@@ -108,9 +108,10 @@ function emptyMemory(): NarrativeMemory {
 
 export function createGame(player: Player): GameState {
   const overall = startingOverall(player.position, player.traits);
+  const careerSeed = Math.floor(Math.random() * 1_000_000) + 1;
   return {
     version: STATE_VERSION,
-    careerSeed: Math.floor(Math.random() * 1_000_000) + 1,
+    careerSeed,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     player,
@@ -121,7 +122,7 @@ export function createGame(player: Player): GameState {
     beat: 0,
     sceneCount: 0,
     queue: [],
-    offers: buildOffers(player.city),
+    offers: buildOffers(player.city, careerSeed),
     recent: [],
     threads: [],
     eventHistory: [],
