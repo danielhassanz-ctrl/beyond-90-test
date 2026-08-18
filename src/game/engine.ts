@@ -840,6 +840,18 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   }
 
   s.tablePosition = clamp((s.tablePosition || 8) + (won ? -1 : drew ? 0 : 1), 1, 20);
+  s.recent = [
+    {
+      opponent: final.ctx.opponentShort,
+      gf: final.goalsFor,
+      ga: final.goalsAgainst,
+      res: won ? "W" : drew ? "D" : "L",
+      played: final.minutes > 0,
+      goals: final.goals,
+      assists: final.assists,
+    },
+    ...(s.recent ?? []),
+  ].slice(0, 8);
   checkAchievements(s);
   const deltas = diff(before, s);
   const label = final.shootout
@@ -850,21 +862,23 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   s.lastOutcome = {
     title: label,
     text: final.unused
-      ? "No entras en la convocatoria. Ves el partido desde la grada con la sensación de estar de sobra."
+      ? `No entras en la convocatoria para ${final.ctx.isHome ? "el partido en casa" : `viajar a ${final.ctx.venueCity}`}. Lo ves con la sensación de estar de sobra.`
       : final.benchOnly
-        ? "Noventa minutos en el banquillo, calentando dos veces sin llegar a entrar."
-        : `${final.minutes}' disputados · valoración ${final.rating.toFixed(1)}${final.goals ? ` · ${final.goals} gol${final.goals > 1 ? "es" : ""}` : ""}${final.assists ? ` · ${final.assists} asistencia${final.assists > 1 ? "s" : ""}` : ""}.`,
+        ? `Noventa minutos en el banquillo de ${final.ctx.venue}, calentando dos veces sin llegar a entrar.`
+        : `${final.minutes}' disputados en ${final.ctx.venue} · valoración ${final.rating.toFixed(1)}${final.goals ? ` · ${final.goals} gol${final.goals > 1 ? "es" : ""}` : ""}${final.assists ? ` · ${final.assists} asistencia${final.assists > 1 ? "s" : ""}` : ""}.`,
     deltas,
     tone: won ? "good" : drew ? "neutral" : "bad",
     ...(share ? { share } : {}),
   };
+  afterScene(s);
   note(
     s,
-    `${final.competition} · ${final.home ? "vs" : "en"} ${final.opponent} ${final.goalsFor}-${final.goalsAgainst}${final.minutes ? ` (${final.minutes}', ${final.rating.toFixed(1)})` : " (sin minutos)"}`,
+    `${final.ctx.competition} · ${final.ctx.homeTeam} ${final.goalsFor > final.goalsAgainst === final.ctx.isHome ? "" : ""}${final.ctx.isHome ? final.goalsFor : final.goalsAgainst}-${final.ctx.isHome ? final.goalsAgainst : final.goalsFor} ${final.ctx.awayTeam}${final.minutes ? ` (${final.minutes}', ${final.rating.toFixed(1)})` : " (sin minutos)"}`,
     won ? "good" : drew ? "neutral" : "bad",
   );
   return touch(s);
 }
+
 
 function shareCard(s: GameState, headline: string, m?: MatchData): ShareData {
   const lines: { label: string; value: string }[] = [
