@@ -32,6 +32,21 @@ function criticalRel(state: GameState): { label: string; value: number } {
   return entries.sort((a, b) => a.value - b.value)[0]!;
 }
 
+/** Pista de continuidad: siempre derivada del estado real, nunca inventada. */
+function nextHint(state: GameState): string | null {
+  const open = openTeasers(state);
+  if (open.length > 0) return "Ese asunto todavía no está cerrado. Va a volver.";
+  if (state.injury) return `El parte médico marca ${state.injury.matchesOut} partidos. El míster no espera a nadie.`;
+  if (state.rel.coach <= 32) return "El míster apunta todo. La próxima decisión pesa el doble.";
+  if (state.agent.present && state.agent.teaser) return `${state.agent.name} tiene algo a medio contar.`;
+  const nextMatch = state.queue.find((q) => q.kind === "match");
+  if (nextMatch?.tag === "derby") return "Se acerca el derbi. La ciudad ya lo tiene marcado.";
+  if (nextMatch?.tag === "debut") return "Hay una lista que puede cambiarte la vida esta semana.";
+  if (state.form >= 74) return "Estás en tu mejor momento y eso siempre atrae miradas.";
+  if (state.form <= 38) return "Necesitas un partido bueno antes de que la duda se instale.";
+  return null;
+}
+
 export function ContextFeed({ state }: { state: GameState }) {
   const season = currentSeason(state);
   const rating = season && season.apps ? Math.round((season.ratingSum / season.apps) * 10) / 10 : 0;
@@ -42,6 +57,7 @@ export function ContextFeed({ state }: { state: GameState }) {
   const critical = criticalRel(state);
   const prev = state.seasons.length > 1 ? state.seasons[state.seasons.length - 2]!.overall : null;
   const trend = prev !== null ? state.overall - prev : 0;
+  const hint = nextHint(state);
 
   return (
     <section className="mt-4 space-y-3 pb-6">
@@ -130,6 +146,13 @@ export function ContextFeed({ state }: { state: GameState }) {
               <li key={t.id}>· {t.teaser}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {hint && (
+        <div className="panel border-accent/25 p-3">
+          <p className="text-kicker text-accent">Lo que viene</p>
+          <p className="mt-1 text-sm leading-snug text-foreground/85">{hint}</p>
         </div>
       )}
 

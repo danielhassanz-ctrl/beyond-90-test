@@ -988,14 +988,17 @@ export function eligibleEvents(s: GameState): GameEvent[] {
     const hit = history.find((h) => h.id === id);
     return hit ? hit.scene : null;
   };
+  const last = history[0]?.id ?? null;
   return ALL_EVENTS.filter((e) => {
     if (!safeRequires(e, s)) return false;
+    // Nunca el mismo template dos veces seguidas.
+    if (e.id === last) return false;
     // Los eventos estructurales (prioridad alta) solo se viven una vez.
     if ((e.priority ?? 0) >= 100) return !s.seenEvents.includes(e.id);
     if (!s.seenEvents.includes(e.id)) return true;
     const seen = lastSeen(e.id);
-    // Los ambientales pueden repetirse, pero muy separados en el tiempo.
-    return seen !== null && scene - seen >= 26;
+    // Un mismo evento no reaparece antes de 20 escenas.
+    return seen !== null && scene - seen >= EVENT_COOLDOWN;
   });
 }
 
@@ -1007,19 +1010,23 @@ function safeRequires(e: GameEvent, s: GameState): boolean {
   }
 }
 
-/** Distancia mínima en escenas entre eventos de la misma categoría. */
-const CATEGORY_COOLDOWN = 5;
+/** Escenas mínimas antes de que un mismo eventId pueda repetirse. */
+const EVENT_COOLDOWN = 20;
+/** Una misma categoría puede aparecer como máximo 2 veces en las últimas 5. */
+const CATEGORY_WINDOW = 5;
+const CATEGORY_MAX = 2;
 
 function categoryBlocked(s: GameState, category: EventCategory | undefined): boolean {
   const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
-  const last = history.find((h) => h.category === (category ?? "life"));
-  if (!last) return false;
-  return (s.sceneCount ?? 0) - last.scene < CATEGORY_COOLDOWN;
+  const cat = category ?? "life";
+  const recent = history.slice(0, CATEGORY_WINDOW);
+  if (recent[0]?.category === cat) return true;
+  return recent.filter((h) => h.category === cat).length >= CATEGORY_MAX;
 }
 
 /**
- * Elige el siguiente evento. Prioriza la categoría pedida por el planificador,
- * respeta cooldowns por categoría y nunca repite un evento ya visto.
+ * Elige el siguiente evento. Prioriza la categoría pedida por el planificador;
+ * si esa categoría está saturada o vacía, CAMBIA de categoría en vez de repetir.
  */
 export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | null {
   const pool = eligibleEvents(s);
@@ -1035,7 +1042,10 @@ export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | 
   if (ambient.length === 0) return null;
 
   const fresh = ambient.filter((e) => !categoryBlocked(s, e.category));
-  const wanted = preferred ? fresh.filter((e) => (e.category ?? "life") === preferred) : [];
+  const wanted =
+    preferred && !categoryBlocked(s, preferred)
+      ? fresh.filter((e) => (e.category ?? "life") === preferred)
+      : [];
   const bucket = wanted.length > 0 ? wanted : fresh.length > 0 ? fresh : ambient;
   return bucket[Math.floor(Math.random() * bucket.length)] ?? null;
 }

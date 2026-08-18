@@ -134,44 +134,71 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
   if (line) ctx.fillText(line, x, cursor);
 }
 
-export async function shareCareerCard(input: CareerCardInput): Promise<"shared" | "downloaded" | "copied" | "failed"> {
-  const text = `${input.headline} — ${input.name} (${input.club}, ${input.kicker})\n${input.lines
+export function shareText(input: CareerCardInput): string {
+  return `${input.headline} — ${input.name} (${input.club}, ${input.kicker})\n${input.lines
     .map((l) => `${l.label}: ${l.value}`)
     .join(" · ")}\n\nMi carrera en BEYOND 90.`;
+}
 
+export type ShareOutcome =
+  | { status: "shared" }
+  | { status: "cancelled" }
+  /** No hay share nativo con archivos: hay que mostrar la tarjeta al usuario. */
+  | { status: "preview"; url: string; text: string; canDownload: boolean }
+  | { status: "failed"; text: string };
+
+function isIOS(): boolean {
+  const ua = navigator.userAgent || "";
+  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document);
+}
+
+/**
+ * Compartir de verdad: primero Web Share API con File (móvil moderno). Si no
+ * está soportado, NO fingimos éxito: devolvemos la tarjeta para mostrarla en un
+ * modal donde el usuario puede mantener pulsado para guardarla o copiar el texto.
+ * La descarga programática solo se ofrece donde es realmente viable.
+ */
+export async function shareCareerCard(input: CareerCardInput): Promise<ShareOutcome> {
+  const text = shareText(input);
   const blob = await renderCareerCard(input);
   const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
 
   if (blob && typeof nav.share === "function") {
     const file = new File([blob], "beyond90.png", { type: "image/png" });
-    if (!nav.canShare || nav.canShare({ files: [file] })) {
+    if (typeof nav.canShare === "function" && nav.canShare({ files: [file] })) {
       try {
         await nav.share({ files: [file], text, title: "BEYOND 90" });
-        return "shared";
-      } catch {
-        /* usuario canceló o no soportado: seguimos con el fallback */
+        return { status: "shared" };
+      } catch (err) {
+        const aborted = err instanceof DOMException && err.name === "AbortError";
+        if (aborted) return { status: "cancelled" };
       }
     }
   }
 
   if (blob) {
-    try {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "beyond90-career-card.png";
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 4000);
-      return "downloaded";
-    } catch {
-      /* seguimos al portapapeles */
-    }
+    const url = URL.createObjectURL(blob);
+    // En iOS la descarga programática no guarda en Fotos: se muestra la tarjeta.
+    return { status: "preview", url, text, canDownload: !isIOS() };
   }
 
+  return { status: "failed", text };
+}
+
+/** Descarga explícita, solo tras interacción del usuario. */
+export function downloadCard(url: string): void {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "beyond90-career-card.png";
+  a.rel = "noopener";
+  a.click();
+}
+
+export async function copyShareText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
-    return "copied";
+    return true;
   } catch {
-    return "failed";
+    return false;
   }
 }

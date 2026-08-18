@@ -18,16 +18,18 @@ export function rel(s: GameState, key: keyof Relationships, delta: number): void
   const cur = s.rel[key];
   let d = delta;
   if (d > 0) {
-    if (cur >= 88) d *= 0.25;
-    else if (cur >= 78) d *= 0.5;
-    else if (cur >= 68) d *= 0.75;
-    d = Math.min(d, 12);
+    // Rendimientos decrecientes: 90+ exige una historia excepcional y sostenida.
+    if (cur >= 88) d *= 0.12;
+    else if (cur >= 82) d *= 0.3;
+    else if (cur >= 74) d *= 0.5;
+    else if (cur >= 66) d *= 0.7;
+    d = Math.min(d, 10);
   } else {
     if (cur <= 20) d *= 0.4;
     else if (cur <= 32) d *= 0.7;
     d = Math.max(d, -14);
   }
-  s.rel[key] = clamp(cur + d, 2, 96);
+  s.rel[key] = clamp(cur + d, 4, 93);
 }
 
 /** Regresión suave hacia la media: nada se queda clavado en 99 ni en 0. */
@@ -35,8 +37,8 @@ export function decayRelations(s: GameState): void {
   for (const key of Object.keys(s.rel) as (keyof Relationships)[]) {
     if (key === "agent" && !s.agent?.present) continue;
     const cur = s.rel[key];
-    if (cur > 82) s.rel[key] = clamp(cur - 1, 2, 96);
-    else if (cur < 34) s.rel[key] = clamp(cur + 1, 2, 96);
+    if (cur > 80) s.rel[key] = clamp(cur - 1, 4, 93);
+    else if (cur < 34) s.rel[key] = clamp(cur + 1, 4, 93);
   }
 }
 
@@ -45,17 +47,20 @@ export function decayRelations(s: GameState): void {
  * hunden por debajo de 20. Cada escena la mueve como máximo 12 puntos.
  */
 export function adjustForm(s: GameState, delta: number, crisis = false): void {
-  const d = Math.max(-14, Math.min(14, delta * 1.4));
-  const floor = crisis ? 6 : 30;
-  s.form = clamp(Math.max(floor, Math.min(88, s.form + d)), 0, 100);
+  // Amortiguación: cuanto más extremo el valor actual, menos empuja el delta.
+  const raw = Math.max(-14, Math.min(14, delta * 1.3));
+  const damp = raw > 0 ? (s.form >= 78 ? 0.35 : s.form >= 68 ? 0.6 : 1) : s.form <= 36 ? 0.45 : s.form <= 46 ? 0.7 : 1;
+  const floor = crisis ? 18 : 32;
+  s.form = clamp(Math.max(floor, Math.min(86, s.form + raw * damp)), 0, 100);
 }
 
 /** Deriva muy suave hacia 52: corrige extremos sin aplanar las rachas. */
 export function driftForm(s: GameState): void {
   const target = 52;
   const diff = target - s.form;
-  if (Math.abs(diff) <= 8) return;
-  s.form = clamp(s.form + Math.sign(diff) * 1.5, 0, 100);
+  if (Math.abs(diff) <= 6) return;
+  // Recuperación gradual: una mala racha se arrastra, pero no se hace crónica.
+  s.form = clamp(s.form + Math.sign(diff) * (Math.abs(diff) > 20 ? 2.5 : 1.5), 0, 100);
 }
 
 export function stat(

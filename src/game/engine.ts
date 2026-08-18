@@ -275,6 +275,19 @@ export function ensureRuntime(s: GameState): void {
 
 type KeySpec = { tag: NonNullable<Slot["tag"]>; tie?: boolean; opponentId?: string };
 
+/**
+ * Una final solo es plausible si el jugador está en un equipo competitivo, ya
+ * es profesional y ha ganado eliminatorias esta temporada. Si no, el partido
+ * clave es una eliminatoria o una jornada decisiva, nunca una final regalada.
+ */
+function finalPlausible(s: GameState): boolean {
+  if (s.stage !== "first") return false;
+  const club = clubDef(s.clubId);
+  if (club.prestige < 4) return false;
+  if (s.overall < 70) return false;
+  return (s.flags["copa_rondas"] ?? 0) >= 2;
+}
+
 function keyMatchSpecs(s: GameState): KeySpec[] {
   const debut = !s.achievements.includes(s.stage === "first" ? "debut_pro" : "debut_juvenil");
   const derby = derbyRivalOf(clubDef(s.clubId));
@@ -287,7 +300,8 @@ function keyMatchSpecs(s: GameState): KeySpec[] {
     { tag: "decisive" },
   ];
   if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) specs.splice(3, 0, { tag: "exclub" });
-  else if (Math.random() < 0.45) specs.push({ tag: "final", tie: true });
+  else if (finalPlausible(s) && Math.random() < 0.6) specs.push({ tag: "final", tie: true });
+  else specs.push({ tag: "cup", tie: true });
   return specs.slice(0, 7);
 }
 
@@ -392,7 +406,7 @@ export function advance(state: GameState): GameState {
     // 2. Regreso pendiente.
     if (!s.injury && s.flags["volvio_pendiente"] === 1) {
       s.flags["volvio_pendiente"] = 0;
-      s.pending = dyn("return", { label: String(s.flags["ultima_lesion_label"] ?? "") || "La lesión" });
+      s.pending = dyn("return", { label: s.memory.lastInjuryLabel || "La lesión" });
       return touch(s);
     }
 
@@ -419,17 +433,23 @@ export function advance(state: GameState): GameState {
     if (slot.kind === "sim") {
       const run = applyRun(s, slot.matches ?? 3);
       if (run.notable) {
-        s.pending = dyn("match_flash", {
-          kind: run.notable.kind,
-          text: run.notable.text,
-          opponent: run.notable.opponent,
-          wins: run.wins,
-          draws: run.draws,
-          losses: run.losses,
-          goals: run.goals,
-          matches: run.matches,
-        });
-        return touch(s);
+        // Lo simulado nunca es una pantalla informativa: solo abre escena si la
+        // consecuencia es interactiva (conflicto, expulsión, ostracismo, crisis).
+        const interactive = ["red", "snub", "crisis", "bad", "injury"].includes(run.notable.kind);
+        note(s, run.notable.text, interactive ? "bad" : "good");
+        if (interactive) {
+          s.pending = dyn("match_flash", {
+            kind: run.notable.kind,
+            text: run.notable.text,
+            opponent: run.notable.opponent,
+            wins: run.wins,
+            draws: run.draws,
+            losses: run.losses,
+            goals: run.goals,
+            matches: run.matches,
+          });
+          return touch(s);
+        }
       }
       continue; // sin escena: el siguiente clic lleva a una decisión real
     }
@@ -653,8 +673,10 @@ export function resolveDynamicCard(
     result = { title: "Sigues adelante", text: "La semana pasa sin más.", tone: "neutral" as const };
   }
   if (card.kind === "injury_diagnosis" && s.injury) {
-    s.flags["ultima_lesion_label"] = 0;
-    s.flags["volvio_pendiente"] = 1;
+    // Se conserva el nombre real de la lesión para la escena de regreso.
+    s.memory.lastInjuryLabel = s.injury.label;
+    // Una lesión menor no genera arco: se resuelve sin escena de regreso extra.
+    s.flags["volvio_pendiente"] = s.injury.severity === "minor" ? 0 : 1;
   }
   if (card.kind === "thread") {
     const id = typeof card.data["threadId"] === "string" ? card.data["threadId"] : "";
@@ -779,6 +801,10 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   const season = currentSeason(s);
   const won = final.shootout ? final.shootout.us > final.shootout.them : final.goalsFor > final.goalsAgainst;
   const drew = !final.shootout && final.goalsFor === final.goalsAgainst;
+  // Progreso real de copa: una final solo puede existir tras superar rondas.
+  if (final.ctx.competition === "Copa del Rey") {
+    s.flags["copa_rondas"] = won ? (s.flags["copa_rondas"] ?? 0) + 1 : 0;
+  }
   if (season) {
     if (final.minutes > 0) {
       season.apps += 1;
@@ -874,7 +900,7 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   afterScene(s);
   note(
     s,
-    `${final.ctx.competition} · ${final.ctx.homeTeam} ${final.goalsFor > final.goalsAgainst === final.ctx.isHome ? "" : ""}${final.ctx.isHome ? final.goalsFor : final.goalsAgainst}-${final.ctx.isHome ? final.goalsAgainst : final.goalsFor} ${final.ctx.awayTeam}${final.minutes ? ` (${final.minutes}', ${final.rating.toFixed(1)})` : " (sin minutos)"}`,
+    `${final.ctx.competition} · ${final.ctx.homeTeam} ${final.ctx.isHome ? final.goalsFor : final.goalsAgainst}-${final.ctx.isHome ? final.goalsAgainst : final.goalsFor} ${final.ctx.awayTeam}${final.minutes ? ` (${final.minutes}', ${final.rating.toFixed(1)})` : " (sin minutos)"}`,
     won ? "good" : drew ? "neutral" : "bad",
   );
   return touch(s);

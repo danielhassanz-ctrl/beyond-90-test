@@ -52,7 +52,7 @@ export const CLUB_POOL: ClubDef[] = [
   { id: "girona", name: "Girona FC", short: "Girona", city: "Girona", stadium: "Montilivi", colors: "Rojiblanco", region: "cataluna", tier: 1, prestige: 3, dev: 3, minutes: 1 },
   { id: "alaves", name: "Deportivo Alavés", short: "Alavés", city: "Vitoria", stadium: "Mendizorroza", colors: "Albiazul", region: "norte", tier: 1, prestige: 3, dev: 3, minutes: 2 },
   { id: "mallorca", name: "RCD Mallorca", short: "Mallorca", city: "Palma", stadium: "Son Moix", colors: "Bermellón", region: "islas", tier: 1, prestige: 3, dev: 3, minutes: 2 },
-  { id: "sevilla-atl", name: "UD Las Palmas", short: "Las Palmas", city: "Las Palmas", stadium: "Gran Canaria", colors: "Amarillo", region: "islas", tier: 1, prestige: 3, dev: 4, minutes: 3 },
+  { id: "las-palmas", name: "UD Las Palmas", short: "Las Palmas", city: "Las Palmas", stadium: "Gran Canaria", colors: "Amarillo", region: "islas", tier: 1, prestige: 3, dev: 4, minutes: 3 },
   { id: "valladolid", name: "Real Valladolid", short: "Valladolid", city: "Valladolid", stadium: "José Zorrilla", colors: "Violeta", region: "centro", tier: 1, prestige: 3, dev: 3, minutes: 2 },
   { id: "leganes", name: "CD Leganés", short: "Leganés", city: "Leganés", stadium: "Butarque", colors: "Pepinero", region: "madrid", tier: 1, prestige: 2, dev: 2, minutes: 3 },
 
@@ -113,9 +113,9 @@ const DERBIES: Record<string, string[]> = {
   rayo: ["getafe", "leganes"],
   getafe: ["leganes", "rayo"],
   leganes: ["getafe", "rayo"],
-  mallorca: ["sevilla-atl", "tenerife"],
-  "sevilla-atl": ["tenerife", "mallorca"],
-  tenerife: ["sevilla-atl"],
+  mallorca: ["las-palmas", "tenerife"],
+  "las-palmas": ["tenerife", "mallorca"],
+  tenerife: ["las-palmas"],
   girona: ["espanyol", "sabadell"],
   valladolid: ["burgos", "zaragoza"],
   burgos: ["valladolid", "mirandes"],
@@ -275,38 +275,81 @@ function regionOfCity(city: string): Region | null {
   return null;
 }
 
-/**
- * 4 propuestas variables y plausibles. Nunca la misma combinación fija:
- * una grande difícil, una cantera formativa, un camino rápido (Segunda) y
- * una alternativa; con sesgo por la ciudad del jugador.
- */
-export function buildOffers(city: string): ClubOffer[] {
-  const region = regionOfCity(city);
-  const near = (d: ClubDef) => (region && d.region === region ? 1 : 0);
+const GIANTS = new Set(["real-madrid", "barcelona", "atletico"]);
 
-  const elitePool = CLUB_POOL.filter((d) => d.prestige >= 4 && d.tier === 1);
-  const canteraPool = CLUB_POOL.filter((d) => d.dev >= 4 && d.prestige <= 4);
-  const caminoPool = CLUB_POOL.filter((d) => d.minutes >= 2);
-  const restPool = CLUB_POOL.filter((d) => d.prestige <= 3);
+/** Firma del último set generado: evita repetir la misma combinación seguida. */
+let lastOfferSignature = "";
+
+function buildOffersOnce(city: string): ClubOffer[] {
+  const region = regionOfCity(city);
+  // Sesgo geográfico suave: solo pondera, nunca decide.
+  const weight = (d: ClubDef) => (region && d.region === region ? 2.2 : 1) * (0.6 + Math.random());
+  const best = (pool: ClubDef[], used: Set<string>): ClubDef | null => {
+    const avail = pool.filter((d) => !used.has(d.id));
+    if (!avail.length) return null;
+    return avail.map((d) => ({ d, w: weight(d) })).sort((a, b) => b.w - a.w)[0]!.d;
+  };
 
   const chosen: ClubOffer[] = [];
   const used = new Set<string>();
-
   const take = (pool: ClubDef[], role: ClubOffer["role"]) => {
-    const sorted = shuffle(pool.filter((d) => !used.has(d.id)))
-      .sort((a, b) => near(b) * (Math.random() < 0.7 ? 1 : 0) - near(a) * (Math.random() < 0.7 ? 1 : 0));
-    const def = sorted[0];
+    const def = best(pool, used);
     if (!def) return;
     used.add(def.id);
     chosen.push({ clubId: def.id, role, pitch: pickBy(ROLE_LABEL[role], Math.floor(Math.random() * 2)) });
   };
 
+  // 1. Oferta grande: como máximo un gigante y no siempre (ni siquiera casi siempre).
+  const giantChance = Math.random();
+  const elitePool = CLUB_POOL.filter(
+    (d) => d.tier === 1 && d.prestige >= 4 && (giantChance < 0.3 ? true : !GIANTS.has(d.id)),
+  );
   take(elitePool, "elite");
-  take(canteraPool, "cantera");
-  take(caminoPool, "camino");
-  take(restPool, "alternativa");
-  while (chosen.length < 4) take(CLUB_POOL, "alternativa");
+
+  // 2. Buen desarrollo garantizado.
+  take(CLUB_POOL.filter((d) => d.dev >= 4 && !GIANTS.has(d.id)), "cantera");
+
+  // 3. Camino corto: al menos un club de Segunda, siempre.
+  take(CLUB_POOL.filter((d) => d.tier === 2 && d.minutes >= 2), "camino");
+
+  // 4. Alternativa variable (Primera modesta o Segunda).
+  take(CLUB_POOL.filter((d) => d.prestige <= 3 && !GIANTS.has(d.id)), "alternativa");
+
+  while (chosen.length < 4) take(CLUB_POOL.filter((d) => !GIANTS.has(d.id)), "alternativa");
+
+  // Invariantes: exactamente 4, >=1 Segunda, >=1 dev alto, <=1 gigante.
+  const defs = chosen.map((o) => defById(o.clubId)!).filter(Boolean);
+  const hasSegunda = defs.some((d) => d.tier === 2);
+  const hasDev = defs.some((d) => d.dev >= 4);
+  const giants = defs.filter((d) => GIANTS.has(d.id)).length;
+  if (chosen.length !== 4 || !hasSegunda || !hasDev || giants > 1) return [];
   return shuffle(chosen);
+}
+
+/**
+ * 4 propuestas variables y plausibles, regeneradas en cada nueva carrera:
+ * una grande, una formativa, un camino corto en Segunda y una alternativa.
+ */
+export function buildOffers(city: string): ClubOffer[] {
+  let fallback: ClubOffer[] = [];
+  for (let i = 0; i < 12; i++) {
+    const set = buildOffersOnce(city);
+    if (!set.length) continue;
+    fallback = set;
+    const sig = set.map((o) => o.clubId).sort().join("|");
+    if (sig !== lastOfferSignature) {
+      lastOfferSignature = sig;
+      return set;
+    }
+  }
+  return fallback.length
+    ? fallback
+    : [
+        { clubId: "betis", role: "elite", pitch: ROLE_LABEL.elite[0]! },
+        { clubId: "villarreal", role: "cantera", pitch: ROLE_LABEL.cantera[0]! },
+        { clubId: "malaga", role: "camino", pitch: ROLE_LABEL.camino[0]! },
+        { clubId: "granada", role: "alternativa", pitch: ROLE_LABEL.alternativa[0]! },
+      ];
 }
 
 /* ======================= Contexto de partido ======================= */
