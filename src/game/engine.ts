@@ -288,7 +288,7 @@ function keyMatchSpecs(s: GameState): KeySpec[] {
   ];
   if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) specs.splice(3, 0, { tag: "exclub" });
   else if (Math.random() < 0.45) specs.push({ tag: "final", tie: true });
-  return specs.slice(0, 6 + (Math.random() < 0.5 ? 1 : 0));
+  return specs.slice(0, 7);
 }
 
 const NARRATIVE_ROTATION: EventCategory[] = ["life", "training", "press", "story", "gossip", "life", "agent", "press"];
@@ -499,7 +499,7 @@ function agentCard(s: GameState): Card | null {
     s.agent.teaser = null;
     return dyn("agent_offer", { clubName: suitor, salary: 150 + Math.floor(Math.random() * 500) });
   }
-  if (s.fame >= 30 && Math.random() < 0.6) {
+  if (s.fame >= 30 && Math.random() < 0.5) {
     const teaser = pick([
       "Ha llamado un club importante preguntando por ti",
       "Hay un ojeador que ha pedido tus últimos tres partidos en vídeo",
@@ -511,7 +511,7 @@ function agentCard(s: GameState): Card | null {
   if (s.agent.trust >= 50 && Math.random() < 0.3) {
     return dyn("agent_commission", { commission: Math.min(15, s.agent.commission + 2) });
   }
-  if (Math.random() < 0.45) {
+  if (Math.random() < 0.3) {
     return dyn("agent_check", {
       topic: pick(["minutos", "prensa", "dinero", "vida"]),
       hour: pick(["23:17", "07:40", "14:05", "22:58"]),

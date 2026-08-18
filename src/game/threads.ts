@@ -92,6 +92,10 @@ export function openTeasers(s: GameState): Thread[] {
 export function maybeSpawnThreads(s: GameState): void {
   if (!Array.isArray(s.threads)) s.threads = [];
   if (s.threads.length >= 2) return;
+  // Cadencia: como mucho un hilo nuevo cada 4 escenas.
+  const last = s.flags["ultimo_hilo"] ?? -99;
+  if ((s.sceneCount ?? 0) - last < 4) return;
+  s.flags["ultimo_hilo"] = s.sceneCount ?? 0;
 
   if (s.rel.coach <= 34 && Math.random() < 0.55) {
     spawnThread(s, "coach_upset");

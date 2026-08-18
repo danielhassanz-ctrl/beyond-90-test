@@ -38,8 +38,8 @@ for (let c = 0; c < 25; c++) {
     } else if (p.type === "event") {
       evScenes++;
       evCounts[p.eventId] = (evCounts[p.eventId] ?? 0) + 1;
-      seen[p.eventId] = (seen[p.eventId] ?? 0) + 1;
-      if (seen[p.eventId]! > 1) problems.push("evento repetido " + p.eventId);
+      if (seen[p.eventId] !== undefined && s.sceneCount - seen[p.eventId]! < 20) problems.push("evento repetido pronto " + p.eventId);
+      seen[p.eventId] = s.sceneCount;
       const ev = eventById(p.eventId)!;
       if (ev.freeform && Math.random() < 0.5) s = resolveEventFree(s, ev.id, Math.random() < 0.3 ? "" : "Me da igual lo que digas, yo juego 😤".repeat(3));
       else s = resolveEvent(s, ev.id, ev.choices[Math.floor(Math.random()*ev.choices.length)]!.id);
