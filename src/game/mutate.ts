@@ -10,8 +10,52 @@ export function seasonLabel(seasonIndex: number): string {
   return `${start}/${String((start + 1) % 100).padStart(2, "0")}`;
 }
 
+/**
+ * Relaciones: viven de forma natural entre 30 y 85. Pasar de 88 exige historia
+ * excepcional (rendimientos y gestos repetidos), no una decisión suelta.
+ */
 export function rel(s: GameState, key: keyof Relationships, delta: number): void {
-  s.rel[key] = clamp(s.rel[key] + delta);
+  const cur = s.rel[key];
+  let d = delta;
+  if (d > 0) {
+    if (cur >= 88) d *= 0.25;
+    else if (cur >= 78) d *= 0.5;
+    else if (cur >= 68) d *= 0.75;
+    d = Math.min(d, 12);
+  } else {
+    if (cur <= 20) d *= 0.4;
+    else if (cur <= 32) d *= 0.7;
+    d = Math.max(d, -14);
+  }
+  s.rel[key] = clamp(cur + d, 2, 96);
+}
+
+/** Regresión suave hacia la media: nada se queda clavado en 99 ni en 0. */
+export function decayRelations(s: GameState): void {
+  for (const key of Object.keys(s.rel) as (keyof Relationships)[]) {
+    if (key === "agent" && !s.agent?.present) continue;
+    const cur = s.rel[key];
+    if (cur > 82) s.rel[key] = clamp(cur - 1, 2, 96);
+    else if (cur < 34) s.rel[key] = clamp(cur + 1, 2, 96);
+  }
+}
+
+/**
+ * FORMA: rango habitual 30-88. Solo crisis extrema o inactividad larga la
+ * hunden por debajo de 20. Cada escena la mueve como máximo 12 puntos.
+ */
+export function adjustForm(s: GameState, delta: number, crisis = false): void {
+  const d = Math.max(-12, Math.min(12, delta));
+  const floor = crisis ? 6 : 28;
+  s.form = clamp(Math.max(floor, Math.min(88, s.form + d)), 0, 100);
+}
+
+/** Deriva de la forma hacia 52 entre escenas. */
+export function driftForm(s: GameState): void {
+  const target = 52;
+  const diff = target - s.form;
+  if (Math.abs(diff) <= 1) return;
+  s.form = clamp(s.form + Math.sign(diff) * Math.min(3, Math.abs(diff) * 0.25), 0, 100);
 }
 
 export function stat(
@@ -25,8 +69,13 @@ export function stat(
     s.xp += delta * 26;
     return;
   }
+  if (key === "form") {
+    adjustForm(s, delta);
+    return;
+  }
   s[key] = clamp(s[key] + delta, 0, key === "overall" || key === "potential" ? 99 : 100);
 }
+
 
 export function flag(s: GameState, key: string, value = 1): void {
   s.flags[key] = value;

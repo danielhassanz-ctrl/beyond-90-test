@@ -1,4 +1,6 @@
+import { CLUB_POOL, clubInfoFor, defById, type ClubDef } from "./clubs";
 import type { ClubInfo, Position, SceneKey, TraitId } from "./types";
+
 import training from "@/assets/scene-training.jpg";
 import locker from "@/assets/scene-locker.jpg";
 import match from "@/assets/scene-match.jpg";
@@ -36,85 +38,23 @@ export const TRAITS: { id: TraitId; label: string; desc: string }[] = [
   { id: "carismatico", label: "Carismático", desc: "El vestuario y los focos te quieren." },
 ];
 
-export const CLUBS: ClubInfo[] = [
-  {
-    id: "betis",
-    name: "Real Betis",
-    short: "Betis",
-    city: "Sevilla",
-    colors: "Verdiblanco",
-    development: "Cantera con identidad: mucho balón, mucho trabajo técnico y entrenadores que apuestan por la casa.",
-    competition: "Alta. Hay dos jugadores de tu edad muy valorados en tu puesto.",
-    minutes: "Pocos al principio; si convences, el filial está cerca.",
-    risk: "La presión del entorno es enorme: un mal mes se nota en la calle.",
-    devBonus: 2,
-    minutesBonus: -1,
-    prestige: 4,
-  },
-  {
-    id: "villarreal",
-    name: "Villarreal CF",
-    short: "Villarreal",
-    city: "Vila-real",
-    colors: "Amarillo",
-    development: "Metodología de élite, plan individual, gimnasio y vídeo desde el primer día.",
-    competition: "Media. Compites con chicos muy formados pero hay hueco.",
-    minutes: "Progresivos y bien medidos. Nada regalado, nada quemado.",
-    risk: "Ciudad pequeña y lejos de casa: la soledad pesa.",
-    devBonus: 3,
-    minutesBonus: 0,
-    prestige: 4,
-  },
-  {
-    id: "sevilla",
-    name: "Sevilla FC",
-    short: "Sevilla",
-    city: "Sevilla",
-    colors: "Blanquirrojo",
-    development: "Exigencia máxima y ojo constante de la secretaría técnica.",
-    competition: "Brutal. Fichan a los mejores de cada provincia cada verano.",
-    minutes: "Escasos hasta que demuestres estar por encima.",
-    risk: "Si no explotas rápido, te cruzan de la lista sin avisar.",
-    devBonus: 4,
-    minutesBonus: -2,
-    prestige: 5,
-  },
-  {
-    id: "malaga",
-    name: "Málaga CF",
-    short: "Málaga",
-    city: "Málaga",
-    colors: "Blanquiazul",
-    development: "Menos recursos, más responsabilidad: aquí se aprende jugando.",
-    competition: "Baja. El club necesita canteranos y lo sabe.",
-    minutes: "Muchos y pronto, incluso con 17 años.",
-    risk: "El club es inestable: hoy te quieren, mañana cambia todo.",
-    devBonus: 1,
-    minutesBonus: 3,
-    prestige: 2,
-  },
-];
+/** Compatibilidad: cuatro casas de referencia (las ofertas reales se generan). */
+export const CLUBS: ClubInfo[] = ["betis", "villarreal", "sevilla", "malaga"]
+  .map((id) => CLUB_POOL.find((c) => c.id === id))
+  .filter((d): d is ClubDef => !!d)
+  .map(clubInfoFor);
 
-export function clubById(id: string): ClubInfo {
-  return CLUBS.find((c) => c.id === id) ?? CLUBS[0]!;
+/** Definición completa del club (estadio, región, tier). */
+export function clubDef(id: string): ClubDef {
+  return defById(id) ?? CLUB_POOL.find((c) => c.id === "betis") ?? CLUB_POOL[0]!;
 }
 
-export const YOUTH_OPPONENTS = [
-  "Cádiz CF", "UD Almería", "Recreativo", "Córdoba CF", "Elche CF", "Levante UD",
-  "Granada CF", "Xerez", "Écija", "Utrera", "San Fernando", "Antequera",
-];
-
-export const RESERVE_OPPONENTS = [
-  "Alcorcón B", "Linares", "CD Badajoz", "Mérida AD", "Atlético Sanluqueño",
-  "Yeclano", "UCAM Murcia", "CD Eldense", "Real Murcia", "Algeciras CF",
-];
-
-export const FIRST_OPPONENTS = [
-  "Getafe CF", "Rayo Vallecano", "RCD Espanyol", "Celta de Vigo", "Osasuna",
-  "Deportivo Alavés", "Valencia CF", "Real Sociedad", "Athletic Club", "Girona FC",
-];
+export function clubById(id: string): ClubInfo {
+  return clubInfoFor(clubDef(id));
+}
 
 export const AGENT_NAMES = ["Nacho Arévalo", "Rubén Cifuentes", "Marta Ibarra"];
+
 
 export const ACHIEVEMENTS: { id: string; name: string; desc: string }[] = [
   { id: "elige_cantera", name: "Primer paso", desc: "Elegir una cantera con 16 años." },

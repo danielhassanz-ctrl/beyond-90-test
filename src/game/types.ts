@@ -110,16 +110,57 @@ export interface NarrativeMemory {
 
 /* ======================= Ritmo de temporada ======================= */
 
-export type SlotKind = "match" | "event" | "block" | "agent" | "life";
+export type SlotKind = "match" | "event" | "sim" | "agent" | "life";
 
 export interface Slot {
   kind: SlotKind;
   /** Etiqueta narrativa del partido clave (debut, derbi, final…). */
   label?: string;
-  /** Nº de partidos que resume el bloque automático. */
+  /** Tipo de partido clave: derby, cup, final, exclub, scouts, decisive, debut. */
+  tag?: "derby" | "cup" | "final" | "exclub" | "scouts" | "decisive" | "debut" | null;
+  /** Rival forzado (id del banco de clubes). */
+  opponentId?: string;
+  /** Nº de partidos que se simulan en segundo plano. */
   matches?: number;
+  /** Categoría preferida para la escena narrativa. */
+  category?: EventCategory;
   tie?: boolean;
 }
+
+export interface MatchContext {
+  competition: string;
+  round: string;
+  homeTeam: string;
+  awayTeam: string;
+  opponent: string;
+  opponentShort: string;
+  venue: string;
+  venueCity: string;
+  isHome: boolean;
+  specialTag: string | null;
+  derbyOpponent: string | null;
+  storyLabel: string;
+  tie: boolean;
+}
+
+export interface RecentResult {
+  opponent: string;
+  gf: number;
+  ga: number;
+  res: "W" | "D" | "L";
+  played: boolean;
+  goals: number;
+  assists: number;
+}
+
+export interface Thread {
+  id: string;
+  kind: string;
+  teaser: string;
+  dueScene: number;
+  payload: Record<string, string | number>;
+}
+
 
 export interface AutoBlock {
   title: string;
@@ -220,6 +261,8 @@ export interface KeyMoment {
 }
 
 export interface MatchData {
+  /** Contexto ÚNICO del partido: rival, estadio, competición, etiqueta. */
+  ctx: MatchContext;
   label: string;
   competition: string;
   home: boolean;
@@ -249,9 +292,20 @@ export interface DynamicCard {
 export type Card =
   | { type: "event"; eventId: string }
   | { type: "match"; match: MatchData }
-  | { type: "block"; block: AutoBlock }
   | { type: "season"; summary: Outcome }
   | DynamicCard;
+
+export interface EventLogEntry {
+  id: string;
+  category: EventCategory;
+  scene: number;
+}
+
+export interface ClubOfferRef {
+  clubId: string;
+  role: "elite" | "cantera" | "camino" | "alternativa";
+  pitch: string;
+}
 
 export interface GameState {
   version: number;
@@ -264,7 +318,17 @@ export interface GameState {
   seasonIndex: number;
   /** Índice de escena dentro de la temporada (informativo). */
   beat: number;
+  /** Contador global de escenas: base de cooldowns y de los hilos pendientes. */
+  sceneCount: number;
   queue: Slot[];
+  /** Ofertas iniciales de cantera generadas para esta carrera. */
+  offers: ClubOfferRef[];
+  /** Resultados recientes (incluye simulados en segundo plano). */
+  recent: RecentResult[];
+  /** Hilos narrativos abiertos: teaser hoy, resolución en 1-4 escenas. */
+  threads: Thread[];
+  /** Historial de eventos vistos con categoría y escena, para anti-repetición. */
+  eventHistory: EventLogEntry[];
   overall: number;
   potential: number;
   xp: number;
@@ -291,3 +355,4 @@ export interface GameState {
   pending: Card | null;
   lastOutcome: Outcome | null;
 }
+
