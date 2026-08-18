@@ -406,7 +406,7 @@ export function advance(state: GameState): GameState {
     // 2. Regreso pendiente.
     if (!s.injury && s.flags["volvio_pendiente"] === 1) {
       s.flags["volvio_pendiente"] = 0;
-      s.pending = dyn("return", { label: String(s.flags["ultima_lesion_label"] ?? "") || "La lesión" });
+      s.pending = dyn("return", { label: s.memory.lastInjuryLabel || "La lesión" });
       return touch(s);
     }
 
