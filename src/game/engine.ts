@@ -433,17 +433,23 @@ export function advance(state: GameState): GameState {
     if (slot.kind === "sim") {
       const run = applyRun(s, slot.matches ?? 3);
       if (run.notable) {
-        s.pending = dyn("match_flash", {
-          kind: run.notable.kind,
-          text: run.notable.text,
-          opponent: run.notable.opponent,
-          wins: run.wins,
-          draws: run.draws,
-          losses: run.losses,
-          goals: run.goals,
-          matches: run.matches,
-        });
-        return touch(s);
+        // Lo simulado nunca es una pantalla informativa: solo abre escena si la
+        // consecuencia es interactiva (conflicto, expulsión, ostracismo, crisis).
+        const interactive = ["red", "snub", "crisis", "bad", "injury"].includes(run.notable.kind);
+        note(s, run.notable.text, interactive ? "bad" : "good");
+        if (interactive) {
+          s.pending = dyn("match_flash", {
+            kind: run.notable.kind,
+            text: run.notable.text,
+            opponent: run.notable.opponent,
+            wins: run.wins,
+            draws: run.draws,
+            losses: run.losses,
+            goals: run.goals,
+            matches: run.matches,
+          });
+          return touch(s);
+        }
       }
       continue; // sin escena: el siguiente clic lleva a una decisión real
     }
