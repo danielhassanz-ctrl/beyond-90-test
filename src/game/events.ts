@@ -1007,7 +1007,7 @@ const inPreseason = (s: GameState): boolean => (s.flags["pretemporada"] ?? 0) ==
 function mutedInCareer(s: GameState, e: GameEvent): boolean {
   if ((e.priority ?? 0) >= 100) return false;
   if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 18;
-  return hash(careerSeed(s), `mute:${e.id}`) % 100 < 22;
+  return hash(careerSeed(s), `mute:${e.id}`) % 100 < 32;
 }
 
 export function eligibleEvents(s: GameState, allowMuted = false): GameEvent[] {
