@@ -982,7 +982,21 @@ export function eventById(id: string): GameEvent | undefined {
 }
 
 export function eligibleEvents(s: GameState): GameEvent[] {
-  return ALL_EVENTS.filter((e) => !s.seenEvents.includes(e.id) && safeRequires(e, s));
+  const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
+  const scene = s.sceneCount ?? 0;
+  const lastSeen = (id: string): number | null => {
+    const hit = history.find((h) => h.id === id);
+    return hit ? hit.scene : null;
+  };
+  return ALL_EVENTS.filter((e) => {
+    if (!safeRequires(e, s)) return false;
+    // Los eventos estructurales (prioridad alta) solo se viven una vez.
+    if ((e.priority ?? 0) >= 100) return !s.seenEvents.includes(e.id);
+    if (!s.seenEvents.includes(e.id)) return true;
+    const seen = lastSeen(e.id);
+    // Los ambientales pueden repetirse, pero muy separados en el tiempo.
+    return seen !== null && scene - seen >= 26;
+  });
 }
 
 function safeRequires(e: GameEvent, s: GameState): boolean {

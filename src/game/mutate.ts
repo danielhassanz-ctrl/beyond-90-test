@@ -45,17 +45,17 @@ export function decayRelations(s: GameState): void {
  * hunden por debajo de 20. Cada escena la mueve como máximo 12 puntos.
  */
 export function adjustForm(s: GameState, delta: number, crisis = false): void {
-  const d = Math.max(-12, Math.min(12, delta));
-  const floor = crisis ? 6 : 28;
+  const d = Math.max(-14, Math.min(14, delta * 1.4));
+  const floor = crisis ? 6 : 30;
   s.form = clamp(Math.max(floor, Math.min(88, s.form + d)), 0, 100);
 }
 
-/** Deriva de la forma hacia 52 entre escenas. */
+/** Deriva muy suave hacia 52: corrige extremos sin aplanar las rachas. */
 export function driftForm(s: GameState): void {
   const target = 52;
   const diff = target - s.form;
-  if (Math.abs(diff) <= 1) return;
-  s.form = clamp(s.form + Math.sign(diff) * Math.min(3, Math.abs(diff) * 0.25), 0, 100);
+  if (Math.abs(diff) <= 8) return;
+  s.form = clamp(s.form + Math.sign(diff) * 1.5, 0, 100);
 }
 
 export function stat(
