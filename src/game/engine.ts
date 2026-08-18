@@ -275,6 +275,19 @@ export function ensureRuntime(s: GameState): void {
 
 type KeySpec = { tag: NonNullable<Slot["tag"]>; tie?: boolean; opponentId?: string };
 
+/**
+ * Una final solo es plausible si el jugador está en un equipo competitivo, ya
+ * es profesional y ha ganado eliminatorias esta temporada. Si no, el partido
+ * clave es una eliminatoria o una jornada decisiva, nunca una final regalada.
+ */
+function finalPlausible(s: GameState): boolean {
+  if (s.stage !== "first") return false;
+  const club = clubDef(s.clubId);
+  if (club.prestige < 4) return false;
+  if (s.overall < 70) return false;
+  return (s.flags["copa_rondas"] ?? 0) >= 2;
+}
+
 function keyMatchSpecs(s: GameState): KeySpec[] {
   const debut = !s.achievements.includes(s.stage === "first" ? "debut_pro" : "debut_juvenil");
   const derby = derbyRivalOf(clubDef(s.clubId));
@@ -287,7 +300,8 @@ function keyMatchSpecs(s: GameState): KeySpec[] {
     { tag: "decisive" },
   ];
   if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) specs.splice(3, 0, { tag: "exclub" });
-  else if (Math.random() < 0.45) specs.push({ tag: "final", tie: true });
+  else if (finalPlausible(s) && Math.random() < 0.6) specs.push({ tag: "final", tie: true });
+  else specs.push({ tag: "cup", tie: true });
   return specs.slice(0, 7);
 }
 
