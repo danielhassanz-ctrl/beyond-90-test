@@ -32,6 +32,21 @@ function criticalRel(state: GameState): { label: string; value: number } {
   return entries.sort((a, b) => a.value - b.value)[0]!;
 }
 
+/** Pista de continuidad: siempre derivada del estado real, nunca inventada. */
+function nextHint(state: GameState): string | null {
+  const open = openTeasers(state);
+  if (open.length > 0) return "Ese asunto todavía no está cerrado. Va a volver.";
+  if (state.injury) return `El parte médico marca ${state.injury.matchesOut} partidos. El míster no espera a nadie.`;
+  if (state.rel.coach <= 32) return "El míster apunta todo. La próxima decisión pesa el doble.";
+  if (state.agent.present && state.agent.teaser) return `${state.agent.name} tiene algo a medio contar.`;
+  const nextMatch = state.queue.find((q) => q.kind === "match");
+  if (nextMatch?.tag === "derby") return "Se acerca el derbi. La ciudad ya lo tiene marcado.";
+  if (nextMatch?.tag === "debut") return "Hay una lista que puede cambiarte la vida esta semana.";
+  if (state.form >= 74) return "Estás en tu mejor momento y eso siempre atrae miradas.";
+  if (state.form <= 38) return "Necesitas un partido bueno antes de que la duda se instale.";
+  return null;
+}
+
 export function ContextFeed({ state }: { state: GameState }) {
   const season = currentSeason(state);
   const rating = season && season.apps ? Math.round((season.ratingSum / season.apps) * 10) / 10 : 0;
