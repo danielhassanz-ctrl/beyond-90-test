@@ -900,7 +900,7 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   afterScene(s);
   note(
     s,
-    `${final.ctx.competition} · ${final.ctx.homeTeam} ${final.goalsFor > final.goalsAgainst === final.ctx.isHome ? "" : ""}${final.ctx.isHome ? final.goalsFor : final.goalsAgainst}-${final.ctx.isHome ? final.goalsAgainst : final.goalsFor} ${final.ctx.awayTeam}${final.minutes ? ` (${final.minutes}', ${final.rating.toFixed(1)})` : " (sin minutos)"}`,
+    `${final.ctx.competition} · ${final.ctx.homeTeam} ${final.ctx.isHome ? final.goalsFor : final.goalsAgainst}-${final.ctx.isHome ? final.goalsAgainst : final.goalsFor} ${final.ctx.awayTeam}${final.minutes ? ` (${final.minutes}', ${final.rating.toFixed(1)})` : " (sin minutos)"}`,
     won ? "good" : drew ? "neutral" : "bad",
   );
   return touch(s);
