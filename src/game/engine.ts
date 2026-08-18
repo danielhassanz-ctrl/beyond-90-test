@@ -801,6 +801,10 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   const season = currentSeason(s);
   const won = final.shootout ? final.shootout.us > final.shootout.them : final.goalsFor > final.goalsAgainst;
   const drew = !final.shootout && final.goalsFor === final.goalsAgainst;
+  // Progreso real de copa: una final solo puede existir tras superar rondas.
+  if (final.ctx.competition === "Copa del Rey") {
+    s.flags["copa_rondas"] = won ? (s.flags["copa_rondas"] ?? 0) + 1 : 0;
+  }
   if (season) {
     if (final.minutes > 0) {
       season.apps += 1;
