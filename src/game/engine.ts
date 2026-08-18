@@ -782,22 +782,24 @@ function seasonGrowth(s: GameState): number {
   const room = s.potential - s.overall;
   const ageFactor = s.age <= 18 ? 1.3 : s.age <= 21 ? 1.1 : s.age <= 26 ? 0.8 : s.age <= 29 ? 0.4 : 0;
 
-  let g = Math.min(4.5, s.xp / 55);
-  g += rating >= 7 ? 1.6 : rating >= 6.4 ? 0.9 : rating > 0 ? 0.3 : 0;
-  g += clubById(s.clubId).devBonus * 0.3;
-  g += s.discipline >= 65 ? 0.5 : 0;
-  g += s.player.traits.includes("ambicioso") ? 0.3 : 0;
-  g -= s.injury?.severity === "severe" ? 1.6 : 0;
+  // +1 de MEDIA debe notarse: el crecimiento por temporada es contenido.
+  let g = Math.min(2.6, s.xp / 95);
+  g += rating >= 7.2 ? 1.3 : rating >= 6.6 ? 0.8 : rating >= 6 ? 0.35 : rating > 0 ? 0.1 : 0;
+  g += clubById(s.clubId).devBonus * 0.2;
+  g += s.discipline >= 65 ? 0.3 : 0;
+  g += s.player.traits.includes("ambicioso") ? 0.2 : 0;
+  g -= s.injury?.severity === "severe" ? 1.4 : 0;
   g -= apps === 0 ? 1.2 : 0;
   g *= ageFactor;
 
-  if (room <= 0) return s.age >= 30 ? -1 : Math.random() < 0.25 ? 1 : 0;
-  return Math.max(apps === 0 ? -1 : 0, Math.round(Math.min(g, room * 0.55)));
+  if (room <= 0) return s.age >= 30 ? -1 : Math.random() < 0.15 ? 1 : 0;
+  const cap = s.age <= 21 ? 5 : 3;
+  return Math.max(apps === 0 ? -1 : 0, Math.round(Math.min(g, cap, room * 0.3)));
 }
 
 function evaluatePromotion(s: GameState): { stage: Stage; title: string; text: string } | null {
   if (s.stage === "youth") {
-    if (s.age >= 17 && (s.overall >= 62 || (s.age >= 18 && s.overall >= 60)) && s.rel.coach >= 40) {
+    if (s.age >= 17 && (s.overall >= 62 || (s.age >= 18 && s.overall >= 58)) && s.rel.coach >= 34) {
       return {
         stage: "reserves",
         title: "Subes al filial",

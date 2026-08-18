@@ -19,6 +19,12 @@ export function stat(
   key: "form" | "fitness" | "morale" | "discipline" | "fame" | "overall" | "potential",
   delta: number,
 ): void {
+  // La MEDIA nunca sube por una decisión puntual: se convierte en progreso oculto
+  // y se materializa al cerrar la temporada. Sí puede bajar (lesión, dejadez).
+  if (key === "overall" && delta > 0) {
+    s.xp += delta * 26;
+    return;
+  }
   s[key] = clamp(s[key] + delta, 0, key === "overall" || key === "potential" ? 99 : 100);
 }
 
