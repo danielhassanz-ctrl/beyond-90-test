@@ -11,7 +11,7 @@ export function PlayerAvatar({ src, name, className }: Props) {
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
-    .map((w) => w[0］ ?? "")
+    .map((w) => w[0] ?? "")
     .join("");
   return (
     <div
