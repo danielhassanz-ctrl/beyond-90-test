@@ -156,6 +156,7 @@ const legacy = {
 };
 try {
   const migrated = migrate(JSON.parse(JSON.stringify(legacy)) as unknown as GameState);
+  if (!migrated) throw new Error("migrate devolvió null");
   if (!migrated.queue.length) fail("Save antiguo migrado sin plan de temporada");
   if (migrated.pending && migrated.pending.type === ("block" as never)) fail("Save antiguo conserva tarjeta de bloque");
   const after = advance(migrated);
