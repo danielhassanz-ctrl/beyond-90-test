@@ -993,18 +993,39 @@ function safeRequires(e: GameEvent, s: GameState): boolean {
   }
 }
 
-export function pickEvent(s: GameState): GameEvent | null {
+/** Distancia mínima en escenas entre eventos de la misma categoría. */
+const CATEGORY_COOLDOWN = 5;
+
+function categoryBlocked(s: GameState, category: EventCategory | undefined): boolean {
+  const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
+  const last = history.find((h) => h.category === (category ?? "life"));
+  if (!last) return false;
+  return (s.sceneCount ?? 0) - last.scene < CATEGORY_COOLDOWN;
+}
+
+/**
+ * Elige el siguiente evento. Prioriza la categoría pedida por el planificador,
+ * respeta cooldowns por categoría y nunca repite un evento ya visto.
+ */
+export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | null {
   const pool = eligibleEvents(s);
   if (pool.length === 0) return null;
+
   const maxPriority = Math.max(...pool.map((e) => e.priority ?? 0));
   if (maxPriority >= 100) {
     const top = pool.filter((e) => (e.priority ?? 0) === maxPriority);
     return top[Math.floor(Math.random() * top.length)] ?? null;
   }
+
   const ambient = pool.filter((e) => (e.priority ?? 0) < 100);
   if (ambient.length === 0) return null;
-  return ambient[Math.floor(Math.random() * ambient.length)] ?? null;
+
+  const fresh = ambient.filter((e) => !categoryBlocked(s, e.category));
+  const wanted = preferred ? fresh.filter((e) => (e.category ?? "life") === preferred) : [];
+  const bucket = wanted.length > 0 ? wanted : fresh.length > 0 ? fresh : ambient;
+  return bucket[Math.floor(Math.random() * bucket.length)] ?? null;
 }
+
 
 export const EVENT_COUNT = ALL_EVENTS.length;
 export { totalGoals, hasTrait, note, rel };
