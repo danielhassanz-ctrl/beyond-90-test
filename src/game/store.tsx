@@ -5,13 +5,12 @@ import {
   chooseClub,
   createGame,
   migrate,
-  resolveBlock,
   resolveDynamicCard,
   resolveEvent,
   resolveEventFree,
   resolveMatch,
 } from "./engine";
-import type { AutoBlock, DynamicCard, GameState, MatchData, Player } from "./types";
+import type { DynamicCard, GameState, MatchData, Player } from "./types";
 
 interface GameContextValue {
   state: GameState | null;

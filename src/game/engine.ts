@@ -3,6 +3,7 @@ import { buildOffers, derbyRivalOf } from "./clubs";
 import { randomSuitor, resolveDynamic } from "./dynamic";
 import { eventById, pickEvent } from "./events";
 import { interpretFree, INTENT_FEEDBACK } from "./interpret";
+import { applyFreeFallback } from "./events-extra";
 import {
   achieve,
   adjustForm,
@@ -845,7 +846,7 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
       opponent: final.ctx.opponentShort,
       gf: final.goalsFor,
       ga: final.goalsAgainst,
-      res: won ? "W" : drew ? "D" : "L",
+      res: (won ? "W" : drew ? "D" : "L") as "W" | "D" | "L",
       played: final.minutes > 0,
       goals: final.goals,
       assists: final.assists,

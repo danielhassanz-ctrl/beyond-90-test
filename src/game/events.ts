@@ -12,7 +12,7 @@ import {
   totalApps,
   totalGoals,
 } from "./mutate";
-import type { GameEvent, GameState } from "./types";
+import type { EventCategory, GameEvent, GameState } from "./types";
 
 const club = (s: GameState) => clubById(s.clubId).name;
 const nick = (s: GameState) => s.player.nickname || s.player.name.split(" ")[0] || s.player.name;
