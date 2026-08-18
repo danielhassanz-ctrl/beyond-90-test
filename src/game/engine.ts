@@ -506,6 +506,7 @@ export function advance(state: GameState): GameState {
       s.pending = card;
       return touch(s);
     }
+    s.flags["pretemporada"] = 0;
     const any = pickEvent(s);
     if (any) {
       s.pending = { type: "event", eventId: any.id };
