@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Clock, TrendingUp, Users } from "lucide-react";
-import { useEffect, useState } from "react";
-import { CLUBS } from "@/game/data";
+import { useEffect, useMemo, useState } from "react";
+import { clubById } from "@/game/data";
 import { useGame } from "@/game/store";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/cantera")({
   head: () => ({
