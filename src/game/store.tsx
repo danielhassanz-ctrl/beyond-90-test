@@ -1,6 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { SAVE_KEY, advance, chooseClub, createGame, resolveEvent, resolveMatch } from "./engine";
-import type { GameState, MatchData, Player } from "./types";
+import {
+  SAVE_KEY,
+  advance,
+  chooseClub,
+  createGame,
+  migrate,
+  resolveBlock,
+  resolveDynamicCard,
+  resolveEvent,
+  resolveEventFree,
+  resolveMatch,
+} from "./engine";
+import type { AutoBlock, DynamicCard, GameState, MatchData, Player } from "./types";
 
 interface GameContextValue {
   state: GameState | null;
@@ -9,6 +20,9 @@ interface GameContextValue {
   start: (player: Player) => void;
   pickClub: (clubId: string) => void;
   answerEvent: (eventId: string, choiceId: string) => void;
+  answerFree: (eventId: string, text: string) => void;
+  answerDynamic: (card: DynamicCard, choiceId: string, text?: string) => void;
+  finishBlock: (block: AutoBlock) => void;
   playMatch: (match: MatchData, keyChoiceId?: string) => void;
   next: () => void;
   reset: () => void;
@@ -20,9 +34,7 @@ function read(): GameState | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as GameState;
-    if (!parsed || typeof parsed !== "object" || !parsed.player) return null;
-    return parsed;
+    return migrate(JSON.parse(raw));
   } catch {
     return null;
   }
@@ -51,52 +63,60 @@ export function GameProvider({ children }: { children: ReactNode }) {
     write(next);
   }, []);
 
+  const apply = useCallback((fn: (prev: GameState) => GameState) => {
+    setState((prev) => {
+      if (!prev) return prev;
+      let next: GameState;
+      try {
+        next = fn(prev);
+      } catch {
+        return prev;
+      }
+      write(next);
+      return next;
+    });
+  }, []);
+
   const start = useCallback((player: Player) => commit(createGame(player)), [commit]);
-
-  const pickClub = useCallback(
-    (clubId: string) => {
-      setState((prev) => {
-        if (!prev) return prev;
-        const next = chooseClub(prev, clubId);
-        write(next);
-        return next;
-      });
-    },
-    [],
+  const pickClub = useCallback((clubId: string) => apply((prev) => chooseClub(prev, clubId)), [apply]);
+  const answerEvent = useCallback(
+    (eventId: string, choiceId: string) => apply((prev) => resolveEvent(prev, eventId, choiceId)),
+    [apply],
   );
-
-  const answerEvent = useCallback((eventId: string, choiceId: string) => {
-    setState((prev) => {
-      if (!prev) return prev;
-      const next = resolveEvent(prev, eventId, choiceId);
-      write(next);
-      return next;
-    });
-  }, []);
-
-  const playMatch = useCallback((match: MatchData, keyChoiceId?: string) => {
-    setState((prev) => {
-      if (!prev) return prev;
-      const next = keyChoiceId ? resolveMatch(prev, match, keyChoiceId) : resolveMatch(prev, match);
-      write(next);
-      return next;
-    });
-  }, []);
-
-  const next = useCallback(() => {
-    setState((prev) => {
-      if (!prev) return prev;
-      const updated = advance(prev);
-      write(updated);
-      return updated;
-    });
-  }, []);
-
+  const answerFree = useCallback(
+    (eventId: string, text: string) => apply((prev) => resolveEventFree(prev, eventId, text)),
+    [apply],
+  );
+  const answerDynamic = useCallback(
+    (card: DynamicCard, choiceId: string, text?: string) =>
+      apply((prev) => resolveDynamicCard(prev, card, choiceId, text)),
+    [apply],
+  );
+  const finishBlock = useCallback((block: AutoBlock) => apply((prev) => resolveBlock(prev, block)), [apply]);
+  const playMatch = useCallback(
+    (match: MatchData, keyChoiceId?: string) =>
+      apply((prev) => (keyChoiceId ? resolveMatch(prev, match, keyChoiceId) : resolveMatch(prev, match))),
+    [apply],
+  );
+  const next = useCallback(() => apply((prev) => advance(prev)), [apply]);
   const reset = useCallback(() => commit(null), [commit]);
 
   const value = useMemo<GameContextValue>(
-    () => ({ state, ready, hasSave: !!state, start, pickClub, answerEvent, playMatch, next, reset }),
-    [state, ready, start, pickClub, answerEvent, playMatch, next, reset],
+    () => ({
+      state,
+      ready,
+      hasSave: !!state,
+      start,
+      pickClub,
+      answerEvent,
+      answerFree,
+      answerDynamic,
+      finishBlock,
+      playMatch,
+      next,
+      reset,
+    }),
+    [state, ready, start, pickClub, answerEvent, answerFree, answerDynamic, finishBlock, playMatch, next, reset],
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

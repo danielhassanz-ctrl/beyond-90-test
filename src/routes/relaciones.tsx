@@ -90,9 +90,9 @@ function Relations({ state }: { state: GameState }) {
           <StatBar label="Físico" value={state.fitness} tone="pitch" />
           <StatBar label="Notoriedad" value={state.fame} />
         </div>
-        {state.injuryWeeks > 0 && (
+        {!!state.injury && (
           <p className="mt-3 text-sm text-destructive">
-            {state.injuryLabel} · {state.injuryWeeks} semanas de baja.
+            {state.injury?.label} · {state.injury?.matchesOut ?? 0} partidos de baja estimados.
           </p>
         )}
       </section>
