@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GameShell } from "@/components/game/GameShell";
 import { StatBar } from "@/components/game/StatBar";
+import { npcMood, npcName } from "@/game/npc";
 import type { GameState } from "@/game/types";
 
 export const Route = createFileRoute("/relaciones")({
@@ -95,6 +96,33 @@ function Relations({ state }: { state: GameState }) {
             {state.injury?.label} · {state.injury?.matchesOut ?? 0} partidos de baja estimados.
           </p>
         )}
+      </section>
+
+      <section className="panel p-4">
+        <p className="text-kicker">Tu entorno</p>
+        <ul className="mt-3 space-y-2">
+          {([
+            ["coach", "Entrenador"],
+            ["captain", "Capitán"],
+            ["rival", "Competencia por el puesto"],
+            ["physio", "Fisioterapeuta"],
+            ["journalist", "Prensa"],
+            ["partner", "Pareja"],
+          ] as const).map(([role, label]) => {
+            const mood = npcMood(state, role);
+            return (
+              <li key={role} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="truncate font-display text-sm">{npcName(state, role)}</span>
+                  <span className="ml-2 font-cond text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{label}</span>
+                </span>
+                <span className="font-num text-xs text-foreground/70">
+                  {mood >= 66 ? "De tu lado" : mood >= 40 ? "Neutral" : "En tu contra"}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <ul className="space-y-3">
