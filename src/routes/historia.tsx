@@ -35,7 +35,7 @@ const CATEGORY_STYLE: Record<EventCategory, string> = {
 };
 
 function Story({ state }: { state: GameState }) {
-  const { answerEvent, answerFree, answerDynamic, finishBlock, playMatch, next } = useGame();
+  const { answerEvent, answerFree, answerDynamic, playMatch, next } = useGame();
   const [phase, setPhase] = useState<"pre" | "key">("pre");
   const [lastMatch, setLastMatch] = useState<MatchData | null>(null);
 
@@ -72,39 +72,6 @@ function Story({ state }: { state: GameState }) {
         <Deltas outcome={pending.summary} />
         {pending.summary.share && <ShareButton state={state} share={pending.summary.share} />}
         <PrimaryButton onClick={() => next()}>Nueva temporada</PrimaryButton>
-      </Scene>
-    );
-  } else if (pending.type === "block") {
-    const b = pending.block;
-    body = (
-      <Scene image={SCENES.training} kicker="Bloque simulado" title={b.title} accent="border-accent/35">
-        <p className="text-sm leading-relaxed text-foreground/85">{b.text}</p>
-        <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-          <Cell label="V" value={b.wins} />
-          <Cell label="E" value={b.draws} />
-          <Cell label="D" value={b.losses} />
-          <Cell label="Pos." value={`${b.position}º`} />
-        </div>
-        <div className="mt-3 grid grid-cols-4 gap-2 text-center">
-          <Cell label="PJ" value={b.apps} />
-          <Cell label="G" value={b.goals} />
-          <Cell label="A" value={b.assists} />
-          <Cell label="Nota" value={b.rating || "—"} />
-        </div>
-        <div className="mt-3 flex items-center gap-1.5">
-          {b.formRun.map((r, i) => (
-            <span
-              key={i}
-              className={cn(
-                "font-num grid h-6 w-6 place-items-center rounded text-[0.65rem] font-bold",
-                r === "W" ? "bg-accent/25 text-accent" : r === "L" ? "bg-destructive/25 text-destructive" : r === "D" ? "bg-surface-2 text-foreground/70" : "bg-surface-2 text-muted-foreground",
-              )}
-            >
-              {r}
-            </span>
-          ))}
-        </div>
-        <PrimaryButton onClick={() => finishBlock(b)}>Continuar la temporada</PrimaryButton>
       </Scene>
     );
   } else if (pending.type === "dynamic") {

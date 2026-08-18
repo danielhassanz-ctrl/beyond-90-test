@@ -21,7 +21,6 @@ interface GameContextValue {
   answerEvent: (eventId: string, choiceId: string) => void;
   answerFree: (eventId: string, text: string) => void;
   answerDynamic: (card: DynamicCard, choiceId: string, text?: string) => void;
-  finishBlock: (block: AutoBlock) => void;
   playMatch: (match: MatchData, keyChoiceId?: string) => void;
   next: () => void;
   reset: () => void;
@@ -91,7 +90,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       apply((prev) => resolveDynamicCard(prev, card, choiceId, text)),
     [apply],
   );
-  const finishBlock = useCallback((block: AutoBlock) => apply((prev) => resolveBlock(prev, block)), [apply]);
   const playMatch = useCallback(
     (match: MatchData, keyChoiceId?: string) =>
       apply((prev) => (keyChoiceId ? resolveMatch(prev, match, keyChoiceId) : resolveMatch(prev, match))),
@@ -110,12 +108,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       answerEvent,
       answerFree,
       answerDynamic,
-      finishBlock,
       playMatch,
       next,
       reset,
     }),
-    [state, ready, start, pickClub, answerEvent, answerFree, answerDynamic, finishBlock, playMatch, next, reset],
+    [state, ready, start, pickClub, answerEvent, answerFree, answerDynamic, playMatch, next, reset],
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
