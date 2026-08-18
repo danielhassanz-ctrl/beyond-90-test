@@ -217,7 +217,7 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
       return {
         kicker: "Rumor confirmado",
         title: `Interés del ${str(d, "clubName", "un club")}`,
-        image: "agent",
+        image: "office",
         category: "agent",
         text: `${agentName} lo suelta por fin: el ${str(d, "clubName")} pregunta por ti. No es una oferta firmada, es un sondeo con números: ficha de ${num(d, "salary", 200)}.000 € y promesa de minutos en el filial o rotación. Tu club diría que no de entrada.`,
         choices: [
@@ -251,7 +251,7 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
       return {
         kicker: "Despacho",
         title: "Primer contrato profesional",
-        image: "tunnel",
+        image: "office",
         category: "story",
         text: `Mesa larga, secretaría técnica y una carpeta con tu nombre mal escrito. ${num(d, "years", 3)} temporadas, ${num(d, "salary", 120)}.000 € por curso y una cláusula que suena a mucho. ${s.agent.present ? `${agentName} te toca la rodilla por debajo de la mesa: "Espera".` : "Estás solo con tus padres al otro lado del teléfono."}`,
         choices: [
@@ -264,7 +264,7 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
       return {
         kicker: "Ascenso interno",
         title: str(d, "title", "Subes de categoría"),
-        image: "tunnel",
+        image: "celebration",
         category: "story",
         text: str(d, "text", "El club te sube de equipo."),
         choices: [{ id: "ok", label: "Asumirlo", hint: "Nuevo escalón, nuevo baremo" }],
@@ -273,7 +273,7 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
       return {
         kicker: "Progreso",
         title: "Has dado un salto",
-        image: "training",
+        image: "gym",
         category: "training",
         text: str(d, "text", "El cuerpo técnico ve un cambio real en tu juego."),
         choices: [{ id: "ok", label: "Seguir" }],
