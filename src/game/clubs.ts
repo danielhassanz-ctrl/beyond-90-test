@@ -249,14 +249,25 @@ const ROLE_LABEL: Record<ClubOffer["role"], string[]> = {
   ],
 };
 
-function shuffle<T>(arr: T[]): T[] {
+/** RNG determinista opcional: si hay semilla, la selección depende de la carrera. */
+function makeRng(seed?: number): () => number {
+  if (typeof seed !== "number" || !Number.isFinite(seed)) return Math.random;
+  let s = (Math.floor(seed) % 2147483647) || 1;
+  return () => {
+    s = (s * 48271) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function shuffle<T>(arr: T[], rnd: () => number = Math.random): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rnd() * (i + 1));
     [a[i], a[j]] = [a[j]!, a[i]!];
   }
   return a;
 }
+
 
 function regionOfCity(city: string): Region | null {
   const c = city.trim().toLowerCase();
