@@ -94,6 +94,8 @@ export interface GameState {
   log: LogEntry[];
   achievements: string[];
   onboarded: boolean;
+  pending: Card | null;
+  lastOutcome: Outcome | null;
 }
 
 export interface Delta {
@@ -168,4 +170,5 @@ export interface MatchData {
 export type Card =
   | { type: "event"; eventId: string }
   | { type: "match"; match: MatchData }
+  | { type: "rest"; title: string; text: string }
   | { type: "season"; summary: Outcome };
