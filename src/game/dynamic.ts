@@ -161,7 +161,51 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         text: str(d, "text", "El cuerpo técnico ve un cambio real en tu juego."),
         choices: [{ id: "ok", label: "Seguir" }],
       };
+    case "match_flash": {
+      const flashKind = str(d, "kind", "form");
+      return {
+        kicker: `${num(d, "matches", 3)} jornadas en segundo plano`,
+        title: FLASH_TITLES[flashKind] ?? "Algo ha pasado sin ti",
+        image: flashKind === "injury" ? "injury" : "match",
+        category: "story",
+        text: `${str(d, "text", "El equipo ha seguido su camino.")} Balance del tramo: ${num(d, "wins")}V ${num(d, "draws")}E ${num(d, "losses")}D.`,
+        choices: [
+          { id: "asumir", label: "Asumirlo y mirar adelante", hint: "Cabeza fría" },
+          { id: "hablar", label: "Hablarlo con el míster", hint: "Puede salir bien o mal" },
+        ],
+      };
+    }
+    case "agent_check":
+      return {
+        kicker: `Llamada · ${str(d, "hour", "23:17")}`,
+        title: `${agentName} no quiere hablar por WhatsApp`,
+        image: "agent",
+        category: "agent",
+        text: AGENT_TOPICS[str(d, "topic", "minutos")] ?? "Quiere saber cómo estás de verdad.",
+        choices: [
+          { id: "sincero", label: "Contarle la verdad", hint: "Confianza" },
+          { id: "cerrar", label: "Quitarle importancia", hint: "Te guardas el problema" },
+        ],
+        freeform: { prompt: `¿Qué le contestas a ${agentName}?`, placeholder: "Escribe lo que quieras…" },
+      };
+    case "thread": {
+      const kind = str(d, "threadKind", "club_interest");
+      const view = THREAD_VIEWS[kind];
+      return {
+        kicker: view?.kicker ?? "Se resuelve",
+        title: view?.title ?? "Aquello de lo que se hablaba",
+        image: view?.image ?? "locker",
+        category: view?.category ?? "story",
+        text: `${str(d, "teaser", "Se hablaba de algo.")} ${view?.text ?? "Hoy tiene nombre y apellidos."}`,
+        choices: view?.choices ?? [
+          { id: "afrontar", label: "Afrontarlo de frente" },
+          { id: "evitar", label: "Dejarlo pasar" },
+        ],
+        ...(view?.free ? { freeform: { prompt: view.free, placeholder: "Escribe lo que quieras…" } } : {}),
+      };
+    }
     default:
+
       return {
         kicker: "Carrera",
         title: "Semana de trabajo",
