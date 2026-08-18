@@ -57,6 +57,7 @@ export function ContextFeed({ state }: { state: GameState }) {
   const critical = criticalRel(state);
   const prev = state.seasons.length > 1 ? state.seasons[state.seasons.length - 2]!.overall : null;
   const trend = prev !== null ? state.overall - prev : 0;
+  const hint = nextHint(state);
 
   return (
     <section className="mt-4 space-y-3 pb-6">
@@ -145,6 +146,13 @@ export function ContextFeed({ state }: { state: GameState }) {
               <li key={t.id}>· {t.teaser}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {hint && (
+        <div className="panel border-accent/25 p-3">
+          <p className="text-kicker text-accent">Lo que viene</p>
+          <p className="mt-1 text-sm leading-snug text-foreground/85">{hint}</p>
         </div>
       )}
 
