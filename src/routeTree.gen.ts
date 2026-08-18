@@ -11,7 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CanteraRouteImport } from './routes/cantera'
+import { Route as CarreraRouteImport } from './routes/carrera'
+import { Route as HistoriaRouteImport } from './routes/historia'
+import { Route as LegadoRouteImport } from './routes/legado'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as RelacionesRouteImport } from './routes/relaciones'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,40 +27,98 @@ const CanteraRoute = CanteraRouteImport.update({
   path: '/cantera',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CarreraRoute = CarreraRouteImport.update({
+  id: '/carrera',
+  path: '/carrera',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoriaRoute = HistoriaRouteImport.update({
+  id: '/historia',
+  path: '/historia',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegadoRoute = LegadoRouteImport.update({
+  id: '/legado',
+  path: '/legado',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelacionesRoute = RelacionesRouteImport.update({
+  id: '/relaciones',
+  path: '/relaciones',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cantera': typeof CanteraRoute
+  '/carrera': typeof CarreraRoute
+  '/historia': typeof HistoriaRoute
+  '/legado': typeof LegadoRoute
   '/onboarding': typeof OnboardingRoute
+  '/relaciones': typeof RelacionesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cantera': typeof CanteraRoute
+  '/carrera': typeof CarreraRoute
+  '/historia': typeof HistoriaRoute
+  '/legado': typeof LegadoRoute
   '/onboarding': typeof OnboardingRoute
+  '/relaciones': typeof RelacionesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cantera': typeof CanteraRoute
+  '/carrera': typeof CarreraRoute
+  '/historia': typeof HistoriaRoute
+  '/legado': typeof LegadoRoute
   '/onboarding': typeof OnboardingRoute
+  '/relaciones': typeof RelacionesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cantera' | '/onboarding'
+  fullPaths:
+    | '/'
+    | '/cantera'
+    | '/carrera'
+    | '/historia'
+    | '/legado'
+    | '/onboarding'
+    | '/relaciones'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cantera' | '/onboarding'
-  id: '__root__' | '/' | '/cantera' | '/onboarding'
+  to:
+    | '/'
+    | '/cantera'
+    | '/carrera'
+    | '/historia'
+    | '/legado'
+    | '/onboarding'
+    | '/relaciones'
+  id:
+    | '__root__'
+    | '/'
+    | '/cantera'
+    | '/carrera'
+    | '/historia'
+    | '/legado'
+    | '/onboarding'
+    | '/relaciones'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CanteraRoute: typeof CanteraRoute
+  CarreraRoute: typeof CarreraRoute
+  HistoriaRoute: typeof HistoriaRoute
+  LegadoRoute: typeof LegadoRoute
   OnboardingRoute: typeof OnboardingRoute
+  RelacionesRoute: typeof RelacionesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,11 +137,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CanteraRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/carrera': {
+      id: '/carrera'
+      path: '/carrera'
+      fullPath: '/carrera'
+      preLoaderRoute: typeof CarreraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historia': {
+      id: '/historia'
+      path: '/historia'
+      fullPath: '/historia'
+      preLoaderRoute: typeof HistoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legado': {
+      id: '/legado'
+      path: '/legado'
+      fullPath: '/legado'
+      preLoaderRoute: typeof LegadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relaciones': {
+      id: '/relaciones'
+      path: '/relaciones'
+      fullPath: '/relaciones'
+      preLoaderRoute: typeof RelacionesRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,7 +178,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CanteraRoute: CanteraRoute,
+  CarreraRoute: CarreraRoute,
+  HistoriaRoute: HistoriaRoute,
+  LegadoRoute: LegadoRoute,
   OnboardingRoute: OnboardingRoute,
+  RelacionesRoute: RelacionesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
