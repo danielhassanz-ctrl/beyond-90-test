@@ -32,6 +32,9 @@ const CATEGORY_STYLE: Record<EventCategory, string> = {
   agent: "border-gold/60",
   gossip: "border-fuchsia-500/35",
   medical: "border-destructive/45",
+  preseason: "border-accent/45",
+  club: "border-gold/30",
+  market: "border-emerald-500/40",
 };
 
 function Story({ state }: { state: GameState }) {

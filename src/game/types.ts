@@ -224,7 +224,17 @@ export interface EventChoice {
   apply: (s: GameState) => void;
 }
 
-export type EventCategory = "story" | "training" | "life" | "press" | "agent" | "gossip" | "medical";
+export type EventCategory =
+  | "story"
+  | "training"
+  | "life"
+  | "press"
+  | "agent"
+  | "gossip"
+  | "medical"
+  | "preseason"
+  | "club"
+  | "market";
 
 export interface GameEvent {
   id: string;
@@ -248,7 +258,13 @@ export type SceneKey =
   | "agent"
   | "injury"
   | "family"
-  | "tunnel";
+  | "tunnel"
+  | "press"
+  | "stadium"
+  | "office"
+  | "gym"
+  | "travel"
+  | "celebration";
 
 export interface MatchMoment {
   minute: number;
@@ -311,6 +327,8 @@ export interface ClubOfferRef {
 
 export interface GameState {
   version: number;
+  /** Semilla de carrera: da personalidad propia al reparto de eventos y NPCs. */
+  careerSeed?: number;
   createdAt: number;
   updatedAt: number;
   player: Player;
