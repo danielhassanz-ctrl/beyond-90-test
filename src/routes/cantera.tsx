@@ -23,6 +23,11 @@ function Academy() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
 
+  const offers = useMemo(
+    () => (state?.offers ?? []).map((o) => ({ ...clubById(o.clubId), pitch: o.pitch })),
+    [state?.offers],
+  );
+
   useEffect(() => {
     if (ready && !state) void navigate({ to: "/onboarding" });
     if (ready && state?.clubId) void navigate({ to: "/historia" });
@@ -44,7 +49,8 @@ function Academy() {
         </p>
 
         <ul className="mt-6 space-y-4">
-          {CLUBS.map((c) => {
+          {offers.map((c) => {
+
             const active = selected === c.id;
             return (
               <li key={c.id}>
