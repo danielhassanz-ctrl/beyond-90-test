@@ -96,7 +96,7 @@ export const CLUBS: ClubInfo[] = [
 ];
 
 export function clubById(id: string): ClubInfo {
-  return CLUBS.find((c) => c.id === id) ?? CLUBS[0];
+  return CLUBS.find((c) => c.id === id) ?? CLUBS[0]!;
 }
 
 export const YOUTH_OPPONENTS = [
