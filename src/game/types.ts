@@ -106,6 +106,8 @@ export interface NarrativeMemory {
   promises: string[];
   threads: Record<string, number>;
   npcs: Record<string, { name: string; role: string; mood: number }>;
+  /** Nombre real de la última lesión, para la escena de regreso. */
+  lastInjuryLabel?: string | null;
 }
 
 /* ======================= Ritmo de temporada ======================= */
