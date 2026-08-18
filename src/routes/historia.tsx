@@ -140,11 +140,19 @@ function Story({ state }: { state: GameState }) {
       body = (
         <Scene
           image={SCENES.match}
-          kicker={`${match.competition} · ${match.label}`}
-          title={`${match.home ? "vs" : "en"} ${match.opponent}`}
+          kicker={`${match.ctx.competition} · ${match.ctx.round}`}
+          title={match.ctx.storyLabel}
           accent="border-gold/45"
         >
-          <p className="text-sm leading-relaxed text-muted-foreground">
+          <div className="mt-1 flex items-center justify-between rounded-lg bg-surface-2 px-3 py-2 text-xs">
+            <span className="font-cond font-semibold">{match.ctx.homeTeam}</span>
+            <span className="text-muted-foreground">vs</span>
+            <span className="font-cond font-semibold">{match.ctx.awayTeam}</span>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {match.ctx.venue} · {match.ctx.venueCity}
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             {match.unused
               ? "No estás en la lista. Toca ver el partido desde fuera."
               : match.benchOnly
@@ -152,8 +160,9 @@ function Story({ state }: { state: GameState }) {
                 : match.minutes >= 60
                   ? "Sales de titular."
                   : "Empiezas en el banquillo, con opciones de entrar."}
-            {match.tie ? " Eliminatoria a partido único: si hay empate, penaltis." : ""}
+            {match.ctx.tie ? " Eliminatoria a partido único: si hay empate, penaltis." : ""}
           </p>
+
           <PrimaryButton
             onClick={() => {
               if (km && match.minutes > 0) {
