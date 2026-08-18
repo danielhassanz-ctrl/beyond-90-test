@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GameShell } from "@/components/game/GameShell";
 import { StatBar } from "@/components/game/StatBar";
-import { npcMood, npcName } from "@/game/npc";
+import { npc } from "@/game/npc";
 import type { GameState } from "@/game/types";
 
 export const Route = createFileRoute("/relaciones")({
@@ -109,15 +109,15 @@ function Relations({ state }: { state: GameState }) {
             ["journalist", "Prensa"],
             ["partner", "Pareja"],
           ] as const).map(([role, label]) => {
-            const mood = npcMood(state, role);
+            const person = npc(state, role);
             return (
               <li key={role} className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0">
-                  <span className="truncate font-display text-sm">{npcName(state, role)}</span>
+                  <span className="truncate font-display text-sm">{person.name}</span>
                   <span className="ml-2 font-cond text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{label}</span>
                 </span>
                 <span className="font-num text-xs text-foreground/70">
-                  {mood >= 66 ? "De tu lado" : mood >= 40 ? "Neutral" : "En tu contra"}
+                  {person.mood >= 66 ? "De tu lado" : person.mood >= 40 ? "Neutral" : "En tu contra"}
                 </span>
               </li>
             );
