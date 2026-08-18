@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Clock, TrendingUp, Users } from "lucide-react";
-import { useEffect, useState } from "react";
-import { CLUBS } from "@/game/data";
+import { useEffect, useMemo, useState } from "react";
+import { clubById } from "@/game/data";
 import { useGame } from "@/game/store";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/cantera")({
   head: () => ({
@@ -21,6 +22,11 @@ function Academy() {
   const { state, ready, pickClub } = useGame();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
+
+  const offers = useMemo(
+    () => (state?.offers ?? []).map((o) => ({ ...clubById(o.clubId), pitch: o.pitch })),
+    [state?.offers],
+  );
 
   useEffect(() => {
     if (ready && !state) void navigate({ to: "/onboarding" });
@@ -43,7 +49,8 @@ function Academy() {
         </p>
 
         <ul className="mt-6 space-y-4">
-          {CLUBS.map((c) => {
+          {offers.map((c) => {
+
             const active = selected === c.id;
             return (
               <li key={c.id}>
@@ -67,6 +74,9 @@ function Academy() {
                       Nivel {c.prestige}/5
                     </span>
                   </div>
+
+                  <p className="mt-2 text-sm italic leading-snug text-foreground/70">{c.pitch}</p>
+
 
                   <dl className="mt-3 space-y-2 text-sm">
                     <Row Icon={TrendingUp} label="Desarrollo" text={c.development} />

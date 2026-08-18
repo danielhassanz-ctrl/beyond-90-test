@@ -48,6 +48,19 @@ for (let i = 0; i < 40; i++) {
 if (signatures.size < 10) fail(`Ofertas poco variables (${signatures.size} combinaciones en 40)`);
 if (CLUB_POOL.some((c) => c.id === "sevilla-atl")) fail("Sigue existiendo el id sevilla-atl");
 
+/* ---------- 1b. Nuevas carreras: las ofertas cambian de verdad ---------- */
+{
+  const sets = new Set<string>();
+  for (let i = 0; i < 15; i++) {
+    const s = createGame(player(i));
+    if (s.offers.length !== 4) fail("Nueva carrera sin 4 ofertas");
+    sets.add(s.offers.map((o) => o.clubId).sort().join("|"));
+  }
+  if (sets.size < 10) fail(`Nuevas carreras repiten el mismo set de clubes (${sets.size}/15)`);
+  console.log(`Ofertas de nueva carrera: ${sets.size}/15 conjuntos distintos`);
+}
+
+
 /* ---------- 2. Carreras completas ---------- */
 const CAREERS = 22;
 const stats = { keyMatches: [] as number[], ovr: [] as number[], forms: [] as number[], rels: [] as number[] };

@@ -249,14 +249,25 @@ const ROLE_LABEL: Record<ClubOffer["role"], string[]> = {
   ],
 };
 
-function shuffle<T>(arr: T[]): T[] {
+/** RNG determinista opcional: si hay semilla, la selección depende de la carrera. */
+function makeRng(seed?: number): () => number {
+  if (typeof seed !== "number" || !Number.isFinite(seed)) return Math.random;
+  let s = (Math.floor(seed) % 2147483647) || 1;
+  return () => {
+    s = (s * 48271) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function shuffle<T>(arr: T[], rnd: () => number = Math.random): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rnd() * (i + 1));
     [a[i], a[j]] = [a[j]!, a[i]!];
   }
   return a;
 }
+
 
 function regionOfCity(city: string): Region | null {
   const c = city.trim().toLowerCase();
@@ -280,10 +291,11 @@ const GIANTS = new Set(["real-madrid", "barcelona", "atletico"]);
 /** Firma del último set generado: evita repetir la misma combinación seguida. */
 let lastOfferSignature = "";
 
-function buildOffersOnce(city: string): ClubOffer[] {
+function buildOffersOnce(city: string, seed?: number): ClubOffer[] {
+  const rnd = makeRng(seed);
   const region = regionOfCity(city);
   // Sesgo geográfico suave: solo pondera, nunca decide.
-  const weight = (d: ClubDef) => (region && d.region === region ? 2.2 : 1) * (0.6 + Math.random());
+  const weight = (d: ClubDef) => (region && d.region === region ? 2.2 : 1) * (0.6 + rnd());
   const best = (pool: ClubDef[], used: Set<string>): ClubDef | null => {
     const avail = pool.filter((d) => !used.has(d.id));
     if (!avail.length) return null;
@@ -296,11 +308,11 @@ function buildOffersOnce(city: string): ClubOffer[] {
     const def = best(pool, used);
     if (!def) return;
     used.add(def.id);
-    chosen.push({ clubId: def.id, role, pitch: pickBy(ROLE_LABEL[role], Math.floor(Math.random() * 2)) });
+    chosen.push({ clubId: def.id, role, pitch: pickBy(ROLE_LABEL[role], Math.floor(rnd() * 2)) });
   };
 
   // 1. Oferta grande: como máximo un gigante y no siempre (ni siquiera casi siempre).
-  const giantChance = Math.random();
+  const giantChance = rnd();
   const elitePool = CLUB_POOL.filter(
     (d) => d.tier === 1 && d.prestige >= 4 && (giantChance < 0.3 ? true : !GIANTS.has(d.id)),
   );
@@ -323,17 +335,18 @@ function buildOffersOnce(city: string): ClubOffer[] {
   const hasDev = defs.some((d) => d.dev >= 4);
   const giants = defs.filter((d) => GIANTS.has(d.id)).length;
   if (chosen.length !== 4 || !hasSegunda || !hasDev || giants > 1) return [];
-  return shuffle(chosen);
+  return shuffle(chosen, rnd);
 }
 
 /**
  * 4 propuestas variables y plausibles, regeneradas en cada nueva carrera:
  * una grande, una formativa, un camino corto en Segunda y una alternativa.
+ * Si se pasa `seed` (careerSeed), el set depende de la carrera concreta.
  */
-export function buildOffers(city: string): ClubOffer[] {
+export function buildOffers(city: string, seed?: number): ClubOffer[] {
   let fallback: ClubOffer[] = [];
   for (let i = 0; i < 12; i++) {
-    const set = buildOffersOnce(city);
+    const set = buildOffersOnce(city, typeof seed === "number" ? seed + i * 7919 : undefined);
     if (!set.length) continue;
     fallback = set;
     const sig = set.map((o) => o.clubId).sort().join("|");
@@ -351,6 +364,7 @@ export function buildOffers(city: string): ClubOffer[] {
         { clubId: "granada", role: "alternativa", pitch: ROLE_LABEL.alternativa[0]! },
       ];
 }
+
 
 /* ======================= Contexto de partido ======================= */
 
