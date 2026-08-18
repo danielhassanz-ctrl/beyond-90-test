@@ -8,6 +8,12 @@ import agent from "@/assets/scene-agent.jpg";
 import injury from "@/assets/scene-injury.jpg";
 import family from "@/assets/scene-family.jpg";
 import tunnel from "@/assets/scene-tunnel.jpg";
+import press from "@/assets/scene-press.jpg";
+import stadium from "@/assets/scene-stadium.jpg";
+import office from "@/assets/scene-office.jpg";
+import gym from "@/assets/scene-gym.jpg";
+import travel from "@/assets/scene-travel.jpg";
+import celebration from "@/assets/scene-celebration.jpg";
 
 export const SCENES: Record<SceneKey, string> = {
   training,
@@ -17,6 +23,12 @@ export const SCENES: Record<SceneKey, string> = {
   injury,
   family,
   tunnel,
+  press,
+  stadium,
+  office,
+  gym,
+  travel,
+  celebration,
 };
 
 export const POSITIONS: { id: Position; label: string; long: string }[] = [

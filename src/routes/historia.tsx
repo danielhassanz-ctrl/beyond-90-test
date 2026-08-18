@@ -32,6 +32,9 @@ const CATEGORY_STYLE: Record<EventCategory, string> = {
   agent: "border-gold/60",
   gossip: "border-fuchsia-500/35",
   medical: "border-destructive/45",
+  preseason: "border-accent/45",
+  club: "border-gold/30",
+  market: "border-emerald-500/40",
 };
 
 function Story({ state }: { state: GameState }) {
@@ -67,7 +70,7 @@ function Story({ state }: { state: GameState }) {
     );
   } else if (pending.type === "season") {
     body = (
-      <Scene image={SCENES.tunnel} kicker="Fin de temporada" title={pending.summary.title}>
+      <Scene image={SCENES.celebration} kicker="Fin de temporada" title={pending.summary.title}>
         <p className="text-sm leading-relaxed text-foreground/85">{pending.summary.text}</p>
         <Deltas outcome={pending.summary} />
         {pending.summary.share && <ShareButton state={state} share={pending.summary.share} />}
@@ -119,7 +122,7 @@ function Story({ state }: { state: GameState }) {
     const km = match.keyMoment;
     if (phase === "key" && km) {
       body = (
-        <Scene image={SCENES.match} kicker={`Minuto ${km.minute}'`} title="Jugada clave" accent="border-gold/60">
+        <Scene image={SCENES.stadium} kicker={`Minuto ${km.minute}'`} title="Jugada clave" accent="border-gold/60">
           <p className="text-[0.95rem] leading-relaxed text-foreground/85">{km.prompt}</p>
           <div className="mt-5 space-y-2.5">
             {km.options.map((o) => (

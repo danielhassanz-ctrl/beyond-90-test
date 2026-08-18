@@ -974,33 +974,20 @@ const AMBIENT: GameEvent[] = [
 ];
 
 import { EXTRA_EVENTS } from "./events-extra";
+import { PHASE5_EVENTS, traitAffinity } from "./events-phase5";
+import { careerSeed, hash } from "./npc";
 
-export const ALL_EVENTS: GameEvent[] = [...STORY, ...AMBIENT, ...EXTRA_EVENTS];
+export const ALL_EVENTS: GameEvent[] = [...STORY, ...AMBIENT, ...EXTRA_EVENTS, ...PHASE5_EVENTS];
 
 export function eventById(id: string): GameEvent | undefined {
   return ALL_EVENTS.find((e) => e.id === id);
 }
 
-export function eligibleEvents(s: GameState): GameEvent[] {
-  const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
-  const scene = s.sceneCount ?? 0;
-  const lastSeen = (id: string): number | null => {
-    const hit = history.find((h) => h.id === id);
-    return hit ? hit.scene : null;
-  };
-  const last = history[0]?.id ?? null;
-  return ALL_EVENTS.filter((e) => {
-    if (!safeRequires(e, s)) return false;
-    // Nunca el mismo template dos veces seguidas.
-    if (e.id === last) return false;
-    // Los eventos estructurales (prioridad alta) solo se viven una vez.
-    if ((e.priority ?? 0) >= 100) return !s.seenEvents.includes(e.id);
-    if (!s.seenEvents.includes(e.id)) return true;
-    const seen = lastSeen(e.id);
-    // Un mismo evento no reaparece antes de 20 escenas.
-    return seen !== null && scene - seen >= EVENT_COOLDOWN;
-  });
-}
+/** Escenas mínimas antes de que un mismo eventId pueda repetirse. */
+const EVENT_COOLDOWN = 26;
+/** Una misma categoría puede aparecer como máximo 2 veces en las últimas 5. */
+const CATEGORY_WINDOW = 5;
+const CATEGORY_MAX = 2;
 
 function safeRequires(e: GameEvent, s: GameState): boolean {
   try {
@@ -1010,11 +997,43 @@ function safeRequires(e: GameEvent, s: GameState): boolean {
   }
 }
 
-/** Escenas mínimas antes de que un mismo eventId pueda repetirse. */
-const EVENT_COOLDOWN = 20;
-/** Una misma categoría puede aparecer como máximo 2 veces en las últimas 5. */
-const CATEGORY_WINDOW = 5;
-const CATEGORY_MAX = 2;
+const inPreseason = (s: GameState): boolean => (s.flags["pretemporada"] ?? 0) === 1;
+
+/**
+ * Cada carrera silencia una parte del banco ambiental de forma determinista
+ * (careerSeed). Así dos partidas distintas ven repartos de historias distintos
+ * y no solo un orden distinto.
+ */
+function mutedInCareer(s: GameState, e: GameEvent): boolean {
+  if ((e.priority ?? 0) >= 100) return false;
+  if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 18;
+  return hash(careerSeed(s), `mute:${e.id}`) % 100 < 32;
+}
+
+export function eligibleEvents(s: GameState, allowMuted = false): GameEvent[] {
+  const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
+  const scene = s.sceneCount ?? 0;
+  const lastSeen = (id: string): number | null => {
+    const hit = history.find((h) => h.id === id);
+    return hit ? hit.scene : null;
+  };
+  const recentIds = new Set(history.slice(0, 3).map((h) => h.id));
+  const pre = inPreseason(s);
+  return ALL_EVENTS.filter((e) => {
+    // Las escenas de pretemporada solo existen durante la pretemporada.
+    if ((e.category === "preseason") !== pre && e.category === "preseason") return false;
+    if (pre && (e.priority ?? 0) < 100 && e.category !== "preseason") return false;
+    if (!safeRequires(e, s)) return false;
+    // Nunca uno de los tres últimos templates.
+    if (recentIds.has(e.id)) return false;
+    if (!allowMuted && mutedInCareer(s, e)) return false;
+    // Los eventos estructurales (prioridad alta) solo se viven una vez.
+    if ((e.priority ?? 0) >= 100) return !s.seenEvents.includes(e.id);
+    if (!s.seenEvents.includes(e.id)) return true;
+    const seen = lastSeen(e.id);
+    return seen !== null && scene - seen >= EVENT_COOLDOWN;
+  });
+}
 
 function categoryBlocked(s: GameState, category: EventCategory | undefined): boolean {
   const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
@@ -1024,12 +1043,46 @@ function categoryBlocked(s: GameState, category: EventCategory | undefined): boo
   return recent.filter((h) => h.category === cat).length >= CATEGORY_MAX;
 }
 
+/** Peso de un evento: contexto de estado, rasgos, frescura y sesgo de carrera. */
+function weightOf(s: GameState, e: GameEvent): number {
+  const cat = e.category ?? "life";
+  let w = traitAffinity(s, cat);
+  // Sesgo estable por carrera: cada partida tiene sus historias favoritas.
+  w *= 0.65 + (hash(careerSeed(s), `w:${e.id}`) % 70) / 100;
+  // Frescura: lo nunca visto pesa mucho más que lo repetido.
+  if (!s.seenEvents.includes(e.id)) w *= 2.4;
+  // Coherencia de contexto.
+  if (cat === "gossip") w *= s.fame >= 45 ? 1.2 : 0.7;
+  if (cat === "medical" && s.injury) w *= 2.2;
+  if (cat === "market" && (s.flags["mercado_abierto"] ?? 0) === 1) w *= 1.8;
+  if (cat === "club" && s.stage !== "youth") w *= 1.3;
+  if (cat === "press" && s.fame < 20) w *= 0.5;
+  return Math.max(0.05, w);
+}
+
+function weightedPick(s: GameState, pool: GameEvent[]): GameEvent | null {
+  if (pool.length === 0) return null;
+  const weights = pool.map((e) => weightOf(s, e));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < pool.length; i++) {
+    r -= weights[i]!;
+    if (r <= 0) return pool[i]!;
+  }
+  return pool[pool.length - 1]!;
+}
+
 /**
  * Elige el siguiente evento. Prioriza la categoría pedida por el planificador;
  * si esa categoría está saturada o vacía, CAMBIA de categoría en vez de repetir.
  */
 export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | null {
-  const pool = eligibleEvents(s);
+  let pool = eligibleEvents(s);
+  // Si el banco filtrado se queda corto, reabrimos los silenciados antes de repetir.
+  if (pool.length < 4) {
+    const wide = eligibleEvents(s, true);
+    if (wide.length > pool.length) pool = wide;
+  }
   if (pool.length === 0) return null;
 
   const maxPriority = Math.max(...pool.map((e) => e.priority ?? 0));
@@ -1047,9 +1100,8 @@ export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | 
       ? fresh.filter((e) => (e.category ?? "life") === preferred)
       : [];
   const bucket = wanted.length > 0 ? wanted : fresh.length > 0 ? fresh : ambient;
-  return bucket[Math.floor(Math.random() * bucket.length)] ?? null;
+  return weightedPick(s, bucket);
 }
-
 
 export const EVENT_COUNT = ALL_EVENTS.length;
 export { totalGoals, hasTrait, note, rel };

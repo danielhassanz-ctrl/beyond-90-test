@@ -110,6 +110,7 @@ export function createGame(player: Player): GameState {
   const overall = startingOverall(player.position, player.traits);
   return {
     version: STATE_VERSION,
+    careerSeed: Math.floor(Math.random() * 1_000_000) + 1,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     player,
@@ -269,6 +270,9 @@ export function ensureRuntime(s: GameState): void {
   if (!Array.isArray(s.offers) || s.offers.length < 4) s.offers = buildOffers(s.player?.city ?? "");
   if (!s.memory.threads || typeof s.memory.threads !== "object") s.memory.threads = {};
   if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
+  if (typeof s.careerSeed !== "number" || !Number.isFinite(s.careerSeed)) {
+    s.careerSeed = Math.floor(Math.random() * 1_000_000) + 1;
+  }
 }
 
 /* ============================ Plan de temporada ============================ */
@@ -319,6 +323,12 @@ export function makeSeasonPlan(s: GameState): Slot[] {
   const slots: Slot[] = [];
   let rotation = 0;
   const narrative = (): Slot => ({ kind: "event", category: NARRATIVE_ROTATION[rotation++ % NARRATIVE_ROTATION.length]! });
+
+  // PRETEMPORADA: 2-4 escenas variables (objetivos, competencia, rumores,
+  // vestuario, agente, tests). No salen todas ni en el mismo orden.
+  const preCount = 2 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < preCount; i++) slots.push({ kind: "event", category: "preseason" });
+  if (s.agent.present && Math.random() < 0.6) slots.push({ kind: "agent" });
 
   keys.forEach((k, idx) => {
     const before = idx === 0 ? 2 : 2 + (Math.random() < 0.5 ? 1 : 0);
@@ -483,6 +493,7 @@ export function advance(state: GameState): GameState {
       return touch(s);
     }
 
+    s.flags["pretemporada"] = slot.category === "preseason" ? 1 : 0;
     const event = pickEvent(s, slot.category);
     if (event) {
       s.pending = { type: "event", eventId: event.id };
@@ -495,6 +506,7 @@ export function advance(state: GameState): GameState {
       s.pending = card;
       return touch(s);
     }
+    s.flags["pretemporada"] = 0;
     const any = pickEvent(s);
     if (any) {
       s.pending = { type: "event", eventId: any.id };
