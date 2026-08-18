@@ -673,8 +673,10 @@ export function resolveDynamicCard(
     result = { title: "Sigues adelante", text: "La semana pasa sin más.", tone: "neutral" as const };
   }
   if (card.kind === "injury_diagnosis" && s.injury) {
-    s.flags["ultima_lesion_label"] = 0;
-    s.flags["volvio_pendiente"] = 1;
+    // Se conserva el nombre real de la lesión para la escena de regreso.
+    s.memory.lastInjuryLabel = s.injury.label;
+    // Una lesión menor no genera arco: se resuelve sin escena de regreso extra.
+    s.flags["volvio_pendiente"] = s.injury.severity === "minor" ? 0 : 1;
   }
   if (card.kind === "thread") {
     const id = typeof card.data["threadId"] === "string" ? card.data["threadId"] : "";
