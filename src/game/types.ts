@@ -160,7 +160,7 @@ export interface MatchData {
   assists: number;
   rating: number;
   moments: MatchMoment[];
-  keyMoment?: KeyMoment;
+  keyMoment?: KeyMoment | undefined;
   benchOnly: boolean;
   unused: boolean;
 }
