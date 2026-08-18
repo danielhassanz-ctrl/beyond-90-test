@@ -75,6 +75,9 @@ function Academy() {
                     </span>
                   </div>
 
+                  <p className="mt-2 text-sm italic leading-snug text-foreground/70">{c.pitch}</p>
+
+
                   <dl className="mt-3 space-y-2 text-sm">
                     <Row Icon={TrendingUp} label="Desarrollo" text={c.development} />
                     <Row Icon={Users} label="Competencia" text={c.competition} />
