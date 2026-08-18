@@ -69,5 +69,6 @@ export const ACHIEVEMENTS: { id: string; name: string; desc: string }[] = [
   { id: "debut_pro", name: "Debut profesional", desc: "Debutar con el primer equipo." },
   { id: "media_70", name: "Media 70", desc: "Alcanzar una media de 70." },
   { id: "idolo", name: "Uno de los nuestros", desc: "Llegar a 80 de afición." },
+  { id: "internacional", name: "Internacional", desc: "Ser convocado por tu selección." },
   { id: "superviviente", name: "Superviviente", desc: "Volver de una lesión larga." },
 ];
