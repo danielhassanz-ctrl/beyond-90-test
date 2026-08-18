@@ -386,8 +386,45 @@ export function resolveDynamic(
       return { title: str(d, "title", "Nuevo escalón"), text: "Nuevo vestuario, nuevo baremo: aquí tu media pesa menos que ayer.", tone: "gold" };
     case "growth":
       return { title: "Salto de nivel", text: str(d, "text", "Tu media sube."), tone: "gold" };
+    case "match_flash": {
+      if (choiceId === "hablar") {
+        const ok = s.rel.coach >= 45 ? Math.random() < 0.6 : Math.random() < 0.3;
+        rel(s, "coach", ok ? 5 : -5);
+        stat(s, "morale", ok ? 5 : -5);
+        return ok
+          ? { title: "Conversación útil", text: "El míster te explica qué quiere de ti y te da un plan concreto.", tone: "good" }
+          : { title: "Portazo suave", text: "\"Cuando toque, jugarás\". Sales del despacho igual que entraste.", tone: "bad" };
+      }
+      stat(s, "discipline", 2);
+      return { title: "Cabeza fría", text: "Guardas el enfado para el campo.", tone: "neutral" };
+    }
+    case "agent_check": {
+      if (interp) {
+        const good = interp.intent === "professional" || interp.intent === "loyal" || interp.intent === "conciliatory";
+        s.agent.trust = clamp(s.agent.trust + (good ? 7 : -5));
+        rel(s, "agent", good ? 4 : -4);
+        remember(s, `Hablasteis de ${str(d, "topic", "todo")} por teléfono de noche`);
+        return {
+          title: good ? "Se queda tranquilo" : "Cuelga raro",
+          text: good
+            ? `${s.agent.name} apunta lo que le dices y promete moverse con cabeza.`
+            : `${s.agent.name} no le gusta el tono. "Ya hablamos otro día".`,
+          tone: good ? "good" : "bad",
+        };
+      }
+      if (choiceId === "sincero") {
+        s.agent.trust = clamp(s.agent.trust + 6);
+        rel(s, "agent", 4);
+        return { title: "Todo sobre la mesa", text: `${s.agent.name} escucha veinte minutos sin interrumpir. Sirve.`, tone: "good" };
+      }
+      s.agent.trust = clamp(s.agent.trust - 3);
+      return { title: "Te lo guardas", text: "\"Como quieras. Pero yo me entero igual\".", tone: "neutral" };
+    }
+    case "thread":
+      return resolveThread(s, card, choiceId, interp);
     default:
       return { title: "Semana cerrada", text: "Sigues.", tone: "neutral" };
+
   }
 }
 
