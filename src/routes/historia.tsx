@@ -375,19 +375,20 @@ function OutcomeCard({
   return (
     <Scene
       image={match ? SCENES.match : SCENES.locker}
-      kicker={match ? `${match.competition} · ${match.home ? "casa" : "fuera"}` : "Consecuencias"}
+      kicker={match ? `${match.ctx.competition} · ${match.ctx.isHome ? "casa" : "fuera"}` : "Consecuencias"}
       title={outcome.title}
       accent={outcome.tone === "gold" ? "border-gold/60" : undefined}
     >
       {match && (
         <div className="mb-4 rounded-xl border border-border bg-surface-2 p-4 text-center">
-          <p className="text-kicker">{match.label}</p>
+          <p className="text-kicker">{match.ctx.storyLabel}</p>
           <p className="font-num mt-1 text-4xl font-bold text-gold">
-            {match.goalsFor} - {match.goalsAgainst}
+            {match.ctx.isHome ? match.goalsFor : match.goalsAgainst} - {match.ctx.isHome ? match.goalsAgainst : match.goalsFor}
           </p>
           <p className="mt-1 font-cond text-xs uppercase tracking-[0.14em] text-muted-foreground">
-            {match.home ? `vs ${match.opponent}` : `en campo del ${match.opponent}`}
+            {match.ctx.homeTeam} · {match.ctx.awayTeam} · {match.ctx.venue}
           </p>
+
           {match.shootout && (
             <p className="mt-1 font-cond text-xs uppercase tracking-[0.14em] text-gold-soft">
               Penaltis {match.shootout.us}-{match.shootout.them}
