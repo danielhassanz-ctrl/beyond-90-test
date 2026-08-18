@@ -43,12 +43,12 @@ export function achieve(s: GameState, id: string): void {
   s.achievements.push(id);
 }
 
-export function injure(s: GameState, weeks: number, label: string): void {
-  s.injuryWeeks = weeks;
-  s.injuryLabel = label;
+export function injure(s: GameState, matchesOut: number, label: string): void {
+  const severity: "minor" | "medium" | "severe" = matchesOut >= 12 ? "severe" : matchesOut >= 5 ? "medium" : "minor";
+  s.injury = { label, severity, matchesOut: Math.max(1, Math.round(matchesOut)), treated: false };
   s.fitness = clamp(s.fitness - 18);
   s.form = clamp(s.form - 12);
-  note(s, `Lesión: ${label} (${weeks} semanas fuera).`, "bad");
+  note(s, `Lesión: ${label} (baja estimada de ${s.injury.matchesOut} partidos).`, "bad");
 }
 
 export function hasTrait(s: GameState, id: string): boolean {
@@ -57,6 +57,12 @@ export function hasTrait(s: GameState, id: string): boolean {
 
 export function currentSeason(s: GameState) {
   return s.seasons[s.seasons.length - 1];
+}
+
+export function seasonRatingAvg(s: GameState): number {
+  const cur = currentSeason(s);
+  if (!cur || !cur.apps) return 0;
+  return Math.round((cur.ratingSum / cur.apps) * 10) / 10;
 }
 
 export function totalApps(s: GameState): number {

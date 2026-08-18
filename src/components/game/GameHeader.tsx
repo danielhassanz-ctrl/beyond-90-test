@@ -28,7 +28,10 @@ export function GameHeader({ state }: { state: GameState }) {
           <div className="shrink-0 text-right">
             <p className="text-kicker">Media</p>
             <p className="gold-text font-display text-4xl leading-none">{state.overall}</p>
+            <p className="text-kicker mt-1">Forma</p>
+            <p className="font-num text-lg font-semibold leading-none text-accent">{Math.round(state.form)}</p>
           </div>
+
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">

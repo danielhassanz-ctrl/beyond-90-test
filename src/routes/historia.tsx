@@ -1,35 +1,53 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { Share2 } from "lucide-react";
+import { ContextFeed } from "@/components/game/ContextFeed";
 import { GameShell } from "@/components/game/GameShell";
-import { SCENES } from "@/game/data";
+import { SCENES, clubById } from "@/game/data";
+import { renderDynamic } from "@/game/dynamic";
 import { eventById } from "@/game/events";
+import { seasonLabel, stageLabel } from "@/game/engine";
 import { useGame } from "@/game/store";
-import type { GameState, MatchData, Outcome } from "@/game/types";
+import type { DynamicCard, EventCategory, GameState, MatchData, Outcome, ShareData } from "@/game/types";
+import { shareCareerCard } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/historia")({
   head: () => ({
     meta: [
       { title: "Historia — BEYOND 90" },
-      { name: "description", content: "Escenas, decisiones y partidos: avanza semana a semana en la carrera de tu futbolista." },
+      { name: "description", content: "Escenas clave, decisiones narrativas y partidos decisivos de la carrera de tu futbolista." },
       { property: "og:title", content: "Historia — BEYOND 90" },
-      { property: "og:description", content: "Cada semana una escena cinematográfica y decisiones que cambian tu carrera." },
+      { property: "og:description", content: "Cada escena una decisión: vestuario, prensa, representante y partidos que marcan una carrera." },
     ],
   }),
   component: () => <GameShell>{({ state }) => <Story state={state} />}</GameShell>,
 });
 
+const CATEGORY_STYLE: Record<EventCategory, string> = {
+  story: "border-gold/45",
+  training: "border-accent/35",
+  life: "border-border",
+  press: "border-sky-500/35",
+  agent: "border-gold/60",
+  gossip: "border-fuchsia-500/35",
+  medical: "border-destructive/45",
+};
+
 function Story({ state }: { state: GameState }) {
-  const { answerEvent, playMatch, next } = useGame();
+  const { answerEvent, answerFree, answerDynamic, finishBlock, playMatch, next } = useGame();
   const [phase, setPhase] = useState<"pre" | "key">("pre");
   const [lastMatch, setLastMatch] = useState<MatchData | null>(null);
 
   const outcome = state.lastOutcome;
   const pending = state.pending;
 
+  let body: React.ReactNode;
+
   if (outcome) {
-    return (
+    body = (
       <OutcomeCard
+        state={state}
         outcome={outcome}
         match={lastMatch}
         onNext={() => {
@@ -39,118 +57,229 @@ function Story({ state }: { state: GameState }) {
         }}
       />
     );
-  }
-
-  if (!pending) {
-    return (
+  } else if (!pending) {
+    body = (
       <div className="panel p-6 text-center">
-        <p className="text-kicker">Semana {state.week}</p>
+        <p className="text-kicker">Escena {state.beat}</p>
         <h2 className="mt-2 font-display text-2xl">Sigue la temporada</h2>
         <PrimaryButton onClick={() => next()}>Avanzar</PrimaryButton>
       </div>
     );
-  }
-
-  if (pending.type === "rest") {
-    return (
-      <Scene image={SCENES.injury} kicker="Enfermería" title={pending.title}>
-        <p className="text-sm leading-relaxed text-foreground/85">{pending.text}</p>
-        <PrimaryButton onClick={() => next()}>Continuar</PrimaryButton>
-      </Scene>
-    );
-  }
-
-  if (pending.type === "season") {
-    return (
+  } else if (pending.type === "season") {
+    body = (
       <Scene image={SCENES.tunnel} kicker="Fin de temporada" title={pending.summary.title}>
         <p className="text-sm leading-relaxed text-foreground/85">{pending.summary.text}</p>
         <Deltas outcome={pending.summary} />
+        {pending.summary.share && <ShareButton state={state} share={pending.summary.share} />}
         <PrimaryButton onClick={() => next()}>Nueva temporada</PrimaryButton>
       </Scene>
     );
-  }
-
-  if (pending.type === "event") {
+  } else if (pending.type === "block") {
+    const b = pending.block;
+    body = (
+      <Scene image={SCENES.training} kicker="Bloque simulado" title={b.title} accent="border-accent/35">
+        <p className="text-sm leading-relaxed text-foreground/85">{b.text}</p>
+        <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+          <Cell label="V" value={b.wins} />
+          <Cell label="E" value={b.draws} />
+          <Cell label="D" value={b.losses} />
+          <Cell label="Pos." value={`${b.position}º`} />
+        </div>
+        <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+          <Cell label="PJ" value={b.apps} />
+          <Cell label="G" value={b.goals} />
+          <Cell label="A" value={b.assists} />
+          <Cell label="Nota" value={b.rating || "—"} />
+        </div>
+        <div className="mt-3 flex items-center gap-1.5">
+          {b.formRun.map((r, i) => (
+            <span
+              key={i}
+              className={cn(
+                "font-num grid h-6 w-6 place-items-center rounded text-[0.65rem] font-bold",
+                r === "W" ? "bg-accent/25 text-accent" : r === "L" ? "bg-destructive/25 text-destructive" : r === "D" ? "bg-surface-2 text-foreground/70" : "bg-surface-2 text-muted-foreground",
+              )}
+            >
+              {r}
+            </span>
+          ))}
+        </div>
+        <PrimaryButton onClick={() => finishBlock(b)}>Continuar la temporada</PrimaryButton>
+      </Scene>
+    );
+  } else if (pending.type === "dynamic") {
+    body = <DynamicScene state={state} card={pending} onChoice={answerDynamic} />;
+  } else if (pending.type === "event") {
     const event = eventById(pending.eventId);
     if (!event) {
-      return (
+      body = (
         <div className="panel p-6 text-center">
           <PrimaryButton onClick={() => next()}>Continuar</PrimaryButton>
         </div>
       );
+    } else {
+      const text = typeof event.text === "function" ? event.text(state) : event.text;
+      body = (
+        <Scene
+          image={SCENES[event.image]}
+          kicker={event.kicker}
+          title={event.title}
+          accent={CATEGORY_STYLE[event.category ?? "life"]}
+        >
+          <p className="text-[0.95rem] leading-relaxed text-foreground/85">{text}</p>
+          <div className="mt-5 space-y-2.5">
+            {event.choices.map((c) => (
+              <ChoiceButton
+                key={c.id}
+                label={c.label}
+                hint={c.hint}
+                onClick={() => answerEvent(event.id, c.id)}
+              />
+            ))}
+          </div>
+          {event.freeform && (
+            <FreeResponse
+              prompt={event.freeform.prompt}
+              placeholder={event.freeform.placeholder}
+              onSubmit={(t) => answerFree(event.id, t)}
+            />
+          )}
+        </Scene>
+      );
     }
-    const text = typeof event.text === "function" ? event.text(state) : event.text;
-    return (
-      <Scene image={SCENES[event.image]} kicker={event.kicker} title={event.title}>
-        <p className="text-[0.95rem] leading-relaxed text-foreground/85">{text}</p>
-        <div className="mt-5 space-y-2.5">
-          {event.choices.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => answerEvent(event.id, c.id)}
-              className="w-full rounded-xl border border-border bg-surface-2 px-4 py-3 text-left transition-colors active:border-gold/70"
-            >
-              <span className="block font-cond text-base font-semibold uppercase tracking-[0.08em]">
-                {c.label}
-              </span>
-              {c.hint && <span className="mt-0.5 block text-xs text-muted-foreground">{c.hint}</span>}
-            </button>
-          ))}
-        </div>
-      </Scene>
-    );
-  }
-
-  const match = pending.match;
-  const km = match.keyMoment;
-
-  if (phase === "key" && km) {
-    return (
-      <Scene image={SCENES.match} kicker={`Minuto ${km.minute}'`} title="Jugada clave">
-        <p className="text-[0.95rem] leading-relaxed text-foreground/85">{km.prompt}</p>
-        <div className="mt-5 space-y-2.5">
-          {km.options.map((o) => (
-            <button
-              key={o.id}
-              onClick={() => {
-                setLastMatch(match);
-                playMatch(match, o.id);
-              }}
-              className="w-full rounded-xl border border-border bg-surface-2 px-4 py-3 text-left transition-colors active:border-gold/70"
-            >
-              <span className="block font-cond text-base font-semibold uppercase tracking-[0.08em]">{o.label}</span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">{o.note}</span>
-            </button>
-          ))}
-        </div>
-      </Scene>
-    );
+  } else {
+    const match = pending.match;
+    const km = match.keyMoment;
+    if (phase === "key" && km) {
+      body = (
+        <Scene image={SCENES.match} kicker={`Minuto ${km.minute}'`} title="Jugada clave" accent="border-gold/60">
+          <p className="text-[0.95rem] leading-relaxed text-foreground/85">{km.prompt}</p>
+          <div className="mt-5 space-y-2.5">
+            {km.options.map((o) => (
+              <ChoiceButton
+                key={o.id}
+                label={o.label}
+                hint={o.note}
+                onClick={() => {
+                  setLastMatch(match);
+                  playMatch(match, o.id);
+                }}
+              />
+            ))}
+          </div>
+        </Scene>
+      );
+    } else {
+      body = (
+        <Scene
+          image={SCENES.match}
+          kicker={`${match.competition} · ${match.label}`}
+          title={`${match.home ? "vs" : "en"} ${match.opponent}`}
+          accent="border-gold/45"
+        >
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {match.unused
+              ? "No estás en la lista. Toca ver el partido desde fuera."
+              : match.benchOnly
+                ? "Estás en la convocatoria, pero el once ya está decidido."
+                : match.minutes >= 60
+                  ? "Sales de titular."
+                  : "Empiezas en el banquillo, con opciones de entrar."}
+            {match.tie ? " Eliminatoria a partido único: si hay empate, penaltis." : ""}
+          </p>
+          <PrimaryButton
+            onClick={() => {
+              if (km && match.minutes > 0) {
+                setPhase("key");
+                return;
+              }
+              setLastMatch(match);
+              playMatch(match);
+            }}
+          >
+            {match.unused ? "Ver el partido" : "Salir al campo"}
+          </PrimaryButton>
+        </Scene>
+      );
+    }
   }
 
   return (
-    <Scene image={SCENES.match} kicker={match.competition} title={`${match.home ? "vs" : "en"} ${match.opponent}`}>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        {match.unused
-          ? "No estás en la lista. Toca ver el partido desde fuera."
-          : match.benchOnly
-            ? "Estás en la convocatoria, pero el once ya está decidido."
-            : match.minutes >= 60
-              ? "Sales de titular."
-              : "Empiezas en el banquillo, con opciones de entrar."}
-      </p>
-      <PrimaryButton
-        onClick={() => {
-          if (km && match.minutes > 0) {
-            setPhase("key");
-            return;
-          }
-          setLastMatch(match);
-          playMatch(match);
-        }}
-      >
-        {match.unused ? "Ver el partido" : "Salir al campo"}
-      </PrimaryButton>
+    <div>
+      {body}
+      <ContextFeed state={state} />
+    </div>
+  );
+}
+
+function DynamicScene({
+  state,
+  card,
+  onChoice,
+}: {
+  state: GameState;
+  card: DynamicCard;
+  onChoice: (card: DynamicCard, choiceId: string, text?: string) => void;
+}) {
+  const view = renderDynamic(state, card);
+  return (
+    <Scene image={SCENES[view.image]} kicker={view.kicker} title={view.title} accent={CATEGORY_STYLE[view.category]}>
+      <p className="text-[0.95rem] leading-relaxed text-foreground/85">{view.text}</p>
+      <div className="mt-5 space-y-2.5">
+        {view.choices.map((c) => (
+          <ChoiceButton key={c.id} label={c.label} hint={c.hint} onClick={() => onChoice(card, c.id)} />
+        ))}
+      </div>
+      {view.freeform && (
+        <FreeResponse
+          prompt={view.freeform.prompt}
+          placeholder={view.freeform.placeholder}
+          onSubmit={(t) => onChoice(card, "free", t)}
+        />
+      )}
     </Scene>
+  );
+}
+
+function FreeResponse({
+  prompt,
+  placeholder,
+  onSubmit,
+}: {
+  prompt: string;
+  placeholder?: string | undefined;
+  onSubmit: (text: string) => void;
+}) {
+  const [text, setText] = useState("");
+  return (
+    <div className="mt-5 rounded-xl border border-gold/30 bg-surface-2/60 p-3">
+      <p className="text-kicker">{prompt}</p>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value.slice(0, 400))}
+        placeholder={placeholder ?? "Escribe lo que quieras…"}
+        rows={3}
+        className="mt-2 w-full resize-none rounded-lg border border-border bg-background/70 px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:border-gold/60"
+      />
+      <button
+        onClick={() => onSubmit(text.trim())}
+        className="mt-2 w-full rounded-lg border border-gold/50 px-4 py-2.5 font-cond text-sm font-bold uppercase tracking-[0.16em] text-gold active:scale-[0.99]"
+      >
+        Responder
+      </button>
+    </div>
+  );
+}
+
+function ChoiceButton({ label, hint, onClick }: { label: string; hint?: string | undefined; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full rounded-xl border border-border bg-surface-2 px-4 py-3 text-left transition-colors active:border-gold/70"
+    >
+      <span className="block font-cond text-base font-semibold uppercase tracking-[0.08em]">{label}</span>
+      {hint && <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>}
+    </button>
   );
 }
 
@@ -159,16 +288,18 @@ function Scene({
   kicker,
   title,
   children,
+  accent,
 }: {
   image: string;
   kicker: string;
   title: string;
   children: React.ReactNode;
+  accent?: string | undefined;
 }) {
   return (
-    <article className="panel overflow-hidden">
+    <article className={cn("panel overflow-hidden", accent && `border ${accent}`)}>
       <div className="relative">
-        <img src={image} alt="" loading="lazy" width={1280} height={720} className="h-48 w-full object-cover" />
+        <img src={image} alt="" loading="lazy" width={1280} height={720} className="h-44 w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-4">
           <p className="text-kicker">{kicker}</p>
@@ -191,6 +322,15 @@ function PrimaryButton({ onClick, children }: { onClick: () => void; children: R
   );
 }
 
+function Cell({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="rounded-lg border border-border bg-surface-2 py-1.5">
+      <p className="font-num text-base font-semibold">{value}</p>
+      <p className="text-kicker">{label}</p>
+    </div>
+  );
+}
+
 function Deltas({ outcome }: { outcome: Outcome }) {
   if (outcome.deltas.length === 0) return null;
   return (
@@ -210,11 +350,48 @@ function Deltas({ outcome }: { outcome: Outcome }) {
   );
 }
 
+function ShareButton({ state, share }: { state: GameState; share: ShareData }) {
+  const [status, setStatus] = useState<string | null>(null);
+  return (
+    <div className="mt-4">
+      <button
+        onClick={async () => {
+          setStatus("Generando tarjeta…");
+          const result = await shareCareerCard({
+            headline: share.headline,
+            kicker: share.kicker || `${seasonLabel(state.seasonIndex)} · ${stageLabel(state.stage)}`,
+            name: state.player.nickname || state.player.name,
+            club: clubById(state.clubId).name,
+            lines: share.lines,
+            avatar: state.player.avatar,
+          });
+          setStatus(
+            result === "shared"
+              ? "Compartido."
+              : result === "downloaded"
+                ? "Tarjeta descargada."
+                : result === "copied"
+                  ? "Texto copiado al portapapeles."
+                  : "No se ha podido compartir.",
+          );
+        }}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-gold/60 px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em] text-gold active:scale-[0.99]"
+      >
+        <Share2 className="h-4 w-4" aria-hidden />
+        Compartir career card
+      </button>
+      {status && <p className="mt-2 text-center text-xs text-muted-foreground">{status}</p>}
+    </div>
+  );
+}
+
 function OutcomeCard({
+  state,
   outcome,
   match,
   onNext,
 }: {
+  state: GameState;
   outcome: Outcome;
   match: MatchData | null;
   onNext: () => void;
@@ -224,16 +401,22 @@ function OutcomeCard({
       image={match ? SCENES.match : SCENES.locker}
       kicker={match ? `${match.competition} · ${match.home ? "casa" : "fuera"}` : "Consecuencias"}
       title={outcome.title}
+      accent={outcome.tone === "gold" ? "border-gold/60" : undefined}
     >
       {match && (
         <div className="mb-4 rounded-xl border border-border bg-surface-2 p-4 text-center">
-          <p className="text-kicker">{match.home ? "Tu equipo" : match.opponent}</p>
+          <p className="text-kicker">{match.label}</p>
           <p className="font-num mt-1 text-4xl font-bold text-gold">
             {match.goalsFor} - {match.goalsAgainst}
           </p>
           <p className="mt-1 font-cond text-xs uppercase tracking-[0.14em] text-muted-foreground">
-            {match.home ? `vs ${match.opponent}` : "a domicilio"}
+            {match.home ? `vs ${match.opponent}` : `en campo del ${match.opponent}`}
           </p>
+          {match.shootout && (
+            <p className="mt-1 font-cond text-xs uppercase tracking-[0.14em] text-gold-soft">
+              Penaltis {match.shootout.us}-{match.shootout.them}
+            </p>
+          )}
         </div>
       )}
       <p className="text-[0.95rem] leading-relaxed text-foreground/85">{outcome.text}</p>
@@ -255,7 +438,8 @@ function OutcomeCard({
         </ul>
       )}
       <Deltas outcome={outcome} />
-      <PrimaryButton onClick={onNext}>Siguiente semana</PrimaryButton>
+      {outcome.share && <ShareButton state={state} share={outcome.share} />}
+      <PrimaryButton onClick={onNext}>Siguiente escena</PrimaryButton>
     </Scene>
   );
 }

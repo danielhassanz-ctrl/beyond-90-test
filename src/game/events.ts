@@ -661,7 +661,7 @@ const AMBIENT: GameEvent[] = [
     kicker: "Enfermería",
     title: "Un pinchazo en el isquio",
     image: "injury",
-    requires: (s) => s.fitness <= 62 && s.injuryWeeks === 0,
+    requires: (s) => s.fitness <= 62 && !s.injury,
     text: () => `Notas un pinchazo al acelerar. No es rotura, pero el fisio pone esa cara que ya conoces.`,
     choices: [
       { id: "parar", label: "Parar dos semanas", outcome: "Aburrido, correcto, sano.", apply: (s) => { injure(s, 2, "Sobrecarga en el isquiotibial"); rel(s, "coach", 3); } },
@@ -673,7 +673,7 @@ const AMBIENT: GameEvent[] = [
     kicker: "Enfermería",
     title: "Ruido en la rodilla",
     image: "injury",
-    requires: (s) => s.injuryWeeks === 0 && (s.flags["forzo_lesion"] === 1 || s.fitness <= 45) && s.age >= 17,
+    requires: (s) => !s.injury && (s.flags["forzo_lesion"] === 1 || s.fitness <= 45) && s.age >= 17,
     text: () => `Caes mal tras un salto tonto en un entrenamiento cualquiera. No hay contacto. Esas son las peores.`,
     choices: [
       { id: "asumir", label: "Asumir la baja larga y hacer las cosas bien",
@@ -689,7 +689,7 @@ const AMBIENT: GameEvent[] = [
     kicker: "Vuelta",
     title: "El primer día sin muletas",
     image: "training",
-    requires: (s) => s.injuryWeeks === 0 && !!s.flags["volvio_pendiente"],
+    requires: (s) => !s.injury && !!s.flags["volvio_pendiente"],
     text: () => `Vuelves al grupo. Todos han seguido sin ti y eso es lo que más duele. El balón pesa distinto.`,
     choices: [
       { id: "paciencia", label: "Ir poco a poco", outcome: "Tres semanas después estás entero.", apply: (s) => { s.flags["volvio_pendiente"] = 0; stat(s, "fitness", 12); achieve(s, "superviviente"); } },
@@ -973,7 +973,9 @@ const AMBIENT: GameEvent[] = [
   },
 ];
 
-export const ALL_EVENTS: GameEvent[] = [...STORY, ...AMBIENT];
+import { EXTRA_EVENTS } from "./events-extra";
+
+export const ALL_EVENTS: GameEvent[] = [...STORY, ...AMBIENT, ...EXTRA_EVENTS];
 
 export function eventById(id: string): GameEvent | undefined {
   return ALL_EVENTS.find((e) => e.id === id);
