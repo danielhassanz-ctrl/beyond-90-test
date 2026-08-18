@@ -176,3 +176,52 @@ if (problems.length) {
   process.exit(1);
 }
 console.log("QA OK: sin incoherencias detectadas.");
+
+/* ---------- 4. Variedad entre carreras (Fase 5) ---------- */
+{
+  const setsPerCareer: Set<string>[] = [];
+  let preseasonMissing = 0;
+  const finals: number[] = [];
+  for (let c = 0; c < 12; c++) {
+    let s = createGame(player(c + 100));
+    s = chooseClub(s, s.offers[0]!.clubId);
+    s = advance(s);
+    const ids = new Set<string>();
+    let preseasonSeen = 0;
+    let seasons = 0;
+    let guard = 0;
+    while (seasons < 3 && guard++ < 4000) {
+      const card = s.pending;
+      if (!card) { s = advance(s); continue; }
+      if (card.type === "match") s = resolveMatch(s, card.match, card.match.keyMoment ? card.match.keyMoment.options[0]!.id : undefined);
+      else if (card.type === "event") {
+        const ev = eventById(card.eventId)!;
+        ids.add(card.eventId);
+        if (ev.category === "preseason") preseasonSeen++;
+        s = ev.freeform && guard % 3 === 0 ? resolveEventFree(s, card.eventId, "Trabajaré para ganarme el sitio") : resolveEvent(s, card.eventId, ev.choices[guard % ev.choices.length]!.id);
+      } else if (card.type === "dynamic") s = resolveDynamicCard(s, card, "ok");
+      else if (card.type === "season") { seasons++; s = advance(s); }
+    }
+    if (preseasonSeen < 2) preseasonMissing++;
+    setsPerCareer.push(ids);
+    finals.push(s.overall);
+  }
+  // Solapamiento medio entre carreras: cuanto menor, más rejugabilidad.
+  let overlap = 0;
+  let pairs = 0;
+  for (let i = 0; i < setsPerCareer.length; i++) {
+    for (let j = i + 1; j < setsPerCareer.length; j++) {
+      const a = setsPerCareer[i]!;
+      const b = setsPerCareer[j]!;
+      const inter = [...a].filter((x) => b.has(x)).length;
+      overlap += inter / Math.max(1, Math.min(a.size, b.size));
+      pairs++;
+    }
+  }
+  const jac = Math.round((overlap / Math.max(1, pairs)) * 100);
+  const spread = Math.max(...finals) - Math.min(...finals);
+  console.log(`Fase 5 · solapamiento de eventos entre carreras ${jac}% · pretemporadas cortas ${preseasonMissing}/12 · OVR final ${Math.min(...finals)}-${Math.max(...finals)}`);
+  if (jac > 78) console.log(`AVISO: carreras demasiado parecidas (${jac}%)`);
+  if (preseasonMissing > 3) console.log("AVISO: pretemporada poco presente");
+  if (spread < 6) console.log("AVISO: resultados de carrera demasiado uniformes");
+}
