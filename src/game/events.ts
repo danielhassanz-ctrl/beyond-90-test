@@ -12,7 +12,7 @@ import {
   totalApps,
   totalGoals,
 } from "./mutate";
-import type { GameEvent, GameState } from "./types";
+import type { EventCategory, GameEvent, GameState } from "./types";
 
 const club = (s: GameState) => clubById(s.clubId).name;
 const nick = (s: GameState) => s.player.nickname || s.player.name.split(" ")[0] || s.player.name;
@@ -982,7 +982,21 @@ export function eventById(id: string): GameEvent | undefined {
 }
 
 export function eligibleEvents(s: GameState): GameEvent[] {
-  return ALL_EVENTS.filter((e) => !s.seenEvents.includes(e.id) && safeRequires(e, s));
+  const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
+  const scene = s.sceneCount ?? 0;
+  const lastSeen = (id: string): number | null => {
+    const hit = history.find((h) => h.id === id);
+    return hit ? hit.scene : null;
+  };
+  return ALL_EVENTS.filter((e) => {
+    if (!safeRequires(e, s)) return false;
+    // Los eventos estructurales (prioridad alta) solo se viven una vez.
+    if ((e.priority ?? 0) >= 100) return !s.seenEvents.includes(e.id);
+    if (!s.seenEvents.includes(e.id)) return true;
+    const seen = lastSeen(e.id);
+    // Los ambientales pueden repetirse, pero muy separados en el tiempo.
+    return seen !== null && scene - seen >= 26;
+  });
 }
 
 function safeRequires(e: GameEvent, s: GameState): boolean {
@@ -993,18 +1007,39 @@ function safeRequires(e: GameEvent, s: GameState): boolean {
   }
 }
 
-export function pickEvent(s: GameState): GameEvent | null {
+/** Distancia mínima en escenas entre eventos de la misma categoría. */
+const CATEGORY_COOLDOWN = 5;
+
+function categoryBlocked(s: GameState, category: EventCategory | undefined): boolean {
+  const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
+  const last = history.find((h) => h.category === (category ?? "life"));
+  if (!last) return false;
+  return (s.sceneCount ?? 0) - last.scene < CATEGORY_COOLDOWN;
+}
+
+/**
+ * Elige el siguiente evento. Prioriza la categoría pedida por el planificador,
+ * respeta cooldowns por categoría y nunca repite un evento ya visto.
+ */
+export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | null {
   const pool = eligibleEvents(s);
   if (pool.length === 0) return null;
+
   const maxPriority = Math.max(...pool.map((e) => e.priority ?? 0));
   if (maxPriority >= 100) {
     const top = pool.filter((e) => (e.priority ?? 0) === maxPriority);
     return top[Math.floor(Math.random() * top.length)] ?? null;
   }
+
   const ambient = pool.filter((e) => (e.priority ?? 0) < 100);
   if (ambient.length === 0) return null;
-  return ambient[Math.floor(Math.random() * ambient.length)] ?? null;
+
+  const fresh = ambient.filter((e) => !categoryBlocked(s, e.category));
+  const wanted = preferred ? fresh.filter((e) => (e.category ?? "life") === preferred) : [];
+  const bucket = wanted.length > 0 ? wanted : fresh.length > 0 ? fresh : ambient;
+  return bucket[Math.floor(Math.random() * bucket.length)] ?? null;
 }
+
 
 export const EVENT_COUNT = ALL_EVENTS.length;
 export { totalGoals, hasTrait, note, rel };

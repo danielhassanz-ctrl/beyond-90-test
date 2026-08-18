@@ -1,6 +1,7 @@
 import { clubById } from "@/game/data";
 import { stageLabel, statusLabel, tierLabel } from "@/game/engine";
 import { currentSeason } from "@/game/mutate";
+import { openTeasers } from "@/game/threads";
 import type { GameState } from "@/game/types";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,10 @@ function criticalRel(state: GameState): { label: string; value: number } {
 export function ContextFeed({ state }: { state: GameState }) {
   const season = currentSeason(state);
   const rating = season && season.apps ? Math.round((season.ratingSum / season.apps) * 10) / 10 : 0;
-  const recent = state.log.filter((l) => l.text.includes("-")).slice(0, 5);
+  const results = (state.recent ?? []).slice(0, 5);
+  const teasers = openTeasers(state);
+  const pts = results.reduce((a, r) => a + (r.res === "W" ? 3 : r.res === "D" ? 1 : 0), 0);
+  const resGoals = results.reduce((a, r) => a + r.goals, 0);
   const critical = criticalRel(state);
   const prev = state.seasons.length > 1 ? state.seasons[state.seasons.length - 2]!.overall : null;
   const trend = prev !== null ? state.overall - prev : 0;
@@ -82,20 +86,48 @@ export function ContextFeed({ state }: { state: GameState }) {
         </div>
       </div>
 
-      {recent.length > 0 && (
+      {results.length > 0 && (
         <div className="panel p-3">
-          <p className="text-kicker">Últimos resultados</p>
-          <ul className="mt-2 space-y-1">
-            {recent.map((r, i) => (
-              <li key={i} className="grid grid-cols-[6px_minmax(0,1fr)] items-center gap-2 text-xs">
-                <span
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    r.tone === "good" ? "bg-accent" : r.tone === "bad" ? "bg-destructive" : "bg-muted-foreground",
-                  )}
-                />
-                <span className="truncate text-foreground/75">{r.text}</span>
+          <div className="flex items-baseline justify-between">
+            <p className="text-kicker">Últimos {results.length}</p>
+            <p className="font-num text-xs text-muted-foreground">
+              {pts} pts · {resGoals} {resGoals === 1 ? "gol" : "goles"} tuyos
+            </p>
+          </div>
+          <div className="mt-2 flex items-center gap-1.5">
+            {results.map((r, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "font-num grid h-6 w-6 place-items-center rounded text-[0.65rem] font-bold",
+                  r.res === "W"
+                    ? "bg-accent/25 text-accent"
+                    : r.res === "L"
+                      ? "bg-destructive/25 text-destructive"
+                      : "bg-surface-2 text-foreground/70",
+                )}
+              >
+                {r.res}
+              </span>
+            ))}
+          </div>
+          <ul className="mt-2 space-y-1 text-xs text-foreground/70">
+            {results.slice(0, 3).map((r, i) => (
+              <li key={i} className="truncate">
+                · {r.gf}-{r.ga} {r.opponent}
+                {r.played ? (r.goals ? ` · ${r.goals}G` : "") : " · sin minutos"}
               </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {teasers.length > 0 && (
+        <div className="panel border-gold/30 p-3">
+          <p className="text-kicker text-gold-soft">Algo se está cociendo</p>
+          <ul className="mt-1 space-y-1 text-sm leading-snug text-foreground/85">
+            {teasers.slice(0, 2).map((t) => (
+              <li key={t.id}>· {t.teaser}</li>
             ))}
           </ul>
         </div>

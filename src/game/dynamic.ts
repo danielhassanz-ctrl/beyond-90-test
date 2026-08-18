@@ -28,7 +28,124 @@ const RIVAL_CLUBS = [
   "Sporting de Lisboa", "Ajax", "Brighton", "Olympique de Lyon", "Benfica",
 ];
 
+const FLASH_TITLES: Record<string, string> = {
+  goal: "Un gol que cambia el tramo",
+  red: "Roja y silencio en el autobús",
+  bench: "Tres partidos sin salir del banquillo",
+  injury: "Algo se ha roto por el camino",
+  streak: "El equipo se ha soltado",
+  slump: "Racha mala y ruido alrededor",
+  form: "El calendario ha pasado por encima",
+};
+
+const AGENT_TOPICS: Record<string, string> = {
+  minutos:
+    "Va directo: \"¿Te ha dicho el míster por qué juegas de rotación o te lo estás inventando tú?\". Hay ruido de bar detrás.",
+  prensa:
+    "\"Ha salido una frase tuya recortada. Ni la desmientas ni la repitas. Pero quiero saber qué dijiste exactamente\".",
+  dinero:
+    "\"Tu contrato está desfasado para lo que juegas. Puedo pedir mejora ahora o esperar a que valgas más. Decide tú\".",
+  vida:
+    "\"Te voy a preguntar una cosa como si fuera tu tío: ¿estás durmiendo bien? Porque en el vídeo se te ven las piernas cansadas\".",
+};
+
+interface ThreadView {
+  kicker: string;
+  title: string;
+  image: SceneKey;
+  category: EventCategory;
+  text: string;
+  choices: { id: string; label: string; hint?: string }[];
+  free?: string;
+}
+
+const THREAD_VIEWS: Record<string, ThreadView> = {
+  club_interest: {
+    kicker: "Se confirma",
+    title: "El club que preguntaba tiene nombre",
+    image: "agent",
+    category: "agent",
+    text: "Era un sondeo real: quieren verte de cerca la próxima temporada.",
+    choices: [
+      { id: "afrontar", label: "Mostrar interés y escuchar", hint: "Ambición, ruido en el vestuario" },
+      { id: "evitar", label: "Cortarlo: aquí estás creciendo", hint: "Club y afición lo valoran" },
+    ],
+    free: "¿Qué dices cuando te preguntan por ese club?",
+  },
+  coach_upset: {
+    kicker: "Despacho",
+    title: "El míster te esperaba sentado",
+    image: "locker",
+    category: "story",
+    text: "No grita. Dice que te ve fuera del plan y que quiere oírte a ti antes de decidir.",
+    choices: [
+      { id: "afrontar", label: "Pedirle una oportunidad clara", hint: "Puede ganarte minutos" },
+      { id: "evitar", label: "Callar y trabajar en silencio", hint: "Nada cambia hoy" },
+    ],
+    free: "¿Qué le contestas al entrenador?",
+  },
+  teammate_jealous: {
+    kicker: "Vestuario",
+    title: "El pique tiene cara concreta",
+    image: "locker",
+    category: "gossip",
+    text: "El veterano que te dejó de saludar suelta una pulla delante de todos en la charla.",
+    choices: [
+      { id: "afrontar", label: "Responderle delante del grupo", hint: "Respeto o guerra" },
+      { id: "evitar", label: "Aguantar y hablarlo aparte", hint: "Cabeza" },
+    ],
+    free: "¿Qué respondes en el vestuario?",
+  },
+  press_digging: {
+    kicker: "Prensa",
+    title: "El periodista ya tiene el reportaje",
+    image: "tunnel",
+    category: "press",
+    text: "Quiere hablar de tu barrio, tu familia y del dinero que se mueve alrededor de un chico de tu edad.",
+    choices: [
+      { id: "afrontar", label: "Dar la entrevista", hint: "Notoriedad, exposición" },
+      { id: "evitar", label: "Declinar por el club", hint: "Perfil bajo" },
+    ],
+    free: "¿Qué le dices al periodista?",
+  },
+  sponsor_call: {
+    kicker: "Dinero",
+    title: "Primera oferta de patrocinio",
+    image: "agent",
+    category: "life",
+    text: "Botas, dos publicaciones al mes y una cifra que en tu casa nunca se ha visto junta.",
+    choices: [
+      { id: "afrontar", label: "Firmar el acuerdo", hint: "Dinero y ruido" },
+      { id: "evitar", label: "Aparcarlo hasta consolidarte", hint: "Foco en el campo" },
+    ],
+  },
+  national_call: {
+    kicker: "Selección",
+    title: "Lista publicada",
+    image: "tunnel",
+    category: "story",
+    text: "Tu nombre aparece en la convocatoria de tu categoría. Cinco días fuera en pleno curso.",
+    choices: [
+      { id: "afrontar", label: "Ir y jugártela allí", hint: "Escaparate" },
+      { id: "evitar", label: "Alegar cansancio y quedarte", hint: "El club lo agradece" },
+    ],
+  },
+  family_worry: {
+    kicker: "Casa",
+    title: "Lo que no te contaban",
+    image: "family",
+    category: "life",
+    text: "Es un problema de dinero en casa que llevaban meses tapando para no distraerte.",
+    choices: [
+      { id: "afrontar", label: "Implicarte y ayudar", hint: "Familia arriba, cabeza ocupada" },
+      { id: "evitar", label: "Delegarlo y centrarte en jugar", hint: "Rendimiento primero" },
+    ],
+    free: "¿Qué dices en casa?",
+  },
+};
+
 export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
+
   const d = card.data;
   const agentName = s.agent.name;
   switch (card.kind) {
@@ -161,7 +278,51 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         text: str(d, "text", "El cuerpo técnico ve un cambio real en tu juego."),
         choices: [{ id: "ok", label: "Seguir" }],
       };
+    case "match_flash": {
+      const flashKind = str(d, "kind", "form");
+      return {
+        kicker: `${num(d, "matches", 3)} jornadas en segundo plano`,
+        title: FLASH_TITLES[flashKind] ?? "Algo ha pasado sin ti",
+        image: flashKind === "injury" ? "injury" : "match",
+        category: "story",
+        text: `${str(d, "text", "El equipo ha seguido su camino.")} Balance del tramo: ${num(d, "wins")}V ${num(d, "draws")}E ${num(d, "losses")}D.`,
+        choices: [
+          { id: "asumir", label: "Asumirlo y mirar adelante", hint: "Cabeza fría" },
+          { id: "hablar", label: "Hablarlo con el míster", hint: "Puede salir bien o mal" },
+        ],
+      };
+    }
+    case "agent_check":
+      return {
+        kicker: `Llamada · ${str(d, "hour", "23:17")}`,
+        title: `${agentName} no quiere hablar por WhatsApp`,
+        image: "agent",
+        category: "agent",
+        text: AGENT_TOPICS[str(d, "topic", "minutos")] ?? "Quiere saber cómo estás de verdad.",
+        choices: [
+          { id: "sincero", label: "Contarle la verdad", hint: "Confianza" },
+          { id: "cerrar", label: "Quitarle importancia", hint: "Te guardas el problema" },
+        ],
+        freeform: { prompt: `¿Qué le contestas a ${agentName}?`, placeholder: "Escribe lo que quieras…" },
+      };
+    case "thread": {
+      const kind = str(d, "threadKind", "club_interest");
+      const view = THREAD_VIEWS[kind];
+      return {
+        kicker: view?.kicker ?? "Se resuelve",
+        title: view?.title ?? "Aquello de lo que se hablaba",
+        image: view?.image ?? "locker",
+        category: view?.category ?? "story",
+        text: `${str(d, "teaser", "Se hablaba de algo.")} ${view?.text ?? "Hoy tiene nombre y apellidos."}`,
+        choices: view?.choices ?? [
+          { id: "afrontar", label: "Afrontarlo de frente" },
+          { id: "evitar", label: "Dejarlo pasar" },
+        ],
+        ...(view?.free ? { freeform: { prompt: view.free, placeholder: "Escribe lo que quieras…" } } : {}),
+      };
+    }
     default:
+
       return {
         kicker: "Carrera",
         title: "Semana de trabajo",
@@ -225,8 +386,156 @@ export function resolveDynamic(
       return { title: str(d, "title", "Nuevo escalón"), text: "Nuevo vestuario, nuevo baremo: aquí tu media pesa menos que ayer.", tone: "gold" };
     case "growth":
       return { title: "Salto de nivel", text: str(d, "text", "Tu media sube."), tone: "gold" };
+    case "match_flash": {
+      if (choiceId === "hablar") {
+        const ok = s.rel.coach >= 45 ? Math.random() < 0.6 : Math.random() < 0.3;
+        rel(s, "coach", ok ? 5 : -5);
+        stat(s, "morale", ok ? 5 : -5);
+        return ok
+          ? { title: "Conversación útil", text: "El míster te explica qué quiere de ti y te da un plan concreto.", tone: "good" }
+          : { title: "Portazo suave", text: "\"Cuando toque, jugarás\". Sales del despacho igual que entraste.", tone: "bad" };
+      }
+      stat(s, "discipline", 2);
+      return { title: "Cabeza fría", text: "Guardas el enfado para el campo.", tone: "neutral" };
+    }
+    case "agent_check": {
+      if (interp) {
+        const good = interp.intent === "professional" || interp.intent === "loyal" || interp.intent === "conciliatory";
+        s.agent.trust = clamp(s.agent.trust + (good ? 7 : -5));
+        rel(s, "agent", good ? 4 : -4);
+        remember(s, `Hablasteis de ${str(d, "topic", "todo")} por teléfono de noche`);
+        return {
+          title: good ? "Se queda tranquilo" : "Cuelga raro",
+          text: good
+            ? `${s.agent.name} apunta lo que le dices y promete moverse con cabeza.`
+            : `${s.agent.name} no le gusta el tono. "Ya hablamos otro día".`,
+          tone: good ? "good" : "bad",
+        };
+      }
+      if (choiceId === "sincero") {
+        s.agent.trust = clamp(s.agent.trust + 6);
+        rel(s, "agent", 4);
+        return { title: "Todo sobre la mesa", text: `${s.agent.name} escucha veinte minutos sin interrumpir. Sirve.`, tone: "good" };
+      }
+      s.agent.trust = clamp(s.agent.trust - 3);
+      return { title: "Te lo guardas", text: "\"Como quieras. Pero yo me entero igual\".", tone: "neutral" };
+    }
+    case "thread":
+      return resolveThread(s, card, choiceId, interp);
     default:
       return { title: "Semana cerrada", text: "Sigues.", tone: "neutral" };
+/** Resolución de hilos: cada cierre puede abrir consecuencias diferidas. */
+function resolveThread(
+  s: GameState,
+  card: DynamicCard,
+  choiceId: string,
+  interp: Interpretation | null,
+): DynamicResult {
+  const kind = str(card.data, "threadKind", "club_interest");
+  const face = choiceId !== "evitar";
+  const hostile = interp?.intent === "aggressive" || interp?.intent === "defiant";
+  const warm = interp?.intent === "conciliatory" || interp?.intent === "professional" || interp?.intent === "loyal";
+
+  switch (kind) {
+    case "club_interest": {
+      if (face) {
+        stat(s, "fame", 6);
+        rel(s, "dressing", -4);
+        s.agent.trust = clamp(s.agent.trust + 5);
+        s.agent.teaser = "Aquello sigue vivo, dame semanas";
+        return { title: "La puerta queda abierta", text: "Tu representante empieza a trabajar la operación en serio.", tone: "neutral" };
+      }
+      s.memory.rejectedClubs.push(str(card.data, "clubName", "un club de Primera"));
+      rel(s, "fans", 7);
+      rel(s, "coach", 4);
+      return { title: "Te quedas", text: "El club agradece públicamente tu compromiso. Alguien lo recordará dentro de unos años.", tone: "good" };
+    }
+    case "coach_upset": {
+      if (hostile) {
+        rel(s, "coach", -10);
+        s.flags["nolist"] = 1;
+        return { title: "Conversación rota", text: "Te levantas antes de que acabe. El domingo no estás en la lista.", tone: "bad" };
+      }
+      if (face || warm) {
+        rel(s, "coach", 8);
+        stat(s, "morale", 5);
+        s.flags["status"] = Math.max(s.flags["status"] ?? 0, 1);
+        return { title: "Segunda oportunidad", text: "Sales del despacho con una condición: si compites en cada rondo, juegas.", tone: "good" };
+      }
+      rel(s, "coach", -3);
+      return { title: "Silencio", text: "Trabajas callado. Ni mejora ni empeora, pero el tiempo corre.", tone: "neutral" };
+    }
+    case "teammate_jealous": {
+      if (hostile || face) {
+        rel(s, "dressing", hostile ? -8 : 6);
+        stat(s, "fame", 2);
+        s.memory.conflicts.push("Choque con el veterano del vestuario");
+        return hostile
+          ? { title: "Se sube el tono", text: "Hay que separaros. El míster os multa a los dos.", tone: "bad" }
+          : { title: "Te haces respetar", text: "Le contestas sin faltar y el vestuario lo aprueba en silencio.", tone: "good" };
+      }
+      rel(s, "dressing", 3);
+      return { title: "Hablado aparte", text: "En el gimnasio arreglas lo que en grupo era imposible.", tone: "good" };
+    }
+    case "press_digging": {
+      if (face) {
+        stat(s, "fame", 10);
+        rel(s, "family", hostile ? -6 : 2);
+        rel(s, "coach", -2);
+        return { title: "Reportaje publicado", text: "Sales en portada del diario local. En casa no todos están cómodos.", tone: "neutral" };
+      }
+      stat(s, "fame", -2);
+      rel(s, "coach", 3);
+      return { title: "Perfil bajo", text: "El club responde por ti y el tema muere en dos días.", tone: "good" };
+    }
+    case "sponsor_call": {
+      if (face) {
+        s.salary += 25;
+        stat(s, "fame", 8);
+        rel(s, "family", 4);
+        stat(s, "discipline", -2);
+        return { title: "Contrato de botas", text: "Primer dinero de verdad ganado con tu nombre.", tone: "gold" };
+      }
+      stat(s, "discipline", 4);
+      return { title: "Aparcado", text: "\"Cuando juegue de verdad\". Tu representante suspira, pero lo respeta.", tone: "neutral" };
+    }
+    case "national_call": {
+      if (face) {
+        stat(s, "fame", 12);
+        stat(s, "fitness", -8);
+        milestone(s, "Convocatoria con la selección de tu categoría.");
+        achieve(s, "internacional");
+        return {
+          title: "Internacional",
+          text: "Cinco días con la selección y un partido que ven ojeadores de media Europa.",
+          tone: "gold",
+          share: {
+            headline: "CONVOCADO POR ESPAÑA",
+            kicker: `${clubById(s.clubId).short} · ${s.age} años`,
+            lines: [
+              { label: "Media", value: String(s.overall) },
+              { label: "Notoriedad", value: String(s.fame) },
+            ],
+          },
+        };
+      }
+      rel(s, "coach", 5);
+      stat(s, "fame", -3);
+      return { title: "Te quedas en el club", text: "Descansas y el míster lo apunta a tu favor.", tone: "neutral" };
+    }
+    default: {
+      if (face) {
+        rel(s, "family", 8);
+        stat(s, "form", -4);
+        return { title: "Das la cara en casa", text: "Te implicas de lleno. La cabeza lo paga en el campo unas semanas.", tone: "neutral" };
+      }
+      rel(s, "family", -6);
+      return { title: "Lo delegas", text: "Te centras en jugar. En casa entienden a medias.", tone: "bad" };
+    }
+  }
+}
+
+
   }
 }
 

@@ -1,27 +1,33 @@
-import { ACHIEVEMENTS, AGENT_NAMES, clubById } from "./data";
+import { ACHIEVEMENTS, AGENT_NAMES, clubById, clubDef } from "./data";
+import { buildOffers, derbyRivalOf } from "./clubs";
 import { randomSuitor, resolveDynamic } from "./dynamic";
 import { eventById, pickEvent } from "./events";
 import { interpretFree, INTENT_FEEDBACK } from "./interpret";
+import { applyFreeFallback } from "./events-extra";
 import {
   achieve,
+  adjustForm,
   avgRating,
   clamp,
   currentSeason,
+  decayRelations,
+  driftForm,
   flag,
   milestone,
   note,
+  rel as relSoft,
   seasonLabel,
   totalApps,
 } from "./mutate";
-import { baselineOverall, computeRole, pick, simulateBlock, simulateMatch, validateMatch } from "./match";
+import { closeThread, dueThread, maybeSpawnThreads, spawnThread } from "./threads";
+import { baselineOverall, computeRole, pick, simulateMatch, simulateRun, validateMatch, type SimRun } from "./match";
 import type {
   AgentState,
-  AutoBlock,
   Card,
   Delta,
   DynamicCard,
+  EventCategory,
   GameState,
-  Injury,
   MatchData,
   NarrativeMemory,
   Outcome,
@@ -33,6 +39,7 @@ import type {
   Stage,
   TraitId,
 } from "./types";
+
 
 export const SAVE_KEY = "beyond90:save:v1";
 export const STATE_VERSION = 2;
@@ -111,7 +118,13 @@ export function createGame(player: Player): GameState {
     age: 16,
     seasonIndex: 0,
     beat: 0,
+    sceneCount: 0,
     queue: [],
+    offers: buildOffers(player.city),
+    recent: [],
+    threads: [],
+    eventHistory: [],
+
     overall,
     potential: rollPotential(overall, player.traits),
     xp: 0,
@@ -232,60 +245,79 @@ export function migrate(raw: unknown): GameState | null {
   if (s.potential <= s.overall) s.potential = Math.min(99, s.overall + 6);
   if (!s.rel || typeof s.rel !== "object") s.rel = { coach: 45, fans: 30, dressing: 45, agent: 0, family: 60 };
 
+  // Campos nuevos de Fase 3.
+  ensureRuntime(s);
+
   // Estructura de ritmo nueva: si el save es antiguo, se replanifica la temporada.
-  if (!Array.isArray(s.queue) || s.queue.length === 0) {
+  if (!Array.isArray(s.queue) || s.queue.length === 0 || s.queue.some((q) => (q.kind as string) === "block")) {
     s.queue = s.clubId ? makeSeasonPlan(s) : [];
     s.pending = null;
     s.lastOutcome = null;
   }
-  const validCards = ["event", "match", "block", "season", "dynamic"];
+  const validCards = ["event", "match", "season", "dynamic"];
   if (s.pending && !validCards.includes(s.pending.type)) s.pending = null;
+  if (s.pending?.type === "match" && !s.pending.match?.ctx) s.pending = null;
   return s;
+}
+
+/** Inicializa las estructuras de Fase 3 en partidas antiguas o corruptas. */
+export function ensureRuntime(s: GameState): void {
+  if (typeof s.sceneCount !== "number" || !Number.isFinite(s.sceneCount)) s.sceneCount = 0;
+  if (!Array.isArray(s.recent)) s.recent = [];
+  if (!Array.isArray(s.threads)) s.threads = [];
+  if (!Array.isArray(s.eventHistory)) s.eventHistory = [];
+  if (!Array.isArray(s.offers) || s.offers.length < 4) s.offers = buildOffers(s.player?.city ?? "");
+  if (!s.memory.threads || typeof s.memory.threads !== "object") s.memory.threads = {};
+  if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
 }
 
 /* ============================ Plan de temporada ============================ */
 
-function keyMatchLabels(s: GameState): { label: string; tie?: boolean }[] {
+type KeySpec = { tag: NonNullable<Slot["tag"]>; tie?: boolean; opponentId?: string };
+
+function keyMatchSpecs(s: GameState): KeySpec[] {
   const debut = !s.achievements.includes(s.stage === "first" ? "debut_pro" : "debut_juvenil");
-  const derbyRival = s.clubId === "sevilla" ? "Betis" : s.clubId === "betis" ? "Sevilla" : s.clubId === "malaga" ? "Granada" : "Valencia";
-  const base: { label: string; tie?: boolean }[] = [
-    { label: debut ? "Tu primera oportunidad" : "Primera jornada" },
-    { label: `Derbi contra el ${derbyRival}` },
-    { label: "Duelo directo por la parte alta" },
-    { label: "Eliminatoria de Copa", tie: true },
-    { label: "Partido con ojeadores en la grada" },
-    { label: "Jornada decisiva de la temporada" },
+  const derby = derbyRivalOf(clubDef(s.clubId));
+  const specs: KeySpec[] = [
+    { tag: debut ? "debut" : "scouts" },
+    ...(derby ? [{ tag: "derby" as const, opponentId: derby.id }] : []),
+    { tag: "decisive" },
+    { tag: "cup", tie: true },
+    { tag: "scouts" },
+    { tag: "decisive" },
   ];
-  if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) {
-    base.splice(3, 0, { label: `Partido ante el ${s.memory.rejectedClubs[0]}` });
-  } else if (Math.random() < 0.5) {
-    base.push({ label: "Final de fase de ascenso", tie: true });
-  }
-  return base.slice(0, 6 + (Math.random() < 0.5 ? 1 : 0));
+  if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) specs.splice(3, 0, { tag: "exclub" });
+  else if (Math.random() < 0.45) specs.push({ tag: "final", tie: true });
+  return specs.slice(0, 7);
 }
 
+const NARRATIVE_ROTATION: EventCategory[] = ["life", "training", "press", "story", "gossip", "life", "agent", "press"];
+
 /**
- * Una temporada = 6-7 escenas deportivas clave + bloques auto-simulados
- * + 9-13 escenas de vida/carrera. Nunca partido→semana→partido.
+ * Una temporada = 6-7 escenas deportivas clave + jornadas simuladas en segundo
+ * plano + 10-14 escenas narrativas interactivas. Nunca dos pantallas
+ * informativas seguidas y nunca dos partidos seguidos (salvo eliminatoria).
  */
 export function makeSeasonPlan(s: GameState): Slot[] {
-  const keys = keyMatchLabels(s);
-  const blocks = keys.length; // un bloque tras cada partido clave
-  const totalBlockMatches = Math.max(0, MATCHES_PER_SEASON - keys.length);
-  const per = Math.max(3, Math.floor(totalBlockMatches / blocks));
+  const keys = keyMatchSpecs(s);
+  const totalSim = Math.max(0, MATCHES_PER_SEASON - keys.length);
+  const per = Math.max(2, Math.floor(totalSim / keys.length));
   const slots: Slot[] = [];
+  let rotation = 0;
+  const narrative = (): Slot => ({ kind: "event", category: NARRATIVE_ROTATION[rotation++ % NARRATIVE_ROTATION.length]! });
 
   keys.forEach((k, idx) => {
-    const lifeBefore = idx === 0 ? 2 : 1 + (Math.random() < 0.5 ? 1 : 0);
-    for (let i = 0; i < lifeBefore; i++) slots.push({ kind: idx % 2 === 0 ? "event" : "life" });
-    if (idx === 2 || idx === 4) slots.push({ kind: "agent" });
-    slots.push(k.tie ? { kind: "match", label: k.label, tie: true } : { kind: "match", label: k.label });
-    const remainder = idx === blocks - 1 ? totalBlockMatches - per * (blocks - 1) : per;
-    slots.push({ kind: "block", matches: Math.max(2, remainder) });
-    if (Math.random() < 0.6) slots.push({ kind: "event" });
+    const before = idx === 0 ? 2 : 2 + (Math.random() < 0.5 ? 1 : 0);
+    for (let i = 0; i < before; i++) slots.push(narrative());
+    if (idx === 1 || idx === 3 || idx === 5) slots.push({ kind: "agent" });
+    slots.push({ kind: "match", tag: k.tag, ...(k.tie ? { tie: true } : {}), ...(k.opponentId ? { opponentId: k.opponentId } : {}) });
+    const remainder = idx === keys.length - 1 ? totalSim - per * (keys.length - 1) : per;
+    slots.push({ kind: "sim", matches: Math.max(2, remainder) });
+    slots.push(narrative());
   });
-  slots.push({ kind: "life" });
+  slots.push(narrative());
   return slots;
+
 }
 
 /* =============================== Deltas =============================== */
@@ -334,82 +366,128 @@ function agentEligible(s: GameState): boolean {
   return s.age >= 17 || s.fame >= 22 || s.overall >= 64;
 }
 
-/** Elige la siguiente escena y la deja en state.pending. */
+/**
+ * Elige la siguiente escena y la deja en state.pending.
+ * Nunca deja como escena principal una pantalla puramente informativa: los
+ * partidos que el jugador no disputa se resuelven en segundo plano y solo
+ * generan escena si ha ocurrido algo digno de contar.
+ */
 export function advance(state: GameState): GameState {
   const s = clone(state);
   s.lastOutcome = null;
   s.beat += 1;
+  ensureRuntime(s);
 
-  // 1. Lesión sin diagnosticar: siempre manda.
-  if (s.injury && !s.injury.treated) {
-    s.pending = dyn("injury_diagnosis", {
-      label: s.injury.label,
-      severity: s.injury.severity,
-      matchesOut: s.injury.matchesOut,
-    });
-    return touch(s);
-  }
-
-  // 2. Regreso pendiente.
-  if (!s.injury && s.flags["volvio_pendiente"] === 1) {
-    s.flags["volvio_pendiente"] = 0;
-    s.pending = dyn("return", { label: s.flags["ultima_lesion_label"] ? String(s.flags["ultima_lesion_label"]) : "La lesión" });
-    return touch(s);
-  }
-
-  // 3. Fin de temporada.
-  if (s.queue.length === 0) {
-    s.pending = { type: "season", summary: closeSeason(s) };
-    return touch(s);
-  }
-
-  const slot = s.queue.shift()!;
-
-  // Lesionado: los partidos clave se convierten en bloques que absorben la baja.
-  if (s.injury && slot.kind === "match") {
-    s.pending = { type: "block", block: buildBlock(s, 3) };
-    return touch(s);
-  }
-
-  switch (slot.kind) {
-    case "match":
-      s.pending = { type: "match", match: simulateMatch(s, slot) };
+  for (let guard = 0; guard < 16; guard++) {
+    // 1. Lesión sin diagnosticar: siempre manda.
+    if (s.injury && !s.injury.treated) {
+      s.pending = dyn("injury_diagnosis", {
+        label: s.injury.label,
+        severity: s.injury.severity,
+        matchesOut: s.injury.matchesOut,
+      });
       return touch(s);
-    case "block":
-      s.pending = { type: "block", block: buildBlock(s, slot.matches ?? 4) };
+    }
+
+    // 2. Regreso pendiente.
+    if (!s.injury && s.flags["volvio_pendiente"] === 1) {
+      s.flags["volvio_pendiente"] = 0;
+      s.pending = dyn("return", { label: String(s.flags["ultima_lesion_label"] ?? "") || "La lesión" });
       return touch(s);
-    case "agent": {
+    }
+
+    // 3. Hilo narrativo que vence: resolución de una anticipación previa.
+    const thread = dueThread(s);
+    if (thread) {
+      s.pending = dyn("thread", {
+        threadId: thread.id,
+        threadKind: thread.kind,
+        teaser: thread.teaser,
+        clubName: typeof thread.payload["clubName"] === "string" ? thread.payload["clubName"] : null,
+      });
+      return touch(s);
+    }
+
+    // 4. Fin de temporada.
+    if (s.queue.length === 0) {
+      s.pending = { type: "season", summary: closeSeason(s) };
+      return touch(s);
+    }
+
+    const slot = s.queue.shift()!;
+
+    if (slot.kind === "sim") {
+      const run = applyRun(s, slot.matches ?? 3);
+      if (run.notable) {
+        s.pending = dyn("match_flash", {
+          kind: run.notable.kind,
+          text: run.notable.text,
+          opponent: run.notable.opponent,
+          wins: run.wins,
+          draws: run.draws,
+          losses: run.losses,
+          goals: run.goals,
+          matches: run.matches,
+        });
+        return touch(s);
+      }
+      continue; // sin escena: el siguiente clic lleva a una decisión real
+    }
+
+    if (slot.kind === "match") {
+      if (s.injury) {
+        applyRun(s, 3);
+        continue;
+      }
+      s.pending = { type: "match", match: simulateMatch(s, slot, s.beat) };
+      return touch(s);
+    }
+
+    if (slot.kind === "agent") {
       const card = agentCard(s);
       if (card) {
         s.pending = card;
         return touch(s);
       }
-      break;
     }
-    default:
-      break;
+
+    // Contrato profesional cuando toca.
+    if (
+      s.stage !== "youth" &&
+      !s.contract &&
+      s.age >= 17 &&
+      s.overall >= baselineOverall(s) - 3 &&
+      s.flags["contrato_aplazado"] !== 1
+    ) {
+      s.pending = dyn("contract", { years: 3, salary: s.stage === "first" ? 220 : 90 });
+      return touch(s);
+    }
+
+    const event = pickEvent(s, slot.category);
+    if (event) {
+      s.pending = { type: "event", eventId: event.id };
+      return touch(s);
+    }
+
+    // Sin evento válido en esa categoría: probamos agente y luego cualquier otra.
+    const card = agentCard(s);
+    if (card) {
+      s.pending = card;
+      return touch(s);
+    }
+    const any = pickEvent(s);
+    if (any) {
+      s.pending = { type: "event", eventId: any.id };
+      return touch(s);
+    }
+
+    // Último recurso: abrir un hilo y resolverlo ya, nunca una pantalla vacía.
+    const forced = spawnThread(s, s.agent.present ? "club_interest" : "coach_upset", {}, 0);
+    if (forced) continue;
+    applyRun(s, 2);
   }
 
-  // Contrato profesional cuando toca.
-  if (
-    s.stage !== "youth" &&
-    !s.contract &&
-    s.age >= 17 &&
-    s.overall >= baselineOverall(s) - 3 &&
-    s.flags["contrato_aplazado"] !== 1
-  ) {
-    s.pending = dyn("contract", { years: 3, salary: s.stage === "first" ? 220 : 90 });
-    return touch(s);
-  }
-
-  const event = pickEvent(s);
-  if (event) {
-    s.pending = { type: "event", eventId: event.id };
-    return touch(s);
-  }
-
-  // Sin eventos disponibles: bloque corto para no dejar la escena vacía.
-  s.pending = { type: "block", block: buildBlock(s, 3) };
+  s.pending = { type: "season", summary: closeSeason(s) };
   return touch(s);
 }
 
@@ -421,7 +499,7 @@ function agentCard(s: GameState): Card | null {
     s.agent.teaser = null;
     return dyn("agent_offer", { clubName: suitor, salary: 150 + Math.floor(Math.random() * 500) });
   }
-  if (s.fame >= 35 && Math.random() < 0.55) {
+  if (s.fame >= 30 && Math.random() < 0.5) {
     const teaser = pick([
       "Ha llamado un club importante preguntando por ti",
       "Hay un ojeador que ha pedido tus últimos tres partidos en vídeo",
@@ -430,21 +508,99 @@ function agentCard(s: GameState): Card | null {
     s.agent.teaser = teaser;
     return dyn("agent_teaser", { teaser });
   }
-  if (s.agent.trust >= 50 && Math.random() < 0.35) {
+  if (s.agent.trust >= 50 && Math.random() < 0.3) {
     return dyn("agent_commission", { commission: Math.min(15, s.agent.commission + 2) });
+  }
+  if (Math.random() < 0.3) {
+    return dyn("agent_check", {
+      topic: pick(["minutos", "prensa", "dinero", "vida"]),
+      hour: pick(["23:17", "07:40", "14:05", "22:58"]),
+    });
   }
   return null;
 }
 
-function buildBlock(s: GameState, count: number): AutoBlock {
-  const missed = s.injury ? Math.min(count, s.injury.matchesOut) : 0;
-  return simulateBlock(s, count, missed);
+/* ============ Partidos resueltos en SEGUNDO PLANO (sin pantalla) ============ */
+
+function applyRun(s: GameState, count: number): SimRun {
+  const run = simulateRun(s, count);
+  const season = currentSeason(s);
+  if (season) {
+    season.apps += run.apps;
+    season.goals += run.goals;
+    season.assists += run.assists;
+    season.ratingSum += run.ratingSum;
+    season.cleanSheets += run.cleanSheets;
+    season.wins += run.wins;
+    season.draws += run.draws;
+    season.losses += run.losses;
+  }
+
+  s.recent = [...run.results, ...(s.recent ?? [])].slice(0, 8);
+
+  if (run.apps > 0) {
+    const perf = run.ratingSum / run.apps - 6.2;
+    adjustForm(s, perf * 7);
+    s.morale = clamp(s.morale + perf * 4 + (run.wins > run.losses ? 3 : -2));
+    s.fitness = clamp(s.fitness - Math.min(9, run.apps * 2));
+    relSoft(s, "coach", perf * 3);
+    relSoft(s, "fans", perf * 2 + run.goals * 2);
+    s.fame = clamp(s.fame + run.goals + (s.stage === "first" ? 2 : 1));
+    s.xp += run.apps * 2 + run.goals * 3 + Math.max(0, perf * 6);
+  } else if (!s.injury) {
+    adjustForm(s, -4);
+    s.morale = clamp(s.morale - 4);
+    s.fitness = clamp(s.fitness + 5);
+    relSoft(s, "coach", -1);
+  }
+
+  if (s.injury) {
+    s.injury.matchesOut -= count;
+    s.fitness = clamp(s.fitness + 5);
+    if (s.injury.matchesOut <= 0) {
+      s.flags["volvio_pendiente"] = 1;
+      note(s, `Alta médica: ${s.injury.label} superada.`, "good");
+      s.injury = null;
+    }
+  }
+
+  s.tablePosition = clamp(
+    (s.tablePosition || 8) + (run.wins > run.losses ? -1 : run.losses > run.wins ? 1 : 0),
+    1,
+    20,
+  );
+
+  if (!s.injury && s.fitness < 42 && Math.random() < 0.2) {
+    const severe = s.flags["riesgo_recaida"] === 1 && Math.random() < 0.4;
+    s.injury = {
+      label: severe ? "Recaída muscular grave" : "Sobrecarga muscular",
+      severity: severe ? "severe" : "minor",
+      matchesOut: severe ? 10 + Math.floor(Math.random() * 6) : 2 + Math.floor(Math.random() * 3),
+      treated: false,
+    };
+    s.flags["riesgo_recaida"] = 0;
+  }
+
+  note(
+    s,
+    `${run.matches} jornadas en segundo plano: ${run.wins}V ${run.draws}E ${run.losses}D · ${run.goals}G ${run.assists}A`,
+    run.wins > run.losses ? "good" : run.losses > run.wins ? "bad" : "neutral",
+  );
+  return run;
 }
+
 
 /* ========================= Resolución de escenas ========================= */
 
+function logEvent(s: GameState, id: string, category: EventCategory | undefined): void {
+  if (!Array.isArray(s.eventHistory)) s.eventHistory = [];
+  s.eventHistory.unshift({ id, category: category ?? "life", scene: s.sceneCount ?? 0 });
+  s.eventHistory = s.eventHistory.slice(0, 60);
+}
+
 export function resolveEvent(state: GameState, eventId: string, choiceId: string): GameState {
   const s = clone(state);
+  ensureRuntime(s);
   const event = eventById(eventId);
   if (!event) return advance(s);
   const choice = event.choices.find((c) => c.id === choiceId) ?? event.choices[0]!;
@@ -456,12 +612,14 @@ export function resolveEvent(state: GameState, eventId: string, choiceId: string
     /* nunca romper la partida por un evento */
   }
   if (!s.seenEvents.includes(eventId)) s.seenEvents.push(eventId);
+  logEvent(s, eventId, event.category);
   finishScene(s, event.title, outcomeText, before);
   return touch(s);
 }
 
 export function resolveEventFree(state: GameState, eventId: string, text: string): GameState {
   const s = clone(state);
+  ensureRuntime(s);
   const event = eventById(eventId);
   if (!event) return advance(s);
   const before = snapshot(s);
@@ -469,11 +627,12 @@ export function resolveEventFree(state: GameState, eventId: string, text: string
   const reaction = event.freeform?.reactions?.[interp.intent] ?? INTENT_FEEDBACK[interp.intent];
   try {
     if (event.applyFree) event.applyFree(s, interp);
-    else event.choices[0]?.apply(s);
+    else applyFreeFallback(s, interp);
   } catch {
     /* respuesta libre nunca debe romper el juego */
   }
   if (!s.seenEvents.includes(eventId)) s.seenEvents.push(eventId);
+  logEvent(s, eventId, event.category);
   finishScene(s, event.title, `${reaction} (${interp.label})`, before);
   return touch(s);
 }
@@ -485,6 +644,7 @@ export function resolveDynamicCard(
   freeText?: string,
 ): GameState {
   const s = clone(state);
+  ensureRuntime(s);
   const before = snapshot(s);
   let result;
   try {
@@ -496,12 +656,25 @@ export function resolveDynamicCard(
     s.flags["ultima_lesion_label"] = 0;
     s.flags["volvio_pendiente"] = 1;
   }
+  if (card.kind === "thread") {
+    const id = typeof card.data["threadId"] === "string" ? card.data["threadId"] : "";
+    if (id) closeThread(s, id);
+  }
   s.pending = null;
   const deltas = diff(before, s);
   s.lastOutcome = { title: result.title, text: result.text, deltas, tone: result.tone, ...(result.share ? { share: result.share } : {}) };
+  afterScene(s);
   checkAchievements(s);
   note(s, `${result.title}: ${result.text}`, result.tone === "gold" ? "gold" : result.tone);
   return touch(s);
+}
+
+/** Cierre común de cualquier escena: contador, derivas y hilos nuevos. */
+function afterScene(s: GameState): void {
+  s.sceneCount = (s.sceneCount ?? 0) + 1;
+  driftForm(s);
+  if (s.sceneCount % 3 === 0) decayRelations(s);
+  maybeSpawnThreads(s);
 }
 
 function finishScene(s: GameState, title: string, text: string, before: ReturnType<typeof snapshot>) {
@@ -514,80 +687,10 @@ function finishScene(s: GameState, title: string, text: string, before: ReturnTy
     deltas,
     tone: deltas.some((d) => d.tone === "bad") && !deltas.some((d) => d.tone === "good") ? "bad" : "good",
   };
+  afterScene(s);
   note(s, `${title}: ${text}`, "neutral");
 }
 
-export function resolveBlock(state: GameState, block: AutoBlock): GameState {
-  const s = clone(state);
-  const before = snapshot(s);
-  const season = currentSeason(s);
-  if (season) {
-    season.apps += block.apps;
-    season.goals += block.goals;
-    season.assists += block.assists;
-    season.ratingSum += block.rating * block.apps;
-    season.wins += block.wins;
-    season.draws += block.draws;
-    season.losses += block.losses;
-  }
-
-  if (block.apps > 0) {
-    const perf = block.rating - 6.2;
-    s.form = clamp(s.form + perf * 8);
-    s.morale = clamp(s.morale + perf * 4 + (block.wins > block.losses ? 4 : -2));
-    s.fitness = clamp(s.fitness - Math.min(10, block.apps));
-    s.rel.coach = clamp(s.rel.coach + perf * 3);
-    s.rel.fans = clamp(s.rel.fans + perf * 2 + block.goals * 2);
-    s.fame = clamp(s.fame + block.goals + (s.stage === "first" ? 2 : 1));
-    s.xp += block.apps * 2 + block.goals * 3 + Math.max(0, perf * 6);
-  } else if (!s.injury) {
-    s.form = clamp(s.form - 6);
-    s.morale = clamp(s.morale - 5);
-    s.fitness = clamp(s.fitness + 5);
-    s.rel.coach = clamp(s.rel.coach - 2);
-  }
-
-  // Recuperación de lesión absorbida por el bloque.
-  if (s.injury) {
-    s.injury.matchesOut -= block.missed || block.matches;
-    s.fitness = clamp(s.fitness + 6);
-    if (s.injury.matchesOut <= 0) {
-      s.flags["volvio_pendiente"] = 1;
-      note(s, `Alta médica: ${s.injury.label} superada.`, "good");
-      s.injury = null;
-    }
-  }
-
-  s.tablePosition = clamp(
-    (s.tablePosition || 8) + (block.wins > block.losses ? -1 : block.losses > block.wins ? 1 : 0),
-    1,
-    20,
-  );
-
-  // Lesión nueva por acumulación de partidos.
-  if (!s.injury && s.fitness < 42 && Math.random() < 0.22) {
-    const severe = s.flags["riesgo_recaida"] === 1 && Math.random() < 0.4;
-    s.injury = {
-      label: severe ? "Recaída muscular grave" : "Sobrecarga muscular",
-      severity: severe ? "severe" : "minor",
-      matchesOut: severe ? 10 + Math.floor(Math.random() * 6) : 2 + Math.floor(Math.random() * 3),
-      treated: false,
-    };
-    s.flags["riesgo_recaida"] = 0;
-  }
-
-  checkAchievements(s);
-  const deltas = diff(before, s);
-  s.pending = null;
-  s.lastOutcome = {
-    title: block.title,
-    text: block.text,
-    deltas,
-    tone: block.wins > block.losses ? "good" : block.losses > block.wins ? "bad" : "neutral",
-  };
-  note(s, `${block.matches} jornadas: ${block.wins}V ${block.draws}E ${block.losses}D · ${block.goals}G ${block.assists}A`, "neutral");
-  return touch(s);
-}
 
 export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: string): GameState {
   const s = clone(state);
@@ -694,21 +797,22 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   let share: ShareData | undefined;
 
   if (final.minutes === 0) {
-    s.form = clamp(s.form - (final.benchOnly ? 2 : 5));
+    adjustForm(s, final.benchOnly ? -2 : -4);
     s.morale = clamp(s.morale - (final.benchOnly ? 2 : 5));
     s.fitness = clamp(s.fitness + 3);
-    s.rel.coach = clamp(s.rel.coach - 1);
+    relSoft(s, "coach", -1);
   } else {
     const perf = final.rating - 6.2;
-    s.form = clamp(s.form + perf * 7);
+    adjustForm(s, perf * 7);
     s.morale = clamp(s.morale + perf * 4 + (won ? 4 : drew ? 0 : -3));
     s.fitness = clamp(s.fitness - Math.round(final.minutes / 20));
-    s.rel.coach = clamp(s.rel.coach + perf * 2.5);
-    s.rel.fans = clamp(s.rel.fans + perf * 2 + final.goals * 3);
-    s.rel.dressing = clamp(s.rel.dressing + (perf > 0 ? 1 : 0));
+    relSoft(s, "coach", perf * 2.5);
+    relSoft(s, "fans", perf * 2 + final.goals * 3);
+    relSoft(s, "dressing", perf > 0 ? 1 : 0);
     s.fame = clamp(s.fame + Math.max(0, Math.round(perf * 2)) + final.goals * 3 + (s.stage === "first" ? 3 : 0));
     // La MEDIA no sube por partido: se acumula progreso oculto.
     s.xp += 6 + Math.max(0, perf * 8) + final.goals * 5 + final.assists * 3;
+
 
     if (s.stage === "first" && !s.achievements.includes("debut_pro")) {
       achieve(s, "debut_pro");
@@ -737,6 +841,18 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   }
 
   s.tablePosition = clamp((s.tablePosition || 8) + (won ? -1 : drew ? 0 : 1), 1, 20);
+  s.recent = [
+    {
+      opponent: final.ctx.opponentShort,
+      gf: final.goalsFor,
+      ga: final.goalsAgainst,
+      res: (won ? "W" : drew ? "D" : "L") as "W" | "D" | "L",
+      played: final.minutes > 0,
+      goals: final.goals,
+      assists: final.assists,
+    },
+    ...(s.recent ?? []),
+  ].slice(0, 8);
   checkAchievements(s);
   const deltas = diff(before, s);
   const label = final.shootout
@@ -747,21 +863,23 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   s.lastOutcome = {
     title: label,
     text: final.unused
-      ? "No entras en la convocatoria. Ves el partido desde la grada con la sensación de estar de sobra."
+      ? `No entras en la convocatoria para ${final.ctx.isHome ? "el partido en casa" : `viajar a ${final.ctx.venueCity}`}. Lo ves con la sensación de estar de sobra.`
       : final.benchOnly
-        ? "Noventa minutos en el banquillo, calentando dos veces sin llegar a entrar."
-        : `${final.minutes}' disputados · valoración ${final.rating.toFixed(1)}${final.goals ? ` · ${final.goals} gol${final.goals > 1 ? "es" : ""}` : ""}${final.assists ? ` · ${final.assists} asistencia${final.assists > 1 ? "s" : ""}` : ""}.`,
+        ? `Noventa minutos en el banquillo de ${final.ctx.venue}, calentando dos veces sin llegar a entrar.`
+        : `${final.minutes}' disputados en ${final.ctx.venue} · valoración ${final.rating.toFixed(1)}${final.goals ? ` · ${final.goals} gol${final.goals > 1 ? "es" : ""}` : ""}${final.assists ? ` · ${final.assists} asistencia${final.assists > 1 ? "s" : ""}` : ""}.`,
     deltas,
     tone: won ? "good" : drew ? "neutral" : "bad",
     ...(share ? { share } : {}),
   };
+  afterScene(s);
   note(
     s,
-    `${final.competition} · ${final.home ? "vs" : "en"} ${final.opponent} ${final.goalsFor}-${final.goalsAgainst}${final.minutes ? ` (${final.minutes}', ${final.rating.toFixed(1)})` : " (sin minutos)"}`,
+    `${final.ctx.competition} · ${final.ctx.homeTeam} ${final.goalsFor > final.goalsAgainst === final.ctx.isHome ? "" : ""}${final.ctx.isHome ? final.goalsFor : final.goalsAgainst}-${final.ctx.isHome ? final.goalsAgainst : final.goalsFor} ${final.ctx.awayTeam}${final.minutes ? ` (${final.minutes}', ${final.rating.toFixed(1)})` : " (sin minutos)"}`,
     won ? "good" : drew ? "neutral" : "bad",
   );
   return touch(s);
 }
+
 
 function shareCard(s: GameState, headline: string, m?: MatchData): ShareData {
   const lines: { label: string; value: string }[] = [

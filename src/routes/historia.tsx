@@ -35,7 +35,7 @@ const CATEGORY_STYLE: Record<EventCategory, string> = {
 };
 
 function Story({ state }: { state: GameState }) {
-  const { answerEvent, answerFree, answerDynamic, finishBlock, playMatch, next } = useGame();
+  const { answerEvent, answerFree, answerDynamic, playMatch, next } = useGame();
   const [phase, setPhase] = useState<"pre" | "key">("pre");
   const [lastMatch, setLastMatch] = useState<MatchData | null>(null);
 
@@ -72,39 +72,6 @@ function Story({ state }: { state: GameState }) {
         <Deltas outcome={pending.summary} />
         {pending.summary.share && <ShareButton state={state} share={pending.summary.share} />}
         <PrimaryButton onClick={() => next()}>Nueva temporada</PrimaryButton>
-      </Scene>
-    );
-  } else if (pending.type === "block") {
-    const b = pending.block;
-    body = (
-      <Scene image={SCENES.training} kicker="Bloque simulado" title={b.title} accent="border-accent/35">
-        <p className="text-sm leading-relaxed text-foreground/85">{b.text}</p>
-        <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-          <Cell label="V" value={b.wins} />
-          <Cell label="E" value={b.draws} />
-          <Cell label="D" value={b.losses} />
-          <Cell label="Pos." value={`${b.position}º`} />
-        </div>
-        <div className="mt-3 grid grid-cols-4 gap-2 text-center">
-          <Cell label="PJ" value={b.apps} />
-          <Cell label="G" value={b.goals} />
-          <Cell label="A" value={b.assists} />
-          <Cell label="Nota" value={b.rating || "—"} />
-        </div>
-        <div className="mt-3 flex items-center gap-1.5">
-          {b.formRun.map((r, i) => (
-            <span
-              key={i}
-              className={cn(
-                "font-num grid h-6 w-6 place-items-center rounded text-[0.65rem] font-bold",
-                r === "W" ? "bg-accent/25 text-accent" : r === "L" ? "bg-destructive/25 text-destructive" : r === "D" ? "bg-surface-2 text-foreground/70" : "bg-surface-2 text-muted-foreground",
-              )}
-            >
-              {r}
-            </span>
-          ))}
-        </div>
-        <PrimaryButton onClick={() => finishBlock(b)}>Continuar la temporada</PrimaryButton>
       </Scene>
     );
   } else if (pending.type === "dynamic") {
@@ -173,11 +140,19 @@ function Story({ state }: { state: GameState }) {
       body = (
         <Scene
           image={SCENES.match}
-          kicker={`${match.competition} · ${match.label}`}
-          title={`${match.home ? "vs" : "en"} ${match.opponent}`}
+          kicker={`${match.ctx.competition} · ${match.ctx.round}`}
+          title={match.ctx.storyLabel}
           accent="border-gold/45"
         >
-          <p className="text-sm leading-relaxed text-muted-foreground">
+          <div className="mt-1 flex items-center justify-between rounded-lg bg-surface-2 px-3 py-2 text-xs">
+            <span className="font-cond font-semibold">{match.ctx.homeTeam}</span>
+            <span className="text-muted-foreground">vs</span>
+            <span className="font-cond font-semibold">{match.ctx.awayTeam}</span>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {match.ctx.venue} · {match.ctx.venueCity}
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             {match.unused
               ? "No estás en la lista. Toca ver el partido desde fuera."
               : match.benchOnly
@@ -185,8 +160,9 @@ function Story({ state }: { state: GameState }) {
                 : match.minutes >= 60
                   ? "Sales de titular."
                   : "Empiezas en el banquillo, con opciones de entrar."}
-            {match.tie ? " Eliminatoria a partido único: si hay empate, penaltis." : ""}
+            {match.ctx.tie ? " Eliminatoria a partido único: si hay empate, penaltis." : ""}
           </p>
+
           <PrimaryButton
             onClick={() => {
               if (km && match.minutes > 0) {
@@ -399,19 +375,20 @@ function OutcomeCard({
   return (
     <Scene
       image={match ? SCENES.match : SCENES.locker}
-      kicker={match ? `${match.competition} · ${match.home ? "casa" : "fuera"}` : "Consecuencias"}
+      kicker={match ? `${match.ctx.competition} · ${match.ctx.isHome ? "casa" : "fuera"}` : "Consecuencias"}
       title={outcome.title}
       accent={outcome.tone === "gold" ? "border-gold/60" : undefined}
     >
       {match && (
         <div className="mb-4 rounded-xl border border-border bg-surface-2 p-4 text-center">
-          <p className="text-kicker">{match.label}</p>
+          <p className="text-kicker">{match.ctx.storyLabel}</p>
           <p className="font-num mt-1 text-4xl font-bold text-gold">
-            {match.goalsFor} - {match.goalsAgainst}
+            {match.ctx.isHome ? match.goalsFor : match.goalsAgainst} - {match.ctx.isHome ? match.goalsAgainst : match.goalsFor}
           </p>
           <p className="mt-1 font-cond text-xs uppercase tracking-[0.14em] text-muted-foreground">
-            {match.home ? `vs ${match.opponent}` : `en campo del ${match.opponent}`}
+            {match.ctx.homeTeam} · {match.ctx.awayTeam} · {match.ctx.venue}
           </p>
+
           {match.shootout && (
             <p className="mt-1 font-cond text-xs uppercase tracking-[0.14em] text-gold-soft">
               Penaltis {match.shootout.us}-{match.shootout.them}
