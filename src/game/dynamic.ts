@@ -28,7 +28,124 @@ const RIVAL_CLUBS = [
   "Sporting de Lisboa", "Ajax", "Brighton", "Olympique de Lyon", "Benfica",
 ];
 
+const FLASH_TITLES: Record<string, string> = {
+  goal: "Un gol que cambia el tramo",
+  red: "Roja y silencio en el autobús",
+  bench: "Tres partidos sin salir del banquillo",
+  injury: "Algo se ha roto por el camino",
+  streak: "El equipo se ha soltado",
+  slump: "Racha mala y ruido alrededor",
+  form: "El calendario ha pasado por encima",
+};
+
+const AGENT_TOPICS: Record<string, string> = {
+  minutos:
+    "Va directo: \"¿Te ha dicho el míster por qué juegas de rotación o te lo estás inventando tú?\". Hay ruido de bar detrás.",
+  prensa:
+    "\"Ha salido una frase tuya recortada. Ni la desmientas ni la repitas. Pero quiero saber qué dijiste exactamente\".",
+  dinero:
+    "\"Tu contrato está desfasado para lo que juegas. Puedo pedir mejora ahora o esperar a que valgas más. Decide tú\".",
+  vida:
+    "\"Te voy a preguntar una cosa como si fuera tu tío: ¿estás durmiendo bien? Porque en el vídeo se te ven las piernas cansadas\".",
+};
+
+interface ThreadView {
+  kicker: string;
+  title: string;
+  image: SceneKey;
+  category: EventCategory;
+  text: string;
+  choices: { id: string; label: string; hint?: string }[];
+  free?: string;
+}
+
+const THREAD_VIEWS: Record<string, ThreadView> = {
+  club_interest: {
+    kicker: "Se confirma",
+    title: "El club que preguntaba tiene nombre",
+    image: "agent",
+    category: "agent",
+    text: "Era un sondeo real: quieren verte de cerca la próxima temporada.",
+    choices: [
+      { id: "afrontar", label: "Mostrar interés y escuchar", hint: "Ambición, ruido en el vestuario" },
+      { id: "evitar", label: "Cortarlo: aquí estás creciendo", hint: "Club y afición lo valoran" },
+    ],
+    free: "¿Qué dices cuando te preguntan por ese club?",
+  },
+  coach_upset: {
+    kicker: "Despacho",
+    title: "El míster te esperaba sentado",
+    image: "locker",
+    category: "story",
+    text: "No grita. Dice que te ve fuera del plan y que quiere oírte a ti antes de decidir.",
+    choices: [
+      { id: "afrontar", label: "Pedirle una oportunidad clara", hint: "Puede ganarte minutos" },
+      { id: "evitar", label: "Callar y trabajar en silencio", hint: "Nada cambia hoy" },
+    ],
+    free: "¿Qué le contestas al entrenador?",
+  },
+  teammate_jealous: {
+    kicker: "Vestuario",
+    title: "El pique tiene cara concreta",
+    image: "locker",
+    category: "gossip",
+    text: "El veterano que te dejó de saludar suelta una pulla delante de todos en la charla.",
+    choices: [
+      { id: "afrontar", label: "Responderle delante del grupo", hint: "Respeto o guerra" },
+      { id: "evitar", label: "Aguantar y hablarlo aparte", hint: "Cabeza" },
+    ],
+    free: "¿Qué respondes en el vestuario?",
+  },
+  press_digging: {
+    kicker: "Prensa",
+    title: "El periodista ya tiene el reportaje",
+    image: "tunnel",
+    category: "press",
+    text: "Quiere hablar de tu barrio, tu familia y del dinero que se mueve alrededor de un chico de tu edad.",
+    choices: [
+      { id: "afrontar", label: "Dar la entrevista", hint: "Notoriedad, exposición" },
+      { id: "evitar", label: "Declinar por el club", hint: "Perfil bajo" },
+    ],
+    free: "¿Qué le dices al periodista?",
+  },
+  sponsor_call: {
+    kicker: "Dinero",
+    title: "Primera oferta de patrocinio",
+    image: "agent",
+    category: "life",
+    text: "Botas, dos publicaciones al mes y una cifra que en tu casa nunca se ha visto junta.",
+    choices: [
+      { id: "afrontar", label: "Firmar el acuerdo", hint: "Dinero y ruido" },
+      { id: "evitar", label: "Aparcarlo hasta consolidarte", hint: "Foco en el campo" },
+    ],
+  },
+  national_call: {
+    kicker: "Selección",
+    title: "Lista publicada",
+    image: "tunnel",
+    category: "story",
+    text: "Tu nombre aparece en la convocatoria de tu categoría. Cinco días fuera en pleno curso.",
+    choices: [
+      { id: "afrontar", label: "Ir y jugártela allí", hint: "Escaparate" },
+      { id: "evitar", label: "Alegar cansancio y quedarte", hint: "El club lo agradece" },
+    ],
+  },
+  family_worry: {
+    kicker: "Casa",
+    title: "Lo que no te contaban",
+    image: "family",
+    category: "life",
+    text: "Es un problema de dinero en casa que llevaban meses tapando para no distraerte.",
+    choices: [
+      { id: "afrontar", label: "Implicarte y ayudar", hint: "Familia arriba, cabeza ocupada" },
+      { id: "evitar", label: "Delegarlo y centrarte en jugar", hint: "Rendimiento primero" },
+    ],
+    free: "¿Qué dices en casa?",
+  },
+};
+
 export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
+
   const d = card.data;
   const agentName = s.agent.name;
   switch (card.kind) {
