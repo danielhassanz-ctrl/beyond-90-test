@@ -9,7 +9,7 @@ import { eventById } from "@/game/events";
 import { seasonLabel, stageLabel } from "@/game/engine";
 import { useGame } from "@/game/store";
 import type { DynamicCard, EventCategory, GameState, MatchData, Outcome, ShareData } from "@/game/types";
-import { shareCareerCard } from "@/lib/share";
+import { copyShareText, downloadCard, shareCareerCard } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/historia")({
