@@ -424,6 +424,117 @@ export function resolveDynamic(
       return resolveThread(s, card, choiceId, interp);
     default:
       return { title: "Semana cerrada", text: "Sigues.", tone: "neutral" };
+/** Resolución de hilos: cada cierre puede abrir consecuencias diferidas. */
+function resolveThread(
+  s: GameState,
+  card: DynamicCard,
+  choiceId: string,
+  interp: Interpretation | null,
+): DynamicResult {
+  const kind = str(card.data, "threadKind", "club_interest");
+  const face = choiceId !== "evitar";
+  const hostile = interp?.intent === "aggressive" || interp?.intent === "defiant";
+  const warm = interp?.intent === "conciliatory" || interp?.intent === "professional" || interp?.intent === "loyal";
+
+  switch (kind) {
+    case "club_interest": {
+      if (face) {
+        stat(s, "fame", 6);
+        rel(s, "dressing", -4);
+        s.agent.trust = clamp(s.agent.trust + 5);
+        s.agent.teaser = "Aquello sigue vivo, dame semanas";
+        return { title: "La puerta queda abierta", text: "Tu representante empieza a trabajar la operación en serio.", tone: "neutral" };
+      }
+      s.memory.rejectedClubs.push(str(card.data, "clubName", "un club de Primera"));
+      rel(s, "fans", 7);
+      rel(s, "coach", 4);
+      return { title: "Te quedas", text: "El club agradece públicamente tu compromiso. Alguien lo recordará dentro de unos años.", tone: "good" };
+    }
+    case "coach_upset": {
+      if (hostile) {
+        rel(s, "coach", -10);
+        s.flags["nolist"] = 1;
+        return { title: "Conversación rota", text: "Te levantas antes de que acabe. El domingo no estás en la lista.", tone: "bad" };
+      }
+      if (face || warm) {
+        rel(s, "coach", 8);
+        stat(s, "morale", 5);
+        s.flags["status"] = Math.max(s.flags["status"] ?? 0, 1);
+        return { title: "Segunda oportunidad", text: "Sales del despacho con una condición: si compites en cada rondo, juegas.", tone: "good" };
+      }
+      rel(s, "coach", -3);
+      return { title: "Silencio", text: "Trabajas callado. Ni mejora ni empeora, pero el tiempo corre.", tone: "neutral" };
+    }
+    case "teammate_jealous": {
+      if (hostile || face) {
+        rel(s, "dressing", hostile ? -8 : 6);
+        stat(s, "fame", 2);
+        s.memory.conflicts.push("Choque con el veterano del vestuario");
+        return hostile
+          ? { title: "Se sube el tono", text: "Hay que separaros. El míster os multa a los dos.", tone: "bad" }
+          : { title: "Te haces respetar", text: "Le contestas sin faltar y el vestuario lo aprueba en silencio.", tone: "good" };
+      }
+      rel(s, "dressing", 3);
+      return { title: "Hablado aparte", text: "En el gimnasio arreglas lo que en grupo era imposible.", tone: "good" };
+    }
+    case "press_digging": {
+      if (face) {
+        stat(s, "fame", 10);
+        rel(s, "family", hostile ? -6 : 2);
+        rel(s, "coach", -2);
+        return { title: "Reportaje publicado", text: "Sales en portada del diario local. En casa no todos están cómodos.", tone: "neutral" };
+      }
+      stat(s, "fame", -2);
+      rel(s, "coach", 3);
+      return { title: "Perfil bajo", text: "El club responde por ti y el tema muere en dos días.", tone: "good" };
+    }
+    case "sponsor_call": {
+      if (face) {
+        s.salary += 25;
+        stat(s, "fame", 8);
+        rel(s, "family", 4);
+        stat(s, "discipline", -2);
+        return { title: "Contrato de botas", text: "Primer dinero de verdad ganado con tu nombre.", tone: "gold" };
+      }
+      stat(s, "discipline", 4);
+      return { title: "Aparcado", text: "\"Cuando juegue de verdad\". Tu representante suspira, pero lo respeta.", tone: "neutral" };
+    }
+    case "national_call": {
+      if (face) {
+        stat(s, "fame", 12);
+        stat(s, "fitness", -8);
+        milestone(s, "Convocatoria con la selección de tu categoría.");
+        achieve(s, "internacional");
+        return {
+          title: "Internacional",
+          text: "Cinco días con la selección y un partido que ven ojeadores de media Europa.",
+          tone: "gold",
+          share: {
+            headline: "CONVOCADO POR ESPAÑA",
+            kicker: `${clubById(s.clubId).short} · ${s.age} años`,
+            lines: [
+              { label: "Media", value: String(s.overall) },
+              { label: "Notoriedad", value: String(s.fame) },
+            ],
+          },
+        };
+      }
+      rel(s, "coach", 5);
+      stat(s, "fame", -3);
+      return { title: "Te quedas en el club", text: "Descansas y el míster lo apunta a tu favor.", tone: "neutral" };
+    }
+    default: {
+      if (face) {
+        rel(s, "family", 8);
+        stat(s, "form", -4);
+        return { title: "Das la cara en casa", text: "Te implicas de lleno. La cabeza lo paga en el campo unas semanas.", tone: "neutral" };
+      }
+      rel(s, "family", -6);
+      return { title: "Lo delegas", text: "Te centras en jugar. En casa entienden a medias.", tone: "bad" };
+    }
+  }
+}
+
 
   }
 }
