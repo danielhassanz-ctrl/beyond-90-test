@@ -305,6 +305,52 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         ],
         freeform: { prompt: `¿Qué le contestas a ${agentName}?`, placeholder: "Escribe lo que quieras…" },
       };
+    /* ===================== FASE 6 · mercado y retirada ===================== */
+    case "market_offer": {
+      const kind = str(d, "kind", "transfer");
+      const clubName = str(d, "clubName", "un club");
+      const salary = num(d, "salary", 150);
+      const years = num(d, "years", 3);
+      return {
+        kicker: kind === "renewal" ? "Renovación" : kind === "loan" ? "Cesión" : "Mercado",
+        title:
+          kind === "renewal"
+            ? `El ${clubName} te pone un contrato nuevo`
+            : kind === "loan"
+              ? `Cesión al ${clubName}`
+              : `Oferta del ${clubName}`,
+        image: "office",
+        category: "market",
+        text: `${str(d, "reason", "Hay movimiento con tu nombre.")} Sobre la mesa: ${years} temporada${years > 1 ? "s" : ""} y ${salary}.000 € por curso. ${s.agent.present ? `${agentName} te avisa de que la ventana no estará abierta eternamente.` : "No tienes representante: decides tú y tu familia."}`,
+        choices: [
+          { id: "aceptar", label: kind === "renewal" ? "Renovar" : "Aceptar y firmar", hint: "Cambio real en tu carrera" },
+          { id: "rechazar", label: "Rechazar", hint: "Te quedas donde estás" },
+          ...(kind === "transfer" ? [{ id: "negociar", label: "Pedir más ficha", hint: "Puede caerse la operación" }] : []),
+        ],
+        freeform: { prompt: "¿Qué dices al respecto?", placeholder: "Habla claro…" },
+      };
+    }
+    case "retirement":
+      return {
+        kicker: "Final de camino",
+        title: "Hora de decidir el final",
+        image: "tunnel",
+        category: "story",
+        text: `${num(d, "age", 35)} años, el cuerpo pidiendo tregua y una carrera de ${str(d, "tier", "profesional")} detrás. El club te ofrece cerrar aquí, con homenaje y campo lleno.`,
+        choices: [
+          { id: "retirar", label: "Anunciar la retirada", hint: "Cierras tu carrera" },
+          { id: "seguir", label: "Aguantar una temporada más", hint: "Riesgo de acabar peor" },
+        ],
+      };
+    case "career_end":
+      return {
+        kicker: "Carrera cerrada",
+        title: str(d, "tier", "Carrera profesional"),
+        image: "celebration",
+        category: "story",
+        text: `${num(d, "apps")} partidos, ${num(d, "goals")} goles, ${num(d, "titles")} títulos, ${num(d, "awards")} premios individuales y una media máxima de ${num(d, "peak")}. Patrimonio: ${num(d, "wealth")}.000 €.`,
+        choices: [{ id: "ok", label: "Ver mi legado" }],
+      };
     case "thread": {
       const kind = str(d, "threadKind", "club_interest");
       const view = THREAD_VIEWS[kind];
