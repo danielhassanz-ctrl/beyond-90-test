@@ -1121,7 +1121,11 @@ function closeSeason(s: GameState): Outcome {
       : `Temporada sin minutos oficiales. Cumples ${s.age} años y el curso que viene no admite excusas.${moneyText}${promoText}`,
     deltas,
     tone: "gold",
-    ...(promo ? { share: shareCard(s, promo.title.toUpperCase()) } : {}),
+    ...(promo
+      ? { share: shareCard(s, promo.title.toUpperCase()) }
+      : honours.titles.length || honours.awards.length
+        ? { share: shareCard(s, [...honours.titles, ...honours.awards][0]!.toUpperCase()) }
+        : {}),
   };
 }
 
