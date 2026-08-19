@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Lock, Trophy } from "lucide-react";
 import { GameShell } from "@/components/game/GameShell";
+import { ShareButton } from "@/components/game/ShareButton";
 import { careerPhase, careerSummary, PHASE_LABEL } from "@/game/career";
 import { achievementList } from "@/game/engine";
 import type { GameState } from "@/game/types";
@@ -61,6 +62,21 @@ function Legacy({ state }: { state: GameState }) {
         )}
         {summary.titles.length > 0 && <p className="mt-1 text-xs text-accent">Palmarés: {summary.titles.join(" · ")}</p>}
         {summary.awards.length > 0 && <p className="mt-1 text-xs text-gold">Premios: {summary.awards.join(" · ")}</p>}
+        <ShareButton
+          state={state}
+          label={state.retired ? "Compartir carrera" : "Compartir mi carrera"}
+          share={{
+            headline: state.retired ? `Carrera cerrada: ${summary.tier}` : `Mi carrera: ${summary.tier}`,
+            kicker: phase,
+            lines: [
+              { label: "Media máx.", value: String(summary.peakOverall) },
+              { label: "Partidos", value: String(summary.apps) },
+              { label: "Goles", value: String(summary.goals) },
+              { label: "Títulos", value: String(summary.titles.length) },
+              { label: "Premios", value: String(summary.awards.length) },
+            ],
+          }}
+        />
       </section>
 
 
