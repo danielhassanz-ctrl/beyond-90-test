@@ -936,8 +936,10 @@ function seasonGrowth(s: GameState): number {
   const season = currentSeason(s);
   const apps = season?.apps ?? 0;
   const rating = apps ? (season!.ratingSum / apps) : 0;
-  const room = s.potential - s.overall;
-  const ageFactor = s.age <= 18 ? 1.3 : s.age <= 21 ? 1.1 : s.age <= 26 ? 0.8 : s.age <= 29 ? 0.4 : 0;
+  const ceiling = overallCeiling(s);
+  const room = ceiling - s.overall;
+  const ageFactor = ageGrowthFactor(s.age);
+  const decline = ageDecline(s);
 
   // +1 de MEDIA debe notarse: el crecimiento por temporada es contenido.
   let g = Math.min(2.6, s.xp / 95);
@@ -949,9 +951,11 @@ function seasonGrowth(s: GameState): number {
   g -= apps === 0 ? 1.2 : 0;
   g *= ageFactor;
 
-  if (room <= 0) return s.age >= 30 ? -1 : Math.random() < 0.15 ? 1 : 0;
+  // Declive: a partir de los 31 la edad pesa más que el trabajo.
+  if (decline > 0) return -decline;
+  if (room <= 0) return Math.random() < 0.15 && ageFactor > 0 ? 1 : 0;
   const cap = s.age <= 21 ? 5 : 3;
-  return Math.max(apps === 0 ? -1 : 0, Math.round(Math.min(g, cap, room * 0.3)));
+  return Math.max(apps === 0 ? -1 : 0, Math.round(Math.min(g, cap, room * 0.35)));
 }
 
 function evaluatePromotion(s: GameState): { stage: Stage; title: string; text: string } | null {
