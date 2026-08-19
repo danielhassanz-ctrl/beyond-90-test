@@ -16,6 +16,8 @@ interface GameContextValue {
   state: GameState | null;
   ready: boolean;
   hasSave: boolean;
+  error: string | null;
+  clearError: () => void;
   start: (player: Player) => void;
   pickClub: (clubId: string) => void;
   answerEvent: (eventId: string, choiceId: string) => void;
@@ -50,6 +52,7 @@ function write(state: GameState | null) {
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState | null>(null);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setState(read());
@@ -66,8 +69,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!prev) return prev;
       let next: GameState;
       try {
+        setError(null);
         next = fn(prev);
       } catch {
+        setError("Esa acción no se pudo aplicar. Pulsa \u00abReintentar escena\u00bb para seguir tu carrera.");
         return prev;
       }
       write(next);
@@ -103,6 +108,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       state,
       ready,
       hasSave: !!state,
+      error,
+      clearError: () => setError(null),
       start,
       pickClub,
       answerEvent,
@@ -112,7 +119,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       next,
       reset,
     }),
-    [state, ready, start, pickClub, answerEvent, answerFree, answerDynamic, playMatch, next, reset],
+    [state, ready, error, start, pickClub, answerEvent, answerFree, answerDynamic, playMatch, next, reset],
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
