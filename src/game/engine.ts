@@ -415,6 +415,34 @@ export function advance(state: GameState): GameState {
   s.beat += 1;
   ensureRuntime(s);
 
+  // FASE 6 · 0. Carrera terminada: solo queda el balance final.
+  if (s.retired) {
+    const sum = careerSummary(s);
+    s.pending = dyn("career_end", {
+      tier: sum.tier,
+      apps: sum.apps,
+      goals: sum.goals,
+      titles: sum.titles.length,
+      awards: sum.awards.length,
+      peak: sum.peakOverall,
+      wealth: sum.wealth,
+    });
+    return touch(s);
+  }
+
+  // FASE 6 · 0b. Mercado o retirada pendientes tras el cierre de temporada.
+  if (s.pendingMarket) {
+    s.pending = s.pendingMarket;
+    s.pendingMarket = null;
+    return touch(s);
+  }
+
+  // FASE 6 · 0c. Cambio de club: replanifica la temporada con el club nuevo.
+  if (s.flags["replan"] === 1) {
+    s.flags["replan"] = 0;
+    s.queue = makeSeasonPlan(s);
+  }
+
   for (let guard = 0; guard < 16; guard++) {
     // 1. Lesión sin diagnosticar: siempre manda.
     if (s.injury && !s.injury.treated) {
