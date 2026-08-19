@@ -1001,6 +1001,17 @@ function closeSeason(s: GameState): Outcome {
   const apps = season?.apps ?? 0;
   const rating = apps ? (season!.ratingSum / apps) : 0;
 
+  // FASE 6: títulos, premios, selección y economía antes de cambiar de curso.
+  const honours = seasonHonours(s);
+  const euro = europeanCompetition(s);
+  if (euro) note(s, `El club jugará ${euro} la próxima temporada.`, "good");
+  if (nationalCallup(s) && !s.achievements.includes("seleccion")) {
+    achieve(s, "seleccion");
+    milestone(s, "Primera convocatoria con la selección absoluta.");
+    note(s, "El seleccionador te llama por primera vez.", "gold");
+  }
+  const earned = accrueWealth(s);
+
   const growth = seasonGrowth(s);
   s.overall = clamp(s.overall + growth, 0, 100);
   s.xp = 0;
