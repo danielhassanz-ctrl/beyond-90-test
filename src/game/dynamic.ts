@@ -578,6 +578,8 @@ function resolveMarket(
       ],
     },
   };
+}
+
 /** Resolución de hilos: cada cierre puede abrir consecuencias diferidas. */
 function resolveThread(
   s: GameState,
