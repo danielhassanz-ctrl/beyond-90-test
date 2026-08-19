@@ -290,7 +290,7 @@ export function ensureRuntime(s: GameState): void {
 
 /* ============================ Plan de temporada ============================ */
 
-type KeySpec = { tag: NonNullable<Slot["tag"]>; tie?: boolean; opponentId?: string };
+type KeySpec = { tag: NonNullable<Slot["tag"]>; tie?: boolean; opponentId?: string; competition?: string };
 
 /**
  * Una final solo es plausible si el jugador está en un equipo competitivo, ya
@@ -316,6 +316,9 @@ function keyMatchSpecs(s: GameState): KeySpec[] {
     { tag: "scouts" },
     { tag: "decisive" },
   ];
+  // FASE 6: si el club juega competición europea, uno de los partidos clave lo es.
+  const euro = europeanCompetition(s);
+  if (euro) specs.splice(2, 0, { tag: "euro", tie: true, competition: euro });
   if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) specs.splice(3, 0, { tag: "exclub" });
   else if (finalPlausible(s) && Math.random() < 0.6) specs.push({ tag: "final", tie: true });
   else specs.push({ tag: "cup", tie: true });
@@ -347,7 +350,13 @@ export function makeSeasonPlan(s: GameState): Slot[] {
     const before = idx === 0 ? 2 : 2 + (Math.random() < 0.5 ? 1 : 0);
     for (let i = 0; i < before; i++) slots.push(narrative());
     if (idx === 1 || idx === 3 || idx === 5) slots.push({ kind: "agent" });
-    slots.push({ kind: "match", tag: k.tag, ...(k.tie ? { tie: true } : {}), ...(k.opponentId ? { opponentId: k.opponentId } : {}) });
+    slots.push({
+      kind: "match",
+      tag: k.tag,
+      ...(k.tie ? { tie: true } : {}),
+      ...(k.opponentId ? { opponentId: k.opponentId } : {}),
+      ...(k.competition ? { competition: k.competition } : {}),
+    });
     const remainder = idx === keys.length - 1 ? totalSim - per * (keys.length - 1) : per;
     slots.push({ kind: "sim", matches: Math.max(2, remainder) });
     slots.push(narrative());
@@ -1118,6 +1127,11 @@ export function checkAchievements(s: GameState): void {
   if (s.contract) achieve(s, "primer_contrato");
   if (s.stage === "reserves" || s.stage === "first") achieve(s, "filial");
   if (s.stage === "first") achieve(s, "entreno_mayores");
+  if ((s.titles ?? []).length >= 1) achieve(s, "primer_titulo");
+  if ((s.awards ?? []).length >= 1) achieve(s, "premio_individual");
+  if (s.overall >= 85) achieve(s, "media_85");
+  if ((s.awards ?? []).includes("Balón de Oro")) achieve(s, "balon_oro");
+  if (s.retired) achieve(s, "retirada");
 }
 
 export function achievementList(s: GameState) {
