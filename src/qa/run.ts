@@ -238,3 +238,40 @@ console.log("QA OK: sin incoherencias detectadas.");
   if (preseasonMissing > 3) console.log("AVISO: pretemporada poco presente");
   if (spread < 6) console.log("AVISO: resultados de carrera demasiado uniformes");
 }
+
+/* ---------- 5. Diversidad de la historia principal (rutas narrativas) ---------- */
+{
+  const signaturesStory = new Map<string, number>();
+  const routes = new Set<string>();
+  const N = 14;
+  for (let c = 0; c < N; c++) {
+    let s = createGame(player(c + 500));
+    s = chooseClub(s, s.offers[c % s.offers.length]!.clubId);
+    s = advance(s);
+    const storyIds: string[] = [];
+    let guard = 0;
+    while (storyIds.length < 5 && guard++ < 3000) {
+      const card = s.pending;
+      if (!card) { s = advance(s); continue; }
+      if (card.type === "match") s = resolveMatch(s, card.match, card.match.keyMoment ? card.match.keyMoment.options[0]!.id : undefined);
+      else if (card.type === "event") {
+        const ev = eventById(card.eventId)!;
+        if ((ev.priority ?? 0) >= 100) storyIds.push(card.eventId);
+        s = ev.freeform && guard % 3 === 0
+          ? resolveEventFree(s, card.eventId, "Voy a pelear mi sitio")
+          : resolveEvent(s, card.eventId, ev.choices[guard % ev.choices.length]!.id);
+      } else if (card.type === "dynamic") s = resolveDynamicCard(s, card, "ok");
+      else if (card.type === "season") s = advance(s);
+    }
+    routes.add(String((s as unknown as { storyRoute?: string }).storyRoute ?? "?"));
+    const sig = storyIds.join(">");
+    signaturesStory.set(sig, (signaturesStory.get(sig) ?? 0) + 1);
+  }
+  const top = Math.max(...signaturesStory.values());
+  const share = Math.round((top / N) * 100);
+  console.log(`Historia · firmas distintas ${signaturesStory.size}/${N} · rutas usadas ${routes.size} · firma más repetida ${share}%`);
+  if (share > 35) {
+    console.log(`FALLO: ${share}% de las carreras comparten la misma secuencia inicial de STORY`);
+    process.exit(1);
+  }
+}
