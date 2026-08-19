@@ -1,5 +1,17 @@
 import { ACHIEVEMENTS, AGENT_NAMES, clubById, clubDef } from "./data";
 import { buildOffers, derbyRivalOf } from "./clubs";
+import {
+  accrueWealth,
+  ageDecline,
+  ageGrowthFactor,
+  buildMarketProposal,
+  careerSummary,
+  europeanCompetition,
+  nationalCallup,
+  overallCeiling,
+  seasonHonours,
+  shouldRetire,
+} from "./career";
 import { randomSuitor, resolveDynamic } from "./dynamic";
 import { eventById, pickEvent } from "./events";
 import { interpretFree, INTENT_FEEDBACK } from "./interpret";
