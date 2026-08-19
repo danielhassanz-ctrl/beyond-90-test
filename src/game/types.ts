@@ -366,6 +366,18 @@ export interface GameState {
   memory: NarrativeMemory;
   contract: string | null;
   salary: number;
+  /** Fase 6: años restantes de contrato. */
+  contractYears?: number;
+  /** Fase 6: patrimonio acumulado en miles de €. */
+  wealth?: number;
+  /** Fase 6: títulos colectivos ganados. */
+  titles?: string[];
+  /** Fase 6: premios individuales. */
+  awards?: string[];
+  /** Fase 6: propuesta de mercado o escena de carrera pendiente. */
+  pendingMarket?: Card | null;
+  /** Fase 6: carrera finalizada. */
+  retired?: boolean;
   tablePosition: number;
   rel: Relationships;
   seenEvents: string[];
