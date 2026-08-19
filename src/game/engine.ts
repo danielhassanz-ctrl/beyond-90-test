@@ -1035,6 +1035,25 @@ function closeSeason(s: GameState): Outcome {
     achieve(s, promo.stage === "first" ? "filial" : "filial");
   }
 
+  // FASE 6: contrato, mercado y retirada. La escena se muestra tras el resumen.
+  if (s.contractYears && s.contractYears > 0) s.contractYears -= 1;
+  s.pendingMarket = null;
+  if (shouldRetire(s)) {
+    s.pendingMarket = dyn("retirement", { age: s.age, tier: careerSummary(s).tier });
+  } else {
+    const proposal = buildMarketProposal(s);
+    if (proposal && (proposal.kind !== "renewal" || (s.contractYears ?? 0) <= 1)) {
+      s.pendingMarket = dyn("market_offer", {
+        kind: proposal.kind,
+        clubId: proposal.clubId,
+        clubName: proposal.clubName,
+        salary: proposal.salary,
+        years: proposal.years,
+        reason: proposal.reason,
+      });
+    }
+  }
+
   s.seasons.push(newSeasonRecord(s));
   s.queue = makeSeasonPlan(s);
   s.beat = 0;
@@ -1047,11 +1066,15 @@ function closeSeason(s: GameState): Outcome {
   );
 
   const promoText = promo ? ` ${promo.text}` : "";
+  const honourText = honours.titles.length || honours.awards.length
+    ? ` Palmarés del curso: ${[...honours.titles, ...honours.awards].join(", ")}.`
+    : "";
+  const moneyText = earned > 0 ? ` Ahorro del año: ${earned}.000 € (patrimonio ${s.wealth ?? 0}.000 €).` : "";
   return {
     title: `Temporada ${season?.season ?? ""} cerrada`,
     text: apps
-      ? `${apps} partidos, ${season?.goals ?? 0} goles y ${season?.assists ?? 0} asistencias con valoración media ${rating.toFixed(1)}. Cumples ${s.age} años y tu media pasa a ${s.overall}.${promoText}`
-      : `Temporada sin minutos oficiales. Cumples ${s.age} años y el curso que viene no admite excusas.${promoText}`,
+      ? `${apps} partidos, ${season?.goals ?? 0} goles y ${season?.assists ?? 0} asistencias con valoración media ${rating.toFixed(1)}. Cumples ${s.age} años y tu media pasa a ${s.overall}.${honourText}${moneyText}${promoText}`
+      : `Temporada sin minutos oficiales. Cumples ${s.age} años y el curso que viene no admite excusas.${moneyText}${promoText}`,
     deltas,
     tone: "gold",
     ...(promo ? { share: shareCard(s, promo.title.toUpperCase()) } : {}),
