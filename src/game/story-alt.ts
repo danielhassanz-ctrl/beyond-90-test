@@ -43,7 +43,7 @@ export const STORY_ALT: GameEvent[] = [
       {
         id: "excusa",
         label: "Explicar que el bus no esperó",
-        outcome: `"Aquí nadie quiere razones", te suelta ${npcName(s as GameState, "assistant")} sin levantar la vista.`,
+        outcome: (s: GameState) => `"Aquí nadie quiere razones", te suelta ${npcName(s, "assistant")} sin levantar la vista.`,
         apply: (s) => { rel(s, "coach", -6); stat(s, "morale", -2); rel(s, "dressing", 4); },
       },
       {
