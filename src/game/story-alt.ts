@@ -78,7 +78,7 @@ export const STORY_ALT: GameEvent[] = [
       },
       {
         id: "capitan",
-        label: `Devolverle la broma a ${"el capitán"}`,
+        label: "Devolverle la broma al capitán",
         outcome: "Risas. Te sientas a su lado el resto del año.",
         apply: (s) => { rel(s, "dressing", 12); stat(s, "morale", 5); },
       },
