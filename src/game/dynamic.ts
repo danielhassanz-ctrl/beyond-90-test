@@ -692,8 +692,6 @@ function resolveThread(
 }
 
 
-  }
-}
 
 function remember(s: GameState, text: string) {
   if (!s.agent.memories.includes(text)) s.agent.memories.unshift(text);
