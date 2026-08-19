@@ -1,3 +1,4 @@
+import { moveToClub } from "./career";
 import { clubById } from "./data";
 import { interpretFree } from "./interpret";
 import { achieve, clamp, milestone, note, rel, stat } from "./mutate";
@@ -305,6 +306,52 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         ],
         freeform: { prompt: `¿Qué le contestas a ${agentName}?`, placeholder: "Escribe lo que quieras…" },
       };
+    /* ===================== FASE 6 · mercado y retirada ===================== */
+    case "market_offer": {
+      const kind = str(d, "kind", "transfer");
+      const clubName = str(d, "clubName", "un club");
+      const salary = num(d, "salary", 150);
+      const years = num(d, "years", 3);
+      return {
+        kicker: kind === "renewal" ? "Renovación" : kind === "loan" ? "Cesión" : "Mercado",
+        title:
+          kind === "renewal"
+            ? `El ${clubName} te pone un contrato nuevo`
+            : kind === "loan"
+              ? `Cesión al ${clubName}`
+              : `Oferta del ${clubName}`,
+        image: "office",
+        category: "market",
+        text: `${str(d, "reason", "Hay movimiento con tu nombre.")} Sobre la mesa: ${years} temporada${years > 1 ? "s" : ""} y ${salary}.000 € por curso. ${s.agent.present ? `${agentName} te avisa de que la ventana no estará abierta eternamente.` : "No tienes representante: decides tú y tu familia."}`,
+        choices: [
+          { id: "aceptar", label: kind === "renewal" ? "Renovar" : "Aceptar y firmar", hint: "Cambio real en tu carrera" },
+          { id: "rechazar", label: "Rechazar", hint: "Te quedas donde estás" },
+          ...(kind === "transfer" ? [{ id: "negociar", label: "Pedir más ficha", hint: "Puede caerse la operación" }] : []),
+        ],
+        freeform: { prompt: "¿Qué dices al respecto?", placeholder: "Habla claro…" },
+      };
+    }
+    case "retirement":
+      return {
+        kicker: "Final de camino",
+        title: "Hora de decidir el final",
+        image: "tunnel",
+        category: "story",
+        text: `${num(d, "age", 35)} años, el cuerpo pidiendo tregua y una carrera de ${str(d, "tier", "profesional")} detrás. El club te ofrece cerrar aquí, con homenaje y campo lleno.`,
+        choices: [
+          { id: "retirar", label: "Anunciar la retirada", hint: "Cierras tu carrera" },
+          { id: "seguir", label: "Aguantar una temporada más", hint: "Riesgo de acabar peor" },
+        ],
+      };
+    case "career_end":
+      return {
+        kicker: "Carrera cerrada",
+        title: str(d, "tier", "Carrera profesional"),
+        image: "celebration",
+        category: "story",
+        text: `${num(d, "apps")} partidos, ${num(d, "goals")} goles, ${num(d, "titles")} títulos, ${num(d, "awards")} premios individuales y una media máxima de ${num(d, "peak")}. Patrimonio: ${num(d, "wealth")}.000 €.`,
+        choices: [{ id: "ok", label: "Ver mi legado" }],
+      };
     case "thread": {
       const kind = str(d, "threadKind", "club_interest");
       const view = THREAD_VIEWS[kind];
@@ -422,8 +469,118 @@ export function resolveDynamic(
     }
     case "thread":
       return resolveThread(s, card, choiceId, interp);
+    case "market_offer":
+      return resolveMarket(s, card, choiceId, interp);
+    case "retirement": {
+      if (choiceId === "seguir") {
+        stat(s, "morale", 4);
+        return {
+          title: "Una más",
+          text: "Aprietas los dientes y firmas un año más. Puede salir bonito o puede salir triste.",
+          tone: "neutral",
+        };
+      }
+      s.retired = true;
+      milestone(s, "Anuncias tu retirada del fútbol profesional.");
+      note(s, "Te retiras. Campo lleno, camiseta al aire y final de historia.", "gold");
+      return {
+        title: "Se acabó",
+        text: "Lo anuncias en sala de prensa con la voz rota. El último domingo el estadio se pone en pie y ya nadie te pide nada más.",
+        tone: "gold",
+      };
+    }
+    case "career_end":
+      return {
+        title: str(d, "tier", "Carrera cerrada"),
+        text: "Tu historia ya está escrita. Consulta tu legado cuando quieras.",
+        tone: "gold",
+        share: {
+          headline: str(d, "tier", "CARRERA CERRADA"),
+          kicker: `${s.player.name} · ${num(d, "apps")} partidos`,
+          lines: [
+            { label: "Goles", value: String(num(d, "goals")) },
+            { label: "Títulos", value: String(num(d, "titles")) },
+            { label: "Premios", value: String(num(d, "awards")) },
+            { label: "Media máxima", value: String(num(d, "peak")) },
+          ],
+        },
+      };
     default:
       return { title: "Semana cerrada", text: "Sigues.", tone: "neutral" };
+  }
+}
+
+/** FASE 6 · Mercado: fichajes, renovaciones y cesiones con consecuencias reales. */
+function resolveMarket(
+  s: GameState,
+  card: DynamicCard,
+  choiceId: string,
+  interp: Interpretation | null,
+): DynamicResult {
+  const d = card.data;
+  const kind = str(d, "kind", "transfer");
+  const clubName = str(d, "clubName", "un club");
+  const clubId = str(d, "clubId");
+  const salary = num(d, "salary", 150);
+  const years = num(d, "years", 3);
+  const wantsOut = interp ? interp.intent === "ambitious" || interp.intent === "aggressive" : false;
+  const accept = choiceId === "aceptar" || (interp !== null && wantsOut && choiceId !== "rechazar");
+
+  if (choiceId === "negociar") {
+    const ok = s.overall >= 78 || s.agent.trust >= 65 ? Math.random() < 0.6 : Math.random() < 0.3;
+    if (ok) {
+      moveToClub(s, clubId, Math.round(salary * 1.15), years);
+      s.agent.trust = clamp(s.agent.trust + 5);
+      return { title: "Operación mejorada", text: `El ${clubName} sube la ficha y firmas. Tu representante se lleva su parte y su gloria.`, tone: "gold" };
+    }
+    s.agent.trust = clamp(s.agent.trust - 6);
+    return { title: "Se cae la operación", text: `El ${clubName} se retira al oír tus condiciones. Te quedas donde estabas y con la sensación de haber apurado demasiado.`, tone: "bad" };
+  }
+
+  if (!accept) {
+    if (!s.memory.rejectedClubs.includes(clubName)) s.memory.rejectedClubs.push(clubName);
+    rel(s, "fans", kind === "renewal" ? -6 : 6);
+    s.agent.trust = clamp(s.agent.trust - (kind === "renewal" ? 8 : 4));
+    return {
+      title: kind === "renewal" ? "Sin renovación" : "Dices no",
+      text:
+        kind === "renewal"
+          ? `Rechazas la renovación del ${clubName}. El club te lo apunta y el vestuario lo huele.`
+          : `Rechazas al ${clubName}. La grada lo celebra; ${s.agent.name} no tanto.`,
+      tone: kind === "renewal" ? "bad" : "neutral",
+    };
+  }
+
+  if (kind === "renewal") {
+    s.salary = salary;
+    s.contract = `${years} temporada${years > 1 ? "s" : ""} · ${salary}.000 €`;
+    s.contractYears = years;
+    rel(s, "fans", 6);
+    achieve(s, "primer_contrato");
+    milestone(s, `Renuevas con el ${clubName} hasta ${years} temporadas más.`);
+    return { title: "Renovado", text: `Firmas la renovación con el ${clubName}. Ficha de ${salary}.000 € y galones.`, tone: "gold" };
+  }
+
+  moveToClub(s, clubId, salary, years, kind === "loan");
+  return {
+    title: kind === "loan" ? "Cedido" : "Fichaje cerrado",
+    text:
+      kind === "loan"
+        ? `Sales cedido al ${clubName} para jugar cada domingo. Vuelves a empezar de cero en un vestuario que no te conoce.`
+        : `Firmas por el ${clubName}. Foto con la camiseta, ficha de ${salary}.000 € y una presión nueva.`,
+    tone: "gold",
+    share: {
+      headline: kind === "loan" ? "CESIÓN" : "FICHAJE",
+      kicker: `${s.player.name} · ${clubName}`,
+      lines: [
+        { label: "Contrato", value: `${years} temporada${years > 1 ? "s" : ""}` },
+        { label: "Ficha", value: `${salary}.000 €` },
+        { label: "Media", value: String(s.overall) },
+      ],
+    },
+  };
+}
+
 /** Resolución de hilos: cada cierre puede abrir consecuencias diferidas. */
 function resolveThread(
   s: GameState,
@@ -536,8 +693,6 @@ function resolveThread(
 }
 
 
-  }
-}
 
 function remember(s: GameState, text: string) {
   if (!s.agent.memories.includes(text)) s.agent.memories.unshift(text);

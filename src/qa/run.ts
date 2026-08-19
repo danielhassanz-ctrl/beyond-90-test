@@ -3,6 +3,7 @@
  * No forma parte del bundle de la app (no lo importa ninguna ruta).
  */
 import { CLUB_POOL, buildOffers, defById, validateMatchContext } from "@/game/clubs";
+import { careerSummary } from "@/game/career";
 import {
   advance,
   chooseClub,
@@ -274,4 +275,69 @@ console.log("QA OK: sin incoherencias detectadas.");
     console.log(`FALLO: ${share}% de las carreras comparten la misma secuencia inicial de STORY`);
     process.exit(1);
   }
+}
+
+/* ---------- 6. FASE 6 · carrera completa hasta la retirada ---------- */
+{
+  const tiers = new Map<string, number>();
+  const peaks: number[] = [];
+  const ages: number[] = [];
+  const clubsChanged: number[] = [];
+  let ballons = 0;
+  let titlesTotal = 0;
+  const problems6: string[] = [];
+  for (let c = 0; c < 10; c++) {
+    let s = createGame(player(c + 900));
+    s = chooseClub(s, s.offers[c % s.offers.length]!.clubId);
+    s = advance(s);
+    let guard = 0;
+    while (!s.retired && guard++ < 60000) {
+      const card = s.pending;
+      if (!card) { s = advance(s); continue; }
+      if (card.type === "match") {
+        const m = card.match;
+        const own = CLUB_POOL.find((d) => d.name === (m.ctx.isHome ? m.ctx.homeTeam : m.ctx.awayTeam));
+        if (!own) problems6.push("Partido sin club propio identificable");
+        else if (!validateMatchContext(m.ctx, own.name)) problems6.push(`Contexto incoherente: ${JSON.stringify(m.ctx)}`);
+        if (m.goals > m.goalsFor) problems6.push("Goles del jugador > goles del equipo");
+        s = resolveMatch(s, m, m.keyMoment ? m.keyMoment.options[0]!.id : undefined);
+      } else if (card.type === "event") {
+        const ev = eventById(card.eventId)!;
+        s = resolveEvent(s, card.eventId, ev.choices[guard % ev.choices.length]!.id);
+      } else if (card.type === "dynamic") {
+        const choice = card.kind === "retirement" ? (guard % 3 === 0 ? "seguir" : "retirar") : card.kind === "market_offer" ? (guard % 3 === 0 ? "rechazar" : "aceptar") : "ok";
+        s = resolveDynamicCard(s, card, choice);
+      } else if (card.type === "season") {
+        s = advance(s);
+      }
+      if (!Number.isFinite(s.overall) || s.overall < 20 || s.overall > 99) problems6.push(`OVR fuera de rango (${s.overall})`);
+      if (s.age >= 90) problems6.push("Edad imposible");
+    }
+    if (!s.retired) problems6.push(`Carrera ${c} no llega a la retirada`);
+    // Tras retirarse el juego sigue respondiendo sin crash.
+    s = advance(s);
+    if (!s.pending || s.pending.type !== "dynamic") problems6.push("Sin escena de cierre tras la retirada");
+    const sum = careerSummary(s);
+    tiers.set(sum.tier, (tiers.get(sum.tier) ?? 0) + 1);
+    peaks.push(sum.peakOverall);
+    ages.push(s.age);
+    clubsChanged.push(sum.clubs.length);
+    titlesTotal += sum.titles.length;
+    if (sum.awards.includes("Balón de Oro")) ballons++;
+  }
+  console.log(
+    `Fase 6 · retiradas 10/10 · edad final ${Math.min(...ages)}-${Math.max(...ages)} · media máx ${Math.min(...peaks)}-${Math.max(...peaks)} · clubes por carrera ${avg(clubsChanged)} · títulos totales ${titlesTotal} · Balones de Oro ${ballons}`,
+  );
+  console.log(`Fase 6 · finales: ${[...tiers.entries()].map(([k, v]) => `${k} x${v}`).join(" · ")}`);
+  if (peaks.some((p) => p > 95)) problems6.push("Media máxima irreal (>95)");
+  if (ballons > 3) problems6.push("Balón de Oro demasiado frecuente");
+  if (tiers.size < 2) console.log("AVISO: todas las carreras acaban igual");
+  if (problems6.length) {
+    const counts = new Map<string, number>();
+    for (const p of problems6) counts.set(p, (counts.get(p) ?? 0) + 1);
+    console.log(`PROBLEMAS FASE 6 (${problems6.length}):`);
+    for (const [msg, n] of [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)) console.log(` x${n} ${msg}`);
+    process.exit(1);
+  }
+  console.log("Fase 6 OK");
 }

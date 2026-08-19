@@ -83,4 +83,9 @@ export const ACHIEVEMENTS: { id: string; name: string; desc: string }[] = [
   { id: "idolo", name: "Uno de los nuestros", desc: "Llegar a 80 de afición." },
   { id: "internacional", name: "Internacional", desc: "Ser convocado por tu selección." },
   { id: "superviviente", name: "Superviviente", desc: "Volver de una lesión larga." },
+  { id: "primer_titulo", name: "Primer título", desc: "Ganar tu primer título colectivo." },
+  { id: "premio_individual", name: "Distinguido", desc: "Ganar un premio individual." },
+  { id: "media_85", name: "Media 85", desc: "Alcanzar una media de 85." },
+  { id: "balon_oro", name: "Balón de Oro", desc: "Ser el mejor jugador del mundo." },
+  { id: "retirada", name: "Fin del camino", desc: "Retirarte del fútbol profesional." },
 ];

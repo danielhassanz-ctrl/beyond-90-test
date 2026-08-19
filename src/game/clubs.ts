@@ -33,6 +33,18 @@ export interface ClubDef {
   minutes: number;
 }
 
+/** FASE 6 · Rivales europeos (solo para contextos de competición europea). */
+export const EURO_POOL: ClubDef[] = [
+  { id: "eu-ajax", name: "Ajax", short: "Ajax", city: "Ámsterdam", stadium: "Johan Cruijff Arena", colors: "Rojiblanco", region: "centro", tier: 1, prestige: 4, dev: 5, minutes: 1 },
+  { id: "eu-benfica", name: "Benfica", short: "Benfica", city: "Lisboa", stadium: "Estádio da Luz", colors: "Rojo", region: "centro", tier: 1, prestige: 4, dev: 4, minutes: 0 },
+  { id: "eu-inter", name: "Inter de Milán", short: "Inter", city: "Milán", stadium: "Giuseppe Meazza", colors: "Neroazzurro", region: "centro", tier: 1, prestige: 5, dev: 3, minutes: -2 },
+  { id: "eu-bayern", name: "Bayern de Múnich", short: "Bayern", city: "Múnich", stadium: "Allianz Arena", colors: "Rojo", region: "centro", tier: 1, prestige: 5, dev: 4, minutes: -2 },
+  { id: "eu-psg", name: "Paris Saint-Germain", short: "PSG", city: "París", stadium: "Parc des Princes", colors: "Azulgrana", region: "centro", tier: 1, prestige: 5, dev: 3, minutes: -2 },
+  { id: "eu-city", name: "Manchester City", short: "Man City", city: "Mánchester", stadium: "Etihad Stadium", colors: "Celeste", region: "centro", tier: 1, prestige: 5, dev: 3, minutes: -3 },
+  { id: "eu-roma", name: "AS Roma", short: "Roma", city: "Roma", stadium: "Stadio Olimpico", colors: "Granate", region: "centro", tier: 1, prestige: 4, dev: 3, minutes: -1 },
+  { id: "eu-brujas", name: "Club Brujas", short: "Brujas", city: "Brujas", stadium: "Jan Breydel", colors: "Azulnegro", region: "centro", tier: 1, prestige: 3, dev: 3, minutes: 1 },
+];
+
 export const CLUB_POOL: ClubDef[] = [
   // ---------------- Primera ----------------
   { id: "real-madrid", name: "Real Madrid", short: "Real Madrid", city: "Madrid", stadium: "Santiago Bernabéu", colors: "Blanco", region: "madrid", tier: 1, prestige: 5, dev: 5, minutes: -3 },
@@ -443,8 +455,13 @@ export function buildMatchContext(input: BuildCtxInput): MatchContext {
     const pool = opponentPool(stage, club);
     opponent = shuffle(pool)[0] ?? CLUB_POOL.find((d) => d.id !== club.id)!;
   }
+  if (tag === "euro") {
+    const euros = EURO_POOL.filter((d) => d.id !== club.id);
+    opponent = euros[Math.floor(Math.random() * euros.length)] ?? opponent;
+    competition = slot.competition ?? "UEFA Europa League";
+  }
   if (tag === "derby") derby = true;
-  if (tag === "cup" || tie) competition = "Copa del Rey";
+  else if (tag === "cup" || (tie && tag !== "euro")) competition = "Copa del Rey";
 
   const isHome = tag === "derby" ? Math.random() < 0.5 : Math.random() < 0.52;
   const homeDef = isHome ? club : opponent;

@@ -1,5 +1,17 @@
 import { ACHIEVEMENTS, AGENT_NAMES, clubById, clubDef } from "./data";
 import { buildOffers, derbyRivalOf } from "./clubs";
+import {
+  accrueWealth,
+  ageDecline,
+  ageGrowthFactor,
+  buildMarketProposal,
+  careerSummary,
+  europeanCompetition,
+  nationalCallup,
+  overallCeiling,
+  seasonHonours,
+  shouldRetire,
+} from "./career";
 import { randomSuitor, resolveDynamic } from "./dynamic";
 import { eventById, pickEvent } from "./events";
 import { interpretFree, INTENT_FEEDBACK } from "./interpret";
@@ -274,11 +286,18 @@ export function ensureRuntime(s: GameState): void {
   if (typeof s.careerSeed !== "number" || !Number.isFinite(s.careerSeed)) {
     s.careerSeed = Math.floor(Math.random() * 1_000_000) + 1;
   }
+  // FASE 6: campos de carrera profesional (saves antiguos incluidos).
+  if (!Array.isArray(s.titles)) s.titles = [];
+  if (!Array.isArray(s.awards)) s.awards = [];
+  if (typeof s.wealth !== "number" || !Number.isFinite(s.wealth)) s.wealth = 0;
+  if (typeof s.contractYears !== "number" || !Number.isFinite(s.contractYears)) s.contractYears = s.contract ? 2 : 0;
+  if (s.retired !== true) s.retired = false;
+  if (s.pendingMarket === undefined) s.pendingMarket = null;
 }
 
 /* ============================ Plan de temporada ============================ */
 
-type KeySpec = { tag: NonNullable<Slot["tag"]>; tie?: boolean; opponentId?: string };
+type KeySpec = { tag: NonNullable<Slot["tag"]>; tie?: boolean; opponentId?: string; competition?: string };
 
 /**
  * Una final solo es plausible si el jugador está en un equipo competitivo, ya
@@ -304,6 +323,9 @@ function keyMatchSpecs(s: GameState): KeySpec[] {
     { tag: "scouts" },
     { tag: "decisive" },
   ];
+  // FASE 6: si el club juega competición europea, uno de los partidos clave lo es.
+  const euro = europeanCompetition(s);
+  if (euro) specs.splice(2, 0, { tag: "euro", tie: true, competition: euro });
   if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) specs.splice(3, 0, { tag: "exclub" });
   else if (finalPlausible(s) && Math.random() < 0.6) specs.push({ tag: "final", tie: true });
   else specs.push({ tag: "cup", tie: true });
@@ -335,7 +357,13 @@ export function makeSeasonPlan(s: GameState): Slot[] {
     const before = idx === 0 ? 2 : 2 + (Math.random() < 0.5 ? 1 : 0);
     for (let i = 0; i < before; i++) slots.push(narrative());
     if (idx === 1 || idx === 3 || idx === 5) slots.push({ kind: "agent" });
-    slots.push({ kind: "match", tag: k.tag, ...(k.tie ? { tie: true } : {}), ...(k.opponentId ? { opponentId: k.opponentId } : {}) });
+    slots.push({
+      kind: "match",
+      tag: k.tag,
+      ...(k.tie ? { tie: true } : {}),
+      ...(k.opponentId ? { opponentId: k.opponentId } : {}),
+      ...(k.competition ? { competition: k.competition } : {}),
+    });
     const remainder = idx === keys.length - 1 ? totalSim - per * (keys.length - 1) : per;
     slots.push({ kind: "sim", matches: Math.max(2, remainder) });
     slots.push(narrative());
@@ -402,6 +430,34 @@ export function advance(state: GameState): GameState {
   s.lastOutcome = null;
   s.beat += 1;
   ensureRuntime(s);
+
+  // FASE 6 · 0. Carrera terminada: solo queda el balance final.
+  if (s.retired) {
+    const sum = careerSummary(s);
+    s.pending = dyn("career_end", {
+      tier: sum.tier,
+      apps: sum.apps,
+      goals: sum.goals,
+      titles: sum.titles.length,
+      awards: sum.awards.length,
+      peak: sum.peakOverall,
+      wealth: sum.wealth,
+    });
+    return touch(s);
+  }
+
+  // FASE 6 · 0b. Mercado o retirada pendientes tras el cierre de temporada.
+  if (s.pendingMarket) {
+    s.pending = s.pendingMarket;
+    s.pendingMarket = null;
+    return touch(s);
+  }
+
+  // FASE 6 · 0c. Cambio de club: replanifica la temporada con el club nuevo.
+  if (s.flags["replan"] === 1) {
+    s.flags["replan"] = 0;
+    s.queue = makeSeasonPlan(s);
+  }
 
   for (let guard = 0; guard < 16; guard++) {
     // 1. Lesión sin diagnosticar: siempre manda.
@@ -936,8 +992,10 @@ function seasonGrowth(s: GameState): number {
   const season = currentSeason(s);
   const apps = season?.apps ?? 0;
   const rating = apps ? (season!.ratingSum / apps) : 0;
-  const room = s.potential - s.overall;
-  const ageFactor = s.age <= 18 ? 1.3 : s.age <= 21 ? 1.1 : s.age <= 26 ? 0.8 : s.age <= 29 ? 0.4 : 0;
+  const ceiling = overallCeiling(s);
+  const room = ceiling - s.overall;
+  const ageFactor = ageGrowthFactor(s.age);
+  const decline = ageDecline(s);
 
   // +1 de MEDIA debe notarse: el crecimiento por temporada es contenido.
   let g = Math.min(2.6, s.xp / 95);
@@ -949,9 +1007,11 @@ function seasonGrowth(s: GameState): number {
   g -= apps === 0 ? 1.2 : 0;
   g *= ageFactor;
 
-  if (room <= 0) return s.age >= 30 ? -1 : Math.random() < 0.15 ? 1 : 0;
+  // Declive: a partir de los 31 la edad pesa más que el trabajo.
+  if (decline > 0) return -decline;
+  if (room <= 0) return Math.random() < 0.15 && ageFactor > 0 ? 1 : 0;
   const cap = s.age <= 21 ? 5 : 3;
-  return Math.max(apps === 0 ? -1 : 0, Math.round(Math.min(g, cap, room * 0.3)));
+  return Math.max(apps === 0 ? -1 : 0, Math.round(Math.min(g, cap, room * 0.35)));
 }
 
 function evaluatePromotion(s: GameState): { stage: Stage; title: string; text: string } | null {
@@ -985,6 +1045,17 @@ function closeSeason(s: GameState): Outcome {
   const apps = season?.apps ?? 0;
   const rating = apps ? (season!.ratingSum / apps) : 0;
 
+  // FASE 6: títulos, premios, selección y economía antes de cambiar de curso.
+  const honours = seasonHonours(s);
+  const euro = europeanCompetition(s);
+  if (euro) note(s, `El club jugará ${euro} la próxima temporada.`, "good");
+  if (nationalCallup(s) && !s.achievements.includes("internacional")) {
+    achieve(s, "internacional");
+    milestone(s, "Primera convocatoria con la selección absoluta.");
+    note(s, "El seleccionador te llama por primera vez.", "gold");
+  }
+  const earned = accrueWealth(s);
+
   const growth = seasonGrowth(s);
   s.overall = clamp(s.overall + growth, 0, 100);
   s.xp = 0;
@@ -1008,6 +1079,25 @@ function closeSeason(s: GameState): Outcome {
     achieve(s, promo.stage === "first" ? "filial" : "filial");
   }
 
+  // FASE 6: contrato, mercado y retirada. La escena se muestra tras el resumen.
+  if (s.contractYears && s.contractYears > 0) s.contractYears -= 1;
+  s.pendingMarket = null;
+  if (shouldRetire(s)) {
+    s.pendingMarket = dyn("retirement", { age: s.age, tier: careerSummary(s).tier });
+  } else {
+    const proposal = buildMarketProposal(s);
+    if (proposal && (proposal.kind !== "renewal" || (s.contractYears ?? 0) <= 1)) {
+      s.pendingMarket = dyn("market_offer", {
+        kind: proposal.kind,
+        clubId: proposal.clubId,
+        clubName: proposal.clubName,
+        salary: proposal.salary,
+        years: proposal.years,
+        reason: proposal.reason,
+      });
+    }
+  }
+
   s.seasons.push(newSeasonRecord(s));
   s.queue = makeSeasonPlan(s);
   s.beat = 0;
@@ -1020,11 +1110,15 @@ function closeSeason(s: GameState): Outcome {
   );
 
   const promoText = promo ? ` ${promo.text}` : "";
+  const honourText = honours.titles.length || honours.awards.length
+    ? ` Palmarés del curso: ${[...honours.titles, ...honours.awards].join(", ")}.`
+    : "";
+  const moneyText = earned > 0 ? ` Ahorro del año: ${earned}.000 € (patrimonio ${s.wealth ?? 0}.000 €).` : "";
   return {
     title: `Temporada ${season?.season ?? ""} cerrada`,
     text: apps
-      ? `${apps} partidos, ${season?.goals ?? 0} goles y ${season?.assists ?? 0} asistencias con valoración media ${rating.toFixed(1)}. Cumples ${s.age} años y tu media pasa a ${s.overall}.${promoText}`
-      : `Temporada sin minutos oficiales. Cumples ${s.age} años y el curso que viene no admite excusas.${promoText}`,
+      ? `${apps} partidos, ${season?.goals ?? 0} goles y ${season?.assists ?? 0} asistencias con valoración media ${rating.toFixed(1)}. Cumples ${s.age} años y tu media pasa a ${s.overall}.${honourText}${moneyText}${promoText}`
+      : `Temporada sin minutos oficiales. Cumples ${s.age} años y el curso que viene no admite excusas.${moneyText}${promoText}`,
     deltas,
     tone: "gold",
     ...(promo ? { share: shareCard(s, promo.title.toUpperCase()) } : {}),
@@ -1040,6 +1134,11 @@ export function checkAchievements(s: GameState): void {
   if (s.contract) achieve(s, "primer_contrato");
   if (s.stage === "reserves" || s.stage === "first") achieve(s, "filial");
   if (s.stage === "first") achieve(s, "entreno_mayores");
+  if ((s.titles ?? []).length >= 1) achieve(s, "primer_titulo");
+  if ((s.awards ?? []).length >= 1) achieve(s, "premio_individual");
+  if (s.overall >= 85) achieve(s, "media_85");
+  if ((s.awards ?? []).includes("Balón de Oro")) achieve(s, "balon_oro");
+  if (s.retired) achieve(s, "retirada");
 }
 
 export function achievementList(s: GameState) {
