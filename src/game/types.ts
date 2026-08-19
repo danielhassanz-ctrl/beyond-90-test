@@ -329,6 +329,8 @@ export interface GameState {
   version: number;
   /** Semilla de carrera: da personalidad propia al reparto de eventos y NPCs. */
   careerSeed?: number;
+  /** Ruta narrativa principal de esta carrera (persistida para coherencia). */
+  storyRoute?: string;
   createdAt: number;
   updatedAt: number;
   player: Player;

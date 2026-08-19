@@ -12,6 +12,7 @@ import {
   totalApps,
   totalGoals,
 } from "./mutate";
+import { BENCH_IDS, CALL_IDS, DEBUT_IDS, TALK_IDS, TRAIN_IDS, seenAny, storyWeight, variantOf } from "./story";
 import type { EventCategory, GameEvent, GameState } from "./types";
 
 const club = (s: GameState) => clubById(s.clubId).name;
@@ -27,7 +28,7 @@ const STORY: GameEvent[] = [
     title: "El primer entrenamiento",
     image: "training",
     priority: 300,
-    requires: (s) => s.age === 16,
+    requires: (s) => s.age === 16 && variantOf(s, "train", 3) === 0,
     text: (s) =>
       `Primer día en la ciudad deportiva del ${club(s)}. Botas nuevas que aún hacen daño, veinte chavales que también fueron los mejores de su barrio y un segundo entrenador con una carpeta que apunta todo. Nadie sabe tu nombre todavía.`,
     choices: [
@@ -70,7 +71,7 @@ const STORY: GameEvent[] = [
     title: "Conversación con el entrenador",
     image: "locker",
     priority: 280,
-    requires: (s) => s.age === 16 && !!s.seenEvents.includes("st_first_training"),
+    requires: (s) => s.age <= 17 && seenAny(s, TRAIN_IDS) && !seenAny(s, TALK_IDS) && variantOf(s, "talk", 3) === 0,
     text: (s) =>
       `El míster del juvenil te llama al despacho. "Aquí nadie juega por lo que hizo en su pueblo, ${nick(s)}. Dime qué quieres ser en seis meses."`,
     choices: [
@@ -111,7 +112,7 @@ const STORY: GameEvent[] = [
     title: "Los estudios y la mesa de la cocina",
     image: "family",
     priority: 260,
-    requires: (s) => s.age <= 17 && !!s.seenEvents.includes("st_coach_talk"),
+    requires: (s) => s.age <= 17 && (seenAny(s, TALK_IDS) || seenAny(s, TRAIN_IDS)),
     text: () =>
       `Tu madre pone la carpeta del instituto sobre la mesa. "El fútbol sí, pero el bachillerato también." Tu padre no dice nada, que es su forma de decir que está de acuerdo.`,
     choices: [
@@ -156,7 +157,8 @@ const STORY: GameEvent[] = [
     image: "locker",
     priority: 250,
     requires: (s) =>
-      s.stage === "youth" && !s.flags["listed"] && (s.rel.coach >= 52 || s.flags["semanas"]! >= 3),
+      s.stage === "youth" && !s.flags["listed"] && !seenAny(s, CALL_IDS) && variantOf(s, "call", 2) === 0 &&
+      (s.rel.coach >= 48 || (s.flags["semanas"] ?? 0) >= 3 || seenAny(s, TALK_IDS)),
     text: (s) =>
       `Papel impreso en la puerta del vestuario. Dieciocho nombres. El tuyo está el último, escrito a mano porque lo añadieron después. ${nick(s)} viaja el sábado.`,
     choices: [
@@ -193,7 +195,7 @@ const STORY: GameEvent[] = [
     title: "Noventa minutos sentado",
     image: "match",
     priority: 240,
-    requires: (s) => !!s.flags["listed"] && !s.flags["status"],
+    requires: (s) => !!s.flags["listed"] && !s.flags["status"] && !seenAny(s, BENCH_IDS) && variantOf(s, "bench", 2) === 0,
     text: () =>
       `Calientas tres veces. A la tercera te quitas el peto convencido, y el míster mira hacia otro lado. Final del partido. Cero minutos y el frío metido en las piernas.`,
     choices: [
@@ -236,7 +238,9 @@ const STORY: GameEvent[] = [
     title: "\"Calienta, entras tú\"",
     image: "tunnel",
     priority: 230,
-    requires: (s) => s.stage === "youth" && !!s.flags["listed"] && !s.flags["status"] && !!s.seenEvents.includes("st_bench"),
+    requires: (s) =>
+      s.stage === "youth" && !!s.flags["listed"] && !s.flags["status"] && seenAny(s, BENCH_IDS) &&
+      !seenAny(s, DEBUT_IDS) && variantOf(s, "debut", 3) === 0,
     text: (s) =>
       `Minuto 63, 1-0 abajo. El segundo entrenador grita tu apellido mal pronunciado. Te levantas y las piernas no son tuyas. Debut oficial con el juvenil del ${clubById(s.clubId).short}.`,
     choices: [
@@ -274,7 +278,7 @@ const STORY: GameEvent[] = [
     title: "El once de la pizarra",
     image: "locker",
     priority: 220,
-    requires: (s) => s.stage === "youth" && s.flags["status"] === 1 && totalApps(s) >= 6 && s.rel.coach >= 58,
+    requires: (s) => s.stage === "youth" && s.flags["status"] === 1 && totalApps(s) >= 6 && s.rel.coach >= 54,
     text: (s) =>
       `El míster dibuja el once en la pizarra y tu apellido aparece arriba, no en la lista de abajo. "${nick(s)} juega. Y juega hasta que me demuestre lo contrario."`,
     choices: [
@@ -974,10 +978,11 @@ const AMBIENT: GameEvent[] = [
 ];
 
 import { EXTRA_EVENTS } from "./events-extra";
+import { STORY_ALT } from "./story-alt";
 import { PHASE5_EVENTS, traitAffinity } from "./events-phase5";
 import { careerSeed, hash } from "./npc";
 
-export const ALL_EVENTS: GameEvent[] = [...STORY, ...AMBIENT, ...EXTRA_EVENTS, ...PHASE5_EVENTS];
+export const ALL_EVENTS: GameEvent[] = [...STORY, ...STORY_ALT, ...AMBIENT, ...EXTRA_EVENTS, ...PHASE5_EVENTS];
 
 export function eventById(id: string): GameEvent | undefined {
   return ALL_EVENTS.find((e) => e.id === id);
@@ -1087,8 +1092,17 @@ export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | 
 
   const maxPriority = Math.max(...pool.map((e) => e.priority ?? 0));
   if (maxPriority >= 100) {
-    const top = pool.filter((e) => (e.priority ?? 0) === maxPriority);
-    return top[Math.floor(Math.random() * top.length)] ?? null;
+    // Banda de hitos disponibles: la ruta narrativa y la semilla deciden el
+    // orden, no una cadena fija de prioridades.
+    const band = pool.filter((e) => (e.priority ?? 0) >= 100 && maxPriority - (e.priority ?? 0) <= 60);
+    const weights = band.map((e) => storyWeight(s, e.id) * (1 + ((e.priority ?? 100) - 100) / 90));
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < band.length; i++) {
+      r -= weights[i]!;
+      if (r <= 0) return band[i]!;
+    }
+    return band[band.length - 1] ?? null;
   }
 
   const ambient = pool.filter((e) => (e.priority ?? 0) < 100);
