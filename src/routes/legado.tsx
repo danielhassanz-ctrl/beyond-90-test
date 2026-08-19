@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Lock, Trophy } from "lucide-react";
 import { GameShell } from "@/components/game/GameShell";
+import { careerPhase, careerSummary, PHASE_LABEL } from "@/game/career";
 import { achievementList } from "@/game/engine";
 import type { GameState } from "@/game/types";
 import { cn } from "@/lib/utils";
