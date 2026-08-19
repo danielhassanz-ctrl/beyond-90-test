@@ -286,6 +286,13 @@ export function ensureRuntime(s: GameState): void {
   if (typeof s.careerSeed !== "number" || !Number.isFinite(s.careerSeed)) {
     s.careerSeed = Math.floor(Math.random() * 1_000_000) + 1;
   }
+  // FASE 6: campos de carrera profesional (saves antiguos incluidos).
+  if (!Array.isArray(s.titles)) s.titles = [];
+  if (!Array.isArray(s.awards)) s.awards = [];
+  if (typeof s.wealth !== "number" || !Number.isFinite(s.wealth)) s.wealth = 0;
+  if (typeof s.contractYears !== "number" || !Number.isFinite(s.contractYears)) s.contractYears = s.contract ? 2 : 0;
+  if (s.retired !== true) s.retired = false;
+  if (s.pendingMarket === undefined) s.pendingMarket = null;
 }
 
 /* ============================ Plan de temporada ============================ */
@@ -1042,8 +1049,8 @@ function closeSeason(s: GameState): Outcome {
   const honours = seasonHonours(s);
   const euro = europeanCompetition(s);
   if (euro) note(s, `El club jugará ${euro} la próxima temporada.`, "good");
-  if (nationalCallup(s) && !s.achievements.includes("seleccion")) {
-    achieve(s, "seleccion");
+  if (nationalCallup(s) && !s.achievements.includes("internacional")) {
+    achieve(s, "internacional");
     milestone(s, "Primera convocatoria con la selección absoluta.");
     note(s, "El seleccionador te llama por primera vez.", "gold");
   }
