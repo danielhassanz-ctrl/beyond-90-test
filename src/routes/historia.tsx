@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Share2 } from "lucide-react";
 import { ContextFeed } from "@/components/game/ContextFeed";
 import { GameShell } from "@/components/game/GameShell";
 import { SCENES, clubById } from "@/game/data";
@@ -9,7 +8,7 @@ import { eventById } from "@/game/events";
 import { seasonLabel, stageLabel } from "@/game/engine";
 import { useGame } from "@/game/store";
 import type { DynamicCard, EventCategory, GameState, MatchData, Outcome, ShareData } from "@/game/types";
-import { copyShareText, downloadCard, shareCareerCard } from "@/lib/share";
+import { ShareButton } from "@/components/game/ShareButton";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/historia")({
@@ -326,84 +325,6 @@ function Deltas({ outcome }: { outcome: Outcome }) {
         </li>
       ))}
     </ul>
-  );
-}
-
-function ShareButton({ state, share }: { state: GameState; share: ShareData }) {
-  const [status, setStatus] = useState<string | null>(null);
-  const [preview, setPreview] = useState<{ url: string; text: string; canDownload: boolean } | null>(null);
-
-  return (
-    <div className="mt-4">
-      <button
-        onClick={async () => {
-          setStatus("Generando tarjeta…");
-          const result = await shareCareerCard({
-            headline: share.headline,
-            kicker: share.kicker || `${seasonLabel(state.seasonIndex)} · ${stageLabel(state.stage)}`,
-            name: state.player.nickname || state.player.name,
-            club: clubById(state.clubId).name,
-            lines: share.lines,
-            avatar: state.player.avatar,
-          });
-          if (result.status === "shared") setStatus("Compartido.");
-          else if (result.status === "cancelled") setStatus(null);
-          else if (result.status === "preview") {
-            setStatus(null);
-            setPreview({ url: result.url, text: result.text, canDownload: result.canDownload });
-          } else {
-            const ok = await copyShareText(result.text);
-            setStatus(ok ? "Texto copiado al portapapeles." : "No se ha podido compartir.");
-          }
-        }}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-gold/60 px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em] text-gold active:scale-[0.99]"
-      >
-        <Share2 className="h-4 w-4" aria-hidden />
-        Compartir career card
-      </button>
-      {status && <p className="mt-2 text-center text-xs text-muted-foreground">{status}</p>}
-
-      {preview && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-black/90 p-5">
-          <img
-            src={preview.url}
-            alt="Career card de Beyond 90"
-            className="max-h-[62vh] w-auto rounded-xl border border-gold/40"
-          />
-          <p className="text-center text-xs text-muted-foreground">
-            Mantén pulsada la imagen para guardarla en tu galería.
-          </p>
-          <div className="flex w-full max-w-sm flex-col gap-2">
-            {preview.canDownload && (
-              <button
-                onClick={() => downloadCard(preview.url)}
-                className="rounded-xl border border-gold/60 px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em] text-gold"
-              >
-                Descargar PNG
-              </button>
-            )}
-            <button
-              onClick={async () => {
-                const ok = await copyShareText(preview.text);
-                setStatus(ok ? "Texto copiado al portapapeles." : "No se ha podido copiar.");
-              }}
-              className="rounded-xl border border-border px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em]"
-            >
-              Copiar texto
-            </button>
-            <button
-              onClick={() => {
-                URL.revokeObjectURL(preview.url);
-                setPreview(null);
-              }}
-              className="py-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 
