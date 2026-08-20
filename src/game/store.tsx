@@ -1,3 +1,5 @@
+import { rememberBeat } from "./archetype";
+import { eventById } from "./events";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   SAVE_KEY,
@@ -83,7 +85,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const start = useCallback((player: Player) => commit(createGame(player)), [commit]);
   const pickClub = useCallback((clubId: string) => apply((prev) => chooseClub(prev, clubId)), [apply]);
   const answerEvent = useCallback(
-    (eventId: string, choiceId: string) => apply((prev) => resolveEvent(prev, eventId, choiceId)),
+    (eventId: string, choiceId: string) =>
+      apply((prev) => {
+        const next = resolveEvent(prev, eventId, choiceId);
+        const label = eventById(eventId)?.choices.find((c) => c.id === choiceId)?.label;
+        if (label) rememberBeat(next, label);
+        return next;
+      }),
     [apply],
   );
   const answerFree = useCallback(
@@ -92,7 +100,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
   const answerDynamic = useCallback(
     (card: DynamicCard, choiceId: string, text?: string) =>
-      apply((prev) => resolveDynamicCard(prev, card, choiceId, text)),
+      apply((prev) => {
+        const next = resolveDynamicCard(prev, card, choiceId, text);
+        rememberBeat(next, text?.trim() || choiceId.replace(/_/g, " "));
+        return next;
+      }),
     [apply],
   );
   const playMatch = useCallback(
