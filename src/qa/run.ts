@@ -341,3 +341,41 @@ console.log("QA OK: sin incoherencias detectadas.");
   }
   console.log("Fase 6 OK");
 }
+
+/* ---------- 7. QA DE EXPERIENCIA · variedad de los 30 primeros eventos ---------- */
+{
+  const N = 8;
+  const runs: { ids: string[]; fams: string[]; titles: string[] }[] = [];
+  for (let c = 0; c < N; c++) {
+    let s = createGame(player(c + 500));
+    s = chooseClub(s, s.offers[c % s.offers.length]!.clubId);
+    s = advance(s);
+    const ids: string[] = []; const fams: string[] = []; const titles: string[] = [];
+    let guard = 0;
+    while (ids.length < 30 && guard++ < 6000) {
+      const card = s.pending;
+      if (!card) { s = advance(s); continue; }
+      if (card.type === "match") s = resolveMatch(s, card.match, card.match.keyMoment?.options[0]!.id);
+      else if (card.type === "event") {
+        const ev = eventById(card.eventId)!;
+        ids.push(ev.id); fams.push(ev.family ?? ev.id); titles.push(ev.title);
+        s = resolveEvent(s, ev.id, ev.choices[guard % ev.choices.length]!.id);
+      } else if (card.type === "dynamic") s = resolveDynamicCard(s, card, "ok");
+      else s = advance(s);
+    }
+    runs.push({ ids, fams, titles });
+  }
+  const overlap = (key: "ids" | "fams" | "titles") => {
+    let sum = 0, pairs = 0;
+    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+      const a = new Set(runs[i]![key]); const b = new Set(runs[j]![key]);
+      let shared = 0; for (const x of a) if (b.has(x)) shared++;
+      sum += shared / Math.max(1, Math.min(a.size, b.size)); pairs++;
+    }
+    return Math.round((sum / pairs) * 100);
+  };
+  console.log(`Experiencia · eventIds compartidos ${overlap("ids")}% · familias compartidas ${overlap("fams")}% · títulos compartidos ${overlap("titles")}%`);
+  const raros = runs.map((r) => r.ids.filter((id) => eventById(id)?.rare).length);
+  console.log(`Experiencia · escenas raras por carrera (30 escenas): ${raros.join(",")}`);
+  if (overlap("ids") > 55) { console.log("FALLO: los primeros 30 eventos se repiten demasiado entre carreras"); process.exit(1); }
+}
