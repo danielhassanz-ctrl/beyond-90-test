@@ -119,7 +119,7 @@ export function archetypeWeight(s: GameState, e: GameEvent): number {
 export function archetypeMuted(s: GameState, e: GameEvent): boolean {
   if ((e.priority ?? 0) >= 100) return false;
   const bias = archetypeMeta(s).bias[e.category ?? "life"] ?? 1;
-  const threshold = bias >= 1.5 ? 8 : bias <= 0.7 ? 45 : 22;
+  const threshold = bias >= 1.5 ? 6 : bias <= 0.7 ? 62 : 36;
   return hash(careerSeed(s), `arq:${archetypeOf(s)}:${e.id}`) % 100 < threshold;
 }
 
