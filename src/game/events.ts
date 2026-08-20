@@ -1,3 +1,4 @@
+import { archetypeMuted, archetypeWeight } from "./archetype";
 import { clubById } from "./data";
 import {
   achieve,
@@ -1040,6 +1041,7 @@ const inPreseason = (s: GameState): boolean => (s.flags["pretemporada"] ?? 0) ==
  */
 function mutedInCareer(s: GameState, e: GameEvent): boolean {
   if ((e.priority ?? 0) >= 100) return false;
+  if (archetypeMuted(s, e)) return true;
   if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 18;
   return hash(careerSeed(s), `mute:${e.id}`) % 100 < 32;
 }
@@ -1083,7 +1085,7 @@ function categoryBlocked(s: GameState, category: EventCategory | undefined): boo
 /** Peso de un evento: contexto de estado, rasgos, frescura y sesgo de carrera. */
 function weightOf(s: GameState, e: GameEvent): number {
   const cat = e.category ?? "life";
-  let w = traitAffinity(s, cat);
+  let w = traitAffinity(s, cat) * archetypeWeight(s, e);
   // Sesgo estable por carrera: cada partida tiene sus historias favoritas.
   w *= 0.65 + (hash(careerSeed(s), `w:${e.id}`) % 70) / 100;
   // Frescura: lo nunca visto pesa mucho más que lo repetido.

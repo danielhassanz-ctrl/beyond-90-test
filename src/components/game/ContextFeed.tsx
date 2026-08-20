@@ -1,3 +1,4 @@
+import { archetypeMeta, beatEcho } from "@/game/archetype";
 import { clubById } from "@/game/data";
 import { stageLabel, statusLabel, tierLabel } from "@/game/engine";
 import { currentSeason } from "@/game/mutate";
@@ -58,9 +59,18 @@ export function ContextFeed({ state }: { state: GameState }) {
   const prev = state.seasons.length > 1 ? state.seasons[state.seasons.length - 2]!.overall : null;
   const trend = prev !== null ? state.overall - prev : 0;
   const hint = nextHint(state);
+  const arq = archetypeMeta(state);
+  const echo = beatEcho(state);
 
   return (
     <section className="mt-4 space-y-3 pb-6">
+      <div className="panel p-3">
+        <p className="text-kicker">Tu perfil</p>
+        <p className="mt-1 font-cond text-sm font-semibold leading-snug">{arq.label}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{arq.blurb}</p>
+        {echo && <p className="mt-2 text-xs italic text-gold-soft">{echo}</p>}
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div className="panel p-3">
           <p className="text-kicker">Próxima cita</p>
