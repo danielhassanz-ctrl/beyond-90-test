@@ -980,9 +980,38 @@ const AMBIENT: GameEvent[] = [
 import { EXTRA_EVENTS } from "./events-extra";
 import { STORY_ALT } from "./story-alt";
 import { PHASE5_EVENTS, traitAffinity } from "./events-phase5";
+import { BANK_CLUB } from "./bank-club";
+import { BANK_LIFE } from "./bank-life";
 import { careerSeed, hash } from "./npc";
 
-export const ALL_EVENTS: GameEvent[] = [...STORY, ...STORY_ALT, ...AMBIENT, ...EXTRA_EVENTS, ...PHASE5_EVENTS];
+export const ALL_EVENTS: GameEvent[] = [
+  ...STORY,
+  ...STORY_ALT,
+  ...AMBIENT,
+  ...EXTRA_EVENTS,
+  ...PHASE5_EVENTS,
+  ...BANK_CLUB,
+  ...BANK_LIFE,
+];
+
+/** Familia narrativa de cada evento (plantilla), para evitar repetirla. */
+const FAMILY_BY_ID = new Map<string, string>(
+  ALL_EVENTS.map((e) => [e.id, e.family ?? `solo:${e.id}`] as const),
+);
+/** Escenas mínimas antes de repetir la misma familia narrativa. */
+const FAMILY_COOLDOWN = 9;
+
+function recentFamilies(s: GameState): Set<string> {
+  const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
+  const scene = s.sceneCount ?? 0;
+  const out = new Set<string>();
+  for (const h of history) {
+    if (scene - h.scene > FAMILY_COOLDOWN) break;
+    const fam = FAMILY_BY_ID.get(h.id);
+    if (fam) out.add(fam);
+  }
+  return out;
+}
 
 export function eventById(id: string): GameEvent | undefined {
   return ALL_EVENTS.find((e) => e.id === id);
@@ -1023,6 +1052,7 @@ export function eligibleEvents(s: GameState, allowMuted = false): GameEvent[] {
     return hit ? hit.scene : null;
   };
   const recentIds = new Set(history.slice(0, 3).map((h) => h.id));
+  const fams = recentFamilies(s);
   const pre = inPreseason(s);
   return ALL_EVENTS.filter((e) => {
     // Las escenas de pretemporada solo existen durante la pretemporada.
@@ -1031,6 +1061,8 @@ export function eligibleEvents(s: GameState, allowMuted = false): GameEvent[] {
     if (!safeRequires(e, s)) return false;
     // Nunca uno de los tres últimos templates.
     if (recentIds.has(e.id)) return false;
+    // Nunca la misma familia/plantilla narrativa en una ventana larga.
+    if ((e.priority ?? 0) < 100 && fams.has(e.family ?? `solo:${e.id}`)) return false;
     if (!allowMuted && mutedInCareer(s, e)) return false;
     // Los eventos estructurales (prioridad alta) solo se viven una vez.
     if ((e.priority ?? 0) >= 100) return !s.seenEvents.includes(e.id);
@@ -1062,6 +1094,8 @@ function weightOf(s: GameState, e: GameEvent): number {
   if (cat === "market" && (s.flags["mercado_abierto"] ?? 0) === 1) w *= 1.8;
   if (cat === "club" && s.stage !== "youth") w *= 1.3;
   if (cat === "press" && s.fame < 20) w *= 0.5;
+  // Lo raro/surrealista sorprende justamente porque casi nunca sale.
+  if (e.rare) w *= 0.12;
   return Math.max(0.05, w);
 }
 
