@@ -246,6 +246,10 @@ export interface GameEvent {
   text: string | ((s: GameState) => string);
   priority?: number;
   category?: EventCategory;
+  /** Familia narrativa (plantilla): el selector evita repetir familia. */
+  family?: string;
+  /** Situaciones raras/surrealistas: aparecen con peso muy bajo. */
+  rare?: boolean;
   freeform?: FreeFormSpec;
   /** Aplica la respuesta libre interpretada localmente. */
   applyFree?: (s: GameState, i: Interpretation) => void;
