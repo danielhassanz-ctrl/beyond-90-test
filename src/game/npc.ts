@@ -70,3 +70,9 @@ export function npcMood(s: GameState, key: string, delta: number): void {
   const n = npc(s, key);
   n.mood = Math.max(0, Math.min(100, Math.round(n.mood + delta)));
 }
+
+/** "Nombre, rol" para que el jugador nunca tenga que adivinar quién habla. */
+export function who(s: GameState, key: string): string {
+  const n = npc(s, key);
+  return `${n.name}, ${n.role.toLowerCase()}`;
+}
