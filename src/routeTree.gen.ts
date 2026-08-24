@@ -15,6 +15,7 @@ import { Route as CarreraRouteImport } from './routes/carrera'
 import { Route as HistoriaRouteImport } from './routes/historia'
 import { Route as LegadoRouteImport } from './routes/legado'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PatrimonioRouteImport } from './routes/patrimonio'
 import { Route as RelacionesRouteImport } from './routes/relaciones'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PatrimonioRoute = PatrimonioRouteImport.update({
+  id: '/patrimonio',
+  path: '/patrimonio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RelacionesRoute = RelacionesRouteImport.update({
   id: '/relaciones',
   path: '/relaciones',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/historia': typeof HistoriaRoute
   '/legado': typeof LegadoRoute
   '/onboarding': typeof OnboardingRoute
+  '/patrimonio': typeof PatrimonioRoute
   '/relaciones': typeof RelacionesRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/historia': typeof HistoriaRoute
   '/legado': typeof LegadoRoute
   '/onboarding': typeof OnboardingRoute
+  '/patrimonio': typeof PatrimonioRoute
   '/relaciones': typeof RelacionesRoute
 }
 export interface FileRoutesById {
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/historia': typeof HistoriaRoute
   '/legado': typeof LegadoRoute
   '/onboarding': typeof OnboardingRoute
+  '/patrimonio': typeof PatrimonioRoute
   '/relaciones': typeof RelacionesRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/historia'
     | '/legado'
     | '/onboarding'
+    | '/patrimonio'
     | '/relaciones'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/historia'
     | '/legado'
     | '/onboarding'
+    | '/patrimonio'
     | '/relaciones'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/historia'
     | '/legado'
     | '/onboarding'
+    | '/patrimonio'
     | '/relaciones'
   fileRoutesById: FileRoutesById
 }
@@ -118,6 +130,7 @@ export interface RootRouteChildren {
   HistoriaRoute: typeof HistoriaRoute
   LegadoRoute: typeof LegadoRoute
   OnboardingRoute: typeof OnboardingRoute
+  PatrimonioRoute: typeof PatrimonioRoute
   RelacionesRoute: typeof RelacionesRoute
 }
 
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/patrimonio': {
+      id: '/patrimonio'
+      path: '/patrimonio'
+      fullPath: '/patrimonio'
+      preLoaderRoute: typeof PatrimonioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/relaciones': {
       id: '/relaciones'
       path: '/relaciones'
@@ -182,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoriaRoute: HistoriaRoute,
   LegadoRoute: LegadoRoute,
   OnboardingRoute: OnboardingRoute,
+  PatrimonioRoute: PatrimonioRoute,
   RelacionesRoute: RelacionesRoute,
 }
 export const routeTree = rootRouteImport
