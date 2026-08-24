@@ -1,4 +1,6 @@
 import { moveToClub } from "./career";
+import { renderMoney, resolveMoney } from "./finance";
+import { renderConsequence, resolveConsequence } from "./consequences";
 import { clubById } from "./data";
 import { interpretFree } from "./interpret";
 import { achieve, clamp, milestone, note, rel, stat } from "./mutate";
@@ -146,6 +148,8 @@ const THREAD_VIEWS: Record<string, ThreadView> = {
 };
 
 export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
+  const ext = renderMoney(s, card) ?? renderConsequence(s, card);
+  if (ext) return ext;
 
   const d = card.data;
   const agentName = s.agent.name;
@@ -389,6 +393,8 @@ export function resolveDynamic(
 ): DynamicResult {
   const d = card.data;
   const interp: Interpretation | null = freeText !== undefined ? interpretFree(freeText) : null;
+  const ext = resolveMoney(s, card, choiceId) ?? resolveConsequence(s, card, choiceId);
+  if (ext) return ext;
 
   switch (card.kind) {
     case "injury_diagnosis":

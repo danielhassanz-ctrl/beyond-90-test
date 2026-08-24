@@ -33,6 +33,8 @@ import {
 } from "./mutate";
 import { closeThread, dueThread, maybeSpawnThreads, spawnThread } from "./threads";
 import { baselineOverall, computeRole, pick, simulateMatch, simulateRun, validateMatch, type SimRun } from "./match";
+import { ensureFinance, moneyCard, netWorth, seasonFinance } from "./finance";
+import { consequenceCard } from "./consequences";
 import type {
   AgentState,
   Card,
@@ -276,6 +278,8 @@ export function migrate(raw: unknown): GameState | null {
 
 /** Inicializa las estructuras de Fase 3 en partidas antiguas o corruptas. */
 export function ensureRuntime(s: GameState): void {
+  ensureFinance(s);
+  if (s.lastMatch === undefined) s.lastMatch = null;
   if (typeof s.sceneCount !== "number" || !Number.isFinite(s.sceneCount)) s.sceneCount = 0;
   if (!Array.isArray(s.recent)) s.recent = [];
   if (!Array.isArray(s.threads)) s.threads = [];
@@ -470,6 +474,13 @@ export function advance(state: GameState): GameState {
       return touch(s);
     }
 
+    // 1b. Consecuencia de una relación en el límite: el mundo reacciona.
+    const cons = consequenceCard(s);
+    if (cons) {
+      s.pending = cons;
+      return touch(s);
+    }
+
     // 2. Regreso pendiente.
     if (!s.injury && s.flags["volvio_pendiente"] === 1) {
       s.flags["volvio_pendiente"] = 0;
@@ -548,6 +559,15 @@ export function advance(state: GameState): GameState {
     ) {
       s.pending = dyn("contract", { years: 3, salary: s.stage === "first" ? 220 : 90 });
       return touch(s);
+    }
+
+    // Decisiones de dinero: solo cuando la economía las justifica.
+    if (slot.kind === "life" || slot.kind === "event") {
+      const money = moneyCard(s);
+      if (money) {
+        s.pending = money;
+        return touch(s);
+      }
     }
 
     s.flags["pretemporada"] = slot.category === "preseason" ? 1 : 0;
@@ -866,6 +886,7 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
 
   // Fuente única de verdad: se validan invariantes antes de mostrar nada.
   const final = validateMatch(m);
+  s.lastMatch = final;
 
   const season = currentSeason(s);
   const won = final.shootout ? final.shootout.us > final.shootout.them : final.goalsFor > final.goalsAgainst;
@@ -1054,7 +1075,8 @@ function closeSeason(s: GameState): Outcome {
     milestone(s, "Primera convocatoria con la selección absoluta.");
     note(s, "El seleccionador te llama por primera vez.", "gold");
   }
-  const earned = accrueWealth(s);
+  const fin = seasonFinance(s);
+  const earned = Math.max(0, fin.net);
 
   const growth = seasonGrowth(s);
   s.overall = clamp(s.overall + growth, 0, 100);
