@@ -15,6 +15,8 @@ import {
   resolveMatch,
 } from "@/game/engine";
 import { eventById } from "@/game/events";
+import { matchCoherenceErrors } from "@/game/match";
+import { ensureFinance, netWorth } from "@/game/finance";
 import type { GameState, Player } from "@/game/types";
 
 const problems: string[] = [];
@@ -64,7 +66,15 @@ if (CLUB_POOL.some((c) => c.id === "sevilla-atl")) fail("Sigue existiendo el id 
 
 /* ---------- 2. Carreras completas ---------- */
 const CAREERS = 22;
-const stats = { keyMatches: [] as number[], ovr: [] as number[], forms: [] as number[], rels: [] as number[] };
+const stats = {
+  keyMatches: [] as number[],
+  ovr: [] as number[],
+  forms: [] as number[],
+  rels: [] as number[],
+  wealth: [] as number[],
+  consequences: [] as number[],
+  money: [] as number[],
+};
 
 for (let c = 0; c < CAREERS; c++) {
   let s = createGame(player(c));
@@ -74,6 +84,8 @@ for (let c = 0; c < CAREERS; c++) {
 
   let seasons = 0;
   let keyThisSeason = 0;
+  let consequences = 0;
+  let moneyScenes = 0;
   let guard = 0;
   const seenEventScene = new Map<string, number>();
 
@@ -97,6 +109,10 @@ for (let c = 0; c < CAREERS; c++) {
       if (m.minutes === 0 && (m.goals || m.assists || m.rating)) fail("Stats sin minutos");
       if (!Number.isFinite(m.rating)) fail("Rating NaN");
       s = resolveMatch(s, m, m.keyMoment ? m.keyMoment.options[0]!.id : undefined);
+      // Fuente de verdad: el partido guardado tras resolver debe ser coherente.
+      const done = s.lastMatch;
+      if (!done) fail("resolveMatch no persiste lastMatch");
+      else for (const e of matchCoherenceErrors(done)) fail(`Partido incoherente: ${e}`);
     } else if (card.type === "event") {
       const ev = eventById(card.eventId);
       if (!ev) fail(`Evento desconocido ${card.eventId}`);
@@ -112,6 +128,8 @@ for (let c = 0; c < CAREERS; c++) {
         s = resolveEvent(s, card.eventId, ev!.choices[guard % ev!.choices.length]!.id);
       }
     } else if (card.type === "dynamic") {
+      if (card.kind.startsWith("cons_")) consequences += 1;
+      if (card.kind === "money") moneyScenes += 1;
       if (card.kind === "match_flash") {
         const k = String(card.data["kind"] ?? "");
         if (["brace", "winner", "form"].includes(k)) fail(`Bloque simulado positivo convertido en escena (${k})`);
@@ -129,6 +147,14 @@ for (let c = 0; c < CAREERS; c++) {
     if (s.form < 4 || s.form > 92) fail(`Forma extrema (${s.form})`);
   }
 
+  stats.consequences.push(consequences);
+  stats.money.push(moneyScenes);
+  const fin = ensureFinance(s);
+  if (fin.cash < 0) fail("Saldo negativo");
+  if (netWorth(s) !== (s.wealth ?? 0)) fail("Patrimonio neto y wealth desincronizados");
+  if (fin.history.length < 3) fail(`Sin cierre económico por temporada (${fin.history.length})`);
+  if (s.stage !== "youth" && fin.annualSalary < s.salary) fail("Ficha anual inferior al salario");
+  stats.wealth.push(netWorth(s));
   stats.ovr.push(s.overall);
   stats.forms.push(s.form);
   stats.rels.push(Math.max(s.rel.coach, s.rel.fans, s.rel.dressing));
@@ -139,6 +165,10 @@ const keyOut = stats.keyMatches.filter((k) => k < 4 || k > 8);
 if (keyOut.length > stats.keyMatches.length * 0.25) fail(`Partidos clave/temporada fuera de 4-8 en ${keyOut.length} casos`);
 if (avg(stats.ovr) > 82) fail(`OVR medio disparado tras 3 temporadas (${avg(stats.ovr)})`);
 if (stats.rels.some((r) => r >= 95)) fail("Relación llega a 95+ en 3 temporadas");
+if (stats.wealth.every((w) => w === 0)) fail("El patrimonio nunca progresa");
+console.log(
+  `Patrimonio medio 3 temporadas: ${avg(stats.wealth)}.000 € · consecuencias por carrera ${avg(stats.consequences)} · escenas de dinero ${avg(stats.money)}`,
+);
 
 /* ---------- 3. Migración de saves antiguos ---------- */
 const legacy = {
