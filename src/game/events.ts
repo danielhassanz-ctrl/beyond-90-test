@@ -983,6 +983,7 @@ import { STORY_ALT } from "./story-alt";
 import { PHASE5_EVENTS, traitAffinity } from "./events-phase5";
 import { BANK_CLUB } from "./bank-club";
 import { BANK_LIFE } from "./bank-life";
+import { BANK_V21 } from "./bank-v21";
 import { careerSeed, hash } from "./npc";
 
 export const ALL_EVENTS: GameEvent[] = [
@@ -993,6 +994,7 @@ export const ALL_EVENTS: GameEvent[] = [
   ...PHASE5_EVENTS,
   ...BANK_CLUB,
   ...BANK_LIFE,
+  ...BANK_V21,
 ];
 
 /** Familia narrativa de cada evento (plantilla), para evitar repetirla. */
@@ -1039,9 +1041,26 @@ const inPreseason = (s: GameState): boolean => (s.flags["pretemporada"] ?? 0) ==
  * (careerSeed). Así dos partidas distintas ven repartos de historias distintos
  * y no solo un orden distinto.
  */
+/* Build de prueba V2.1: los templates ambientales antiguos más repetidos se
+ * silencian en gran medida durante las 3 primeras temporadas para que el banco
+ * nuevo (v21_) sea la columna vertebral de la experiencia. */
+const LEGACY_HEAVY = ["am_", "ff_", "gz_"];
+const LEGACY_MID = ["f5_", "l5_", "m5_", "ps_"];
+function legacyQuiet(s: GameState, e: GameEvent): boolean {
+  if (e.id.startsWith("v21_")) return false;
+  if ((s.seasonIndex ?? 0) > 2) return false;
+  const roll = hash(careerSeed(s), `q21:${e.id}`) % 100;
+  if (LEGACY_HEAVY.some((p) => e.id.startsWith(p))) return roll < 85;
+  if (LEGACY_MID.some((p) => e.id.startsWith(p))) return roll < 70;
+  if (e.id.startsWith("nb_")) return roll < 35;
+  return false;
+}
+
 function mutedInCareer(s: GameState, e: GameEvent): boolean {
   if ((e.priority ?? 0) >= 100) return false;
   if (archetypeMuted(s, e)) return true;
+  if (legacyQuiet(s, e)) return true;
+  if (e.id.startsWith("v21_")) return hash(careerSeed(s), `mute21:${e.id}`) % 100 < 12;
   if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 18;
   return hash(careerSeed(s), `mute:${e.id}`) % 100 < 32;
 }
@@ -1098,6 +1117,8 @@ function weightOf(s: GameState, e: GameEvent): number {
   if (cat === "press" && s.fame < 20) w *= 0.5;
   // Lo raro/surrealista sorprende justamente porque casi nunca sale.
   if (e.rare) w *= 0.12;
+  // Build de prueba V2.1: el banco nuevo domina la experiencia.
+  if (e.id.startsWith("v21_")) w *= 3.2;
   return Math.max(0.05, w);
 }
 
