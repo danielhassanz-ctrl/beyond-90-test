@@ -1050,9 +1050,9 @@ function legacyQuiet(s: GameState, e: GameEvent): boolean {
   if (e.id.startsWith("v21_")) return false;
   if ((s.seasonIndex ?? 0) > 2) return false;
   const roll = hash(careerSeed(s), `q21:${e.id}`) % 100;
-  if (LEGACY_HEAVY.some((p) => e.id.startsWith(p))) return roll < 85;
-  if (LEGACY_MID.some((p) => e.id.startsWith(p))) return roll < 70;
-  if (e.id.startsWith("nb_")) return roll < 35;
+  if (LEGACY_HEAVY.some((p) => e.id.startsWith(p))) return roll < 95;
+  if (LEGACY_MID.some((p) => e.id.startsWith(p))) return roll < 85;
+  if (e.id.startsWith("nb_")) return roll < 55;
   return false;
 }
 
@@ -1060,7 +1060,7 @@ function mutedInCareer(s: GameState, e: GameEvent): boolean {
   if ((e.priority ?? 0) >= 100) return false;
   if (archetypeMuted(s, e)) return true;
   if (legacyQuiet(s, e)) return true;
-  if (e.id.startsWith("v21_")) return hash(careerSeed(s), `mute21:${e.id}`) % 100 < 12;
+  if (e.id.startsWith("v21_")) return hash(careerSeed(s), `mute21:${e.id}`) % 100 < 22;
   if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 18;
   return hash(careerSeed(s), `mute:${e.id}`) % 100 < 32;
 }
@@ -1118,7 +1118,7 @@ function weightOf(s: GameState, e: GameEvent): number {
   // Lo raro/surrealista sorprende justamente porque casi nunca sale.
   if (e.rare) w *= 0.12;
   // Build de prueba V2.1: el banco nuevo domina la experiencia.
-  if (e.id.startsWith("v21_")) w *= 3.2;
+  if (e.id.startsWith("v21_")) w *= 5.5;
   return Math.max(0.05, w);
 }
 
