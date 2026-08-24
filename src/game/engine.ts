@@ -1,7 +1,6 @@
 import { ACHIEVEMENTS, AGENT_NAMES, clubById, clubDef } from "./data";
 import { buildOffers, derbyRivalOf } from "./clubs";
 import {
-  accrueWealth,
   ageDecline,
   ageGrowthFactor,
   buildMarketProposal,
@@ -1135,7 +1134,7 @@ function closeSeason(s: GameState): Outcome {
   const honourText = honours.titles.length || honours.awards.length
     ? ` Palmarés del curso: ${[...honours.titles, ...honours.awards].join(", ")}.`
     : "";
-  const moneyText = earned > 0 ? ` Ahorro del año: ${earned}.000 € (patrimonio ${s.wealth ?? 0}.000 €).` : "";
+  const moneyText = ` Balance económico: ${fin.income}.000 € ingresados, ${fin.spend}.000 € de gastos${earned > 0 ? `, ${earned}.000 € ahorrados` : ""}. Patrimonio neto: ${netWorth(s)}.000 €.`;
   return {
     title: `Temporada ${season?.season ?? ""} cerrada`,
     text: apps
