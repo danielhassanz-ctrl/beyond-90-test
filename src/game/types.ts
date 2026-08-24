@@ -382,6 +382,10 @@ export interface GameState {
   awards?: string[];
   /** Fase 6: propuesta de mercado o escena de carrera pendiente. */
   pendingMarket?: Card | null;
+  /** Patrimonio: caja, propiedades, patrocinio y compromisos (miles de €). */
+  finance?: import("./finance").Finance | null;
+  /** Último partido resuelto: única fuente de verdad para la UI del resultado. */
+  lastMatch?: MatchData | null;
   /** Fase 6: carrera finalizada. */
   retired?: boolean;
   tablePosition: number;

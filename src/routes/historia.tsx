@@ -50,7 +50,7 @@ function Story({ state }: { state: GameState }) {
       <OutcomeCard
         state={state}
         outcome={outcome}
-        match={lastMatch}
+        match={lastMatch ? (state.lastMatch ?? lastMatch) : null}
         onNext={() => {
           setLastMatch(null);
           setPhase("pre");
