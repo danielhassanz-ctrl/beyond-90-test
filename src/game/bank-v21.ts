@@ -668,7 +668,7 @@ export const BANK_V21: GameEvent[] = [
    * ARCO 9 · LA CLÁUSULA DEL ABUELO
    * ------------------------------------------------------------------ */
   {
-    id: "v21_cláusula_1",
+    id: "v21_clausula_1",
     kicker: "Agente · Capítulo 1",
     title: "Una cláusula rara en el contrato",
     image: "agent",
