@@ -286,17 +286,50 @@ export function validateMatch(m: MatchData): MatchData {
     m.shootout = undefined;
   }
 
-  // Relato coherente: cuenta de goles narrados == marcador.
-  const narratedFor = m.moments.filter((x) => x.text.includes("Gol tuyo") || x.text.includes("Gol de tu equipo")).length
-    + m.moments.filter((x) => x.text.includes("Asistencia tuya")).length;
-  if (narratedFor > m.goalsFor + m.assists) {
-    m.moments = m.moments.filter((x) => !x.text.includes("Gol de tu equipo")).slice(0, 12);
-  }
-  m.moments = m.moments
+  // Relato coherente: la cronología SIEMPRE se reconstruye desde el marcador
+  // final, de modo que lo que el jugador lee coincide con lo que ocurrió.
+  rebuildTimeline(m);
+  return m;
+}
+
+const GOAL_MARKS = ["Gol tuyo", "Gol de tu equipo", "Asistencia tuya", "Gol del "];
+
+/** Reescribe los momentos de gol para que cuadren exactamente con el marcador. */
+export function rebuildTimeline(m: MatchData): MatchData {
+  const others = (m.moments ?? []).filter((x) => !GOAL_MARKS.some((g) => x.text.includes(g)));
+  const goals: MatchData["moments"] = [];
+  const mine = m.minutes > 0 ? m.goals : 0;
+  const assists = m.minutes > 0 ? m.assists : 0;
+  const teamOther = Math.max(0, m.goalsFor - mine - assists);
+  const lo = m.minutes > 0 ? Math.max(1, 91 - m.minutes) : 1;
+  const at = () => rnd(lo, 90);
+  for (let i = 0; i < mine; i++) goals.push({ minute: at(), text: "Gol tuyo.", tone: "good" });
+  for (let i = 0; i < assists; i++) goals.push({ minute: at(), text: "Asistencia tuya.", tone: "good" });
+  for (let i = 0; i < teamOther; i++) goals.push({ minute: rnd(1, 90), text: "Gol de tu equipo.", tone: "neutral" });
+  for (let i = 0; i < m.goalsAgainst; i++)
+    goals.push({ minute: rnd(1, 90), text: `Gol del ${m.ctx.opponentShort}.`, tone: "bad" });
+  m.moments = [...others, ...goals]
     .map((x) => ({ ...x, minute: Math.max(1, Math.min(90, Math.round(x.minute))) }))
     .sort((a, b) => a.minute - b.minute)
-    .slice(0, 12);
+    .slice(0, 14);
   return m;
+}
+
+/** QA: devuelve incoherencias entre marcador, estadísticas y cronología. */
+export function matchCoherenceErrors(m: MatchData): string[] {
+  const e: string[] = [];
+  if (m.goals + m.assists > m.goalsFor) e.push("goles+asistencias del jugador > goles del equipo");
+  if (m.minutes === 0 && (m.goals || m.assists || m.rating)) e.push("stats sin minutos");
+  const mine = m.moments.filter((x) => x.text.includes("Gol tuyo")).length;
+  const ast = m.moments.filter((x) => x.text.includes("Asistencia tuya")).length;
+  const team = m.moments.filter((x) => x.text.includes("Gol de tu equipo")).length;
+  const against = m.moments.filter((x) => x.text.includes(`Gol del ${m.ctx.opponentShort}`)).length;
+  if (mine !== m.goals) e.push(`cronología: ${mine} goles narrados vs ${m.goals}`);
+  if (ast !== m.assists) e.push(`cronología: ${ast} asistencias narradas vs ${m.assists}`);
+  if (mine + ast + team !== m.goalsFor) e.push(`cronología a favor ${mine + ast + team} vs ${m.goalsFor}`);
+  if (against !== m.goalsAgainst) e.push(`cronología en contra ${against} vs ${m.goalsAgainst}`);
+  if (m.competition !== m.ctx.competition || m.opponent !== m.ctx.opponent) e.push("etiquetas fuera del contexto único");
+  return e;
 }
 
 /* ==================== Simulación en SEGUNDO PLANO ==================== */
