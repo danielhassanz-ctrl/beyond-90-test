@@ -5,9 +5,16 @@
  */
 import { who } from "./npc";
 import { clubById } from "./data";
-import { clamp, milestone, note, rel, remember, stat } from "./mutate";
+import { clamp, milestone, note, rel, stat } from "./mutate";
 import type { DynamicCard, GameState } from "./types";
 import type { DynamicResult, DynamicView } from "./dynamic";
+
+function remember(s: GameState, text: string): void {
+  if (!s.agent.memories.includes(text)) s.agent.memories.unshift(text);
+  s.agent.memories = s.agent.memories.slice(0, 10);
+  if (!s.memory.conflicts.includes(text)) s.memory.conflicts.unshift(text);
+  s.memory.conflicts = s.memory.conflicts.slice(0, 12);
+}
 
 type Kind = "cons_bench" | "cons_isolation" | "cons_agent_break" | "cons_family_break" | "cons_fans_war";
 
