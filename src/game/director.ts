@@ -1798,10 +1798,20 @@ export function directorNewSeason(s: GameState): void {
     return !!arc && a.chapter < arc.chapters.length;
   });
   const pool = ARCS.filter((a) => !d.completed.includes(a.id) && !d.active.some((x) => x.id === a.id) && a.requires(s));
-  const scored = pool
-    .map((a) => ({ id: a.id, w: a.weight(s) + (hash(careerSeed(s), `${a.id}${s.seasonIndex}`) % 14) }))
-    .sort((x, y) => y.w - x.w);
-  d.candidates = scored.slice(0, 5).map((x) => x.id);
+  // Sorteo ponderado: la misma situación no produce siempre los mismos arcos.
+  const bag = pool.map((a) => ({ id: a.id, w: Math.max(1, a.weight(s)) + (hash(careerSeed(s), `${a.id}${s.seasonIndex}${d.profile}`) % 26) }));
+  const chosen: string[] = [];
+  const target = 3 + (hash(careerSeed(s), `ncand${s.seasonIndex}`) % 3);
+  let salt = hash(careerSeed(s), `pickarc${s.seasonIndex}`);
+  while (bag.length > 0 && chosen.length < target) {
+    const total = bag.reduce((acc, x) => acc + x.w, 0);
+    salt = (salt * 1103515245 + 12345) % 2147483647;
+    let roll = salt % total;
+    let i = 0;
+    while (i < bag.length - 1 && roll >= bag[i]!.w) { roll -= bag[i]!.w; i++; }
+    chosen.push(bag.splice(i, 1)[0]!.id);
+  }
+  d.candidates = chosen;
   // Perfil oculto: la trayectoria no es igual para todos.
   if (d.profile === "tardio" && s.age <= 20) s.xp = Math.round(s.xp * 0.85);
   if (d.profile === "prodigio" && s.age <= 21) s.xp = Math.round(s.xp * 1.12);
@@ -1811,11 +1821,14 @@ export function directorNewSeason(s: GameState): void {
 function openArc(s: GameState): ActiveArc | null {
   const d = directorState(s);
   if (d.active.length >= 3) return null;
-  for (const id of d.candidates) {
-    if (d.active.some((a) => a.id === id) || d.completed.includes(id)) continue;
+  const eligible = d.candidates.filter((id) => {
+    if (d.active.some((a) => a.id === id) || d.completed.includes(id)) return false;
     const arc = arcById(id);
-    if (!arc || !arc.requires(s)) continue;
-    if (familyBlocked(s, arc.family)) continue;
+    return !!arc && arc.requires(s) && !familyBlocked(s, arc.family);
+  });
+  if (eligible.length > 0) {
+    const id = eligible[hash(careerSeed(s), `open${s.sceneCount ?? 0}`) % eligible.length]!;
+    const arc = arcById(id)!;
     const active: ActiveArc = { id, chapter: 0, opened: s.sceneCount ?? 0, params: arc.open ? arc.open(s) : {} };
     d.active.push(active);
     d.candidates = d.candidates.filter((c) => c !== id);
@@ -1873,6 +1886,22 @@ export function directorCard(s: GameState): DynamicCard | null {
   return null;
 }
 
+const CALLBACK_TITLES = [
+  "Esto ya lo habías empezado tú",
+  "Vuelve una conversación pendiente",
+  "Alguien te lo recuerda hoy",
+  "La factura de una decisión",
+  "No se había cerrado",
+];
+
+const CALLBACK_WRAP = [
+  "En este oficio las decisiones vuelven con retraso y con intereses.",
+  "Nadie lo había olvidado, solo estaban esperando el momento.",
+  "Aparece un martes cualquiera, cuando ya no lo esperabas.",
+  "Te lo sueltan sin aviso, entre dos ejercicios de entrenamiento.",
+  "Llega por teléfono, tarde, y te quita el sueño esa noche.",
+];
+
 /* ============================== Render ============================== */
 
 export interface DirectorView {
@@ -1913,10 +1942,10 @@ export function renderDirector(s: GameState, card: DynamicCard): DirectorView | 
     const text = typeof card.data["text"] === "string" ? card.data["text"] : "Algo que decidiste vuelve";
     return {
       kicker: `${currentMonth(s)} · vuelve una decisión`,
-      title: "Esto ya lo habías empezado tú",
+      title: CALLBACK_TITLES[hash(careerSeed(s), `cbt${s.sceneCount ?? 0}`) % CALLBACK_TITLES.length]!,
       image: "locker",
       category: "story",
-      text: `${text}. Nadie lo ha olvidado: en este oficio las decisiones vuelven con retraso y con intereses.`,
+      text: `${text}. ${CALLBACK_WRAP[hash(careerSeed(s), `cbw${s.sceneCount ?? 0}`) % CALLBACK_WRAP.length]}`,
       choices: [
         { id: "afrontar", label: "Afrontarlo de frente" },
         { id: "esquivar", label: "Esquivarlo por ahora", hint: "Puede volver peor" },
