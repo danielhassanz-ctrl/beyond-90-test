@@ -12,7 +12,8 @@ import {
   shouldRetire,
 } from "./career";
 import { randomSuitor, resolveDynamic } from "./dynamic";
-import { eventById, pickEvent } from "./events";
+import { eventById } from "./events";
+import { directorCard, directorNewSeason, directorState, renderDirector, resolveDirector } from "./director";
 import { interpretFree, INTENT_FEEDBACK } from "./interpret";
 import { applyFreeFallback } from "./events-extra";
 import {
@@ -30,7 +31,7 @@ import {
   seasonLabel,
   totalApps,
 } from "./mutate";
-import { closeThread, dueThread, maybeSpawnThreads, spawnThread } from "./threads";
+import { closeThread, dueThread, maybeSpawnThreads } from "./threads";
 import { baselineOverall, computeRole, pick, simulateMatch, simulateRun, validateMatch, type SimRun } from "./match";
 import { ensureFinance, moneyCard, netWorth, seasonFinance } from "./finance";
 import { consequenceCard } from "./consequences";
@@ -343,6 +344,7 @@ const NARRATIVE_ROTATION: EventCategory[] = ["life", "training", "press", "story
  * informativas seguidas y nunca dos partidos seguidos (salvo eliminatoria).
  */
 export function makeSeasonPlan(s: GameState): Slot[] {
+  directorNewSeason(s);
   const keys = keyMatchSpecs(s);
   const totalSim = Math.max(0, MATCHES_PER_SEASON - keys.length);
   const per = Math.max(2, Math.floor(totalSim / keys.length));
