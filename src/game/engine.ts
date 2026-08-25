@@ -807,10 +807,15 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   const before = snapshot(s);
   const m: MatchData = clone(match);
   let keyText = "";
+  let keyOk: boolean | null = null;
+  let keyId = "";
 
   if (m.keyMoment && keyChoiceId) {
     const option = m.keyMoment.options.find((o) => o.id === keyChoiceId) ?? m.keyMoment.options[0]!;
     const success = Math.random() < option.success;
+    keyOk = success;
+    keyId = option.id;
+
     if (option.id === "ceder") {
       if (success) m.goalsFor += 1;
       s.rel.dressing = clamp(s.rel.dressing + 8);
