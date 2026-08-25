@@ -1,5 +1,6 @@
 import { moveToClub } from "./career";
 import { renderMoney, resolveMoney } from "./finance";
+import { renderDirector, resolveDirector } from "./director";
 import { renderConsequence, resolveConsequence } from "./consequences";
 import { clubById } from "./data";
 import { interpretFree } from "./interpret";
@@ -148,6 +149,8 @@ const THREAD_VIEWS: Record<string, ThreadView> = {
 };
 
 export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
+  const dir = renderDirector(s, card);
+  if (dir) return dir;
   const ext = renderMoney(s, card) ?? renderConsequence(s, card);
   if (ext) return ext;
 
@@ -393,6 +396,8 @@ export function resolveDynamic(
 ): DynamicResult {
   const d = card.data;
   const interp: Interpretation | null = freeText !== undefined ? interpretFree(freeText) : null;
+  const dirRes = resolveDirector(s, card, choiceId);
+  if (dirRes) return dirRes;
   const ext = resolveMoney(s, card, choiceId) ?? resolveConsequence(s, card, choiceId);
   if (ext) return ext;
 

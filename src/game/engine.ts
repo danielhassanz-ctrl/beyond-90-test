@@ -12,7 +12,8 @@ import {
   shouldRetire,
 } from "./career";
 import { randomSuitor, resolveDynamic } from "./dynamic";
-import { eventById, pickEvent } from "./events";
+import { eventById } from "./events";
+import { directorCard, directorNewSeason } from "./director";
 import { interpretFree, INTENT_FEEDBACK } from "./interpret";
 import { applyFreeFallback } from "./events-extra";
 import {
@@ -30,7 +31,7 @@ import {
   seasonLabel,
   totalApps,
 } from "./mutate";
-import { closeThread, dueThread, maybeSpawnThreads, spawnThread } from "./threads";
+import { closeThread, dueThread, maybeSpawnThreads } from "./threads";
 import { baselineOverall, computeRole, pick, simulateMatch, simulateRun, validateMatch, type SimRun } from "./match";
 import { ensureFinance, moneyCard, netWorth, seasonFinance } from "./finance";
 import { consequenceCard } from "./consequences";
@@ -343,6 +344,7 @@ const NARRATIVE_ROTATION: EventCategory[] = ["life", "training", "press", "story
  * informativas seguidas y nunca dos partidos seguidos (salvo eliminatoria).
  */
 export function makeSeasonPlan(s: GameState): Slot[] {
+  directorNewSeason(s);
   const keys = keyMatchSpecs(s);
   const totalSim = Math.max(0, MATCHES_PER_SEASON - keys.length);
   const per = Math.max(2, Math.floor(totalSim / keys.length));
@@ -570,28 +572,22 @@ export function advance(state: GameState): GameState {
     }
 
     s.flags["pretemporada"] = slot.category === "preseason" ? 1 : 0;
-    const event = pickEvent(s, slot.category);
-    if (event) {
-      s.pending = { type: "event", eventId: event.id };
+
+    // NARRATIVE DIRECTOR: única fuente de escenas de carrera. No hay fallback
+    // al selector antiguo; si no hay escena válida, se avanza tiempo.
+    const dirCard = directorCard(s);
+    if (dirCard) {
+      s.pending = dirCard;
       return touch(s);
     }
 
-    // Sin evento válido en esa categoría: probamos agente y luego cualquier otra.
     const card = agentCard(s);
     if (card) {
       s.pending = card;
       return touch(s);
     }
-    s.flags["pretemporada"] = 0;
-    const any = pickEvent(s);
-    if (any) {
-      s.pending = { type: "event", eventId: any.id };
-      return touch(s);
-    }
 
-    // Último recurso: abrir un hilo y resolverlo ya, nunca una pantalla vacía.
-    const forced = spawnThread(s, s.agent.present ? "club_interest" : "coach_upset", {}, 0);
-    if (forced) continue;
+    // Nada narrativo válido: avanzamos semanas de calendario.
     applyRun(s, 2);
   }
 

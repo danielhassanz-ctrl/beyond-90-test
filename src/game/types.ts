@@ -342,6 +342,8 @@ export interface GameState {
   careerSeed?: number;
   /** Ruta narrativa principal de esta carrera (persistida para coherencia). */
   storyRoute?: string;
+  /** Estado del Narrative Director: arcos activos, memoria y callbacks. */
+  director?: import("./director").DirectorState;
   createdAt: number;
   updatedAt: number;
   player: Player;
