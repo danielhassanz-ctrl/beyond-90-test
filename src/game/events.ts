@@ -1103,18 +1103,20 @@ function weightOf(s: GameState, e: GameEvent): number {
   let w = traitAffinity(s, cat) * archetypeWeight(s, e);
   // Sesgo estable por carrera: cada partida tiene sus historias favoritas.
   w *= 0.65 + (hash(careerSeed(s), `w:${e.id}`) % 70) / 100;
-  // Frescura: lo nunca visto pesa mucho más que lo repetido.
-  if (!s.seenEvents.includes(e.id)) w *= 2.4;
   // Coherencia de contexto.
   if (cat === "gossip") w *= s.fame >= 45 ? 1.2 : 0.7;
   if (cat === "medical" && s.injury) w *= 2.2;
   if (cat === "market" && (s.flags["mercado_abierto"] ?? 0) === 1) w *= 1.8;
   if (cat === "club" && s.stage !== "youth") w *= 1.3;
   if (cat === "press" && s.fame < 20) w *= 0.5;
-  // Lo raro/surrealista sorprende justamente porque casi nunca sale.
-  if (e.rare) w *= 0.12;
-  // Build de prueba V2.1: el banco nuevo domina la experiencia.
-  if (e.id.startsWith("v21_")) w *= 5.5;
+  // Lo raro/surrealista sorprende justamente porque casi nunca sale (0-1 por temporada).
+  if (e.rare) w *= 0.1;
+  // El banco núcleo (arcos con capítulos) y el V2.1 sostienen la experiencia.
+  if (e.id.startsWith("bc_")) w *= 6.5;
+  if (e.id.startsWith("v21_")) w *= 4.5;
+  // Un arco abierto tira fuerte: primero se cierra la historia, luego se abre otra.
+  if ((e.family ?? "").startsWith("arc_")) w *= 1.8;
+
   return Math.max(0.05, w);
 }
 
