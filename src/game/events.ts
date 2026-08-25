@@ -1067,15 +1067,26 @@ function mutedInCareer(s: GameState, e: GameEvent): boolean {
   if ((e.priority ?? 0) >= 100) return false;
   if (archetypeMuted(s, e)) return true;
   if (legacyQuiet(s, e)) return true;
-  if (e.id.startsWith("v21_")) return hash(careerSeed(s), `mute21:${e.id}`) % 100 < 22;
-  if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 18;
-  return hash(careerSeed(s), `mute:${e.id}`) % 100 < 32;
+  if (e.id.startsWith("bc_")) return hash(careerSeed(s), `mutebc:${e.id}`) % 100 < 16;
+  if (e.id.startsWith("v21_")) return hash(careerSeed(s), `mute21:${e.id}`) % 100 < 26;
+  if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 12;
+  return hash(careerSeed(s), `mute:${e.id}`) % 100 < 45;
+}
+
+/** ¿Hubo una escena surrealista hace poco? Como mucho 0-1 por temporada. */
+function rareBlocked(s: GameState): boolean {
+  const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
+  const scene = s.sceneCount ?? 0;
+  return history.some((h) => scene - h.scene <= 16 && (eventById(h.id)?.rare ?? false));
 }
 
 export function eligibleEvents(s: GameState, allowMuted = false, familyWindow = FAMILY_COOLDOWN): GameEvent[] {
   const pre = inPreseason(s);
   const fams = recentFamilies(s, familyWindow);
+  const noRare = rareBlocked(s);
   return ALL_EVENTS.filter((e) => {
+    if (e.rare && noRare) return false;
+
     // Las escenas de pretemporada solo existen durante la pretemporada.
     if ((e.category === "preseason") !== pre && e.category === "preseason") return false;
     if (pre && (e.priority ?? 0) < 100 && e.category !== "preseason") return false;
