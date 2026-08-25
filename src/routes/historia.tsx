@@ -216,8 +216,14 @@ function DynamicScene({
   onChoice: (card: DynamicCard, choiceId: string, text?: string) => void;
 }) {
   const view = renderDynamic(state, card);
+  const tag = directorTag(state);
   return (
     <Scene image={SCENES[view.image]} kicker={view.kicker} title={view.title} accent={CATEGORY_STYLE[view.category]}>
+      {tag && (
+        <p className="mb-3 inline-block rounded-full border border-border px-2.5 py-0.5 font-cond text-[0.68rem] uppercase tracking-[0.14em] text-muted-foreground">
+          {tag}
+        </p>
+      )}
       <p className="text-[0.95rem] leading-relaxed text-foreground/85">{view.text}</p>
       <div className="mt-5 space-y-2.5">
         {view.choices.map((c) => (
