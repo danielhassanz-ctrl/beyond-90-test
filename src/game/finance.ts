@@ -301,7 +301,7 @@ export function moneyCard(s: GameState): DynamicCard | null {
   );
   if (candidates.length === 0) return null;
   if (Math.random() < 0.35) return null;
-  const offer = candidates[candidates.length - 1]!;
+  const offer = candidates[Math.floor(Math.random() * candidates.length)]!;
   f.lastOfferScene = scene;
   return { type: "dynamic", kind: "money", data: { offer: offer.id, price: offer.price } };
 }
