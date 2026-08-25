@@ -117,7 +117,31 @@ export function seasonFinance(s: GameState): { income: number; spend: number; ne
 
   const label = season?.season ?? `Temporada ${s.seasonIndex}`;
   const text = `Ingresos ${gross}.000 € · gastos ${spend}.000 € · saldo ${f.cash}.000 €`;
+  // Los activos viven: los negocios pueden crecer o quebrar, la cartera compone.
+  for (const p of f.properties) {
+    const risky = p.name.includes("Negocio") || p.name.includes("Restaurante") || p.name.includes("Local");
+    if (risky) {
+      const roll = Math.random();
+      if (roll < 0.16) {
+        f.history.unshift({ season: label, text: `Quiebra: ${p.name} cierra y te comes la pérdida.`, amount: -p.value });
+        p.value = 0;
+        note(s, `${p.name} echa el cierre.`, "bad");
+      } else if (roll < 0.5) {
+        const gain = Math.round(p.value * 0.18);
+        p.value += gain;
+        f.cash += Math.round(gain * 0.4);
+        note(s, `${p.name} va bien: reparto de beneficios.`, "good");
+      }
+    } else if (p.name.includes("Cartera")) {
+      p.value = Math.round(p.value * (1.02 + Math.random() * 0.09));
+    } else if (p.name.includes("Coche")) {
+      p.value = Math.round(p.value * 0.84);
+    }
+  }
+  f.properties = f.properties.filter((p) => p.value > 0 || p.debt > 0);
+
   f.history.unshift({ season: label, text, amount: net });
+
   f.history = f.history.slice(0, 14);
 
   // Compatibilidad: wealth es el patrimonio neto estimado.
