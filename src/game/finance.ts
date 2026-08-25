@@ -213,7 +213,49 @@ const OFFERS: MoneyOffer[] = [
     financeable: true,
     requires: (s) => s.overall >= 80 && (s.finance?.properties.length ?? 0) >= 1,
   },
+  {
+    id: "coche_absurdo",
+    kicker: "Dinero",
+    title: "El coche absurdo",
+    text: () => "Naranja, 610 caballos, techo de cristal y un ruido que despierta a la urbanización. Objetivamente no lo necesitas. Subjetivamente llevas años soñándolo.",
+    price: 320,
+    minCash: 520,
+    financeable: true,
+    requires: (s) => s.fame >= 40,
+    effect: (s) => {
+      s.flags["coche_absurdo"] = 1;
+      s.fame = Math.min(100, s.fame + 5);
+      s.rel.dressing = Math.min(100, s.rel.dressing + 4);
+    },
+  },
+  {
+    id: "restaurante",
+    kicker: "Inversión",
+    title: "Un restaurante con tu nombre",
+    text: () => "Un grupo hostelero quiere abrir con tu apellido en la fachada. Tú pones capital y cara; ellos, cocina y cuentas que no vas a leer.",
+    price: 400,
+    minCash: 620,
+    financeable: false,
+    requires: (s) => s.fame >= 45,
+    effect: (s) => {
+      s.flags["restaurante"] = 1;
+    },
+  },
+  {
+    id: "fondo",
+    kicker: "Inversión",
+    title: "Cartera aburrida",
+    text: () => "Tu asesor propone lo menos emocionante del mundo: fondos indexados, diez años sin tocarlo, cero fotos. Dice que es lo único que ha visto funcionar.",
+    price: 250,
+    minCash: 420,
+    financeable: false,
+    requires: (s) => s.age >= 21,
+    effect: (s) => {
+      s.flags["fondo"] = 1;
+    },
+  },
 ];
+
 
 const SPONSORS = ["Puma", "Adidas", "Nike", "New Balance", "Under Armour"];
 
