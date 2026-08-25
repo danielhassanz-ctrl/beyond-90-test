@@ -13,7 +13,7 @@ import {
 } from "./career";
 import { randomSuitor, resolveDynamic } from "./dynamic";
 import { eventById } from "./events";
-import { directorCard, directorNewSeason, directorState, renderDirector, resolveDirector } from "./director";
+import { directorCard, directorNewSeason } from "./director";
 import { interpretFree, INTENT_FEEDBACK } from "./interpret";
 import { applyFreeFallback } from "./events-extra";
 import {
