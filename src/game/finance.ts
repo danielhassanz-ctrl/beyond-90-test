@@ -381,7 +381,15 @@ export function resolveMoney(s: GameState, card: DynamicCard, choiceId: string):
     s.rel.dressing = Math.min(100, s.rel.dressing + 6);
   } else if (offer.id === "negocio_amigo") {
     f.properties.push({ name: "Negocio con un amigo", value: Math.round(offer.price * 0.9), debt: 0 });
+  } else if (offer.id === "coche_absurdo") {
+    f.properties.push({ name: "Coche deportivo", value: Math.round(offer.price * 0.7), debt });
+    f.commitments.push({ name: "Seguro y garaje", yearly: 14, seasonsLeft: 5 });
+  } else if (offer.id === "restaurante") {
+    f.properties.push({ name: "Restaurante con tu apellido", value: Math.round(offer.price * 0.85), debt: 0 });
+  } else if (offer.id === "fondo") {
+    f.properties.push({ name: "Cartera indexada", value: offer.price, debt: 0 });
   }
+
   offer.effect?.(s, mode);
   s.wealth = netWorth(s);
 
