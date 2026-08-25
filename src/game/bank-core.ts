@@ -53,7 +53,7 @@ export const BANK_CORE: GameEvent[] = [
       },
       {
         id: "hablar",
-        label: `Preguntar a ${who(s, "coach")} qué significa esa firma`,
+        label: "Preguntar al entrenador qué significa esa firma",
         hint: "Directo al despacho",
         outcome: "\"Significa que hay competencia. Eso no es un castigo\", responde sin apartar la vista del portátil.",
         apply: (s) => { flag(s, "rival_1"); flag(s, "rival_pregunta"); rel(s, "coach", 3); stat(s, "morale", -4); },
