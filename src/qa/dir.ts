@@ -1,9 +1,9 @@
-import { advance, chooseClub, newGame, resolveDynamicCard, resolveEvent, resolveMatch } from "@/game/engine";
+import { advance, chooseClub, createGame, resolveDynamicCard, resolveEvent, resolveMatch } from "@/game/engine";
 import type { GameState } from "@/game/types";
 import { renderDynamic } from "@/game/dynamic";
 
 function run(seed: number) {
-  let s = newGame({ name: "Test" + seed, nickname: "T", position: "MC", nationality: "ES", city: "Sevilla", avatar: null, traits: [] } as any);
+  let s = createGame({ name: "Test" + seed, nickname: "T", position: "MC", city: "Sevilla", avatar: null, traits: [] } as any);
   s.careerSeed = seed * 7919;
   s = chooseClub(s, s.offers[0]!.clubId);
   const ids: string[] = []; const texts = new Set<string>(); let dupText = 0; let seasons = 0;
