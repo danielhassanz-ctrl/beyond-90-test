@@ -299,6 +299,11 @@ export interface MatchData {
   rating: number;
   moments: MatchMoment[];
   keyMoment?: KeyMoment | undefined;
+  /** Resolución inmediata de la jugada clave elegida por el jugador. */
+  keyResult?:
+    | { minute: number; verdict: string; text: string; tone: "good" | "bad" | "neutral" }
+    | undefined;
+
   benchOnly: boolean;
   unused: boolean;
   tie: boolean;
