@@ -570,28 +570,22 @@ export function advance(state: GameState): GameState {
     }
 
     s.flags["pretemporada"] = slot.category === "preseason" ? 1 : 0;
-    const event = pickEvent(s, slot.category);
-    if (event) {
-      s.pending = { type: "event", eventId: event.id };
+
+    // NARRATIVE DIRECTOR: única fuente de escenas de carrera. No hay fallback
+    // al selector antiguo; si no hay escena válida, se avanza tiempo.
+    const dirCard = directorCard(s);
+    if (dirCard) {
+      s.pending = dirCard;
       return touch(s);
     }
 
-    // Sin evento válido en esa categoría: probamos agente y luego cualquier otra.
     const card = agentCard(s);
     if (card) {
       s.pending = card;
       return touch(s);
     }
-    s.flags["pretemporada"] = 0;
-    const any = pickEvent(s);
-    if (any) {
-      s.pending = { type: "event", eventId: any.id };
-      return touch(s);
-    }
 
-    // Último recurso: abrir un hilo y resolverlo ya, nunca una pantalla vacía.
-    const forced = spawnThread(s, s.agent.present ? "club_interest" : "coach_upset", {}, 0);
-    if (forced) continue;
+    // Nada narrativo válido: avanzamos semanas de calendario.
     applyRun(s, 2);
   }
 
