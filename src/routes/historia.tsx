@@ -145,8 +145,10 @@ function Story({ state }: { state: GameState }) {
                 hint={o.note}
                 onClick={() => {
                   setLastMatch(match);
+                  setPhase("flash");
                   playMatch(match, o.id);
                 }}
+
               />
             ))}
           </div>
