@@ -1057,9 +1057,9 @@ function legacyQuiet(s: GameState, e: GameEvent): boolean {
   if (e.id.startsWith("v21_")) return false;
   if ((s.seasonIndex ?? 0) > 2) return false;
   const roll = hash(careerSeed(s), `q21:${e.id}`) % 100;
-  if (LEGACY_HEAVY.some((p) => e.id.startsWith(p))) return roll < 95;
-  if (LEGACY_MID.some((p) => e.id.startsWith(p))) return roll < 85;
-  if (e.id.startsWith("nb_")) return roll < 55;
+  if (LEGACY_HEAVY.some((p) => e.id.startsWith(p))) return roll < 68;
+  if (LEGACY_MID.some((p) => e.id.startsWith(p))) return roll < 60;
+  if (e.id.startsWith("nb_")) return roll < 45;
   return false;
 }
 
@@ -1067,10 +1067,10 @@ function mutedInCareer(s: GameState, e: GameEvent): boolean {
   if ((e.priority ?? 0) >= 100) return false;
   if (archetypeMuted(s, e)) return true;
   if (legacyQuiet(s, e)) return true;
-  if (e.id.startsWith("bc_")) return hash(careerSeed(s), `mutebc:${e.id}`) % 100 < 16;
+  if (e.id.startsWith("bc_")) return hash(careerSeed(s), `mutebc:${e.id}`) % 100 < 34;
   if (e.id.startsWith("v21_")) return hash(careerSeed(s), `mute21:${e.id}`) % 100 < 26;
   if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 12;
-  return hash(careerSeed(s), `mute:${e.id}`) % 100 < 45;
+  return hash(careerSeed(s), `mute:${e.id}`) % 100 < 38;
 }
 
 /** ¿Hubo una escena surrealista hace poco? Como mucho 0-1 por temporada. */
@@ -1127,8 +1127,8 @@ function weightOf(s: GameState, e: GameEvent): number {
   // Lo raro/surrealista sorprende justamente porque casi nunca sale (0-1 por temporada).
   if (e.rare) w *= 0.1;
   // El banco núcleo (arcos con capítulos) y el V2.1 sostienen la experiencia.
-  if (e.id.startsWith("bc_")) w *= 6.5;
-  if (e.id.startsWith("v21_")) w *= 4.5;
+  if (e.id.startsWith("bc_")) w *= 3.4;
+  if (e.id.startsWith("v21_")) w *= 2.6;
   // Un arco abierto tira fuerte: primero se cierra la historia, luego se abre otra.
   if ((e.family ?? "").startsWith("arc_")) w *= 1.8;
 
