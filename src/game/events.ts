@@ -1137,13 +1137,19 @@ function weightedPick(s: GameState, pool: GameEvent[]): GameEvent | null {
  * si esa categoría está saturada o vacía, CAMBIA de categoría en vez de repetir.
  */
 export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | null {
+  // Escalera de relajación: nunca se recicla texto, se relajan los filtros.
   let pool = eligibleEvents(s);
-  // Si el banco filtrado se queda corto, reabrimos los silenciados antes de repetir.
   if (pool.length < 4) {
-    const wide = eligibleEvents(s, true);
+    const relaxed = eligibleEvents(s, false, FAMILY_FLOOR);
+    if (relaxed.length > pool.length) pool = relaxed;
+  }
+  if (pool.length < 4) {
+    const wide = eligibleEvents(s, true, FAMILY_FLOOR);
     if (wide.length > pool.length) pool = wide;
   }
   if (pool.length === 0) return null;
+
+
 
   const maxPriority = Math.max(...pool.map((e) => e.priority ?? 0));
   if (maxPriority >= 100) {
