@@ -1003,18 +1003,21 @@ const FAMILY_BY_ID = new Map<string, string>(
 );
 /** Escenas mínimas antes de repetir la misma familia narrativa. */
 const FAMILY_COOLDOWN = 9;
+/** Suelo absoluto: nunca 2 escenas de la misma familia en 5 escenas. */
+const FAMILY_FLOOR = 5;
 
-function recentFamilies(s: GameState): Set<string> {
+function recentFamilies(s: GameState, window = FAMILY_COOLDOWN): Set<string> {
   const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
   const scene = s.sceneCount ?? 0;
   const out = new Set<string>();
   for (const h of history) {
-    if (scene - h.scene > FAMILY_COOLDOWN) break;
+    if (scene - h.scene > window) break;
     const fam = FAMILY_BY_ID.get(h.id);
     if (fam) out.add(fam);
   }
   return out;
 }
+
 
 export function eventById(id: string): GameEvent | undefined {
   return ALL_EVENTS.find((e) => e.id === id);
