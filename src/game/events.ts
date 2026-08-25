@@ -1068,33 +1068,26 @@ function mutedInCareer(s: GameState, e: GameEvent): boolean {
   return hash(careerSeed(s), `mute:${e.id}`) % 100 < 32;
 }
 
-export function eligibleEvents(s: GameState, allowMuted = false): GameEvent[] {
-  const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
-  const scene = s.sceneCount ?? 0;
-  const lastSeen = (id: string): number | null => {
-    const hit = history.find((h) => h.id === id);
-    return hit ? hit.scene : null;
-  };
-  const recentIds = new Set(history.slice(0, 3).map((h) => h.id));
-  const fams = recentFamilies(s);
+export function eligibleEvents(s: GameState, allowMuted = false, familyWindow = FAMILY_COOLDOWN): GameEvent[] {
   const pre = inPreseason(s);
+  const fams = recentFamilies(s, familyWindow);
   return ALL_EVENTS.filter((e) => {
     // Las escenas de pretemporada solo existen durante la pretemporada.
     if ((e.category === "preseason") !== pre && e.category === "preseason") return false;
     if (pre && (e.priority ?? 0) < 100 && e.category !== "preseason") return false;
     if (!safeRequires(e, s)) return false;
-    // Nunca uno de los tres últimos templates.
-    if (recentIds.has(e.id)) return false;
-    // Nunca la misma familia/plantilla narrativa en una ventana larga.
-    if ((e.priority ?? 0) < 100 && fams.has(e.family ?? `solo:${e.id}`)) return false;
+    // ANTI-REPETICIÓN DURA: ninguna escena textual se repite en una carrera.
+    if (s.seenEvents.includes(e.id)) return false;
+    // Nunca la misma familia/plantilla narrativa en la ventana vigente,
+    // salvo que sea el capítulo siguiente de un arco explícito (family arc_*).
+    const fam = e.family ?? `solo:${e.id}`;
+    const isArcChapter = fam.startsWith("arc_");
+    if ((e.priority ?? 0) < 100 && !isArcChapter && fams.has(fam)) return false;
     if (!allowMuted && mutedInCareer(s, e)) return false;
-    // Los eventos estructurales (prioridad alta) solo se viven una vez.
-    if ((e.priority ?? 0) >= 100) return !s.seenEvents.includes(e.id);
-    if (!s.seenEvents.includes(e.id)) return true;
-    const seen = lastSeen(e.id);
-    return seen !== null && scene - seen >= EVENT_COOLDOWN;
+    return true;
   });
 }
+
 
 function categoryBlocked(s: GameState, category: EventCategory | undefined): boolean {
   const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
