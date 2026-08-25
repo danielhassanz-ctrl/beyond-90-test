@@ -983,7 +983,9 @@ import { STORY_ALT } from "./story-alt";
 import { PHASE5_EVENTS, traitAffinity } from "./events-phase5";
 import { BANK_CLUB } from "./bank-club";
 import { BANK_LIFE } from "./bank-life";
+import { BANK_CORE } from "./bank-core";
 import { BANK_V21 } from "./bank-v21";
+
 import { careerSeed, hash } from "./npc";
 
 export const ALL_EVENTS: GameEvent[] = [
