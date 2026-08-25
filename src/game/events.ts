@@ -1023,8 +1023,8 @@ export function eventById(id: string): GameEvent | undefined {
   return ALL_EVENTS.find((e) => e.id === id);
 }
 
-/** Escenas mínimas antes de que un mismo eventId pueda repetirse. */
-const EVENT_COOLDOWN = 26;
+/** Una misma escena nunca se repite en una carrera (anti-repetición dura). */
+
 /** Una misma categoría puede aparecer como máximo 2 veces en las últimas 5. */
 const CATEGORY_WINDOW = 5;
 const CATEGORY_MAX = 2;
