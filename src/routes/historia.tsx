@@ -37,15 +37,29 @@ const CATEGORY_STYLE: Record<EventCategory, string> = {
 
 function Story({ state }: { state: GameState }) {
   const { answerEvent, answerFree, answerDynamic, playMatch, next } = useGame();
-  const [phase, setPhase] = useState<"pre" | "key">("pre");
+  const [phase, setPhase] = useState<"pre" | "key" | "flash" | "post">("pre");
   const [lastMatch, setLastMatch] = useState<MatchData | null>(null);
 
   const outcome = state.lastOutcome;
   const pending = state.pending;
+  const keyResult = state.lastMatch?.keyResult ?? null;
 
   let body: React.ReactNode;
 
-  if (outcome) {
+  if (outcome && phase === "flash" && keyResult) {
+    body = (
+      <Scene
+        image={SCENES.stadium}
+        kicker={`Minuto ${keyResult.minute}' · jugada resuelta`}
+        title={keyResult.verdict}
+        accent={keyResult.tone === "bad" ? "border-destructive/60" : "border-gold/70"}
+      >
+        <p className="text-[0.95rem] leading-relaxed text-foreground/85">{keyResult.text}</p>
+        <p className="mt-3 text-xs text-muted-foreground">El partido sigue. Todavía puede cambiar todo.</p>
+        <PrimaryButton onClick={() => setPhase("post")}>Seguir el partido</PrimaryButton>
+      </Scene>
+    );
+  } else if (outcome) {
     body = (
       <OutcomeCard
         state={state}
@@ -58,6 +72,7 @@ function Story({ state }: { state: GameState }) {
         }}
       />
     );
+
   } else if (!pending) {
     body = (
       <div className="panel p-6 text-center">
@@ -130,8 +145,10 @@ function Story({ state }: { state: GameState }) {
                 hint={o.note}
                 onClick={() => {
                   setLastMatch(match);
+                  setPhase("flash");
                   playMatch(match, o.id);
                 }}
+
               />
             ))}
           </div>

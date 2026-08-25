@@ -983,7 +983,9 @@ import { STORY_ALT } from "./story-alt";
 import { PHASE5_EVENTS, traitAffinity } from "./events-phase5";
 import { BANK_CLUB } from "./bank-club";
 import { BANK_LIFE } from "./bank-life";
+import { BANK_CORE } from "./bank-core";
 import { BANK_V21 } from "./bank-v21";
+
 import { careerSeed, hash } from "./npc";
 
 export const ALL_EVENTS: GameEvent[] = [
@@ -994,7 +996,9 @@ export const ALL_EVENTS: GameEvent[] = [
   ...PHASE5_EVENTS,
   ...BANK_CLUB,
   ...BANK_LIFE,
+  ...BANK_CORE,
   ...BANK_V21,
+
 ];
 
 /** Familia narrativa de cada evento (plantilla), para evitar repetirla. */
@@ -1003,25 +1007,28 @@ const FAMILY_BY_ID = new Map<string, string>(
 );
 /** Escenas mínimas antes de repetir la misma familia narrativa. */
 const FAMILY_COOLDOWN = 9;
+/** Suelo absoluto: nunca 2 escenas de la misma familia en 5 escenas. */
+const FAMILY_FLOOR = 5;
 
-function recentFamilies(s: GameState): Set<string> {
+function recentFamilies(s: GameState, window = FAMILY_COOLDOWN): Set<string> {
   const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
   const scene = s.sceneCount ?? 0;
   const out = new Set<string>();
   for (const h of history) {
-    if (scene - h.scene > FAMILY_COOLDOWN) break;
+    if (scene - h.scene > window) break;
     const fam = FAMILY_BY_ID.get(h.id);
     if (fam) out.add(fam);
   }
   return out;
 }
 
+
 export function eventById(id: string): GameEvent | undefined {
   return ALL_EVENTS.find((e) => e.id === id);
 }
 
-/** Escenas mínimas antes de que un mismo eventId pueda repetirse. */
-const EVENT_COOLDOWN = 26;
+/** Una misma escena nunca se repite en una carrera (anti-repetición dura). */
+
 /** Una misma categoría puede aparecer como máximo 2 veces en las últimas 5. */
 const CATEGORY_WINDOW = 5;
 const CATEGORY_MAX = 2;
@@ -1050,9 +1057,9 @@ function legacyQuiet(s: GameState, e: GameEvent): boolean {
   if (e.id.startsWith("v21_")) return false;
   if ((s.seasonIndex ?? 0) > 2) return false;
   const roll = hash(careerSeed(s), `q21:${e.id}`) % 100;
-  if (LEGACY_HEAVY.some((p) => e.id.startsWith(p))) return roll < 95;
-  if (LEGACY_MID.some((p) => e.id.startsWith(p))) return roll < 85;
-  if (e.id.startsWith("nb_")) return roll < 55;
+  if (LEGACY_HEAVY.some((p) => e.id.startsWith(p))) return roll < 68;
+  if (LEGACY_MID.some((p) => e.id.startsWith(p))) return roll < 60;
+  if (e.id.startsWith("nb_")) return roll < 45;
   return false;
 }
 
@@ -1060,38 +1067,42 @@ function mutedInCareer(s: GameState, e: GameEvent): boolean {
   if ((e.priority ?? 0) >= 100) return false;
   if (archetypeMuted(s, e)) return true;
   if (legacyQuiet(s, e)) return true;
-  if (e.id.startsWith("v21_")) return hash(careerSeed(s), `mute21:${e.id}`) % 100 < 22;
-  if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 18;
-  return hash(careerSeed(s), `mute:${e.id}`) % 100 < 32;
+  if (e.id.startsWith("bc_")) return hash(careerSeed(s), `mutebc:${e.id}`) % 100 < 34;
+  if (e.id.startsWith("v21_")) return hash(careerSeed(s), `mute21:${e.id}`) % 100 < 26;
+  if (e.category === "preseason") return hash(careerSeed(s), e.id) % 100 < 12;
+  return hash(careerSeed(s), `mute:${e.id}`) % 100 < 38;
 }
 
-export function eligibleEvents(s: GameState, allowMuted = false): GameEvent[] {
+/** ¿Hubo una escena surrealista hace poco? Como mucho 0-1 por temporada. */
+function rareBlocked(s: GameState): boolean {
   const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
   const scene = s.sceneCount ?? 0;
-  const lastSeen = (id: string): number | null => {
-    const hit = history.find((h) => h.id === id);
-    return hit ? hit.scene : null;
-  };
-  const recentIds = new Set(history.slice(0, 3).map((h) => h.id));
-  const fams = recentFamilies(s);
+  return history.some((h) => scene - h.scene <= 16 && (eventById(h.id)?.rare ?? false));
+}
+
+export function eligibleEvents(s: GameState, allowMuted = false, familyWindow = FAMILY_COOLDOWN): GameEvent[] {
   const pre = inPreseason(s);
+  const fams = recentFamilies(s, familyWindow);
+  const noRare = rareBlocked(s);
   return ALL_EVENTS.filter((e) => {
+    if (e.rare && noRare) return false;
+
     // Las escenas de pretemporada solo existen durante la pretemporada.
     if ((e.category === "preseason") !== pre && e.category === "preseason") return false;
     if (pre && (e.priority ?? 0) < 100 && e.category !== "preseason") return false;
     if (!safeRequires(e, s)) return false;
-    // Nunca uno de los tres últimos templates.
-    if (recentIds.has(e.id)) return false;
-    // Nunca la misma familia/plantilla narrativa en una ventana larga.
-    if ((e.priority ?? 0) < 100 && fams.has(e.family ?? `solo:${e.id}`)) return false;
+    // ANTI-REPETICIÓN DURA: ninguna escena textual se repite en una carrera.
+    if (s.seenEvents.includes(e.id)) return false;
+    // Nunca la misma familia/plantilla narrativa en la ventana vigente,
+    // salvo que sea el capítulo siguiente de un arco explícito (family arc_*).
+    const fam = e.family ?? `solo:${e.id}`;
+    const isArcChapter = fam.startsWith("arc_");
+    if ((e.priority ?? 0) < 100 && !isArcChapter && fams.has(fam)) return false;
     if (!allowMuted && mutedInCareer(s, e)) return false;
-    // Los eventos estructurales (prioridad alta) solo se viven una vez.
-    if ((e.priority ?? 0) >= 100) return !s.seenEvents.includes(e.id);
-    if (!s.seenEvents.includes(e.id)) return true;
-    const seen = lastSeen(e.id);
-    return seen !== null && scene - seen >= EVENT_COOLDOWN;
+    return true;
   });
 }
+
 
 function categoryBlocked(s: GameState, category: EventCategory | undefined): boolean {
   const history = Array.isArray(s.eventHistory) ? s.eventHistory : [];
@@ -1107,18 +1118,20 @@ function weightOf(s: GameState, e: GameEvent): number {
   let w = traitAffinity(s, cat) * archetypeWeight(s, e);
   // Sesgo estable por carrera: cada partida tiene sus historias favoritas.
   w *= 0.65 + (hash(careerSeed(s), `w:${e.id}`) % 70) / 100;
-  // Frescura: lo nunca visto pesa mucho más que lo repetido.
-  if (!s.seenEvents.includes(e.id)) w *= 2.4;
   // Coherencia de contexto.
   if (cat === "gossip") w *= s.fame >= 45 ? 1.2 : 0.7;
   if (cat === "medical" && s.injury) w *= 2.2;
   if (cat === "market" && (s.flags["mercado_abierto"] ?? 0) === 1) w *= 1.8;
   if (cat === "club" && s.stage !== "youth") w *= 1.3;
   if (cat === "press" && s.fame < 20) w *= 0.5;
-  // Lo raro/surrealista sorprende justamente porque casi nunca sale.
-  if (e.rare) w *= 0.12;
-  // Build de prueba V2.1: el banco nuevo domina la experiencia.
-  if (e.id.startsWith("v21_")) w *= 5.5;
+  // Lo raro/surrealista sorprende justamente porque casi nunca sale (0-1 por temporada).
+  if (e.rare) w *= 0.1;
+  // El banco núcleo (arcos con capítulos) y el V2.1 sostienen la experiencia.
+  if (e.id.startsWith("bc_")) w *= 3.4;
+  if (e.id.startsWith("v21_")) w *= 2.6;
+  // Un arco abierto tira fuerte: primero se cierra la historia, luego se abre otra.
+  if ((e.family ?? "").startsWith("arc_")) w *= 1.8;
+
   return Math.max(0.05, w);
 }
 
@@ -1139,13 +1152,19 @@ function weightedPick(s: GameState, pool: GameEvent[]): GameEvent | null {
  * si esa categoría está saturada o vacía, CAMBIA de categoría en vez de repetir.
  */
 export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | null {
+  // Escalera de relajación: nunca se recicla texto, se relajan los filtros.
   let pool = eligibleEvents(s);
-  // Si el banco filtrado se queda corto, reabrimos los silenciados antes de repetir.
   if (pool.length < 4) {
-    const wide = eligibleEvents(s, true);
+    const relaxed = eligibleEvents(s, false, FAMILY_FLOOR);
+    if (relaxed.length > pool.length) pool = relaxed;
+  }
+  if (pool.length < 4) {
+    const wide = eligibleEvents(s, true, FAMILY_FLOOR);
     if (wide.length > pool.length) pool = wide;
   }
   if (pool.length === 0) return null;
+
+
 
   const maxPriority = Math.max(...pool.map((e) => e.priority ?? 0));
   if (maxPriority >= 100) {

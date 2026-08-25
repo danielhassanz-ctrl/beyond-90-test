@@ -807,10 +807,15 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
   const before = snapshot(s);
   const m: MatchData = clone(match);
   let keyText = "";
+  let keyOk: boolean | null = null;
+  let keyId = "";
 
   if (m.keyMoment && keyChoiceId) {
     const option = m.keyMoment.options.find((o) => o.id === keyChoiceId) ?? m.keyMoment.options[0]!;
     const success = Math.random() < option.success;
+    keyOk = success;
+    keyId = option.id;
+
     if (option.id === "ceder") {
       if (success) m.goalsFor += 1;
       s.rel.dressing = clamp(s.rel.dressing + 8);
@@ -875,13 +880,27 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
       }
     }
     if (keyText) {
-      m.moments.push({
-        minute: m.keyMoment.minute,
-        text: keyText,
-        tone: keyText.startsWith("No sale") || keyText.includes("fallado") || keyText.includes("Ridículo") ? "bad" : "good",
-      });
+      const tone: "good" | "bad" =
+        keyText.startsWith("No sale") || keyText.includes("fallado") || keyText.includes("Ridículo") || keyText.includes("lo falla")
+          ? "bad"
+          : "good";
+      m.moments.push({ minute: m.keyMoment.minute, text: keyText, tone });
+      const penalty = keyId === "panenka" || keyId === "tiro_penalti" || keyId === "penalti" || keyId === "ceder";
+      const verdict = penalty
+        ? keyId === "ceder"
+          ? keyOk
+            ? "GOL DE TU COMPAÑERO"
+            : "PENALTI FALLADO"
+          : keyOk
+            ? "¡GOL!"
+            : "PARADA / FUERA"
+        : keyOk
+          ? "SALE BIEN"
+          : "NO SALE";
+      m.keyResult = { minute: m.keyMoment.minute, verdict, text: keyText, tone };
     }
   }
+
 
   // Fuente única de verdad: se validan invariantes antes de mostrar nada.
   const final = validateMatch(m);

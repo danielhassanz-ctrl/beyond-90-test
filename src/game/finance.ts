@@ -117,7 +117,31 @@ export function seasonFinance(s: GameState): { income: number; spend: number; ne
 
   const label = season?.season ?? `Temporada ${s.seasonIndex}`;
   const text = `Ingresos ${gross}.000 € · gastos ${spend}.000 € · saldo ${f.cash}.000 €`;
+  // Los activos viven: los negocios pueden crecer o quebrar, la cartera compone.
+  for (const p of f.properties) {
+    const risky = p.name.includes("Negocio") || p.name.includes("Restaurante") || p.name.includes("Local");
+    if (risky) {
+      const roll = Math.random();
+      if (roll < 0.16) {
+        f.history.unshift({ season: label, text: `Quiebra: ${p.name} cierra y te comes la pérdida.`, amount: -p.value });
+        p.value = 0;
+        note(s, `${p.name} echa el cierre.`, "bad");
+      } else if (roll < 0.5) {
+        const gain = Math.round(p.value * 0.18);
+        p.value += gain;
+        f.cash += Math.round(gain * 0.4);
+        note(s, `${p.name} va bien: reparto de beneficios.`, "good");
+      }
+    } else if (p.name.includes("Cartera")) {
+      p.value = Math.round(p.value * (1.02 + Math.random() * 0.09));
+    } else if (p.name.includes("Coche")) {
+      p.value = Math.round(p.value * 0.84);
+    }
+  }
+  f.properties = f.properties.filter((p) => p.value > 0 || p.debt > 0);
+
   f.history.unshift({ season: label, text, amount: net });
+
   f.history = f.history.slice(0, 14);
 
   // Compatibilidad: wealth es el patrimonio neto estimado.
@@ -213,7 +237,49 @@ const OFFERS: MoneyOffer[] = [
     financeable: true,
     requires: (s) => s.overall >= 80 && (s.finance?.properties.length ?? 0) >= 1,
   },
+  {
+    id: "coche_absurdo",
+    kicker: "Dinero",
+    title: "El coche absurdo",
+    text: () => "Naranja, 610 caballos, techo de cristal y un ruido que despierta a la urbanización. Objetivamente no lo necesitas. Subjetivamente llevas años soñándolo.",
+    price: 320,
+    minCash: 520,
+    financeable: true,
+    requires: (s) => s.fame >= 40,
+    effect: (s) => {
+      s.flags["coche_absurdo"] = 1;
+      s.fame = Math.min(100, s.fame + 5);
+      s.rel.dressing = Math.min(100, s.rel.dressing + 4);
+    },
+  },
+  {
+    id: "restaurante",
+    kicker: "Inversión",
+    title: "Un restaurante con tu nombre",
+    text: () => "Un grupo hostelero quiere abrir con tu apellido en la fachada. Tú pones capital y cara; ellos, cocina y cuentas que no vas a leer.",
+    price: 400,
+    minCash: 620,
+    financeable: false,
+    requires: (s) => s.fame >= 45,
+    effect: (s) => {
+      s.flags["restaurante"] = 1;
+    },
+  },
+  {
+    id: "fondo",
+    kicker: "Inversión",
+    title: "Cartera aburrida",
+    text: () => "Tu asesor propone lo menos emocionante del mundo: fondos indexados, diez años sin tocarlo, cero fotos. Dice que es lo único que ha visto funcionar.",
+    price: 250,
+    minCash: 420,
+    financeable: false,
+    requires: (s) => s.age >= 21,
+    effect: (s) => {
+      s.flags["fondo"] = 1;
+    },
+  },
 ];
+
 
 const SPONSORS = ["Puma", "Adidas", "Nike", "New Balance", "Under Armour"];
 
@@ -235,7 +301,7 @@ export function moneyCard(s: GameState): DynamicCard | null {
   );
   if (candidates.length === 0) return null;
   if (Math.random() < 0.35) return null;
-  const offer = candidates[candidates.length - 1]!;
+  const offer = candidates[Math.floor(Math.random() * candidates.length)]!;
   f.lastOfferScene = scene;
   return { type: "dynamic", kind: "money", data: { offer: offer.id, price: offer.price } };
 }
@@ -339,7 +405,15 @@ export function resolveMoney(s: GameState, card: DynamicCard, choiceId: string):
     s.rel.dressing = Math.min(100, s.rel.dressing + 6);
   } else if (offer.id === "negocio_amigo") {
     f.properties.push({ name: "Negocio con un amigo", value: Math.round(offer.price * 0.9), debt: 0 });
+  } else if (offer.id === "coche_absurdo") {
+    f.properties.push({ name: "Coche deportivo", value: Math.round(offer.price * 0.7), debt });
+    f.commitments.push({ name: "Seguro y garaje", yearly: 14, seasonsLeft: 5 });
+  } else if (offer.id === "restaurante") {
+    f.properties.push({ name: "Restaurante con tu apellido", value: Math.round(offer.price * 0.85), debt: 0 });
+  } else if (offer.id === "fondo") {
+    f.properties.push({ name: "Cartera indexada", value: offer.price, debt: 0 });
   }
+
   offer.effect?.(s, mode);
   s.wealth = netWorth(s);
 
