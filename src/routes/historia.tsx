@@ -4,6 +4,7 @@ import { ContextFeed } from "@/components/game/ContextFeed";
 import { GameShell } from "@/components/game/GameShell";
 import { SCENES } from "@/game/data";
 import { renderDynamic } from "@/game/dynamic";
+import { directorTag } from "@/game/director";
 import { eventById } from "@/game/events";
 import { useGame } from "@/game/store";
 import type { DynamicCard, EventCategory, GameState, MatchData, Outcome, ShareData } from "@/game/types";
