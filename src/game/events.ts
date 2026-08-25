@@ -996,7 +996,9 @@ export const ALL_EVENTS: GameEvent[] = [
   ...PHASE5_EVENTS,
   ...BANK_CLUB,
   ...BANK_LIFE,
+  ...BANK_CORE,
   ...BANK_V21,
+
 ];
 
 /** Familia narrativa de cada evento (plantilla), para evitar repetirla. */
