@@ -213,7 +213,7 @@ const ARCS: Arc[] = [
           },
           {
             id: "pelear",
-            label: `Decirle que le vas a quitar el puesto a ${"" }${""}`,
+            label: "Decirle que le vas a quitar el puesto",
             hint: "Riesgo y ambición",
             apply: (c) => {
               rel(c.s, "coach", -3);
@@ -275,7 +275,7 @@ const ARCS: Arc[] = [
           },
           {
             id: "hablar",
-            label: `Hablar con ${"él"} después`,
+            label: "Hablar con él después",
             hint: "Puede crear un aliado o un enemigo",
             apply: (c) => {
               const good = npc(c.s, "rival").mood >= 45;
@@ -495,7 +495,7 @@ const ARCS: Arc[] = [
         choices: [
           {
             id: "minutos",
-            label: `Ir a ${"jugar"}: destino con minutos`,
+            label: "Ir donde te garantizan minutos",
             hint: "Crecimiento real, menos escaparate",
             apply: (c) => {
               c.arc.params["elegido"] = c.arc.params["destino"] ?? "la cesión";
@@ -1255,7 +1255,7 @@ const ARCS: Arc[] = [
               const f = ensureFinance(c.s);
               const amount = Math.min(f.cash, 60);
               f.cash -= amount;
-              f.commitments.push({ id: `neg_${c.s.sceneCount}`, label: "Negocio de un amigo", perSeason: 0, seasonsLeft: 3 });
+              f.commitments.push({ name: "Negocio de un amigo", yearly: 0, seasonsLeft: 3 });
               f.history.unshift({ season: "", text: "Inversión en negocio", amount: -amount });
               flag(c.s, "negocio_amigo", 1);
               callback(c.s, "cb_negocio", "El negocio en el que invertiste tiene noticias", 10);
@@ -1299,7 +1299,7 @@ const ARCS: Arc[] = [
                   ? { title: "Salva el negocio", text: "Seis meses después hay cola en la puerta y tu apellido en la fachada.", tone: "good", end: true }
                   : { title: "Se lo lleva todo", text: `${amount} mil € que no vuelven y una amistad tocada.`, tone: "bad", end: true };
               }
-              f.properties.push({ id: `casa_${c.s.sceneCount}`, label: "Casa propia", value: amount * 3, debt: amount * 2, kind: "house" });
+              f.properties.push({ name: "Casa propia", value: amount * 3, debt: amount * 2 });
               return { title: "Escritura", text: "Primera casa a tu nombre, con hipoteca y con habitación para tus padres.", tone: "good", end: true };
             },
           },
@@ -1614,8 +1614,8 @@ const BEATS: Beat[] = [
       title: "El primer coche",
       text: `Saldo: ${Math.round(cash(s))} mil €. Un compañero te lleva a un concesionario donde "hacen precio a los del club". Hay un utilitario sensato y hay algo naranja con 500 caballos.`,
       choices: [
-        { id: "sensato", label: "Comprar el coche sensato", apply: (st) => { const f = ensureFinance(st); f.cash -= 25; f.properties.push({ id: `car_${st.sceneCount}`, label: "Coche sensato", value: 22, debt: 0, kind: "car" }); return { title: "Coche de gente normal", text: "Nadie te mira en el parking y llegas a los entrenamientos igual.", tone: "good" }; } },
-        { id: "absurdo", label: "Comprar el coche absurdo", hint: "Vestuario y entrenador lo verán", apply: (st) => { const f = ensureFinance(st); const price = Math.min(f.cash, 95); f.cash -= price; f.properties.push({ id: `car_${st.sceneCount}`, label: "Coche absurdo", value: price * 0.7, debt: 0, kind: "car" }); stat(st, "fame", 8); rel(st, "coach", -6); rel(st, "dressing", -3); callback(st, "cb_coche", "Alguien va a opinar de tu coche cuando el equipo pierda", 7); return { title: "Naranja", text: "Suena al arrancar y se oye desde el vestuario. Mala idea preciosa.", tone: "neutral" }; } },
+        { id: "sensato", label: "Comprar el coche sensato", apply: (st) => { const f = ensureFinance(st); f.cash -= 25; f.properties.push({ name: "Coche sensato", value: 22, debt: 0 }); return { title: "Coche de gente normal", text: "Nadie te mira en el parking y llegas a los entrenamientos igual.", tone: "good" }; } },
+        { id: "absurdo", label: "Comprar el coche absurdo", hint: "Vestuario y entrenador lo verán", apply: (st) => { const f = ensureFinance(st); const price = Math.min(f.cash, 95); f.cash -= price; f.properties.push({ name: "Coche absurdo", value: Math.round(price * 0.7), debt: 0 }); stat(st, "fame", 8); rel(st, "coach", -6); rel(st, "dressing", -3); callback(st, "cb_coche", "Alguien va a opinar de tu coche cuando el equipo pierda", 7); return { title: "Naranja", text: "Suena al arrancar y se oye desde el vestuario. Mala idea preciosa.", tone: "neutral" }; } },
       ],
     }),
   },
