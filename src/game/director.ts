@@ -192,11 +192,12 @@ function remember(s: GameState, text: string): void {
   s.memory.promises = s.memory.promises.slice(0, 24);
 }
 
-function callback(s: GameState, id: string, text: string, inScenes = 4): void {
+function callback(s: GameState, id: string, text: string, inScenes = 8): void {
   const d = directorState(s);
   if (d.callbacks.some((c) => c.id === id)) return;
-  d.callbacks.push({ id, text, dueScene: (s.sceneCount ?? 0) + inScenes });
+  d.callbacks.push({ id, text, dueScene: (s.sceneCount ?? 0) + Math.max(6, inScenes) });
 }
+
 
 const LOAN_DESTINOS = [
   "Racing de Santander (Segunda)",
