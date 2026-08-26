@@ -36,6 +36,16 @@ export interface DirectorState {
   lastFamilies: string[];
   sceneInSeason: number;
   profile: string;
+  /** RITMO: escenas narrativas objetivo de esta temporada (4-9). */
+  budget?: number;
+  /** RITMO: beat del motor en que se mostró el último capítulo de arco. */
+  lastArcBeat?: number;
+  /** RITMO: beat del motor en que se mostró la última escena secundaria. */
+  lastBeatBeat?: number;
+  /** RITMO: beat del motor de la última escena narrativa de cualquier tipo. */
+  lastAnyBeat?: number;
+  /** RITMO: escenas narrativas consumidas en pretemporada. */
+  preseasonUsed?: number;
 }
 
 type WithDirector = GameState & { director?: DirectorState };
@@ -56,6 +66,11 @@ export function directorState(s: GameState): DirectorState {
       lastFamilies: [],
       sceneInSeason: 0,
       profile: rollProfile(s),
+      budget: seasonBudget(s),
+      lastArcBeat: -99,
+      lastBeatBeat: -99,
+      lastAnyBeat: -99,
+      preseasonUsed: 0,
     };
     return g.director;
   }
@@ -66,8 +81,28 @@ export function directorState(s: GameState): DirectorState {
   if (!Array.isArray(d.candidates)) d.candidates = [];
   if (typeof d.profile !== "string") d.profile = rollProfile(s);
   if (typeof d.sceneInSeason !== "number") d.sceneInSeason = 0;
+  // Saves antiguos: campos de ritmo inicializados de forma defensiva.
+  if (typeof d.budget !== "number" || d.budget <= 0) d.budget = seasonBudget(s);
+  if (typeof d.lastArcBeat !== "number") d.lastArcBeat = -99;
+  if (typeof d.lastBeatBeat !== "number") d.lastBeatBeat = -99;
+  if (typeof d.lastAnyBeat !== "number") d.lastAnyBeat = -99;
+  if (typeof d.preseasonUsed !== "number") d.preseasonUsed = 0;
+  // Regla nueva: un solo arco principal activo. Los saves con varios se poda.
+  if (d.active.length > 1) d.active = [d.active[0]!];
   return d;
 }
+
+/**
+ * RITMO: presupuesto de escenas narrativas por temporada. Reproducible por
+ * careerSeed: normalmente 6-8, con temporadas tranquilas (4-5) e intensas (9).
+ */
+function seasonBudget(s: GameState): number {
+  const h = hash(careerSeed(s), `budget${s.seasonIndex}`) % 100;
+  if (h < 18) return 4 + (h % 2); // temporada tranquila
+  if (h < 82) return 6 + (h % 3); // norma: 6-8
+  return 9;
+}
+
 
 /** Perfil de trayectoria oculto: nunca se muestra al usuario. */
 function rollProfile(s: GameState): string {
@@ -157,11 +192,12 @@ function remember(s: GameState, text: string): void {
   s.memory.promises = s.memory.promises.slice(0, 24);
 }
 
-function callback(s: GameState, id: string, text: string, inScenes = 4): void {
+function callback(s: GameState, id: string, text: string, inScenes = 8): void {
   const d = directorState(s);
   if (d.callbacks.some((c) => c.id === id)) return;
-  d.callbacks.push({ id, text, dueScene: (s.sceneCount ?? 0) + inScenes });
+  d.callbacks.push({ id, text, dueScene: (s.sceneCount ?? 0) + Math.max(6, inScenes) });
 }
+
 
 const LOAN_DESTINOS = [
   "Racing de Santander (Segunda)",
@@ -1783,21 +1819,70 @@ function markScene(s: GameState, sceneId: string, family: string): void {
   d.lastFamilies.unshift(family);
   d.lastFamilies = d.lastFamilies.slice(0, 10);
   d.sceneInSeason += 1;
+  d.lastAnyBeat = s.beat ?? 0;
+  if (s.flags["pretemporada"] === 1) d.preseasonUsed = (d.preseasonUsed ?? 0) + 1;
   if (!Array.isArray(s.seenEvents)) s.seenEvents = [];
   if (!s.seenEvents.includes(sceneId)) s.seenEvents.push(sceneId);
   s.sceneCount = (s.sceneCount ?? 0) + 1;
 }
+
+/* ---------------------------- RITMO Y COHERENCIA ---------------------------- */
+
+/** Beats del motor transcurridos desde la última escena narrativa. */
+function sinceAny(s: GameState, d: DirectorState): number {
+  return (s.beat ?? 0) - (d.lastAnyBeat ?? -99);
+}
+
+/**
+ * Coherencia de estatus: fama, dinero grande, selección, mercado y legado
+ * exigen progresión real. Un chaval de 16-18 sin debutar no vive historias
+ * de estrella.
+ */
+function statusOk(s: GameState, family: string): boolean {
+  const apps = totalApps(s);
+  const debuted = apps >= 3 || s.achievements.includes("debut_pro");
+  switch (family) {
+    case "legado":
+      return s.stage === "first" && s.age >= 24 && s.overall >= 78 && s.fame >= 55;
+    case "seleccion":
+      return debuted && s.stage === "first" && s.overall >= 70 && s.age >= 18;
+    case "mercado":
+    case "salto":
+      return debuted && s.stage === "first" && apps >= 12 && s.overall >= 66;
+    case "dinero":
+      return debuted && (s.salary ?? 0) >= 60 && s.age >= 18;
+    case "revelacion":
+      return debuted && apps >= 10 && s.form >= 58;
+    case "contrato":
+      return s.age >= 17 && debuted;
+    case "capitan":
+      return s.stage === "first" && apps >= 25;
+    default:
+      return true;
+  }
+}
+
+/** Escenas narrativas ya agotadas para esta temporada. */
+function budgetSpent(s: GameState, d: DirectorState): boolean {
+  return d.sceneInSeason >= (d.budget ?? 7);
+}
+
 
 /** Nueva temporada: 3-5 arcos candidatos coherentes con el contexto. */
 export function directorNewSeason(s: GameState): void {
   const d = directorState(s);
   d.season = s.seasonIndex;
   d.sceneInSeason = 0;
+  d.preseasonUsed = 0;
+  d.budget = seasonBudget(s);
   d.active = d.active.filter((a) => {
     const arc = arcById(a.id);
     return !!arc && a.chapter < arc.chapters.length;
   });
-  const pool = ARCS.filter((a) => !d.completed.includes(a.id) && !d.active.some((x) => x.id === a.id) && a.requires(s));
+  if (d.active.length > 1) d.active = [d.active[0]!];
+  const pool = ARCS.filter(
+    (a) => !d.completed.includes(a.id) && !d.active.some((x) => x.id === a.id) && statusOk(s, a.family) && a.requires(s),
+  );
   // Sorteo ponderado: la misma situación no produce siempre los mismos arcos.
   const bag = pool.map((a) => ({ id: a.id, w: Math.max(1, a.weight(s)) + (hash(careerSeed(s), `${a.id}${s.seasonIndex}${d.profile}`) % 26) }));
   const chosen: string[] = [];
@@ -1820,11 +1905,12 @@ export function directorNewSeason(s: GameState): void {
 
 function openArc(s: GameState): ActiveArc | null {
   const d = directorState(s);
-  if (d.active.length >= 3) return null;
+  // RITMO: un solo arco principal activo. No se abre otro hasta cerrar el actual.
+  if (d.active.length >= 1) return null;
   const eligible = d.candidates.filter((id) => {
     if (d.active.some((a) => a.id === id) || d.completed.includes(id)) return false;
     const arc = arcById(id);
-    return !!arc && arc.requires(s) && !familyBlocked(s, arc.family);
+    return !!arc && statusOk(s, arc.family) && arc.requires(s) && !familyBlocked(s, arc.family);
   });
   if (eligible.length > 0) {
     const id = eligible[hash(careerSeed(s), `open${s.sceneCount ?? 0}`) % eligible.length]!;
@@ -1840,51 +1926,89 @@ function openArc(s: GameState): ActiveArc | null {
 const arcCard = (arc: ActiveArc): DynamicCard => ({ type: "dynamic", kind: "arc", data: { arcId: arc.id, chapter: arc.chapter } });
 
 /**
- * Único punto de selección de escena narrativa.
- * Orden: callbacks pendientes -> capítulo de arco activo -> abrir arco nuevo ->
- * escena secundaria contextual NUEVA. Si nada es válido devuelve null y el
- * motor avanza tiempo (jamás recicla una tarjeta antigua).
+ * Único punto de selección de escena narrativa, con RITMO DE VIDA REAL.
+ *
+ * Reglas de pacing (todas reproducibles por careerSeed, sin Math.random):
+ *  - presupuesto de 4-9 escenas narrativas por temporada (norma 6-8);
+ *  - un único arco principal activo;
+ *  - separación mínima entre capítulos del mismo arco (los "tres meses
+ *    después" del copy se sienten de verdad);
+ *  - escenas secundarias mucho menos frecuentes y nunca de relleno;
+ *  - pretemporada: 1-2 momentos como máximo.
+ * Si nada procede devuelve null y el motor avanza semanas de calendario.
  */
 export function directorCard(s: GameState): DynamicCard | null {
   const d = directorState(s);
+  const beatNow = s.beat ?? 0;
+  const pre = s.flags["pretemporada"] === 1;
 
-  // 1. Callback pendiente que ya vence.
-  const cbIdx = d.callbacks.findIndex((c) => (s.sceneCount ?? 0) >= c.dueScene);
-  if (cbIdx >= 0) {
-    const cb = d.callbacks.splice(cbIdx, 1)[0]!;
-    if (!seen(s, `cb_scene_${cb.id}`)) {
-      return { type: "dynamic", kind: "arc_callback", data: { cbId: cb.id, text: cb.text } };
-    }
+  // 0. Pretemporada dosificada: 1-2 escenas, nunca test+dorsal+historia seguidas.
+  if (pre) {
+    const preMax = 1 + (hash(careerSeed(s), `pre${s.seasonIndex}`) % 2);
+    if ((d.preseasonUsed ?? 0) >= preMax) return null;
+    if (sinceAny(s, d) < 2) return null;
   }
 
-  // 2. Capítulo siguiente de un arco activo (si sigue cumpliendo requisitos).
+  // 1. Callback pendiente que ya vence (y con aire desde la última escena).
+  const cbIdx = d.callbacks.findIndex((c) => (s.sceneCount ?? 0) >= c.dueScene);
+  if (cbIdx >= 0 && sinceAny(s, d) >= 3) {
+    const cb = d.callbacks[cbIdx]!;
+    if (!seen(s, `cb_scene_${cb.id}`)) {
+      d.callbacks.splice(cbIdx, 1);
+      return { type: "dynamic", kind: "arc_callback", data: { cbId: cb.id, text: cb.text } };
+    }
+    d.callbacks.splice(cbIdx, 1);
+  }
+
+  // 2. Capítulo siguiente del arco activo, con separación temporal real.
   const ready = d.active.filter((a) => {
     const arc = arcById(a.id);
     if (!arc || a.chapter >= arc.chapters.length) return false;
     const ch = arc.chapters[a.chapter]!;
     if (seen(s, `${a.id}_c${a.chapter}`)) return false;
-    // Continuidad: el capítulo 2+ no espera cooldown de familia (es el mismo hilo).
     if (a.chapter === 0 && familyBlocked(s, ch.family)) return false;
+    // Cooldown entre capítulos: 3-5 beats de motor (semanas/meses de rutina).
+    if (a.chapter > 0) {
+      const gap = 3 + (hash(careerSeed(s), `gap${a.id}${a.chapter}`) % 3);
+      if (beatNow - (d.lastArcBeat ?? -99) < gap) return false;
+    } else if (sinceAny(s, d) < 2) {
+      return false;
+    }
     return true;
   });
   if (ready.length > 0) {
     const chosen = ready.sort((x, y) => y.chapter - x.chapter || x.opened - y.opened)[0]!;
+    d.lastArcBeat = beatNow;
     return arcCard(chosen);
   }
 
-  // 3. Abrir un arco nuevo de los candidatos de la temporada.
-  const opened = openArc(s);
-  if (opened) return arcCard(opened);
+  // A partir de aquí, solo material opcional: respeta el presupuesto.
+  if (budgetSpent(s, d)) return null;
 
-  // 4. Escena secundaria contextual nueva, de familia distinta a las últimas.
-  const beats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && b.requires(s));
+  // 3. Abrir un arco nuevo si no hay ninguno vivo y ha pasado tiempo.
+  if (d.active.length === 0 && sinceAny(s, d) >= 3) {
+    const opened = openArc(s);
+    if (opened) {
+      d.lastArcBeat = beatNow;
+      return arcCard(opened);
+    }
+  }
+
+  // 4. Escena secundaria contextual: poco frecuente y nunca de relleno.
+  const beatGap = 4 + (hash(careerSeed(s), `bgap${s.sceneCount ?? 0}`) % 4);
+  if (beatNow - (d.lastBeatBeat ?? -99) < beatGap || sinceAny(s, d) < 3) return null;
+  // Filtro extra reproducible: la mayoría de huecos se quedan en rutina.
+  if (hash(careerSeed(s), `bchance${beatNow}${s.seasonIndex}`) % 100 >= 45) return null;
+  const beats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && statusOk(s, b.family) && b.requires(s));
   if (beats.length > 0) {
     const h = hash(careerSeed(s), `beat${s.sceneCount ?? 0}`);
     const beat = beats[h % beats.length]!;
+    d.lastBeatBeat = beatNow;
     return { type: "dynamic", kind: "arc_beat", data: { beatId: beat.id } };
   }
   return null;
 }
+
 
 const CALLBACK_TITLES = [
   "Esto ya lo habías empezado tú",

@@ -352,16 +352,16 @@ export function makeSeasonPlan(s: GameState): Slot[] {
   let rotation = 0;
   const narrative = (): Slot => ({ kind: "event", category: NARRATIVE_ROTATION[rotation++ % NARRATIVE_ROTATION.length]! });
 
-  // PRETEMPORADA: 2-4 escenas variables (objetivos, competencia, rumores,
-  // vestuario, agente, tests). No salen todas ni en el mismo orden.
-  const preCount = 2 + Math.floor(Math.random() * 3);
+  // PRETEMPORADA: 1-2 huecos narrativos como máximo (el director dosifica).
+  const preCount = 1 + (Math.floor(Math.random() * 2));
   for (let i = 0; i < preCount; i++) slots.push({ kind: "event", category: "preseason" });
-  if (s.agent.present && Math.random() < 0.6) slots.push({ kind: "agent" });
+  if (s.agent.present && Math.random() < 0.35) slots.push({ kind: "agent" });
 
   keys.forEach((k, idx) => {
-    const before = idx === 0 ? 2 : 2 + (Math.random() < 0.5 ? 1 : 0);
+    const before = idx === 0 ? 1 : 1 + (Math.random() < 0.4 ? 1 : 0);
     for (let i = 0; i < before; i++) slots.push(narrative());
-    if (idx === 1 || idx === 3 || idx === 5) slots.push({ kind: "agent" });
+    if (idx === 3) slots.push({ kind: "agent" });
+
     slots.push({
       kind: "match",
       tag: k.tag,
@@ -591,9 +591,28 @@ export function advance(state: GameState): GameState {
     applyRun(s, 2);
   }
 
+  // RITMO: con el director dosificado, muchos huecos son rutina. Si tras el
+  // recorrido no ha salido escena y la temporada sigue viva, contamos el
+  // tramo de calendario en vez de cerrar la temporada por agotamiento.
+  if (s.queue.length > 0) {
+    const run = applyRun(s, 3);
+    s.pending = dyn("match_flash", {
+      kind: run.notable?.kind ?? "run",
+      text: run.notable?.text ?? "Semanas de rutina: entrenar, viajar, competir.",
+      opponent: run.notable?.opponent ?? "",
+      wins: run.wins,
+      draws: run.draws,
+      losses: run.losses,
+      goals: run.goals,
+      matches: run.matches,
+    });
+    return touch(s);
+  }
+
   s.pending = { type: "season", summary: closeSeason(s) };
   return touch(s);
 }
+
 
 function agentCard(s: GameState): Card | null {
   if (agentEligible(s)) return dyn("agent_intro", { commission: 8 + Math.floor(Math.random() * 3) });
