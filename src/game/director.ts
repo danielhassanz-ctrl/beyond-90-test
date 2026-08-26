@@ -36,6 +36,16 @@ export interface DirectorState {
   lastFamilies: string[];
   sceneInSeason: number;
   profile: string;
+  /** RITMO: escenas narrativas objetivo de esta temporada (4-9). */
+  budget?: number;
+  /** RITMO: beat del motor en que se mostró el último capítulo de arco. */
+  lastArcBeat?: number;
+  /** RITMO: beat del motor en que se mostró la última escena secundaria. */
+  lastBeatBeat?: number;
+  /** RITMO: beat del motor de la última escena narrativa de cualquier tipo. */
+  lastAnyBeat?: number;
+  /** RITMO: escenas narrativas consumidas en pretemporada. */
+  preseasonUsed?: number;
 }
 
 type WithDirector = GameState & { director?: DirectorState };
@@ -56,6 +66,11 @@ export function directorState(s: GameState): DirectorState {
       lastFamilies: [],
       sceneInSeason: 0,
       profile: rollProfile(s),
+      budget: seasonBudget(s),
+      lastArcBeat: -99,
+      lastBeatBeat: -99,
+      lastAnyBeat: -99,
+      preseasonUsed: 0,
     };
     return g.director;
   }
@@ -66,8 +81,28 @@ export function directorState(s: GameState): DirectorState {
   if (!Array.isArray(d.candidates)) d.candidates = [];
   if (typeof d.profile !== "string") d.profile = rollProfile(s);
   if (typeof d.sceneInSeason !== "number") d.sceneInSeason = 0;
+  // Saves antiguos: campos de ritmo inicializados de forma defensiva.
+  if (typeof d.budget !== "number" || d.budget <= 0) d.budget = seasonBudget(s);
+  if (typeof d.lastArcBeat !== "number") d.lastArcBeat = -99;
+  if (typeof d.lastBeatBeat !== "number") d.lastBeatBeat = -99;
+  if (typeof d.lastAnyBeat !== "number") d.lastAnyBeat = -99;
+  if (typeof d.preseasonUsed !== "number") d.preseasonUsed = 0;
+  // Regla nueva: un solo arco principal activo. Los saves con varios se poda.
+  if (d.active.length > 1) d.active = [d.active[0]!];
   return d;
 }
+
+/**
+ * RITMO: presupuesto de escenas narrativas por temporada. Reproducible por
+ * careerSeed: normalmente 6-8, con temporadas tranquilas (4-5) e intensas (9).
+ */
+function seasonBudget(s: GameState): number {
+  const h = hash(careerSeed(s), `budget${s.seasonIndex}`) % 100;
+  if (h < 18) return 4 + (h % 2); // temporada tranquila
+  if (h < 82) return 6 + (h % 3); // norma: 6-8
+  return 9;
+}
+
 
 /** Perfil de trayectoria oculto: nunca se muestra al usuario. */
 function rollProfile(s: GameState): string {
