@@ -591,9 +591,28 @@ export function advance(state: GameState): GameState {
     applyRun(s, 2);
   }
 
+  // RITMO: con el director dosificado, muchos huecos son rutina. Si tras el
+  // recorrido no ha salido escena y la temporada sigue viva, contamos el
+  // tramo de calendario en vez de cerrar la temporada por agotamiento.
+  if (s.queue.length > 0) {
+    const run = applyRun(s, 3);
+    s.pending = dyn("match_flash", {
+      kind: run.notable?.kind ?? "run",
+      text: run.notable?.text ?? "Semanas de rutina: entrenar, viajar, competir.",
+      opponent: run.notable?.opponent ?? "",
+      wins: run.wins,
+      draws: run.draws,
+      losses: run.losses,
+      goals: run.goals,
+      matches: run.matches,
+    });
+    return touch(s);
+  }
+
   s.pending = { type: "season", summary: closeSeason(s) };
   return touch(s);
 }
+
 
 function agentCard(s: GameState): Card | null {
   if (agentEligible(s)) return dyn("agent_intro", { commission: 8 + Math.floor(Math.random() * 3) });
