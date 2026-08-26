@@ -1819,10 +1819,54 @@ function markScene(s: GameState, sceneId: string, family: string): void {
   d.lastFamilies.unshift(family);
   d.lastFamilies = d.lastFamilies.slice(0, 10);
   d.sceneInSeason += 1;
+  d.lastAnyBeat = s.beat ?? 0;
+  if (s.flags["pretemporada"] === 1) d.preseasonUsed = (d.preseasonUsed ?? 0) + 1;
   if (!Array.isArray(s.seenEvents)) s.seenEvents = [];
   if (!s.seenEvents.includes(sceneId)) s.seenEvents.push(sceneId);
   s.sceneCount = (s.sceneCount ?? 0) + 1;
 }
+
+/* ---------------------------- RITMO Y COHERENCIA ---------------------------- */
+
+/** Beats del motor transcurridos desde la última escena narrativa. */
+function sinceAny(s: GameState, d: DirectorState): number {
+  return (s.beat ?? 0) - (d.lastAnyBeat ?? -99);
+}
+
+/**
+ * Coherencia de estatus: fama, dinero grande, selección, mercado y legado
+ * exigen progresión real. Un chaval de 16-18 sin debutar no vive historias
+ * de estrella.
+ */
+function statusOk(s: GameState, family: string): boolean {
+  const apps = totalApps(s);
+  const debuted = apps >= 3 || s.achievements.includes("debut_pro");
+  switch (family) {
+    case "legado":
+      return s.stage === "first" && s.age >= 24 && s.overall >= 78 && s.fame >= 55;
+    case "seleccion":
+      return debuted && s.stage === "first" && s.overall >= 70 && s.age >= 18;
+    case "mercado":
+    case "salto":
+      return debuted && s.stage === "first" && apps >= 12 && s.overall >= 66;
+    case "dinero":
+      return debuted && (s.salary ?? 0) >= 60 && s.age >= 18;
+    case "revelacion":
+      return debuted && apps >= 10 && s.form >= 58;
+    case "contrato":
+      return s.age >= 17 && debuted;
+    case "capitan":
+      return s.stage === "first" && apps >= 25;
+    default:
+      return true;
+  }
+}
+
+/** Escenas narrativas ya agotadas para esta temporada. */
+function budgetSpent(s: GameState, d: DirectorState): boolean {
+  return d.sceneInSeason >= (d.budget ?? 7);
+}
+
 
 /** Nueva temporada: 3-5 arcos candidatos coherentes con el contexto. */
 export function directorNewSeason(s: GameState): void {
