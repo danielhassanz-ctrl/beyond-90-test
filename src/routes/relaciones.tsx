@@ -106,7 +106,7 @@ function Relations({ state }: { state: GameState }) {
             ["captain", "Capitán"],
             ["rival", "Competencia por el puesto"],
             ["physio", "Fisioterapeuta"],
-            ["journalist", "Prensa"],
+            ["press", "Prensa"],
             ["partner", "Pareja"],
           ] as const).map(([role, label]) => {
             const person = npc(state, role);
