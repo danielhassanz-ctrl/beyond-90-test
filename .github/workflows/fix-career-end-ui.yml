@@ -1,0 +1,40 @@
+name: Fix terminal career end UI
+
+on:
+  push:
+    branches:
+      - recovery-v4-19-delivery-gate
+    paths:
+      - scripts/fix-career-end-ui.mjs
+      - .github/workflows/fix-career-end-ui.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout recovery branch
+        uses: actions/checkout@v4
+        with:
+          ref: recovery-v4-19-delivery-gate
+          fetch-depth: 0
+      - name: Patch terminal career end
+        run: node scripts/fix-career-end-ui.mjs
+      - name: Validate diff
+        run: git diff --check
+      - name: Commit UI fix
+        shell: bash
+        run: |
+          if git diff --quiet -- src/routes/historia.tsx; then
+            echo "Career end UI already fixed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/historia.tsx
+          git commit -m "Make career end terminal and route to Legado"
+          git push origin HEAD:recovery-v4-19-delivery-gate
