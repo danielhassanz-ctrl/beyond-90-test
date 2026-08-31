@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "qa:career": "tsx scripts/full-career-smoke.ts",
+    "qa:career": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-career-smoke.ts",
     "format": "prettier --write ."
   },
   "dependencies": {
