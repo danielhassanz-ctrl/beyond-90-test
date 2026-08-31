@@ -28,5 +28,8 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Full career smoke QA
+        run: npm run qa:career
+
       - name: Build
         run: npm run build
