@@ -2665,6 +2665,11 @@ export function resolveDirector(s: GameState, card: DynamicCard, choiceId: strin
       rel(s, "dressing", 3);
       return { title: "Buscas contexto", text: "Antes de responder, hablas con quien estuvo dentro de aquella historia. Cambia el tono, no borra lo ocurrido.", tone: "neutral" };
     }
+    if (choiceId === "consultar") {
+      stat(s, "discipline", 2);
+      rel(s, "dressing", 3);
+      return { title: "Buscas contexto", text: "Antes de responder, hablas con quien estuvo dentro de aquella historia. Cambia el tono, no borra lo ocurrido.", tone: "neutral" };
+    }
     if (choiceId === "esquivar") {
       d.callbacks.push({ id: `${id}_bis`, text: typeof card.data["text"] === "string" ? card.data["text"] : "Sigue pendiente", dueScene: (s.sceneCount ?? 0) + 6 });
       stat(s, "morale", -3);
