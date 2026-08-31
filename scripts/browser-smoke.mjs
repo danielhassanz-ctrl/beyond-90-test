@@ -89,9 +89,27 @@ try {
   await page.getByRole("link", { name: "Ver mi legado" }).click();
   await page.waitForURL(/\/legado$/, { timeout: 10_000 });
   await page.locator("main").waitFor({ state: "visible", timeout: 10_000 });
+  await page.getByText("¿Y después del minuto 90?", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await assertNoFatal("career end to legacy");
 
-  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} route=${page.url()} legacy=ok`);
+  await page.getByRole("button", { name: /Ser entrenador/i }).click();
+  await page.getByText("Nueva vida · Entrenador", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+  await page.getByRole("button", { name: /Empezar desde abajo/i }).click();
+  await page.getByText("Entrenador · empieza otra carrera", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+  await assertNoFatal("post-career decision");
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.getByText("Entrenador · empieza otra carrera", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+  const persistedPostCareer = await page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    return state.flags?.post_career_path === 1 && state.flags?.post_career_style === 1;
+  }, saveKey);
+  if (!persistedPostCareer) throw new Error("post-career coach path/style did not persist after reload");
+  await assertNoFatal("post-career persistence");
+
+  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} route=${page.url()} legacy=ok postCareer=coach-a`);
 } finally {
   await browser.close();
 }
