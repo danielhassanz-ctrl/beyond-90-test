@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "qa:career": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-career-smoke.ts",
+    "qa:branches": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/branch-coverage-smoke.ts",
     "format": "prettier --write ."
   },
   "dependencies": {
