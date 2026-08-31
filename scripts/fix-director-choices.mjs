@@ -99,7 +99,7 @@ for (let from = 0; ; ) {
   const close = matchingBracket(src, open);
   const body = src.slice(open + 1, close);
   from = close + 1;
-  if (!body.includes("apply:")) continue; // render-only arrays handled separately
+  if (!body.includes("apply:")) continue;
   const count = topLevelObjects(body);
   if (count >= 3) continue;
   const chapterMode = marker < beatMarker;
@@ -110,9 +110,8 @@ for (let from = 0; ; ) {
   inserts.push({ at: close, text: addition });
 }
 
-for (const ins of inserts.sort((a, b) => b.at - a.at)) src = src.slice(0, ins.at) + ins.text + "\n        " + src.slice(ins.at);
+for (const ins of inserts.sort((a, b) => b.at - a.at)) src = src.slice(0, ins.at) + ins.text + "\n" + src.slice(ins.at);
 
-// Callback: tercera vía real, no un alias decorativo.
 src = src.replace(
   '{ id: "esquivar", label: "Esquivarlo por ahora", hint: "Puede volver peor" },\n      ],',
   '{ id: "esquivar", label: "Esquivarlo por ahora", hint: "Puede volver peor" },\n        { id: "consultar", label: "Hablar con alguien implicado antes de cerrar", hint: "Menos impulso, más contexto" },\n      ],',
@@ -122,5 +121,6 @@ src = src.replace(
   'if (choiceId === "consultar") {\n      stat(s, "discipline", 2);\n      rel(s, "dressing", 3);\n      return { title: "Buscas contexto", text: "Antes de responder, hablas con quien estuvo dentro de aquella historia. Cambia el tono, no borra lo ocurrido.", tone: "neutral" };\n    }\n    if (choiceId === "esquivar") {\n      d.callbacks.push',
 );
 
+src = src.replace(/[ \t]+$/gm, "");
 fs.writeFileSync(file, src);
 console.log(`Normalized ${inserts.length} director choice arrays to exactly 3 choices.`);
