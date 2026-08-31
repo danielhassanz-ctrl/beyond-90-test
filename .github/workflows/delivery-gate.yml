@@ -31,6 +31,9 @@ jobs:
       - name: Full career smoke QA
         run: npm run qa:career
 
+      - name: Targeted narrative branch QA
+        run: npm run qa:branches
+
       - name: Extended gameplay QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
 
