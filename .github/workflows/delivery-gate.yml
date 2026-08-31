@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - recovery-v4-19-delivery-gate
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
