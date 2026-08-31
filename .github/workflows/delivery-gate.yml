@@ -35,7 +35,7 @@ jobs:
         run: npm run qa:branches
 
       - name: Extended gameplay QA
-        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
 
       - name: Build
         run: npm run build
