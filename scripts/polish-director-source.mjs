@@ -9,7 +9,22 @@ const genericCount = src.split(genericReturn).length - 1;
 if (genericCount < 5) throw new Error(`Expected at least 5 generic third-way outcomes, found ${genericCount}`);
 
 const helperMarker = 'function callback(s: GameState, id: string, text: string, inScenes = 8): void {';
-const helper = `function thirdWayResult(s: GameState): Res {\n  const variants = [\n    { title: "Pides margen", text: "No respondes en caliente. Escuchas una versión más, fijas un plazo y haces que el resto espere tu decisión." },\n    { title: "Cambias el terreno", text: "Sacas la conversación del foco público y la llevas a una mesa pequeña. Pierdes impacto inmediato, ganas información." },\n    { title: "Ni sí ni no", text: "No compras ninguno de los dos extremos. Pides condiciones concretas y dejas claro que decidirás cuando tengas todos los datos." },\n    { title: "Veinticuatro horas", text: "Te reservas un día para hablar con quien realmente está implicado. La situación no desaparece, pero deja de decidir por ti." },\n    { title: "Una salida intermedia", text: "Propones una solución menos vistosa y más controlable. Nadie sale del todo satisfecho, que a veces es señal de un acuerdo real." },\n    { title: "Lo enfrías", text: "Bajas el volumen, haces dos preguntas incómodas y pospones la respuesta. El problema sigue ahí, pero ahora conoces mejor su precio." },\n  ] as const;\n  const i = hash(careerSeed(s), \\`third-way-\\${s.sceneCount ?? 0}-\\${s.beat ?? 0}-\\${s.seasonIndex}\\`) % variants.length;\n  return { ...variants[i]!, tone: "neutral" };\n}\n\n`;
+const helper = [
+  'function thirdWayResult(s: GameState): Res {',
+  '  const variants = [',
+  '    { title: "Pides margen", text: "No respondes en caliente. Escuchas una versión más, fijas un plazo y haces que el resto espere tu decisión." },',
+  '    { title: "Cambias el terreno", text: "Sacas la conversación del foco público y la llevas a una mesa pequeña. Pierdes impacto inmediato, ganas información." },',
+  '    { title: "Ni sí ni no", text: "No compras ninguno de los dos extremos. Pides condiciones concretas y dejas claro que decidirás cuando tengas todos los datos." },',
+  '    { title: "Veinticuatro horas", text: "Te reservas un día para hablar con quien realmente está implicado. La situación no desaparece, pero deja de decidir por ti." },',
+  '    { title: "Una salida intermedia", text: "Propones una solución menos vistosa y más controlable. Nadie sale del todo satisfecho, que a veces es señal de un acuerdo real." },',
+  '    { title: "Lo enfrías", text: "Bajas el volumen, haces dos preguntas incómodas y pospones la respuesta. El problema sigue ahí, pero ahora conoces mejor su precio." },',
+  '  ] as const;',
+  '  const key = "third-way-" + (s.sceneCount ?? 0) + "-" + (s.beat ?? 0) + "-" + s.seasonIndex;',
+  '  const i = hash(careerSeed(s), key) % variants.length;',
+  '  return { ...variants[i]!, tone: "neutral" };',
+  '}',
+  '',
+].join("\n");
 if (!src.includes("function thirdWayResult(s: GameState): Res")) {
   const pos = src.indexOf(helperMarker);
   if (pos < 0) throw new Error("Could not find callback helper insertion point");
@@ -31,7 +46,14 @@ if (replaced !== genericCount) throw new Error(`Expected to replace ${genericCou
 
 src = src.split(genericHint).join("");
 
-const consultBlock = `    if (choiceId === "consultar") {\n      stat(s, "discipline", 2);\n      rel(s, "dressing", 3);\n      return { title: "Buscas contexto", text: "Antes de responder, hablas con quien estuvo dentro de aquella historia. Cambia el tono, no borra lo ocurrido.", tone: "neutral" };\n    }\n`;
+const consultBlock = [
+  '    if (choiceId === "consultar") {',
+  '      stat(s, "discipline", 2);',
+  '      rel(s, "dressing", 3);',
+  '      return { title: "Buscas contexto", text: "Antes de responder, hablas con quien estuvo dentro de aquella historia. Cambia el tono, no borra lo ocurrido.", tone: "neutral" };',
+  '    }',
+  '',
+].join("\n");
 const doubled = consultBlock + consultBlock;
 if (src.includes(doubled)) src = src.replace(doubled, consultBlock);
 
