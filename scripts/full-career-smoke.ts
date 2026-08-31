@@ -3,6 +3,7 @@ import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
 import type { GameState, Player } from "../src/game/types";
 
+// Release gate: this script must stay deterministic and fail on the first reproducible career blocker.
 function rng(seed: number) {
   let x = seed >>> 0;
   return () => {
