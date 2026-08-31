@@ -3,6 +3,7 @@ import { advance, chooseClub, clone, createGame, resolveDynamicCard } from "../s
 import { renderDynamic } from "../src/game/dynamic";
 import { interpretFree } from "../src/game/interpret";
 import { simulateMatch } from "../src/game/match";
+import { choosePostCareerPath, choosePostCareerStyle, postCareerStatus, type PostCareerPath } from "../src/game/postcareer";
 import type { DynamicCard, GameState, Player, Slot } from "../src/game/types";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -91,6 +92,23 @@ assert(end.pending?.type === "dynamic" && end.pending.kind === "career_end", "re
 const endView = renderDynamic(end, end.pending);
 assert(endView.choices.length === 1 && endView.choices[0]?.id === "ok", "career_end must remain informational, not a fake three-choice decision");
 
+const initialPost = postCareerStatus(end);
+assert(initialPost.options.length === 3, `Post-career root has ${initialPost.options.length} paths; expected 3`);
+const pathIds = initialPost.options.map((o) => o.id);
+assert(new Set(pathIds).size === 3 && pathIds.includes("coach") && pathIds.includes("agent") && pathIds.includes("president"), "Post-career paths are incomplete");
+for (const path of ["coach", "agent", "president"] as PostCareerPath[]) {
+  const pathState = choosePostCareerPath(end, path);
+  const pathView = postCareerStatus(pathState);
+  assert(pathView.path === path, `Post-career path ${path} did not persist`);
+  assert(pathView.options.length === 3, `Post-career ${path} has ${pathView.options.length} styles; expected 3`);
+  for (const style of ["a", "b", "c"] as const) {
+    const finished = choosePostCareerStyle(pathState, style);
+    const finalView = postCareerStatus(finished);
+    assert(finalView.complete && finalView.style === style, `Post-career ${path}/${style} did not complete`);
+    assert(finished.log.some((entry) => entry.text.includes("Postcarrera")), `Post-career ${path}/${style} was not written to career log`);
+  }
+}
+
 const matchState = clone(base);
 matchState.stage = "first";
 matchState.age = 24;
@@ -111,4 +129,4 @@ for (let i = 0; i < 80; i++) {
 }
 assert(keyMoments >= 10, `Expected broad key-moment coverage, observed only ${keyMoments}`);
 
-console.log(`BRANCH_COVERAGE_SMOKE_OK dynamic=${decisionCards.length + 1} keyMoments=${keyMoments} careerEnd=ok semanticCases=${semanticCases.length + 2} genericCopy=0`);
+console.log(`BRANCH_COVERAGE_SMOKE_OK dynamic=${decisionCards.length + 1} keyMoments=${keyMoments} careerEnd=ok semanticCases=${semanticCases.length + 2} postCareer=3x3 genericCopy=0`);
