@@ -55,7 +55,43 @@ try {
   await page.locator("article").waitFor({ state: "visible", timeout: 10_000 });
   await assertNoFatal("saved career reload");
 
-  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} route=${page.url()}`);
+  const saveKey = "beyond90:save:v1";
+  const retirementPrepared = await page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    state.retired = true;
+    state.age = Math.max(30, Math.min(42, Number(state.age) || 36));
+    state.lastOutcome = null;
+    state.pendingMarket = null;
+    state.pending = {
+      type: "dynamic",
+      kind: "career_end",
+      data: {
+        tier: "QA",
+        apps: (state.seasons || []).reduce((sum, season) => sum + (season.apps || 0), 0),
+        goals: (state.seasons || []).reduce((sum, season) => sum + (season.goals || 0), 0),
+        titles: (state.titles || []).length,
+        awards: (state.awards || []).length,
+        peak: Math.max(state.overall || 0, ...(state.seasons || []).map((season) => season.overall || 0)),
+        wealth: state.wealth || 0,
+      },
+    };
+    localStorage.setItem(key, JSON.stringify(state));
+    return true;
+  }, saveKey);
+  if (!retirementPrepared) throw new Error("could not prepare retirement state from persisted career");
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.getByText("Carrera terminada", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+  await page.getByRole("link", { name: "Ver mi legado" }).waitFor({ state: "visible", timeout: 10_000 });
+  await assertNoFatal("career end render");
+  await page.getByRole("link", { name: "Ver mi legado" }).click();
+  await page.waitForURL(/\/legado$/, { timeout: 10_000 });
+  await page.locator("main").waitFor({ state: "visible", timeout: 10_000 });
+  await assertNoFatal("career end to legacy");
+
+  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} route=${page.url()} legacy=ok`);
 } finally {
   await browser.close();
 }
