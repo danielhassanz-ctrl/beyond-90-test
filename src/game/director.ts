@@ -360,7 +360,19 @@ const ARCS: Arc[] = [
               return { title: "Petición registrada", text: "El club lo estudiará en el mercado de invierno. Se abre otra historia.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "jerarquia",
@@ -387,7 +399,30 @@ const ARCS: Arc[] = [
               };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+          {
+            id: "consultar_entorno",
+            label: "No responder en caliente y ganarte margen en el campo",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -432,7 +467,19 @@ const ARCS: Arc[] = [
               return { title: "Como si fuera normal", text: "Cenas, duermes ocho horas y llegas al campo como el que va a trabajar.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "debut",
@@ -474,7 +521,19 @@ const ARCS: Arc[] = [
               return { title: "Se te va larga", text: "Pierdes el balón dos veces en zona mala. El míster mira al suelo. Debutaste, pero no como querías.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "debut",
@@ -506,7 +565,19 @@ const ARCS: Arc[] = [
               return { title: "Demasiado pronto", text: `"Llevas doce minutos como profesional y ya vienes a pedir. Vuelve cuando lleves doce partidos".`, tone: "bad", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -596,7 +667,19 @@ const ARCS: Arc[] = [
               return { title: "El chico del grande", text: "Juegas bien y caes mal. Aquí eso se paga en los balones que no te llegan.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "family", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "cesion",
@@ -635,7 +718,19 @@ const ARCS: Arc[] = [
               return { title: "Otro año fuera", text: "Aquí juegas. Es menos glamuroso y más carrera.", tone: "neutral", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -679,7 +774,19 @@ const ARCS: Arc[] = [
               return { title: "Portada", text: "\"Quiero jugar la Champions antes de los 23\". Mañana lo tendrás recortado en tu taquilla.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Responder solo lo imprescindible y salir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "revelacion",
@@ -712,7 +819,19 @@ const ARCS: Arc[] = [
               return { title: "Prisas", text: "Cuando el jugador empuja, el club sube el precio y la operación se complica. Ya está en marcha.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir tiempo y marcar tus propias condiciones",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "revelacion",
@@ -743,7 +862,19 @@ const ARCS: Arc[] = [
               return { title: "Te secan", text: "Dos partidos sin aparecer y la prensa ya escribe \"se ha apagado\". Es el mismo jugador, otro contexto.", tone: "bad", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -790,7 +921,19 @@ const ARCS: Arc[] = [
               return { title: "Un año más", text: "El club respira. Tú te quedas con la duda de qué habría pasado.", tone: "good", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "salto",
@@ -822,7 +965,19 @@ const ARCS: Arc[] = [
               return { title: "Nostalgia", text: "Videollamadas hasta las tres. Al día siguiente el míster ve las piernas, no la nostalgia.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "salto",
@@ -853,7 +1008,19 @@ const ARCS: Arc[] = [
               return { title: "Vuelta a casa", text: "Vuelves a un vestuario donde entiendes los chistes. Y eso, ahora, importa.", tone: "neutral", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -896,7 +1063,19 @@ const ARCS: Arc[] = [
               return { title: "Se oye en el pasillo", text: "Dos frases y un portazo. Mañana lo sabrá la prensa.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "conflicto",
@@ -971,7 +1150,30 @@ const ARCS: Arc[] = [
               return { title: "Reconciliación", text: "No os vais a llamar por Navidad, pero jugáis juntos y eso ya es suficiente.", tone: "good", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+          {
+            id: "consultar_entorno",
+            label: "Pedir tiempo y buscar una tercera vía",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -1014,7 +1216,19 @@ const ARCS: Arc[] = [
               return { title: "Contra el reloj", text: "Fisio privado, dos sesiones diarias y una fecha en la cabeza. El club no firma ese plan.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Consultar el plan con el fisio antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "lesion",
@@ -1045,7 +1259,19 @@ const ARCS: Arc[] = [
               return { title: "Presente", text: "Estás en cada charla y en cada autobús. Cuando vuelvas, nadie tendrá que presentarte.", tone: "good" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Consultar el plan con el fisio antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "lesion",
@@ -1081,7 +1307,19 @@ const ARCS: Arc[] = [
               return { title: "Con freno", text: "Vuelves entero pero a medio gas. El entrenador lo nota y espera.", tone: "neutral", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -1170,7 +1408,19 @@ const ARCS: Arc[] = [
               return { title: "Se cae la operación", text: "Vuelves al vestuario con la sensación de que ya eres un tema y no un compañero.", tone: "bad", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -1212,7 +1462,19 @@ const ARCS: Arc[] = [
               return { title: "Distancia", text: "\"Tú mismo\", dice, y se gira. En este vestuario eso pesa.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "vestuario",
@@ -1246,7 +1508,19 @@ const ARCS: Arc[] = [
               return { title: "Respuesta en el campo", text: "No abres la boca y firmas tu mejor partido del año.", tone: "good", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -1352,7 +1626,19 @@ const ARCS: Arc[] = [
               return { title: "Sigues de alquiler", text: "Ni casa ni deuda. En este oficio no es mala idea.", tone: "neutral", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "family", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -1396,7 +1682,19 @@ const ARCS: Arc[] = [
               return { title: "Diez minutos", text: "Se va con el bocadillo que había traído para ti. No se queja.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "family", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "familia",
@@ -1429,7 +1727,19 @@ const ARCS: Arc[] = [
               return { title: "Domingos de videollamada", text: "Funciona, hasta que un domingo nadie coge el teléfono porque están en una boda.", tone: "neutral", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "family", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -1470,7 +1780,19 @@ const ARCS: Arc[] = [
               return { title: "Sin brazalete", text: "\"Yo lidero jugando\". Medio vestuario lo entiende, el otro medio no.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
       {
         family: "legado",
@@ -1505,7 +1827,19 @@ const ARCS: Arc[] = [
               return { title: "Uno de los suyos", text: `${netWorth(c.s) >= 3000 ? "Ya tienes el dinero hecho." : "No serás el más rico."} Serás el que se quedó.`, tone: "gold", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
       },
     ],
   },
@@ -1538,7 +1872,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "apretar", label: "Terminar primero cueste lo que cueste", hint: "Impresión alta, físico justo", apply: (st) => { stat(st, "fitness", -4); rel(st, "coach", 6); return { title: "Primero en la cuesta", text: "Llegas sin aire y con el respeto del cuerpo técnico.", tone: "good" }; } },
         { id: "medir", label: "Administrar y no romperte en julio", hint: "Sensato", apply: (st) => { stat(st, "fitness", 7); return { title: "Julio largo", text: "No destacas y llegas entero a septiembre, que es cuando se juega.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Seguir el plan del cuerpo técnico sin hacer ruido",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1554,7 +1900,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "pedir", label: "Pedir un dorsal bajo", hint: "Ambición visible", apply: (st) => { rel(st, "dressing", -4); stat(st, "fame", 4); return { title: "Se ríen", text: "\"El 10 lo tiene alguien que lleva ocho años aquí\". Toca esperar.", tone: "neutral" }; } },
         { id: "aceptar", label: "Quedarte el que te dan", apply: (st) => { rel(st, "dressing", 5); return { title: "Sin ruido", text: "Coges tu camiseta y tu sitio del fondo del autobús.", tone: "good" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Seguir el plan del cuerpo técnico sin hacer ruido",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1570,7 +1928,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "gym", label: "Entrenar el domingo mientras juegan", apply: (st) => { stat(st, "fitness", 6); st.xp += 14; return { title: "Domingo de gimnasio", text: "El estadio se oye desde la sala de pesas. Trabajas igual.", tone: "neutral" }; } },
         { id: "preguntar", label: "Preguntar al entrenador por qué", apply: (st) => { const ok = st.rel.coach >= 50; rel(st, "coach", ok ? 3 : -6); return ok ? { title: "Respuesta honesta", text: "\"Es semana de gente hecha. La siguiente entras\".", tone: "neutral" } : { title: "Mala respuesta", text: "\"Cuando tenga que explicarte algo, te llamo yo\".", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1587,7 +1957,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "asumir", label: "Asumirlo y disculparte en el grupo", apply: (st) => { rel(st, "dressing", 4); rel(st, "coach", -5); stat(st, "discipline", 3); return { title: "Cara al frente", text: "Al día siguiente el míster no dice nada, que es peor.", tone: "neutral" }; } },
         { id: "hackeado", label: "Decir que te han cogido el móvil", apply: (st) => { rel(st, "dressing", -8); return { title: "Nadie se lo cree", text: "El chiste dura tres meses y la frase se queda como mote.", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Quitarte del foco y resolverlo en privado",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1603,7 +1985,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "ir", label: "Aceptar los 5.000 €", apply: (st) => { const f = ensureFinance(st); f.cash += 5; f.history.unshift({ season: "", text: "Cachet videoclip", amount: 5 }); stat(st, "fame", 16); rel(st, "coach", -5); callback(st, "cb_malum", "El videoclip de Malum-a se estrena y alguien lo comenta", 9); return { title: "Tres segundos de gloria", text: "Sales apoyado en un coche que no es tuyo, con gafas que no te pegan.", tone: "neutral" }; } },
         { id: "no", label: "Decir que no", apply: (st) => { rel(st, "coach", 4); stat(st, "discipline", 3); return { title: "Sin videoclip", text: "El representante de la cantante insiste dos semanas y se rinde.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Quitarte del foco y resolverlo en privado",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1619,7 +2013,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "jugar", label: "Meterte en la liga y picarte", apply: (st) => { rel(st, "dressing", 7); return { title: "Liga interna", text: "Pierdes la jornada y pagas el desayuno de doce personas.", tone: "good" }; } },
         { id: "ignorar", label: "Pasar del tema", apply: (st) => { stat(st, "discipline", 2); return { title: "Sin Fantasy", text: "Te llaman aburrido en tres idiomas.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Quitarte del foco y resolverlo en privado",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1636,7 +2042,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "diplomacia", label: "Contestar sin dar titular", apply: (st) => { rel(st, "coach", 5); stat(st, "fame", 2); return { title: "Nada que rascar", text: "Sales del atril y el jefe de prensa te da una palmada.", tone: "good" }; } },
         { id: "sincero", label: "Decir la verdad aunque duela", apply: (st) => { stat(st, "fame", 9); rel(st, "coach", -8); flag(st, "hablo_alto", 1); return { title: "Titular servido", text: "Mañana está en portada y el míster lo lee en el desayuno.", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Responder solo lo imprescindible y salir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1652,7 +2070,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "sensato", label: "Comprar el coche sensato", apply: (st) => { const f = ensureFinance(st); f.cash -= 25; f.properties.push({ name: "Coche sensato", value: 22, debt: 0 }); return { title: "Coche de gente normal", text: "Nadie te mira en el parking y llegas a los entrenamientos igual.", tone: "good" }; } },
         { id: "absurdo", label: "Comprar el coche absurdo", hint: "Vestuario y entrenador lo verán", apply: (st) => { const f = ensureFinance(st); const price = Math.min(f.cash, 95); f.cash -= price; f.properties.push({ name: "Coche absurdo", value: Math.round(price * 0.7), debt: 0 }); stat(st, "fame", 8); rel(st, "coach", -6); rel(st, "dressing", -3); callback(st, "cb_coche", "Alguien va a opinar de tu coche cuando el equipo pierda", 7); return { title: "Naranja", text: "Suena al arrancar y se oye desde el vestuario. Mala idea preciosa.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "agent", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1668,7 +2098,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "seguir", label: "Dejar el curso y apostar todo al fútbol", apply: (st) => { rel(st, "family", -6); st.xp += 25; remember(st, "Dejaste los estudios para apostar todo al fútbol"); return { title: "Todo al fútbol", text: "Tu madre firma el papel sin mirarte. Ahora hay una sola puerta.", tone: "neutral" }; } },
         { id: "compaginar", label: "Compaginar aunque cueste", apply: (st) => { rel(st, "family", 10); stat(st, "fitness", -4); stat(st, "discipline", 5); return { title: "Dos frentes", text: "Estudias en autobuses y duermes mal. Tu madre respira.", tone: "good" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "family", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1684,7 +2126,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "desmentir", label: "Desmentirlo y jugar limpio", apply: (st) => { st.agent.trust = clamp(st.agent.trust + 8); rel(st, "coach", 4); return { title: "Ruido apagado", text: "A la mañana siguiente nadie habla del tema.", tone: "good" }; } },
         { id: "dejar", label: "Dejarlo correr", apply: (st) => { stat(st, "fame", 7); rel(st, "dressing", -5); flag(st, "presiono_mercado", 1); return { title: "Que corra", text: "El club llama al agente antes de comer. Ha funcionado y ha costado.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir tiempo y marcar tus propias condiciones",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "agent", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1700,7 +2154,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "escuchar", label: "Escucharle y pedir tiempo", apply: (st) => { flag(st, "agente_aplazado", 1); return { title: "Lo pensarás", text: "Te quedas su número en la nota del móvil, sin nombre.", tone: "neutral" }; } },
         { id: "cortar", label: "Cortarlo: de esto se encarga tu padre", apply: (st) => { rel(st, "family", 6); return { title: "Tu padre lo lleva", text: "Tu padre no sabe de cláusulas, pero sabe cuándo alguien miente.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir tiempo y marcar tus propias condiciones",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "agent", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1716,7 +2182,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "aplaudir", label: "Aplaudir a la grada al salir", apply: (st) => { rel(st, "fans", 8); return { title: "Gesto", text: "Los silbidos bajan. La gente perdona el error, no el desprecio.", tone: "good" }; } },
         { id: "responder", label: "Responder con un gesto", apply: (st) => { rel(st, "fans", -14); stat(st, "fame", 6); flag(st, "afición_contra", 1); return { title: "Se lía", text: "El gesto se hace vídeo antes de que llegues al vestuario.", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1732,7 +2210,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "ir", label: "Ir a las seis de la mañana", apply: (st) => { stat(st, "fitness", 8); st.xp += 30; stat(st, "fame", 5); return { title: "Seis de la mañana", text: "Vomitas en la papelera y él se ríe: \"ahora ya eres profesional\".", tone: "good" }; } },
         { id: "dormir", label: "Dormir tus ocho horas", apply: (st) => { stat(st, "morale", 4); return { title: "Duermes", text: "Descansas bien y te enteras por Instagram de lo que te has perdido.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir un plan individual y demostrarlo entrenando",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1748,7 +2238,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "ir", label: "Ir con la selección", apply: (st) => { stat(st, "fame", 10); rel(st, "coach", -5); milestone(st, "Internacional en categorías inferiores"); return { title: "Camiseta nacional", text: "Debutas con la sub-21 y vuelves con la pierna cargada.", tone: "good" }; } },
         { id: "quedarme", label: "Alegar molestias y quedarte", apply: (st) => { rel(st, "coach", 8); stat(st, "fame", -4); return { title: "Te quedas", text: "Juegas el domingo. En la federación apuntan tu nombre con lápiz.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1764,7 +2266,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "concentrarse", label: "Aislarte del ruido", apply: (st) => { stat(st, "form", 5); stat(st, "discipline", 3); return { title: "Semana en silencio", text: "Móvil apagado y dos vídeos del rival al día.", tone: "good" }; } },
         { id: "calentar", label: "Calentar el partido en redes", apply: (st) => { stat(st, "fame", 9); rel(st, "fans", 6); rel(st, "coach", -6); return { title: "Ruido", text: "El rival imprime tu frase y la cuelga en su vestuario.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1780,7 +2294,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "recibir", label: "Recibirle bien y medirte en el campo", apply: (st) => { rel(st, "dressing", 6); stat(st, "form", 4); npc(st, "rival"); return { title: "Bienvenida", text: "Le enseñas el vestuario y le quitas el sitio en el rondo.", tone: "good" }; } },
         { id: "quejarse", label: "Pedir explicaciones al club", apply: (st) => { rel(st, "coach", -6); flag(st, "quiere_salir", 1); return { title: "Mala señal", text: "\"Un club ficha, no pide permiso\". Sales del despacho peor de lo que entraste.", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "agent", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
   {
@@ -1796,7 +2322,19 @@ const BEATS: Beat[] = [
       choices: [
         { id: "preguntar", label: "Preguntarle si cuentas para el año que viene", apply: (st) => { const ok = computeRole(st) >= 50; rel(st, "coach", ok ? 4 : -2); return ok ? { title: "Cuentas", text: "\"Vuelve el 8 de julio con la cabeza en su sitio\".", tone: "good" } : { title: "No cuenta contigo", text: "\"Hablará el club contigo\". Eso, en fútbol, es un no.", tone: "bad" }; } },
         { id: "vacaciones", label: "Irte de vacaciones sin preguntar nada", apply: (st) => { stat(st, "morale", 8); stat(st, "fitness", 6); return { title: "Desconectar", text: "Tres semanas sin balón y una llamada pendiente para agosto.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            hint: "Alternativa prudente con consecuencias propias",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+            },
+          },
+],
     }),
   },
 ];
@@ -2073,6 +2611,7 @@ export function renderDirector(s: GameState, card: DynamicCard): DirectorView | 
       choices: [
         { id: "afrontar", label: "Afrontarlo de frente" },
         { id: "esquivar", label: "Esquivarlo por ahora", hint: "Puede volver peor" },
+        { id: "consultar", label: "Hablar con alguien implicado antes de cerrar", hint: "Menos impulso, más contexto" },
       ],
     };
   }
@@ -2121,6 +2660,11 @@ export function resolveDirector(s: GameState, card: DynamicCard, choiceId: strin
   if (card.kind === "arc_callback") {
     const id = typeof card.data["cbId"] === "string" ? card.data["cbId"] : "cb";
     markScene(s, `cb_scene_${id}`, "callback");
+    if (choiceId === "consultar") {
+      stat(s, "discipline", 2);
+      rel(s, "dressing", 3);
+      return { title: "Buscas contexto", text: "Antes de responder, hablas con quien estuvo dentro de aquella historia. Cambia el tono, no borra lo ocurrido.", tone: "neutral" };
+    }
     if (choiceId === "esquivar") {
       d.callbacks.push({ id: `${id}_bis`, text: typeof card.data["text"] === "string" ? card.data["text"] : "Sigue pendiente", dueScene: (s.sceneCount ?? 0) + 6 });
       stat(s, "morale", -3);
