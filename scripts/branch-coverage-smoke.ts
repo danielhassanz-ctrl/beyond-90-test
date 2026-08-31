@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { advance, chooseClub, clone, createGame, resolveDynamicCard } from "../src/game/engine";
 import { renderDynamic } from "../src/game/dynamic";
+import { interpretFree } from "../src/game/interpret";
 import { simulateMatch } from "../src/game/match";
 import type { DynamicCard, GameState, Player, Slot } from "../src/game/types";
 
@@ -14,6 +15,21 @@ assert(!directorSource.includes("Alternativa prudente con consecuencias propias"
 assert(directorSource.includes("function thirdWayResult(s: GameState): Res"), "Narrative third-way variation helper is missing");
 const consultBranches = directorSource.match(/if \(choiceId === "consultar"\)/g)?.length ?? 0;
 assert(consultBranches === 1, `Expected one arc_callback consultar resolver, found ${consultBranches}`);
+
+const semanticCases = [
+  ["No me voy. Este es mi club y quiero seguir aquí.", "loyal"],
+  ["Me quiero ir. Necesito jugar y quiero salir este verano.", "defiant"],
+  ["Lo siento, entiendo al míster, pero voy a seguir trabajando y demostrarlo en el campo.", "professional"],
+  ["Perdón, tienes razón. Hablemos y vamos a arreglarlo.", "conciliatory"],
+  ["Quiero llegar a la selección y ganar la Champions algún día.", "ambitious"],
+  ["Prefiero no hablar de eso ahora, ya veremos.", "evasive"],
+] as const;
+for (const [text, expected] of semanticCases) {
+  const result = interpretFree(text);
+  assert(result.intent === expected, `Free response '${text}' -> ${result.intent}; expected ${expected}`);
+}
+assert(interpretFree("No quiero irme aunque tenga ofertas").intent === "loyal", "Negated departure intent was misread");
+assert(interpretFree("QUIERO JUGAR YA!!!").intent !== "professional", "Shouted demand was flattened to professional");
 
 const player: Player = {
   name: "Branch QA",
@@ -95,4 +111,4 @@ for (let i = 0; i < 80; i++) {
 }
 assert(keyMoments >= 10, `Expected broad key-moment coverage, observed only ${keyMoments}`);
 
-console.log(`BRANCH_COVERAGE_SMOKE_OK dynamic=${decisionCards.length + 1} keyMoments=${keyMoments} careerEnd=ok genericCopy=0`);
+console.log(`BRANCH_COVERAGE_SMOKE_OK dynamic=${decisionCards.length + 1} keyMoments=${keyMoments} careerEnd=ok semanticCases=${semanticCases.length + 2} genericCopy=0`);
