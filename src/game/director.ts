@@ -2036,7 +2036,7 @@ const BEATS: Beat[] = [
   },
   {
     id: "beat_grupo_equivocado",
-    family: "humor",
+    family: "rareza",
     image: "locker",
     category: "gossip",
     requires: (s) => totalApps(s) >= 3,
@@ -2562,6 +2562,15 @@ export function directorCard(s: GameState): DynamicCard | null {
     const preMax = 1 + (hash(careerSeed(s), `pre${s.seasonIndex}`) % 2);
     if ((d.preseasonUsed ?? 0) >= preMax) return null;
     if (sinceAny(s, d) < 2) return null;
+
+    // La pretemporada debe sentirse al menos una vez cuando hay material válido.
+    // Antes competía con todos los arcos y podía desaparecer por completo.
+    const preBeats = BEATS.filter((b) => b.family === "pretemporada" && !seen(s, b.id) && b.requires(s));
+    if (preBeats.length > 0) {
+      const beat = preBeats[hash(careerSeed(s), `prebeat${s.seasonIndex}${d.preseasonUsed ?? 0}`) % preBeats.length]!;
+      d.lastBeatBeat = beatNow;
+      return { type: "dynamic", kind: "arc_beat", data: { beatId: beat.id } };
+    }
   }
 
   // 1. Callback pendiente que ya vence (y con aire desde la última escena).
@@ -2617,7 +2626,11 @@ export function directorCard(s: GameState): DynamicCard | null {
   const beats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && statusOk(s, b.family) && b.requires(s));
   if (beats.length > 0) {
     const h = hash(careerSeed(s), `beat${s.sceneCount ?? 0}`);
-    const beat = beats[h % beats.length]!;
+    const rare = beats.filter((b) => b.family === "rareza");
+    const rareRoll = hash(careerSeed(s), `rare${beatNow}${s.seasonIndex}${s.sceneCount ?? 0}`) % 100;
+    const beat = rare.length > 0 && rareRoll < 24
+      ? rare[hash(careerSeed(s), `rarepick${s.sceneCount ?? 0}`) % rare.length]!
+      : beats[h % beats.length]!;
     d.lastBeatBeat = beatNow;
     return { type: "dynamic", kind: "arc_beat", data: { beatId: beat.id } };
   }
