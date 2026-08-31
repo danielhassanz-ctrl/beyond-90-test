@@ -42,23 +42,29 @@ function resolvePending(s: GameState): GameState {
 
   if (s.pending.type === "match") {
     const key = s.pending.match.keyMoment?.options[0]?.id;
+    if (s.pending.match.keyMoment) {
+      assert(s.pending.match.keyMoment.options.length === 3, `Match key moment has ${s.pending.match.keyMoment.options.length} choices; expected 3`);
+    }
     return resolveMatch(s, s.pending.match, key);
   }
 
   if (s.pending.type === "event") {
     const event = eventById(s.pending.eventId);
     assert(event, `Missing event ${s.pending.eventId}`);
-    assert(event.choices.length === 3, `Event ${event.id} has ${event.choices.length} choices; expected 3`);
+    assert(event.choices.length === 3, `Event ${event.id} (${event.title}) has ${event.choices.length} choices; expected 3`);
     return resolveEvent(s, event.id, event.choices[0]!.id);
   }
 
   const view = renderDynamic(s, s.pending);
   const informational = new Set(["promotion", "growth", "career_end"]);
   if (!informational.has(s.pending.kind)) {
-    assert(view.choices.length === 3, `Dynamic ${s.pending.kind} has ${view.choices.length} choices; expected 3`);
+    assert(
+      view.choices.length === 3,
+      `Dynamic ${s.pending.kind} (${view.title}) has ${view.choices.length} choices [${view.choices.map((x) => x.id).join(", ")}]; expected 3`,
+    );
   }
   const choice = view.choices[0];
-  assert(choice, `Dynamic ${s.pending.kind} has no actionable choice`);
+  assert(choice, `Dynamic ${s.pending.kind} (${view.title}) has no actionable choice`);
   return resolveDynamicCard(s, s.pending, choice.id);
 }
 
