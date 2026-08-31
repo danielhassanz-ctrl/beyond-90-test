@@ -192,6 +192,19 @@ function remember(s: GameState, text: string): void {
   s.memory.promises = s.memory.promises.slice(0, 24);
 }
 
+function thirdWayResult(s: GameState): Res {
+  const variants = [
+    { title: "Pides margen", text: "No respondes en caliente. Escuchas una versión más, fijas un plazo y haces que el resto espere tu decisión." },
+    { title: "Cambias el terreno", text: "Sacas la conversación del foco público y la llevas a una mesa pequeña. Pierdes impacto inmediato, ganas información." },
+    { title: "Ni sí ni no", text: "No compras ninguno de los dos extremos. Pides condiciones concretas y dejas claro que decidirás cuando tengas todos los datos." },
+    { title: "Veinticuatro horas", text: "Te reservas un día para hablar con quien realmente está implicado. La situación no desaparece, pero deja de decidir por ti." },
+    { title: "Una salida intermedia", text: "Propones una solución menos vistosa y más controlable. Nadie sale del todo satisfecho, que a veces es señal de un acuerdo real." },
+    { title: "Lo enfrías", text: "Bajas el volumen, haces dos preguntas incómodas y pospones la respuesta. El problema sigue ahí, pero ahora conoces mejor su precio." },
+  ] as const;
+  const key = "third-way-" + (s.sceneCount ?? 0) + "-" + (s.beat ?? 0) + "-" + s.seasonIndex;
+  const i = hash(careerSeed(s), key) % variants.length;
+  return { ...variants[i]!, tone: "neutral" };
+}
 function callback(s: GameState, id: string, text: string, inScenes = 8): void {
   const d = directorState(s);
   if (d.callbacks.some((c) => c.id === id)) return;
@@ -364,12 +377,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -403,23 +415,21 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir una conversación privada y buscar un punto medio",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
           {
             id: "consultar_entorno",
             label: "No responder en caliente y ganarte margen en el campo",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -471,12 +481,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -525,12 +534,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -569,12 +577,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir una conversación privada y buscar un punto medio",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -671,12 +678,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablarlo con los tuyos antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "family", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -722,12 +728,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -778,12 +783,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Responder solo lo imprescindible y salir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -823,12 +827,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir tiempo y marcar tus propias condiciones",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "agent", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -866,12 +869,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -925,12 +927,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir 48 horas y comparar el coste real",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "agent", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -969,12 +970,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir una conversación privada y buscar un punto medio",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1012,12 +1012,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir 48 horas y comparar el coste real",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "agent", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1067,12 +1066,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir una conversación privada y buscar un punto medio",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1154,23 +1152,21 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
           {
             id: "consultar_entorno",
             label: "Pedir tiempo y buscar una tercera vía",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1220,12 +1216,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Consultar el plan con el fisio antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1263,12 +1258,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Consultar el plan con el fisio antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1311,12 +1305,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1412,12 +1405,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir 48 horas y comparar el coste real",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "agent", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1466,12 +1458,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir una conversación privada y buscar un punto medio",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1512,12 +1503,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir una conversación privada y buscar un punto medio",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1630,12 +1620,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablarlo con los tuyos antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "family", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1795,12 +1784,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablarlo con los tuyos antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "family", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1840,12 +1828,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablarlo con los tuyos antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "family", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1893,12 +1880,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1940,12 +1926,11 @@ const ARCS: Arc[] = [
           {
             id: "tercera_via",
             label: "Pedir 48 horas y comparar el coste real",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (c) => {
               stat(c.s, "discipline", 2);
               stat(c.s, "morale", 1);
               rel(c.s, "agent", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(c.s);
             },
           },
 ],
@@ -1985,12 +1970,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Seguir el plan del cuerpo técnico sin hacer ruido",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2013,12 +1997,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Seguir el plan del cuerpo técnico sin hacer ruido",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2041,12 +2024,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Pedir una conversación privada y buscar un punto medio",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2070,12 +2052,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Quitarte del foco y resolverlo en privado",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2098,12 +2079,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Quitarte del foco y resolverlo en privado",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2126,12 +2106,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Quitarte del foco y resolverlo en privado",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2155,12 +2134,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Responder solo lo imprescindible y salir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2183,12 +2161,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Pedir 48 horas y comparar el coste real",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "agent", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2211,12 +2188,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Hablarlo con los tuyos antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "family", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2239,12 +2215,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Pedir tiempo y marcar tus propias condiciones",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "agent", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2267,12 +2242,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Pedir tiempo y marcar tus propias condiciones",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "agent", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2295,12 +2269,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Pedir una conversación privada y buscar un punto medio",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2323,12 +2296,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Pedir un plan individual y demostrarlo entrenando",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2351,12 +2323,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2379,12 +2350,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Hablar con alguien de confianza antes de decidir",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "dressing", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2407,12 +2377,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Pedir 48 horas y comparar el coste real",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "agent", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2435,12 +2404,11 @@ const BEATS: Beat[] = [
           {
             id: "tercera_via",
             label: "Pedir una conversación privada y buscar un punto medio",
-            hint: "Alternativa prudente con consecuencias propias",
             apply: (st) => {
               stat(st, "discipline", 2);
               stat(st, "morale", 1);
               rel(st, "coach", 2);
-              return { title: "Buscas una tercera vía", text: "No eliges ninguno de los extremos. Pides margen, escuchas y obligas a los demás a esperar tu respuesta.", tone: "neutral" };
+              return thirdWayResult(st);
             },
           },
 ],
@@ -2769,11 +2737,6 @@ export function resolveDirector(s: GameState, card: DynamicCard, choiceId: strin
   if (card.kind === "arc_callback") {
     const id = typeof card.data["cbId"] === "string" ? card.data["cbId"] : "cb";
     markScene(s, `cb_scene_${id}`, "callback");
-    if (choiceId === "consultar") {
-      stat(s, "discipline", 2);
-      rel(s, "dressing", 3);
-      return { title: "Buscas contexto", text: "Antes de responder, hablas con quien estuvo dentro de aquella historia. Cambia el tono, no borra lo ocurrido.", tone: "neutral" };
-    }
     if (choiceId === "consultar") {
       stat(s, "discipline", 2);
       rel(s, "dressing", 3);
