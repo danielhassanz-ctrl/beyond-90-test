@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { advance, chooseClub, clone, createGame, resolveDynamicCard } from "../src/game/engine";
 import { renderDynamic } from "../src/game/dynamic";
 import { simulateMatch } from "../src/game/match";
@@ -6,6 +7,13 @@ import type { DynamicCard, GameState, Player, Slot } from "../src/game/types";
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
+
+const directorSource = readFileSync("src/game/director.ts", "utf8");
+assert(!directorSource.includes("Buscas una tercera vía"), "Narrative director still contains generic third-way outcome copy");
+assert(!directorSource.includes("Alternativa prudente con consecuencias propias"), "Narrative director still contains generic third-way hint copy");
+assert(directorSource.includes("function thirdWayResult(s: GameState): Res"), "Narrative third-way variation helper is missing");
+const consultBranches = directorSource.match(/if \(choiceId === "consultar"\)/g)?.length ?? 0;
+assert(consultBranches === 1, `Expected one arc_callback consultar resolver, found ${consultBranches}`);
 
 const player: Player = {
   name: "Branch QA",
@@ -87,4 +95,4 @@ for (let i = 0; i < 80; i++) {
 }
 assert(keyMoments >= 10, `Expected broad key-moment coverage, observed only ${keyMoments}`);
 
-console.log(`BRANCH_COVERAGE_SMOKE_OK dynamic=${decisionCards.length + 1} keyMoments=${keyMoments} careerEnd=ok`);
+console.log(`BRANCH_COVERAGE_SMOKE_OK dynamic=${decisionCards.length + 1} keyMoments=${keyMoments} careerEnd=ok genericCopy=0`);
