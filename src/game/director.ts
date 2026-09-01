@@ -2574,7 +2574,7 @@ export function directorNewSeason(s: GameState): void {
   const contextualPool = ARCS.filter(
     (a) => !d.completed.includes(a.id) && !d.active.some((x) => x.id === a.id) && statusOk(s, a.family) && a.requires(s),
   );
-  const laneThreshold = s.stage === "youth" ? 55 : 65;
+  const laneThreshold = s.stage === "youth" ? 50 : 60;
   const lanePool = contextualPool.filter((a) => hash(careerSeed(s), `arc-lane|${d.profile}|${a.id}`) % 100 < laneThreshold);
   const minLane = s.stage === "youth" ? 1 : 2;
   const pool = lanePool.length >= minLane ? lanePool : contextualPool;
@@ -2706,7 +2706,7 @@ export function directorCard(s: GameState): DynamicCard | null {
   if (beatNow - (d.lastBeatBeat ?? -99) < beatGap || sinceAny(s, d) < 3) return null;
   if (hash(careerSeed(s), `bchance|${identity}|${beatNow}|${s.seasonIndex}`) % 100 >= 58) return null;
   const contextualBeats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && statusOk(s, b.family) && b.requires(s));
-  const laneBeats = contextualBeats.filter((b) => b.family === "rareza" || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 55);
+  const laneBeats = contextualBeats.filter((b) => b.family === "rareza" || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 48);
   const beats = laneBeats.length >= 2 ? laneBeats : contextualBeats;
   if (beats.length > 0) {
     const ranked = [...beats].sort((a, b) =>

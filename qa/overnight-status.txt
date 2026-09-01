@@ -1,4 +1,4 @@
-HEAD_BEFORE=142ff1d35ed4ad9a3e965e018c9e949e868e8940
+HEAD_BEFORE=f762f0c9e3e60607b724f3b471b13b9210504ec4
 
 > typecheck
 > tsc --noEmit
@@ -8,7 +8,7 @@ TYPECHECK_EXIT=0
 > qa:career
 > node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-career-smoke.ts
 
-(node:2022) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+(node:2104) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
 --import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/asset-loader.mjs", pathToFileURL("./"));'
 (Use `node --trace-warnings ...` to show where the warning was created)
 ┌─────────┬──────┬───────┬─────┬─────────┬──────┬─────────┬─────────┬─────────┐
@@ -17,41 +17,41 @@ TYPECHECK_EXIT=0
 │ 0       │ 1001 │ 1306  │ 36  │ 74      │ 83   │ 21      │ 'first' │ true    │
 │ 1       │ 1098 │ 1364  │ 36  │ 67      │ 76   │ 21      │ 'first' │ true    │
 │ 2       │ 1195 │ 1429  │ 37  │ 82      │ 88   │ 22      │ 'first' │ true    │
-│ 3       │ 1292 │ 1356  │ 36  │ 69      │ 78   │ 21      │ 'first' │ true    │
-│ 4       │ 1389 │ 1216  │ 34  │ 60      │ 65   │ 19      │ 'first' │ true    │
-│ 5       │ 1486 │ 1360  │ 36  │ 79      │ 85   │ 21      │ 'first' │ true    │
+│ 3       │ 1292 │ 1409  │ 37  │ 66      │ 78   │ 22      │ 'first' │ true    │
+│ 4       │ 1389 │ 1176  │ 34  │ 61      │ 65   │ 19      │ 'first' │ true    │
+│ 5       │ 1486 │ 1384  │ 36  │ 83      │ 87   │ 21      │ 'first' │ true    │
 │ 6       │ 1583 │ 1320  │ 36  │ 58      │ 68   │ 21      │ 'first' │ true    │
-│ 7       │ 1680 │ 1344  │ 36  │ 86      │ 90   │ 21      │ 'first' │ true    │
-│ 8       │ 1777 │ 1427  │ 37  │ 65      │ 77   │ 22      │ 'first' │ true    │
+│ 7       │ 1680 │ 1326  │ 36  │ 87      │ 91   │ 21      │ 'first' │ true    │
+│ 8       │ 1777 │ 1524  │ 38  │ 62      │ 77   │ 23      │ 'first' │ true    │
 │ 9       │ 1874 │ 1311  │ 35  │ 61      │ 68   │ 20      │ 'first' │ true    │
-│ 10      │ 1971 │ 1395  │ 37  │ 89      │ 95   │ 22      │ 'first' │ true    │
-│ 11      │ 2068 │ 1306  │ 36  │ 64      │ 73   │ 21      │ 'first' │ true    │
+│ 10      │ 1971 │ 1512  │ 38  │ 81      │ 89   │ 23      │ 'first' │ true    │
+│ 11      │ 2068 │ 1336  │ 36  │ 64      │ 73   │ 21      │ 'first' │ true    │
 └─────────┴──────┴───────┴─────┴─────────┴──────┴─────────┴─────────┴─────────┘
-FULL_CAREER_SMOKE_OK careers=12 distinctPeaks=11 retirementAges=4
+FULL_CAREER_SMOKE_OK careers=12 distinctPeaks=11 retirementAges=5
 CAREER_EXIT=0
 
 > qa:branches
 > node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/branch-coverage-smoke.ts
 
-(node:2053) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+(node:2135) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
 --import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/asset-loader.mjs", pathToFileURL("./"));'
 (Use `node --trace-warnings ...` to show where the warning was created)
-BRANCH_COVERAGE_SMOKE_OK dynamic=13 keyMoments=54 careerEnd=ok semanticCases=8 postCareer=3x3 genericCopy=0
+BRANCH_COVERAGE_SMOKE_OK dynamic=13 keyMoments=45 careerEnd=ok semanticCases=8 postCareer=3x3 genericCopy=0
 BRANCH_EXIT=0
-(node:2071) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+(node:2153) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
 --import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/asset-loader.mjs", pathToFileURL("./"));'
 (Use `node --trace-warnings ...` to show where the warning was created)
 Ofertas de nueva carrera: 14/15 conjuntos distintos
-Patrimonio medio 3 temporadas: 146.9.000 € · consecuencias por carrera 1 · escenas de dinero 2.7
-Carreras: 22 · partidos clave/temporada 6 · OVR medio 63.5 · forma media 39.1 · combinaciones de ofertas 35/40
+Patrimonio medio 3 temporadas: 190.7.000 € · consecuencias por carrera 1 · escenas de dinero 4.1
+Carreras: 22 · partidos clave/temporada 5.6 · OVR medio 67.5 · forma media 49 · combinaciones de ofertas 35/40
 QA OK: sin incoherencias detectadas.
-Fase 5 · solapamiento de eventos entre carreras 0% · pretemporadas sin escena 2/12 · OVR final 57-68
-Narrative Director · firmas distintas 14/14 · perfiles usados 6 · primeros arcos 5 · firma más repetida 7% · primer arco más repetido 36%
-Fase 6 · retiradas 10/10 · edad final 33-38 · media máx 55-89 · clubes por carrera 2.8 · títulos totales 25 · Balones de Oro 0
-Fase 6 · finales: Carrera truncada x3 · Carrera modesta x2 · Top mundial x2 · Carrera profesional sólida x3
+Fase 5 · solapamiento de eventos entre carreras 0% · pretemporadas sin escena 1/12 · OVR final 54-69
+Narrative Director · firmas distintas 13/14 · perfiles usados 5 · primeros arcos 6 · firma más repetida 14% · primer arco más repetido 29%
+Fase 6 · retiradas 10/10 · edad final 34-39 · media máx 56-88 · clubes por carrera 2.9 · títulos totales 19 · Balones de Oro 0
+Fase 6 · finales: Carrera truncada x3 · Carrera profesional sólida x3 · Carrera modesta x1 · Gran profesional x1 · Top mundial x2
 Fase 6 OK
-Experiencia · eventIds compartidos 59% · familias compartidas 93% · títulos compartidos 59%
-Experiencia · escenas raras por carrera (30 escenas): 1,1,1,1,0,1,1,1
+Experiencia · eventIds compartidos 70% · familias compartidas 98% · títulos compartidos 70%
+Experiencia · escenas raras por carrera (30 escenas): 0,0,1,1,1,1,1,1
 FALLO: los primeros 30 eventos se repiten demasiado entre carreras
 EXTENDED_EXIT=1
 
@@ -81,24 +81,24 @@ dist/client/assets/scene-locker-Bf5VOIok.jpg        63.50 kB
 dist/client/assets/scene-gym-Xp0lVena.jpg           83.14 kB
 dist/client/assets/scene-celebration-Bpp6KyY6.jpg   85.21 kB
 dist/client/assets/styles-DyZGutE7.css              87.78 kB │ gzip:  14.46 kB
-dist/client/assets/trending-up-DXc1xM3L.js           0.16 kB │ gzip:   0.16 kB
-dist/client/assets/users-BN8hSWI6.js                 0.29 kB │ gzip:   0.21 kB
+dist/client/assets/trending-up-BNaKjYmq.js           0.16 kB │ gzip:   0.16 kB
+dist/client/assets/users-Bou0101O.js                 0.29 kB │ gzip:   0.21 kB
 dist/client/assets/rolldown-runtime-CbXtAM7H.js      0.58 kB │ gzip:   0.36 kB
-dist/client/assets/routes-C7eRFHn9.js                2.71 kB │ gzip:   1.21 kB
-dist/client/assets/carrera-D5XRe1m0.js               2.81 kB │ gzip:   1.00 kB
-dist/client/assets/cantera-5aLmuMV5.js               3.33 kB │ gzip:   1.48 kB
-dist/client/assets/patrimonio-CWzIyuhw.js            3.59 kB │ gzip:   1.21 kB
-dist/client/assets/relaciones-BWCPNNJ2.js            3.62 kB │ gzip:   1.46 kB
-dist/client/assets/ShareButton-BXpVHy_3.js           6.13 kB │ gzip:   2.60 kB
-dist/client/assets/GameShell-OiCiIH0x.js             6.18 kB │ gzip:   2.31 kB
-dist/client/assets/legado-0JDJVuMA.js                6.32 kB │ gzip:   2.17 kB
-dist/client/assets/onboarding-CoSBfSEI.js            6.35 kB │ gzip:   2.38 kB
-dist/client/assets/historia-Dtx94OBY.js             17.69 kB │ gzip:   5.19 kB
-dist/client/assets/utils-DmrU2M_M.js                28.51 kB │ gzip:   9.31 kB
-dist/client/assets/index-DP1-97E-.js               342.83 kB │ gzip: 107.11 kB
-dist/client/assets/store-HNl_Ouj0.js               457.47 kB │ gzip: 142.39 kB
+dist/client/assets/routes-rCtfIcPg.js                2.71 kB │ gzip:   1.20 kB
+dist/client/assets/carrera-DqaY37NY.js               2.81 kB │ gzip:   1.00 kB
+dist/client/assets/cantera-Bp1LCuLC.js               3.33 kB │ gzip:   1.47 kB
+dist/client/assets/patrimonio-DflG37aS.js            3.59 kB │ gzip:   1.21 kB
+dist/client/assets/relaciones-naJsaBap.js            3.62 kB │ gzip:   1.46 kB
+dist/client/assets/ShareButton-Cbi8Win1.js           6.13 kB │ gzip:   2.59 kB
+dist/client/assets/GameShell-DNdW-ywq.js             6.18 kB │ gzip:   2.31 kB
+dist/client/assets/legado-DKf2_6J8.js                6.32 kB │ gzip:   2.17 kB
+dist/client/assets/onboarding-Dzi-UHOv.js            6.35 kB │ gzip:   2.38 kB
+dist/client/assets/historia-CpXEON1m.js             17.69 kB │ gzip:   5.19 kB
+dist/client/assets/utils-DKuJdkv1.js                28.51 kB │ gzip:   9.31 kB
+dist/client/assets/index-DgYyMjxV.js               342.83 kB │ gzip: 107.10 kB
+dist/client/assets/store-ClyaslS-.js               457.47 kB │ gzip: 142.39 kB
 
-[32m✓ built in 1.36s[39m
+[32m✓ built in 1.91s[39m
 [36mvite v8.2.2 [32mbuilding ssr environment for production...[36m[39m
 transforming...
 ✓ 120 modules transformed.
@@ -107,23 +107,23 @@ computing gzip size...
 dist/server/assets/utils-C_uf36nf.js                         0.18 kB │ gzip:   0.15 kB
 dist/server/assets/empty-plugin-adapters-D9UWiqvJ.js         0.22 kB │ gzip:   0.16 kB
 dist/server/assets/rolldown-runtime-D7D4PA-g.js              0.36 kB │ gzip:   0.25 kB
-dist/server/assets/start-BP0YSMYJ.js                         1.56 kB │ gzip:   0.71 kB
-dist/server/assets/_tanstack-start-manifest_v-DTMFRv_S.js    2.45 kB │ gzip:   0.66 kB
-dist/server/assets/routes-C0xJNYFz.js                        4.23 kB │ gzip:   1.51 kB
+dist/server/assets/start-Bl_efz7a.js                         1.56 kB │ gzip:   0.71 kB
+dist/server/assets/_tanstack-start-manifest_v-Da4hrZ9w.js    2.45 kB │ gzip:   0.66 kB
+dist/server/assets/routes-Iv4Hhsh1.js                        4.23 kB │ gzip:   1.52 kB
 dist/server/server.js                                        4.63 kB │ gzip:   1.93 kB
-dist/server/assets/carrera-C8TunG_z.js                       4.65 kB │ gzip:   1.34 kB
-dist/server/assets/cantera-Bh8H5tQg.js                       4.79 kB │ gzip:   1.66 kB
-dist/server/assets/patrimonio-CPfCkgN1.js                    5.37 kB │ gzip:   1.55 kB
-dist/server/assets/relaciones-DOvE2eF7.js                    5.42 kB │ gzip:   1.82 kB
-dist/server/assets/GameShell-CWwrZmoM.js                     7.82 kB │ gzip:   2.34 kB
-dist/server/assets/legado-BgKYj97i.js                        8.82 kB │ gzip:   2.32 kB
-dist/server/assets/ShareButton-Bbwj1dFR.js                   9.24 kB │ gzip:   3.39 kB
-dist/server/assets/onboarding-CM1oecAg.js                    9.43 kB │ gzip:   2.82 kB
-dist/server/assets/historia-BMdyGhzX.js                     26.96 kB │ gzip:   6.57 kB
-dist/server/assets/server-BnLdINx0.js                       59.74 kB │ gzip:  15.35 kB
-dist/server/assets/router-BgwTtIbM.js                      631.62 kB │ gzip: 163.24 kB
+dist/server/assets/carrera-CwgoIJjf.js                       4.65 kB │ gzip:   1.34 kB
+dist/server/assets/cantera-CWVe6JeG.js                       4.79 kB │ gzip:   1.66 kB
+dist/server/assets/patrimonio-Ch6LXbpw.js                    5.37 kB │ gzip:   1.56 kB
+dist/server/assets/relaciones-Bwb2hT6h.js                    5.42 kB │ gzip:   1.82 kB
+dist/server/assets/GameShell-BXqv4JAx.js                     7.82 kB │ gzip:   2.34 kB
+dist/server/assets/legado-DJNRz0jG.js                        8.82 kB │ gzip:   2.32 kB
+dist/server/assets/ShareButton-554a-wok.js                   9.24 kB │ gzip:   3.40 kB
+dist/server/assets/onboarding-ByUMLjj1.js                    9.43 kB │ gzip:   2.82 kB
+dist/server/assets/historia-CLcNGrzz.js                     26.96 kB │ gzip:   6.58 kB
+dist/server/assets/server-CyD8C4CO.js                       59.74 kB │ gzip:  15.35 kB
+dist/server/assets/router-CRfyT0kz.js                      631.62 kB │ gzip: 163.25 kB
 
-[32m✓ built in 568ms[39m
+[32m✓ built in 749ms[39m
 [33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
 [prerender] Prerendering pages...
 [prerender] Concurrency: 2
