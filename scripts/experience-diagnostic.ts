@@ -1,5 +1,6 @@
 import { advance, chooseClub, createGame, resolveDynamicCard, resolveEvent, resolveMatch } from "../src/game/engine";
 import { eventById } from "../src/game/events";
+import { renderDynamic } from "../src/game/dynamic";
 import type { Player } from "../src/game/types";
 
 function player(i: number): Player {
@@ -38,7 +39,8 @@ for (let c = 0; c < 8; c++) {
             ? `callback:${String(card.data["cbId"] ?? "?")}`
             : card.kind;
       ids.push(`dynamic:${dynamicKey}`);
-      s = resolveDynamicCard(s, card, "ok");
+      const choiceId = renderDynamic(s, card).choices[0]?.id ?? "ok";
+      s = resolveDynamicCard(s, card, choiceId);
     } else s = advance(s);
   }
   runs.push(ids);

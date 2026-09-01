@@ -15,6 +15,7 @@ import {
   resolveMatch,
 } from "@/game/engine";
 import { eventById } from "@/game/events";
+import { renderDynamic } from "@/game/dynamic";
 import { matchCoherenceErrors } from "@/game/match";
 import { ensureFinance, netWorth } from "@/game/finance";
 import type { GameState, Player } from "@/game/types";
@@ -247,7 +248,8 @@ console.log("QA OK: sin incoherencias detectadas.");
         // Narrative Director usa arc_beat para la pretemporada; el QA antiguo
         // solo contaba eventos legacy y daba un falso negativo permanente.
         if (s.flags["pretemporada"] === 1 && card.kind === "arc_beat") preseasonSeen++;
-        s = resolveDynamicCard(s, card, "ok");
+        const choiceId = renderDynamic(s, card).choices[0]?.id ?? "ok";
+        s = resolveDynamicCard(s, card, choiceId);
       } else if (card.type === "season") { seasons++; s = advance(s); }
     }
     // El diseño exige 1-2 momentos de pretemporada, no un mínimo artificial de 2.
