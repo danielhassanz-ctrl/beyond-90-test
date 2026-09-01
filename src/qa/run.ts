@@ -426,7 +426,7 @@ console.log("QA OK: sin incoherencias detectadas.");
         ids.push(`dynamic:${dynamicKey}`);
         fams.push(`dynamic:${card.kind}`);
         titles.push(dynamicKey);
-        if (card.kind === "arc_beat" && card.data["beatId"] === "beat_grupo_equivocado") rareCount++;
+        if (card.kind === "arc_beat" && (card.data["beatId"] === "beat_grupo_equivocado" || String(card.data["beatId"] ?? "").includes("beat_early_rare_"))) rareCount++;
         s = resolveDynamicCard(s, card, "ok");
       } else s = advance(s);
     }

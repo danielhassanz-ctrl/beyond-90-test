@@ -2028,7 +2028,42 @@ interface Beat {
   build: (s: GameState) => { kicker: string; title: string; text: string; choices: { id: string; label: string; hint?: string; apply: (s: GameState) => Res }[]; freeform?: string };
 }
 
+
+const EARLY_VARIETY_STORIES = [
+  { id: "beat_early_0a", bucket: 0, family: "origen", image: "locker", category: "life", title: "La taquilla equivocada", text: "El utillero te ha colocado en la esquina del vestuario y durante dos días usas una taquilla que no era la tuya. Cuando aparece el dueño, un veterano, nadie dice nada y todos esperan a ver cómo reaccionas.", actions: ["Pedir disculpas y cambiarte", "Preguntar dónde debes colocarte", "Hacer una broma y quitar hierro"] },
+  { id: "beat_early_0b", bucket: 0, family: "entorno", image: "travel", category: "life", title: "Cena de gasolinera", text: "El autobús vuelve tarde y la única cena abierta está en una gasolinera. Los mayores compran cualquier cosa; tú todavía tienes mañana clase y un entrenamiento temprano. La vida de cantera empieza a parecer menos glamurosa de lo que imaginabas.", actions: ["Comer ligero y dormir", "Sentarte con los veteranos", "Llamar a casa durante la parada"] },
+  { id: "beat_early_rare_0", bucket: 0, family: "rareza", image: "office", category: "story", title: "Te confunden con el fisio", text: "Un patrocinador visita la ciudad deportiva y te pide que le indiques dónde está la sala de masaje porque cree que trabajas allí. Antes de que puedas responder, un compañero se parte de risa. Nadie del grupo parece dispuesto a aclararlo por ti.", actions: ["Acompañarlo sin decir nada", "Aclarar que eres jugador", "Seguir la broma hasta el final"] },
+  { id: "beat_early_1a", bucket: 1, family: "origen", image: "family", category: "life", title: "La llamada después de perder", text: "Has jugado mal y al salir ves tres llamadas perdidas de casa. Sabes exactamente qué quieren decirte: que no pasa nada. Ahora mismo esa frase te molesta más que cualquier crítica del entrenador.", actions: ["Devolver la llamada", "Esperar a estar más tranquilo", "Contarles exactamente cómo te sientes"] },
+  { id: "beat_early_1b", bucket: 1, family: "entorno", image: "travel", category: "story", title: "Tu primer viaje con los mayores", text: "Falta uno para completar la convocatoria y te suben al autobús del filial. Nadie te ha explicado dónde sentarte. Hay sitios libres, pero cada asiento parece pertenecer a alguien aunque no haya ningún cartel.", actions: ["Sentarte al fondo", "Preguntar al capitán", "Esperar a que alguien te haga sitio"] },
+  { id: "beat_early_rare_1", bucket: 1, family: "rareza", image: "locker", category: "life", title: "Tus botas desaparecen", text: "Llegas al vestuario y tus botas no están. Diez minutos después aparecen dentro de una nevera portátil, perfectamente colocadas junto a dos bebidas isotónicas. Nadie admite haber sido el autor.", actions: ["Reírte y entrenar", "Preguntar quién ha sido", "Preparar una devolución de la broma"] },
+  { id: "beat_early_2a", bucket: 2, family: "origen", image: "locker", category: "life", title: "Botas prestadas", text: "Una de tus botas se abre por la suela antes del entrenamiento. El club puede darte un par básico o puedes pedirle unas a un compañero con medio número más. El míster ya está en el césped mirando el reloj.", actions: ["Usar las del club", "Pedir las del compañero", "Avisar al míster y arreglarlo bien"] },
+  { id: "beat_early_2b", bucket: 2, family: "entorno", image: "press", category: "press", title: "Tu nombre en una cuenta local", text: "Una cuenta pequeña de fútbol base sube un vídeo tuyo y te llama 'la próxima joya'. Tiene pocos seguidores, pero en el instituto ya lo han visto. Por primera vez notas que alguien construye una versión pública de ti sin conocerte.", actions: ["No responder", "Compartirlo con humor", "Pedir que bajen el tono"] },
+  { id: "beat_early_rare_2", bucket: 2, family: "rareza", image: "training", category: "training", title: "Entrenas con dos botas izquierdas", text: "El utillero se equivoca en una bolsa de material y durante un ejercicio descubres que el par de repuesto lleva dos botas izquierdas. El entrenador no detiene la sesión. Tus compañeros quieren saber cuánto tardas en darte cuenta.", actions: ["Seguir hasta que termine el ejercicio", "Parar y cambiar el material", "Convertirlo en una apuesta con el grupo"] },
+  { id: "beat_early_3a", bucket: 3, family: "origen", image: "family", category: "life", title: "La camiseta para casa", text: "Te entregan tu primera camiseta oficial con tu apellido. En casa ya han decidido quién se la queda y la discusión lleva dos días. Tú aún no has jugado un minuto con ella.", actions: ["Dársela a tus padres", "Guardarla tú", "Prometer la siguiente a quien falte"] },
+  { id: "beat_early_3b", bucket: 3, family: "entorno", image: "office", category: "story", title: "Tu nombre en la pizarra", text: "Entras a por agua y ves tu apellido escrito en una pizarra del cuerpo técnico, junto a tres palabras que no alcanzas a leer bien. Nadie sabe que lo has visto. El entrenamiento empieza en cinco minutos.", actions: ["No preguntar nada", "Preguntar al segundo entrenador", "Usarlo como motivación sin saber qué pone"] },
+  { id: "beat_early_rare_3", bucket: 3, family: "rareza", image: "press", category: "story", title: "El vídeo que no era para ti", text: "El analista te manda por error un vídeo individual de otro jugador con tu mismo nombre. Durante seis minutos estudias tus supuestos errores hasta que reconoces que ni siquiera eres tú. El mensaje de corrección llega justo después.", actions: ["Avisar del error", "Ver el vídeo completo igualmente", "Bromear con el analista al día siguiente"] },
+] as const;
+
+const EARLY_VARIETY_BEATS: Beat[] = EARLY_VARIETY_STORIES.map((story) => ({
+  id: story.id,
+  family: story.family,
+  image: story.image,
+  category: story.category,
+  requires: (s) => s.age <= 19 && s.seasonIndex <= 2 && hash(careerSeed(s), "early-flavour") % 4 === story.bucket,
+  build: (s) => ({
+    kicker: `${currentMonth(s)} · primeros años`,
+    title: story.title,
+    text: story.text,
+    choices: [
+      { id: "calma", label: story.actions[0], apply: (st) => { stat(st, "discipline", 2); rel(st, "dressing", 3); return { title: "Lo resuelves sin ruido", text: "La escena pasa, pero te deja una pequeña lección sobre cómo funciona este mundo.", tone: "good" }; } },
+      { id: "preguntar", label: story.actions[1], apply: (st) => { rel(st, "coach", 2); stat(st, "morale", 2); return { title: "Preguntas antes de asumir", text: "Obtienes una respuesta que no siempre te gusta, pero entiendes mejor dónde estás.", tone: "neutral" }; } },
+      { id: "personal", label: story.actions[2], apply: (st) => { stat(st, "form", 2); stat(st, "fame", 1); rel(st, "dressing", 1); return { title: "Lo haces a tu manera", text: "No es la reacción más discreta, pero el vestuario empieza a reconocer tu forma de estar en el grupo.", tone: "neutral" }; } },
+    ],
+  }),
+}));
+
 const BEATS: Beat[] = [
+  ...EARLY_VARIETY_BEATS,
 
   {
     id: "beat_pos_dc",
