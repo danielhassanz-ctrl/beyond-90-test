@@ -2877,7 +2877,7 @@ export function directorCard(s: GameState): DynamicCard | null {
   if (beatNow - (d.lastBeatBeat ?? -99) < beatGap || sinceAny(s, d) < 3) return null;
   if (hash(careerSeed(s), `bchance|${identity}|${beatNow}|${s.seasonIndex}`) % 100 >= 58) return null;
   const contextualBeats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && statusOk(s, b.family) && b.requires(s));
-  const laneBeats = contextualBeats.filter((b) => b.family === "rareza" || hash(careerSeed(s), (["rareza", "posicion", "origen"].includes(b.family) || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 55));
+  const laneBeats = contextualBeats.filter((b) => ["rareza", "posicion", "origen"].includes(b.family) || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 55);
   const beats = laneBeats.length >= 2 ? laneBeats : contextualBeats;
   if (beats.length > 0) {
     const ranked = [...beats].sort((a, b) =>
