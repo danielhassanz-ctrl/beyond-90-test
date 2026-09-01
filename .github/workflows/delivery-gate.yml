@@ -9,9 +9,6 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -19,46 +16,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Apply seeded early catalog lanes
-        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'APPLY_EARLY_CATALOG_LANES' }}
-        run: |
-          python3 scripts/apply-early-catalog-lanes.py
-          rm -f scripts/apply-early-catalog-lanes.py
-          git config user.name "Beyond 90 QA"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          git commit -m "Narrative split early optional catalog by career seed"
-          git push origin HEAD:recovery-v4-19-delivery-gate
 
       - name: Setup Node
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_EARLY_CATALOG_LANES') }}
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
       - name: Clean install
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_EARLY_CATALOG_LANES') }}
         run: npm install --no-audit --no-fund
 
       - name: Typecheck
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_EARLY_CATALOG_LANES') }}
         run: npm run typecheck
 
       - name: Full career smoke QA
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_EARLY_CATALOG_LANES') }}
         run: npm run qa:career
 
       - name: Targeted narrative branch QA
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_EARLY_CATALOG_LANES') }}
         run: npm run qa:branches
 
       - name: Extended gameplay QA
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_EARLY_CATALOG_LANES') }}
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
 
       - name: Build
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_EARLY_CATALOG_LANES') }}
         run: npm run build
