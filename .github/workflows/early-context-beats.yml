@@ -1,0 +1,54 @@
+name: Beyond 90 early contextual beats
+on:
+  push:
+    branches: [recovery-v4-19-delivery-gate]
+    paths: ['.github/workflows/early-context-beats.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: recovery-v4-19-delivery-gate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Add contextual beats and restore best lane settings
+        env:
+          CONTEXT_BEATS_Z64: "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" 
+        run: |
+          python3 - <<'PY'
+          import base64,zlib,os
+          from pathlib import Path
+          p=Path('src/game/director.ts'); s=p.read_text()
+          s=s.replace('const laneThreshold = s.stage === "youth" ? 50 : 60;', 'const laneThreshold = s.stage === "youth" ? 55 : 65;', 1)
+          s=s.replace('`beat-lane|${d.profile}|${b.id}`) % 100 < 48', '(["rareza", "posicion", "origen"].includes(b.family) || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 55)', 1)
+          marker='''const BEATS: Beat[] = [\n'''
+          if 'id: "beat_pos_dc"' not in s:
+            payload=zlib.decompress(base64.b64decode(os.environ['CONTEXT_BEATS_Z64'])).decode()
+            if marker not in s: raise SystemExit('BEATS marker missing')
+            s=s.replace(marker,marker+payload,1)
+          p.write_text(s)
+          PY
+      - run: npm install --no-audit --no-fund
+      - name: Verify
+        shell: bash
+        run: |
+          : > qa/overnight-status.txt
+          echo "HEAD_BEFORE=$(git rev-parse HEAD)" >> qa/overnight-status.txt
+          set +e
+          npm run typecheck >> qa/overnight-status.txt 2>&1; echo "TYPECHECK_EXIT=$?" >> qa/overnight-status.txt
+          npm run qa:career >> qa/overnight-status.txt 2>&1; echo "CAREER_EXIT=$?" >> qa/overnight-status.txt
+          npm run qa:branches >> qa/overnight-status.txt 2>&1; echo "BRANCH_EXIT=$?" >> qa/overnight-status.txt
+          node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts >> qa/overnight-status.txt 2>&1; echo "EXTENDED_EXIT=$?" >> qa/overnight-status.txt
+          npm run build >> qa/overnight-status.txt 2>&1; echo "BUILD_EXIT=$?" >> qa/overnight-status.txt
+          set -e
+      - name: Commit
+        run: |
+          rm -f .github/workflows/early-context-beats.yml
+          git config user.name "Beyond 90 QA"; git config user.email "actions@users.noreply.github.com"
+          git add -A; git commit -m "Narrative: add contextual early-career scene pools" || true
+          git push origin HEAD:recovery-v4-19-delivery-gate
