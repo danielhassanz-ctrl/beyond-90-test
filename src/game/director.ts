@@ -2571,13 +2571,17 @@ export function directorNewSeason(s: GameState): void {
     return !!arc && a.chapter < arc.chapters.length;
   });
   if (d.active.length > 1) d.active = [d.active[0]!];
-  const pool = ARCS.filter(
+  const contextualPool = ARCS.filter(
     (a) => !d.completed.includes(a.id) && !d.active.some((x) => x.id === a.id) && statusOk(s, a.family) && a.requires(s),
   );
-  // Sorteo ponderado: la misma situación no produce siempre los mismos arcos.
+  const laneThreshold = s.stage === "youth" ? 55 : 65;
+  const lanePool = contextualPool.filter((a) => hash(careerSeed(s), `arc-lane|${d.profile}|${a.id}`) % 100 < laneThreshold);
+  const minLane = s.stage === "youth" ? 1 : 2;
+  const pool = lanePool.length >= minLane ? lanePool : contextualPool;
   const bag = pool.map((a) => ({ id: a.id, w: Math.max(1, a.weight(s)) + (hash(careerSeed(s), `${a.id}${s.seasonIndex}${d.profile}`) % 26) }));
   const chosen: string[] = [];
-  const target = 3 + (hash(careerSeed(s), `ncand${s.seasonIndex}`) % 3);
+  const wanted = s.stage === "youth" ? 1 + (hash(careerSeed(s), `ncand-youth${s.seasonIndex}`) % 2) : 2 + (hash(careerSeed(s), `ncand${s.seasonIndex}`) % 3);
+  const target = Math.min(pool.length, wanted);
   let salt = hash(careerSeed(s), `pickarc${s.seasonIndex}`);
   while (bag.length > 0 && chosen.length < target) {
     const total = bag.reduce((acc, x) => acc + x.w, 0);
@@ -2701,7 +2705,9 @@ export function directorCard(s: GameState): DynamicCard | null {
   const beatGap = 3 + (hash(careerSeed(s), `bgap|${identity}|${s.sceneCount ?? 0}`) % 4);
   if (beatNow - (d.lastBeatBeat ?? -99) < beatGap || sinceAny(s, d) < 3) return null;
   if (hash(careerSeed(s), `bchance|${identity}|${beatNow}|${s.seasonIndex}`) % 100 >= 58) return null;
-  const beats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && statusOk(s, b.family) && b.requires(s));
+  const contextualBeats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && statusOk(s, b.family) && b.requires(s));
+  const laneBeats = contextualBeats.filter((b) => b.family === "rareza" || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 55);
+  const beats = laneBeats.length >= 2 ? laneBeats : contextualBeats;
   if (beats.length > 0) {
     const ranked = [...beats].sort((a, b) =>
       (hash(careerSeed(s), `rank|${identity}|${s.seasonIndex}|${s.sceneCount ?? 0}|${a.id}`) % 10000) -
@@ -2709,7 +2715,7 @@ export function directorCard(s: GameState): DynamicCard | null {
     );
     const rare = ranked.filter((b) => b.family === "rareza");
     const rareRoll = hash(careerSeed(s), `rare|${identity}|${beatNow}|${s.seasonIndex}|${s.sceneCount ?? 0}`) % 100;
-    const beat = rare.length > 0 && rareRoll < 30
+    const beat = rare.length > 0 && rareRoll < 45
       ? rare[hash(careerSeed(s), `rarepick|${identity}|${s.sceneCount ?? 0}`) % rare.length]!
       : ranked[0]!;
     d.lastBeatBeat = beatNow;
