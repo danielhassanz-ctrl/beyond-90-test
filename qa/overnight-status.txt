@@ -1,58 +1,89 @@
-HEAD_BEFORE=f762f0c9e3e60607b724f3b471b13b9210504ec4
+HEAD_BEFORE=06acbea4dc4483fb0140f07114cd4ce221acf196
 
 > typecheck
 > tsc --noEmit
 
-TYPECHECK_EXIT=0
+src/game/director.ts(2880,218): error TS1005: ')' expected.
+TYPECHECK_EXIT=2
 
 > qa:career
 > node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-career-smoke.ts
 
-(node:2104) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+(node:2119) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
 --import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/asset-loader.mjs", pathToFileURL("./"));'
 (Use `node --trace-warnings ...` to show where the warning was created)
-┌─────────┬──────┬───────┬─────┬─────────┬──────┬─────────┬─────────┬─────────┐
-│ (index) │ seed │ steps │ age │ overall │ peak │ seasons │ stage   │ retired │
-├─────────┼──────┼───────┼─────┼─────────┼──────┼─────────┼─────────┼─────────┤
-│ 0       │ 1001 │ 1306  │ 36  │ 74      │ 83   │ 21      │ 'first' │ true    │
-│ 1       │ 1098 │ 1364  │ 36  │ 67      │ 76   │ 21      │ 'first' │ true    │
-│ 2       │ 1195 │ 1429  │ 37  │ 82      │ 88   │ 22      │ 'first' │ true    │
-│ 3       │ 1292 │ 1409  │ 37  │ 66      │ 78   │ 22      │ 'first' │ true    │
-│ 4       │ 1389 │ 1176  │ 34  │ 61      │ 65   │ 19      │ 'first' │ true    │
-│ 5       │ 1486 │ 1384  │ 36  │ 83      │ 87   │ 21      │ 'first' │ true    │
-│ 6       │ 1583 │ 1320  │ 36  │ 58      │ 68   │ 21      │ 'first' │ true    │
-│ 7       │ 1680 │ 1326  │ 36  │ 87      │ 91   │ 21      │ 'first' │ true    │
-│ 8       │ 1777 │ 1524  │ 38  │ 62      │ 77   │ 23      │ 'first' │ true    │
-│ 9       │ 1874 │ 1311  │ 35  │ 61      │ 68   │ 20      │ 'first' │ true    │
-│ 10      │ 1971 │ 1512  │ 38  │ 81      │ 89   │ 23      │ 'first' │ true    │
-│ 11      │ 2068 │ 1336  │ 36  │ 64      │ 73   │ 21      │ 'first' │ true    │
-└─────────┴──────┴───────┴─────┴─────────┴──────┴─────────┴─────────┴─────────┘
-FULL_CAREER_SMOKE_OK careers=12 distinctPeaks=11 retirementAges=5
-CAREER_EXIT=0
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+Error: Transform failed with 1 error:
+/home/runner/work/beyond-90-test/beyond-90-test/src/game/director.ts:2880:217: ERROR: Expected ")" but found ";"
+    at failureErrorWithLog (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:1752:15)
+    at /home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:1019:50
+    at responseCallbacks.<computed> (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:886:9)
+    at handleIncomingPacket (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:941:12)
+    at Socket.readFromStdout (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:864:7)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
+  name: 'TransformError'
+}
+
+Node.js v22.23.2
+CAREER_EXIT=1
 
 > qa:branches
 > node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/branch-coverage-smoke.ts
 
-(node:2135) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+(node:2150) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
 --import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/asset-loader.mjs", pathToFileURL("./"));'
 (Use `node --trace-warnings ...` to show where the warning was created)
-BRANCH_COVERAGE_SMOKE_OK dynamic=13 keyMoments=45 careerEnd=ok semanticCases=8 postCareer=3x3 genericCopy=0
-BRANCH_EXIT=0
-(node:2153) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+Error: Transform failed with 1 error:
+/home/runner/work/beyond-90-test/beyond-90-test/src/game/director.ts:2880:217: ERROR: Expected ")" but found ";"
+    at failureErrorWithLog (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:1752:15)
+    at /home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:1019:50
+    at responseCallbacks.<computed> (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:886:9)
+    at handleIncomingPacket (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:941:12)
+    at Socket.readFromStdout (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:864:7)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
+  name: 'TransformError'
+}
+
+Node.js v22.23.2
+BRANCH_EXIT=1
+(node:2168) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
 --import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/asset-loader.mjs", pathToFileURL("./"));'
 (Use `node --trace-warnings ...` to show where the warning was created)
-Ofertas de nueva carrera: 14/15 conjuntos distintos
-Patrimonio medio 3 temporadas: 190.7.000 € · consecuencias por carrera 1 · escenas de dinero 4.1
-Carreras: 22 · partidos clave/temporada 5.6 · OVR medio 67.5 · forma media 49 · combinaciones de ofertas 35/40
-QA OK: sin incoherencias detectadas.
-Fase 5 · solapamiento de eventos entre carreras 0% · pretemporadas sin escena 1/12 · OVR final 54-69
-Narrative Director · firmas distintas 13/14 · perfiles usados 5 · primeros arcos 6 · firma más repetida 14% · primer arco más repetido 29%
-Fase 6 · retiradas 10/10 · edad final 34-39 · media máx 56-88 · clubes por carrera 2.9 · títulos totales 19 · Balones de Oro 0
-Fase 6 · finales: Carrera truncada x3 · Carrera profesional sólida x3 · Carrera modesta x1 · Gran profesional x1 · Top mundial x2
-Fase 6 OK
-Experiencia · eventIds compartidos 70% · familias compartidas 98% · títulos compartidos 70%
-Experiencia · escenas raras por carrera (30 escenas): 0,0,1,1,1,1,1,1
-FALLO: los primeros 30 eventos se repiten demasiado entre carreras
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+Error: Transform failed with 1 error:
+/home/runner/work/beyond-90-test/beyond-90-test/src/game/director.ts:2880:217: ERROR: Expected ")" but found ";"
+    at failureErrorWithLog (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:1752:15)
+    at /home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:1019:50
+    at responseCallbacks.<computed> (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:886:9)
+    at handleIncomingPacket (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:941:12)
+    at Socket.readFromStdout (/home/runner/work/beyond-90-test/beyond-90-test/node_modules/esbuild/lib/main.js:864:7)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
+  name: 'TransformError'
+}
+
+Node.js v22.23.2
 EXTENDED_EXIT=1
 
 > build
@@ -63,71 +94,30 @@ EXTENDED_EXIT=1
 [33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
 [36mvite v8.2.2 [32mbuilding client environment for production...[36m[39m
 transforming...
-✓ 1948 modules transformed.
-rendering chunks...
-computing gzip size...
-dist/client/assets/scene-family-b7PY2FoM.jpg        23.79 kB
-dist/client/assets/scene-press-BvBALy3f.jpg         26.71 kB
-dist/client/assets/scene-tunnel-CBiY96-l.jpg        30.02 kB
-dist/client/assets/scene-injury-Cu-QGxfQ.jpg        33.11 kB
-dist/client/assets/scene-training-CHW7vPOA.jpg      35.16 kB
-dist/client/assets/hero-cover-B9aZXOMm.jpg          41.87 kB
-dist/client/assets/scene-travel-WDY5lTf9.jpg        44.61 kB
-dist/client/assets/scene-match-CszBgE1k.jpg         44.64 kB
-dist/client/assets/scene-office-D0DUemSi.jpg        45.54 kB
-dist/client/assets/scene-agent-VQumCNbz.jpg         46.40 kB
-dist/client/assets/scene-stadium-CnW04FwK.jpg       56.01 kB
-dist/client/assets/scene-locker-Bf5VOIok.jpg        63.50 kB
-dist/client/assets/scene-gym-Xp0lVena.jpg           83.14 kB
-dist/client/assets/scene-celebration-Bpp6KyY6.jpg   85.21 kB
-dist/client/assets/styles-DyZGutE7.css              87.78 kB │ gzip:  14.46 kB
-dist/client/assets/trending-up-BNaKjYmq.js           0.16 kB │ gzip:   0.16 kB
-dist/client/assets/users-Bou0101O.js                 0.29 kB │ gzip:   0.21 kB
-dist/client/assets/rolldown-runtime-CbXtAM7H.js      0.58 kB │ gzip:   0.36 kB
-dist/client/assets/routes-rCtfIcPg.js                2.71 kB │ gzip:   1.20 kB
-dist/client/assets/carrera-DqaY37NY.js               2.81 kB │ gzip:   1.00 kB
-dist/client/assets/cantera-Bp1LCuLC.js               3.33 kB │ gzip:   1.47 kB
-dist/client/assets/patrimonio-DflG37aS.js            3.59 kB │ gzip:   1.21 kB
-dist/client/assets/relaciones-naJsaBap.js            3.62 kB │ gzip:   1.46 kB
-dist/client/assets/ShareButton-Cbi8Win1.js           6.13 kB │ gzip:   2.59 kB
-dist/client/assets/GameShell-DNdW-ywq.js             6.18 kB │ gzip:   2.31 kB
-dist/client/assets/legado-DKf2_6J8.js                6.32 kB │ gzip:   2.17 kB
-dist/client/assets/onboarding-Dzi-UHOv.js            6.35 kB │ gzip:   2.38 kB
-dist/client/assets/historia-CpXEON1m.js             17.69 kB │ gzip:   5.19 kB
-dist/client/assets/utils-DKuJdkv1.js                28.51 kB │ gzip:   9.31 kB
-dist/client/assets/index-DgYyMjxV.js               342.83 kB │ gzip: 107.10 kB
-dist/client/assets/store-ClyaslS-.js               457.47 kB │ gzip: 142.39 kB
+✓ 1947 modules transformed.
+[31m✗[39m Build failed in 1.72s
+[31merror during build:
+[31mBuild failed with 1 error:
 
-[32m✓ built in 1.91s[39m
-[36mvite v8.2.2 [32mbuilding ssr environment for production...[36m[39m
-transforming...
-✓ 120 modules transformed.
-rendering chunks...
-computing gzip size...
-dist/server/assets/utils-C_uf36nf.js                         0.18 kB │ gzip:   0.15 kB
-dist/server/assets/empty-plugin-adapters-D9UWiqvJ.js         0.22 kB │ gzip:   0.16 kB
-dist/server/assets/rolldown-runtime-D7D4PA-g.js              0.36 kB │ gzip:   0.25 kB
-dist/server/assets/start-Bl_efz7a.js                         1.56 kB │ gzip:   0.71 kB
-dist/server/assets/_tanstack-start-manifest_v-Da4hrZ9w.js    2.45 kB │ gzip:   0.66 kB
-dist/server/assets/routes-Iv4Hhsh1.js                        4.23 kB │ gzip:   1.52 kB
-dist/server/server.js                                        4.63 kB │ gzip:   1.93 kB
-dist/server/assets/carrera-CwgoIJjf.js                       4.65 kB │ gzip:   1.34 kB
-dist/server/assets/cantera-CWVe6JeG.js                       4.79 kB │ gzip:   1.66 kB
-dist/server/assets/patrimonio-Ch6LXbpw.js                    5.37 kB │ gzip:   1.56 kB
-dist/server/assets/relaciones-Bwb2hT6h.js                    5.42 kB │ gzip:   1.82 kB
-dist/server/assets/GameShell-BXqv4JAx.js                     7.82 kB │ gzip:   2.34 kB
-dist/server/assets/legado-DJNRz0jG.js                        8.82 kB │ gzip:   2.32 kB
-dist/server/assets/ShareButton-554a-wok.js                   9.24 kB │ gzip:   3.40 kB
-dist/server/assets/onboarding-ByUMLjj1.js                    9.43 kB │ gzip:   2.82 kB
-dist/server/assets/historia-CLcNGrzz.js                     26.96 kB │ gzip:   6.58 kB
-dist/server/assets/server-CyD8C4CO.js                       59.74 kB │ gzip:  15.35 kB
-dist/server/assets/router-CRfyT0kz.js                      631.62 kB │ gzip: 163.25 kB
-
-[32m✓ built in 749ms[39m
-[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
-[prerender] Prerendering pages...
-[prerender] Concurrency: 2
-[prerender] Crawling: /
-[prerender] Prerendered 1 pages:
-[prerender] - /
-BUILD_EXIT=0
+[31m[builtin:vite-transform] [0mExpected `,` or `)` but found `;`
+      [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/game/director.ts:2880:218 [38;5;246m][0m
+      [38;5;246m│[0m
+ [38;5;246m2880 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249ml[0m[38;5;249ma[0m[38;5;249mn[0m[38;5;249me[0m[38;5;249mB[0m[38;5;249me[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249ms[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249mt[0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mt[0m[38;5;249mu[0m[38;5;249ma[0m[38;5;249ml[0m[38;5;249mB[0m[38;5;249me[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249ms[0m[38;5;249m.[0m[38;5;249mf[0m[38;5;249mi[0m[38;5;249ml[0m[38;5;249mt[0m[38;5;249me[0m[38;5;249mr[0m([38;5;249m([0m[38;5;249mb[0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249mb[0m[38;5;249m.[0m[38;5;249mf[0m[38;5;249ma[0m[38;5;249mm[0m[38;5;249mi[0m[38;5;249ml[0m[38;5;249my[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m=[0m[38;5;249m=[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249mz[0m[38;5;249ma[0m[38;5;249m"[0m[38;5;249m [0m[38;5;249m|[0m[38;5;249m|[0m[38;5;249m [0m[38;5;249mh[0m[38;5;249ma[0m[38;5;249ms[0m[38;5;249mh[0m[38;5;249m([0m[38;5;249mc[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249mr[0m[38;5;249mS[0m[38;5;249me[0m[38;5;249me[0m[38;5;249md[0m[38;5;249m([0m[38;5;249ms[0m[38;5;249m)[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m([0m[38;5;249m[[0m[38;5;249m"[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249mz[0m[38;5;249ma[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249mc[0m[38;5;249mi[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mi[0m[38;5;249mg[0m[38;5;249me[0m[38;5;249mn[0m[38;5;249m"[0m[38;5;249m][0m[38;5;249m.[0m[38;5;249mi[0m[38;5;249mn[0m[38;5;249mc[0m[38;5;249ml[0m[38;5;249mu[0m[38;5;249md[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249m([0m[38;5;249mb[0m[38;5;249m.[0m[38;5;249mf[0m[38;5;249ma[0m[38;5;249mm[0m[38;5;249mi[0m[38;5;249ml[0m[38;5;249my[0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m|[0m[38;5;249m|[0m[38;5;249m [0m[38;5;249mh[0m[38;5;249ma[0m[38;5;249ms[0m[38;5;249mh[0m[38;5;249m([0m[38;5;249mc[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249mr[0m[38;5;249mS[0m[38;5;249me[0m[38;5;249me[0m[38;5;249md[0m[38;5;249m([0m[38;5;249ms[0m[38;5;249m)[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m`[0m[38;5;249mb[0m[38;5;249me[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249m-[0m[38;5;249ml[0m[38;5;249ma[0m[38;5;249mn[0m[38;5;249me[0m[38;5;249m|[0m[38;5;249m$[0m[38;5;249m{[0m[38;5;249md[0m[38;5;249m.[0m[38;5;249mp[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mf[0m[38;5;249mi[0m[38;5;249ml[0m[38;5;249me[0m[38;5;249m}[0m[38;5;249m|[0m[38;5;249m$[0m[38;5;249m{[0m[38;5;249mb[0m[38;5;249m.[0m[38;5;249mi[0m[38;5;249md[0m[38;5;249m}[0m[38;5;249m`[0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m%[0m[38;5;249m [0m[38;5;249m1[0m[38;5;249m0[0m[38;5;249m0[0m[38;5;249m [0m[38;5;249m<[0m[38;5;249m [0m[38;5;249m5[0m[38;5;249m5[0m[38;5;249m)[0m[38;5;249m)[0m;
+ [38;5;240m     │[0m                                           ┬                                                                                                                                                                              ┬  
+ [38;5;240m     │[0m                                           ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Opened here
+ [38;5;240m     │[0m                                                                                                                                                                                                                          │  
+ [38;5;240m     │[0m                                                                                                                                                                                                                          ╰── `,` or `)` expected
+[38;5;246m──────╯[0m
+[31m
+    at aggregateBindingErrorsIntoJsError (file:///home/runner/work/beyond-90-test/beyond-90-test/node_modules/rolldown/dist/shared/error-HDibX49O.mjs:48:18)
+    at unwrapBindingResult (file:///home/runner/work/beyond-90-test/beyond-90-test/node_modules/rolldown/dist/shared/error-HDibX49O.mjs:18:128)
+    at #build (file:///home/runner/work/beyond-90-test/beyond-90-test/node_modules/rolldown/dist/shared/rolldown-C9Hfg50O.mjs:133:34)
+    at async buildEnvironment (file:///home/runner/work/beyond-90-test/beyond-90-test/node_modules/vite/dist/node/chunks/node.js:33821:66)
+    at async Object.build (file:///home/runner/work/beyond-90-test/beyond-90-test/node_modules/vite/dist/node/chunks/node.js:34242:19)
+    at async buildStartViteEnvironments (file:///home/runner/work/beyond-90-test/beyond-90-test/node_modules/@tanstack/start-plugin-core/dist/esm/vite/planning.js:95:23)
+    at async Object.buildApp (file:///home/runner/work/beyond-90-test/beyond-90-test/node_modules/@tanstack/start-plugin-core/dist/esm/vite/plugin.js:113:8)
+    at async Object.buildApp (file:///home/runner/work/beyond-90-test/beyond-90-test/node_modules/vite/dist/node/chunks/node.js:34234:6)
+    at async CAC.<anonymous> (file:///home/runner/work/beyond-90-test/beyond-90-test/node_modules/vite/dist/node/cli.js:776:3) {
+  errors: [Getter/Setter]
+}[39m
+BUILD_EXIT=1

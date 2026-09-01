@@ -2029,6 +2029,177 @@ interface Beat {
 }
 
 const BEATS: Beat[] = [
+
+  {
+    id: "beat_pos_dc",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "DC",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · área pequeña`,
+      title: "El entrenador te cuenta los remates",
+      text: `${who(s, "coach")} pone a los delanteros a finalizar veinte centros y apunta cada remate. Al terminar te enseña la hoja: no quiere goles bonitos, quiere que llegues antes que el central.`,
+      choices: [
+        { id: "primer_palo", label: "Trabajar el primer palo", apply: (st) => { st.xp += 18; stat(st, "form", 3); return { title: "Medio metro", text: "Empiezas a ganar un espacio que antes llegaba tarde.", tone: "good" }; } },
+        { id: "fisico", label: "Pelear cada balón con el central", apply: (st) => { stat(st, "fitness", 3); rel(st, "dressing", -2); return { title: "Choques", text: "Acabas lleno de golpes y el central deja de regalarte el área.", tone: "neutral" }; } },
+        { id: "preguntar", label: "Pedir al míster que te enseñe tus movimientos", apply: (st) => { rel(st, "coach", 5); stat(st, "discipline", 2); return { title: "Vídeo después de comer", text: "Veis seis jugadas y descubres dos carreras que nunca hacías.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_ext",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "EXT",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · banda`,
+      title: "El lateral ya sabe tu regate",
+      text: `En el partidillo, el lateral te espera siempre hacia dentro. ${who(s, "coach")} para dos veces la jugada: si solo tienes un regate, en unas semanas todos lo conocerán.`,
+      choices: [
+        { id: "fuera", label: "Practicar la salida por fuera", apply: (st) => { st.xp += 16; stat(st, "form", 3); return { title: "Otra puerta", text: "No es tan vistoso, pero el defensor ya no puede adivinarte.", tone: "good" }; } },
+        { id: "insistir", label: "Insistir con tu mejor recurso", apply: (st) => { stat(st, "form", 2); stat(st, "discipline", -2); return { title: "Tu jugada", text: "A veces funciona porque eres bueno; otras, porque el rival se equivoca.", tone: "neutral" }; } },
+        { id: "asociarte", label: "Buscar una pared en vez del uno contra uno", apply: (st) => { rel(st, "dressing", 5); stat(st, "discipline", 2); return { title: "Dos contra uno", text: "Dejas de necesitar ganar cada duelo tú solo.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_mc",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "MC",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · rondo`,
+      title: "Dos segundos antes",
+      text: `${who(s, "coach")} te corrige sin parar: recibes bien, pero miras tarde. Te obliga a decir en voz alta dónde está el compañero libre antes de que te llegue el balón.`,
+      choices: [
+        { id: "perfil", label: "Trabajar el perfil corporal", apply: (st) => { st.xp += 18; stat(st, "discipline", 3); return { title: "Antes de recibir", text: "Empiezas a jugar la siguiente acción antes de tocar la pelota.", tone: "good" }; } },
+        { id: "riesgo", label: "Probar pases más difíciles", apply: (st) => { stat(st, "form", 4); rel(st, "coach", -2); return { title: "Alguno rompe líneas", text: "Pierdes balones, pero también empiezas a ver pases que otros no ven.", tone: "neutral" }; } },
+        { id: "simple", label: "Jugar fácil durante unas semanas", apply: (st) => { rel(st, "coach", 4); stat(st, "discipline", 2); return { title: "Fiable", text: "No sales en el resumen, pero el equipo empieza a buscarte siempre.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_mco",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "MCO",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · entre líneas`,
+      title: "No siempre hay espacio",
+      text: `El segundo entrenador te pone un peto distinto y te obliga a recibir con dos rivales encima. En juveniles podías girarte; aquí la pelota llega y la ventana ya se está cerrando.`,
+      choices: [
+        { id: "un_toque", label: "Entrenar a un toque", apply: (st) => { st.xp += 18; stat(st, "form", 2); return { title: "Más rápido", text: "Empiezas a crear ventajas sin necesidad de girarte.", tone: "good" }; } },
+        { id: "aguantar", label: "Aguantar el contacto y girar", apply: (st) => { stat(st, "fitness", 4); stat(st, "form", 2); return { title: "Espalda fuerte", text: "Pierdes alguna, pero ya no te sacan de la jugada con un empujón.", tone: "neutral" }; } },
+        { id: "moverte", label: "Cambiar dónde recibes", apply: (st) => { rel(st, "coach", 4); stat(st, "discipline", 3); return { title: "Otro mapa", text: "Dejas de esperar el espacio perfecto y empiezas a fabricarlo.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_lat",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "LAT",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · banda larga`,
+      title: "Sesenta metros para volver",
+      text: `Subes al ataque y el ejercicio no termina: el preparador lanza otro balón a tu espalda. ${who(s, "coach")} quiere saber si eres lateral cuando atacas y también cuando toca correr hacia tu portería.`,
+      choices: [
+        { id: "fondo", label: "Priorizar resistencia", apply: (st) => { stat(st, "fitness", 5); st.xp += 10; return { title: "Otra carrera", text: "La quinta repetición ya no parece una condena.", tone: "good" }; } },
+        { id: "centro", label: "Quedarte después practicando centros", apply: (st) => { stat(st, "form", 4); stat(st, "fitness", -2); return { title: "Treinta balones", text: "Algunos siguen acabando en la grada, pero ya hay una zona donde caen casi siempre.", tone: "neutral" }; } },
+        { id: "orden", label: "Preguntar cuándo debes subir", apply: (st) => { rel(st, "coach", 5); stat(st, "discipline", 3); return { title: "Semáforo", text: "Entiendes que llegar mucho no sirve si eliges mal cuándo.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_dfc",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "DFC",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · línea defensiva`,
+      title: "Un paso que mueve a cuatro",
+      text: `${who(s, "captain")} te grita que salgas y tú dudas medio segundo. El ejercicio acaba en gol. Después te explica que un central joven no puede defender solo: tiene que conseguir que los demás den el paso con él.`,
+      choices: [
+        { id: "mandar", label: "Empezar a hablar más", apply: (st) => { rel(st, "dressing", 4); stat(st, "discipline", 3); return { title: "Se te oye", text: "Al principio suena forzado. A las dos semanas ya reaccionan a tu voz.", tone: "good" }; } },
+        { id: "duelo", label: "Centrarte en ganar tus duelos", apply: (st) => { stat(st, "fitness", 4); stat(st, "form", 2); return { title: "Tu metro cuadrado", text: "No arreglas toda la línea, pero empiezas por no perder la tuya.", tone: "neutral" }; } },
+        { id: "capitan", label: "Pedir al capitán que te corrija", apply: (st) => { rel(st, "dressing", 6); st.xp += 12; return { title: "Después de entrenar", text: "Os quedáis diez minutos moviendo conos y hablando de distancias.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_lane_a",
+    family: "origen",
+    image: "locker",
+    category: "life",
+    requires: (s) => s.age <= 19 && hash(careerSeed(s), "early-flavour") % 4 === 0,
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · vestuario`,
+      title: "La multa que no conocías",
+      text: `Llegas treinta segundos tarde a una charla y encuentras una moneda pegada con cinta a tu taquilla. Es la multa simbólica del vestuario. Nadie te había explicado la norma.`,
+      choices: [
+        { id: "pagar", label: "Pagar y reírte", apply: (st) => { rel(st, "dressing", 5); return { title: "Norma aprendida", text: "Te explican otras tres antes de que vuelvas a meter la pata.", tone: "good" }; } },
+        { id: "protestar", label: "Decir que nadie te avisó", apply: (st) => { rel(st, "dressing", -4); stat(st, "discipline", -1); return { title: "Peor que la multa", text: "La discusión cuesta más que la moneda.", tone: "bad" }; } },
+        { id: "preguntar", label: "Preguntar qué otras reglas hay", apply: (st) => { stat(st, "discipline", 3); rel(st, "dressing", 2); return { title: "Manual invisible", text: "Descubres que el vestuario tiene un reglamento que nunca se escribió.", tone: "neutral" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_lane_b",
+    family: "origen",
+    image: "travel",
+    category: "life",
+    requires: (s) => s.age <= 19 && hash(careerSeed(s), "early-flavour") % 4 === 1,
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · vuelta a casa`,
+      title: "El último autobús",
+      text: `El entrenamiento se alarga y pierdes tu conexión habitual. Te quedan apuntes en la mochila, hambre y una hora extra de trayecto. Por primera vez notas el coste pequeño y repetido de perseguir esto.`,
+      choices: [
+        { id: "rutina", label: "Organizar mejor la semana", apply: (st) => { stat(st, "discipline", 4); return { title: "Calendario nuevo", text: "No hace el trayecto más corto, pero deja de pillarte por sorpresa.", tone: "good" }; } },
+        { id: "quejar", label: "Quejarte en casa", apply: (st) => { rel(st, "family", 3); stat(st, "morale", 2); return { title: "Te escuchan", text: "No solucionan el autobús, pero la cena está esperando.", tone: "neutral" }; } },
+        { id: "aguantar", label: "No decir nada a nadie", apply: (st) => { stat(st, "morale", -2); stat(st, "discipline", 2); return { title: "Otra noche", text: "Lo haces solo. Funciona, aunque no siempre es lo mismo que estar bien.", tone: "neutral" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_lane_c",
+    family: "origen",
+    image: "family",
+    category: "life",
+    requires: (s) => s.age <= 19 && hash(careerSeed(s), "early-flavour") % 4 === 2,
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · domingo`,
+      title: "Tus amigos ya no esperan",
+      text: `Abres el móvil después del partido y ves una foto de tus amigos sin ti. No hay reproche, que casi es peor. Sus horarios empiezan a dejar de contar contigo.`,
+      choices: [
+        { id: "llamar", label: "Llamar a uno de ellos", apply: (st) => { stat(st, "morale", 4); rel(st, "family", 1); return { title: "Veinte minutos", text: "No recuperas el domingo, pero la conversación sigue siendo la de siempre.", tone: "good" }; } },
+        { id: "asumir", label: "Asumir que tu vida está cambiando", apply: (st) => { stat(st, "discipline", 3); return { title: "Otra etapa", text: "No dramatizas. Solo entiendes que elegir también significa perder cosas.", tone: "neutral" }; } },
+        { id: "aparecer", label: "Ir a verlos aunque llegues tarde", apply: (st) => { stat(st, "fitness", -2); stat(st, "morale", 5); return { title: "Una hora", text: "Llegas cuando algunos se van. Aun así, merecía la pena.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_lane_d",
+    family: "origen",
+    image: "office",
+    category: "club",
+    requires: (s) => s.age <= 19 && hash(careerSeed(s), "early-flavour") % 4 === 3,
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · pasillo`,
+      title: "El nombre mal escrito",
+      text: `En la hoja del gimnasio han escrito mal tu apellido por tercera vez. Es una tontería, pero resume bastante bien tu sitio actual en el club: todavía eres alguien a quien están aprendiendo a reconocer.`,
+      choices: [
+        { id: "corregir", label: "Corregirlo con una sonrisa", apply: (st) => { rel(st, "dressing", 3); stat(st, "morale", 2); return { title: "Ya está bien", text: "Al día siguiente aparece escrito correctamente.", tone: "good" }; } },
+        { id: "pasar", label: "Pasar del tema", apply: (st) => { stat(st, "discipline", 2); return { title: "Que hablen tus botas", text: "No necesitas que sepan escribirlo todavía.", tone: "neutral" }; } },
+        { id: "broma", label: "Convertirlo en una broma del grupo", apply: (st) => { rel(st, "dressing", 5); stat(st, "morale", 2); return { title: "Nuevo mote", text: "No era el objetivo, pero ahora nadie olvida tu nombre.", tone: "good" }; } },
+      ],
+    }),
+  },
   {
     id: "beat_pretemporada_test",
     family: "pretemporada",
@@ -2574,7 +2745,7 @@ export function directorNewSeason(s: GameState): void {
   const contextualPool = ARCS.filter(
     (a) => !d.completed.includes(a.id) && !d.active.some((x) => x.id === a.id) && statusOk(s, a.family) && a.requires(s),
   );
-  const laneThreshold = s.stage === "youth" ? 50 : 60;
+  const laneThreshold = s.stage === "youth" ? 55 : 65;
   const lanePool = contextualPool.filter((a) => hash(careerSeed(s), `arc-lane|${d.profile}|${a.id}`) % 100 < laneThreshold);
   const minLane = s.stage === "youth" ? 1 : 2;
   const pool = lanePool.length >= minLane ? lanePool : contextualPool;
@@ -2706,7 +2877,7 @@ export function directorCard(s: GameState): DynamicCard | null {
   if (beatNow - (d.lastBeatBeat ?? -99) < beatGap || sinceAny(s, d) < 3) return null;
   if (hash(careerSeed(s), `bchance|${identity}|${beatNow}|${s.seasonIndex}`) % 100 >= 58) return null;
   const contextualBeats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && statusOk(s, b.family) && b.requires(s));
-  const laneBeats = contextualBeats.filter((b) => b.family === "rareza" || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 48);
+  const laneBeats = contextualBeats.filter((b) => b.family === "rareza" || hash(careerSeed(s), (["rareza", "posicion", "origen"].includes(b.family) || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 55));
   const beats = laneBeats.length >= 2 ? laneBeats : contextualBeats;
   if (beats.length > 0) {
     const ranked = [...beats].sort((a, b) =>
