@@ -77,3 +77,5 @@ const EARLY_VARIETY_BEATS: Beat[] = EARLY_VARIETY_STORIES.map((story) => ({
           git add src/game/director.ts src/qa/run.ts
           git commit -m "Narrative: add twelve seeded early-career scenes"
           git push origin HEAD:recovery-v4-19-delivery-gate
+
+# trigger revision
