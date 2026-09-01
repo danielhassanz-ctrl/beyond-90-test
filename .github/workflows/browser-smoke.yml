@@ -70,7 +70,7 @@ jobs:
 
       - name: Wait for exact production URL
         run: |
-          URL='https://beyond-90-public-630f3c8-dani-ad1e.vercel.app'
+          URL='https://beyond-90-public-final-630f3c8-dani-ad1e.vercel.app'
           for i in {1..45}; do
             code=$(curl -L -sS -o /tmp/public.html -w '%{http_code}' "$URL" || true)
             if [ "$code" = "200" ] && grep -qi 'BEYOND 90' /tmp/public.html; then
@@ -91,5 +91,5 @@ jobs:
 
       - name: Exact public URL iPhone WebKit E2E
         env:
-          BEYOND90_URL: https://beyond-90-public-630f3c8-dani-ad1e.vercel.app
+          BEYOND90_URL: https://beyond-90-public-final-630f3c8-dani-ad1e.vercel.app
         run: node scripts/browser-smoke.mjs
