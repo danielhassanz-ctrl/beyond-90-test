@@ -1,0 +1,47 @@
+name: Beyond 90 fix contextual selector
+on:
+  push:
+    branches: [recovery-v4-19-delivery-gate]
+    paths: ['.github/workflows/fix-context-beats.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: recovery-v4-19-delivery-gate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fix selector
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/game/director.ts'); s=p.read_text()
+          bad='''  const laneBeats = contextualBeats.filter((b) => b.family === "rareza" || hash(careerSeed(s), (["rareza", "posicion", "origen"].includes(b.family) || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 55));'''
+          good='''  const laneBeats = contextualBeats.filter((b) => ["rareza", "posicion", "origen"].includes(b.family) || hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < 55);'''
+          if bad not in s: raise SystemExit('bad selector not found')
+          p.write_text(s.replace(bad,good,1))
+          PY
+      - run: npm install --no-audit --no-fund
+      - name: Verify all gates
+        shell: bash
+        run: |
+          : > qa/overnight-status.txt
+          echo "HEAD_BEFORE=$(git rev-parse HEAD)" >> qa/overnight-status.txt
+          set +e
+          npm run typecheck >> qa/overnight-status.txt 2>&1; echo "TYPECHECK_EXIT=$?" >> qa/overnight-status.txt
+          npm run qa:career >> qa/overnight-status.txt 2>&1; echo "CAREER_EXIT=$?" >> qa/overnight-status.txt
+          npm run qa:branches >> qa/overnight-status.txt 2>&1; echo "BRANCH_EXIT=$?" >> qa/overnight-status.txt
+          node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts >> qa/overnight-status.txt 2>&1; echo "EXTENDED_EXIT=$?" >> qa/overnight-status.txt
+          npm run build >> qa/overnight-status.txt 2>&1; echo "BUILD_EXIT=$?" >> qa/overnight-status.txt
+          set -e
+      - name: Commit
+        run: |
+          rm -f .github/workflows/fix-context-beats.yml
+          git config user.name "Beyond 90 QA"; git config user.email "actions@users.noreply.github.com"
+          git add -A; git commit -m "Narrative: fix contextual early-career selector" || true
+          git push origin HEAD:recovery-v4-19-delivery-gate
