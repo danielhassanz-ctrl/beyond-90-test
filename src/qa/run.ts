@@ -135,7 +135,7 @@ for (let c = 0; c < CAREERS; c++) {
         const k = String(card.data["kind"] ?? "");
         if (["brace", "winner", "form"].includes(k)) fail(`Bloque simulado positivo convertido en escena (${k})`);
       }
-      s = resolveDynamicCard(s, card, "ok");
+      s = resolveDynamicCard(s, card, renderDynamic(s, card).choices[0]?.id ?? "ok");
     } else if (card.type === "season") {
       stats.keyMatches.push(keyThisSeason);
       keyThisSeason = 0;
@@ -308,7 +308,7 @@ console.log("QA OK: sin incoherencias detectadas.");
         } else if (card.kind === "arc_callback") {
           storyBeats.push(`callback:${String(card.data["cbId"] ?? "?")}`);
         }
-        s = resolveDynamicCard(s, card, "ok");
+        s = resolveDynamicCard(s, card, renderDynamic(s, card).choices[0]?.id ?? "ok");
       } else if (card.type === "season") {
         s = advance(s);
       }
@@ -418,18 +418,36 @@ console.log("QA OK: sin incoherencias detectadas.");
       } else if (card.type === "dynamic") {
         // Las escenas del Narrative Director son parte de la experiencia y deben
         // entrar en variedad/rareza igual que los eventos legacy.
+        const view = renderDynamic(s, card);
+        const semantic = (key: string, fallback = "?") => String(card.data[key] ?? fallback);
         const dynamicKey = card.kind === "arc_beat"
-          ? String(card.data["beatId"] ?? "arc_beat")
+          ? semantic("beatId", "arc_beat")
           : card.kind === "arc"
-            ? `${String(card.data["arcId"] ?? "arc")}:c${String(card.data["chapter"] ?? "?")}`
+            ? `${semantic("arcId", "arc")}:c${semantic("chapter")}`
             : card.kind === "arc_callback"
-              ? `callback:${String(card.data["cbId"] ?? "?")}`
-              : card.kind;
+              ? `callback:${semantic("cbId")}`
+              : card.kind === "thread"
+                ? `thread:${semantic("threadKind")}`
+                : card.kind === "match_flash"
+                  ? `match_flash:${semantic("kind", "run")}`
+                  : card.kind === "agent_check"
+                    ? `agent_check:${semantic("topic", "general")}`
+                    : card.kind === "agent_teaser"
+                      ? `agent_teaser:${semantic("teaser", "rumor")}`
+                      : card.kind === "agent_offer"
+                        ? `agent_offer:${semantic("clubName", "club")}`
+                        : card.kind === "money"
+                          ? `money:${semantic("offer", "decision")}`
+                          : card.kind === "injury_diagnosis"
+                            ? `injury:${semantic("severity", "minor")}:${semantic("label", "lesion")}`
+                            : card.kind === "return"
+                              ? `return:${semantic("label", "lesion")}`
+                              : card.kind;
         ids.push(`dynamic:${dynamicKey}`);
-        fams.push(`dynamic:${card.kind}`);
-        titles.push(dynamicKey);
+        fams.push(`dynamic:${view.category}`);
+        titles.push(view.title);
         if (card.kind === "arc_beat" && (card.data["beatId"] === "beat_grupo_equivocado" || String(card.data["beatId"] ?? "").includes("beat_early_rare_"))) rareCount++;
-        s = resolveDynamicCard(s, card, "ok");
+        s = resolveDynamicCard(s, card, renderDynamic(s, card).choices[0]?.id ?? "ok");
       } else s = advance(s);
     }
     runs.push({ ids, fams, titles, rareCount });

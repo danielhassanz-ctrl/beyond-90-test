@@ -842,6 +842,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
       s.agent.commission = commission;
       s.agent.trust = clamp(s.agent.trust + 20, 0, 100);
       rel(s, "agent", 25);
+      s.rel.agent = Math.max(s.rel.agent, 30);
       achieve(s, "representante");
       remember(s, "Primera reunión seria: te tomó en serio desde el minuto uno");
       milestone(s, `${s.agent.name} pasa a ser tu representante.`);
@@ -853,6 +854,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
       s.agent.commission = Math.max(5, commission - 1);
       s.agent.trust = clamp(s.agent.trust + 10);
       rel(s, "agent", 15);
+      s.rel.agent = Math.max(s.rel.agent, 24);
       achieve(s, "representante");
       remember(s, "Le dejaste claro que quieres llegar arriba");
       return { title: "Acuerdo con carácter", text: `Le pones condiciones y le rebajas la comisión al ${s.agent.commission}%. "Me gusta que sepas lo que vales".`, tone: "good" };
@@ -861,6 +863,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
     s.hasAgent = true;
     s.agent.commission = commission;
     rel(s, "agent", 10);
+    s.rel.agent = Math.max(s.rel.agent, 20);
     achieve(s, "representante");
     return { title: "Acuerdo tibio", text: `Firmáis sin entusiasmo. ${s.agent.name} se guarda tu falta de claridad para otro día.`, tone: "neutral" };
   }
@@ -875,6 +878,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
     s.agent.commission = Math.max(5, commission - 2);
     s.agent.trust = clamp(s.agent.trust + 8);
     rel(s, "agent", 14);
+    s.rel.agent = Math.max(s.rel.agent, 24);
     achieve(s, "representante");
     remember(s, "Le negociaste la comisión desde el primer día");
     return { title: "Comisión negociada", text: `Cierras un ${s.agent.commission}%. Él se ríe: "Vas a ser de los complicados. Mejor".`, tone: "good" };
@@ -884,6 +888,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
   s.agent.commission = commission;
   s.agent.trust = clamp(s.agent.trust + 15);
   rel(s, "agent", 22);
+  s.rel.agent = Math.max(s.rel.agent, 28);
   achieve(s, "representante");
   milestone(s, `${s.agent.name} pasa a ser tu representante.`);
   return { title: "Tienes representante", text: `Firmas en una servilleta y luego en papel de verdad. Ya no estás solo en esto.`, tone: "gold" };

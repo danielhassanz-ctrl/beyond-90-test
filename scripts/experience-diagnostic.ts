@@ -31,13 +31,19 @@ for (let c = 0; c < 8; c++) {
       ids.push(ev.id);
       s = resolveEvent(s, ev.id, ev.choices[guard % ev.choices.length]!.id);
     } else if (card.type === "dynamic") {
-      const dynamicKey = card.kind === "arc_beat"
-        ? String(card.data["beatId"] ?? "arc_beat")
-        : card.kind === "arc"
-          ? `${String(card.data["arcId"] ?? "arc")}:c${String(card.data["chapter"] ?? "?")}`
-          : card.kind === "arc_callback"
-            ? `callback:${String(card.data["cbId"] ?? "?")}`
-            : card.kind;
+      const semantic = (key: string, fallback = "?") => String(card.data[key] ?? fallback);
+      const dynamicKey = card.kind === "arc_beat" ? semantic("beatId", "arc_beat")
+        : card.kind === "arc" ? `${semantic("arcId", "arc")}:c${semantic("chapter")}`
+        : card.kind === "arc_callback" ? `callback:${semantic("cbId")}`
+        : card.kind === "thread" ? `thread:${semantic("threadKind")}`
+        : card.kind === "match_flash" ? `match_flash:${semantic("kind", "run")}`
+        : card.kind === "agent_check" ? `agent_check:${semantic("topic", "general")}`
+        : card.kind === "agent_teaser" ? `agent_teaser:${semantic("teaser", "rumor")}`
+        : card.kind === "agent_offer" ? `agent_offer:${semantic("clubName", "club")}`
+        : card.kind === "money" ? `money:${semantic("offer", "decision")}`
+        : card.kind === "injury_diagnosis" ? `injury:${semantic("severity", "minor")}:${semantic("label", "lesion")}`
+        : card.kind === "return" ? `return:${semantic("label", "lesion")}`
+        : card.kind;
       ids.push(`dynamic:${dynamicKey}`);
       const choiceId = renderDynamic(s, card).choices[0]?.id ?? "ok";
       s = resolveDynamicCard(s, card, choiceId);
