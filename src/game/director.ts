@@ -2528,7 +2528,8 @@ function openArc(s: GameState): ActiveArc | null {
     return !!arc && statusOk(s, arc.family) && arc.requires(s) && !familyBlocked(s, arc.family);
   });
   if (eligible.length > 0) {
-    const id = eligible[hash(careerSeed(s), `open${s.sceneCount ?? 0}`) % eligible.length]!;
+    const identity = `${d.profile}|${s.player.position}|${s.player.city}|${s.clubId}|${s.seasonIndex}`;
+    const id = eligible[hash(careerSeed(s), `open|${identity}|${s.sceneCount ?? 0}`) % eligible.length]!;
     const arc = arcById(id)!;
     const active: ActiveArc = { id, chapter: 0, opened: s.sceneCount ?? 0, params: arc.open ? arc.open(s) : {} };
     d.active.push(active);
@@ -2618,19 +2619,22 @@ export function directorCard(s: GameState): DynamicCard | null {
     }
   }
 
-  // 4. Escena secundaria contextual: poco frecuente y nunca de relleno.
-  const beatGap = 4 + (hash(careerSeed(s), `bgap${s.sceneCount ?? 0}`) % 4);
+  // 4. Escena secundaria contextual: diversidad real entre carreras.
+  const identity = `${d.profile}|${s.player.position}|${s.player.city}|${s.clubId}`;
+  const beatGap = 3 + (hash(careerSeed(s), `bgap|${identity}|${s.sceneCount ?? 0}`) % 4);
   if (beatNow - (d.lastBeatBeat ?? -99) < beatGap || sinceAny(s, d) < 3) return null;
-  // Filtro extra reproducible: la mayoría de huecos se quedan en rutina.
-  if (hash(careerSeed(s), `bchance${beatNow}${s.seasonIndex}`) % 100 >= 45) return null;
+  if (hash(careerSeed(s), `bchance|${identity}|${beatNow}|${s.seasonIndex}`) % 100 >= 58) return null;
   const beats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && statusOk(s, b.family) && b.requires(s));
   if (beats.length > 0) {
-    const h = hash(careerSeed(s), `beat${s.sceneCount ?? 0}`);
-    const rare = beats.filter((b) => b.family === "rareza");
-    const rareRoll = hash(careerSeed(s), `rare${beatNow}${s.seasonIndex}${s.sceneCount ?? 0}`) % 100;
-    const beat = rare.length > 0 && rareRoll < 24
-      ? rare[hash(careerSeed(s), `rarepick${s.sceneCount ?? 0}`) % rare.length]!
-      : beats[h % beats.length]!;
+    const ranked = [...beats].sort((a, b) =>
+      (hash(careerSeed(s), `rank|${identity}|${s.seasonIndex}|${s.sceneCount ?? 0}|${a.id}`) % 10000) -
+      (hash(careerSeed(s), `rank|${identity}|${s.seasonIndex}|${s.sceneCount ?? 0}|${b.id}`) % 10000)
+    );
+    const rare = ranked.filter((b) => b.family === "rareza");
+    const rareRoll = hash(careerSeed(s), `rare|${identity}|${beatNow}|${s.seasonIndex}|${s.sceneCount ?? 0}`) % 100;
+    const beat = rare.length > 0 && rareRoll < 30
+      ? rare[hash(careerSeed(s), `rarepick|${identity}|${s.sceneCount ?? 0}`) % rare.length]!
+      : ranked[0]!;
     d.lastBeatBeat = beatNow;
     return { type: "dynamic", kind: "arc_beat", data: { beatId: beat.id } };
   }

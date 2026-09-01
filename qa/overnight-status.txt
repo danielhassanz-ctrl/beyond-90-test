@@ -1,0 +1,129 @@
+HEAD_BEFORE=4e18b571ab8c4c75de4b399b08cf6396e81d3d23
+
+> typecheck
+> tsc --noEmit
+
+TYPECHECK_EXIT=0
+
+> qa:career
+> node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-career-smoke.ts
+
+(node:2119) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/asset-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+┌─────────┬──────┬───────┬─────┬─────────┬──────┬─────────┬─────────┬─────────┐
+│ (index) │ seed │ steps │ age │ overall │ peak │ seasons │ stage   │ retired │
+├─────────┼──────┼───────┼─────┼─────────┼──────┼─────────┼─────────┼─────────┤
+│ 0       │ 1001 │ 1435  │ 37  │ 78      │ 85   │ 22      │ 'first' │ true    │
+│ 1       │ 1098 │ 1342  │ 36  │ 67      │ 76   │ 21      │ 'first' │ true    │
+│ 2       │ 1195 │ 1427  │ 37  │ 81      │ 88   │ 22      │ 'first' │ true    │
+│ 3       │ 1292 │ 1427  │ 37  │ 66      │ 78   │ 22      │ 'first' │ true    │
+│ 4       │ 1389 │ 1228  │ 34  │ 59      │ 65   │ 19      │ 'first' │ true    │
+│ 5       │ 1486 │ 1483  │ 37  │ 74      │ 85   │ 22      │ 'first' │ true    │
+│ 6       │ 1583 │ 1382  │ 36  │ 58      │ 68   │ 21      │ 'first' │ true    │
+│ 7       │ 1680 │ 1358  │ 36  │ 85      │ 89   │ 21      │ 'first' │ true    │
+│ 8       │ 1777 │ 1401  │ 37  │ 65      │ 77   │ 22      │ 'first' │ true    │
+│ 9       │ 1874 │ 1376  │ 36  │ 58      │ 68   │ 21      │ 'first' │ true    │
+│ 10      │ 1971 │ 1378  │ 36  │ 83      │ 87   │ 21      │ 'first' │ true    │
+│ 11      │ 2068 │ 1377  │ 37  │ 61      │ 73   │ 22      │ 'first' │ true    │
+└─────────┴──────┴───────┴─────┴─────────┴──────┴─────────┴─────────┴─────────┘
+FULL_CAREER_SMOKE_OK careers=12 distinctPeaks=10 retirementAges=3
+CAREER_EXIT=0
+
+> qa:branches
+> node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/branch-coverage-smoke.ts
+
+(node:2165) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/asset-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+BRANCH_COVERAGE_SMOKE_OK dynamic=13 keyMoments=42 careerEnd=ok semanticCases=8 postCareer=3x3 genericCopy=0
+BRANCH_EXIT=0
+(node:2199) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/asset-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+Ofertas de nueva carrera: 14/15 conjuntos distintos
+Patrimonio medio 3 temporadas: 112.000 € · consecuencias por carrera 1 · escenas de dinero 2.5
+Carreras: 22 · partidos clave/temporada 6.1 · OVR medio 61.8 · forma media 39 · combinaciones de ofertas 35/40
+QA OK: sin incoherencias detectadas.
+Fase 5 · solapamiento de eventos entre carreras 0% · pretemporadas sin escena 5/12 · OVR final 52-69
+AVISO: pretemporada poco presente
+Narrative Director · firmas distintas 6/14 · perfiles usados 5 · primeros arcos 2 · firma más repetida 64% · primer arco más repetido 86%
+FALLO: el Narrative Director converge demasiado entre carreras
+EXTENDED_EXIT=1
+
+> build
+> vite build
+
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[36mvite v8.2.2 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 1948 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/client/assets/scene-family-b7PY2FoM.jpg        23.79 kB
+dist/client/assets/scene-press-BvBALy3f.jpg         26.71 kB
+dist/client/assets/scene-tunnel-CBiY96-l.jpg        30.02 kB
+dist/client/assets/scene-injury-Cu-QGxfQ.jpg        33.11 kB
+dist/client/assets/scene-training-CHW7vPOA.jpg      35.16 kB
+dist/client/assets/hero-cover-B9aZXOMm.jpg          41.87 kB
+dist/client/assets/scene-travel-WDY5lTf9.jpg        44.61 kB
+dist/client/assets/scene-match-CszBgE1k.jpg         44.64 kB
+dist/client/assets/scene-office-D0DUemSi.jpg        45.54 kB
+dist/client/assets/scene-agent-VQumCNbz.jpg         46.40 kB
+dist/client/assets/scene-stadium-CnW04FwK.jpg       56.01 kB
+dist/client/assets/scene-locker-Bf5VOIok.jpg        63.50 kB
+dist/client/assets/scene-gym-Xp0lVena.jpg           83.14 kB
+dist/client/assets/scene-celebration-Bpp6KyY6.jpg   85.21 kB
+dist/client/assets/styles-DyZGutE7.css              87.78 kB │ gzip:  14.46 kB
+dist/client/assets/trending-up-BuPfh083.js           0.16 kB │ gzip:   0.16 kB
+dist/client/assets/users-DXic1fBJ.js                 0.29 kB │ gzip:   0.21 kB
+dist/client/assets/rolldown-runtime-CbXtAM7H.js      0.58 kB │ gzip:   0.36 kB
+dist/client/assets/routes-BSNmschn.js                2.71 kB │ gzip:   1.21 kB
+dist/client/assets/carrera-D-ZTDSL4.js               2.81 kB │ gzip:   1.00 kB
+dist/client/assets/cantera-DVxgE3Mk.js               3.33 kB │ gzip:   1.48 kB
+dist/client/assets/patrimonio-kunAXV-N.js            3.59 kB │ gzip:   1.21 kB
+dist/client/assets/relaciones-mgLK0CVP.js            3.62 kB │ gzip:   1.46 kB
+dist/client/assets/ShareButton-DANdd9El.js           6.13 kB │ gzip:   2.60 kB
+dist/client/assets/GameShell-CgPeg1Qr.js             6.18 kB │ gzip:   2.31 kB
+dist/client/assets/legado-ClSLGhnc.js                6.32 kB │ gzip:   2.18 kB
+dist/client/assets/onboarding-DwBCd-PX.js            6.35 kB │ gzip:   2.38 kB
+dist/client/assets/historia-Y31Aj38Z.js             17.69 kB │ gzip:   5.19 kB
+dist/client/assets/utils-RQJTy5W1.js                28.51 kB │ gzip:   9.32 kB
+dist/client/assets/index-C6EW3Pmx.js               342.83 kB │ gzip: 107.10 kB
+dist/client/assets/store-C9KPJhQM.js               452.39 kB │ gzip: 140.91 kB
+
+[32m✓ built in 1.68s[39m
+[36mvite v8.2.2 [32mbuilding ssr environment for production...[36m[39m
+transforming...
+✓ 120 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/server/assets/utils-C_uf36nf.js                         0.18 kB │ gzip:   0.15 kB
+dist/server/assets/empty-plugin-adapters-D9UWiqvJ.js         0.22 kB │ gzip:   0.16 kB
+dist/server/assets/rolldown-runtime-D7D4PA-g.js              0.36 kB │ gzip:   0.25 kB
+dist/server/assets/start-DvCHBVKL.js                         1.56 kB │ gzip:   0.71 kB
+dist/server/assets/_tanstack-start-manifest_v-CircssHt.js    2.45 kB │ gzip:   0.66 kB
+dist/server/assets/routes-y5u9ORFz.js                        4.23 kB │ gzip:   1.52 kB
+dist/server/server.js                                        4.63 kB │ gzip:   1.93 kB
+dist/server/assets/carrera-BC-dciGO.js                       4.65 kB │ gzip:   1.34 kB
+dist/server/assets/cantera-DmsHXb05.js                       4.79 kB │ gzip:   1.66 kB
+dist/server/assets/patrimonio-BuwiOLIa.js                    5.37 kB │ gzip:   1.56 kB
+dist/server/assets/relaciones-C0BZBIi0.js                    5.42 kB │ gzip:   1.82 kB
+dist/server/assets/GameShell-BY_T41SL.js                     7.82 kB │ gzip:   2.34 kB
+dist/server/assets/legado-D1p6paYj.js                        8.82 kB │ gzip:   2.32 kB
+dist/server/assets/ShareButton-6m8Bxzdr.js                   9.24 kB │ gzip:   3.40 kB
+dist/server/assets/onboarding-CEC03ATA.js                    9.43 kB │ gzip:   2.82 kB
+dist/server/assets/historia-DgKI6FtN.js                     26.96 kB │ gzip:   6.58 kB
+dist/server/assets/server-PwOYuHas.js                       59.74 kB │ gzip:  15.35 kB
+dist/server/assets/router-BKQvxHng.js                      624.41 kB │ gzip: 161.34 kB
+
+[32m✓ built in 756ms[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[prerender] Prerendering pages...
+[prerender] Concurrency: 2
+[prerender] Crawling: /
+[prerender] Prerendered 1 pages:
+[prerender] - /
+BUILD_EXIT=0
