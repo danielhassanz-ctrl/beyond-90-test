@@ -1,4 +1,3 @@
-# trigger 2026-09-01T07:45
 name: Beyond 90 early arc diversity
 
 on:
@@ -20,97 +19,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Add early-career arcs and guarantee first preseason beat
+      - name: Patch director
+        env:
+          EARLY_ARCS_B64: "ICAvKiAtLS0tLS0tLS0tLS0tLS0tIDFCLiBBREFQVEFDScOTTiBBIExBIENBTlRFUkEgLS0tLS0tLS0tLS0tLS0tLSAqLwogIHsKICAgIGlkOiAiYXJjX2FkYXB0YWNpb25fY2FudGVyYSIsCiAgICBsYWJlbDogIkVuY2FqYXIgZW4gbGEgY2FudGVyYSIsCiAgICBmYW1pbHk6ICJhZGFwdGFjaW9uIiwKICAgIHJlcXVpcmVzOiAocykgPT4gcy5zdGFnZSA9PT0gInlvdXRoIiAmJiBzLmFnZSA8PSAxOCwKICAgIHdlaWdodDogKHMpID0+IDIyICsgKHMucmVsLmRyZXNzaW5nIDwgNTAgPyAxMiA6IDApLAogICAgY2hhcHRlcnM6IFsKICAgICAgewogICAgICAgIGZhbWlseTogImFkYXB0YWNpb24iLAogICAgICAgIGltYWdlOiAibG9ja2VyIiwKICAgICAgICBjYXRlZ29yeTogImxpZmUiLAogICAgICAgIGtpY2tlcjogKGMpID0+IGAke2MubW9udGh9IMK3IHZlc3R1YXJpbyBkZSBjYW50ZXJhYCwKICAgICAgICB0aXRsZTogKCkgPT4gIlR1IHNpdGlvIGVuIGxhIG1lc2EiLAogICAgICAgIHRleHQ6IChjKSA9PiBgJHtjLmNhcHRhaW59IHRlIHNlw7FhbGEgdW4gYXNpZW50byBhbCBmb25kby4gTG9zIHZldGVyYW5vcyBkZSBsYSBjYXRlZ29yw61hIHRpZW5lbiBzdXMgYnJvbWFzLCBzdXMgZ3J1cG9zIHkgc3VzIGPDs2RpZ29zLiBOYWRpZSB0ZSB0cmF0YSBtYWwsIHBlcm8gbmFkaWUgdmEgYSBoYWNlcnRlIGh1ZWNvIHBvcnF1ZSBzw60uYCwKICAgICAgICBjaG9pY2VzOiBbCiAgICAgICAgICB7IGlkOiAiZW50cmFyIiwgbGFiZWw6ICJNZXRlcnRlIGVuIGVsIGdydXBvIGRlc2RlIGVsIHByaW1lciBkw61hIiwgYXBwbHk6IChjKSA9PiB7IHJlbChjLnMsICJkcmVzc2luZyIsIDcpOyBzdGF0KGMucywgIm1vcmFsZSIsIDMpOyByZXR1cm4geyB0aXRsZTogIlVubyBtw6FzIiwgdGV4dDogIlRlIHLDrcKtcyBhdW5xdWUgbm8gZW50aWVuZGFzIGRvcyBjaGlzdGVzLiBBIGxhIHNlbWFuYSB5YSB0ZSBndWFyZGFuIHNpdGlvLiIsIHRvbmU6ICJnb29kIiB9OyB9IH0sCiAgICAgICAgICB7IGlkOiAib2JzZXJ2YXIiLCBsYWJlbDogIkVzY3VjaGFyIG3DoXMgcXVlIGhhYmxhciIsIGFwcGx5OiAoYykgPT4geyBzdGF0KGMucywgImRpc2NpcGxpbmUiLCA0KTsgcmVsKGMucywgImRyZXNzaW5nIiwgMik7IHJldHVybiB7IHRpdGxlOiAiUGVyZmlsIGJham8iLCB0ZXh0OiAiTm8gZnVlcnphcyBuYWRhLiBQb2NvIGEgcG9jbyBlbXBpZXphbiBhIHByZWd1bnRhcnRlIGNvc2FzIGVuIHZleiBkZSBpZ25vcmFydGUuIiwgdG9uZTogIm5ldXRyYWwiIH07IH0gfSwKICAgICAgICAgIHsgaWQ6ICJjb21wZXRpciIsIGxhYmVsOiAiRGVqYXIgY2xhcm8gcXVlIHZpZW5lcyBhIHF1aXRhciBwdWVzdG9zIiwgYXBwbHk6IChjKSA9PiB7IHN0YXQoYy5zLCAiZm9ybSIsIDQpOyByZWwoYy5zLCAiZHJlc3NpbmciLCAtNCk7IHJlbWVtYmVyKGMucywgIkVudHJhc3RlIGVuIGxhIGNhbnRlcmEgZGVqYW5kbyBjbGFybyBxdWUgd mVuw61hcyBhIGNvbXBldGlyIHBvciB1biBzaXRpbyIpOyByZXR1cm4geyB0aXRsZTogIk1lbnNhamUgcmVjaWJpZG8iLCB0ZXh0OiAiTmFkaWUgZHVkYSBkZSB0dSBhbWJpY2nDs24uIFRhbXBvY28gZGUgcXVlIGFob3JhIHRlIHZhbiBhIG1lZGlyIGNhZGEgZMOtYS4iLCB0b25lOiAibmV1dHJhbCIgfTsgfSB9LAogICAgICAgIF0sCiAgICAgIH0sCiAgICAgIHsKICAgICAgICBmYW1pbHk6ICJhZGFwdGFjaW9uIiwKICAgICAgICBpbWFnZTogInRyYWluaW5nIiwKICAgICAgICBjYXRlZ29yeTogInRyYWluaW5nIiwKICAgICAgICBza2lwOiAiVHJlcyBzZW1hbmFzIGRlc3B1w6lzIiwKICAgICAgICBraWNrZXI6IChjKSA9PiBgJHtjLm1vbnRofSDCt yBlbnRyZW5hbWllbnRvYCwKICAgICAgICB0aXRsZTogKCkgPT4gIllhIHNhYmVuIHF1acOpbiBlcmVzIiwKICAgICAgICB0ZXh0OiAoYykgPT4gYCR7Yy5jb2FjaH0gcGFyYSBlbCBlamVyY2ljaW8geSB0ZSB1c2EgY29tbyBlamVtcGxvLCBwYXJhIGJpZW4gbyBwYXJhIG1hbC4gRWwgZ3J1cG8geWEgdGllbmUgdW5hIG9wacOzbiBzb2JyZSB0aSB5IHRvY2EgZGVjaWRpciBxdcOpIGhhY2VzIGNvbiBlbGxhLmAsCiAgICAgICAgY2hvaWNlczogWwogICAgICAgICAgeyBpZDogInNlZ3VpciIsIGxhYmVsOiAiU2VndWlyIGV4YWN0YW1lbnRlIGlndWFsIiwgYXBwbHk6IChjKSA9PiB7IHN0YXQoYy5zLCAiZGlzY2lwbGluZSIsIDMpOyByZXR1cm4geyB0aXRsZTogIklkZW50aWRhZCIsIHRleHQ6ICJObyBjYW1iaWFzIHBvciBndXN0YXIuIEVsIHZlc3R1YXJpbyB0ZXJtaW5hIGVudGVuZGllbmRvIHF1w6kgcHVlZGUgZXNwZXJhciBkZSB0aS4iLCB0b25lOiAibmV1dHJhbCIsIGVuZDogdHJ1ZSB9OyB9IH0sCiAgICAgICAgICB7IGlkOiAiYWNlcmNhcnRlIiwgbGFiZWw6ICJBY2VyY2FydGUgYSBkb3MgY29tcGHDsWVyb3MgY29uY3JldG9zIiwgYXBwbHk6IChjKSA9PiB7IHJlbChjLnMsICJkcmVzc2luZyIsIDYpOyByZXR1cm4geyB0aXRsZTogIkRvcyBhbGlhZG9zIiwgdGV4dDogIk5vIG5lY2VzaXRhcyBjYWVybGUgYmllbiBhIHRyZWludGEuIENvbiBkb3MgeWEgY2FtYmlhIGVsIGTDrWEgYSBkw61hLiIsIHRvbmU6ICJnb29kIiwgZW5kOiB0cnVlIH07IH0gfSwKICAgICAgICAgIHsgaWQ6ICJoYWJsYXJfbWlzdGVyIiwgbGFiZWw6ICJQcmVndW50YXIgYWwgZW50cmVuYWRvciBxdcOpIGVzcGVyYSBkZSB0aSIsIGFwcGx5OiAoYykgPT4geyByZWwoYy5zLCAiY29hY2giLCA1KTsgc3RhdChjLnMsICJkaXNjaXBsaW5lIiwgMik7IHJldHVybiB7IHRpdGxlOiAiRXhwZWN0YXRpdmFzIGNsYXJhcyIsIHRleHQ6ICJTYWxlcyBjb24gZG9zIHRhcmVhcyBjb25jcmV0YXMgeSBtZW5vcyBydWlkbyBlbiBsYSBjYWJlemEuIiwgdG9uZTogImdvb2QiLCBlbmQ6IHRydWUgfTsgfSB9LAogICAgICAgIF0sCiAgICAgIH0sCiAgICBdLAogIH0sCgogIC8qIC0tLS0tLS0tLS0tLS0tLS0gMUMuIEVTVFVESU9TIFkgRsOaVEJPTCAtLS0tLS0tLS0tLS0tLS0tICovCiAgewogICAgaWQ6ICJhcmNfZXN0dWRpb3NfY2FudGVyYSIsCiAgICBsYWJlbDogIkRvcyB2aWRhcyBhIGxhIHZleiIsCiAgICBmYW1pbHk6ICJlc3R1ZGlvcyIsCiAgICByZXF1aXJlczogKHMpID0+IHMuc3RhZ2UgPT09ICJ5b3V0aCIgJiYgcy5hZ2UgPD0gMTgsCiAgICB3ZWlnaHQ6IChzKSA9PiAxOCArIChzLnJlbC5mYW1pbHkgPj0gNjAgPyA4IDogMCksCiAgICBjaGFwdGVyczogWwogICAgICB7CiAgICAgICAgZmFtaWx5OiAiZXN0dWRpb3MiLAogICAgICAgIGltYWdlOiAiZmFtaWx5IiwKICAgICAgICBjYXRlZ29yeTogImxpZmUiLAogICAgICAgIGtpY2tlcjogKGMpID0+IGAke2MubW9udGh9IMK3IGNhc2FgLAogICAgICAgIHRpdGxlOiAoKSA9PiAiTWFuw6FuYSBoYXkgZXhhbWVuIiwKICAgICAgICB0ZXh0OiAoKSA9PiBgTGxlZ2FzIGEgY2FzYSB0YXJkZSBkZXNwdcOpcyBkZSBlbnRyZW5hciB5IHRpZW5lcyB1biBleGFtZW4gYSBwcmltZXJhIGhvcmEuIEVuIGxhIG1lc2EgaGF5IGFwdW50ZXMsIHVuYSBjZW5hIHJlY2FsZW50YWRhIHkgdW4gbWVuc2FqZSBkZWwgdHV0b3IgZGljaWVuZG8gcXVlIGxsZXZhcyBkZW1hc2lhZGFzIGZhbHRhcy4gRWwgZsO6dGJvbCBlbXBpZXphIGEgY29tZXJzZSBlbCByZXN0byBkZSB0dSB2aWRhLmAsCiAgICAgICAgY2hvaWNlczogWwogICAgICAgICAgeyBpZDogImVzdHVkaWFyIiwgbGFiZWw6ICJFc3R1ZGlhciBhdW5xdWUgZHVlcm1hcyBwb2NvIiwgYXBwbHk6IChjKSA9PiB7IHJlbChjLnMsICJmYW1pbHkiLCA2KTsgc3RhdChjLnMsICJmaXRuZXNzIiwgLTMpOyBzdGF0KGMucywgImRpc2NpcGxpbmUiLCA0KTsgcmV0dXJuIHsgdGl0bGU6ICJOb2NoZSBjb3J0YSIsIHRleHQ6ICJBcHJ1ZWJhcyBwb3IgcG9jbyB5IGVudHJlbmFzIGNvbiBzdWXDsb8uIEhhcyBzYWx2YWRvIGxhcyBkb3MgY29zYXMsIGRlIG1vbWVudG8uIiwgdG9uZTogIm5ldXRyYWwiIH07IH0gfSwKICAgICAgICAgIHsgaWQ6ICJmdXRib2wiLCBsYWJlbDogIkRvcm1pciB5IHByaW9yaXphciBlbCBlbnRyZW5hbWllbnRvIiwgYXBwbHk6IChjKSA9PiB7IGMucy54cCArPSAxODsgcmVsKGMucywgImZhbWlseSIsIC01KTsgcmVtZW1iZXIoYy5zLCAiRW1wZXphc3RlIGEgcHJpb3JpemFyIGVsIGbDunRib2wgc29icmUgbG9zIGVzdHVkaW9zIGEgbG9zIDE2Iik7IHJldHVybiB7IHRpdGxlOiAiVW5hIGFwdWVzdGEiLCB0ZXh0OiAiRW50cmVuYXMgYmllbi4gRWwgZXhhbWVuIHNhbGUgbWFsLiBFbiBjYXNhIG5hZGllIGxvIGxsYW1hIGNhc3VhbGlkYWQuIiwgdG9uZTogIm5ldXRyYWwiIH07IH0gfSwKICAgICAgICAgIHsgaWQ6ICJuZWdvY2lhciIsIGxhYmVsOiAiUGVkaXIgdW4gcGxhbiBlc3BlY2lhbCBhbCBpbnN0aXR1dG8iLCBhcHBseTogKGMpID0+IHsgc3RhdChjLnMsICJkaXNjaXBsaW5lIiwgMyk7IHJlbChjLnMsICJmYW1pbHkiLCAzKTsgcmV0dXJuIHsgdGl0bGU6ICJQbGFuIEIiLCB0ZXh0OiAiTm8gdGUgcmVnYWxhbiBuYWRhLCBwZXJvIHRlIGRlamFuIHJlY3VwZXJhciB0YXJlYXMgZW4gbG9zIHZpYWplcy4gR2FuYXMgbWFyZ2VuLCBubyB1bmEgZXhjdXNhLiIsIHRvbmU6ICJnb29kIiB9OyB9IH0sCiAgICAgICAgXSwKICAgICAgfSwKICAgICAgewogICAgICAgIGZhbWlseTogImVzdHVkaW9zIiwKICAgICAgICBpbWFnZTogInRyYXZlbCIsCiAgICAgICAgY2F0ZWdvcnk6ICJsaWZlIiwKICAgICAgICBza2lwOiAiVW4gbWVzIGRlc3B1w6lzIiwKICAgICAgICBraWNrZXI6IChjKSA9PiBgJHtjLm1vbnRofSDCt yBhdXRvYsO6cyBkZWwgZXF1aXBvYCwKICAgICAgICB0aXRsZTogKCkgPT4gIkxvIHF1ZSBlc3TDoXMgZGVqYW5kbyBhdHLDoXMiLAogICAgICAgIHRleHQ6ICgpID0+IGBNaWVudHJhcyB0dXMgY29tcGHDsWVyb3MgZHVlcm1lbiBlbiBlbCBhdXRvYsO6cywgdMO6IG1pcmFzIGVsIGNhbGVuZGFyaW8gZGVsIGluc3RpdHV0byBlbiBlbCBtw7N2aWwuIFlhIG5vIHB1ZWRlcyBmaW5naXIgcXVlIHRvZG8gY2FiZSBzaW4gZWxlZ2lyIHByaW9yaWRhZGVzLmAsCiAgICAgICAgY2hvaWNlczogWwogICAgICAgICAgeyBpZDogImRvYmxlIiwgbGFiZWw6ICJNYW50ZW5lciBsYXMgZG9zIGNvc2FzIGVzdGUgY3Vyc28iLCBhcHBseTogKGMpID0+IHsgc3RhdChjLnMsICJkaXNjaXBsaW5lIiwgNCk7IHJlbChjLnMsICJmYW1pbHkiLCA0KTsgcmV0dXJuIHsgdGl0bGU6ICJEb2JsZSB0dXJubyIsIHRleHQ6ICJTZXLDoSBjYW5zYWRvLCBwZXJvIHRlcm1pbmFzIGVsIGN1cnNvIHNpbiBjZXJyYXIgbmluZ3VuYSBwdWVydGEuIiwgdG9uZTogImdvb2QiLCBlbmQ6IHRydWUgfTsgfSB9LAogICAgICAgICAgeyBpZDogInRvZG9fZnV0Ym9sIiwgbGFiZWw6ICJIYWJsYXIgZW4gY2FzYSB5IGFwb3N0YXIgcG9yIGVsIGbDunRib2wiLCBhcHBseTogKGMpID0+IHsgYy5zLnhwICs9IDI1OyByZWwoYy5zLCAiZmFtaWx5IiwgLTMpOyBmbGFnKGMucywgImVzdHVkaW9zX2FwYXJjYWRvcyIsIDEpOyByZXR1cm4geyB0aXRsZTogIlVuYSBzb2xhIHbDrWEiLCB0ZXh0OiAiTGEgZGVjaXNpw7NuIHF1ZWRhIGFwdW50YWRhIGVuIGNhc2EuIERlc2RlIGFob3JhIGNhZGEgZW50cmVuYW1pZW50byBwZXNhIHVuIHBvY28gbcOhcy4iLCB0b25lOiAibmV1dHJhbCIsIGVuZDogdHJ1ZSB9OyB9IH0sCiAgICAgICAgICB7IGlkOiAicmV2aXNhciIsIGxhYmVsOiAiRXNwZXJhciBoYXN0YSBmaW5hbCBkZSB0ZW1wb3JhZGEgcGFyYSBkZWNpZGlyIiwgYXBwbHk6IChjKSA9PiB7IHN0YXQoYy5zLCAibW9yYWxlIiwgMik7IHJlbWVtYmVyKGMucywgIkFwbGF6YXN0ZSBsYSBkZWNpc2nDs24gZW50cmUgZXN0dWRpb3MgeSBmw7p0Ym9sIGhhc3RhIGZpbmFsIGRlIHRlbXBvcmFkYSIpOyByZXR1cm4geyB0aXRsZTogIkRlY2lzacOzbiBhcGxhemFkYSIsIHRleHQ6ICJObyBlcyBlc2NhcGFyOiB0ZSBkYXMgdW5vcyBtZXNlcyBwYXJhIHNhYmVyIHNpIGVsIGbDunRib2wgZGUgdmVyZGFkIGVzdMOhIGFicmllbmRvIGxhIHB1ZXJ0YS4iLCB0b25lOiAibmV1dHJhbCIsIGVuZDogdHJ1ZSB9OyB9IH0sCiAgICAgICAgXSwKICAgICAgfSwKICAgIF0sCiAgfSwKCi"
         run: |
           python3 - <<'PY'
+          import base64, os
           from pathlib import Path
           p=Path('src/game/director.ts')
           s=p.read_text()
           old='''    if ((d.preseasonUsed ?? 0) >= preMax) return null;\n    if (sinceAny(s, d) < 2) return null;\n'''
-          new='''    if ((d.preseasonUsed ?? 0) >= preMax) return null;\n    // La primera escena de pretemporada no debe perderse por el cooldown de\n    // una escena anterior; las siguientes sí respetan aire narrativo.\n    if ((d.preseasonUsed ?? 0) > 0 && sinceAny(s, d) < 2) return null;\n'''
+          new='''    if ((d.preseasonUsed ?? 0) >= preMax) return null;\n    if ((d.preseasonUsed ?? 0) > 0 && sinceAny(s, d) < 2) return null;\n'''
           if old in s:
               s=s.replace(old,new,1)
-          marker='''  /* ---------------- 2. PRIMERA OPORTUNIDAD ---------------- */\n'''
           if 'id: "arc_adaptacion_cantera"' not in s:
-              insert=r'''  /* ---------------- 1B. ADAPTACIÓN A LA CANTERA ---------------- */
-  {
-    id: "arc_adaptacion_cantera",
-    label: "Encajar en la cantera",
-    family: "adaptacion",
-    requires: (s) => s.stage === "youth" && s.age <= 18,
-    weight: (s) => 22 + (s.rel.dressing < 50 ? 12 : 0),
-    chapters: [
-      {
-        family: "adaptacion",
-        image: "locker",
-        category: "life",
-        kicker: (c) => `${c.month} · vestuario de cantera`,
-        title: () => "Tu sitio en la mesa",
-        text: (c) => `${c.captain} te señala un asiento al fondo. Los veteranos de la categoría tienen sus bromas, sus grupos y sus códigos. Nadie te trata mal, pero nadie va a hacerte hueco porque sí.`,
-        choices: [
-          { id: "entrar", label: "Meterte en el grupo desde el primer día", apply: (c) => { rel(c.s, "dressing", 7); stat(c.s, "morale", 3); return { title: "Uno más", text: "Te ríes aunque no entiendas dos chistes. A la semana ya te guardan sitio.", tone: "good" }; } },
-          { id: "observar", label: "Escuchar más que hablar", apply: (c) => { stat(c.s, "discipline", 4); rel(c.s, "dressing", 2); return { title: "Perfil bajo", text: "No fuerzas nada. Poco a poco empiezan a preguntarte cosas en vez de ignorarte.", tone: "neutral" }; } },
-          { id: "competir", label: "Dejar claro que vienes a quitar puestos", apply: (c) => { stat(c.s, "form", 4); rel(c.s, "dressing", -4); remember(c.s, "Entraste en la cantera dejando claro que venías a competir por un sitio"); return { title: "Mensaje recibido", text: "Nadie duda de tu ambición. Tampoco de que ahora te van a medir cada día.", tone: "neutral" }; } },
-        ],
-      },
-      {
-        family: "adaptacion",
-        image: "training",
-        category: "training",
-        skip: "Tres semanas después",
-        kicker: (c) => `${c.month} · entrenamiento`,
-        title: () => "Ya saben quién eres",
-        text: (c) => `${c.coach} para el ejercicio y te usa como ejemplo, para bien o para mal. El grupo ya tiene una opinión sobre ti y toca decidir qué haces con ella.`,
-        choices: [
-          { id: "seguir", label: "Seguir exactamente igual", apply: (c) => { stat(c.s, "discipline", 3); return { title: "Identidad", text: "No cambias por gustar. El vestuario termina entendiendo qué puede esperar de ti.", tone: "neutral", end: true }; } },
-          { id: "acercarte", label: "Acercarte a dos compañeros concretos", apply: (c) => { rel(c.s, "dressing", 6); return { title: "Dos aliados", text: "No necesitas caerle bien a treinta. Con dos ya cambia el día a día.", tone: "good", end: true }; } },
-          { id: "hablar_mister", label: "Preguntar al entrenador qué espera de ti", apply: (c) => { rel(c.s, "coach", 5); stat(c.s, "discipline", 2); return { title: "Expectativas claras", text: "Sales con dos tareas concretas y menos ruido en la cabeza.", tone: "good", end: true }; } },
-        ],
-      },
-    ],
-  },
-
-  /* ---------------- 1C. ESTUDIOS Y FÚTBOL ---------------- */
-  {
-    id: "arc_estudios_cantera",
-    label: "Dos vidas a la vez",
-    family: "estudios",
-    requires: (s) => s.stage === "youth" && s.age <= 18,
-    weight: (s) => 18 + (s.rel.family >= 60 ? 8 : 0),
-    chapters: [
-      {
-        family: "estudios",
-        image: "family",
-        category: "life",
-        kicker: (c) => `${c.month} · casa`,
-        title: () => "Mañana hay examen",
-        text: () => `Llegas a casa tarde después de entrenar y tienes un examen a primera hora. En la mesa hay apuntes, una cena recalentada y un mensaje del tutor diciendo que llevas demasiadas faltas. El fútbol empieza a comerse el resto de tu vida.`,
-        choices: [
-          { id: "estudiar", label: "Estudiar aunque duermas poco", apply: (c) => { rel(c.s, "family", 6); stat(c.s, "fitness", -3); stat(c.s, "discipline", 4); return { title: "Noche corta", text: "Apruebas por poco y entrenas con sueño. Has salvado las dos cosas, de momento.", tone: "neutral" }; } },
-          { id: "futbol", label: "Dormir y priorizar el entrenamiento", apply: (c) => { c.s.xp += 18; rel(c.s, "family", -5); remember(c.s, "Empezaste a priorizar el fútbol sobre los estudios a los 16"); return { title: "Una apuesta", text: "Entrenas bien. El examen sale mal. En casa nadie lo llama casualidad.", tone: "neutral" }; } },
-          { id: "negociar", label: "Pedir un plan especial al instituto", apply: (c) => { stat(c.s, "discipline", 3); rel(c.s, "family", 3); return { title: "Plan B", text: "No te regalan nada, pero te dejan recuperar tareas en los viajes. Ganas margen, no una excusa.", tone: "good" }; } },
-        ],
-      },
-      {
-        family: "estudios",
-        image: "travel",
-        category: "life",
-        skip: "Un mes después",
-        kicker: (c) => `${c.month} · autobús del equipo`,
-        title: () => "Lo que estás dejando atrás",
-        text: () => `Mientras tus compañeros duermen en el autobús, tú miras el calendario del instituto en el móvil. Ya no puedes fingir que todo cabe sin elegir prioridades.`,
-        choices: [
-          { id: "doble", label: "Mantener las dos cosas este curso", apply: (c) => { stat(c.s, "discipline", 4); rel(c.s, "family", 4); return { title: "Doble turno", text: "Será cansado, pero terminas el curso sin cerrar ninguna puerta.", tone: "good", end: true }; } },
-          { id: "todo_futbol", label: "Hablar en casa y apostar por el fútbol", apply: (c) => { c.s.xp += 25; rel(c.s, "family", -3); flag(c.s, "estudios_aparcados", 1); return { title: "Una sola vía", text: "La decisión queda apuntada en casa. Desde ahora cada entrenamiento pesa un poco más.", tone: "neutral", end: true }; } },
-          { id: "revisar", label: "Esperar hasta final de temporada para decidir", apply: (c) => { stat(c.s, "morale", 2); remember(c.s, "Aplazaste la decisión entre estudios y fútbol hasta final de temporada"); return { title: "Decisión aplazada", text: "No es escapar: te das unos meses para saber si el fútbol de verdad está abriendo la puerta.", tone: "neutral", end: true }; } },
-        ],
-      },
-    ],
-  },
-
-'''
+              marker='''  /* ---------------- 2. PRIMERA OPORTUNIDAD ---------------- */\n'''
               if marker not in s:
                   raise SystemExit('arc insertion marker missing')
+              insert=base64.b64decode(os.environ['EARLY_ARCS_B64']).decode()
               s=s.replace(marker,insert+marker,1)
           p.write_text(s)
           PY
