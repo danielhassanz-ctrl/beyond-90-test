@@ -437,6 +437,82 @@ const ARCS: Arc[] = [
     ],
   },
 
+  /* ---------------- 1B. ADAPTACIÓN A LA CANTERA ---------------- */
+  {
+    id: "arc_adaptacion_cantera",
+    label: "Encajar en la cantera",
+    family: "adaptacion",
+    requires: (s) => s.stage === "youth" && s.age <= 18,
+    weight: (s) => 22 + (s.rel.dressing < 50 ? 12 : 0),
+    chapters: [
+      {
+        family: "adaptacion",
+        image: "locker",
+        category: "life",
+        kicker: (c) => `${c.month} · vestuario de cantera`,
+        title: () => "Tu sitio en la mesa",
+        text: (c) => `${c.captain} te señala un asiento al fondo. Los veteranos de la categoría tienen sus bromas, sus grupos y sus códigos. Nadie te trata mal, pero nadie va a hacerte hueco porque sí.`,
+        choices: [
+          { id: "entrar", label: "Meterte en el grupo desde el primer día", apply: (c) => { rel(c.s, "dressing", 7); stat(c.s, "morale", 3); return { title: "Uno más", text: "Te ríes aunque no entiendas dos chistes. A la semana ya te guardan sitio.", tone: "good" }; } },
+          { id: "observar", label: "Escuchar más que hablar", apply: (c) => { stat(c.s, "discipline", 4); rel(c.s, "dressing", 2); return { title: "Perfil bajo", text: "No fuerzas nada. Poco a poco empiezan a preguntarte cosas en vez de ignorarte.", tone: "neutral" }; } },
+          { id: "competir", label: "Dejar claro que vienes a quitar puestos", apply: (c) => { stat(c.s, "form", 4); rel(c.s, "dressing", -4); remember(c.s, "Entraste en la cantera dejando claro que venías a competir por un sitio"); return { title: "Mensaje recibido", text: "Nadie duda de tu ambición. Tampoco de que ahora te van a medir cada día.", tone: "neutral" }; } },
+        ],
+      },
+      {
+        family: "adaptacion",
+        image: "training",
+        category: "training",
+        skip: "Tres semanas después",
+        kicker: (c) => `${c.month} · entrenamiento`,
+        title: () => "Ya saben quién eres",
+        text: (c) => `${c.coach} para el ejercicio y te usa como ejemplo, para bien o para mal. El grupo ya tiene una opinión sobre ti y toca decidir qué haces con ella.`,
+        choices: [
+          { id: "seguir", label: "Seguir exactamente igual", apply: (c) => { stat(c.s, "discipline", 3); return { title: "Identidad", text: "No cambias por gustar. El vestuario termina entendiendo qué puede esperar de ti.", tone: "neutral", end: true }; } },
+          { id: "acercarte", label: "Acercarte a dos compañeros concretos", apply: (c) => { rel(c.s, "dressing", 6); return { title: "Dos aliados", text: "No necesitas caerle bien a treinta. Con dos ya cambia el día a día.", tone: "good", end: true }; } },
+          { id: "hablar_mister", label: "Preguntar al entrenador qué espera de ti", apply: (c) => { rel(c.s, "coach", 5); stat(c.s, "discipline", 2); return { title: "Expectativas claras", text: "Sales con dos tareas concretas y menos ruido en la cabeza.", tone: "good", end: true }; } },
+        ],
+      },
+    ],
+  },
+
+  /* ---------------- 1C. ESTUDIOS Y FÚTBOL ---------------- */
+  {
+    id: "arc_estudios_cantera",
+    label: "Dos vidas a la vez",
+    family: "estudios",
+    requires: (s) => s.stage === "youth" && s.age <= 18,
+    weight: (s) => 18 + (s.rel.family >= 60 ? 8 : 0),
+    chapters: [
+      {
+        family: "estudios",
+        image: "family",
+        category: "life",
+        kicker: (c) => `${c.month} · casa`,
+        title: () => "Mañana hay examen",
+        text: () => `Llegas a casa tarde después de entrenar y tienes un examen a primera hora. En la mesa hay apuntes, una cena recalentada y un mensaje del tutor diciendo que llevas demasiadas faltas. El fútbol empieza a comerse el resto de tu vida.`,
+        choices: [
+          { id: "estudiar", label: "Estudiar aunque duermas poco", apply: (c) => { rel(c.s, "family", 6); stat(c.s, "fitness", -3); stat(c.s, "discipline", 4); return { title: "Noche corta", text: "Apruebas por poco y entrenas con sueño. Has salvado las dos cosas, de momento.", tone: "neutral" }; } },
+          { id: "futbol", label: "Dormir y priorizar el entrenamiento", apply: (c) => { c.s.xp += 18; rel(c.s, "family", -5); remember(c.s, "Empezaste a priorizar el fútbol sobre los estudios a los 16"); return { title: "Una apuesta", text: "Entrenas bien. El examen sale mal. En casa nadie lo llama casualidad.", tone: "neutral" }; } },
+          { id: "negociar", label: "Pedir un plan especial al instituto", apply: (c) => { stat(c.s, "discipline", 3); rel(c.s, "family", 3); return { title: "Plan B", text: "No te regalan nada, pero te dejan recuperar tareas en los viajes. Ganas margen, no una excusa.", tone: "good" }; } },
+        ],
+      },
+      {
+        family: "estudios",
+        image: "travel",
+        category: "life",
+        skip: "Un mes después",
+        kicker: (c) => `${c.month} · autobús del equipo`,
+        title: () => "Lo que estás dejando atrás",
+        text: () => `Mientras tus compañeros duermen en el autobús, tú miras el calendario del instituto en el móvil. Ya no puedes fingir que todo cabe sin elegir prioridades.`,
+        choices: [
+          { id: "doble", label: "Mantener las dos cosas este curso", apply: (c) => { stat(c.s, "discipline", 4); rel(c.s, "family", 4); return { title: "Doble turno", text: "Será cansado, pero terminas el curso sin cerrar ninguna puerta.", tone: "good", end: true }; } },
+          { id: "todo_futbol", label: "Hablar en casa y apostar por el fútbol", apply: (c) => { c.s.xp += 25; rel(c.s, "family", -3); flag(c.s, "estudios_aparcados", 1); return { title: "Una sola vía", text: "La decisión queda apuntada en casa. Desde ahora cada entrenamiento pesa un poco más.", tone: "neutral", end: true }; } },
+          { id: "revisar", label: "Esperar hasta final de temporada para decidir", apply: (c) => { stat(c.s, "morale", 2); remember(c.s, "Aplazaste la decisión entre estudios y fútbol hasta final de temporada"); return { title: "Decisión aplazada", text: "No es escapar: te das unos meses para saber si el fútbol de verdad está abriendo la puerta.", tone: "neutral", end: true }; } },
+        ],
+      },
+    ],
+  },
+
   /* ---------------- 2. PRIMERA OPORTUNIDAD ---------------- */
   {
     id: "arc_primera",
@@ -2562,7 +2638,8 @@ export function directorCard(s: GameState): DynamicCard | null {
   if (pre) {
     const preMax = 1 + (hash(careerSeed(s), `pre${s.seasonIndex}`) % 2);
     if ((d.preseasonUsed ?? 0) >= preMax) return null;
-    if (sinceAny(s, d) < 2) return null;
+    // La primera escena de pretemporada no se pierde por un cooldown previo.
+    if ((d.preseasonUsed ?? 0) > 0 && sinceAny(s, d) < 2) return null;
 
     // La pretemporada debe sentirse al menos una vez cuando hay material válido.
     // Antes competía con todos los arcos y podía desaparecer por completo.
