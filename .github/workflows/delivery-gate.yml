@@ -9,9 +9,6 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -19,51 +16,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Apply narrative pass 2
-        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'APPLY_NARRATIVE_PASS2' }}
-        run: |
-          python3 scripts/apply-narrative-pass2.py
-          rm -f .github/workflows/narrative-variety-pass2.yml
-          rm -f scripts/apply-narrative-pass2.py
-          git config user.name "Beyond 90 QA"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          git commit -m "Narrative expand seeded early career variety"
-          git push origin HEAD:recovery-v4-19-delivery-gate
-
-      - name: Stop patch run after source commit
-        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'APPLY_NARRATIVE_PASS2' }}
-        run: exit 0
 
       - name: Setup Node
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_NARRATIVE_PASS2') }}
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
       - name: Clean install
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_NARRATIVE_PASS2') }}
         run: npm install --no-audit --no-fund
 
       - name: Typecheck
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_NARRATIVE_PASS2') }}
         run: npm run typecheck
 
       - name: Full career smoke QA
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_NARRATIVE_PASS2') }}
         run: npm run qa:career
 
       - name: Targeted narrative branch QA
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_NARRATIVE_PASS2') }}
         run: npm run qa:branches
 
       - name: Extended gameplay QA
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_NARRATIVE_PASS2') }}
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
 
       - name: Build
-        if: ${{ !(github.event_name == 'push' && github.event.head_commit.message == 'APPLY_NARRATIVE_PASS2') }}
         run: npm run build
