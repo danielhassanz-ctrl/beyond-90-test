@@ -5,6 +5,7 @@ import { routeTree } from "./routeTree.gen";
 export const getRouter = () => {
   const queryClient = new QueryClient();
   const portable = import.meta.env["VITE_PORTABLE_SINGLE_FILE"] === "1";
+  const usePortableHashHistory = portable && !import.meta.env.SSR;
   const basepath = portable
     ? "/"
     : import.meta.env.BASE_URL === "/"
@@ -14,7 +15,7 @@ export const getRouter = () => {
   const router = createRouter({
     routeTree,
     basepath,
-    ...(portable ? { history: createHashHistory() } : {}),
+    ...(usePortableHashHistory ? { history: createHashHistory() } : {}),
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
