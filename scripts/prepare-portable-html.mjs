@@ -9,7 +9,10 @@ let html = await readFile(input, "utf8");
 function localAssetPath(url) {
   const clean = url.split("?")[0].split("#")[0];
   if (/^(?:https?:|data:|blob:|#)/i.test(clean)) return null;
-  return resolve(root, clean.replace(/^\/(?:\.\/)+/, "").replace(/^\.\//, "").replace(/^\//, ""));
+  const normalized = clean
+    .replace(/^\/+/, "")
+    .replace(/^(?:\.\/)+/, "");
+  return resolve(root, normalized);
 }
 
 function attrValue(attrs, name) {
@@ -17,10 +20,9 @@ function attrValue(attrs, name) {
   return match?.[1] ?? null;
 }
 
-// Inline every local stylesheet regardless of attribute order.
-const linkTags = [...html.matchAll(/<link\b([^>]*)>/gi)];
-let inlinedStyles = 0;
-for (const match of linkTags) {
+// Inline local stylesheets. Process from the end so replacements cannot invalidate offsets.
+const styleReplacements = [];
+for (const match of html.matchAll(/<link\b([^>]*)>/gi)) {
   const attrs = match[1];
   const rel = attrValue(attrs, "rel");
   const href = attrValue(attrs, "href");
@@ -28,37 +30,52 @@ for (const match of linkTags) {
   const asset = localAssetPath(href);
   if (!asset) continue;
   const css = await readFile(asset, "utf8");
-  html = html.replace(match[0], `<style data-beyond90-portable>${css}</style>`);
-  inlinedStyles += 1;
+  styleReplacements.push({ start: match.index, end: match.index + match[0].length, value: `<style data-beyond90-portable>${css}</style>` });
 }
+for (const replacement of styleReplacements.reverse()) {
+  html = html.slice(0, replacement.start) + replacement.value + html.slice(replacement.end);
+}
+const inlinedStyles = styleReplacements.length;
 
-// Inline every local external script regardless of attribute order/newlines.
-// The portable Vite build has code splitting disabled, so the entry module is self-contained.
-const scriptTags = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-let inlinedScripts = 0;
-for (const match of scriptTags) {
+// Inline every local external script by locating its opening tag first. This deliberately
+// does not depend on a single regex matching the whole script element, which proved brittle
+// with TanStack/Vite's generated shell markup.
+const scriptReplacements = [];
+for (const match of html.matchAll(/<script\b([^>]*)>/gi)) {
   const attrs = match[1];
   const src = attrValue(attrs, "src");
   if (!src) continue;
   const asset = localAssetPath(src);
   if (!asset) continue;
+
   const js = await readFile(asset, "utf8");
   if (/<\/script/i.test(js)) {
     throw new Error(`Portable bundle contains a literal </script> sequence: ${src}`);
   }
+
+  const openEnd = match.index + match[0].length;
+  const closeMatch = /<\/script\s*>/i.exec(html.slice(openEnd));
+  if (!closeMatch) {
+    throw new Error(`External script tag has no closing </script>: ${src}`);
+  }
+  const elementEnd = openEnd + closeMatch.index + closeMatch[0].length;
   const cleanAttrs = attrs
     .replace(/\bsrc\s*=\s*["'][^"']+["']/gi, "")
     .replace(/\s+/g, " ")
     .trim();
-  html = html.replace(
-    match[0],
-    `<script${cleanAttrs ? ` ${cleanAttrs}` : ""} data-beyond90-portable>${js}</script>`,
-  );
-  inlinedScripts += 1;
+  scriptReplacements.push({
+    start: match.index,
+    end: elementEnd,
+    value: `<script${cleanAttrs ? ` ${cleanAttrs}` : ""} data-beyond90-portable>${js}</script>`,
+  });
 }
+for (const replacement of scriptReplacements.reverse()) {
+  html = html.slice(0, replacement.start) + replacement.value + html.slice(replacement.end);
+}
+const inlinedScripts = scriptReplacements.length;
 
 // Modulepreload links are unnecessary once the bundle is inline and can trigger
-// file-origin fetches in Safari/WebKit. Match regardless of attribute order.
+// file-origin fetches in Safari/WebKit.
 html = html.replace(/<link\b([^>]*)>/gi, (tag, attrs) => {
   const rel = attrValue(attrs, "rel");
   return rel?.split(/\s+/).some((v) => v.toLowerCase() === "modulepreload") ? "" : tag;
