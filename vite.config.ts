@@ -20,7 +20,20 @@ export default defineConfig(() => {
         server: { entry: "server" },
       }),
       react(),
-      ...(portable ? [viteSingleFile()] : []),
+      ...(portable
+        ? [
+            viteSingleFile({
+              overrideConfig: {
+                build: {
+                  // TanStack Start's SSR manifest expects a CSS manifest entry.
+                  // Keep CSS splitting enabled; the single-file plugin still
+                  // inlines the emitted stylesheet into the final HTML.
+                  cssCodeSplit: true,
+                },
+              },
+            }),
+          ]
+        : []),
     ],
   };
 });
