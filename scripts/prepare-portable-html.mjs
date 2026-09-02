@@ -64,7 +64,17 @@ for (const match of html.matchAll(/<script\b([^>]*)>/gi)) {
   const closeMatch = /<\/script\s*>/i.exec(html.slice(openEnd));
   if (!closeMatch) throw new Error(`External script tag has no closing </script>: ${src}`);
   const elementEnd = openEnd + closeMatch.index + closeMatch[0].length;
-  const cleanAttrs = attrs.replace(/\bsrc\s*=\s*["'][^"']+["']/gi, "").replace(/\s+/g, " ").trim();
+
+  // The original Vite/TanStack entry is emitted as an async module. Once it is inlined into
+  // the portable document there is nothing left to fetch, and keeping async allows Safari to
+  // run it before the preceding prerender/hydration bootstrap has deterministically settled.
+  // Strip async for the portable build so execution order follows document order on both
+  // file:// and hosted HTTPS/HTTP origins.
+  const cleanAttrs = attrs
+    .replace(/\bsrc\s*=\s*["'][^"']+["']/gi, "")
+    .replace(/\sasync(?:\s*=\s*(?:["'][^"']*["']|[^\s>]+))?/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
   scriptReplacements.push({ start: match.index, end: elementEnd, value: `<script${cleanAttrs ? ` ${cleanAttrs}` : ""} data-beyond90-portable>${js}</script>` });
 }
 for (const replacement of scriptReplacements.reverse()) html = html.slice(0, replacement.start) + replacement.value + html.slice(replacement.end);
@@ -95,6 +105,7 @@ const remaining = [
 if (remaining.length) throw new Error(`Portable HTML still has local asset dependencies: ${[...new Set(remaining)].join(", ")}`);
 if (!inlinedScripts) throw new Error("Portable HTML did not inline the production script bundle");
 if (!html.includes("data-beyond90-portable")) throw new Error("Portable HTML did not inline any production assets");
+if (/<script\b[^>]*data-beyond90-portable[^>]*\basync\b/i.test(html)) throw new Error("Portable production script still has async execution enabled");
 
 await writeFile(output, html, "utf8");
 const size = Buffer.byteLength(html);
