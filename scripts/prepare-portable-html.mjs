@@ -6,6 +6,7 @@ const output = process.argv[3] || "dist/client/Beyond90.html";
 const root = dirname(resolve(input));
 let html = await readFile(input, "utf8");
 const portableAssets = new Map();
+const noopModule = "data:text/javascript,export%20default%20%7B%7D%3B";
 
 function localAssetPath(url) {
   const clean = url.split("?")[0].split("#")[0];
@@ -53,23 +54,16 @@ for (const match of html.matchAll(/<script\b([^>]*)>/gi)) {
   const js = await readFile(asset, "utf8");
   if (/<\/script/i.test(js)) throw new Error(`Portable bundle contains a literal </script> sequence: ${src}`);
 
-  // The production entry is physically inlined below. TanStack's prerender payload can
-  // still contain the old entry URL and may import it during hydration. Point those stale
-  // references at a no-op module instead of at a base64 copy of the full bundle: importing
-  // the full bundle a second time reintroduces its original relative CSS manifest URL under
-  // file:// and causes Safari/WebKit to throw before hydration finishes.
-  rememberAsset(src, "data:text/javascript,export%20default%20%7B%7D%3B");
+  // The real production entry is physically inlined below. We temporarily map stale
+  // prerender references to a unique no-op URL so they can be located and removed from
+  // TanStack's hydration manifest after all normal asset rewriting has finished.
+  rememberAsset(src, noopModule);
 
   const openEnd = match.index + match[0].length;
   const closeMatch = /<\/script\s*>/i.exec(html.slice(openEnd));
   if (!closeMatch) throw new Error(`External script tag has no closing </script>: ${src}`);
   const elementEnd = openEnd + closeMatch.index + closeMatch[0].length;
 
-  // The original Vite/TanStack entry is emitted as an async module. Once it is inlined into
-  // the portable document there is nothing left to fetch, and keeping async allows Safari to
-  // run it before the preceding prerender/hydration bootstrap has deterministically settled.
-  // Strip async for the portable build so execution order follows document order on both
-  // file:// and hosted HTTPS/HTTP origins.
   const cleanAttrs = attrs
     .replace(/\bsrc\s*=\s*["'][^"']+["']/gi, "")
     .replace(/\sasync(?:\s*=\s*(?:["'][^"']*["']|[^\s>]+))?/gi, "")
@@ -85,12 +79,24 @@ html = html.replace(/<link\b([^>]*)>/gi, (tag, attrs) => {
   return rel?.split(/\s+/).some((v) => v.toLowerCase() === "modulepreload") ? "" : tag;
 });
 
-// Rewrite stale TanStack/Vite hydration asset URLs after the real production assets are
-// already inline. CSS becomes an absolute data URL; JS entry references become a no-op
-// module because the real entry has already executed inline.
 for (const [alias, data] of [...portableAssets.entries()].sort((a, b) => b[0].length - a[0].length)) {
   html = html.split(alias).join(data);
 }
+
+// Safari on a physical iPhone still receives TanStack's serialized prerender manifest even
+// though the production entry has already been executed inline. Leaving the stale JS entry
+// in `preloads`/`scripts` makes hydration attempt a second module load from a data: URL.
+// WebKit has a history of origin/loading differences around module/data/blob URLs, and this
+// extra load is unnecessary for a truly self-contained document. Remove it entirely.
+const escapedNoopModule = noopModule.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+html = html.replace(
+  new RegExp(`preloads:\\$R\\[(\\d+)\\]=\\["${escapedNoopModule}"\\]`, "g"),
+  "preloads:$R[$1]=[]",
+);
+html = html.replace(
+  new RegExp(`scripts:\\$R\\[(\\d+)\\]=\\[\\$R\\[\\d+\\]=\\{attrs:\\$R\\[\\d+\\]=\\{type:"module",async:!0,src:"${escapedNoopModule}"\\}\\}\\]`, "g"),
+  "scripts:$R[$1]=[]",
+);
 
 const remaining = [
   ...html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>/gi),
@@ -106,6 +112,7 @@ if (remaining.length) throw new Error(`Portable HTML still has local asset depen
 if (!inlinedScripts) throw new Error("Portable HTML did not inline the production script bundle");
 if (!html.includes("data-beyond90-portable")) throw new Error("Portable HTML did not inline any production assets");
 if (/<script\b[^>]*data-beyond90-portable[^>]*\basync\b/i.test(html)) throw new Error("Portable production script still has async execution enabled");
+if (html.includes(noopModule)) throw new Error("Portable HTML still contains a stale hydration module URL");
 
 await writeFile(output, html, "utf8");
 const size = Buffer.byteLength(html);
