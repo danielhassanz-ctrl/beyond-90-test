@@ -19,12 +19,11 @@ function attrValue(attrs, name) {
   return match?.[1] ?? null;
 }
 
-function rememberAsset(url, mime, content) {
-  const data = `data:${mime};base64,${Buffer.from(content).toString("base64")}`;
+function rememberAsset(url, replacement) {
   const clean = url.split("?")[0].split("#")[0];
   const file = basename(clean);
   for (const alias of new Set([clean, clean.replace(/^\/+/, ""), `/${clean.replace(/^\/+/, "")}`, `./${clean.replace(/^\/+/, "")}`, file, `/${file}`, `./${file}`])) {
-    if (alias) portableAssets.set(alias, data);
+    if (alias) portableAssets.set(alias, replacement);
   }
 }
 
@@ -37,7 +36,8 @@ for (const match of html.matchAll(/<link\b([^>]*)>/gi)) {
   const asset = localAssetPath(href);
   if (!asset) continue;
   const css = await readFile(asset, "utf8");
-  rememberAsset(href, "text/css", css);
+  const cssData = `data:text/css;base64,${Buffer.from(css).toString("base64")}`;
+  rememberAsset(href, cssData);
   styleReplacements.push({ start: match.index, end: match.index + match[0].length, value: `<style data-beyond90-portable>${css}</style>` });
 }
 for (const replacement of styleReplacements.reverse()) html = html.slice(0, replacement.start) + replacement.value + html.slice(replacement.end);
@@ -52,7 +52,14 @@ for (const match of html.matchAll(/<script\b([^>]*)>/gi)) {
   if (!asset) continue;
   const js = await readFile(asset, "utf8");
   if (/<\/script/i.test(js)) throw new Error(`Portable bundle contains a literal </script> sequence: ${src}`);
-  rememberAsset(src, "text/javascript", js);
+
+  // The production entry is physically inlined below. TanStack's prerender payload can
+  // still contain the old entry URL and may import it during hydration. Point those stale
+  // references at a no-op module instead of at a base64 copy of the full bundle: importing
+  // the full bundle a second time reintroduces its original relative CSS manifest URL under
+  // file:// and causes Safari/WebKit to throw before hydration finishes.
+  rememberAsset(src, "data:text/javascript,export%20default%20%7B%7D%3B");
+
   const openEnd = match.index + match[0].length;
   const closeMatch = /<\/script\s*>/i.exec(html.slice(openEnd));
   if (!closeMatch) throw new Error(`External script tag has no closing </script>: ${src}`);
@@ -68,10 +75,9 @@ html = html.replace(/<link\b([^>]*)>/gi, (tag, attrs) => {
   return rel?.split(/\s+/).some((v) => v.toLowerCase() === "modulepreload") ? "" : tag;
 });
 
-// TanStack's prerender payload can retain production asset URLs even after the actual
-// stylesheet/script tags are inlined. Safari then tries to resolve those strings against
-// file:// and reports a fatal local-resource error. Rewrite every known generated asset
-// alias to a data URI so hydration cannot escape the single HTML file.
+// Rewrite stale TanStack/Vite hydration asset URLs after the real production assets are
+// already inline. CSS becomes an absolute data URL; JS entry references become a no-op
+// module because the real entry has already executed inline.
 for (const [alias, data] of [...portableAssets.entries()].sort((a, b) => b[0].length - a[0].length)) {
   html = html.split(alias).join(data);
 }
