@@ -25,10 +25,18 @@ export default defineConfig(() => {
             viteSingleFile({
               overrideConfig: {
                 build: {
-                  // TanStack Start's SSR manifest expects a CSS manifest entry.
-                  // Keep CSS splitting enabled; the single-file plugin still
-                  // inlines the emitted stylesheet into the final HTML.
+                  // TanStack Start's SSR manifest needs a CSS manifest entry,
+                  // so keep CSS splitting enabled. Everything else must be
+                  // forced into the portable document: images as data URLs and
+                  // lazy route chunks collapsed into the entry bundle.
                   cssCodeSplit: true,
+                  assetsInlineLimit: () => true,
+                  chunkSizeWarningLimit: 100_000_000,
+                  rollupOptions: {
+                    output: {
+                      codeSplitting: false,
+                    },
+                  },
                 },
               },
             }),
