@@ -9,7 +9,7 @@ let html = await readFile(input, "utf8");
 function localAssetPath(url) {
   const clean = url.split("?")[0].split("#")[0];
   if (/^(?:https?:|data:|blob:|#)/i.test(clean)) return null;
-  return resolve(root, clean.replace(/^\.\//, "").replace(/^\//, ""));
+  return resolve(root, clean.replace(/^\/(?:\.\/)+/, "").replace(/^\.\//, "").replace(/^\//, ""));
 }
 
 // Inline every local stylesheet emitted by the production build.
@@ -21,7 +21,7 @@ for (const match of styleLinks) {
   html = html.replace(match[0], `<style data-beyond90-portable>${css}</style>`);
 }
 
-// Inline local module scripts. The portable Vite build has code splitting disabled,
+// Inline local scripts. The portable Vite build has code splitting disabled,
 // so the entry module is self-contained and safe to execute from file://.
 const moduleScripts = [...html.matchAll(/<script\b([^>]*)src=["']([^"']+)["']([^>]*)><\/script>/gi)];
 for (const match of moduleScripts) {
@@ -39,8 +39,14 @@ for (const match of moduleScripts) {
 // file-origin fetches in Safari/WebKit.
 html = html.replace(/<link\b[^>]*rel=["']modulepreload["'][^>]*>/gi, "");
 
-// A truly portable file must not retain any local JS/CSS/image dependency.
-const remaining = [...html.matchAll(/(?:src|href)=["']([^"']+)["']/gi)]
+// A truly portable file must not retain real HTML tags that load local assets.
+// Do not scan arbitrary src=/href= strings inside the inlined JS/SSR payload:
+// those are application data and created a false positive for the original entry URL.
+const remaining = [
+  ...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi),
+  ...html.matchAll(/<link\b[^>]*\bhref=["']([^"']+)["'][^>]*>/gi),
+  ...html.matchAll(/<(?:img|source|video|audio)\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi),
+]
   .map((m) => m[1])
   .filter((url) => {
     if (/^(?:https?:|data:|blob:|mailto:|tel:|#)/i.test(url)) return false;
