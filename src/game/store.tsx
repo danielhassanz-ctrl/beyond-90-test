@@ -12,6 +12,7 @@ import {
   resolveEventFree,
   resolveMatch,
 } from "./engine";
+import { choosePostCareerPath, choosePostCareerStyle, type PostCareerPath, type PostCareerStyle } from "./postcareer";
 import type { DynamicCard, GameState, MatchData, Player } from "./types";
 
 interface GameContextValue {
@@ -26,6 +27,8 @@ interface GameContextValue {
   answerFree: (eventId: string, text: string) => void;
   answerDynamic: (card: DynamicCard, choiceId: string, text?: string) => void;
   playMatch: (match: MatchData, keyChoiceId?: string) => void;
+  choosePostCareer: (path: PostCareerPath) => void;
+  choosePostCareerStyle: (style: PostCareerStyle) => void;
   next: () => void;
   reset: () => void;
 }
@@ -112,6 +115,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       apply((prev) => (keyChoiceId ? resolveMatch(prev, match, keyChoiceId) : resolveMatch(prev, match))),
     [apply],
   );
+  const choosePostCareer = useCallback(
+    (path: PostCareerPath) => apply((prev) => choosePostCareerPath(prev, path)),
+    [apply],
+  );
+  const choosePostCareerStyleAction = useCallback(
+    (style: PostCareerStyle) => apply((prev) => choosePostCareerStyle(prev, style)),
+    [apply],
+  );
   const next = useCallback(() => apply((prev) => advance(prev)), [apply]);
   const reset = useCallback(() => commit(null), [commit]);
 
@@ -128,10 +139,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       answerFree,
       answerDynamic,
       playMatch,
+      choosePostCareer,
+      choosePostCareerStyle: choosePostCareerStyleAction,
       next,
       reset,
     }),
-    [state, ready, error, start, pickClub, answerEvent, answerFree, answerDynamic, playMatch, next, reset],
+    [state, ready, error, start, pickClub, answerEvent, answerFree, answerDynamic, playMatch, choosePostCareer, choosePostCareerStyleAction, next, reset],
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

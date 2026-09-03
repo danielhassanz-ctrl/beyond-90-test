@@ -188,7 +188,19 @@ const STORY: GameEvent[] = [
           milestone(s, "Primera convocatoria con el juvenil.");
         },
       },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "st_bench",
@@ -271,7 +283,19 @@ const STORY: GameEvent[] = [
           milestone(s, "Debut oficial con el juvenil.");
         },
       },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "st_starter",
@@ -307,7 +331,19 @@ const STORY: GameEvent[] = [
           milestone(s, "Titular indiscutible en el juvenil.");
         },
       },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "st_agent",
@@ -390,7 +426,19 @@ const STORY: GameEvent[] = [
           flag(s, "sin_agente_definitivo");
         },
       },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "st_first_contract",
@@ -497,7 +545,19 @@ const STORY: GameEvent[] = [
           milestone(s, "Ascenso al filial.");
         },
       },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "st_train_first",
@@ -534,7 +594,19 @@ const STORY: GameEvent[] = [
           milestone(s, "Primer entrenamiento con el primer equipo (y un caño al capitán).");
         },
       },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "st_pro_debut",
@@ -576,7 +648,19 @@ const STORY: GameEvent[] = [
           milestone(s, "DEBUT PROFESIONAL con el primer equipo.");
         },
       },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
 ];
 
@@ -594,7 +678,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "seguir", label: "Seguirlo a rajatabla", outcome: "Duele. Funciona.", apply: (s) => { stat(s, "fitness", 10); stat(s, "overall", 1); stat(s, "morale", -2); } },
       { id: "medias", label: "Hacerlo a medias, priorizar el balón", outcome: "Más técnica, cuerpo más frágil.", apply: (s) => { stat(s, "overall", 1); stat(s, "fitness", -6); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_broma",
@@ -621,7 +717,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "ayudar", label: "Bajarte a ayudar al delegado", outcome: "La cabra te embiste suavemente. El vídeo tiene 40.000 visitas el lunes.", apply: (s) => { rel(s, "dressing", 8); stat(s, "fame", 5); stat(s, "morale", 5); } },
       { id: "dormir", label: "Seguir durmiendo con los cascos puestos", outcome: "Te despiertas ya en el campo, descansado y ajeno a la leyenda.", apply: (s) => { stat(s, "fitness", 5); rel(s, "dressing", -2); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_school_exam",
@@ -633,7 +741,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "estudiar", label: "Estudiar en el autobús", outcome: "Apruebas raspado. Tu madre lo cuenta en el trabajo.", apply: (s) => { rel(s, "family", 8); stat(s, "form", -3); } },
       { id: "dormir", label: "Dormir y centrarte en el partido", outcome: "Suspendes. Juegas bien.", apply: (s) => { rel(s, "family", -8); stat(s, "form", 6); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_scout",
@@ -645,7 +765,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "ignorar", label: "Ignorarlo y jugar tu partido", outcome: "Buena decisión: sigue viniendo.", apply: (s) => { stat(s, "form", 4); rel(s, "coach", 2); } },
       { id: "impresionar", label: "Intentar impresionarlo", outcome: "Te sales del guion. El míster te cambia en el 60'.", apply: (s) => { stat(s, "form", -6); rel(s, "coach", -5); stat(s, "fame", 4); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_gossip",
@@ -671,7 +803,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "parar", label: "Parar dos semanas", outcome: "Aburrido, correcto, sano.", apply: (s) => { injure(s, 2, "Sobrecarga en el isquiotibial"); rel(s, "coach", 3); } },
       { id: "infiltrar", label: "Apretar los dientes y jugar", outcome: "Juegas. Y el cuerpo pasa factura.", apply: (s) => { stat(s, "fitness", -12); stat(s, "form", -5); rel(s, "coach", 4); flag(s, "forzo_lesion"); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_injury_big",
@@ -687,7 +831,19 @@ const AMBIENT: GameEvent[] = [
       { id: "atajar", label: "Buscar un atajo con un preparador externo",
         outcome: "Vuelves antes. Tu rodilla no opina lo mismo.",
         apply: (s) => { injure(s, 5, "Esguince grave de rodilla (recuperación exprés)"); stat(s, "fitness", -10); flag(s, "rodilla_fragil"); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_return",
@@ -699,7 +855,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "paciencia", label: "Ir poco a poco", outcome: "Tres semanas después estás entero.", apply: (s) => { s.flags["volvio_pendiente"] = 0; stat(s, "fitness", 12); achieve(s, "superviviente"); } },
       { id: "prisa", label: "Ir a por todas desde el primer rondo", outcome: "El fisio te grita. Tú sonríes. Aguanta.", apply: (s) => { s.flags["volvio_pendiente"] = 0; stat(s, "form", 8); stat(s, "fitness", -5); achieve(s, "superviviente"); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_fans_banner",
@@ -711,7 +879,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "saludar", label: "Ir a saludar al final del partido", outcome: "Se vuelven locos. Eso ya no se te olvida.", apply: (s) => { rel(s, "fans", 10); stat(s, "morale", 8); } },
       { id: "camiseta", label: "Regalarles tu camiseta", outcome: "El utillero te riñe. La afición te adopta.", apply: (s) => { rel(s, "fans", 14); rel(s, "dressing", 3); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_fans_whistle",
@@ -736,7 +916,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "escuchar", label: "Escucharle y preguntarle por su carrera", outcome: "Te cuenta más en veinte minutos que cualquier curso.", apply: (s) => { rel(s, "dressing", 12); stat(s, "overall", 1); } },
       { id: "incomodo", label: "Cortar la conversación, te incomoda", outcome: "Se levanta. No vuelve a sentarse ahí.", apply: (s) => { rel(s, "dressing", -6); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_boots",
@@ -751,7 +943,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "aceptar", label: "Aceptar", outcome: "Botas nuevas cada dos meses. Y una obligación más.", apply: (s) => { s.salary += 400; stat(s, "fame", 6); rel(s, "agent", 6); rel(s, "coach", -2); } },
       { id: "rechazar", label: "Rechazar: primero el fútbol", outcome: "El míster se entera y le encanta.", apply: (s) => { rel(s, "coach", 8); stat(s, "discipline", 5); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_agent_push",
@@ -789,7 +993,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "ayudar", label: "Dar parte de tu ficha a tus padres", outcome: "Tu padre lo rechaza dos veces y lo acepta a la tercera.", apply: (s) => { rel(s, "family", 16); s.salary = Math.max(300, Math.round(s.salary * 0.7)); stat(s, "morale", 5); } },
       { id: "ahorrar", label: "Ahorrar: nadie sabe cuánto dura esto", outcome: "Frío, sensato, correcto.", apply: (s) => { rel(s, "family", -5); stat(s, "discipline", 6); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_night_out",
@@ -814,7 +1030,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "aceptar", label: "Aceptar", outcome: "Pesa más de lo que parece. Te crece la voz.", apply: (s) => { rel(s, "coach", 8); rel(s, "dressing", 6); stat(s, "morale", 8); flag(s, "capitan"); } },
       { id: "ceder", label: "Cedérselo al veterano", outcome: "El vestuario lo agradece. El míster también, en silencio.", apply: (s) => { rel(s, "dressing", 12); rel(s, "coach", 3); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_penalty_practice",
@@ -826,7 +1054,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "aceptar", label: "Aceptar el reto", outcome: "Metes dieciséis. Desayunos gratis y algo más importante: confianza desde los once metros.", apply: (s) => { flag(s, "penaltis"); stat(s, "form", 5); rel(s, "dressing", 6); } },
       { id: "pasar", label: "Pasar, hoy toca descansar", outcome: "El portero te llama flojo durante una semana.", apply: (s) => { stat(s, "fitness", 4); rel(s, "dressing", -3); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_rival_talk",
@@ -838,7 +1078,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "amable", label: "Hablar con él y desearle suerte", outcome: "Os seguís escribiendo. Los contactos también son carrera.", apply: (s) => { rel(s, "dressing", 3); stat(s, "morale", 4); flag(s, "amigo_rival"); } },
       { id: "frio", label: "Mirarle sin contestar", outcome: "Te mete un caño en el 12'. Nunca provoques a un extremo.", apply: (s) => { stat(s, "form", -4); stat(s, "fame", 2); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_journalist",
@@ -863,7 +1115,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "probar", label: "Probarlo con la mente abierta", outcome: "Al principio te pierdes. Luego entiendes el juego mejor que nunca.", apply: (s) => { flag(s, "reposicion"); stat(s, "overall", 3); stat(s, "form", -4); rel(s, "coach", 8); } },
       { id: "negarse", label: "Decirle que tu sitio es el de siempre", outcome: "Respeta la sinceridad, pero se guarda el plan.", apply: (s) => { flag(s, "reposicion"); rel(s, "coach", -6); stat(s, "form", 4); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_mascota",
@@ -876,7 +1140,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "ayudar", label: "Ir a levantarla en pleno calentamiento", outcome: "La foto sale en tres periódicos. El pez espada te debe una.", apply: (s) => { rel(s, "fans", 10); stat(s, "fame", 6); rel(s, "coach", -2); } },
       { id: "seguir", label: "Seguir calentando como un profesional", outcome: "El utillero la levanta. Tú metes gol en el 20'. Nadie recuerda al pez.", apply: (s) => { stat(s, "form", 4); rel(s, "coach", 3); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_derbi",
@@ -888,7 +1164,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "aislar", label: "Aislarte: móvil apagado toda la semana", outcome: "Llegas fresco de cabeza. Se nota.", apply: (s) => { stat(s, "form", 8); stat(s, "morale", 3); } },
       { id: "vivirlo", label: "Vivirlo con la gente del barrio", outcome: "La afición te siente suyo. Duermes fatal el sábado.", apply: (s) => { rel(s, "fans", 12); stat(s, "fitness", -5); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_youngster",
@@ -900,7 +1188,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "acoger", label: "Sentarte con él y echarle una mano", outcome: "Te llamará mentor durante años en cada entrevista.", apply: (s) => { rel(s, "dressing", 10); stat(s, "morale", 5); flag(s, "mentor"); } },
       { id: "ignorar", label: "Ir a lo tuyo, bastante tienes", outcome: "Nadie te lo reprocha. Tampoco nadie te lo agradece.", apply: (s) => { stat(s, "form", 3); rel(s, "dressing", -4); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_pisos",
@@ -925,7 +1225,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "mantener", label: "No cambiar nada de tu rutina", outcome: "La racha dura un mes más.", apply: (s) => { stat(s, "form", 5); stat(s, "overall", 2); rel(s, "coach", 4); } },
       { id: "disfrutar", label: "Disfrutarlo y soltarte", outcome: "Un caño en el 89' con 3-0. El rival no lo perdona.", apply: (s) => { stat(s, "fame", 8); rel(s, "fans", 8); rel(s, "dressing", -4); stat(s, "form", -3); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_racha_mala",
@@ -950,7 +1262,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "aceptar", label: "Aceptar la cesión", outcome: "Preparas la maleta. El barro también enseña.", apply: (s) => { stat(s, "overall", 3); rel(s, "agent", 8); rel(s, "fans", -4); flag(s, "cedido"); milestone(s, "Cesión para buscar minutos."); } },
       { id: "rechazar", label: "Rechazarla: aquí está tu oportunidad", outcome: "El club interpreta que crees en el proyecto.", apply: (s) => { rel(s, "coach", 8); rel(s, "fans", 6); rel(s, "agent", -6); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_charity",
@@ -962,7 +1286,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "ir", label: "Ir", outcome: "Cuatro horas. Sales con la cabeza en otro sitio, en el bueno.", apply: (s) => { rel(s, "fans", 8); stat(s, "morale", 10); rel(s, "coach", 4); } },
       { id: "no", label: "Descansar, el cuerpo lo pide", outcome: "Nadie te dice nada. Tú te acuerdas igual.", apply: (s) => { stat(s, "fitness", 5); stat(s, "morale", -4); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
   {
     id: "am_first_team_watch",
@@ -974,7 +1310,19 @@ const AMBIENT: GameEvent[] = [
     choices: [
       { id: "estudiar", label: "Estudiar a quien juega en tu puesto", outcome: "Sales con tres cosas apuntadas en el móvil.", apply: (s) => { stat(s, "overall", 2); stat(s, "morale", 3); } },
       { id: "sonar", label: "Imaginarte ahí abajo", outcome: "Se te pone un nudo raro. Bueno, pero raro.", apply: (s) => { stat(s, "morale", 8); stat(s, "form", 3); } },
-    ],
+
+      {
+        id: "consultar",
+        label: "Tomarte un día y buscar una tercera vía",
+        hint: "Menos impulso, más contexto",
+        outcome: "No eliges ninguno de los extremos. Pides margen y la situación se enfría lo suficiente para pensar.",
+        apply: (s) => {
+          stat(s, "discipline", 2);
+          stat(s, "morale", 1);
+          rel(s, "dressing", 2);
+        },
+      },
+],
   },
 ];
 

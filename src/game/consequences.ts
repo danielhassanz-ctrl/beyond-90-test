@@ -87,6 +87,7 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
         choices: [
           { id: "romper", label: "Romper la relación", hint: "Te quedas sin representante" },
           { id: "recomponer", label: "Recomponerlo cediendo comisión", hint: "Pagas la paz" },
+          { id: "limites", label: "Seguir juntos, pero renegociar límites", hint: "No rompes ni compras la paz" },
         ],
         freeform: { prompt: "¿Qué le contestas?" },
       };
@@ -100,6 +101,7 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
         choices: [
           { id: "volver", label: "Cortar la semana y volver a casa", hint: "Cuerpo y cabeza" },
           { id: "seguir", label: "Seguir enfocado en el fútbol", hint: "Coste personal real" },
+          { id: "reordenar", label: "Reordenar la agenda y reservar tiempo fijo", hint: "Intentar sostener ambas vidas" },
         ],
         freeform: { prompt: "¿Qué dices en casa?" },
       };
@@ -135,7 +137,7 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
         }
         rel(s, "coach", -8);
         s.flags["nolist"] = 1;
-        return { title: "Peor todavía", text: "Te escucha con los brazos cruzados y responde con una frase: \u00abAquí se juega por lo que se entrena\u00bb. Sigues fuera.", tone: "bad" };
+        return { title: "Peor todavía", text: "Te escucha con los brazos cruzados y responde con una frase: «Aquí se juega por lo que se entrena». Sigues fuera.", tone: "bad" };
       }
       if (choiceId === "trabajar") {
         rel(s, "coach", 10);
@@ -162,7 +164,7 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
       if (choiceId === "aliado") {
         rel(s, "dressing", 11);
         s.flags["aliado_vestuario"] = 1;
-        return { title: "Uno basta", text: `Te acercas al que menos habla del vestuario. Come contigo. En dos semanas ya sois tres.`, tone: "good" };
+        return { title: "Uno basta", text: "Te acercas al que menos habla del vestuario. Come contigo. En dos semanas ya sois tres.", tone: "good" };
       }
       stat(s, "form", 6);
       rel(s, "dressing", -6);
@@ -178,7 +180,14 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
         rel(s, "agent", -20);
         remember(s, `Rompiste con ${s.agent.name}`);
         note(s, `Rompes con ${s.agent.name}.`, "bad");
-        return { title: "Sin representante", text: `Cuelgas y se acabó. Mañana el teléfono estará más tranquilo y las ofertas también.`, tone: "bad" };
+        return { title: "Sin representante", text: "Cuelgas y se acabó. Mañana el teléfono estará más tranquilo y las ofertas también.", tone: "bad" };
+      }
+      if (choiceId === "limites") {
+        s.agent.trust = clamp(s.agent.trust + 14);
+        rel(s, "agent", 10);
+        stat(s, "discipline", 3);
+        remember(s, `Renegociaste los límites profesionales con ${s.agent.name}`);
+        return { title: "Nuevas reglas", text: "No hay abrazo ni ruptura. Escribís qué decide cada uno y qué debe consultar. La relación sigue, esta vez con fronteras.", tone: "good" };
       }
       s.agent.commission = Math.min(15, s.agent.commission + 2);
       s.agent.trust = clamp(s.agent.trust + 26);
@@ -192,6 +201,13 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
         stat(s, "form", -5);
         remember(s, "Paraste la semana para volver a casa");
         return { title: "Volver", text: "Tres días de cocina de casa y silencio. El sábado juegas peor y duermes mejor que en meses.", tone: "good" };
+      }
+      if (choiceId === "reordenar") {
+        rel(s, "family", 14);
+        stat(s, "discipline", 4);
+        stat(s, "morale", 4);
+        remember(s, "Reordenaste tu agenda para recuperar a tu familia sin abandonar la temporada");
+        return { title: "Hacer sitio", text: "No solucionas tres meses en una llamada. Pero reservas días, cumples el primero y en casa vuelven a contestar.", tone: "good" };
       }
       rel(s, "family", -8);
       stat(s, "morale", -8);
