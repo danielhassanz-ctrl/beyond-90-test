@@ -114,6 +114,17 @@ if (!html.includes("data-beyond90-portable")) throw new Error("Portable HTML did
 if (/<script\b[^>]*data-beyond90-portable[^>]*\basync\b/i.test(html)) throw new Error("Portable production script still has async execution enabled");
 if (html.includes(noopModule)) throw new Error("Portable HTML still contains a stale hydration module URL");
 
+// Physical Safari is the release gate. Automated WebKit can still miss device-only startup
+// failures, so the portable build must never leave a tester staring at an unexplained black
+// screen. This tiny watchdog stays invisible when the app renders normally; on an uncaught
+// startup error or a persistently blank body it replaces the black screen with the concrete
+// error text that can be reported back and fixed.
+const safariDiagnostic = `<script data-beyond90-safari-diagnostic>(function(){var shown=false,lastError="";function text(v){try{return String(v&&v.stack||v&&v.message||v||"Unknown startup error")}catch(_){return"Unknown startup error"}}function show(reason){if(shown)return;shown=true;var d=document.createElement("div");d.setAttribute("data-beyond90-startup-error","");d.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#090909;color:#f5f5f5;padding:24px;font:15px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;overflow:auto;white-space:pre-wrap";d.textContent="Beyond 90 no ha podido arrancar en Safari.\\n\\n"+reason+"\\n\\nHaz una captura de esta pantalla.";(document.body||document.documentElement).appendChild(d)}window.addEventListener("error",function(e){lastError=text(e.error||e.message)});window.addEventListener("unhandledrejection",function(e){lastError=text(e.reason)});setTimeout(function(){var b=document.body;var visible=b&&((b.innerText||"").trim().length>20||b.querySelector("button,a,input,[role=button],img,svg"));if(!visible)show(lastError||"El documento sigue vacío 6 segundos después de iniciar. Posible fallo de hidratación o ejecución de JavaScript.")},6000)})();</script>`;
+const firstPortableScript = html.indexOf("<script", html.indexOf("data-beyond90-portable") > -1 ? 0 : 0);
+if (firstPortableScript > -1) html = html.slice(0, firstPortableScript) + safariDiagnostic + html.slice(firstPortableScript);
+else html = html.replace(/<\/head>/i, `${safariDiagnostic}</head>`);
+if (!html.includes("data-beyond90-safari-diagnostic")) throw new Error("Portable HTML did not install the Safari startup diagnostic");
+
 await writeFile(output, html, "utf8");
 const size = Buffer.byteLength(html);
 console.log(`PORTABLE_HTML_PREPARED output=${output} bytes=${size} styles=${inlinedStyles} scripts=${inlinedScripts} aliases=${portableAssets.size}`);
