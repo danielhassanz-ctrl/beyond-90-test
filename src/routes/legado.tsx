@@ -4,6 +4,7 @@ import { GameShell } from "@/components/game/GameShell";
 import { ShareButton } from "@/components/game/ShareButton";
 import { careerPhase, careerSummary, PHASE_LABEL } from "@/game/career";
 import { achievementList } from "@/game/engine";
+import { ensureFinance, netWorth, totalDebt } from "@/game/finance";
 import { postCareerStatus, type PostCareerPath, type PostCareerStyle } from "@/game/postcareer";
 import { useGame } from "@/game/store";
 import type { GameState } from "@/game/types";
@@ -28,6 +29,28 @@ function Legacy({ state }: { state: GameState }) {
   const summary = careerSummary(state);
   const phase = state.retired ? "Retirado" : PHASE_LABEL[careerPhase(state.age)];
   const post = postCareerStatus(state);
+  const finance = ensureFinance(state);
+  const net = netWorth(state);
+  const debt = totalDebt(state);
+  const keyMemories = [
+    ...(state.memory.promises ?? []).slice(0, 2),
+    ...(state.memory.conflicts ?? []).slice(0, 2),
+  ].slice(0, 3);
+  const strongestRelationship = [
+    { label: "Entrenador", value: state.rel.coach },
+    { label: "Vestuario", value: state.rel.dressing },
+    { label: "Afición", value: state.rel.fans },
+    { label: "Familia", value: state.rel.family },
+    { label: "Agente", value: state.rel.agent },
+  ].sort((a, b) => b.value - a.value)[0]!;
+  const offFieldLegacy =
+    net >= 2500 && debt <= net * 0.25
+      ? "Construiste patrimonio sin hipotecar tu libertad."
+      : net >= 1000
+        ? "Tu carrera también dejó una base económica seria."
+        : debt > Math.max(500, net * 0.6)
+          ? "El dinero ganado no siempre se convirtió en tranquilidad."
+          : "Fuera del campo todavía estás escribiendo una parte importante de tu legado.";
 
   return (
     <div className="space-y-4">
@@ -112,6 +135,38 @@ function Legacy({ state }: { state: GameState }) {
             ],
           }}
         />
+      </section>
+
+      <section className="panel p-4">
+        <p className="text-kicker">Lo que dejas fuera del campo</p>
+        <p className="mt-2 text-sm leading-relaxed text-foreground/85">{offFieldLegacy}</p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-lg border border-border bg-surface-2 p-3">
+            <p className="text-kicker">Patrimonio neto</p>
+            <p className="mt-1 font-num text-lg font-bold">{Math.round(net).toLocaleString("es-ES")}k €</p>
+            <p className="mt-1 text-xs text-muted-foreground">{debt > 0 ? `Deuda: ${Math.round(debt).toLocaleString("es-ES")}k €` : "Sin deuda pendiente"}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface-2 p-3">
+            <p className="text-kicker">Vínculo más fuerte</p>
+            <p className="mt-1 font-cond text-base font-semibold uppercase tracking-[0.08em]">{strongestRelationship.label}</p>
+            <p className="mt-1 font-num text-sm text-gold">{strongestRelationship.value}/100</p>
+          </div>
+        </div>
+        {finance.sponsorName && (
+          <p className="mt-3 text-xs text-muted-foreground">Marca que acompañó tu carrera: <span className="text-foreground">{finance.sponsorName}</span>.</p>
+        )}
+        {keyMemories.length > 0 && (
+          <div className="mt-3">
+            <p className="text-kicker">Decisiones que todavía pesan</p>
+            <ul className="mt-2 space-y-2">
+              {keyMemories.map((memory, i) => (
+                <li key={`${memory}-${i}`} className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-muted-foreground">
+                  {memory}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       <ul className="space-y-2">
