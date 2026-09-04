@@ -5,6 +5,7 @@ on:
     branches:
       - recovery-v4-19-delivery-gate
       - product-v4-20-polish
+      - product-v4-21-memory-continuity
   pull_request:
     branches:
       - main
