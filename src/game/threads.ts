@@ -49,6 +49,15 @@ function rid(): string {
   return Math.random().toString(36).slice(2, 9);
 }
 
+function memoryRecallKey(text: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return `recall:${(h >>> 0).toString(36)}`;
+}
+
 export function hasThread(s: GameState, kind: ThreadKind): boolean {
   return (s.threads ?? []).some((t) => t.kind === kind);
 }
@@ -84,13 +93,19 @@ export function dueThread(s: GameState): Thread | null {
   if (scene < 6 || (s.flags["memory_thread_season"] ?? -1) === s.seasonIndex) return null;
   if (scene - (s.flags["ultimo_hilo"] ?? -99) < 4) return null;
 
-  const entries = [
+  const entries = [...new Set([
     ...(Array.isArray(s.memory.promises) ? s.memory.promises : []),
     ...(Array.isArray(s.memory.conflicts) ? s.memory.conflicts : []),
-  ].filter((entry): entry is string => typeof entry === "string" && entry.trim().length >= 12);
+  ])].filter(
+    (entry): entry is string =>
+      typeof entry === "string" &&
+      entry.trim().length >= 12 &&
+      (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0,
+  );
   if (entries.length === 0) return null;
 
   const remembered = entries[Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 13 + scene * 5) % entries.length]!;
+  s.memory.threads[memoryRecallKey(remembered)] = 1;
   const lower = remembered.toLowerCase();
   const kind: ThreadKind =
     lower.includes("entrenador") || lower.includes("míster")
