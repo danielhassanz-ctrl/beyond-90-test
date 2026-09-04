@@ -37,11 +37,11 @@ interface Rule {
 }
 
 const NEGATIVE_RULES: Rule[] = [
-  { kind: "cons_bench", flag: "cons_bench_done", fires: (s) => s.rel.coach <= 16 && s.stage !== "youth" },
-  { kind: "cons_isolation", flag: "cons_iso_done", fires: (s) => s.rel.dressing <= 15 },
-  { kind: "cons_agent_break", flag: "cons_agent_done", fires: (s) => s.agent.present && (s.agent.trust <= 14 || s.rel.agent <= 12) },
-  { kind: "cons_family_break", flag: "cons_family_done", fires: (s) => s.rel.family <= 14 },
-  { kind: "cons_fans_war", flag: "cons_fans_done", fires: (s) => s.rel.fans <= 14 && s.stage === "first" },
+  { kind: "cons_bench", flag: "cons_bench_done", fires: (s) => s.rel.coach <= 24 && s.stage !== "youth" },
+  { kind: "cons_isolation", flag: "cons_iso_done", fires: (s) => s.rel.dressing <= 23 },
+  { kind: "cons_agent_break", flag: "cons_agent_done", fires: (s) => s.agent.present && (s.agent.trust <= 22 || s.rel.agent <= 20) },
+  { kind: "cons_family_break", flag: "cons_family_done", fires: (s) => s.rel.family <= 22 },
+  { kind: "cons_fans_war", flag: "cons_fans_done", fires: (s) => s.rel.fans <= 22 && s.stage === "first" },
   {
     kind: "cons_financial_pressure",
     flag: "cons_financial_pressure_done",
@@ -52,17 +52,17 @@ const NEGATIVE_RULES: Rule[] = [
       const net = Math.max(1, netWorth(s));
       const yearly = f.commitments.reduce((sum, c) => sum + c.yearly, 0);
       const salary = Math.max(1, f.annualSalary || s.salary || 1);
-      return debt >= 300 && (debt / net > 0.65 || yearly / salary > 0.45);
+      return debt >= 200 && (debt / net > 0.5 || yearly / salary > 0.35);
     },
   },
 ];
 
 const POSITIVE_RULES: Rule[] = [
-  { kind: "cons_coach_backing", flag: "cons_coach_backing_done", fires: (s) => s.rel.coach >= 86 && s.stage !== "youth" },
-  { kind: "cons_dressing_backing", flag: "cons_dressing_backing_done", fires: (s) => s.rel.dressing >= 88 && s.stage === "first" },
-  { kind: "cons_agent_loyalty", flag: "cons_agent_loyalty_done", fires: (s) => s.agent.present && s.rel.agent >= 86 && s.agent.trust >= 70 },
-  { kind: "cons_family_support", flag: "cons_family_support_done", fires: (s) => s.rel.family >= 90 && s.age >= 18 },
-  { kind: "cons_fans_chant", flag: "cons_fans_chant_done", fires: (s) => s.rel.fans >= 90 && s.stage === "first" && s.fame >= 40 },
+  { kind: "cons_coach_backing", flag: "cons_coach_backing_done", fires: (s) => s.rel.coach >= 78 && s.stage !== "youth" },
+  { kind: "cons_dressing_backing", flag: "cons_dressing_backing_done", fires: (s) => s.rel.dressing >= 80 && s.stage === "first" },
+  { kind: "cons_agent_loyalty", flag: "cons_agent_loyalty_done", fires: (s) => s.agent.present && s.rel.agent >= 78 && s.agent.trust >= 65 },
+  { kind: "cons_family_support", flag: "cons_family_support_done", fires: (s) => s.rel.family >= 82 && s.age >= 18 },
+  { kind: "cons_fans_chant", flag: "cons_fans_chant_done", fires: (s) => s.rel.fans >= 82 && s.stage === "first" && s.fame >= 32 },
 ];
 
 /** Devuelve la consecuencia pendiente más importante, si alguna se ha desencadenado. */
