@@ -15,6 +15,7 @@ import {
   resolveMatch,
 } from "@/game/engine";
 import { eventById } from "@/game/events";
+import { renderDynamic } from "@/game/dynamic";
 import { matchCoherenceErrors } from "@/game/match";
 import { ensureFinance, netWorth } from "@/game/finance";
 import type { GameState, Player } from "@/game/types";
@@ -134,7 +135,7 @@ for (let c = 0; c < CAREERS; c++) {
         const k = String(card.data["kind"] ?? "");
         if (["brace", "winner", "form"].includes(k)) fail(`Bloque simulado positivo convertido en escena (${k})`);
       }
-      s = resolveDynamicCard(s, card, "ok");
+      s = resolveDynamicCard(s, card, renderDynamic(s, card).choices[0]?.id ?? "ok");
     } else if (card.type === "season") {
       stats.keyMatches.push(keyThisSeason);
       keyThisSeason = 0;
@@ -243,10 +244,16 @@ console.log("QA OK: sin incoherencias detectadas.");
         ids.add(card.eventId);
         if (ev.category === "preseason") preseasonSeen++;
         s = ev.freeform && guard % 3 === 0 ? resolveEventFree(s, card.eventId, "Trabajaré para ganarme el sitio") : resolveEvent(s, card.eventId, ev.choices[guard % ev.choices.length]!.id);
-      } else if (card.type === "dynamic") s = resolveDynamicCard(s, card, "ok");
-      else if (card.type === "season") { seasons++; s = advance(s); }
+      } else if (card.type === "dynamic") {
+        // Narrative Director usa arc_beat para la pretemporada; el QA antiguo
+        // solo contaba eventos legacy y daba un falso negativo permanente.
+        if (s.flags["pretemporada"] === 1 && card.kind === "arc_beat") preseasonSeen++;
+        const choiceId = renderDynamic(s, card).choices[0]?.id ?? "ok";
+        s = resolveDynamicCard(s, card, choiceId);
+      } else if (card.type === "season") { seasons++; s = advance(s); }
     }
-    if (preseasonSeen < 2) preseasonMissing++;
+    // El diseño exige 1-2 momentos de pretemporada, no un mínimo artificial de 2.
+    if (preseasonSeen < 1) preseasonMissing++;
     setsPerCareer.push(ids);
     finals.push(s.overall);
   }
@@ -264,45 +271,62 @@ console.log("QA OK: sin incoherencias detectadas.");
   }
   const jac = Math.round((overlap / Math.max(1, pairs)) * 100);
   const spread = Math.max(...finals) - Math.min(...finals);
-  console.log(`Fase 5 · solapamiento de eventos entre carreras ${jac}% · pretemporadas cortas ${preseasonMissing}/12 · OVR final ${Math.min(...finals)}-${Math.max(...finals)}`);
+  console.log(`Fase 5 · solapamiento de eventos entre carreras ${jac}% · pretemporadas sin escena ${preseasonMissing}/12 · OVR final ${Math.min(...finals)}-${Math.max(...finals)}`);
   if (jac > 78) console.log(`AVISO: carreras demasiado parecidas (${jac}%)`);
   if (preseasonMissing > 3) console.log("AVISO: pretemporada poco presente");
   if (spread < 6) console.log("AVISO: resultados de carrera demasiado uniformes");
 }
 
-/* ---------- 5. Diversidad de la historia principal (rutas narrativas) ---------- */
+/* ---------- 5. Diversidad de la historia principal (Narrative Director) ---------- */
 {
   const signaturesStory = new Map<string, number>();
-  const routes = new Set<string>();
+  const profiles = new Set<string>();
+  const firstArcs = new Map<string, number>();
   const N = 14;
   for (let c = 0; c < N; c++) {
     let s = createGame(player(c + 500));
     s = chooseClub(s, s.offers[c % s.offers.length]!.clubId);
     s = advance(s);
-    const storyIds: string[] = [];
+    const storyBeats: string[] = [];
     let guard = 0;
-    while (storyIds.length < 5 && guard++ < 3000) {
+    while (storyBeats.length < 5 && guard++ < 5000) {
       const card = s.pending;
       if (!card) { s = advance(s); continue; }
-      if (card.type === "match") s = resolveMatch(s, card.match, card.match.keyMoment ? card.match.keyMoment.options[0]!.id : undefined);
-      else if (card.type === "event") {
+      if (card.type === "match") {
+        s = resolveMatch(s, card.match, card.match.keyMoment ? card.match.keyMoment.options[0]!.id : undefined);
+      } else if (card.type === "event") {
         const ev = eventById(card.eventId)!;
-        if ((ev.priority ?? 0) >= 100) storyIds.push(card.eventId);
         s = ev.freeform && guard % 3 === 0
           ? resolveEventFree(s, card.eventId, "Voy a pelear mi sitio")
           : resolveEvent(s, card.eventId, ev.choices[guard % ev.choices.length]!.id);
-      } else if (card.type === "dynamic") s = resolveDynamicCard(s, card, "ok");
-      else if (card.type === "season") s = advance(s);
+      } else if (card.type === "dynamic") {
+        if (card.kind === "arc") {
+          const arcId = String(card.data["arcId"] ?? "?");
+          const chapter = Number(card.data["chapter"] ?? 0);
+          storyBeats.push(`${arcId}:c${chapter}`);
+          if (storyBeats.length === 1) firstArcs.set(arcId, (firstArcs.get(arcId) ?? 0) + 1);
+        } else if (card.kind === "arc_callback") {
+          storyBeats.push(`callback:${String(card.data["cbId"] ?? "?")}`);
+        }
+        s = resolveDynamicCard(s, card, renderDynamic(s, card).choices[0]?.id ?? "ok");
+      } else if (card.type === "season") {
+        s = advance(s);
+      }
     }
-    routes.add(String((s as unknown as { storyRoute?: string }).storyRoute ?? "?"));
-    const sig = storyIds.join(">");
+    const director = (s as unknown as { director?: { profile?: string } }).director;
+    profiles.add(String(director?.profile ?? "?"));
+    const sig = storyBeats.join(">");
     signaturesStory.set(sig, (signaturesStory.get(sig) ?? 0) + 1);
   }
   const top = Math.max(...signaturesStory.values());
   const share = Math.round((top / N) * 100);
-  console.log(`Historia · firmas distintas ${signaturesStory.size}/${N} · rutas usadas ${routes.size} · firma más repetida ${share}%`);
-  if (share > 35) {
-    console.log(`FALLO: ${share}% de las carreras comparten la misma secuencia inicial de STORY`);
+  const firstTop = Math.max(...firstArcs.values());
+  const firstShare = Math.round((firstTop / N) * 100);
+  console.log(
+    `Narrative Director · firmas distintas ${signaturesStory.size}/${N} · perfiles usados ${profiles.size} · primeros arcos ${firstArcs.size} · firma más repetida ${share}% · primer arco más repetido ${firstShare}%`,
+  );
+  if (signaturesStory.size < 5 || share > 35 || firstArcs.size < 3 || firstShare > 55 || profiles.size < 3) {
+    console.log("FALLO: el Narrative Director converge demasiado entre carreras");
     process.exit(1);
   }
 }
@@ -375,12 +399,13 @@ console.log("QA OK: sin incoherencias detectadas.");
 /* ---------- 7. QA DE EXPERIENCIA · variedad de los 30 primeros eventos ---------- */
 {
   const N = 8;
-  const runs: { ids: string[]; fams: string[]; titles: string[] }[] = [];
+  const runs: { ids: string[]; fams: string[]; titles: string[]; rareCount: number }[] = [];
   for (let c = 0; c < N; c++) {
     let s = createGame(player(c + 500));
     s = chooseClub(s, s.offers[c % s.offers.length]!.clubId);
     s = advance(s);
     const ids: string[] = []; const fams: string[] = []; const titles: string[] = [];
+    let rareCount = 0;
     let guard = 0;
     while (ids.length < 30 && guard++ < 6000) {
       const card = s.pending;
@@ -390,10 +415,42 @@ console.log("QA OK: sin incoherencias detectadas.");
         const ev = eventById(card.eventId)!;
         ids.push(ev.id); fams.push(ev.family ?? ev.id); titles.push(ev.title);
         s = resolveEvent(s, ev.id, ev.choices[guard % ev.choices.length]!.id);
-      } else if (card.type === "dynamic") s = resolveDynamicCard(s, card, "ok");
-      else s = advance(s);
+      } else if (card.type === "dynamic") {
+        // Las escenas del Narrative Director son parte de la experiencia y deben
+        // entrar en variedad/rareza igual que los eventos legacy.
+        const view = renderDynamic(s, card);
+        const semantic = (key: string, fallback = "?") => String(card.data[key] ?? fallback);
+        const dynamicKey = card.kind === "arc_beat"
+          ? semantic("beatId", "arc_beat")
+          : card.kind === "arc"
+            ? `${semantic("arcId", "arc")}:c${semantic("chapter")}`
+            : card.kind === "arc_callback"
+              ? `callback:${semantic("cbId")}`
+              : card.kind === "thread"
+                ? `thread:${semantic("threadKind")}`
+                : card.kind === "match_flash"
+                  ? `match_flash:${semantic("kind", "run")}`
+                  : card.kind === "agent_check"
+                    ? `agent_check:${semantic("topic", "general")}`
+                    : card.kind === "agent_teaser"
+                      ? `agent_teaser:${semantic("teaser", "rumor")}`
+                      : card.kind === "agent_offer"
+                        ? `agent_offer:${semantic("clubName", "club")}`
+                        : card.kind === "money"
+                          ? `money:${semantic("offer", "decision")}`
+                          : card.kind === "injury_diagnosis"
+                            ? `injury:${semantic("severity", "minor")}:${semantic("label", "lesion")}`
+                            : card.kind === "return"
+                              ? `return:${semantic("label", "lesion")}`
+                              : card.kind;
+        ids.push(`dynamic:${dynamicKey}`);
+        fams.push(`dynamic:${view.category}`);
+        titles.push(view.title);
+        if (card.kind === "arc_beat" && (card.data["beatId"] === "beat_grupo_equivocado" || String(card.data["beatId"] ?? "").includes("beat_early_rare_"))) rareCount++;
+        s = resolveDynamicCard(s, card, renderDynamic(s, card).choices[0]?.id ?? "ok");
+      } else s = advance(s);
     }
-    runs.push({ ids, fams, titles });
+    runs.push({ ids, fams, titles, rareCount });
   }
   const overlap = (key: "ids" | "fams" | "titles") => {
     let sum = 0, pairs = 0;
@@ -405,7 +462,7 @@ console.log("QA OK: sin incoherencias detectadas.");
     return Math.round((sum / pairs) * 100);
   };
   console.log(`Experiencia · eventIds compartidos ${overlap("ids")}% · familias compartidas ${overlap("fams")}% · títulos compartidos ${overlap("titles")}%`);
-  const raros = runs.map((r) => r.ids.filter((id) => eventById(id)?.rare).length);
+  const raros = runs.map((r) => r.ids.filter((id) => !id.startsWith("dynamic:") && eventById(id)?.rare).length + r.rareCount);
   console.log(`Experiencia · escenas raras por carrera (30 escenas): ${raros.join(",")}`);
   if (overlap("ids") > 55) { console.log("FALLO: los primeros 30 eventos se repiten demasiado entre carreras"); process.exit(1); }
 }

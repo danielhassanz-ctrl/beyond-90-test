@@ -11,10 +11,37 @@ export function seasonLabel(seasonIndex: number): string {
 }
 
 /**
+ * La memoria narrativa se alimenta desde varios sistemas (director, eventos,
+ * consecuencias y agente). Saves antiguos y rutas distintas podían insertar
+ * la misma frase más de una vez, haciendo que decisiones pasadas parecieran
+ * repetirse. Normalizamos en cada mutación relevante para que la memoria sea
+ * una cronología compacta y no un eco accidental.
+ */
+export function dedupeNarrativeMemory(s: GameState): void {
+  const unique = (values: string[] | undefined, limit: number): string[] => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const value of values ?? []) {
+      const text = typeof value === "string" ? value.trim() : "";
+      if (!text || seen.has(text)) continue;
+      seen.add(text);
+      out.push(text);
+      if (out.length >= limit) break;
+    }
+    return out;
+  };
+
+  s.memory.promises = unique(s.memory.promises, 24);
+  s.memory.conflicts = unique(s.memory.conflicts, 12);
+  s.agent.memories = unique(s.agent.memories, 10);
+}
+
+/**
  * Relaciones: viven de forma natural entre 30 y 85. Pasar de 88 exige historia
  * excepcional (rendimientos y gestos repetidos), no una decisión suelta.
  */
 export function rel(s: GameState, key: keyof Relationships, delta: number): void {
+  dedupeNarrativeMemory(s);
   const cur = s.rel[key];
   let d = delta;
   if (d > 0) {
@@ -68,6 +95,7 @@ export function stat(
   key: "form" | "fitness" | "morale" | "discipline" | "fame" | "overall" | "potential",
   delta: number,
 ): void {
+  dedupeNarrativeMemory(s);
   // La MEDIA nunca sube por una decisión puntual: se convierte en progreso oculto
   // y se materializa al cerrar la temporada. Sí puede bajar (lesión, dejadez).
   if (key === "overall" && delta > 0) {
@@ -83,10 +111,12 @@ export function stat(
 
 
 export function flag(s: GameState, key: string, value = 1): void {
+  dedupeNarrativeMemory(s);
   s.flags[key] = value;
 }
 
 export function note(s: GameState, text: string, tone: LogEntry["tone"] = "neutral"): void {
+  dedupeNarrativeMemory(s);
   s.log.unshift({ season: seasonLabel(s.seasonIndex), age: s.age, text, tone });
   if (s.log.length > 200) s.log.pop();
 }
