@@ -81,10 +81,19 @@ function Relations({ state }: { state: GameState }) {
     },
   ];
 
+  const people = [
+    ["coach", "Entrenador"],
+    ["captain", "Capitán"],
+    ["rival", "Competencia por el puesto"],
+    ["physio", "Fisioterapeuta"],
+    ["press", "Prensa"],
+    ...(state.flags["partner_active"] === 1 ? [["partner", "Pareja"]] : []),
+  ] as const;
+
   return (
     <div className="space-y-4">
       <section className="panel p-4">
-        <p className="text-kicker">Estado personal</p>
+        <p className="text-kicker">Vida · estado personal</p>
         <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
           <StatBar label="Ánimo" value={state.morale} />
           <StatBar label="Forma" value={state.form} tone="pitch" />
@@ -101,14 +110,7 @@ function Relations({ state }: { state: GameState }) {
       <section className="panel p-4">
         <p className="text-kicker">Tu entorno</p>
         <ul className="mt-3 space-y-2">
-          {([
-            ["coach", "Entrenador"],
-            ["captain", "Capitán"],
-            ["rival", "Competencia por el puesto"],
-            ["physio", "Fisioterapeuta"],
-            ["journalist", "Prensa"],
-            ["partner", "Pareja"],
-          ] as const).map(([role, label]) => {
+          {people.map(([role, label]) => {
             const person = npc(state, role);
             return (
               <li key={role} className="flex items-baseline justify-between gap-3">
@@ -122,6 +124,15 @@ function Relations({ state }: { state: GameState }) {
               </li>
             );
           })}
+          {state.flags["partner_active"] !== 1 && (
+            <li className="flex items-baseline justify-between gap-3">
+              <span className="min-w-0">
+                <span className="font-display text-sm">Sin relación estable</span>
+                <span className="ml-2 font-cond text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Vida sentimental</span>
+              </span>
+              <span className="font-num text-xs text-muted-foreground">Sin compromiso</span>
+            </li>
+          )}
         </ul>
       </section>
 

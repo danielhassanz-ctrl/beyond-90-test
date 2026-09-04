@@ -1,0 +1,38 @@
+name: Beyond 90 narrative source polish
+
+on:
+  push:
+    branches:
+      - recovery-v4-19-delivery-gate
+    paths:
+      - scripts/polish-director-source.mjs
+      - .github/workflows/polish-director.yml
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: recovery-v4-19-delivery-gate
+          fetch-depth: 0
+
+      - name: Apply exact narrative polish
+        run: node scripts/polish-director-source.mjs
+
+      - name: Commit only if source changed
+        run: |
+          if git diff --quiet -- src/game/director.ts; then
+            echo "No source changes required"
+            exit 0
+          fi
+          git config user.name "beyond90-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/game/director.ts
+          git commit -m "Polish contextual third-choice outcomes"
+          git push origin HEAD:recovery-v4-19-delivery-gate
