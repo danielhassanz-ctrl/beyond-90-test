@@ -23,10 +23,32 @@ export const Route = createFileRoute("/patrimonio")({
 
 const k = (n: number) => `${Math.round(n).toLocaleString("es-ES")}.000 €`;
 
+const DECISION_LABELS: Record<string, string> = {
+  piso_alquiler: "Te independizaste",
+  coche: "Compraste tu primer coche",
+  piso_propio: "Compraste tu primera vivienda",
+  ayuda_familia: "Ayudaste económicamente a tu familia",
+  negocio_amigo: "Entraste en el negocio de un amigo",
+  casa_grande: "Compraste una casa grande",
+  mansion: "Diste el salto a una mansión",
+  coche_absurdo: "Te diste un capricho de estrella",
+  restaurante: "Invertiste en restauración",
+  fondo: "Empezaste una cartera a largo plazo",
+};
+
 function Wealth({ state }: { state: GameState }) {
   const f = ensureFinance(state);
   const net = netWorth(state);
   const debt = totalDebt(state);
+  const annualCommitments = f.commitments.reduce((sum, c) => sum + c.yearly, 0);
+  const committedShare = f.annualSalary > 0 ? annualCommitments / f.annualSalary : 0;
+  const debtShare = net > 0 ? debt / net : debt > 0 ? 1 : 0;
+  const pressure = debtShare > 0.65 || committedShare > 0.45
+    ? { label: "Alta", text: "Tu estilo de vida ya condiciona las próximas decisiones. Una mala temporada puede doler fuera del campo." }
+    : debtShare > 0.3 || committedShare > 0.25
+      ? { label: "Media", text: "Tienes margen, pero parte de lo que ganas ya está comprometido antes de empezar la temporada." }
+      : { label: "Controlada", text: "Tu economía tiene aire. Puedes asumir oportunidades sin que cada decisión dependa del siguiente contrato." };
+  const careerDecisions = f.boughtIds.map((id) => DECISION_LABELS[id] ?? id).slice(-5).reverse();
 
   return (
     <div className="space-y-4">
@@ -44,6 +66,42 @@ function Wealth({ state }: { state: GameState }) {
         </div>
         {f.sponsorName && (
           <p className="mt-3 font-cond text-xs uppercase tracking-[0.16em] text-accent">Marca: {f.sponsorName}</p>
+        )}
+      </section>
+
+      <section className="panel p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-kicker">Presión financiera</p>
+            <p className="mt-1 font-display text-2xl">{pressure.label}</p>
+          </div>
+          <div className="text-right text-xs text-muted-foreground">
+            <p>Deuda / patrimonio: {Math.round(debtShare * 100)}%</p>
+            <p>Compromisos / ficha: {Math.round(committedShare * 100)}%</p>
+          </div>
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{pressure.text}</p>
+      </section>
+
+      <section className="panel p-4">
+        <p className="text-kicker">Decisiones que ya te definen</p>
+        {careerDecisions.length === 0 && !f.sponsorName ? (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Aún no has tomado una decisión económica grande. Cuando llegue, quedará aquí y seguirá pesando en tu carrera.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2 text-sm">
+            {f.sponsorName && (
+              <li className="rounded-lg border border-border bg-surface-2 px-3 py-2">
+                Firmaste con <span className="font-semibold text-foreground">{f.sponsorName}</span>.
+              </li>
+            )}
+            {careerDecisions.map((decision) => (
+              <li key={decision} className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-muted-foreground">
+                {decision}.
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
