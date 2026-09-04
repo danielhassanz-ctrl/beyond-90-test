@@ -58,6 +58,20 @@ function memoryRecallKey(text: string): string {
   return `recall:${(h >>> 0).toString(36)}`;
 }
 
+function memoryThreadKind(text: string): ThreadKind | null {
+  const lower = text.toLowerCase();
+  const hasAny = (...terms: string[]) => terms.some((term) => lower.includes(term));
+
+  if (hasAny("entrenador", "míster", "mister", "técnico", "tecnico")) return "coach_upset";
+  if (hasAny("vestuario", "compañ", "capitán", "capitan", "rival", "jerarquía", "jerarquia")) return "teammate_jealous";
+  if (hasAny("familia", "madre", "padre", "casa", "pareja", "hijo", "herman")) return "family_worry";
+
+  // No inventamos una categoría para recuerdos ambiguos. Si el texto no
+  // identifica a quién afecta, esperamos a otra memoria en vez de convertir
+  // cualquier conflicto en un problema familiar.
+  return null;
+}
+
 export function hasThread(s: GameState, kind: ThreadKind): boolean {
   return (s.threads ?? []).some((t) => t.kind === kind);
 }
@@ -100,19 +114,15 @@ export function dueThread(s: GameState): Thread | null {
     (entry): entry is string =>
       typeof entry === "string" &&
       entry.trim().length >= 12 &&
+      memoryThreadKind(entry) !== null &&
       (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0,
   );
   if (entries.length === 0) return null;
 
   const remembered = entries[Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 13 + scene * 5) % entries.length]!;
   s.memory.threads[memoryRecallKey(remembered)] = 1;
-  const lower = remembered.toLowerCase();
-  const kind: ThreadKind =
-    lower.includes("entrenador") || lower.includes("míster")
-      ? "coach_upset"
-      : lower.includes("vestuario") || lower.includes("compañ")
-        ? "teammate_jealous"
-        : "family_worry";
+  const kind = memoryThreadKind(remembered);
+  if (!kind) return null;
 
   s.flags["memory_thread_season"] = s.seasonIndex;
   s.flags["ultimo_hilo"] = scene;
