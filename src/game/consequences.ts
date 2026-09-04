@@ -6,6 +6,7 @@
 import { who } from "./npc";
 import { clubById } from "./data";
 import { clamp, milestone, note, rel, stat } from "./mutate";
+import { ensureFinance, netWorth, totalDebt } from "./finance";
 import type { DynamicCard, GameState } from "./types";
 import type { DynamicResult, DynamicView } from "./dynamic";
 
@@ -22,6 +23,7 @@ type Kind =
   | "cons_agent_break"
   | "cons_family_break"
   | "cons_fans_war"
+  | "cons_financial_pressure"
   | "cons_coach_backing"
   | "cons_dressing_backing"
   | "cons_agent_loyalty"
@@ -40,6 +42,19 @@ const NEGATIVE_RULES: Rule[] = [
   { kind: "cons_agent_break", flag: "cons_agent_done", fires: (s) => s.agent.present && (s.agent.trust <= 14 || s.rel.agent <= 12) },
   { kind: "cons_family_break", flag: "cons_family_done", fires: (s) => s.rel.family <= 14 },
   { kind: "cons_fans_war", flag: "cons_fans_done", fires: (s) => s.rel.fans <= 14 && s.stage === "first" },
+  {
+    kind: "cons_financial_pressure",
+    flag: "cons_financial_pressure_done",
+    fires: (s) => {
+      if (s.age < 20) return false;
+      const f = ensureFinance(s);
+      const debt = totalDebt(s);
+      const net = Math.max(1, netWorth(s));
+      const yearly = f.commitments.reduce((sum, c) => sum + c.yearly, 0);
+      const salary = Math.max(1, f.annualSalary || s.salary || 1);
+      return debt >= 300 && (debt / net > 0.65 || yearly / salary > 0.45);
+    },
+  },
 ];
 
 const POSITIVE_RULES: Rule[] = [
@@ -151,6 +166,24 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
         ],
         freeform: { prompt: "¿Qué gesto haces?" },
       };
+    case "cons_financial_pressure": {
+      const f = ensureFinance(s);
+      const debt = totalDebt(s);
+      const yearly = f.commitments.reduce((sum, c) => sum + c.yearly, 0);
+      return {
+        kicker: "Consecuencia · Patrimonio",
+        title: "Tu estilo de vida ya manda",
+        image: "office",
+        category: "life",
+        text: `Tu asesor deja dos cifras encima de la mesa: ${debt}.000 € de deuda y ${yearly}.000 € al año ya comprometidos. Una lesión larga o un mal contrato ya no afectarían solo al fútbol. Por primera vez, lo que compraste empieza a decidir por ti.`,
+        choices: [
+          { id: "vender", label: "Vender el activo que más pesa", hint: "Pierdes estatus, recuperas margen" },
+          { id: "renegociar", label: "Renegociar deuda y recortar gastos", hint: "Menos presión, más disciplina" },
+          { id: "seguir", label: "Mantener el nivel de vida", hint: "Confías en el próximo contrato" },
+        ],
+        freeform: { prompt: "¿Qué recortas primero para recuperar control?" },
+      };
+    }
     case "cons_coach_backing":
       return {
         kicker: "Consecuencia",
@@ -216,8 +249,7 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
         text: `Minuto 72. El partido está parado y de pronto una zona del estadio empieza a cantar tu apellido. Se contagia a la grada entera. No has marcado hoy: esto ya no va solo de un partido.`,
         choices: [
           { id: "saludar", label: "Girar y agradecerlo", hint: "Momento compartible" },
-          { id: "seguir", label: "Seguir concentrado como si no lo oyeras", hint: "Mentalidad competitiva" },
-          { id: "escudo", label: "Besarte el escudo", hint: "Te vinculas públicamente al club" },
+          { id: "seguir", label: "Seguir concentrado como si no lo oyeras", hint: "Mentalidad competitiva" },          { id: "escudo", label: "Besarte el escudo", hint: "Te vinculas públicamente al club" },
         ],
         freeform: { prompt: "¿Cómo reaccionas a la grada?" },
       };
@@ -330,6 +362,39 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
       }
       stat(s, "morale", -6);
       return { title: "Al vestuario", text: "Bajas la cabeza y cruzas el túnel. Nada se arregla y nada empeora.", tone: "neutral" };
+    }
+    case "cons_financial_pressure": {
+      const f = ensureFinance(s);
+      if (choiceId === "vender") {
+        const ranked = [...f.properties].sort((a, b) => (b.debt / Math.max(1, b.value)) - (a.debt / Math.max(1, a.value)));
+        const target = ranked[0];
+        if (target) {
+          const equity = Math.max(0, Math.round(target.value - target.debt));
+          f.cash += equity;
+          f.properties = f.properties.filter((p) => p !== target);
+          s.wealth = netWorth(s);
+          stat(s, "morale", -3);
+          stat(s, "discipline", 5);
+          remember(s, `Vendiste ${target.name} para recuperar control de tus finanzas`);
+          return { title: "Recortas a tiempo", text: `Vendes ${target.name}. No es una foto bonita, pero la deuda desaparece de esa línea y vuelves a respirar. Tu patrimonio queda en ${netWorth(s)}.000 €.`, tone: "good" };
+        }
+        stat(s, "discipline", 4);
+        return { title: "No hay nada que liquidar", text: "Tu problema no está en un gran activo, sino en gastos pequeños que se convirtieron en costumbre. Toca recortar de otra forma.", tone: "neutral" };
+      }
+      if (choiceId === "renegociar") {
+        for (const p of f.properties) p.debt = Math.max(0, Math.round(p.debt * 0.9));
+        for (const c of f.commitments) c.yearly = Math.max(0, Math.round(c.yearly * 0.85));
+        stat(s, "discipline", 7);
+        stat(s, "morale", 2);
+        s.wealth = netWorth(s);
+        remember(s, "Renegociaste tus deudas cuando el patrimonio empezó a condicionar tu carrera");
+        return { title: "Menos ruido fuera del campo", text: "Una tarde entera de llamadas, refinanciación y recortes. No te haces más rico, pero dejas de necesitar que cada renovación salga perfecta.", tone: "good" };
+      }
+      stat(s, "morale", -8);
+      stat(s, "discipline", -4);
+      s.flags["vida_por_encima"] = 1;
+      remember(s, "Decidiste mantener tu nivel de vida pese a la presión financiera");
+      return { title: "Doblas la apuesta", text: "No vendes nada. Confías en que el próximo contrato tape el agujero. Desde ahora, una mala temporada también se juega en la cuenta corriente.", tone: "bad" };
     }
     case "cons_coach_backing": {
       if (choiceId === "agradecer") {
