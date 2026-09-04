@@ -46,3 +46,8 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+
+## V4.22 product note
+
+Legacy scoring now derives from football performance, relationships, financial choices and identity. The UI integration follows only after the delivery gate stays green.
