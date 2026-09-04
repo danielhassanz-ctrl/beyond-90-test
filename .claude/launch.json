@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "cmd.exe",
+      "runtimeArgs": ["/c", "C:\\Users\\Usuario\\Downloads\\Beyond 90 claude\\.claude\\dev.cmd"],
+      "port": 3000
+    }
+  ]
+}
