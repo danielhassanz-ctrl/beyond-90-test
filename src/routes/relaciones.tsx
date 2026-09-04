@@ -93,7 +93,7 @@ function Relations({ state }: { state: GameState }) {
   return (
     <div className="space-y-4">
       <section className="panel p-4">
-        <p className="text-kicker">Estado personal</p>
+        <p className="text-kicker">Vida · estado personal</p>
         <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
           <StatBar label="Ánimo" value={state.morale} />
           <StatBar label="Forma" value={state.form} tone="pitch" />
