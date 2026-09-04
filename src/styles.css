@@ -134,7 +134,7 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    overscroll-behavior-y: none;
+    min-height: 100%;\n    min-height: 100dvh;\n    overscroll-behavior-y: none;\n    -webkit-text-size-adjust: 100%;
   }
 
   h1,
@@ -193,7 +193,7 @@
 }
 
 @utility safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
 }
 
 @utility no-scrollbar {
