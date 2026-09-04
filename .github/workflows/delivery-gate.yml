@@ -6,6 +6,8 @@ on:
       - recovery-v4-19-delivery-gate
       - product-v4-20-polish
       - product-v4-21-memory-continuity
+      - product-v4-22-life-wealth-pressure
+      - product-v4-23-legacy-integration
   pull_request:
     branches:
       - main
