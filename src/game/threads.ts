@@ -76,8 +76,38 @@ export function spawnThread(
 }
 
 export function dueThread(s: GameState): Thread | null {
-  if (!Array.isArray(s.threads)) return null;
-  return s.threads.find((t) => (s.sceneCount ?? 0) >= t.dueScene) ?? null;
+  if (!Array.isArray(s.threads)) s.threads = [];
+  const due = s.threads.find((t) => (s.sceneCount ?? 0) >= t.dueScene);
+  if (due) return due;
+
+  const scene = s.sceneCount ?? 0;
+  if (scene < 6 || (s.flags["memory_thread_season"] ?? -1) === s.seasonIndex) return null;
+  if (scene - (s.flags["ultimo_hilo"] ?? -99) < 4) return null;
+
+  const entries = [
+    ...(Array.isArray(s.memory.promises) ? s.memory.promises : []),
+    ...(Array.isArray(s.memory.conflicts) ? s.memory.conflicts : []),
+  ].filter((entry): entry is string => typeof entry === "string" && entry.trim().length >= 12);
+  if (entries.length === 0) return null;
+
+  const remembered = entries[Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 13 + scene * 5) % entries.length]!;
+  const lower = remembered.toLowerCase();
+  const kind: ThreadKind =
+    lower.includes("entrenador") || lower.includes("míster")
+      ? "coach_upset"
+      : lower.includes("vestuario") || lower.includes("compañ")
+        ? "teammate_jealous"
+        : "family_worry";
+
+  s.flags["memory_thread_season"] = s.seasonIndex;
+  s.flags["ultimo_hilo"] = scene;
+  return {
+    id: `memory-${s.seasonIndex}-${scene}`,
+    kind,
+    teaser: `Hace tiempo quedó esto anotado: ${remembered}. Ahora vuelve a tener consecuencias.`,
+    dueScene: scene,
+    payload: { remembered: remembered.slice(0, 240) },
+  };
 }
 
 export function closeThread(s: GameState, id: string): void {
