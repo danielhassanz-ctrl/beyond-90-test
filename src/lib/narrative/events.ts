@@ -492,6 +492,8 @@ export const EVENTS: GameEvent[] = [
         consequences: { rel_representante: 5, rel_entrenador: -3 },
       },
     ],
+    allowFreeText: true,
+    freeTextPrompt: "Si pides la charla cara a cara, ¿qué le dices al entrenador?",
     minWeek: 6,
   },
 
@@ -535,6 +537,8 @@ export const EVENTS: GameEvent[] = [
         consequences: { rel_vestuario: -4, moral: 1 },
       },
     ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le respondes al capitán?",
     minWeek: 3,
   },
   {
@@ -3361,6 +3365,8 @@ export const EVENTS: GameEvent[] = [
         consequences: { moral: -2 },
       },
     ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Cómo se lo explicas a Lucía?",
     minWeek: 45,
   },
   {
@@ -3389,6 +3395,30 @@ export const EVENTS: GameEvent[] = [
     allowFreeText: true,
     freeTextPrompt: "¿Qué es lo primero que le dices?",
     minWeek: 70,
+  },
+  {
+    id: "vid-llamada-madre",
+    category: "vida",
+    title: "La llamada de tu madre",
+    description:
+      "Te llama un domingo cualquiera, sin motivo especial. Pregunta si comes bien, si duermes, si estás cuidándote... y, al final, sin poder evitarlo, si has visto lo que dicen de ti en la televisión.",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le cuentas de verdad?",
+    options: [
+      {
+        id: "a",
+        label: "Contarle todo tal cual está pasando",
+        subtitle: "+Moral, te desahogas de verdad",
+        consequences: { moral: 6 },
+      },
+      {
+        id: "b",
+        label: "Tranquilizarla y quitarle importancia a lo malo",
+        subtitle: "Protegerla a ella antes que a ti",
+        consequences: { moral: 3 },
+      },
+    ],
+    minWeek: 8,
   },
   {
     id: "sel-primera-convocatoria",
