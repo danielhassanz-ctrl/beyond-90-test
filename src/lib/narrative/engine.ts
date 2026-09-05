@@ -142,7 +142,7 @@ export function maybeAddFreeText(event: GameEvent): GameEvent {
  * de rutina, entrenamientos). Solo se muestra lo que importa.
  */
 export function nextWeekGap() {
-  return 3 + Math.floor(Math.random() * 5); // 3 a 7 semanas
+  return 1 + Math.floor(Math.random() * 3); // 1 a 3 semanas
 }
 
 function clampPercent(value: number) {
