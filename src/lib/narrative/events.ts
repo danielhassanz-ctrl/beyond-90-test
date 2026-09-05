@@ -59,7 +59,6 @@ export function buildFallbackContractEvent(
     category: "representante",
     title: "Firma del contrato",
     description: `Te sientas con el entrenador, el presidente del ${club} y ${agentName} para cerrar los términos: ${salary} de salario y ${minutosClause}.`,
-    isMilestone: true,
     milestoneType: "contrato",
     imageScene: `Photorealistic photo of the photographed man holding up a ${describeKit(club)} football jersey with both hands at an official club unveiling event, a club president in a suit next to him extending a handshake, camera flashes, stadium or press room backdrop, official club photo style`,
     options: [
@@ -92,7 +91,6 @@ export function buildInicioFichajeEvent(agentName: string): GameEvent {
     description: hasGiant
       ? `${agentName} se reúne contigo con una noticia enorme: uno de los clubes interesados en ti es un auténtico gigante. Los otros dos son puertas de entrada más modestas, pero esta vez hay una oportunidad que casi nunca llega.`
       : `${agentName} se reúne contigo con dos o tres clubes modestos interesados en darte tu primer contrato profesional. Ninguno es un gigante, pero todos son una puerta de entrada.`,
-    isMilestone: true,
     milestoneType: "debut",
     options: offers.map((offer) => ({
       id: offer.club,
@@ -282,7 +280,6 @@ export function buildOfertaArabiaEvent(player: Player): GameEvent {
     priority: true,
     title: partner ? `Hablarlo con ${partner} antes de decidir` : "La oferta que cambia los números para siempre",
     description,
-    isMilestone: true,
     milestoneType: "contrato",
     allowFreeText: true,
     freeTextPrompt: partner ? `¿Qué le dices a ${partner} para convencerla o para dejarlo pasar?` : "¿Qué es lo primero que piensas al leer la cifra?",
@@ -363,8 +360,6 @@ export function buildDebutPretemp2(): GameEvent {
     category: "entrenamiento",
     title: variant.title,
     description: variant.description,
-    isMilestone: true,
-    milestoneType: "lesion_debut",
     options: [
       {
         id: "a",
@@ -2904,8 +2899,6 @@ export const EVENTS: GameEvent[] = [
     priority: true,
     title: "Solo ante el portero",
     description: "Recibes el pase filtrado y quedas mano a mano con el portero. El estadio contiene la respiración.",
-    isMilestone: true,
-    milestoneType: "gol_decisivo",
     options: [
       {
         id: "a",
@@ -2958,8 +2951,6 @@ export const EVENTS: GameEvent[] = [
     priority: true,
     title: "Penalti a favor en el último minuto",
     description: "El árbitro señala el punto de penalti. El resultado del partido depende de este balón. ¿Lo tiras tú?",
-    isMilestone: true,
-    milestoneType: "gol_decisivo",
     options: [
       {
         id: "a",
@@ -3030,7 +3021,6 @@ export const EVENTS: GameEvent[] = [
     title: "Noche de hat-trick",
     description:
       "Llevas dos goles en el marcador y el partido sigue abierto. En el descuento, un balón suelto en el área te deja solo con la portería vacía para completar el triplete.",
-    isMilestone: true,
     milestoneType: "gol_decisivo",
     imageScene:
       "Photorealistic sports photography of the photographed man celebrating a goal on the pitch, arms raised, teammates running to embrace him, stadium crowd roaring in the background, dramatic floodlights",
@@ -3105,8 +3095,6 @@ export const EVENTS: GameEvent[] = [
     title: "El club que te dejó marchar, enfrente",
     description:
       "El sorteo del calendario te pone cara a cara contra el club que te cedió sin apenas darte una oportunidad. Nadie lo dice en voz alta en la rueda de prensa previa, pero todos en el vestuario saben que este partido es distinto para ti.",
-    isMilestone: true,
-    milestoneType: "revancha",
     imageScene:
       "Photorealistic sports photography of the photographed man celebrating an emotional goal with a restrained, pointed celebration, looking toward the opposing bench, stadium atmosphere, dramatic lighting",
     options: [
@@ -3219,8 +3207,6 @@ export const EVENTS: GameEvent[] = [
     title: "¿Pelear tu lugar o salir a jugar?",
     description:
       "No estás teniendo los minutos que esperabas. Tu representante te trae una alternativa: salir a préstamo a un club donde serías titular.",
-    isMilestone: true,
-    milestoneType: "fichaje",
     lookEvolution:
       "Same person, a bit older now, slightly more defined jawline, still young and fresh-faced, natural light, photorealistic athlete portrait, keep facial identity and skin tone unchanged",
     options: [
@@ -3253,8 +3239,6 @@ export const EVENTS: GameEvent[] = [
     title: "El entrenador ya no cuenta contigo",
     description:
       "Te lo dice sin rodeos en su despacho: no entras en sus planes, ni ahora ni la temporada que viene. El club prefiere que salgas cedido o traspasado antes de que se cumpla tu contrato sin jugar.",
-    isMilestone: true,
-    milestoneType: "crisis",
     imageScene:
       "Photorealistic photo of the photographed man sitting across a desk from a coach in a small, sparse office, tense body language, harsh overhead lighting, difficult conversation atmosphere",
     allowFreeText: true,
@@ -3295,8 +3279,6 @@ export const EVENTS: GameEvent[] = [
     title: "El club no te renueva",
     description:
       "Termina la temporada y, con ella, tu contrato. El club te comunica que no va a renovarte: los números no acompañan, y hay jugadores más jóvenes esperando el sitio. Te quedas libre, sin garantías de nada.",
-    isMilestone: true,
-    milestoneType: "crisis",
     allowFreeText: true,
     freeTextPrompt: "¿Cómo te tomas la noticia, en tus propias palabras?",
     options: [
@@ -3360,8 +3342,6 @@ export const EVENTS: GameEvent[] = [
     title: "Lo que empezó como una copa de más",
     description:
       "Llevas meses sin apenas jugar y las noches de fiesta para desconectar se han convertido en algo casi diario. Tu representante te lo dice a la cara, muy serio: la gente del club ya habla de ello, y no en buen sentido.",
-    isMilestone: true,
-    milestoneType: "crisis",
     allowFreeText: true,
     freeTextPrompt: "¿Qué le respondes a tu representante?",
     options: [
@@ -3400,8 +3380,6 @@ export const EVENTS: GameEvent[] = [
     title: "Una liga distinta te llama",
     description:
       "Terminaste destacando y aparece la chance de dar el salto fuera de tu país por primera vez.",
-    isMilestone: true,
-    milestoneType: "fichaje",
     lookEvolution:
       "Same person, now with light short stubble beard, slightly more mature confident look, natural light, photorealistic athlete portrait, keep facial identity and skin tone unchanged",
     options: [
@@ -3428,8 +3406,6 @@ export const EVENTS: GameEvent[] = [
     title: "Llama un gigante europeo",
     description:
       "Tu nombre ya suena en toda Europa. Un club histórico presenta una oferta que puede cambiar tu carrera para siempre.",
-    isMilestone: true,
-    milestoneType: "fichaje",
     lookEvolution:
       "Same person, now with a fuller well-groomed beard, confident mature elite footballer look, natural light, photorealistic athlete portrait, keep facial identity and skin tone unchanged",
     options: [
@@ -3456,8 +3432,6 @@ export const EVENTS: GameEvent[] = [
     title: "¿Ya lo ganaste todo aquí?",
     description:
       "Después de años en la élite, tu carrera corre el riesgo de volverse previsible. Aparece un reto distinto en otra liga.",
-    isMilestone: true,
-    milestoneType: "fichaje",
     lookEvolution:
       "Same person, veteran elite footballer look, some grey hairs starting to show in the beard, more weathered mature face, natural light, photorealistic athlete portrait, keep facial identity and skin tone unchanged",
     options: [
@@ -3502,8 +3476,6 @@ export const EVENTS: GameEvent[] = [
     title: "Otro gigante de la Premier pregunta por ti",
     description:
       "Tras consolidarte en Inglaterra, un rival directo de tu club se interesa en ti para pelear el título la próxima temporada.",
-    isMilestone: true,
-    milestoneType: "fichaje",
     options: [
       {
         id: "a",
@@ -3535,8 +3507,6 @@ export const EVENTS: GameEvent[] = [
     title: "El chaval que te recuerda a ti",
     description:
       "Un canterano de dieciocho años llega al primer equipo con la misma hambre que tenías tú a su edad. El club te pide, sin decirlo del todo, que lo ayudes a asentarse — sabiendo que en unos años puede quitarte el sitio.",
-    isMilestone: true,
-    milestoneType: "legado",
     options: [
       {
         id: "a",
@@ -3561,8 +3531,6 @@ export const EVENTS: GameEvent[] = [
     title: "Puma o Adidas",
     description:
       "Las dos marcas se pelean por tus botas. Puma ofrece un contrato menor pero con libertad total de imagen; Adidas ofrece más dinero y más exposición, pero exige exclusividad total.",
-    isMilestone: true,
-    milestoneType: "patrocinio",
     options: [
       {
         id: "puma",
@@ -3591,8 +3559,6 @@ export const EVENTS: GameEvent[] = [
     title: "Adidas quiere una bota con tu nombre",
     description:
       "Tu representante entra por videollamada casi sin aliento: Adidas quiere ir más allá del contrato de imagen y sacar un modelo de bota firmado por ti, con tu nombre grabado en el talón y edición limitada en tiendas de medio mundo.",
-    isMilestone: true,
-    milestoneType: "patrocinio",
     imageScene:
       "Photorealistic product photo of a premium signature football boot with the player's surname embroidered on the heel, dramatic studio lighting, sponsor-style advertising shot",
     options: [
@@ -3623,8 +3589,6 @@ export const EVENTS: GameEvent[] = [
     title: "Tu representante te habla de una startup",
     description:
       'Tu representante te presenta a los fundadores de una startup tecnológica: "He visto muchos jugadores meter dinero en tonterías. Esta gente tiene cabeza, y entrar ahora, a este precio, no se va a repetir." Piden una cantidad seria para las siguientes rondas.',
-    isMilestone: true,
-    milestoneType: "startup",
     imageScene:
       "Photorealistic photo of a business magazine cover feature, the photographed man in smart casual clothing photographed in a modern tech office, generic bold headline text about a successful investment, financial press style, confident pose",
     options: [
@@ -3716,8 +3680,6 @@ export const EVENTS: GameEvent[] = [
     title: "Una noticia que lo cambia todo",
     description:
       "Lucía te lo dice una noche cualquiera, sin previo aviso: está embarazada. Te quedas en silencio unos segundos que a ella se le hacen eternos.",
-    isMilestone: true,
-    milestoneType: "familia",
     requiresFlag: "pareja",
     options: [
       {
@@ -3976,7 +3938,6 @@ export const EVENTS: GameEvent[] = [
     description:
       "Un mal apoyo en un partido cualquiera y sientes que la rodilla cede. La resonancia lo confirma esa misma noche: rotura de ligamento, meses fuera. De un momento a otro, tu carrera se detiene.",
     isMilestone: true,
-    milestoneType: "lesion_grave",
     imageScene:
       "Photorealistic photo of the photographed man sitting on a hospital bed or physio table wearing a knee brace, using crutches nearby, somber lighting, medical clinic setting, realistic and emotional but not graphic",
     options: [
@@ -4203,7 +4164,6 @@ export const EVENTS: GameEvent[] = [
     description:
       "Última jornada de clasificación. Tu selección se juega el billete al Mundial en un partido que no admite errores. El estadio entero sabe lo que hay en juego esta noche.",
     isMilestone: true,
-    milestoneType: "clasificacion",
     allowFreeText: true,
     freeTextPrompt: "¿Qué le dices al grupo antes de saltar al campo?",
     imageScene:
@@ -4245,7 +4205,6 @@ export const EVENTS: GameEvent[] = [
     description:
       "Tu selección necesita puntuar sí o sí para asegurar la plaza en la Eurocopa. Es el partido más tenso de toda la fase de clasificación.",
     isMilestone: true,
-    milestoneType: "clasificacion",
     allowFreeText: true,
     freeTextPrompt: "¿Qué le dices al grupo antes de saltar al campo?",
     imageScene:
@@ -4288,7 +4247,6 @@ export const EVENTS: GameEvent[] = [
     description:
       "La selección se juega la clasificación a la Copa América en un partido que puede definir toda la campaña. La presión en el vestuario es máxima.",
     isMilestone: true,
-    milestoneType: "clasificacion",
     allowFreeText: true,
     freeTextPrompt: "¿Qué le dices al grupo antes de saltar al campo?",
     imageScene:
