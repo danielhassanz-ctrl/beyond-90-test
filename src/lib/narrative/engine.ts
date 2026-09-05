@@ -77,11 +77,12 @@ export async function pickNextEventSmart(
 
     if (matchEvent) {
       chosen = matchEvent;
-    } else if (flavorEligible.length > 0 && Math.random() < 0.35) {
+    } else if (flavorEligible.length > 0 && Math.random() < 0.15) {
       // El contenido escrito a mano (vestuario, fama, vida, momentos curiosos)
-      // necesita hueco propio: como generateAiEvent casi nunca falla, si no se
-      // reserva una franja fija aquí, todo ese contenido queda como respaldo
-      // que casi no se llega a ver nunca. Se sortea ANTES de intentar la IA.
+      // es siempre el mismo texto para cualquier jugador que lo viva, así
+      // que se le deja un hueco pequeño en vez de una franja grande: la IA
+      // (que ya conoce la vida personal real de este jugador) es la fuente
+      // principal de narrativa para que cada carrera se sienta propia.
       chosen = flavorEligible[Math.floor(Math.random() * flavorEligible.length)];
     } else {
       const aiEvent = await generateAiEvent(player, history);

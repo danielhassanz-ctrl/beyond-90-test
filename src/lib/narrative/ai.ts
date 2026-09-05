@@ -15,6 +15,35 @@ const FLAVOR_CATEGORIES: EventCategory[] = [
   "especial",
 ];
 
+/**
+ * Traduce los flags acumulados (pareja, hijos, títulos, apodos ganados...)
+ * a una lista legible para el prompt. Sin esto, la IA genera cada escena
+ * en el vacío, sin memoria real de la vida que el jugador ya construyó —
+ * la causa principal de que la narrativa se sienta "plantilla con los
+ * nombres cambiados" en vez de una historia que de verdad continúa.
+ */
+function describePersonalLife(flags: Record<string, string | boolean> | null | undefined): string {
+  if (!flags) return "(todavía no tiene ningún hilo de vida personal establecido)";
+  const lines: string[] = [];
+  if (flags.pareja) lines.push(`- Pareja: ${flags.pareja}`);
+  if (flags.convivencia) lines.push(`- Vive junto a su pareja`);
+  if (flags.hijos) lines.push(`- Hijos: ${flags.hijos === true ? "sí" : flags.hijos}`);
+  if (flags.title_liga) lines.push(`- Ya ganó la Liga con su club`);
+  if (flags.title_champions) lines.push(`- Ya ganó la Champions League`);
+  if (flags.title_balon_oro) lines.push(`- Ya ganó el Balón de Oro`);
+  if (flags.en_premier) lines.push(`- Juega actualmente en la Premier League`);
+  for (const [key, value] of Object.entries(flags)) {
+    if (
+      ["pareja", "convivencia", "hijos", "title_liga", "title_champions", "title_balon_oro", "en_premier"].includes(
+        key,
+      )
+    )
+      continue;
+    lines.push(`- ${key}: ${value}`);
+  }
+  return lines.length > 0 ? lines.join("\n") : "(todavía no tiene ningún hilo de vida personal establecido)";
+}
+
 export interface HistoryItem {
   title: string;
   chosen: string;
@@ -206,12 +235,16 @@ JUGADOR:
 - Patrimonio: ${player.patrimonio} €
 - Relación con el entrenador: ${player.rel_entrenador}/100, con el vestuario: ${player.rel_vestuario}/100, con la afición: ${player.rel_aficion}/100, con el representante: ${player.rel_representante}/100
 
+SU VIDA PERSONAL HASTA AHORA (esto ya pasó de verdad en su historia — no lo ignores ni inventes uno nuevo si ya existe):
+${describePersonalLife(player.flags)}
+
 ÚLTIMOS EVENTOS DE SU CARRERA (no repitas el tema ni la premisa):
 ${historyText}
 
 REGLAS:
 ${COMMON_RULES}
 - El evento tiene que encajar con el club, la edad, la posición y el momento actual del jugador — nada genérico que podría pasar en cualquier carrera. Si tiene solo ${age} años y acaba de llegar a un club modesto, no debería sonar a superestrella todavía.
+- OBLIGATORIO: esta es SU historia concreta, no una plantilla. Si ya tiene pareja, hijos o títulos ganados (mira "SU VIDA PERSONAL HASTA AHORA"), tráelos a la escena cuando tenga sentido en vez de inventar personajes nuevos sin conexión — que su pareja aparezca por su nombre, que un hijo ya nacido condicione una decisión, que un título ganado se lo recuerden en la calle. Si no tiene todavía ningún hilo personal, es buen momento para que empiece uno (pero no en cada turno).
 - Si el evento trata sobre la selección nacional, la familia en su país de origen, o cualquier tema ligado a su nacionalidad, usa SIEMPRE ${player.nation} (nunca asumas España si no es esa la nacionalidad del jugador). El idioma de la narración sigue siendo castellano de España en cualquier caso.
 - Si la escena trata sobre su rendimiento como jugador (se queda en el banquillo, discute con el entrenador por minutos, destaca en un entrenamiento, etc.), incluye un cambio de media coherente: banquillo prolongado o mal rendimiento → media hacia abajo; destacar de verdad → media hacia arriba. Si la escena no tiene que ver con el rendimiento futbolístico, no toques la media.
 - Si el evento amerita una respuesta propia del jugador (algo que él mismo diría en una entrevista o discusión), marca allow_free_text en true y escribe free_text_prompt.
