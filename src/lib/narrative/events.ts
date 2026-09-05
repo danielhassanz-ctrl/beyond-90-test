@@ -1303,6 +1303,36 @@ export const EVENTS: GameEvent[] = [
     minWeek: 20,
   },
   {
+    id: "vid-dorsal-homenaje",
+    category: "vestuario",
+    title: "El dorsal que vas a llevar",
+    description:
+      "El utillero te pregunta qué número quieres llevar esta temporada. Es tu oportunidad de convertirlo en algo con significado, no solo un número más en la espalda.",
+    allowFreeText: true,
+    freeTextPrompt: "¿A quién se lo dedicas, si es que se lo dedicas a alguien?",
+    options: [
+      {
+        id: "a",
+        label: "Elegir el número de un ídolo de tu infancia",
+        subtitle: "Carga emocional, expectativas altas",
+        consequences: { moral: 5, fama: 2 },
+      },
+      {
+        id: "b",
+        label: "Pedir un número libre, sin dedicarlo a nadie",
+        subtitle: "Empezar tu propia historia desde cero",
+        consequences: { moral: 2 },
+      },
+      {
+        id: "c",
+        label: "No darle ninguna importancia al número",
+        subtitle: "Indiferente",
+        consequences: {},
+      },
+    ],
+    minWeek: 2,
+  },
+  {
     id: "esp-broma-vestuario",
     category: "vestuario",
     title: "La broma del vestuario",
@@ -3068,12 +3098,62 @@ export const EVENTS: GameEvent[] = [
       },
       {
         id: "b",
-        label: "Ir a la Premier League",
+        label: "Ir a la Premier League con el Liverpool FC",
         subtitle: "Volver a demostrar todo desde cero",
-        consequences: { club: "Liverpool FC", fama: 10, moral: 5, rel_vestuario: -8 },
+        consequences: {
+          club: "Liverpool FC",
+          fama: 10,
+          moral: 5,
+          rel_vestuario: -8,
+          flags: { en_premier: true },
+        },
+      },
+      {
+        id: "c",
+        label: "Ir a la Premier League con el Manchester City",
+        subtitle: "Un proyecto ganador desde el primer día",
+        consequences: {
+          club: "Manchester City",
+          fama: 10,
+          moral: 5,
+          rel_vestuario: -8,
+          flags: { en_premier: true },
+        },
       },
     ],
     minWeek: 130,
+  },
+  {
+    id: "fork-premier-segundo-club",
+    category: "representante",
+    priority: true,
+    title: "Otro gigante de la Premier pregunta por ti",
+    description:
+      "Tras consolidarte en Inglaterra, un rival directo de tu club se interesa en ti para pelear el título la próxima temporada.",
+    isMilestone: true,
+    milestoneType: "fichaje",
+    options: [
+      {
+        id: "a",
+        label: "Seguir en tu club actual",
+        subtitle: "Lealtad al proyecto",
+        consequences: { rel_aficion: 8, rel_vestuario: 5 },
+      },
+      {
+        id: "b",
+        label: "Cambiar de aires dentro de la Premier",
+        subtitle: "Nuevo reto, mismo país",
+        consequences: {
+          club: "Manchester City",
+          fama: 8,
+          moral: 4,
+          rel_aficion: -10,
+          rel_vestuario: -5,
+        },
+      },
+    ],
+    minWeek: 150,
+    requiresFlag: "en_premier",
   },
   {
     id: "especial-mentor-joven",
@@ -3554,6 +3634,39 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 110,
+  },
+  {
+    id: "fork-oferta-arabia",
+    category: "representante",
+    priority: true,
+    title: "La oferta que cambia los números para siempre",
+    description:
+      "Un club de la liga saudí pone sobre la mesa una cifra que no se parece a nada de lo que has visto en Europa. Tu representante te avisa: esto no se va a repetir, pero también significa dejar la élite competitiva en su momento más alto.",
+    isMilestone: true,
+    milestoneType: "contrato",
+    imageScene:
+      "Photorealistic photo of the photographed man in a tailored suit shaking hands with club executives in a luxurious modern office, Middle Eastern architecture visible through large windows, official signing photo style",
+    options: [
+      {
+        id: "a",
+        label: "Aceptar, es el contrato de tu vida",
+        subtitle: "+Patrimonio enorme, sales de la élite competitiva",
+        consequences: {
+          club: "Al-Nassr FC",
+          patrimonio: 900000,
+          fama: 4,
+          moral: 6,
+          rel_aficion: -10,
+        },
+      },
+      {
+        id: "b",
+        label: "Rechazarla y seguir compitiendo en Europa",
+        subtitle: "Prioridad: el legado deportivo, no el dinero",
+        consequences: { reputacion: 10, moral: 3 },
+      },
+    ],
+    minWeek: 155,
   },
 
   // ── RETIRO (solo modo Pro) ─────────────────────────────────────
