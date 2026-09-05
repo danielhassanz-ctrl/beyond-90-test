@@ -118,6 +118,13 @@ export interface GameEvent {
    * ver siempre las mismas oportunidades que una carrera brillante.
    */
   minMedia?: number;
+  /**
+   * Simétrico a minMedia: el evento solo es elegible por DEBAJO de este
+   * valor. Sirve para narrativas de carrera en dificultades (el
+   * entrenador te destierra, te venden a un club peor) que no tendría
+   * sentido ofrecerle a alguien que está rindiendo bien.
+   */
+  maxMedia?: number;
 }
 
 export interface CareerState {

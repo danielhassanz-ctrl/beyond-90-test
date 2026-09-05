@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { applyConsequences, nextWeekGap, resolveOption } from "@/lib/narrative/engine";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
+import { describeKit } from "@/lib/clubColors";
 import {
   generateContractEvent,
   generateDebutPretemp1,
@@ -110,8 +111,7 @@ export async function resolveEvent(formData: FormData) {
           ...aiContractEvent,
           isMilestone: true,
           milestoneType: "contrato",
-          imageScene:
-            "Photorealistic photo of the photographed man holding up a new football jersey with both hands, presented at an official club unveiling event, a club president in a suit standing next to him applauding, camera flashes, stadium or press room backdrop, official club photo style",
+          imageScene: `Photorealistic photo of the photographed man holding up a ${describeKit(newClub)} football jersey with both hands at an official club unveiling event, a club president in a suit next to him extending a handshake, camera flashes, stadium or press room backdrop, official club photo style`,
         }
       : buildFallbackContractEvent(newClub, agentName, isFirstSigning);
     playerUpdate.pending_event = contractEvent;

@@ -1,6 +1,7 @@
 import type { GameEvent } from "@/types/career";
 import { PRO_RETIREMENT_MIN_WEEK } from "@/types/career";
 import { STARTING_AGENTS, pickStartingClubOffers } from "@/lib/constants";
+import { describeKit } from "@/lib/clubColors";
 
 /**
  * Muy primer evento de toda carrera: elegir quién negocia por ti. Sin esto
@@ -59,8 +60,7 @@ export function buildFallbackContractEvent(
     description: `Te sientas con el entrenador, el presidente del ${club} y ${agentName} para cerrar los términos: ${salary} de salario y ${minutosClause}.`,
     isMilestone: true,
     milestoneType: "contrato",
-    imageScene:
-      "Photorealistic photo of the photographed man sitting at a wooden desk in a club office, signing a contract, flanked by a coach in tracksuit and a club president in a suit, camera flashes, official club photo style, warm indoor lighting",
+    imageScene: `Photorealistic photo of the photographed man holding up a ${describeKit(club)} football jersey with both hands at an official club unveiling event, a club president in a suit next to him extending a handshake, camera flashes, stadium or press room backdrop, official club photo style`,
     options: [
       {
         id: "a",
@@ -3039,6 +3039,113 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 15,
+  },
+  {
+    id: "fork-fuera-de-planes",
+    category: "representante",
+    priority: true,
+    title: "El entrenador ya no cuenta contigo",
+    description:
+      "Te lo dice sin rodeos en su despacho: no entras en sus planes, ni ahora ni la temporada que viene. El club prefiere que salgas cedido o traspasado antes de que se cumpla tu contrato sin jugar.",
+    isMilestone: true,
+    milestoneType: "crisis",
+    imageScene:
+      "Photorealistic photo of the photographed man sitting across a desk from a coach in a small, sparse office, tense body language, harsh overhead lighting, difficult conversation atmosphere",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices al entrenador en ese despacho?",
+    options: [
+      {
+        id: "a",
+        label: "Aceptar la salida a un club más modesto",
+        subtitle: "Bajar el nivel para volver a jugar",
+        consequences: {},
+        resolve: {
+          baseChance: 0.6,
+          statModifier: "media",
+          success: {
+            text: "El cambio de aires te sienta bien: vuelves a disfrutar del fútbol en un club que sí cuenta contigo.",
+            consequences: { moral: 6, media: 3 },
+          },
+          fail: {
+            text: "El nuevo club tampoco te da lo que buscabas, y la sensación de estancamiento vuelve enseguida.",
+            consequences: { moral: -5, media: -3 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Quedarte a pelear tu sitio pese a todo",
+        subtitle: "Orgullo, riesgo de pudrirte en el banquillo",
+        consequences: { moral: -4, rel_entrenador: -3, media: -3 },
+      },
+    ],
+    minWeek: 30,
+    maxMedia: 52,
+  },
+  {
+    id: "fork-no-renovacion",
+    category: "representante",
+    priority: true,
+    title: "El club no te renueva",
+    description:
+      "Termina la temporada y, con ella, tu contrato. El club te comunica que no va a renovarte: los números no acompañan, y hay jugadores más jóvenes esperando el sitio. Te quedas libre, sin garantías de nada.",
+    isMilestone: true,
+    milestoneType: "crisis",
+    allowFreeText: true,
+    freeTextPrompt: "¿Cómo te tomas la noticia, en tus propias palabras?",
+    options: [
+      {
+        id: "a",
+        label: "Aceptar la primera oferta modesta que llegue",
+        subtitle: "Seguir jugando, cueste lo que cueste",
+        consequences: { club: "UD Almería", moral: -2, media: -2, patrimonio: -2000 },
+      },
+      {
+        id: "b",
+        label: "Esperar una oferta mejor, aunque tarde meses sin equipo",
+        subtitle: "Riesgo de quedarte mucho tiempo sin jugar",
+        consequences: {},
+        resolve: {
+          baseChance: 0.4,
+          statModifier: "media",
+          success: {
+            text: "La espera merece la pena: un club con más ambición se fija en ti al final del mercado.",
+            consequences: { club: "Real Valladolid", moral: 5, media: 2 },
+          },
+          fail: {
+            text: "Nadie más llama. Terminas firmando meses después por un club modesto, muy por debajo de donde creías que estarías a estas alturas.",
+            consequences: { club: "Sporting de Gijón", moral: -8, media: -5, patrimonio: -5000 },
+          },
+        },
+      },
+    ],
+    minWeek: 70,
+    maxMedia: 50,
+  },
+  {
+    id: "vid-aceptar-la-realidad",
+    category: "vida",
+    title: "Hacer las paces con la carrera que tienes",
+    description:
+      "Una noche cualquiera te das cuenta de que la superestrella que soñabas ser a los 16 años no va a llegar. No has fracasado, pero tampoco es la carrera de las revistas. Toca decidir con qué te quedas de todo esto.",
+    allowFreeText: true,
+    freeTextPrompt: "Si tuvieras que explicárselo a tu yo de 16 años, ¿qué le dirías?",
+    options: [
+      {
+        id: "a",
+        label: "Encontrar orgullo en lo que sí has construido",
+        subtitle: "+Moral, paz con tu propia historia",
+        consequences: { moral: 10 },
+      },
+      {
+        id: "b",
+        label: "Empezar ya a pensar en tu vida después del fútbol",
+        subtitle: "Mirar hacia delante en vez de hacia atrás",
+        consequences: { moral: 4, patrimonio: 2000 },
+      },
+    ],
+    minWeek: 90,
+    maxMedia: 58,
   },
   {
     id: "fork-salto-internacional",

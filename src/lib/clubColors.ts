@@ -53,6 +53,38 @@ export function getClubColors(club: string): { primary: string; secondary: strin
   return FALLBACK_PALETTE[hashString(club) % FALLBACK_PALETTE.length];
 }
 
+/** Descripción en inglés de la camiseta, para meter en prompts de generación de imagen. */
+const KIT_DESCRIPTIONS: Record<string, string> = {
+  "Real Betis": "green and white striped",
+  "Real Betis Juvenil A": "green and white striped",
+  "Villarreal CF": "yellow with navy blue trim",
+  "Málaga CF": "blue and white",
+  "Real Valladolid": "purple and white",
+  "Cádiz CF": "yellow and navy blue striped",
+  "Sporting de Gijón": "red and white striped",
+  "Levante UD": "navy blue and dark red",
+  "Rayo Vallecano": "white with a red diagonal sash",
+  "Real Zaragoza": "royal blue and white",
+  "UD Almería": "red and white",
+  "Real Oviedo": "blue",
+  "Real Madrid": "all white with gold trim",
+  "FC Barcelona": "blue and dark red striped",
+  "Deportivo de La Coruña": "royal blue and white",
+  "US Lecce": "yellow and red striped",
+  "Sevilla FC": "white and red",
+  "Atlético de Madrid": "red and white striped with dark blue shorts",
+  Atalanta: "dark blue and black",
+  "Borussia Dortmund": "yellow and black",
+  "Liverpool FC": "all red",
+  "Manchester City": "sky blue",
+};
+
+export function describeKit(club: string): string {
+  if (KIT_DESCRIPTIONS[club]) return KIT_DESCRIPTIONS[club];
+  const colors = getClubColors(club);
+  return `custom kit colored ${colors.primary} and ${colors.secondary}`;
+}
+
 export function clubInitials(club: string): string {
   const words = club.replace(/^(CF|CD|UD|US|FC)\s+/i, "").split(/\s+/).filter(Boolean);
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();

@@ -400,13 +400,48 @@ ${COMMON_RULES}
   };
 }
 
+function pickOne<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+/**
+ * Cada hueco de la secuencia garantizada de pretemporada tiene un banco de
+ * temas posibles en vez de uno solo fijo: si no se sortea, cada carrera
+ * nueva vive literalmente la misma escena en el mismo orden (agobio en el
+ * primer entrenamiento, lesión leve con el fisio, mensaje del pasado),
+ * solo con los nombres cambiados — que es justo lo que se siente repetido.
+ */
+const DEBUT_PRETEMP1_THEMES = [
+  "el primer entrenamiento del jugador con el primer equipo, recién fichado a los 16 años, todavía sin ganarse un sitio entre los mayores, sintiendo que el ritmo es muchísimo más alto de lo que esperaba",
+  "la presentación oficial del jugador ante los medios del club, nervioso, sin saber muy bien qué se espera de él en su primera rueda de prensa",
+  "el primer día en el vestuario del primer equipo, donde un par de veteranos le hacen una novatada o una broma pesada para ver cómo reacciona",
+  "una charla táctica del entrenador el primer día, donde queda claro en voz alta que todavía no cuenta para nada y tiene que ganarse cada minuto",
+  "el momento de recibir la equipación oficial del club con su nombre en la espalda por primera vez, algo que debería ser un sueño cumplido pero que se mezcla con los nervios de no estar a la altura",
+];
+
+const DEBUT_PRETEMP2_THEMES = [
+  "un contratiempo físico leve (una molestia, una sobrecarga, nada grave) que hace que conozca al fisio o preparador físico del club, que le atiende",
+  "un roce o choque de caracteres con un veterano de la plantilla que no se toma bien que un chaval de 16 años ya esté entrenando con el primer equipo",
+  "una decisión del cuerpo técnico de hacerle jugar fuera de su posición habitual durante la pretemporada, para probar su versatilidad",
+  "la primera vez que se queda claramente el último en un ejercicio físico de pretemporada, delante de toda la plantilla",
+  "una llamada de su representante contándole que el club ya está recibiendo preguntas de la prensa sobre él, antes de haber debutado siquiera",
+];
+
+const DEBUT_PRETEMP3_THEMES = [
+  "recibe un mensaje inesperado de alguien de su vida de antes del fútbol (un amigo de la infancia, un profesor, un excompañero de instituto, un antiguo entrenador de la cantera, una expareja...) reaccionando a la noticia de que ha fichado",
+  "un periodista local, del pueblo o barrio donde creció, le pide una entrevista corta para el periódico de la zona, orgulloso de que uno de los suyos haya llegado tan lejos",
+  "se cruza sin buscarlo con un excompañero de la cantera que se quedó fuera del fútbol profesional, y la conversación se vuelve más incómoda de lo esperado",
+  "su familia organiza una pequeña celebración por la firma, y alguien de la familia dice, sin mala intención, algo que le toca la fibra",
+];
+
 export async function generateDebutPretemp1(club: string): Promise<GameEvent | null> {
+  const theme = pickOne(DEBUT_PRETEMP1_THEMES);
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
-Genera la escena del primer entrenamiento del jugador con el primer equipo del ${club}, recién fichado a los 16 años, todavía sin ganarse un sitio entre los mayores.
+Genera esta escena de pretemporada en el ${club}: ${theme}.
 
 REGLAS:
 ${COMMON_RULES}
-- 2 opciones sobre cómo afrontar este primer entrenamiento (por ejemplo, entregarte al máximo aunque no puedas seguir el ritmo, frente a ir con cabeza y observar antes de forzar) — no tienen que ser exactamente estas, invéntate variaciones.
+- 2 opciones sobre cómo afrontar la escena, coherentes con el tema descrito arriba.
 - Marca allow_free_text en true con una pregunta corta que te hace un veterano o el cuerpo técnico.
 - No marques is_milestone.`;
 
@@ -415,12 +450,13 @@ ${COMMON_RULES}
 }
 
 export async function generateDebutPretemp2(club: string): Promise<GameEvent | null> {
+  const theme = pickOne(DEBUT_PRETEMP2_THEMES);
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
-Genera una escena de pretemporada en el ${club}, pocos días después del fichaje: el jugador sufre un contratiempo físico leve (una molestia, una sobrecarga, nada grave) y conoce al fisio o al preparador físico del club, que le atiende.
+Genera esta escena de pretemporada en el ${club}, pocos días después del fichaje: ${theme}.
 
 REGLAS:
 ${COMMON_RULES}
-- 2 opciones sobre cómo afrontar la recuperación (con calma y disciplina, frente a con prisa por no perderse nada de la pretemporada).
+- 2 opciones sobre cómo afrontar la escena, coherentes con el tema descrito arriba.
 - Marca is_milestone en true (es un momento memorable de la pretemporada) y escribe image_scene.`;
 
   const event = await callEventTool(prompt, "entrenamiento", "debut-pretemp-2");
@@ -429,12 +465,13 @@ ${COMMON_RULES}
 }
 
 export async function generateDebutPretemp3(): Promise<GameEvent | null> {
+  const theme = pickOne(DEBUT_PRETEMP3_THEMES);
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
-Genera una escena en la que el jugador, en plena pretemporada tras fichar como profesional, recibe un mensaje inesperado de alguien de su vida de antes del fútbol (un amigo de la infancia, un profesor, un excompañero de instituto, un antiguo entrenador de la cantera, una expareja...) reaccionando a la noticia de que ha fichado.
+Genera esta escena en plena pretemporada tras fichar como profesional: el jugador ${theme}.
 
 REGLAS:
 ${COMMON_RULES}
-- 2 o 3 opciones sobre cómo responder a ese mensaje.
+- 2 o 3 opciones sobre cómo responder o reaccionar.
 - Marca allow_free_text en true con la pregunta "¿Qué le respondes?" o similar.
 - No marques is_milestone.`;
 

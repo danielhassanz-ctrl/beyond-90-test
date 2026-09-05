@@ -7,7 +7,10 @@ interface ReplicatePrediction {
 }
 
 async function runFluxKontext(inputImageUrl: string, prompt: string): Promise<string | null> {
-  if (!process.env.REPLICATE_API_TOKEN) return null;
+  if (!process.env.REPLICATE_API_TOKEN) {
+    console.error("[runFluxKontext] no REPLICATE_API_TOKEN set");
+    return null;
+  }
 
   try {
     const res = await fetch(`https://api.replicate.com/v1/models/${MODEL}/predictions`, {
@@ -26,13 +29,21 @@ async function runFluxKontext(inputImageUrl: string, prompt: string): Promise<st
       }),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[runFluxKontext] HTTP ${res.status}`, body.slice(0, 500));
+      return null;
+    }
 
     const data = (await res.json()) as ReplicatePrediction;
-    if (data.status !== "succeeded" || !data.output) return null;
+    if (data.status !== "succeeded" || !data.output) {
+      console.error("[runFluxKontext] prediction did not succeed", JSON.stringify(data).slice(0, 500));
+      return null;
+    }
 
     return Array.isArray(data.output) ? data.output[0] : data.output;
-  } catch {
+  } catch (err) {
+    console.error("[runFluxKontext] threw", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -51,10 +62,14 @@ export async function generatePlayerImage(
 
   try {
     const imageRes = await fetch(outputUrl);
-    if (!imageRes.ok) return null;
+    if (!imageRes.ok) {
+      console.error(`[generatePlayerImage] fetching output failed: HTTP ${imageRes.status}`);
+      return null;
+    }
     const arrayBuffer = await imageRes.arrayBuffer();
     return Buffer.from(arrayBuffer);
-  } catch {
+  } catch (err) {
+    console.error("[generatePlayerImage] threw fetching output", err instanceof Error ? err.message : err);
     return null;
   }
 }

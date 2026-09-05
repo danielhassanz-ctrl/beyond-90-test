@@ -12,7 +12,10 @@ export async function uploadGeneratedImage(
     .from("player-photos")
     .upload(path, buffer, { contentType: "image/png", upsert: true });
 
-  if (error) return null;
+  if (error) {
+    console.error("[uploadGeneratedImage] storage upload failed", error.message);
+    return null;
+  }
 
   const {
     data: { publicUrl },

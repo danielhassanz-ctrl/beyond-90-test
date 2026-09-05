@@ -59,6 +59,7 @@ export async function pickNextEventSmart(
         (playerConfederation !== null &&
           event.requiresConfederation.includes(playerConfederation))) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
+      (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       !usedEventIds.includes(event.id),
   );
 
