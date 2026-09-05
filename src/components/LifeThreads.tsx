@@ -11,7 +11,12 @@ const THREAD_LABELS: Record<string, (value: string | boolean) => string> = {
 };
 
 export function LifeThreads({ flags }: { flags: Record<string, string | boolean> | null | undefined }) {
-  const entries = Object.entries(flags ?? {}).filter(([, v]) => v);
+  // Solo se muestran los hilos pensados para el jugador. El resto de flags
+  // (hilo_* de memoria para la IA, títulos, especialidad de agente...) son
+  // contexto interno, no algo que deba salir en esta tarjeta.
+  const entries = Object.entries(flags ?? {}).filter(
+    ([key, v]) => v && key in THREAD_LABELS,
+  );
 
   return (
     <div className="rounded-lg border border-panel-border bg-panel p-4">
@@ -28,7 +33,7 @@ export function LifeThreads({ flags }: { flags: Record<string, string | boolean>
               className="flex items-center gap-1.5 rounded-full border border-panel-border bg-neutral-950 px-3 py-1 text-xs text-neutral-200"
             >
               <span>{THREAD_ICONS[key] ?? "•"}</span>
-              {THREAD_LABELS[key] ? THREAD_LABELS[key](value) : `${key}: ${value}`}
+              {THREAD_LABELS[key](value)}
             </span>
           ))}
         </div>

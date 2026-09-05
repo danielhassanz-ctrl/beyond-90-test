@@ -1,5 +1,6 @@
 import type { GameEvent } from "@/types/career";
 import { PRO_RETIREMENT_MIN_WEEK } from "@/types/career";
+import type { Player } from "@/types/player";
 import { STARTING_AGENTS, pickStartingClubOffers } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
 
@@ -99,6 +100,197 @@ export function buildInicioFichajeEvent(agentName: string): GameEvent {
       subtitle: offer.pitch,
       consequences: { club: offer.club, moral: 5 },
     })),
+  };
+}
+
+function randomPrice(min: number, max: number, roundTo: number): number {
+  const raw = min + Math.random() * (max - min);
+  return Math.round(raw / roundTo) * roundTo;
+}
+
+function pickThree<T>(items: T[]): T[] {
+  return [...items].sort(() => Math.random() - 0.5).slice(0, 3);
+}
+
+const HOME_LISTINGS = [
+  { name: "Piso de dos habitaciones cerca de la ciudad deportiva", min: 90000, max: 130000 },
+  { name: "Ático con terraza en pleno centro", min: 140000, max: 190000 },
+  { name: "Casa a las afueras, cerca de donde creciste", min: 100000, max: 150000 },
+  { name: "Dúplex nuevo en una zona residencial tranquila", min: 110000, max: 160000 },
+  { name: "Piso reformado junto al estadio", min: 95000, max: 135000 },
+];
+
+const MANSION_LISTINGS = [
+  { name: "Mansión con piscina en una urbanización exclusiva", min: 1800000, max: 2600000 },
+  { name: "Ático de lujo con vistas a toda la ciudad", min: 1200000, max: 1900000 },
+  { name: "Finca con terreno propio y zona de entrenamiento personal", min: 2200000, max: 3400000 },
+  { name: "Villa moderna junto al mar", min: 1600000, max: 2400000 },
+  { name: "Casa histórica reformada en el barrio más exclusivo", min: 1900000, max: 2800000 },
+];
+
+/**
+ * Comprar la primera vivienda: 3 opciones sorteadas de un catálogo, cada
+ * una con un precio real que se descuenta del patrimonio tal cual, no una
+ * cifra aproximada fija. Si el jugador ya tiene pareja, su opinión entra
+ * en la decisión en vez de comprar en solitario.
+ */
+export function buildCasaEvent(player: Player): GameEvent {
+  const listings = pickThree(HOME_LISTINGS).map((l) => ({
+    ...l,
+    price: randomPrice(l.min, l.max, 5000),
+  }));
+  const partner = typeof player.flags?.pareja === "string" ? player.flags.pareja : null;
+
+  return {
+    id: "vid-casa",
+    category: "vida",
+    title: "Tu primer contrato importante",
+    description: partner
+      ? `Con el nuevo sueldo, tu representante te enseña tres opciones de vivienda. Se las enseñas también a ${partner}, que tiene bastante claro cuál le gusta más — aunque la decisión final es tuya. El precio es el de venta; lo que pagas ahora es la entrada, el resto se financia con hipoteca.`
+      : "Con el nuevo sueldo, tu representante te sugiere invertir en una vivienda propia y te enseña tres opciones. El precio es el de venta; lo que pagas ahora es la entrada, el resto se financia con hipoteca.",
+    options: [
+      ...listings.map((l, i) => {
+        const downPayment = Math.round((l.price * 0.2) / 500) * 500;
+        return {
+          id: `casa-${i}`,
+          label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+          subtitle: `Entrada: ${downPayment.toLocaleString("es")} €`,
+          consequences: { patrimonio: -downPayment, moral: 5 },
+        };
+      }),
+      {
+        id: "esperar",
+        label: "Esperar y seguir alquilando",
+        subtitle: "Conservador",
+        consequences: { patrimonio: 0 },
+      },
+    ],
+    minWeek: 8,
+  };
+}
+
+/**
+ * La segunda vivienda, ya con la carrera consolidada: mismo mecanismo que
+ * buildCasaEvent pero con un catálogo de lujo.
+ */
+export function buildMansionEvent(player: Player): GameEvent {
+  const listings = pickThree(MANSION_LISTINGS).map((l) => ({
+    ...l,
+    price: randomPrice(l.min, l.max, 50000),
+  }));
+  const partner = typeof player.flags?.pareja === "string" ? player.flags.pareja : null;
+
+  return {
+    id: "vid-mansion-lujo",
+    category: "vida",
+    title: "La casa con la que soñabas de pequeño",
+    description: partner
+      ? `Con la carrera en su mejor momento, tu representante os enseña tres propiedades a ti y a ${partner}. La típica casa que veías desde fuera de la verja cuando eras un chaval sin nada, y ahora te la pueden vender a ti — si los dos os ponéis de acuerdo. El precio es el de venta; lo que pagas ahora es la entrada.`
+      : "Con la carrera en su mejor momento, tu representante te enseña tres propiedades. La típica casa que veías desde fuera de la verja cuando eras un chaval sin nada. Ahora te la pueden vender a ti. El precio es el de venta; lo que pagas ahora es la entrada.",
+    options: [
+      ...listings.map((l, i) => {
+        const downPayment = Math.round((l.price * 0.3) / 10000) * 10000;
+        return {
+          id: `mansion-${i}`,
+          label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+          subtitle: `Entrada: ${downPayment.toLocaleString("es")} €`,
+          consequences: { patrimonio: -downPayment, moral: 8, fama: 3 },
+        };
+      }),
+      {
+        id: "descartar",
+        label: "Descartarlo, sigues prefiriendo algo discreto",
+        subtitle: "Perfil bajo pese al dinero",
+        consequences: { moral: 2 },
+      },
+    ],
+    minWeek: 65,
+  };
+}
+
+/**
+ * La oferta de Arabia Saudí, en la recta final de la carrera: si el
+ * jugador tiene pareja, la decisión se habla con ella antes de nada
+ * (igual que la partida original que inspiró Beyond 90), no se decide en
+ * solitario.
+ */
+export function buildOfertaArabiaEvent(player: Player): GameEvent {
+  const partner = typeof player.flags?.pareja === "string" ? player.flags.pareja : null;
+  const tieneHijos = Boolean(player.flags?.hijos);
+
+  const description = partner
+    ? `Un club de la liga saudí pone sobre la mesa una cifra que no se parece a nada de lo que has visto en Europa. Antes de responder nada, te sientas a hablarlo con ${partner}${tieneHijos ? ", con los niños ya en la ecuación" : ""}: significa dejar la élite competitiva en su momento más alto, cambiar de país y empezar de cero fuera del campo también.`
+    : "Un club de la liga saudí pone sobre la mesa una cifra que no se parece a nada de lo que has visto en Europa. Tu representante te avisa: esto no se va a repetir, pero también significa dejar la élite competitiva en su momento más alto.";
+
+  const options: GameEvent["options"] = partner
+    ? [
+        {
+          id: "a",
+          label: `Aceptar, con ${partner} de acuerdo en dar el salto juntos`,
+          subtitle: "+Patrimonio enorme, sales de la élite competitiva",
+          consequences: {
+            club: "Al-Nassr FC",
+            patrimonio: 900000,
+            fama: 4,
+            moral: 8,
+            rel_aficion: -10,
+          },
+        },
+        {
+          id: "b",
+          label: `Aceptar aunque a ${partner} le cueste dejar atrás su vida aquí`,
+          subtitle: "+Patrimonio enorme, tensión en casa",
+          consequences: {
+            club: "Al-Nassr FC",
+            patrimonio: 900000,
+            fama: 4,
+            moral: -4,
+            rel_aficion: -10,
+          },
+        },
+        {
+          id: "c",
+          label: "Rechazarla: la vida que tenéis construida pesa más",
+          subtitle: "Prioridad: la familia y el legado deportivo, no el dinero",
+          consequences: { reputacion: 10, moral: 5 },
+        },
+      ]
+    : [
+        {
+          id: "a",
+          label: "Aceptar, es el contrato de tu vida",
+          subtitle: "+Patrimonio enorme, sales de la élite competitiva",
+          consequences: {
+            club: "Al-Nassr FC",
+            patrimonio: 900000,
+            fama: 4,
+            moral: 6,
+            rel_aficion: -10,
+          },
+        },
+        {
+          id: "b",
+          label: "Rechazarla y seguir compitiendo en Europa",
+          subtitle: "Prioridad: el legado deportivo, no el dinero",
+          consequences: { reputacion: 10, moral: 3 },
+        },
+      ];
+
+  return {
+    id: "fork-oferta-arabia",
+    category: "representante",
+    priority: true,
+    title: partner ? `Hablarlo con ${partner} antes de decidir` : "La oferta que cambia los números para siempre",
+    description,
+    isMilestone: true,
+    milestoneType: "contrato",
+    allowFreeText: true,
+    freeTextPrompt: partner ? `¿Qué le dices a ${partner} para convencerla o para dejarlo pasar?` : "¿Qué es lo primero que piensas al leer la cifra?",
+    imageScene:
+      "Photorealistic photo of the photographed man in a tailored suit shaking hands with club executives in a luxurious modern office, Middle Eastern architecture visible through large windows, official signing photo style",
+    options,
+    minWeek: 155,
+    minMedia: 60,
   };
 }
 
@@ -896,33 +1088,6 @@ export const EVENTS: GameEvent[] = [
     allowFreeText: true,
     freeTextPrompt: "¿Qué haces?",
     minWeek: 4,
-  },
-  {
-    id: "vid-casa",
-    category: "vida",
-    title: "Tu primer contrato importante",
-    description: "Con el nuevo sueldo, tu representante te sugiere invertir en una vivienda propia.",
-    options: [
-      {
-        id: "a",
-        label: "Comprar de contado",
-        subtitle: "-Patrimonio, cero deuda",
-        consequences: { patrimonio: -15000, moral: 4 },
-      },
-      {
-        id: "b",
-        label: "Financiar una parte",
-        subtitle: "Mantienes liquidez",
-        consequences: { patrimonio: -5000, moral: 3 },
-      },
-      {
-        id: "c",
-        label: "Esperar y seguir alquilando",
-        subtitle: "Conservador",
-        consequences: { patrimonio: 0 },
-      },
-    ],
-    minWeek: 8,
   },
   {
     id: "vid-amigos-infancia",
@@ -3416,34 +3581,6 @@ export const EVENTS: GameEvent[] = [
     minWeek: 40,
   },
   {
-    id: "vid-mansion-lujo",
-    category: "vida",
-    title: "La casa con la que soñabas de pequeño",
-    description:
-      "Con la carrera en su mejor momento, tu representante te enseña fotos de una mansión en una urbanización exclusiva de las afueras, la típica que veías desde fuera de la verja cuando eras un chaval sin nada. Ahora te la pueden vender a ti.",
-    options: [
-      {
-        id: "a",
-        label: "Pagarla al contado",
-        subtitle: "-Patrimonio alto, cero deuda",
-        consequences: { patrimonio: -1800000, moral: 8, fama: 3 },
-      },
-      {
-        id: "b",
-        label: "Financiar una parte importante",
-        subtitle: "Mantienes liquidez para otras cosas",
-        consequences: { patrimonio: -600000, moral: 6, fama: 2 },
-      },
-      {
-        id: "c",
-        label: "Descartarlo, sigues prefiriendo algo discreto",
-        subtitle: "Perfil bajo pese al dinero",
-        consequences: { moral: 2 },
-      },
-    ],
-    minWeek: 65,
-  },
-  {
     id: "vid-lucia-conoce",
     category: "vida",
     title: "Lucía",
@@ -4058,41 +4195,6 @@ export const EVENTS: GameEvent[] = [
     ],
     minWeek: 115,
   },
-  {
-    id: "fork-oferta-arabia",
-    category: "representante",
-    priority: true,
-    title: "La oferta que cambia los números para siempre",
-    description:
-      "Un club de la liga saudí pone sobre la mesa una cifra que no se parece a nada de lo que has visto en Europa. Tu representante te avisa: esto no se va a repetir, pero también significa dejar la élite competitiva en su momento más alto.",
-    isMilestone: true,
-    milestoneType: "contrato",
-    imageScene:
-      "Photorealistic photo of the photographed man in a tailored suit shaking hands with club executives in a luxurious modern office, Middle Eastern architecture visible through large windows, official signing photo style",
-    options: [
-      {
-        id: "a",
-        label: "Aceptar, es el contrato de tu vida",
-        subtitle: "+Patrimonio enorme, sales de la élite competitiva",
-        consequences: {
-          club: "Al-Nassr FC",
-          patrimonio: 900000,
-          fama: 4,
-          moral: 6,
-          rel_aficion: -10,
-        },
-      },
-      {
-        id: "b",
-        label: "Rechazarla y seguir compitiendo en Europa",
-        subtitle: "Prioridad: el legado deportivo, no el dinero",
-        consequences: { reputacion: 10, moral: 3 },
-      },
-    ],
-    minWeek: 155,
-    minMedia: 60,
-  },
-
   // ── RETIRO (solo modo Pro) ─────────────────────────────────────
   {
     id: "fork-retiro-pro",

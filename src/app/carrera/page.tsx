@@ -2,7 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { pickNextEventSmart, whatIsAtStake } from "@/lib/narrative/engine";
-import { EVENTS, buildEleccionRepresentanteEvent, buildInicioFichajeEvent } from "@/lib/narrative/events";
+import {
+  EVENTS,
+  buildEleccionRepresentanteEvent,
+  buildInicioFichajeEvent,
+  buildCasaEvent,
+  buildMansionEvent,
+  buildOfertaArabiaEvent,
+} from "@/lib/narrative/events";
 import { generateEleccionRepresentanteEvent, generateClubOffersEvent } from "@/lib/narrative/ai";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { CONSEQUENCE_LABELS, MODE_TARGET_WEEKS, playerAge, seasonLabel } from "@/types/career";
@@ -66,15 +73,39 @@ export default async function CarreraPage() {
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 
-  if (!event) {
-    // Para no repetir nunca un evento fijo, se compara contra TODA la
-    // carrera, no solo los últimos turnos.
-    const { data: allHistory } = await supabase
-      .from("career_events")
-      .select("event_id")
-      .eq("player_id", player.id);
-    const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
+  // Para no repetir nunca un evento fijo, se compara contra TODA la
+  // carrera, no solo los últimos turnos.
+  const { data: allHistory } = await supabase
+    .from("career_events")
+    .select("event_id")
+    .eq("player_id", player.id);
+  const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
+  // Comprar casa necesita 3 opciones con precios sorteados en el momento,
+  // así que no puede vivir como una entrada estática más del pool normal.
+  if (!event && player.week >= 8 && !usedEventIds.includes("vid-casa")) {
+    event = buildCasaEvent(player);
+    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+  }
+
+  if (!event && player.week >= 65 && !usedEventIds.includes("vid-mansion-lujo")) {
+    event = buildMansionEvent(player);
+    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+  }
+
+  // Igual que la casa: si hay pareja, el texto y las opciones cambian
+  // según su nombre, así que necesita construirse en el momento.
+  if (
+    !event &&
+    player.week >= 155 &&
+    player.media >= 60 &&
+    !usedEventIds.includes("fork-oferta-arabia")
+  ) {
+    event = buildOfertaArabiaEvent(player);
+    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+  }
+
+  if (!event) {
     // El contexto que le mandamos a la IA sí se limita a lo reciente, para
     // no inflar el prompt.
     const { data: recentHistory } = await supabase

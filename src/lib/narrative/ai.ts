@@ -318,10 +318,14 @@ JUGADOR:
 - Fama: ${player.fama}/100
 - ¿Es su primer contrato profesional?: ${isFirstSigning ? "Sí, viene de la cantera/amateur, es su debut" : "No, ya es profesional y viene de otro club"}
 
+SU VIDA PERSONAL HASTA AHORA:
+${describePersonalLife(player.flags)}
+
 REGLAS:
 ${COMMON_RULES}
 - OBLIGATORIO: el salario ya está decidido, usa EXACTAMENTE esta cifra en la descripción, sin cambiarla ni redondearla de otra forma: "${salaryFigure}". Sobre los minutos, no siempre tiene que haber una promesa concreta — a veces el club directamente NO garantiza nada ("tendrás que ganarte el puesto", "sin promesas de minutos") y eso también es válido y realista; no fuerces una cifra de minutos si no encaja con la escena.
 - Las opciones son sobre cómo negociar o reaccionar en la firma (aceptar tal cual, pedir más minutos garantizados, pedir una cláusula, dejar que ${agent} lleve la voz cantante, etc.), no sobre elegir otro club.
+- Si ya tiene pareja o hijos y no es su primer contrato (implica mudanza de ciudad o de país), puede mencionarse de pasada cómo afecta el cambio a su vida fuera del campo — no en cada fichaje, pero sí cuando aporte algo.
 - Al menos una opción debe modificar el patrimonio (prima de fichaje, o coste de contratar un abogado, etc.) con una cifra distinta a la del salario.`;
 
   return callEventTool(prompt, "representante", isFirstSigning ? "contrato-debut" : "contrato");
