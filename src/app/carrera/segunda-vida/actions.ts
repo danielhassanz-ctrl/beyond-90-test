@@ -34,7 +34,7 @@ export async function resolveSecondLifeEvent(formData: FormData) {
   if (event.memorableThread) {
     patch.flags = { ...player.flags, [`hilo_${Date.now()}`]: event.memorableThread };
   }
-  const newSecondWeek = player.second_week + nextWeekGap();
+  const newSecondWeek = player.second_week + nextWeekGap(player.media, player.mode);
   const willFinish = newSecondWeek > SECOND_LIFE_TARGET_WEEKS;
 
   const { data: insertedEvent } = await supabase

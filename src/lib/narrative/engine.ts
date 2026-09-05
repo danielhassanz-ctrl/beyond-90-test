@@ -149,8 +149,19 @@ export function maybeAddFreeText(event: GameEvent): GameEvent {
  * jugador ya es una figura — la vida de un futbolista de época se llena
  * de más momentos que la de un juvenil recién debutado.
  */
-export function nextWeekGap(media = 50) {
-  const chanceOfAdvance = Math.max(0.28, 0.5 - (media - 50) * 0.005);
+export function nextWeekGap(media = 50, mode: "express" | "standard" | "pro" = "standard") {
+  // Cada modo tiene diferente densidad de eventos por temporada:
+  // Express: ~15 decisiones/temporada (avanza más semanas entre eventos)
+  // Standard: ~20-25 decisiones/temporada (media)
+  // Pro: ~30-35 decisiones/temporada (muchos eventos)
+  const modeMultipliers: Record<string, number> = {
+    express: 0.65,
+    standard: 1.0,
+    pro: 1.5,
+  };
+  const multiplier = modeMultipliers[mode] ?? 1.0;
+  const baseChance = Math.max(0.28, 0.5 - (media - 50) * 0.005);
+  const chanceOfAdvance = Math.min(0.9, baseChance * multiplier);
   return Math.random() < chanceOfAdvance ? 1 : 0;
 }
 
