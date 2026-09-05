@@ -79,13 +79,14 @@ export default async function CarreraPage() {
     // no inflar el prompt.
     const { data: recentHistory } = await supabase
       .from("career_events")
-      .select("title, chosen_option_label")
+      .select("title, chosen_option_label, free_text_response")
       .eq("player_id", player.id)
       .order("created_at", { ascending: false })
       .limit(10);
     const historyForAi = (recentHistory ?? []).map((h) => ({
       title: h.title as string,
       chosen: (h.chosen_option_label as string | null) ?? "",
+      freeText: h.free_text_response as string | null,
     }));
 
     event = await pickNextEventSmart(EVENTS, player, usedEventIds, historyForAi);

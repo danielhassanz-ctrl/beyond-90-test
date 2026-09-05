@@ -125,6 +125,14 @@ export interface GameEvent {
    * sentido ofrecerle a alguien que está rindiendo bien.
    */
   maxMedia?: number;
+  /**
+   * Resumen corto de un vínculo o promesa que esta escena crea o resuelve
+   * (un personaje nuevo, un rencor, algo pendiente) y que merece
+   * recordarse mucho después de que salga del historial reciente. Se
+   * guarda en flags para que la IA lo siga viendo en cualquier turno
+   * futuro, no solo en los últimos 10 eventos.
+   */
+  memorableThread?: string;
 }
 
 export interface CareerState {

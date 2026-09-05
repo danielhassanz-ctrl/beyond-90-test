@@ -73,8 +73,12 @@ export async function resolveEvent(formData: FormData) {
 
   const playerUpdate: Record<string, unknown> = { ...patch };
 
-  if (consequences.flags) {
-    playerUpdate.flags = { ...player.flags, ...consequences.flags };
+  if (consequences.flags || event.memorableThread) {
+    playerUpdate.flags = {
+      ...player.flags,
+      ...consequences.flags,
+      ...(event.memorableThread ? { [`hilo_${Date.now()}`]: event.memorableThread } : {}),
+    };
   }
 
   if (consequences.agent_name) {

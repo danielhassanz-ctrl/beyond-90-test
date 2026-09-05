@@ -30,7 +30,10 @@ export async function resolveSecondLifeEvent(formData: FormData) {
   const outcomeText = resolution ? resolution.text : null;
   const milestoneAchieved = event.isMilestone && (!resolution || resolution.success);
 
-  const patch = applyConsequences(player, consequences);
+  const patch: Record<string, unknown> = applyConsequences(player, consequences);
+  if (event.memorableThread) {
+    patch.flags = { ...player.flags, [`hilo_${Date.now()}`]: event.memorableThread };
+  }
   const newSecondWeek = player.second_week + nextWeekGap();
   const willFinish = newSecondWeek > SECOND_LIFE_TARGET_WEEKS;
 

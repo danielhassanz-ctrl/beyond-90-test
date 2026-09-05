@@ -47,6 +47,8 @@ function describePersonalLife(flags: Record<string, string | boolean> | null | u
 export interface HistoryItem {
   title: string;
   chosen: string;
+  /** Lo que el jugador escribió con sus propias palabras en la opción libre, si la usó. */
+  freeText?: string | null;
 }
 
 function pickCategory(): EventCategory {
@@ -69,10 +71,15 @@ const EVENT_TOOL: Anthropic.Tool = {
         type: "string",
         description: "Solo para eventos de partido: nombre corto y real del club rival (ej. 'Villarreal CF'), igual al usado en la descripción.",
       },
+      memorable_thread: {
+        type: "string",
+        description:
+          "Solo si esta escena presenta o resuelve un vínculo personal que merece recordarse mucho más adelante en la carrera (un personaje nuevo con nombre, una promesa, un rencor, algo pendiente): resume en una frase corta quién es y qué pasó, en tercera persona (ej. 'Iker, un canterano al que dio la espalda cuando le pidió consejo'). Si la escena no crea ni resuelve nada memorable, no incluyas este campo.",
+      },
       options: {
         type: "array",
         minItems: 2,
-        maxItems: 3,
+        maxItems: 4,
         items: {
           type: "object",
           properties: {
@@ -126,7 +133,7 @@ function sanitizeConsequences(raw: Consequences): Consequences {
 }
 
 const COMMON_RULES = `- Escribe en castellano de España (tú, nunca vos/tenés/vení; nada de vocabulario rioplatense o latinoamericano como "plata", "auto", "computadora", "celular", "plantel", "cancha", "vidriera", "afuera", "chico/a" con el sentido de "pequeño" — usa "dinero", "coche", "ordenador", "móvil", "plantilla", "campo", "exposición", "fuera", "pequeño/a"). Tono corto y directo: 2-3 frases en la descripción, como una escena de un simulador de carrera, no un narrador literario.
-- Las opciones deben ser 2 o 3, con una etiqueta de acción corta y un subtítulo que adelante la consecuencia (ej. "+Vestuario", "Jugada de riesgo").
+- Las opciones deben ser entre 2 y 4 — varía la cantidad de una escena a otra, no pongas siempre el mismo número. Cada una con una etiqueta de acción corta y un subtítulo que adelante la consecuencia (ej. "+Vestuario", "Jugada de riesgo").
 - Las consecuencias numéricas deben ser sutiles para stats/relaciones (entre -10 y +10). El patrimonio puede moverse más si la escena lo justifica (ej. una prima de fichaje, un contrato nuevo).
 - Cualquier persona famosa que aparezca (cantante, influencer, otro futbolista) debe ser CLARAMENTE FICTICIA — nunca un nombre real.`;
 
@@ -165,6 +172,7 @@ async function callEventTool(
       is_milestone?: boolean;
       image_scene?: string;
       rival_club?: string;
+      memorable_thread?: string;
       options?: Array<{ label?: string; subtitle?: string; consequences?: Consequences }>;
     };
 
@@ -200,6 +208,7 @@ async function callEventTool(
       milestoneType: isMilestone ? "escena" : undefined,
       imageScene: isMilestone ? data.image_scene : undefined,
       rivalClub: data.rival_club || undefined,
+      memorableThread: data.memorable_thread || undefined,
       options,
     };
   } catch (err) {
@@ -216,7 +225,13 @@ export async function generateAiEvent(
   const age = playerAge(player.week);
 
   const historyText = history.length
-    ? history.map((h) => `- "${h.title}" → eligió: "${h.chosen}"`).join("\n")
+    ? history
+        .map(
+          (h) =>
+            `- "${h.title}" → eligió: "${h.chosen}"` +
+            (h.freeText ? ` — y escribió con sus propias palabras: "${h.freeText}"` : ""),
+        )
+        .join("\n")
     : "(todavía no vivió ningún evento)";
 
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
@@ -248,6 +263,9 @@ ${COMMON_RULES}
 - Si el evento trata sobre la selección nacional, la familia en su país de origen, o cualquier tema ligado a su nacionalidad, usa SIEMPRE ${player.nation} (nunca asumas España si no es esa la nacionalidad del jugador). El idioma de la narración sigue siendo castellano de España en cualquier caso.
 - Si la escena trata sobre su rendimiento como jugador (se queda en el banquillo, discute con el entrenador por minutos, destaca en un entrenamiento, etc.), incluye un cambio de media coherente: banquillo prolongado o mal rendimiento → media hacia abajo; destacar de verdad → media hacia arriba. Si la escena no tiene que ver con el rendimiento futbolístico, no toques la media.
 - Si el evento amerita una respuesta propia del jugador (algo que él mismo diría en una entrevista o discusión), marca allow_free_text en true y escribe free_text_prompt.
+- Si en "ÚLTIMOS EVENTOS" alguna entrada incluye algo que el jugador escribió con sus propias palabras, es texto real suyo, no una opción de una lista — léelo de verdad y, cuando encaje, haz que tenga eco más adelante (alguien le repite lo que dijo, una promesa que hizo se le vuelve en contra o a favor, una idea suya que mencionó reaparece). No lo repitas literalmente ni lo cites entre comillas, solo dale continuidad.
+- OBLIGATORIO también con las decisiones normales (no solo lo escrito a mano libre): mira qué eligió en "ÚLTIMOS EVENTOS" y, de vez en cuando (no siempre, pero sí con regularidad), haz que una elección pasada tenga una consecuencia real más adelante — si pasó de un canterano que le pedía consejo, ese chaval puede reaparecer ya asentado o resentido; si ignoró a alguien que le escribió, puede notarse la distancia después; si le faltó al respeto a un entrenador o a un compañero, esa relación puede tensarse en una escena futura sin que se lo esperara. Las decisiones de este jugador tienen que pesar, no ser anecdóticas.
+- "ÚLTIMOS EVENTOS" solo cubre los últimos turnos: para vínculos que deben recordarse mucho más adelante (pasada ya esa ventana), usa memorable_thread cuando esta escena presente o resuelva algo así (un personaje nuevo con nombre, una promesa, un rencor). Y revisa siempre "SU VIDA PERSONAL HASTA AHORA": ahí aparecerán esos hilos antiguos aunque ya no salgan en el historial reciente — tráelos de vuelta cuando encajen, igual que con la pareja o los hijos.
 - No repitas la premisa de ningún evento del historial reciente.
 - Marca is_milestone en true SOLO si esta escena es visualmente memorable y merece una foto (ej. el entrenador te echa una bronca delante de todo el vestuario, una cena romántica, una reunión tensa con tu representante, un momento en el túnel de vestuarios) — esto debería pasar en más o menos 1 de cada 4-5 eventos, no siempre. El resto de las veces, is_milestone en false y no incluyas image_scene.
 - Cuando is_milestone sea true, escribe también image_scene: una descripción en INGLÉS, estilo prompt de generación de imagen, fotorrealista, describiendo la escena concreta (dónde está, quién más aparece, la luz, el encuadre) para recrearla a partir de una foto real del jugador. Cualquier otra persona en la escena debe describirse genérica (nunca un nombre real).`;
@@ -538,7 +556,13 @@ export async function generateSecondLifeEvent(
   history: HistoryItem[],
 ): Promise<GameEvent | null> {
   const historyText = history.length
-    ? history.map((h) => `- "${h.title}" → eligió: "${h.chosen}"`).join("\n")
+    ? history
+        .map(
+          (h) =>
+            `- "${h.title}" → eligió: "${h.chosen}"` +
+            (h.freeText ? ` — y escribió con sus propias palabras: "${h.freeText}"` : ""),
+        )
+        .join("\n")
     : "(todavía no vivió ningún evento en esta segunda vida)";
 
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
@@ -560,6 +584,7 @@ ${COMMON_RULES}
 - ${SECOND_LIFE_STYLE[role]}
 - Las consecuencias numéricas solo pueden tocar patrimonio y reputacion (no forma, moral, fama ni relaciones — esas ya no aplican en la segunda vida).
 - Si el evento amerita una respuesta propia del personaje, marca allow_free_text en true y escribe free_text_prompt.
+- Si en el historial alguna entrada incluye algo que el personaje escribió con sus propias palabras, léelo de verdad y dale continuidad cuando encaje, sin citarlo literalmente.
 - Marca is_milestone en true solo si es un momento memorable (más o menos 1 de cada 4-5 eventos), y en ese caso escribe image_scene en inglés, fotorrealista, mostrando al personaje en su nuevo rol (traje de entrenador, despacho, palco directivo...), nunca con equipación de jugador.`;
 
   const event = await callEventTool(prompt, "segunda_vida", "segunda-vida");
