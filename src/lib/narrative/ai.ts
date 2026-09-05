@@ -184,6 +184,7 @@ Genera el PRÓXIMO evento de la carrera para este jugador. Categoría de este ev
 
 JUGADOR:
 - Apellido: ${player.last_name}
+- Nacionalidad: ${player.nation}
 - Edad: ${age} años
 - Club actual: ${player.club}
 - Posición: ${player.position}
@@ -200,6 +201,7 @@ ${historyText}
 REGLAS:
 ${COMMON_RULES}
 - El evento tiene que encajar con el club, la edad, la posición y el momento actual del jugador — nada genérico que podría pasar en cualquier carrera. Si tiene solo ${age} años y acaba de llegar a un club modesto, no debería sonar a superestrella todavía.
+- Si el evento trata sobre la selección nacional, la familia en su país de origen, o cualquier tema ligado a su nacionalidad, usa SIEMPRE ${player.nation} (nunca asumas España si no es esa la nacionalidad del jugador). El idioma de la narración sigue siendo castellano de España en cualquier caso.
 - Si la escena trata sobre su rendimiento como jugador (se queda en el banquillo, discute con el entrenador por minutos, destaca en un entrenamiento, etc.), incluye un cambio de media coherente: banquillo prolongado o mal rendimiento → media hacia abajo; destacar de verdad → media hacia arriba. Si la escena no tiene que ver con el rendimiento futbolístico, no toques la media.
 - Si el evento amerita una respuesta propia del jugador (algo que él mismo diría en una entrevista o discusión), marca allow_free_text en true y escribe free_text_prompt.
 - No repitas la premisa de ningún evento del historial reciente.
@@ -244,6 +246,7 @@ El jugador acaba de fichar por un nuevo club. Genera la escena de la firma del c
 
 JUGADOR:
 - Apellido: ${player.last_name}
+- Nacionalidad: ${player.nation}
 - Edad: ${age} años
 - Club nuevo: ${club}
 - Posición: ${player.position}
@@ -283,6 +286,7 @@ Genera la ficha de un partido que el jugador acaba de disputar con su club: un r
 
 JUGADOR:
 - Apellido: ${player.last_name}
+- Nacionalidad: ${player.nation}
 - Edad: ${age} años
 - Club: ${player.club}
 - Posición: ${player.position}
@@ -461,6 +465,7 @@ El jugador ya se retiró como futbolista y ahora vive su segunda vida como ${SEC
 
 PERSONAJE:
 - Apellido: ${player.last_name}
+- Nacionalidad: ${player.nation}
 - Fue futbolista en el ${player.club}, ahora es ${SECOND_CAREER_LABELS[role].toLowerCase()}${(role === "presidente" || role === "entrenador") && player.second_club ? ` del ${player.second_club}` : ""}
 ${role === "agente" && player.flags?.agente_especialidad ? `- Especialización como agente: ${player.flags.agente_especialidad}\n` : ""}- Reputación en este nuevo rol: ${player.reputacion}/100
 - Patrimonio: ${player.patrimonio} €
