@@ -9,6 +9,7 @@ import type {
 import { generateAiEvent, generateMatchResult, type HistoryItem } from "./ai";
 import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
+import { buildMatchContext } from "@/lib/constants";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -97,7 +98,25 @@ export async function pickNextEventSmart(
     }
   }
 
-  return maybeAddFreeText(chosen);
+  return maybeAddFreeText(addMatchContext(chosen, player));
+}
+
+/**
+ * Cualquier escena de "partido" escrita a mano se escribió sin saber
+ * contra quién se iba a jugar (eso solo se sabe en el momento), así que
+ * sin esto sale un "estás en un partido" genérico y sin contexto. Los
+ * resultados generados por IA ya traen rival propio (rivalClub) y no se
+ * tocan.
+ */
+function addMatchContext(event: GameEvent, player: Player): GameEvent {
+  if (event.category !== "partido" || event.rivalClub) return event;
+
+  const { rival, competition, stadium } = buildMatchContext(player.club, player.media);
+  return {
+    ...event,
+    rivalClub: rival,
+    description: `${player.club} vs ${rival}, ${competition}, ${stadium}. ${event.description}`,
+  };
 }
 
 /**

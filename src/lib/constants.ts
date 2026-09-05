@@ -227,3 +227,90 @@ export const AGENT_SPECIALTY_OPTIONS = [
     description: "Menos volatilidad, ingresos más constantes fuera del mercado de fichajes.",
   },
 ] as const;
+
+const REST_RIVALS = [
+  "Real Betis Deportivo",
+  "Cádiz CF",
+  "Real Valladolid",
+  "Sporting de Gijón",
+  "Levante UD",
+  "UD Almería",
+  "Real Oviedo",
+  "CD San Fernando",
+  "Atlético Sanluqueño",
+];
+
+const MID_RIVALS = [
+  "Sevilla FC",
+  "Villarreal CF",
+  "Real Zaragoza",
+  "Rayo Vallecano",
+  "Málaga CF",
+  "Deportivo de La Coruña",
+  "Real Sociedad",
+  "Athletic Club",
+];
+
+const ELITE_RIVALS = [
+  "Real Madrid",
+  "FC Barcelona",
+  "Atlético de Madrid",
+  "Liverpool FC",
+  "Manchester City",
+  "Borussia Dortmund",
+  "Atalanta",
+  "Bayern de Múnich",
+];
+
+const REST_COMPETITIONS = [
+  "un partido del filial en Segunda RFEF",
+  "un amistoso de pretemporada",
+  "un partido de la Copa Federación",
+  "un duelo de la Youth League contra el filial rival",
+];
+
+const MID_COMPETITIONS = [
+  "una jornada de Liga",
+  "un partido de la Copa del Rey",
+  "una jornada de mitad de tabla que no perdona errores",
+];
+
+const ELITE_COMPETITIONS = [
+  "una jornada de Liga con el título en juego",
+  "un partido de la Champions League",
+  "una eliminatoria de Copa a partido único",
+  "un derbi que paraliza a toda la ciudad",
+];
+
+const STADIUM_NOTES = [
+  "con el estadio a rebosar",
+  "con las gradas medio vacías por la hora del partido",
+  "bajo una lluvia que no da tregua",
+  "con un calor húmedo que pesa en las piernas",
+  "con el ambiente más tenso de lo habitual tras los últimos resultados",
+  "con cientos de aficionados rivales haciéndose notar en la grada visitante",
+];
+
+function pick<T>(items: readonly T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+/**
+ * Contexto real para cualquier escena de partido que no lo traiga ya de
+ * fábrica (un evento escrito a mano no sabe, en el momento de escribirlo,
+ * contra quién vas a jugar): rival, competición y ambiente, escalados a
+ * la media del jugador para que un canterano de 16 años no aparezca de
+ * repente jugando una final de Champions.
+ */
+export function buildMatchContext(club: string, media: number): { rival: string; competition: string; stadium: string } {
+  const tier = media < 55 ? "rest" : media < 78 ? "mid" : "elite";
+  const rivalPool = tier === "rest" ? REST_RIVALS : tier === "mid" ? MID_RIVALS : ELITE_RIVALS;
+  const competitionPool = tier === "rest" ? REST_COMPETITIONS : tier === "mid" ? MID_COMPETITIONS : ELITE_COMPETITIONS;
+
+  const candidates = rivalPool.filter((r) => r !== club);
+  return {
+    rival: pick(candidates.length > 0 ? candidates : rivalPool),
+    competition: pick(competitionPool),
+    stadium: pick(STADIUM_NOTES),
+  };
+}
