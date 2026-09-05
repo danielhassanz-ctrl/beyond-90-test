@@ -3605,6 +3605,8 @@ export const EVENTS: GameEvent[] = [
     priority: true,
     isMilestone: true,
     milestoneType: "mundial",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué dices en la rueda de prensa previa al torneo?",
     imageScene:
       "Photorealistic sports photography of the photographed man in his national team kit, celebrating passionately on a World Cup stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting",
     options: [
@@ -3634,6 +3636,215 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 110,
+  },
+  {
+    id: "sel-clasificacion-mundial",
+    category: "especial",
+    priority: true,
+    title: "Partido decisivo de clasificación al Mundial",
+    description:
+      "Última jornada de clasificación. Tu selección se juega el billete al Mundial en un partido que no admite errores. El estadio entero sabe lo que hay en juego esta noche.",
+    isMilestone: true,
+    milestoneType: "clasificacion",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices al grupo antes de saltar al campo?",
+    imageScene:
+      "Photorealistic sports photography of the photographed man in his national team kit, intense moment on the pitch during a decisive qualifying match, huge tension in the stadium, dramatic lighting",
+    options: [
+      {
+        id: "a",
+        label: "Pedir responsabilidad y salir a por el partido",
+        subtitle: "Todo o nada",
+        consequences: {},
+        resolve: {
+          baseChance: 0.55,
+          statModifier: "fama",
+          success: {
+            text: "¡Clasificados! El campo entero explota. Habrá Mundial, y tú vas a estar en él.",
+            consequences: { fama: 14, moral: 12, media: 4 },
+          },
+          fail: {
+            text: "El partido se escapa y la clasificación queda en el aire. La selección necesitará un milagro en otro lado.",
+            consequences: { moral: -10, media: -2 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Jugar con cabeza, sin asumir riesgos innecesarios",
+        subtitle: "Gestión de la presión",
+        consequences: { moral: 2, fama: 2 },
+      },
+    ],
+    minWeek: 85,
+  },
+  {
+    id: "sel-clasificacion-eurocopa",
+    category: "especial",
+    priority: true,
+    title: "Partido decisivo de clasificación a la Eurocopa",
+    description:
+      "Tu selección necesita puntuar sí o sí para asegurar la plaza en la Eurocopa. Es el partido más tenso de toda la fase de clasificación.",
+    isMilestone: true,
+    milestoneType: "clasificacion",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices al grupo antes de saltar al campo?",
+    imageScene:
+      "Photorealistic sports photography of the photographed man in his national team kit, intense moment on the pitch during a decisive European qualifying match, huge tension in the stadium, dramatic lighting",
+    requiresConfederation: ["UEFA"],
+    options: [
+      {
+        id: "a",
+        label: "Pedir responsabilidad y salir a por el partido",
+        subtitle: "Todo o nada",
+        consequences: {},
+        resolve: {
+          baseChance: 0.55,
+          statModifier: "fama",
+          success: {
+            text: "¡Clasificados a la Eurocopa! El vestuario se viene abajo de la emoción.",
+            consequences: { fama: 12, moral: 10, media: 3 },
+          },
+          fail: {
+            text: "El resultado no llega y la clasificación se complica muchísimo de cara a la última jornada.",
+            consequences: { moral: -8, media: -2 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Jugar con cabeza, sin asumir riesgos innecesarios",
+        subtitle: "Gestión de la presión",
+        consequences: { moral: 2, fama: 2 },
+      },
+    ],
+    minWeek: 85,
+  },
+  {
+    id: "sel-clasificacion-copa-america",
+    category: "especial",
+    priority: true,
+    title: "Partido decisivo de clasificación a la Copa América",
+    description:
+      "La selección se juega la clasificación a la Copa América en un partido que puede definir toda la campaña. La presión en el vestuario es máxima.",
+    isMilestone: true,
+    milestoneType: "clasificacion",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices al grupo antes de saltar al campo?",
+    imageScene:
+      "Photorealistic sports photography of the photographed man in his national team kit, intense moment on the pitch during a decisive South American qualifying match, huge tension in the stadium, dramatic lighting",
+    requiresConfederation: ["CONMEBOL"],
+    options: [
+      {
+        id: "a",
+        label: "Pedir responsabilidad y salir a por el partido",
+        subtitle: "Todo o nada",
+        consequences: {},
+        resolve: {
+          baseChance: 0.55,
+          statModifier: "fama",
+          success: {
+            text: "¡Clasificados a la Copa América! La afición celebra en las calles de todo el país.",
+            consequences: { fama: 12, moral: 10, media: 3 },
+          },
+          fail: {
+            text: "El resultado no llega y la clasificación se complica muchísimo de cara a la última jornada.",
+            consequences: { moral: -8, media: -2 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Jugar con cabeza, sin asumir riesgos innecesarios",
+        subtitle: "Gestión de la presión",
+        consequences: { moral: 2, fama: 2 },
+      },
+    ],
+    minWeek: 85,
+  },
+  {
+    id: "sel-eurocopa",
+    category: "especial",
+    priority: true,
+    title: "La Eurocopa",
+    description:
+      "Llegas a la Eurocopa como una pieza importante de tu selección. Semanas de convivencia, presión mediática constante y un torneo entero por delante.",
+    isMilestone: true,
+    milestoneType: "eurocopa",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué dices en la rueda de prensa previa al torneo?",
+    imageScene:
+      "Photorealistic sports photography of the photographed man in his national team kit, celebrating passionately on a European Championship stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting",
+    requiresConfederation: ["UEFA"],
+    options: [
+      {
+        id: "a",
+        label: "Jugar cada partido a todo o nada",
+        subtitle: "Asumir riesgos para liderar al equipo",
+        consequences: {},
+        resolve: {
+          baseChance: 0.4,
+          statModifier: "forma",
+          success: {
+            text: "El equipo llega hasta el final y levantas el trofeo de la Eurocopa. Un torneo entero de tu país parado para ver esto.",
+            consequences: { fama: 22, moral: 18, rel_aficion: 12 },
+          },
+          fail: {
+            text: "La selección cae eliminada antes de lo esperado. El torneo termina con más preguntas que respuestas.",
+            consequences: { fama: 5, moral: -7 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Jugar con la cabeza, priorizando no arriesgar de más",
+        subtitle: "Gestión de la presión",
+        consequences: { moral: 2, fama: 3 },
+      },
+    ],
+    minWeek: 115,
+  },
+  {
+    id: "sel-copa-america",
+    category: "especial",
+    priority: true,
+    title: "La Copa América",
+    description:
+      "Llegas a la Copa América como una pieza importante de tu selección. Todo un continente pendiente del torneo, y tú en medio de él.",
+    isMilestone: true,
+    milestoneType: "copa_america",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué dices en la rueda de prensa previa al torneo?",
+    imageScene:
+      "Photorealistic sports photography of the photographed man in his national team kit, celebrating passionately on a Copa America stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting",
+    requiresConfederation: ["CONMEBOL"],
+    options: [
+      {
+        id: "a",
+        label: "Jugar cada partido a todo o nada",
+        subtitle: "Asumir riesgos para liderar al equipo",
+        consequences: {},
+        resolve: {
+          baseChance: 0.4,
+          statModifier: "forma",
+          success: {
+            text: "El equipo llega hasta el final y levantas el trofeo de la Copa América. Todo el continente habla de esto.",
+            consequences: { fama: 22, moral: 18, rel_aficion: 12 },
+          },
+          fail: {
+            text: "La selección cae eliminada antes de lo esperado. El torneo termina con más preguntas que respuestas.",
+            consequences: { fama: 5, moral: -7 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Jugar con la cabeza, priorizando no arriesgar de más",
+        subtitle: "Gestión de la presión",
+        consequences: { moral: 2, fama: 3 },
+      },
+    ],
+    minWeek: 115,
   },
   {
     id: "fork-oferta-arabia",

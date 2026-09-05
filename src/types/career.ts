@@ -108,6 +108,8 @@ export interface GameEvent {
   lookEvolution?: string;
   /** Nombre del club rival, solo en eventos de partido, para mostrar ambos escudos. */
   rivalClub?: string;
+  /** Si se define, el evento solo es elegible si la selección del jugador pertenece a alguna de estas confederaciones (ej. Eurocopa, Copa América). */
+  requiresConfederation?: ("UEFA" | "CONMEBOL")[];
 }
 
 export interface CareerState {

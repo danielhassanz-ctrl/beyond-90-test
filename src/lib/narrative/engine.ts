@@ -8,6 +8,7 @@ import type {
 } from "@/types/career";
 import { generateAiEvent, generateMatchResult, type HistoryItem } from "./ai";
 import type { Player } from "@/types/player";
+import { getConfederation } from "@/lib/nations";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -48,11 +49,15 @@ export async function pickNextEventSmart(
   usedEventIds: string[],
   history: HistoryItem[],
 ): Promise<GameEvent> {
+  const playerConfederation = getConfederation(player.nation);
   const eligible = events.filter(
     (event) =>
       (event.minWeek ?? 1) <= player.week &&
       (!event.modes || event.modes.includes(player.mode)) &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (!event.requiresConfederation ||
+        (playerConfederation !== null &&
+          event.requiresConfederation.includes(playerConfederation))) &&
       !usedEventIds.includes(event.id),
   );
 
