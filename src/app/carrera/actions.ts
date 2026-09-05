@@ -57,7 +57,7 @@ export async function resolveEvent(formData: FormData) {
   // antes de que el jugador llegue a jugar nada.
   const ONBOARDING_EVENT_IDS = new Set(["eleccion-representante", "inicio-fichaje-agente", "debut-pretemp-1", "debut-pretemp-2", "debut-pretemp-3"]);
   const isOnboarding = ONBOARDING_EVENT_IDS.has(event.id) || event.id.startsWith("contrato-debut");
-  const newWeek = player.week + (isOnboarding ? 1 : nextWeekGap());
+  const newWeek = player.week + (isOnboarding ? 1 : nextWeekGap(player.media));
   const targetWeeks = MODE_TARGET_WEEKS[player.mode];
   const willRetire = !isRetirementDecision && player.mode !== "pro" && newWeek > targetWeeks;
 

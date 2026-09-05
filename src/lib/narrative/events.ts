@@ -3313,6 +3313,46 @@ export const EVENTS: GameEvent[] = [
     maxMedia: 58,
   },
   {
+    id: "esp-espiral-alcohol",
+    category: "vida",
+    priority: true,
+    title: "Lo que empezó como una copa de más",
+    description:
+      "Llevas meses sin apenas jugar y las noches de fiesta para desconectar se han convertido en algo casi diario. Tu representante te lo dice a la cara, muy serio: la gente del club ya habla de ello, y no en buen sentido.",
+    isMilestone: true,
+    milestoneType: "crisis",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le respondes a tu representante?",
+    options: [
+      {
+        id: "a",
+        label: "Reconocerlo y pedir ayuda profesional",
+        subtitle: "El camino difícil, pero real",
+        consequences: {},
+        resolve: {
+          baseChance: 0.55,
+          statModifier: "moral",
+          success: {
+            text: "Cuesta un mundo, pero sales adelante. Meses después vuelves a sentirte dueño de tu vida, aunque el club ya no cuenta contigo como antes.",
+            consequences: { moral: 12, rel_vestuario: 5, media: 2 },
+          },
+          fail: {
+            text: "Lo intentas, pero recaes más de una vez. El club decide no arriesgar más contigo y empieza a buscarte salida.",
+            consequences: { moral: -6, media: -6, rel_entrenador: -8 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Negarlo todo, tú controlas la situación",
+        subtitle: "Jugada de alto riesgo",
+        consequences: { moral: -10, media: -8, rel_entrenador: -10, rel_vestuario: -5 },
+      },
+    ],
+    minWeek: 60,
+    maxMedia: 55,
+  },
+  {
     id: "fork-salto-internacional",
     category: "representante",
     priority: true,

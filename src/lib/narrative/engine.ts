@@ -141,8 +141,17 @@ export function maybeAddFreeText(event: GameEvent): GameEvent {
  * la siguiente pasan varias semanas "en silencio" (pretemporada, partidos
  * de rutina, entrenamientos). Solo se muestra lo que importa.
  */
-export function nextWeekGap() {
-  return 1 + Math.floor(Math.random() * 3); // 1 a 3 semanas
+/**
+ * Cuántas semanas de calendario pasan tras una decisión. No es 1 semana
+ * fija: la mayoría de las veces no avanza nada (varias decisiones pueden
+ * vivirse "la misma semana") para que una temporada (10 semanas) dé sitio
+ * a 20-25 decisiones al principio de la carrera, y más (30-35) cuando el
+ * jugador ya es una figura — la vida de un futbolista de época se llena
+ * de más momentos que la de un juvenil recién debutado.
+ */
+export function nextWeekGap(media = 50) {
+  const chanceOfAdvance = Math.max(0.28, 0.5 - (media - 50) * 0.005);
+  return Math.random() < chanceOfAdvance ? 1 : 0;
 }
 
 function clampPercent(value: number) {
