@@ -2589,6 +2589,90 @@ export const EVENTS: GameEvent[] = [
     minWeek: 26,
   },
   {
+    id: "fama-paparazzi-cena",
+    category: "prensa",
+    title: "Cazado por los paparazzi",
+    description:
+      "Cenas tranquilo con alguien especial en un restaurante discreto de la ciudad. Al día siguiente, una revista publica las fotos: os habían fotografiado desde la calle durante toda la cena sin que os dierais cuenta.",
+    isMilestone: true,
+    milestoneType: "paparazzi",
+    imageScene:
+      "Photorealistic paparazzi-style photo taken through a restaurant window at night, the photographed man having a candlelit dinner with a blurred anonymous companion, grainy telephoto lens look, tabloid magazine aesthetic",
+    options: [
+      {
+        id: "a",
+        label: "No hacer ninguna declaración",
+        subtitle: "Dejar que se apague solo",
+        consequences: { fama: 5, moral: -2 },
+      },
+      {
+        id: "b",
+        label: "Confirmarlo con humor en redes",
+        subtitle: "+Fama, quitarle hierro",
+        consequences: { fama: 8, moral: 3 },
+      },
+      {
+        id: "c",
+        label: "Quejarte públicamente de la falta de privacidad",
+        subtitle: "Postura seria",
+        consequences: { fama: 2, moral: 1 },
+      },
+    ],
+    minWeek: 22,
+  },
+  {
+    id: "fama-post-viral-propio",
+    category: "prensa",
+    title: "Tu propia publicación se vuelve viral",
+    description:
+      "Subes una foto random a tus redes, sin pensarlo demasiado, y por algún motivo que no llegas a entender del todo se convierte en el contenido más comentado del día en todo el país.",
+    isMilestone: true,
+    milestoneType: "viral",
+    imageScene:
+      "Photorealistic photo styled as a phone screen showing a social media post going viral, the photographed man casually smiling in a selfie-style photo, likes and comments counters visible but blurred/illegible, warm natural lighting",
+    options: [
+      {
+        id: "a",
+        label: "Aprovechar el momento y publicar más",
+        subtitle: "+Fama, arriesgas sobreexposición",
+        consequences: { fama: 9, moral: 2 },
+      },
+      {
+        id: "b",
+        label: "Dejar que hable por sí sola, sin insistir",
+        subtitle: "Perfil más comedido",
+        consequences: { fama: 5, moral: 3 },
+      },
+    ],
+    minWeek: 12,
+  },
+  {
+    id: "fama-portada-warca",
+    category: "prensa",
+    title: "Portada de Warca",
+    description:
+      'El diario deportivo más leído del país te pone en portada bajo un titular enorme. Tu representante te manda la foto de la portada antes incluso de que salga a los quioscos: "Esto no tiene precio."',
+    isMilestone: true,
+    milestoneType: "portada",
+    imageScene:
+      "Photorealistic photo of a sports newspaper front cover on a newsstand, the photographed man featured in a dramatic action pose, bold generic headline text, tabloid sports press style, other blurred magazines around it",
+    options: [
+      {
+        id: "a",
+        label: "Enmarcar la portada para casa",
+        subtitle: "Momento para guardar",
+        consequences: { fama: 6, moral: 5 },
+      },
+      {
+        id: "b",
+        label: "Restarle importancia ante la prensa",
+        subtitle: "Perfil humilde",
+        consequences: { fama: 4, rel_vestuario: 2 },
+      },
+    ],
+    minWeek: 30,
+  },
+  {
     id: "fama-leyenda-dorsal",
     category: "vestuario",
     title: "La leyenda te pide que lleves su número",
@@ -3086,6 +3170,10 @@ export const EVENTS: GameEvent[] = [
     title: "Tu representante te habla de una startup",
     description:
       'Tu representante te presenta a los fundadores de una startup tecnológica: "He visto muchos jugadores meter dinero en tonterías. Esta gente tiene cabeza, y entrar ahora, a este precio, no se va a repetir." Piden una cantidad seria para las siguientes rondas.',
+    isMilestone: true,
+    milestoneType: "startup",
+    imageScene:
+      "Photorealistic photo of a business magazine cover feature, the photographed man in smart casual clothing photographed in a modern tech office, generic bold headline text about a successful investment, financial press style, confident pose",
     options: [
       {
         id: "a",
@@ -3096,7 +3184,7 @@ export const EVENTS: GameEvent[] = [
           baseChance: 0.4,
           statModifier: "reputacion",
           success: {
-            text: "La startup despega mucho más rápido de lo esperado y una ronda posterior multiplica tu inversión por varias veces.",
+            text: "La startup despega mucho más rápido de lo esperado y una ronda posterior multiplica tu inversión por varias veces. La prensa económica se hace eco de la operación.",
             consequences: { patrimonio: 60000, moral: 5, rel_representante: 4 },
           },
           fail: {

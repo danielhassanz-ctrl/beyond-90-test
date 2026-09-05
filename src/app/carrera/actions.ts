@@ -111,7 +111,7 @@ export async function resolveEvent(formData: FormData) {
           isMilestone: true,
           milestoneType: "contrato",
           imageScene:
-            "Photorealistic photo of the photographed man sitting at a wooden desk in a club office, signing a contract, flanked by a coach in tracksuit and a club president in a suit, camera flashes, official club photo style, warm indoor lighting",
+            "Photorealistic photo of the photographed man holding up a new football jersey with both hands, presented at an official club unveiling event, a club president in a suit standing next to him applauding, camera flashes, stadium or press room backdrop, official club photo style",
         }
       : buildFallbackContractEvent(newClub, agentName, isFirstSigning);
     playerUpdate.pending_event = contractEvent;
