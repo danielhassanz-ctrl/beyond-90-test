@@ -1,10 +1,14 @@
 import Image from "next/image";
+import { getClubColors } from "@/lib/clubColors";
+import { ClubCrest } from "./ClubCrest";
 
 /**
  * Tarjeta de jugador estilo "carta de cromo" (FIFA/FUT): foto a sangre,
  * dorsal grande, nombre en placa inferior. Se usa como visual por defecto
  * para los hitos que no tienen una imagen generada por IA propia — así
- * siempre hay algo bonito que compartir, con o sin foto.
+ * siempre hay algo bonito que compartir, con o sin foto. Se tiñe con los
+ * colores reales del club y lleva su escudo, para que no se sienta como
+ * "tu cara sola" sino como parte del equipo del momento.
  */
 export function PlayerCard({
   photoUrl,
@@ -23,18 +27,32 @@ export function PlayerCard({
   ribbon: string;
   seasonLabel: string;
 }) {
+  const colors = getClubColors(club);
+
   return (
-    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border-2 border-amber-400/80 bg-gradient-to-b from-amber-900/30 via-neutral-900 to-black shadow-[0_0_50px_-10px_rgba(245,183,64,0.35)]">
+    <div
+      className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border-2 shadow-[0_0_50px_-10px_rgba(245,183,64,0.35)]"
+      style={{ borderColor: `${colors.primary}CC` }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{ background: `linear-gradient(160deg, ${colors.primary}, ${colors.secondary})` }}
+      />
       {photoUrl ? (
-        <Image src={photoUrl} alt={name} fill className="object-cover object-top" />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-black" />
-      )}
+        <Image src={photoUrl} alt={name} fill className="object-cover object-top mix-blend-luminosity" />
+      ) : null}
+      <div
+        className="absolute inset-0"
+        style={{ background: `linear-gradient(160deg, ${colors.primary}55, ${colors.secondary}77)` }}
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/10" />
 
-      <div className="absolute inset-x-0 top-0 flex justify-center pt-3">
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between px-3 pt-3">
         <span className="rounded-full border border-amber-400/60 bg-black/50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-amber-300 backdrop-blur">
           {ribbon}
+        </span>
+        <span className="drop-shadow-md">
+          <ClubCrest club={club} size={28} />
         </span>
       </div>
 

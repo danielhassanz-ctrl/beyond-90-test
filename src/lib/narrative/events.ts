@@ -597,8 +597,6 @@ export const EVENTS: GameEvent[] = [
     category: "partido",
     title: "Te confirman como titular",
     description: "El entrenador te da la titularidad para el próximo partido de liga. Es tu oportunidad.",
-    isMilestone: true,
-    milestoneType: "titularidad",
     options: [
       {
         id: "a",
@@ -643,8 +641,6 @@ export const EVENTS: GameEvent[] = [
     category: "partido",
     title: "Gol en el último minuto",
     description: "Metes el gol de la victoria en el descuento. El estadio explota con tu nombre.",
-    isMilestone: true,
-    milestoneType: "gol_decisivo",
     options: [
       {
         id: "a",
@@ -1140,8 +1136,6 @@ export const EVENTS: GameEvent[] = [
     title: "Una leyenda se cruza contigo en el túnel",
     description:
       'Rui Cardoso, el 7 que marcó una generación entera y sigue compitiendo a los 39 años, te para antes de salir al campo. "Chaval, júntate a mí y aprenderás", te dice mirándote fijo.',
-    isMilestone: true,
-    milestoneType: "leyenda",
     imageScene:
       "Photorealistic photo in a stadium tunnel, the photographed man standing face to face with a veteran footballer legend, both in different club kits, intense respectful eye contact, dramatic tunnel lighting, sports photography style",
     options: [
@@ -1174,8 +1168,6 @@ export const EVENTS: GameEvent[] = [
     title: "Cazado por los paparazzi",
     description:
       "Nadia Solaris, una influencer de moda que conociste hace poco, te invita a cenar. Nadie tenía por qué enterarse... hasta que un fotógrafo os reconoce desde la calle.",
-    isMilestone: true,
-    milestoneType: "paparazzi",
     imageScene:
       "Paparazzi-style candid photo taken through a restaurant window at night, grainy flash photography, tabloid magazine aesthetic, the photographed man sitting at a table across from a stylish young woman with long dark hair, both caught off guard mid-conversation, warm restaurant lighting, subtle motion blur suggesting a hidden photographer, photorealistic",
     options: [
@@ -1203,8 +1195,6 @@ export const EVENTS: GameEvent[] = [
     category: "especial",
     title: "Un cantante famoso te menciona en una canción",
     description: 'Malume Baby, el artista del momento, saca un tema nuevo y en un verso dice tu nombre. Se vuelve tendencia en minutos.',
-    isMilestone: true,
-    milestoneType: "viral",
     options: [
       {
         id: "a",
@@ -1437,8 +1427,6 @@ export const EVENTS: GameEvent[] = [
     title: "Te conviertes en meme",
     description:
       "Una foto tuya con una cara rarísima en pleno festejo de gol se hace viral. En menos de un día, la gente la usa para hablar de absolutamente cualquier cosa menos de fútbol.",
-    isMilestone: true,
-    milestoneType: "viral",
     imageScene:
       "Photorealistic candid sports photo of the photographed man mid-celebration with an exaggerated, funny facial expression, stadium crowd blurred in the background, flash photography style",
     options: [
@@ -1623,8 +1611,6 @@ export const EVENTS: GameEvent[] = [
     title: "Te piden ser padrino de una gala benéfica",
     description:
       "Una fundación local te propone ser la cara visible de su gala anual contra el hambre infantil. Alfombra roja, esmoquin, fotos con la alta sociedad de la ciudad.",
-    isMilestone: true,
-    milestoneType: "gala",
     imageScene:
       "Photorealistic photo of the photographed man on a charity gala red carpet, wearing a tuxedo, camera flashes, elegant evening atmosphere",
     options: [
@@ -1705,8 +1691,6 @@ export const EVENTS: GameEvent[] = [
     title: "Un artista te quiere en su videoclip",
     description:
       "Malume Baby te propone un cameo de pocos segundos en el videoclip de su próximo single: aparecer marcando un gol imaginario en un escenario surrealista.",
-    isMilestone: true,
-    milestoneType: "viral",
     imageScene:
       "Photorealistic photo of the photographed man on a colorful music video set, dramatic stage lighting, mid football celebration pose, surreal artistic backdrop",
     options: [
@@ -1845,8 +1829,6 @@ export const EVENTS: GameEvent[] = [
     title: "Un videojuego de fútbol quiere tu cara",
     description:
       "Los desarrolladores de un popular videojuego de fútbol te piden licencia para incluir tu imagen y tus estadísticas reales en la próxima edición.",
-    isMilestone: true,
-    milestoneType: "patrocinio",
     options: [
       {
         id: "a",
@@ -1903,8 +1885,6 @@ export const EVENTS: GameEvent[] = [
     title: "Primera fila en la semana de la moda",
     description:
       "Una firma de moda te invita a sentarte en primera fila de su desfile durante la semana de la moda. Cámaras por todas partes, un mundo que no es el tuyo.",
-    isMilestone: true,
-    milestoneType: "moda",
     imageScene:
       "Photorealistic photo of the photographed man seated front row at a fashion week runway show, camera flashes, elegant outfit, runway blurred in background",
     options: [
@@ -1935,8 +1915,6 @@ export const EVENTS: GameEvent[] = [
     title: "Un trend viral usa tu nombre",
     description:
       "De la noche a la mañana, miles de vídeos usan un sonido que imita tu forma de celebrar los goles. El trend se vuelve masivo y ni tú entiendes bien por qué.",
-    isMilestone: true,
-    milestoneType: "viral",
     imageScene:
       "Photorealistic candid photo of the photographed man laughing while looking at his phone, casual setting, warm natural lighting",
     options: [
@@ -2025,8 +2003,6 @@ export const EVENTS: GameEvent[] = [
     title: "Una plataforma quiere hacer un documental sobre ti",
     description:
       "Una plataforma de streaming te propone un documental de varios capítulos contando tu historia, desde la cantera hasta ahora. Acceso total a tu vida durante meses.",
-    isMilestone: true,
-    milestoneType: "documental",
     imageScene:
       "Photorealistic photo of the photographed man being filmed by a documentary crew, cameras and boom microphone visible, candid behind-the-scenes atmosphere",
     options: [
@@ -2167,8 +2143,6 @@ export const EVENTS: GameEvent[] = [
     title: "Le regalas tu camiseta a un niño",
     description:
       "A la salida del estadio, un niño con un hospital bordado en la manga de la sudadera te espera junto a su padre. No pide autógrafo, solo verte de cerca un segundo.",
-    isMilestone: true,
-    milestoneType: "gesto",
     imageScene:
       "Photorealistic photo of the photographed man kneeling down to hand his match jersey to a child outside a stadium, warm emotional moment, soft evening light",
     options: [
@@ -2267,8 +2241,6 @@ export const EVENTS: GameEvent[] = [
     title: "Un actor de cine te pide una foto",
     description:
       "En un evento, un actor conocido —de esos que salen en las carteleras de todo el mundo— se acerca él primero a pedirte una foto contigo. El mundo al revés.",
-    isMilestone: true,
-    milestoneType: "curiosidad",
     imageScene:
       "Photorealistic candid photo of the photographed man posing for a photo with a generic well-dressed celebrity figure at an elegant event, camera flashes, warm ambient lighting",
     options: [
@@ -2315,8 +2287,6 @@ export const EVENTS: GameEvent[] = [
     title: "Portada de una revista deportiva importante",
     description:
       "Te llaman para protagonizar la portada de una de las revistas deportivas más leídas del país, con un reportaje a fondo sobre tu progresión.",
-    isMilestone: true,
-    milestoneType: "portada",
     imageScene:
       "Photorealistic magazine cover style photo of the photographed man in his club kit, dramatic studio lighting, confident pose, professional sports magazine aesthetic",
     options: [
@@ -2499,8 +2469,6 @@ export const EVENTS: GameEvent[] = [
     title: "Una leyenda visita el vestuario antes del partido",
     description:
       "Emiliano Rosso, el mejor futbolista de su generación ya retirado, aparece de improviso en el túnel de vestuarios antes del calentamiento. Se para justo delante de ti y te mira de arriba abajo un segundo eterno.",
-    isMilestone: true,
-    milestoneType: "leyenda",
     imageScene:
       "Photorealistic photo of the photographed man in a stadium tunnel shaking hands with an older distinguished football legend figure, respectful atmosphere, warm stadium lighting",
     options: [
@@ -2629,8 +2597,6 @@ export const EVENTS: GameEvent[] = [
     title: "Te ofrecen protagonizar el anuncio más absurdo del año",
     description:
       "Una marca de colonia te propone un anuncio a caballo entre lo épico y lo ridículo: apareces surgiendo de una piscina de pétalos vestido de gladiador mientras suena música orquestal. El guion es, literalmente, así.",
-    isMilestone: true,
-    milestoneType: "anuncio",
     imageScene:
       "Photorealistic photo of the photographed man dressed as a gladiator emerging dramatically from a pool of flower petals, cinematic lighting, over-the-top commercial photoshoot atmosphere",
     options: [
@@ -2733,8 +2699,6 @@ export const EVENTS: GameEvent[] = [
     title: "Te apuntas a un reality de cocina para famosos",
     description:
       "Entre risas aceptaste hace semanas participar en un programa de cocina para famosos, y hoy toca grabar en directo delante de un jurado exigente. Tu plato: una tortilla de patatas que tiene que decidir si eres de las que llevan cebolla.",
-    isMilestone: true,
-    milestoneType: "reality",
     imageScene:
       "Photorealistic photo of the photographed man wearing a chef apron in a TV cooking show set, cameras and studio lights around, playful competitive atmosphere",
     options: [
@@ -2805,8 +2769,6 @@ export const EVENTS: GameEvent[] = [
     title: "Cazado por los paparazzi",
     description:
       "Cenas tranquilo con alguien especial en un restaurante discreto de la ciudad. Al día siguiente, una revista publica las fotos: os habían fotografiado desde la calle durante toda la cena sin que os dierais cuenta.",
-    isMilestone: true,
-    milestoneType: "paparazzi",
     imageScene:
       "Photorealistic paparazzi-style photo taken through a restaurant window at night, the photographed man having a candlelit dinner with a blurred anonymous companion, grainy telephoto lens look, tabloid magazine aesthetic",
     options: [
@@ -2837,8 +2799,6 @@ export const EVENTS: GameEvent[] = [
     title: "Tu propia publicación se vuelve viral",
     description:
       "Subes una foto random a tus redes, sin pensarlo demasiado, y por algún motivo que no llegas a entender del todo se convierte en el contenido más comentado del día en todo el país.",
-    isMilestone: true,
-    milestoneType: "viral",
     imageScene:
       "Photorealistic photo styled as a phone screen showing a social media post going viral, the photographed man casually smiling in a selfie-style photo, likes and comments counters visible but blurred/illegible, warm natural lighting",
     options: [
@@ -2863,8 +2823,6 @@ export const EVENTS: GameEvent[] = [
     title: "Portada de Warca",
     description:
       'El diario deportivo más leído del país te pone en portada bajo un titular enorme. Tu representante te manda la foto de la portada antes incluso de que salga a los quioscos: "Esto no tiene precio."',
-    isMilestone: true,
-    milestoneType: "portada",
     imageScene:
       "Photorealistic photo of a sports newspaper front cover on a newsstand, the photographed man featured in a dramatic action pose, bold generic headline text, tabloid sports press style, other blurred magazines around it",
     options: [
@@ -3778,6 +3736,139 @@ export const EVENTS: GameEvent[] = [
     allowFreeText: true,
     freeTextPrompt: "¿Qué es lo primero que le dices?",
     minWeek: 70,
+  },
+  {
+    id: "vid-boda",
+    category: "vida",
+    title: "El día de la boda",
+    description:
+      "Después de años juntos, hoy te casas con Lucía. Media plantilla está entre los invitados, tu entrenador incluido, y hay más cámaras fuera esperando la salida que en la puerta de algunos estadios.",
+    isMilestone: true,
+    milestoneType: "boda",
+    imageScene:
+      "Photorealistic wedding photo of the photographed man in a formal suit, smiling, with a few teammates and a coach figure visible in the background, elegant wedding venue, warm golden hour light, joyful atmosphere",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué dices en tu discurso?",
+    options: [
+      {
+        id: "a",
+        label: "Un discurso emotivo delante de todos",
+        subtitle: "+Moral, momento para el recuerdo",
+        consequences: { moral: 12, fama: 4 },
+      },
+      {
+        id: "b",
+        label: "Una celebración discreta, sin grandes gestos",
+        subtitle: "Perfil bajo, igual de especial en privado",
+        consequences: { moral: 10 },
+      },
+    ],
+    requiresFlag: "convivencia",
+    minWeek: 55,
+  },
+  {
+    id: "rep-renovacion-contrato",
+    category: "representante",
+    priority: true,
+    title: "El club quiere que sigas",
+    description:
+      "El club te ofrece una renovación antes de que expire tu contrato actual: quieren dejar claro que cuentan contigo a largo plazo. Tu representante ya se ha sentado a hablar números con el director deportivo.",
+    isMilestone: true,
+    milestoneType: "contrato",
+    imageScene:
+      "Photorealistic photo of the photographed man holding up a club jersey with a new contract on the table, sitting next to a club director in a suit, official club office, camera flashes, warm lighting",
+    options: [
+      {
+        id: "a",
+        label: "Firmar sin dilatarlo, quieres seguir aquí",
+        subtitle: "+Relación con la afición",
+        consequences: { rel_aficion: 8, moral: 6 },
+      },
+      {
+        id: "b",
+        label: "Usar el interés de otros clubes para mejorar las condiciones",
+        subtitle: "+Patrimonio, jugada más fría",
+        consequences: { patrimonio: 20000, rel_representante: 5, rel_aficion: -2 },
+      },
+      {
+        id: "c",
+        label: "Pedir una cláusula de salida más baja, por si acaso",
+        subtitle: "Te cubres las espaldas",
+        consequences: { rel_representante: 3 },
+      },
+    ],
+    minWeek: 45,
+    minMedia: 58,
+  },
+  {
+    id: "fork-ascenso-division",
+    category: "partido",
+    priority: true,
+    title: "Partido de ascenso",
+    description:
+      "Última jornada de la temporada regular: ganar significa subir de categoría con el club, algo que la afición lleva años esperando. El ambiente en la ciudad no habla de otra cosa desde hace una semana.",
+    isMilestone: true,
+    milestoneType: "ascenso",
+    imageScene:
+      "Photorealistic sports photography of the photographed man celebrating promotion on the pitch, teammates jumping together, fans invading the field in the background, confetti, dramatic stadium lighting",
+    options: [
+      {
+        id: "a",
+        label: "Jugar el partido de tu vida por el ascenso",
+        subtitle: "Todo o nada",
+        consequences: {},
+        resolve: {
+          baseChance: 0.5,
+          statModifier: "forma",
+          success: {
+            text: "¡Ascenso conseguido! La afición invade el campo al pitido final. Llevarán tu nombre en la memoria de este club durante años.",
+            consequences: { fama: 14, rel_aficion: 15, moral: 12, media: 6 },
+          },
+          fail: {
+            text: "El ascenso se escapa en el último suspiro. El vestidero queda en silencio; habrá que intentarlo otra temporada más.",
+            consequences: { moral: -8, rel_aficion: -3 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Jugar con cabeza, sin forzar de más",
+        subtitle: "Gestión de la presión",
+        consequences: { moral: 2, rel_entrenador: 4 },
+      },
+    ],
+    minWeek: 30,
+    maxMedia: 70,
+  },
+  {
+    id: "par-mvp-partido-clave",
+    category: "partido",
+    priority: true,
+    title: "El mejor sobre el campo",
+    description:
+      "Terminas el partido más importante de la temporada como la gran figura: decisivo de principio a fin. Al pitido final, el speaker del estadio anuncia tu nombre como el mejor jugador del partido.",
+    isMilestone: true,
+    milestoneType: "mvp",
+    imageScene:
+      "Photorealistic sports photography of the photographed man receiving a man-of-the-match award trophy on the pitch after a game, stadium lights, teammates applauding in the background, camera flashes",
+    options: [
+      {
+        id: "a",
+        label: "Dedicar el premio a la afición",
+        subtitle: "+Relación con la afición",
+        consequences: { rel_aficion: 8, fama: 6, moral: 6 },
+      },
+      {
+        id: "b",
+        label: "Dedicarlo al vestuario, fue un trabajo de equipo",
+        subtitle: "+Vestuario",
+        consequences: { rel_vestuario: 8, fama: 4, moral: 4 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué dices al recoger el premio?",
+    minWeek: 30,
+    minMedia: 62,
   },
   {
     id: "vid-hermano-pequeno",
