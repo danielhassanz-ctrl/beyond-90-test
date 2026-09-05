@@ -47,11 +47,11 @@ export function PlayerCard({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/10" />
 
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between px-3 pt-3">
-        <span className="rounded-full border border-amber-400/60 bg-black/50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-amber-300 backdrop-blur">
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 px-3 pt-3">
+        <span className="whitespace-nowrap rounded-full border border-amber-400/60 bg-black/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-amber-300 backdrop-blur">
           {ribbon}
         </span>
-        <span className="drop-shadow-md">
+        <span className="shrink-0 drop-shadow-md">
           <ClubCrest club={club} size={28} />
         </span>
       </div>
