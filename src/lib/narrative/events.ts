@@ -3104,6 +3104,82 @@ export const EVENTS: GameEvent[] = [
     ],
     minWeek: 65,
   },
+  {
+    id: "par-etiqueta-fichaje-caro",
+    category: "partido",
+    priority: true,
+    title: "El peso del dorsal",
+    description:
+      "El club pagó una cifra enorme por ti y todo el mundo lo sabe. Sales de titular en un partido cualquiera de Liga y notas que cada balón que tocas se juzga con otra vara: no basta con jugar bien, hay que parecer que vales lo que costaste.",
+    options: [
+      {
+        id: "a",
+        label: "Jugar simple, sin intentar justificar el precio en una sola jugada",
+        subtitle: "Paciencia con el proceso",
+        consequences: { rel_entrenador: 5, moral: 3 },
+      },
+      {
+        id: "b",
+        label: "Forzar la jugada vistosa para callar bocas",
+        subtitle: "Todo o nada con la presión encima",
+        consequences: {},
+        resolve: {
+          baseChance: 0.4,
+          statModifier: "media",
+          success: {
+            text: "La jugada sale perfecta. Por primera vez sientes que el vestuario y la grada dejan de mirarte como \"el fichaje\" y empiezan a verte como uno más.",
+            consequences: { fama: 8, media: 5, rel_aficion: 6 },
+          },
+          fail: {
+            text: "La jugada se tuerce y el error se magnifica por lo que costaste. Un titular al día siguiente lo deja claro: \"otra vez el fichaje caro\".",
+            consequences: { moral: -6, media: -4, fama: -2 },
+          },
+        },
+      },
+    ],
+    minWeek: 20,
+    minMedia: 60,
+  },
+  {
+    id: "par-cesion-revancha",
+    category: "partido",
+    priority: true,
+    title: "El club que te dejó marchar, enfrente",
+    description:
+      "El sorteo del calendario te pone cara a cara contra el club que te cedió sin apenas darte una oportunidad. Nadie lo dice en voz alta en la rueda de prensa previa, pero todos en el vestuario saben que este partido es distinto para ti.",
+    isMilestone: true,
+    milestoneType: "revancha",
+    imageScene:
+      "Photorealistic sports photography of the photographed man celebrating an emotional goal with a restrained, pointed celebration, looking toward the opposing bench, stadium atmosphere, dramatic lighting",
+    options: [
+      {
+        id: "a",
+        label: "Guardarte las ganas de revancha y jugar con la cabeza fría",
+        subtitle: "Profesionalidad por delante de todo",
+        consequences: { moral: 4, rel_entrenador: 4 },
+      },
+      {
+        id: "b",
+        label: "Salir a demostrarles exactamente lo que se perdieron",
+        subtitle: "Motivación extra, riesgo de precipitarte",
+        consequences: {},
+        resolve: {
+          baseChance: 0.5,
+          statModifier: "forma",
+          success: {
+            text: "Marcas y decides no celebrarlo por respeto, aunque el mensaje llega alto y claro a todo el estadio. La prensa habla de tu partido durante días.",
+            consequences: { fama: 10, media: 5, moral: 8 },
+          },
+          fail: {
+            text: "Las ganas te pueden y terminas forzando decisiones que no son propias de tu juego. El partido se te escapa de las manos.",
+            consequences: { moral: -5, media: -3 },
+          },
+        },
+      },
+    ],
+    minWeek: 25,
+    requiresFlag: "cedido_antes",
+  },
 
   // ── VESTUARIO Y PRENSA (momentos guionados) ───────────────────────
   {
@@ -3200,7 +3276,14 @@ export const EVENTS: GameEvent[] = [
         id: "b",
         label: "Salir cedido para jugar todos los minutos",
         subtitle: "Menos exposición, más minutos",
-        consequences: { club: "Real Zaragoza", forma: 10, fama: -3, moral: 5, media: 4 },
+        consequences: {
+          club: "Real Zaragoza",
+          forma: 10,
+          fama: -3,
+          moral: 5,
+          media: 4,
+          flags: { cedido_antes: "Real Zaragoza" },
+        },
       },
     ],
     minWeek: 15,
