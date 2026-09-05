@@ -288,6 +288,8 @@ export const EVENTS: GameEvent[] = [
         consequences: { rel_vestuario: 5, forma: 1 },
       },
     ],
+    allowFreeText: true,
+    freeTextPrompt: "Si te presentas al grupo, ¿qué dices?",
   },
   {
     id: "ent-sesion-extra",
@@ -773,6 +775,8 @@ export const EVENTS: GameEvent[] = [
         consequences: { moral: -1 },
       },
     ],
+    allowFreeText: true,
+    freeTextPrompt: "Si decides desmentirlo, ¿qué dices exactamente?",
     minWeek: 4,
   },
   {
@@ -844,6 +848,8 @@ export const EVENTS: GameEvent[] = [
         consequences: { fama: 2, moral: -3 },
       },
     ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué aclaración das exactamente?",
     minWeek: 7,
   },
 
@@ -1210,6 +1216,8 @@ export const EVENTS: GameEvent[] = [
         consequences: { moral: -1 },
       },
     ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices al cámara cuando se da cuenta del error?",
     minWeek: 30,
   },
   {
@@ -1282,6 +1290,8 @@ export const EVENTS: GameEvent[] = [
         consequences: { fama: 2, moral: -3 },
       },
     ],
+    allowFreeText: true,
+    freeTextPrompt: "Si lo compartes tú también, ¿qué pie de foto le pones?",
     minWeek: 40,
   },
   {
@@ -1908,6 +1918,8 @@ export const EVENTS: GameEvent[] = [
         consequences: { moral: 2 },
       },
     ],
+    allowFreeText: true,
+    freeTextPrompt: "Si respondes con una indirecta, ¿cuál exactamente?",
     minWeek: 33,
   },
   {
@@ -3395,6 +3407,54 @@ export const EVENTS: GameEvent[] = [
     allowFreeText: true,
     freeTextPrompt: "¿Qué es lo primero que le dices?",
     minWeek: 70,
+  },
+  {
+    id: "vid-hermano-pequeno",
+    category: "vida",
+    title: "Tu hermano pequeño quiere ser como tú",
+    description:
+      "Tu hermano pequeño se ha apuntado a fútbol en el colegio y no para de repetir que quiere llegar donde has llegado tú. Tus padres te piden, entre risas, que le bajes un poco las expectativas... o que le eches una mano de verdad.",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices cuando te pregunta cómo hacerlo?",
+    options: [
+      {
+        id: "a",
+        label: "Involucrarte de verdad: llevarlo a entrenar contigo un día",
+        subtitle: "+Moral, momento familiar bonito",
+        consequences: { moral: 7, patrimonio: -500 },
+      },
+      {
+        id: "b",
+        label: "Darle ánimo desde la distancia, sin más",
+        subtitle: "Cariño con límites",
+        consequences: { moral: 3 },
+      },
+    ],
+    minWeek: 15,
+  },
+  {
+    id: "vid-diego-reaparece",
+    category: "vida",
+    title: "Diego reaparece",
+    description:
+      "Años después de aquel mensaje de felicitación, Diego —tu mejor amigo de la infancia, el que dejó el fútbol cuando tú seguiste— te escribe otra vez. No pide nada al principio, solo pregunta cómo estás de verdad, no la versión de las entrevistas.",
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le cuentas a Diego que no le contarías a nadie más?",
+    options: [
+      {
+        id: "a",
+        label: "Abrirte del todo, como cuando erais chavales",
+        subtitle: "+Moral, recuperas una amistad real",
+        consequences: { moral: 8 },
+      },
+      {
+        id: "b",
+        label: "Responder con cariño pero sin bajar la guardia",
+        subtitle: "Prudente",
+        consequences: { moral: 3 },
+      },
+    ],
+    minWeek: 60,
   },
   {
     id: "vid-llamada-madre",
