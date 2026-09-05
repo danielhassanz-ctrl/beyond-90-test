@@ -38,7 +38,15 @@ const CATEGORY_SCENES: Record<string, string> = {
  * escudo del club y un icono de categoría. Los momentos "hito" siguen
  * teniendo su propia imagen generada con la cara real del jugador.
  */
-export function EventScene({ club, category }: { club: string; category: string }) {
+export function EventScene({
+  club,
+  category,
+  titles = 0,
+}: {
+  club: string;
+  category: string;
+  titles?: number;
+}) {
   const hasClub = club && club !== NO_CLUB_YET;
   const colors = hasClub ? getClubColors(club) : { primary: "#D4AF37", secondary: "#111111" };
   const sceneUrl = CATEGORY_SCENES[category];
@@ -60,7 +68,7 @@ export function EventScene({ club, category }: { club: string; category: string 
       </span>
       {hasClub && (
         <span className="absolute right-2 top-2 drop-shadow-md">
-          <ClubCrest club={club} size={34} />
+          <ClubCrest club={club} size={34} titles={titles} />
         </span>
       )}
     </div>

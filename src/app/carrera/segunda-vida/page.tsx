@@ -64,6 +64,8 @@ export default async function SegundaVidaPage() {
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 
+  const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
+
   return (
     <main className="flex flex-1 justify-center p-6">
       <div className="w-full max-w-lg space-y-6 pb-12">
@@ -91,7 +93,7 @@ export default async function SegundaVidaPage() {
         </div>
 
         <div className="space-y-3 rounded-xl border border-panel-border bg-panel p-5 shadow-sm">
-          <EventScene club={player.second_club ?? player.club} category={event.category} />
+          <EventScene club={player.second_club ?? player.club} category={event.category} titles={clubTitleCount} />
           <h2 className="text-lg font-bold text-neutral-100">{event.title}</h2>
           <p className="text-sm text-neutral-400">{event.description}</p>
 

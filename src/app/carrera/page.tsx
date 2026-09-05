@@ -124,6 +124,8 @@ export default async function CarreraPage() {
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 
+  const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
+
   return (
     <main className="flex flex-1 justify-center p-6 pb-24">
       <div className="w-full max-w-lg space-y-6 pb-12">
@@ -168,9 +170,9 @@ export default async function CarreraPage() {
 
         <div className="space-y-3 rounded-xl border border-panel-border bg-panel p-5 shadow-sm">
           {event.category === "partido" && event.rivalClub ? (
-            <MatchScene club={player.club} rivalClub={event.rivalClub} />
+            <MatchScene club={player.club} rivalClub={event.rivalClub} titles={clubTitleCount} />
           ) : (
-            <EventScene club={player.club} category={event.category} />
+            <EventScene club={player.club} category={event.category} titles={clubTitleCount} />
           )}
           <p className="text-xs font-medium uppercase tracking-wide text-gold">
             {CATEGORY_LABELS[event.category]}
