@@ -65,14 +65,14 @@ export default async function Home() {
       <div className="absolute inset-0">
         <Image
           src="/hero-tunnel.jpg"
-          alt=""
+          alt="Futbolista de espaldas con la camiseta de Beyond 90 en el túnel de vestuarios"
           fill
           priority
           sizes="100vw"
-          className="object-cover object-top opacity-80"
+          className="object-cover object-top"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/70 via-neutral-950/40 to-neutral-950" />
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-neutral-950 via-neutral-950/85 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/40 via-transparent to-neutral-950" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent" />
       </div>
 
       <div className="relative z-10 flex flex-1 flex-col items-center px-6 py-16 text-center">
