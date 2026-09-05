@@ -3066,6 +3066,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 40,
+    minMedia: 62,
   },
   {
     id: "fork-gigante-europeo",
@@ -3093,6 +3094,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 80,
+    minMedia: 78,
   },
   {
     id: "fork-nuevo-reto",
@@ -3138,6 +3140,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 130,
+    minMedia: 82,
   },
   {
     id: "fork-premier-segundo-club",
@@ -3170,6 +3173,7 @@ export const EVENTS: GameEvent[] = [
     ],
     minWeek: 150,
     requiresFlag: "en_premier",
+    minMedia: 84,
   },
   {
     id: "especial-mentor-joven",
@@ -3504,6 +3508,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 50,
+    minMedia: 58,
   },
   {
     id: "especial-lesion-grave",
@@ -3582,6 +3587,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 90,
+    minMedia: 90,
   },
   {
     id: "fork-titulo-liga",
@@ -3621,6 +3627,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 40,
+    minMedia: 66,
   },
   {
     id: "fork-champions",
@@ -3660,6 +3667,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 95,
+    minMedia: 74,
   },
   {
     id: "sel-capitania",
@@ -3685,6 +3693,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 100,
+    minMedia: 72,
   },
   {
     id: "sel-mundial",
@@ -3726,6 +3735,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 110,
+    minMedia: 66,
   },
   {
     id: "sel-clasificacion-mundial",
@@ -3740,6 +3750,7 @@ export const EVENTS: GameEvent[] = [
     freeTextPrompt: "¿Qué le dices al grupo antes de saltar al campo?",
     imageScene:
       "Photorealistic sports photography of the photographed man in his national team kit, intense moment on the pitch during a decisive qualifying match, huge tension in the stadium, dramatic lighting",
+    minMedia: 65,
     options: [
       {
         id: "a",
@@ -3782,6 +3793,7 @@ export const EVENTS: GameEvent[] = [
     imageScene:
       "Photorealistic sports photography of the photographed man in his national team kit, intense moment on the pitch during a decisive European qualifying match, huge tension in the stadium, dramatic lighting",
     requiresConfederation: ["UEFA"],
+    minMedia: 65,
     options: [
       {
         id: "a",
@@ -3824,6 +3836,7 @@ export const EVENTS: GameEvent[] = [
     imageScene:
       "Photorealistic sports photography of the photographed man in his national team kit, intense moment on the pitch during a decisive South American qualifying match, huge tension in the stadium, dramatic lighting",
     requiresConfederation: ["CONMEBOL"],
+    minMedia: 65,
     options: [
       {
         id: "a",
@@ -3866,6 +3879,7 @@ export const EVENTS: GameEvent[] = [
     imageScene:
       "Photorealistic sports photography of the photographed man in his national team kit, celebrating passionately on a European Championship stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting",
     requiresConfederation: ["UEFA"],
+    minMedia: 68,
     options: [
       {
         id: "a",
@@ -3908,6 +3922,7 @@ export const EVENTS: GameEvent[] = [
     imageScene:
       "Photorealistic sports photography of the photographed man in his national team kit, celebrating passionately on a Copa America stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting",
     requiresConfederation: ["CONMEBOL"],
+    minMedia: 68,
     options: [
       {
         id: "a",
@@ -3968,6 +3983,7 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 155,
+    minMedia: 60,
   },
 
   // ── RETIRO (solo modo Pro) ─────────────────────────────────────

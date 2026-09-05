@@ -58,37 +58,61 @@ export async function pickNextEventSmart(
       (!event.requiresConfederation ||
         (playerConfederation !== null &&
           event.requiresConfederation.includes(playerConfederation))) &&
+      (event.minMedia === undefined || player.media >= event.minMedia) &&
       !usedEventIds.includes(event.id),
   );
 
   const priorityEligible = eligible.filter((event) => event.priority);
   const flavorEligible = eligible.filter((event) => !event.priority);
 
+  let chosen: GameEvent;
+
   if (priorityEligible.length > 0 && Math.random() < 0.3) {
-    return priorityEligible[Math.floor(Math.random() * priorityEligible.length)];
+    chosen = priorityEligible[Math.floor(Math.random() * priorityEligible.length)];
+  } else {
+    // De vez en cuando, en lugar de narrativa genérica, se muestra la ficha
+    // de un partido jugado (rival, marcador, rendimiento personal).
+    const matchEvent = Math.random() < 0.25 ? await generateMatchResult(player, history) : null;
+
+    if (matchEvent) {
+      chosen = matchEvent;
+    } else if (flavorEligible.length > 0 && Math.random() < 0.35) {
+      // El contenido escrito a mano (vestuario, fama, vida, momentos curiosos)
+      // necesita hueco propio: como generateAiEvent casi nunca falla, si no se
+      // reserva una franja fija aquí, todo ese contenido queda como respaldo
+      // que casi no se llega a ver nunca. Se sortea ANTES de intentar la IA.
+      chosen = flavorEligible[Math.floor(Math.random() * flavorEligible.length)];
+    } else {
+      const aiEvent = await generateAiEvent(player, history);
+      if (aiEvent) {
+        chosen = aiEvent;
+      } else {
+        const fallbackPool = flavorEligible.length > 0 ? flavorEligible : eligible;
+        chosen = fallbackPool.length > 0
+          ? fallbackPool[Math.floor(Math.random() * fallbackPool.length)]
+          : events[0];
+      }
+    }
   }
 
-  // De vez en cuando, en lugar de narrativa genérica, se muestra la ficha
-  // de un partido jugado (rival, marcador, rendimiento personal).
-  if (Math.random() < 0.25) {
-    const matchEvent = await generateMatchResult(player, history);
-    if (matchEvent) return matchEvent;
-  }
+  return maybeAddFreeText(chosen);
+}
 
-  // El contenido escrito a mano (vestuario, fama, vida, momentos curiosos)
-  // necesita hueco propio: como generateAiEvent casi nunca falla, si no se
-  // reserva una franja fija aquí, todo ese contenido queda como respaldo
-  // que casi no se llega a ver nunca. Se sortea ANTES de intentar la IA.
-  if (flavorEligible.length > 0 && Math.random() < 0.35) {
-    return flavorEligible[Math.floor(Math.random() * flavorEligible.length)];
-  }
-
-  const aiEvent = await generateAiEvent(player, history);
-  if (aiEvent) return aiEvent;
-
-  const fallbackPool = flavorEligible.length > 0 ? flavorEligible : eligible;
-  if (fallbackPool.length === 0) return events[0];
-  return fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+/**
+ * Igual que en la vida real, no todos los momentos importantes traen la
+ * opción de decir algo por tu cuenta — pero cualquiera podría. En vez de
+ * marcar a mano qué escenas la tienen (lo que la convierte en algo
+ * predecible, siempre los mismos personajes), se sortea en cada turno
+ * sobre CUALQUIER evento que no la traiga ya de fábrica.
+ */
+export function maybeAddFreeText(event: GameEvent): GameEvent {
+  if (event.allowFreeText) return event;
+  if (Math.random() >= 0.2) return event;
+  return {
+    ...event,
+    allowFreeText: true,
+    freeTextPrompt: "Si quieres, di o haz algo por tu cuenta en este momento (opcional)",
+  };
 }
 
 /**

@@ -110,6 +110,14 @@ export interface GameEvent {
   rivalClub?: string;
   /** Si se define, el evento solo es elegible si la selección del jugador pertenece a alguna de estas confederaciones (ej. Eurocopa, Copa América). */
   requiresConfederation?: ("UEFA" | "CONMEBOL")[];
+  /**
+   * Si se define, el evento solo es elegible si la media futbolística del
+   * jugador alcanza este mínimo. Así los grandes hitos (Real Madrid, Balón
+   * de Oro, Champions, selección) solo le llegan a quien de verdad rinde,
+   * y una carrera floja diverge hacia una historia más modesta en vez de
+   * ver siempre las mismas oportunidades que una carrera brillante.
+   */
+  minMedia?: number;
 }
 
 export interface CareerState {

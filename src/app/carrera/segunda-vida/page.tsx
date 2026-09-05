@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
-import { pickNextEvent } from "@/lib/narrative/engine";
+import { pickNextEvent, maybeAddFreeText } from "@/lib/narrative/engine";
 import { getSecondLifeEvents } from "@/lib/narrative/segundaVida";
 import { generateSecondLifeEvent } from "@/lib/narrative/ai";
 import { SECOND_CAREER_LABELS } from "@/types/career";
@@ -52,13 +52,14 @@ export default async function SegundaVidaPage() {
       .eq("player_id", player.id);
     const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
-    event =
+    event = maybeAddFreeText(
       (await generateSecondLifeEvent(player, player.second_career, historyForAi)) ??
-      pickNextEvent(
-        getSecondLifeEvents(player.second_career, player.second_club),
-        player.second_week,
-        usedEventIds,
-      );
+        pickNextEvent(
+          getSecondLifeEvents(player.second_career, player.second_club),
+          player.second_week,
+          usedEventIds,
+        ),
+    );
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 

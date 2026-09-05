@@ -106,7 +106,10 @@ async function callEventTool(
   category: EventCategory,
   idPrefix: string,
 ): Promise<GameEvent | null> {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error(`[callEventTool:${idPrefix}] no ANTHROPIC_API_KEY set`);
+    return null;
+  }
 
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -120,7 +123,10 @@ async function callEventTool(
     });
 
     const toolUse = response.content.find((block) => block.type === "tool_use");
-    if (!toolUse || toolUse.type !== "tool_use") return null;
+    if (!toolUse || toolUse.type !== "tool_use") {
+      console.error(`[callEventTool:${idPrefix}] no tool_use block in response`, JSON.stringify(response.content).slice(0, 500));
+      return null;
+    }
 
     const data = toolUse.input as {
       title?: string;
@@ -134,6 +140,7 @@ async function callEventTool(
     };
 
     if (!data.title || !data.description || !data.options || data.options.length < 2) {
+      console.error(`[callEventTool:${idPrefix}] incomplete tool input`, JSON.stringify(data).slice(0, 500));
       return null;
     }
 
@@ -146,7 +153,10 @@ async function callEventTool(
         consequences: sanitizeConsequences(o.consequences ?? {}),
       }));
 
-    if (options.length < 2) return null;
+    if (options.length < 2) {
+      console.error(`[callEventTool:${idPrefix}] fewer than 2 valid options after filtering`);
+      return null;
+    }
 
     const isMilestone = Boolean(data.is_milestone);
 
@@ -163,7 +173,8 @@ async function callEventTool(
       rivalClub: data.rival_club || undefined,
       options,
     };
-  } catch {
+  } catch (err) {
+    console.error(`[callEventTool:${idPrefix}] threw`, err instanceof Error ? err.message : err);
     return null;
   }
 }
