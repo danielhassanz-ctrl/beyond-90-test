@@ -109,13 +109,29 @@ export async function pickNextEventSmart(
  * tocan.
  */
 function addMatchContext(event: GameEvent, player: Player): GameEvent {
-  if (event.category !== "partido" || event.rivalClub) return event;
+  if (event.category !== "partido") {
+    return event;
+  }
+
+  // Si ya tiene un rival fijo, respetarlo
+  if (event.rivalClub) {
+    return event;
+  }
 
   const { rival, competition, stadium } = buildMatchContext(player.club, player.media);
+
+  // Si la IA generó el evento, puede que haya mencionado un rival diferente.
+  // Limpia referencias genéricas de rivales (ej: "el rival", "el contrincante")
+  // pero respeta nombres de equipos específicos que podrían ser intencionales.
+  let desc = event.description;
+  desc = desc.replace(/el rival(?:o)?(?:\s|,|\.)/gi, `${rival} `);
+  desc = desc.replace(/el contrincante(?:\s|,|\.)/gi, `${rival} `);
+  desc = desc.replace(/vuestro(?:\s+)?contrario(?:\s|,|\.)/gi, `${rival} `);
+
   return {
     ...event,
     rivalClub: rival,
-    description: `${player.club} vs ${rival}, ${competition}, ${stadium}. ${event.description}`,
+    description: `${player.club} vs ${rival}, ${competition}, ${stadium}. ${desc}`,
   };
 }
 

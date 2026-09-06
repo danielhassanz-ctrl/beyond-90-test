@@ -4367,6 +4367,99 @@ export const EVENTS: GameEvent[] = [
     ],
     minWeek: 115,
   },
+
+  // ── VIDA TEMPRANA (primeros meses de carrera) ──────────────────
+  {
+    id: "vid-primer-coche",
+    category: "vida",
+    title: "Tu padre te regala un coche",
+    description:
+      "Tu padre entra a casa con las llaves de un coche nuevo. 'Dijiste que querías uno desde que tenías diez años', te dice con una sonrisa. Es un modesto, pero es tuyo, y significa que algo has conseguido ya.",
+    minWeek: 6,
+    options: [
+      {
+        id: "emocionado",
+        label: "Emocionarte de verdad y darle un abrazo",
+        subtitle: "Un momento de sinceridad",
+        consequences: { moral: 8, patrimonio: -8000 },
+      },
+      {
+        id: "practico",
+        label: "Darle las gracias pero pensar en cómo mantenerlo",
+        subtitle: "Responsabilidad del futbolista",
+        consequences: { moral: 4, patrimonio: -5000 },
+      },
+    ],
+  },
+  {
+    id: "vid-fiesta-familia",
+    category: "vida",
+    title: "Fiesta familiar en una discoteca",
+    description:
+      "Tu familia quiere celebrar que ya eres jugador profesional. Reservan una mesa en la mejor discoteca de la ciudad. Amigos, primos, tíos... todos quieren verte.",
+    minWeek: 7,
+    options: [
+      {
+        id: "celebrar",
+        label: "Disfrutar la noche sin frenar",
+        subtitle: "+Moral, -Forma (cansancio)",
+        consequences: { moral: 10, forma: -4, patrimonio: -3000 },
+      },
+      {
+        id: "moderado",
+        label: "Estar pero no trasnochar, mañana entreno",
+        subtitle: "Disciplina",
+        consequences: { moral: 6, forma: 2, rel_entrenador: 3 },
+      },
+    ],
+  },
+  {
+    id: "vid-charla-entrenador",
+    category: "vestuario",
+    title: "El entrenador te cita en su despacho",
+    description:
+      "Después del entrenamiento te llama. Entra en su despacho sin saber si es bueno o malo. Se sienta, te mira a los ojos: 'Eres joven, tienes hambre, eso se ve. Pero aquí no basta. ¿Qué quieres conseguir realmente?'",
+    minWeek: 8,
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices al entrenador? (Tu ambición en una frase)",
+    options: [
+      {
+        id: "ambicioso",
+        label: "Dile que quieres ser una leyenda",
+        subtitle: "+Relación entrenador, +Moral",
+        consequences: { rel_entrenador: 8, moral: 6 },
+      },
+      {
+        id: "modesto",
+        label: "Di que solo quieres aprender y jugar",
+        subtitle: "Pragmático",
+        consequences: { rel_entrenador: 5, moral: 3 },
+      },
+    ],
+  },
+  {
+    id: "vid-compañeros-colegio",
+    category: "vida",
+    title: "Compañeros de clase te reconocen en la calle",
+    description:
+      "Salías del colegio (todavía vas a clase cuando no hay entrenos) y un grupo de compañeros te rodea. 'Eh, ¿es verdad que fichaste por el equipo? ¡Tío, qué pasada!' Todos quieren fotos, autógrafos.",
+    minWeek: 5,
+    options: [
+      {
+        id: "accesible",
+        label: "Tomarte fotos y hablar con todos",
+        subtitle: "+Fama, +Moral",
+        consequences: { fama: 6, moral: 5 },
+      },
+      {
+        id: "distante",
+        label: "Ser amable pero estar ocupado",
+        subtitle: "Mantener el enfoque",
+        consequences: { fama: 2, forma: 3 },
+      },
+    ],
+  },
+
   // ── RETIRO (solo modo Pro) ─────────────────────────────────────
   {
     id: "fork-retiro-pro",
