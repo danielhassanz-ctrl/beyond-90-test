@@ -173,9 +173,9 @@ export const SECOND_CAREER_LABELS: Record<SecondCareerRole, string> = {
 };
 
 export const MODE_LABELS: Record<CareerMode, string> = {
-  express: "Express (1-2 días)",
-  standard: "Standard (4-6 días)",
-  pro: "Pro (10-15 días)",
+  express: "Carrera corta (~15 eventos)",
+  standard: "Carrera media (~25 eventos)",
+  pro: "Carrera larga (~35 eventos)",
 };
 
 const SEASON_START_YEAR = 2026;
