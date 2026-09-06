@@ -11,8 +11,60 @@ import {
   describeCharacterReappearance,
   updateCharacterLastSeen,
 } from "@/lib/narrative/secondary-characters";
+import { NarrativeContent } from "@/lib/narrative/narrative-content";
 
 const MODEL = "claude-sonnet-5";
+
+/**
+ * Genera ideas narrativas para inyectar en prompts según contexto del jugador.
+ * Asegura variedad y riqueza emocional.
+ */
+function generateNarrativeHints(player: Player): string {
+  const hints: string[] = [];
+  const age = playerAge(player.week);
+
+  // Sugerir momentos emocionales según etapa
+  if (age < 20) {
+    hints.push("Juventud, debut, ansiedad de pertenecer");
+    const youthMoments = NarrativeContent.emotions.gol_decisivo;
+    if (youthMoments) hints.push(`Inspiración: ${youthMoments[0]}`);
+  } else if (age < 25) {
+    hints.push("Consolidación, rivalidad, primeros éxitos");
+    hints.push(`Idea: conflicto con entrenador o momento de reconocimiento`);
+  } else if (age < 30) {
+    hints.push("Pico de carrera, presión máxima, dilemas personales");
+    hints.push(`Idea: propuesta personal (matrimonio, hijo) o gran oferta`);
+  } else if (age < 35) {
+    hints.push("Veteranía, legado, últimas oportunidades");
+    hints.push(`Idea: homenaje, oferta exótica o reflexión sobre retiro`);
+  } else {
+    hints.push("Declive, cierre, preparación para segunda vida");
+    hints.push(`Idea: últimos partidos, reconocimiento, transición`);
+  }
+
+  // Sugerir tipos de momento según stats
+  if (player.moral < 40) {
+    hints.push("Momento crítico: conflicto, lesión, fracaso público");
+  } else if (player.fama > 80) {
+    hints.push("Moment de spotlight: presión mediática, escándalo, o gloria");
+  } else if (player.media > 85) {
+    hints.push("Elite mundial: ofertas de gigantes, presión, momentos históricos");
+  }
+
+  // Sugerir variación de tipo de evento
+  const roll = Math.random();
+  if (roll < 0.3) {
+    hints.push("Tipo: momento de gol o asistencia memorable");
+  } else if (roll < 0.5) {
+    hints.push("Tipo: conflicto o dilema personal/profesional");
+  } else if (roll < 0.7) {
+    hints.push("Tipo: cambio de vida (familia, dinero, relaciones)");
+  } else {
+    hints.push("Tipo: presión, escándalo, o momento de reconocimiento");
+  }
+
+  return hints.join("\n");
+}
 
 /**
  * Mejora un prompt de imagen para hacerlo más visual, específico y compartible.
@@ -368,8 +420,13 @@ export async function generateNextEventDynamic(
       ? `💝 OPORTUNIDAD NARRATIVA: ${lifeEvent.context}`
       : "";
 
+  const narrativeHints = generateNarrativeHints(player);
+
   const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista.
 Genera el PRÓXIMO evento ÚNICO para este jugador. **NUNCA repitas la premisa de los últimos eventos.**
+
+💡 PISTAS NARRATIVAS PARA VARIEDAD:
+${narrativeHints}
 
 JUGADOR:
 - Apellido: ${player.last_name}
@@ -442,9 +499,10 @@ ${COMMON_RULES}
 IMPORTANTE - EMOCIÓN Y COMPARTIBILIDAD:
 - DE VEZ EN CUANDO (10% de eventos): genera una escena GRACIOSA o ABSURDA (ej. se queda dormido en una conferencia de prensa, el árbitro confunde nombres, una anécdota rara en el hotel, su mascotas hace algo inesperado durante un evento, un entrenador dice algo ridículo).
 - Las mejores escenas son las que hacen SENTIR: rabia, risa, esperanza, tristeza, sorpresa. Busca emoción pura, no descripciones técnicas.
-- Si es momento importante (fichaje, gol decisivo, boda, primer hijo, Balón de Oro, retiro), ESCENA VISUAL Y MEMORABLE que merezca foto. Marca is_milestone TRUE.
-- Los dilemas tienen que tener PESO: ¿Dejo a mi pareja por ir a Arabia? ¿Me retiro honorable o juego con lesión? ¿Pongo la carrera o la familia primero? No plantees elecciones planas.
+- Si es momento importante (fichaje, gol decisivo, boda, primer hijo, Balón de Oro, retiro, nominación a premios, muerte familiar), ESCENA VISUAL Y MEMORABLE que merezca foto. Marca is_milestone TRUE.
+- Los dilemas tienen que tener PESO y opciones REALES: ¿Dejo a mi pareja por ir a Arabia? ¿Me retiro honorable o juego con lesión? ¿Pongo la carrera o la familia primero? ¿Dinero seguro vs. gloria? No plantees elecciones planas — cada opción tiene consecuencias vívidas.
 - EL AGENTE/REPRESENTANTE: A veces aparece dando consejo o presentando opciones (oportunidades de fichaje, ofertas, dilemas). PERO a veces NO aparece — tomas decisiones por tu cuenta (con pareja, familia, o iniciativa propia) sin consultarle. Que sea natural: no todas las decisiones requieren agente.
+- VARIACIÓN Y RIQUEZA: nunca repitas situaciones. Si fue "gol en minuto 90", la próxima escena de gol debe ser muy distinta (hat-trick, asistencia clave, gol tras regate imposible, gol en final, gol tras lesión recuperada). Cada momento debe sentirse ÚNICO e IRREPETIBLE en esa carrera.
 
 - ESTRUCTURA VARIADA: Alterna entre:
   * Momentos donde ÉL toma decisiones (oportunidad, presión externa)
