@@ -309,29 +309,44 @@ ${historyText}
 TIPO DE EVENTO AHORA: ${category === "vida" ? "VIDA REAL (fiestas, pareja, familia, dinero, vacaciones)" : `FUTBOLÍSTICO en categoría "${category}"`}
 ${positionContext}
 
+RESTRICCIONES POR ESTADO DEL JUGADOR:
+${
+  player.fama < 25
+    ? "⚠️ FAMA MUY BAJA (${player.fama}/100) — NO generes eventos donde celebridades/influencers lo mencionan. Solo eventos sobre su vida personal y carrera local. Las celebridades NUNCA saben quién es."
+    : player.fama < 50
+      ? "Fama media (${player.fama}/100) — Puede haber algo en prensa local/regional, pero NO celebridades internacionales ni influencers aún."
+      : "Fama alta (${player.fama}/100) — Puede haber celebridades, influencers, redes sociales. Genera eventos donde otros lo reconocen."
+}
+
 CONTEXTO DE EDAD/ETAPA (${stage}):
 ${
   stage === "Canterano"
-    ? "Joven sin experiencia. Fiestas con compañeros, primeras novias, padres presionan, amigos de barrio, competencia interna, cedencias."
+    ? "Joven sin experiencia. Pretemporada: entrenamientos duros, rivalidad con otros canteranos, descubrimiento por agentes. Fiestas con compañeros, primeras novias, padres presionan, amigos de barrio, competencia interna, cedencias."
     : stage === "Ascenso"
-      ? "Ganando experiencia, primeros goles/éxitos, lesiones leves, selección sub-21, presión aumenta, pareja importante, transferencia a club mayor."
+      ? "Ganando experiencia. Pretemporada: entrenamientos de verdad, rivales nuevos, competencia por titularidad. Primeros goles/éxitos, lesiones leves, selección sub-21, presión aumenta, pareja importante, transferencia a club mayor."
       : stage === "Pico"
-        ? "Eres una estrella: Champions, fichaje a club gigante, boda, hijo, portadas, oferta Arabia, presión mediática, lesiones serias."
-        : "Veterano: últimas oportunidades, mentoring joven, lesiones cuestionan futuro, divorcio posible, hijo adulto, retiro cerca, nostalgia."
+        ? "Eres una estrella. Pretemporada: presión de ser figura, rivalidades en el equipo, preparación para Champions. Champions, fichaje a club gigante, boda, hijo, portadas, oferta Arabia, presión mediática, lesiones serias."
+        : "Veterano. Pretemporada: compitiendo con jóvenes por minutos, últimas oportunidades. Últimas oportunidades, mentoring joven, lesiones cuestionan futuro, divorcio posible, hijo adulto, retiro cerca, nostalgia."
 }
 
 REGLAS CRÍTICAS:
 ${COMMON_RULES}
-- **OBLIGATORIO**: Este evento debe ser DIFERENTE de los anteriores. Mira "ÚLTIMOS EVENTOS" y NO repitas:
-  * El tema/premisa (si ya hubo "presión del entrenador", esta vez puede ser otra cosa)
-  * El personaje (si acabas de generar un momento con su pareja, no repitas pareja en el siguiente)
-  * La categoría de decisión (variar entre deportiva, personal, económica)
-- Esta ES su historia real, no una plantilla. Si ya tiene pareja/hijos/títulos (mira "SU VIDA PERSONAL"), tráelos cuando tenga sentido.
+- **OBLIGATORIO: NUNCA REPITAS PREMISA EXACTA**: Mira los títulos en "ÚLTIMOS EVENTOS". Si ves:
+  * "Presión del entrenador" → NO hagas otra escena de "entrenador presiona"
+  * "Pareja te reclama tiempo" + "Momento con pareja" → NO repitas pareja
+  * "Un cantante te menciona" + cualquier celebridad → NO generes otra celebridad mencionándote
+  * "Lesión leve en el tobillo" → NO hagas otra lesión sin importar qué parte del cuerpo
+
+- Esta ES su historia real, no una plantilla. Si ya tiene pareja/hijos/títulos (mira "SU VIDA PERSONAL"), tráelos PERO como parte de una NUEVA premisa, no repetida.
 - Si es evento futbolístico: incluye contexto de su posición específica (${player.position}).
 - Si es evento de vida: incluye dilemas reales (carrera vs. familia, gastar vs. ahorrar, diversión vs. enfoque).
 - Las decisiones deben tener consecuencias que se recuerden más adelante (si ignora a un amigo ahora, reaparece resentido luego).
 - is_milestone en true SOLO si es visualmente memorable (1 de cada 4-5 eventos). Si true, image_scene en inglés.
-- Nunca repitas ni referencias genéricas — nombres específicos, situaciones concretas.`;
+- Nunca repitas ni referencias genéricas — nombres específicos, situaciones concretas.
+- ESTRUCTURA VARIADA: Alterna entre:
+  * Momentos donde ÉL toma decisiones (oportunidad, presión externa)
+  * Momentos donde OTROS lo presionan (pareja, entrenador, representante)
+  * Momentos sobre CONSECUENCIAS (amigo reaparece, promesa se cumple/falla)`;
 
   const result = await callEventTool(prompt, category, "dynamic");
   if (result) {
