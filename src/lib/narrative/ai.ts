@@ -5,6 +5,12 @@ import { SECOND_CAREER_LABELS, playerAge } from "@/types/career";
 import { STARTING_AGENTS, pickStartingClubOffers } from "@/lib/constants";
 import { getSeasonContext, formatTournamentContext } from "@/lib/calendar/season";
 import { getCareerContext, shouldHaveClubOpportunity, shouldSuggestLifeEvent } from "@/lib/narrative/career-arc";
+import {
+  getSecondaryCharacters,
+  pickCharacterToReappear,
+  describeCharacterReappearance,
+  updateCharacterLastSeen,
+} from "@/lib/narrative/secondary-characters";
 
 const MODEL = "claude-sonnet-5";
 
@@ -428,6 +434,7 @@ ${COMMON_RULES}
 - Si es evento futbolístico: incluye contexto de su posición específica (${player.position}).
 - Si es evento de vida: incluye dilemas reales (carrera vs. familia, gastar vs. ahorrar, diversión vs. enfoque).
 - Las decisiones deben tener consecuencias que se recuerden más adelante (si ignora a un amigo ahora, reaparece resentido luego).
+- PERSONAJES SECUNDARIOS: De vez en cuando (10-15% de eventos), menciona personas del pasado del jugador: amigos de infancia, rivales de cantera, entrenadores viejos, expartejas, compañeros de primeros años. Son formas naturales de anclar la carrera en momentos emocionales (un amigo se casa, un rival lo felicita en redes, un entrenador viejo lo ve en TV). Inventa nombres realistas y hazlos reales — estos personajes pueden reaparece años después.
 - is_milestone en true SOLO si es visualmente memorable (1 de cada 4-5 eventos). Si true, image_scene en inglés describiendo una escena que ALGUIEN QUERRÍA COMPARTIR EN REDES.
 - Nunca repitas ni referencias genéricas — nombres específicos, situaciones concretas.
 - image_scene DEBE SER VISUAL Y ESPECÍFICO: incluir pose, expresión facial, ropa exacta (camiseta, marca), contexto preciso (dónde exactamente), luz, otros personajes con roles (no genéricos), detalles que hacen memorable (balón, trofeo, camiseta nueva, bandera, estadio lleno, etc). Ejemplo: NO "player signing contract" SÍ "young player in white kit smiling while firmly shaking hands with club director in team's marble executive office, official club crest on wall, morning light, slightly nervous but confident expression".

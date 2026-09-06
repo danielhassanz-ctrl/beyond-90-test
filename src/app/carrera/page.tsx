@@ -94,11 +94,14 @@ export default async function CarreraPage() {
 
   // Igual que la casa: si hay pareja, el texto y las opciones cambian
   // según su nombre, así que necesita construirse en el momento.
+  // Oferta Arabia: NO garantizada, solo probabilística (~35% de chance)
+  // No todos los jugadores reciben oferta de Arabia — depende de la atracción del mercado
   if (
     !event &&
     player.week >= 155 &&
     player.media >= 60 &&
-    !usedEventIds.includes("fork-oferta-arabia")
+    !usedEventIds.includes("fork-oferta-arabia") &&
+    Math.random() < 0.35  // 35% de probabilidad, no garantizado
   ) {
     event = buildOfertaArabiaEvent(player);
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);

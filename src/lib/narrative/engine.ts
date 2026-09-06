@@ -11,6 +11,7 @@ import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
 import { buildMatchContext } from "@/lib/constants";
 import { playerAge } from "@/types/career";
+import { getSeasonContext } from "@/lib/calendar/season";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -300,6 +301,21 @@ export async function pickNextEventDynamic(
     if (preseasoneEvent) {
       console.log(`[pickNextEventDynamic] Generated preseason event: "${preseasoneEvent.title}"`);
       return maybeAddFreeText(addMatchContext(preseasoneEvent, player));
+    }
+  }
+
+  // Ocasionalmente un personaje secundario reaparece (~10% de eventos después de semana 60)
+  // Esto crea momentos emocionales nostálgicos con amigos, rivales, entrenadores viejos
+  if (Math.random() < 0.1 && player.week > 60 && player.flags) {
+    // Importar dinámicamente para evitar circular imports
+    const { pickCharacterToReappear } = await import("./secondary-characters");
+    const charToReappear = pickCharacterToReappear(player);
+    if (charToReappear) {
+      console.log(
+        `[pickNextEventDynamic] Attempting character reappearance: ${charToReappear.name}`
+      );
+      // Por ahora, continuar con flujo normal pero podría generar evento especial aquí
+      // TODO: generar evento específico de reaparición
     }
   }
 
