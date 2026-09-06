@@ -91,7 +91,24 @@ export default async function Home() {
           Cada decisión importa.
         </p>
 
-        <div className="mt-auto w-full max-w-xs space-y-3 pb-8">
+        <div className="mt-auto w-full max-w-sm pt-16">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-panel-border bg-panel/80 p-5 backdrop-blur">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="space-y-1 text-left">
+                <div className="text-gold">{f.icon}</div>
+                <p className="text-xs font-bold uppercase tracking-wide text-gold">{f.title}</p>
+                <p className="text-xs leading-snug text-neutral-400">{f.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-6 text-[11px] uppercase tracking-widest text-neutral-500">
+            Beyond 90 · Beta
+          </p>
+          <p className="text-[11px] text-neutral-600">Tu progreso se guarda en la nube</p>
+        </div>
+
+        <div className="w-full max-w-xs space-y-3 pb-8">
           <Link
             href="/crear-jugador"
             className="flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-bold uppercase tracking-wide text-neutral-950 hover:bg-gold-soft transition-colors"
@@ -112,23 +129,6 @@ export default async function Home() {
             </svg>
             Iniciar sesión
           </Link>
-        </div>
-
-        <div className="mt-auto w-full max-w-sm pt-16">
-          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-panel-border bg-panel/80 p-5 backdrop-blur">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="space-y-1 text-left">
-                <div className="text-gold">{f.icon}</div>
-                <p className="text-xs font-bold uppercase tracking-wide text-gold">{f.title}</p>
-                <p className="text-xs leading-snug text-neutral-400">{f.text}</p>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-6 text-[11px] uppercase tracking-widest text-neutral-500">
-            Beyond 90 · Beta
-          </p>
-          <p className="text-[11px] text-neutral-600">Tu progreso se guarda en la nube</p>
         </div>
       </div>
     </main>
