@@ -12,6 +12,8 @@ import { getConfederation } from "@/lib/nations";
 import { buildMatchContext } from "@/lib/constants";
 import { playerAge } from "@/types/career";
 import { getSeasonContext } from "@/lib/calendar/season";
+import { shouldGenerateAdversity, pickAdversityType, describeAdversity, buildAdversityPrompt, updateAdversityTracker } from "@/lib/narrative/adversity";
+import { detectDeclineSignals, buildDeclinePrompt, describeDeclineContext } from "@/lib/narrative/decline";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -304,18 +306,88 @@ export async function pickNextEventDynamic(
     }
   }
 
+  // Declive emocional: reflexión sobre fin de carrera (edad 30+)
+  // Momento profundo sobre transición, legado, segunda vida
+  if (playerAge(player.week) >= 30 && Math.random() < 0.08 && player.week > 150) {
+    const declineSignals = detectDeclineSignals(player);
+    if (declineSignals.length >= 2) {
+      console.log(
+        `[pickNextEventDynamic] Generating decline reflection for ${player.last_name}, age ${playerAge(player.week)}`
+      );
+      const declinePrompt = buildDeclinePrompt(player, declineSignals);
+
+      const { callEventTool } = await import("./ai");
+      const declineEvent = await callEventTool(declinePrompt, "vida", `decline-${player.week}`);
+
+      if (declineEvent) {
+        return maybeAddFreeText({
+          ...declineEvent,
+          id: `decline-${Date.now()}`,
+          category: "especial",
+          isMilestone: true, // Los momentos de declive siempre son hitos
+        });
+      }
+    }
+  }
+
+  // Adversidades: momentos difíciles que generan tensión (lesiones, fracasos, descensos)
+  // ~1 cada 30-40 semanas, pero probabilidad aumenta con tiempo sin adversidad
+  if (shouldGenerateAdversity(player)) {
+    console.log(
+      `[pickNextEventDynamic] Generating adversity event for ${player.last_name}`
+    );
+    const adversityType = pickAdversityType(player);
+    const adversityDesc = describeAdversity(player, adversityType);
+    const adversityPrompt = buildAdversityPrompt(player, adversityType, adversityDesc);
+
+    const { callEventTool } = await import("./ai");
+    const adversityEvent = await callEventTool(adversityPrompt, "especial", `adversity-${adversityType}`);
+
+    if (adversityEvent) {
+      updateAdversityTracker(player, { lastAdversityWeek: player.week, adversitiesCount: 0 });
+      return maybeAddFreeText({
+        ...adversityEvent,
+        id: `adversity-${adversityType}-${Date.now()}`,
+        category: "especial",
+        isMilestone: Math.random() < 0.3, // 30% de las adversidades son hitos (momentos recordables)
+      });
+    }
+  }
+
   // Ocasionalmente un personaje secundario reaparece (~10% de eventos después de semana 60)
   // Esto crea momentos emocionales nostálgicos con amigos, rivales, entrenadores viejos
   if (Math.random() < 0.1 && player.week > 60 && player.flags) {
     // Importar dinámicamente para evitar circular imports
-    const { pickCharacterToReappear } = await import("./secondary-characters");
+    const { pickCharacterToReappear, describeCharacterReappearance } = await import("./secondary-characters");
     const charToReappear = pickCharacterToReappear(player);
     if (charToReappear) {
       console.log(
         `[pickNextEventDynamic] Attempting character reappearance: ${charToReappear.name}`
       );
-      // Por ahora, continuar con flujo normal pero podría generar evento especial aquí
-      // TODO: generar evento específico de reaparición
+      const charDesc = describeCharacterReappearance(charToReappear, player);
+      const { callEventTool } = await import("./ai");
+
+      const charPrompt = `Eres el director narrativo de "Beyond 90".
+
+JUGADOR: ${player.last_name}, ${playerAge(player.week)} años, media ${player.media}, en ${player.club}
+
+PERSONAJE: ${charToReappear.name} (${charToReappear.type}, relación: ${charToReappear.relationship})
+${charDesc}
+
+REGLAS:
+- Evento emocional sobre reaparición de alguien del pasado
+- 2-3 opciones sobre cómo reaccionar
+- Consecuencias en moral, fama, rel_aficion (emocionales)
+- allow_free_text en true
+- No is_milestone a menos que sea muy significativo`;
+
+      const charEvent = await callEventTool(charPrompt, "vida", `char-${charToReappear.id}`);
+      if (charEvent) {
+        return maybeAddFreeText({
+          ...charEvent,
+          id: `char-reappear-${charToReappear.id}-${Date.now()}`,
+        });
+      }
     }
   }
 
