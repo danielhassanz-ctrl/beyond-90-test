@@ -127,9 +127,9 @@ export const PERSONALITIES = [
 ] as const;
 
 export const MODE_OPTIONS = [
-  { value: "express", label: "Express", hint: "1-2 días de juego" },
-  { value: "standard", label: "Standard", hint: "4-6 días de juego" },
-  { value: "pro", label: "Pro", hint: "10-15 días de juego" },
+  { value: "express", label: "Carrera corta", hint: "~15 eventos" },
+  { value: "standard", label: "Carrera media", hint: "~25 eventos" },
+  { value: "pro", label: "Carrera larga", hint: "~35 eventos" },
 ] as const;
 
 /**
