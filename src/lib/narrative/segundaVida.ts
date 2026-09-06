@@ -900,10 +900,190 @@ const PRESIDENTE_EVENTS: GameEvent[] = [
     ],
     minWeek: 13,
   },
+  {
+    id: "sv-pres-nueva-cantera",
+    category: "segunda_vida",
+    title: "Inviertes en una academia de cantera propia",
+    description: "Construyes una cantera de élite europea, buscando formar talentos desde los 8 años en lugar de comprarlos a los 25.",
+    isMilestone: true,
+    milestoneType: "cantera_propia",
+    options: [
+      {
+        id: "a",
+        label: "Inversión total: la mejor academia del país",
+        subtitle: "Proyecto visionario a 20 años",
+        consequences: { patrimonio: -100000, reputacion: 15 },
+      },
+      {
+        id: "b",
+        label: "Algo más modesto, empezar pequeño",
+        subtitle: "Realismo financiero",
+        consequences: { patrimonio: -20000, reputacion: 5 },
+      },
+    ],
+    minWeek: 15,
+  },
+];
+
+const EXTRA_ENTRENADOR_EVENTS: GameEvent[] = [
+  {
+    id: "sv-ent-legado-final",
+    category: "segunda_vida",
+    title: "Te ofrecen escribir tu legado",
+    description: "Una editorial quiere tu autobiografía: todos los vestuarios, todas las decisiones, todos los secretos que guardaste durante años.",
+    isMilestone: true,
+    milestoneType: "autobiografia",
+    imageScene:
+      "Photorealistic photo of the photographed man in a study or library, surrounded by trophies and memorabilia from a legendary coaching career, thoughtful expression",
+    options: [
+      {
+        id: "a",
+        label: "Contarlo todo, sin censura",
+        subtitle: "Verdad pura, algunos se sentirán traicionados",
+        consequences: { reputacion: 8, patrimonio: 8000 },
+      },
+      {
+        id: "b",
+        label: "Una versión pulida, amable con los rivales",
+        subtitle: "Vende igual, deja amistades intactas",
+        consequences: { reputacion: 5, patrimonio: 5000 },
+      },
+    ],
+    minWeek: 25,
+  },
+  {
+    id: "sv-ent-hall-fama",
+    category: "segunda_vida",
+    title: "Te incluyen en el Salón de la Fama",
+    description: "La federación te reconoce como uno de los mejores entrenadores de todos los tiempos. Tu cara estará en las paredes del museo oficial.",
+    isMilestone: true,
+    milestoneType: "hall_fama",
+    imageScene:
+      "Photorealistic photo of the photographed man in formal attire at a grand hall-of-fame ceremony, surrounded by statues and plaques of legendary coaches, honored expression",
+    options: [
+      {
+        id: "a",
+        label: "Aceptarlo con humildad, reconocer a todos los que te ayudaron",
+        subtitle: "+Reputación genuina",
+        consequences: { reputacion: 14 },
+      },
+      {
+        id: "b",
+        label: "Usarlo como plataforma para tu marca personal",
+        subtitle: "+Patrimonio, menos humildad",
+        consequences: { reputacion: 7, patrimonio: 12000 },
+      },
+    ],
+    minWeek: 28,
+  },
+];
+
+const EXTRA_AGENTE_EVENTS: GameEvent[] = [
+  {
+    id: "sv-age-mundial-cliente",
+    category: "segunda_vida",
+    title: "Tu cliente gana el Balón de Oro",
+    description: "Uno de tus jugadores es coronado el mejor del mundo. Tu nombre está ligado a su éxito de forma indeleble.",
+    isMilestone: true,
+    milestoneType: "balon_oro_cliente",
+    imageScene:
+      "Photorealistic photo of the photographed man in a sharp suit at an award gala, celebrating next to your superstar client receiving the Balón de Oro, proud expression",
+    options: [
+      {
+        id: "a",
+        label: "Celebrar en grande, todo el mundo sabe que fue trabajo tuyo",
+        subtitle: "+Reputación mediática",
+        consequences: { reputacion: 12, patrimonio: 35000 },
+      },
+      {
+        id: "b",
+        label: "Dejar que él brille solo, tú trabajas en la sombra",
+        subtitle: "Profesionalismo puro, menos visibilidad",
+        consequences: { reputacion: 8, patrimonio: 25000 },
+      },
+    ],
+    minWeek: 22,
+  },
+  {
+    id: "sv-age-fondo-propio",
+    category: "segunda_vida",
+    title: "Lanzan un fondo de inversión deportiva contigo de socio",
+    description: "Un grupo de inversores te propone crear un fondo que sea dueño de acciones de múltiples jugadores. Serías el cara visible de una nueva forma de hacer negocios en el fútbol.",
+    isMilestone: true,
+    milestoneType: "fondo_deportivo",
+    imageScene:
+      "Photorealistic photo of the photographed man in a modern financial office with screens showing player data and market statistics, powerful stance",
+    options: [
+      {
+        id: "a",
+        label: "Lanzar el fondo en grande, revolucionar la industria",
+        subtitle: "Patrimonio enorme, cambias el juego",
+        consequences: { patrimonio: 150000, reputacion: 10 },
+      },
+      {
+        id: "b",
+        label: "Rechazarlo, prefieres la independencia de tu agencia",
+        subtitle: "Menos dinero, más libertad",
+        consequences: { reputacion: 6 },
+      },
+    ],
+    minWeek: 20,
+  },
+];
+
+const EXTRA_PRESIDENTE_EVENTS: GameEvent[] = [
+  {
+    id: "sv-pres-internacional",
+    category: "segunda_vida",
+    title: "Te eligen para presidir la federación",
+    description: "El fútbol nacional te reconoce como su mejor gestor. Te ofrecen dejar el club para asumir la presidencia de la federación.",
+    isMilestone: true,
+    milestoneType: "presidente_federacion",
+    imageScene:
+      "Photorealistic photo of the photographed man in formal attire at a grand federation headquarters, seated in a presidential office with national symbols",
+    options: [
+      {
+        id: "a",
+        label: "Asumir el cargo, llevar el fútbol a otro nivel",
+        subtitle: "Legado nacional",
+        consequences: { reputacion: 20, patrimonio: -20000 },
+      },
+      {
+        id: "b",
+        label: "Rechazarlo, tu proyecto en el club aún no está terminado",
+        subtitle: "Local antes que nacional",
+        consequences: { reputacion: 10 },
+      },
+    ],
+    minWeek: 25,
+  },
+  {
+    id: "sv-pres-supervivencia",
+    category: "segunda_vida",
+    title: "El club enfrenta su crisis financiera más grave",
+    description: "Una mala temporada, un fichaje que fracasó y decisiones arriesgadas desembocan en una crisis económica que amenaza la supervivencia del club. Tienes que tomar decisiones duras.",
+    allowFreeText: true,
+    freeTextPrompt: "¿Cómo salvaguardas el club?",
+    options: [
+      {
+        id: "a",
+        label: "Vender a tus mejores jugadores, buscar supervivencia",
+        subtitle: "Duele, pero salva al club",
+        consequences: { reputacion: -8, patrimonio: -80000 },
+      },
+      {
+        id: "b",
+        label: "Buscar un inversor de emergencia",
+        subtitle: "Menos control, pero se salva",
+        consequences: { reputacion: 5, patrimonio: -40000 },
+      },
+    ],
+    minWeek: 23,
+  },
 ];
 
 export function getSecondLifeEvents(role: SecondCareerRole, club: string | null): GameEvent[] {
-  if (role === "entrenador") return [buildEntrenadorPrimerDia(club), ...ENTRENADOR_EVENTS];
-  if (role === "agente") return AGENTE_EVENTS;
-  return [buildPresidenteAsumir(club), ...PRESIDENTE_EVENTS];
+  if (role === "entrenador") return [buildEntrenadorPrimerDia(club), ...ENTRENADOR_EVENTS, ...EXTRA_ENTRENADOR_EVENTS];
+  if (role === "agente") return [...AGENTE_EVENTS, ...EXTRA_AGENTE_EVENTS];
+  return [buildPresidenteAsumir(club), ...PRESIDENTE_EVENTS, ...EXTRA_PRESIDENTE_EVENTS];
 }
