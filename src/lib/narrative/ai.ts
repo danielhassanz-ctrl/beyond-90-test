@@ -3,8 +3,63 @@ import type { Consequences, EventCategory, GameEvent, SecondCareerRole } from "@
 import type { Player } from "@/types/player";
 import { SECOND_CAREER_LABELS, playerAge } from "@/types/career";
 import { STARTING_AGENTS, pickStartingClubOffers } from "@/lib/constants";
+import { getSeasonContext, formatTournamentContext } from "@/lib/calendar/season";
+import { getCareerContext, shouldHaveClubOpportunity, shouldSuggestLifeEvent } from "@/lib/narrative/career-arc";
 
 const MODEL = "claude-sonnet-5";
+
+/**
+ * Mejora un prompt de imagen para hacerlo más visual, específico y compartible.
+ * Asegura que incluya: pose, expresión, ropa, luz, contexto, detalles emocionales.
+ */
+function enhanceImagePrompt(basePrompt: string, context: string = ""): string {
+  // Si el prompt ya es bueno (incluye luz, expresión, pose), no tocarlo
+  if (basePrompt.includes("light") && basePrompt.includes("expression") && basePrompt.length > 100) {
+    return basePrompt;
+  }
+
+  // Agregar elementos visuales específicos si faltan
+  const enhancements: Record<string, string> = {
+    firma: "shaking hands firmly with club director, official executive office with marble, warm morning light from window, determined confident expression, official club crest visible on wall behind",
+    debut: "young player in white kit, hands on hips, determined focused expression, stadium in background with fans, afternoon sunlight, intense but proud moment",
+    gol: "celebrating with both arms raised, genuine joy and pride on face, teammates running towards, stadium crowd blurred celebrating, golden hour light",
+    lesión: "sitting on medical bench, ice pack on leg, pensive concerned expression, medical staff blurred in background, gym indoor lighting",
+    boda: "formal suit, bride in white dress, couple smiling together, intimate moment, warm soft lighting, church or venue interior",
+    hijo: "holding baby carefully, tender loving expression, soft intimate indoor lighting, genuine family moment",
+    trofeo: "holding trophy above head, genuine joy and pride on face, teammates celebrating in background, stadium lighting",
+    despedida: "veteran player, contemplative expression, walking from stadium, sunset lighting, nostalgic emotional mood",
+  };
+
+  // Detectar el tipo de evento
+  let enhancement = "";
+  for (const [key, value] of Object.entries(enhancements)) {
+    if (basePrompt.toLowerCase().includes(key) || context.toLowerCase().includes(key)) {
+      enhancement = value;
+      break;
+    }
+  }
+
+  // Si encontramos una mejora, combinarla con el prompt base
+  if (enhancement) {
+    const cleaned = basePrompt
+      .replace(/photorealistic|professional|high quality/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (cleaned.length < 50) {
+      return `Photorealistic professional scene: ${enhancement}. Emotional, shareable moment.`;
+    } else {
+      return `${cleaned}. Enhanced with: ${enhancement}. Photorealistic, shareable moment.`;
+    }
+  }
+
+  // Si no hay mejora específica, agregar elementos genéricos
+  if (!basePrompt.includes("expression") && !basePrompt.includes("light")) {
+    return `${basePrompt}. Photorealistic, emotional expression on face, professional dynamic lighting, shareable social moment.`;
+  }
+
+  return basePrompt;
+}
 
 const FLAVOR_CATEGORIES: EventCategory[] = [
   "entrenamiento",
@@ -286,6 +341,27 @@ export async function generateNextEventDynamic(
     }
   }
 
+  // Obtén el contexto del calendario (época de la temporada)
+  const seasonContext = getSeasonContext(player.week, player.nation);
+  const tournamentNote = seasonContext.hasMajorTournament
+    ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)}`
+    : "";
+
+  // Obtén el contexto de carrera y oportunidades narrativas
+  const careerContext = getCareerContext(player);
+  const clubOpportunity = shouldHaveClubOpportunity(player);
+  const lifeEvent = shouldSuggestLifeEvent(player);
+
+  const clubContext =
+    clubOpportunity.club && Math.random() < 0.4 // Solo 40% de chance de incluir en prompt
+      ? `⚠️ OPORTUNIDAD DE FICHAJE: ${clubOpportunity.club} — ${clubOpportunity.reason}`
+      : "";
+
+  const lifeEventContext =
+    lifeEvent.suggestion && Math.random() < 0.3 // Solo 30% de chance de incluir
+      ? `💝 OPORTUNIDAD NARRATIVA: ${lifeEvent.context}`
+      : "";
+
   const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista.
 Genera el PRÓXIMO evento ÚNICO para este jugador. **NUNCA repitas la premisa de los últimos eventos.**
 
@@ -305,6 +381,17 @@ ${describePersonalLife(player.flags)}
 
 ÚLTIMOS EVENTOS (no repitas estos temas):
 ${historyText}
+
+CONTEXTO DE CARRERA:
+- Tipo: ${careerContext.stage.toUpperCase()}
+- ${careerContext.description}
+- Focos narrativos típicos: ${careerContext.eventFocus.join(", ")}
+${clubContext ? `\n${clubContext}` : ""}
+${lifeEventContext ? `\n${lifeEventContext}` : ""}
+
+CONTEXTO TEMPORAL:
+- Período de temporada: ${seasonContext.period.toUpperCase()} (${seasonContext.monthApprox})
+- ${seasonContext.description}${tournamentNote}
 
 TIPO DE EVENTO AHORA: ${category === "vida" ? "VIDA REAL (fiestas, pareja, familia, dinero, vacaciones)" : `FUTBOLÍSTICO en categoría "${category}"`}
 ${positionContext}
@@ -341,8 +428,17 @@ ${COMMON_RULES}
 - Si es evento futbolístico: incluye contexto de su posición específica (${player.position}).
 - Si es evento de vida: incluye dilemas reales (carrera vs. familia, gastar vs. ahorrar, diversión vs. enfoque).
 - Las decisiones deben tener consecuencias que se recuerden más adelante (si ignora a un amigo ahora, reaparece resentido luego).
-- is_milestone en true SOLO si es visualmente memorable (1 de cada 4-5 eventos). Si true, image_scene en inglés.
+- is_milestone en true SOLO si es visualmente memorable (1 de cada 4-5 eventos). Si true, image_scene en inglés describiendo una escena que ALGUIEN QUERRÍA COMPARTIR EN REDES.
 - Nunca repitas ni referencias genéricas — nombres específicos, situaciones concretas.
+- image_scene DEBE SER VISUAL Y ESPECÍFICO: incluir pose, expresión facial, ropa exacta (camiseta, marca), contexto preciso (dónde exactamente), luz, otros personajes con roles (no genéricos), detalles que hacen memorable (balón, trofeo, camiseta nueva, bandera, estadio lleno, etc). Ejemplo: NO "player signing contract" SÍ "young player in white kit smiling while firmly shaking hands with club director in team's marble executive office, official club crest on wall, morning light, slightly nervous but confident expression".
+
+IMPORTANTE - EMOCIÓN Y COMPARTIBILIDAD:
+- DE VEZ EN CUANDO (10% de eventos): genera una escena GRACIOSA o ABSURDA (ej. se queda dormido en una conferencia de prensa, el árbitro confunde nombres, una anécdota rara en el hotel, su mascotas hace algo inesperado durante un evento, un entrenador dice algo ridículo).
+- Las mejores escenas son las que hacen SENTIR: rabia, risa, esperanza, tristeza, sorpresa. Busca emoción pura, no descripciones técnicas.
+- Si es momento importante (fichaje, gol decisivo, boda, primer hijo, Balón de Oro, retiro), ESCENA VISUAL Y MEMORABLE que merezca foto. Marca is_milestone TRUE.
+- Los dilemas tienen que tener PESO: ¿Dejo a mi pareja por ir a Arabia? ¿Me retiro honorable o juego con lesión? ¿Pongo la carrera o la familia primero? No plantees elecciones planas.
+- EL AGENTE/REPRESENTANTE: A veces aparece dando consejo o presentando opciones (oportunidades de fichaje, ofertas, dilemas). PERO a veces NO aparece — tomas decisiones por tu cuenta (con pareja, familia, o iniciativa propia) sin consultarle. Que sea natural: no todas las decisiones requieren agente.
+
 - ESTRUCTURA VARIADA: Alterna entre:
   * Momentos donde ÉL toma decisiones (oportunidad, presión externa)
   * Momentos donde OTROS lo presionan (pareja, entrenador, representante)
@@ -374,6 +470,26 @@ export async function generateAiEvent(
         .join("\n")
     : "(todavía no vivió ningún evento)";
 
+  // Obtén contexto completo para la narración
+  const seasonContext = getSeasonContext(player.week, player.nation);
+  const tournamentNote = seasonContext.hasMajorTournament
+    ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)}`
+    : "";
+
+  const careerContext = getCareerContext(player);
+  const clubOpportunity = shouldHaveClubOpportunity(player);
+  const lifeEvent = shouldSuggestLifeEvent(player);
+
+  const clubContext =
+    clubOpportunity.club && Math.random() < 0.4
+      ? `⚠️ OPORTUNIDAD PROBABLE: ${clubOpportunity.club} — ${clubOpportunity.reason}`
+      : "";
+
+  const lifeEventContext =
+    lifeEvent.suggestion && Math.random() < 0.3
+      ? `💝 NARRATIVA PERSONAL: ${lifeEvent.context}`
+      : "";
+
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
 Genera el PRÓXIMO evento de la carrera para este jugador. Categoría de este evento: ${category}.
 
@@ -396,6 +512,17 @@ ${describePersonalLife(player.flags)}
 ÚLTIMOS EVENTOS DE SU CARRERA (no repitas el tema ni la premisa):
 ${historyText}
 
+CONTEXTO DE CARRERA:
+- Tipo: ${careerContext.stage.toUpperCase()}
+- ${careerContext.description}
+- Eventos típicos: ${careerContext.eventFocus.join(", ")}
+${clubContext ? `\n${clubContext}` : ""}
+${lifeEventContext ? `\n${lifeEventContext}` : ""}
+
+CONTEXTO TEMPORAL:
+- Período de temporada: ${seasonContext.period.toUpperCase()} (${seasonContext.monthApprox})
+- ${seasonContext.description}${tournamentNote}
+
 REGLAS:
 ${COMMON_RULES}
 - El evento tiene que encajar con el club, la edad, la posición y el momento actual del jugador — nada genérico que podría pasar en cualquier carrera. Si tiene solo ${age} años y acaba de llegar a un club modesto, no debería sonar a superestrella todavía.
@@ -407,8 +534,14 @@ ${COMMON_RULES}
 - OBLIGATORIO también con las decisiones normales (no solo lo escrito a mano libre): mira qué eligió en "ÚLTIMOS EVENTOS" y, de vez en cuando (no siempre, pero sí con regularidad), haz que una elección pasada tenga una consecuencia real más adelante — si pasó de un canterano que le pedía consejo, ese chaval puede reaparecer ya asentado o resentido; si ignoró a alguien que le escribió, puede notarse la distancia después; si le faltó al respeto a un entrenador o a un compañero, esa relación puede tensarse en una escena futura sin que se lo esperara. Las decisiones de este jugador tienen que pesar, no ser anecdóticas.
 - "ÚLTIMOS EVENTOS" solo cubre los últimos turnos: para vínculos que deben recordarse mucho más adelante (pasada ya esa ventana), usa memorable_thread cuando esta escena presente o resuelva algo así (un personaje nuevo con nombre, una promesa, un rencor). Y revisa siempre "SU VIDA PERSONAL HASTA AHORA": ahí aparecerán esos hilos antiguos aunque ya no salgan en el historial reciente — tráelos de vuelta cuando encajen, igual que con la pareja o los hijos.
 - No repitas la premisa de ningún evento del historial reciente.
-- Marca is_milestone en true SOLO si esta escena es visualmente memorable y merece una foto (ej. el entrenador te echa una bronca delante de todo el vestuario, una cena romántica, una reunión tensa con tu representante, un momento en el túnel de vestuarios) — esto debería pasar en más o menos 1 de cada 4-5 eventos, no siempre. El resto de las veces, is_milestone en false y no incluyas image_scene.
-- Cuando is_milestone sea true, escribe también image_scene: una descripción en INGLÉS, estilo prompt de generación de imagen, fotorrealista, describiendo la escena concreta (dónde está, quién más aparece, la luz, el encuadre) para recrearla a partir de una foto real del jugador. Cualquier otra persona en la escena debe describirse genérica (nunca un nombre real).`;
+- Marca is_milestone en true SOLO si esta escena es visualmente memorable y merece una FOTO PARA REDES (un momento que alguien querría screenshot y compartir). Esto debería ser 1 de cada 4-5 eventos. El resto, is_milestone en false.
+- Cuando is_milestone sea true, escribe image_scene: descripción INGLÉS fotorrealista para recrear desde foto real del jugador. OBLIGATORIO incluir: (1) pose específica (shaking hands, arms raised, holding something, embracing, sitting, etc), (2) expresión facial exacta (joy, determination, concern, pride, etc), (3) ropa/vestuario específico, (4) luz (morning light, sunset, stadium lights, etc), (5) contexto visual (office, stadium, field, church, etc), (6) otros personajes con roles (club director, coach, family, teammates), (7) detalles emocionales que hacen memorable (trofeo, camiseta, balón, uniformes). Ejemplo BUENO: "young player in white home kit shaking hands firmly with club director in marble executive office, official club crest on wall, warm morning sunlight through window, focused determined expression, proud moment". Ejemplo MALO: "player signing contract".
+
+MEMORABILIDAD Y REDES SOCIALES:
+- DE VEZ EN CUANDO (10% eventos): genera una escena DIVERTIDA O ABSURDA que haga reír (se duerme en conferencia, árbitro confunde nombres, mascota interfiere en evento, entrenador dice algo ridículo, anécdota rara del viaje, momentos "WTF" pero reales en fútbol).
+- Los mejores momentos generan EMOCIÓN PURA: rabia, risa, esperanza, nostalgia, sorpresa. No redacción técnica sin alma.
+- Los dilemas TIENEN QUE DOLER: ¿Dejo pareja por Arabia? ¿Juego con lesión? ¿Carrera o familia? ¿Traicion o lealtad? Decisiones que el jugador va a recordar.
+- Milestone = momento que el jugador querría congelar y compartir. No es solo "consigo gol", es "gol de taquicardias en el derbi en el minuto 93".`;
 
   return callEventTool(prompt, category, "ai");
 }
@@ -468,7 +601,23 @@ ${COMMON_RULES}
 - Si ya tiene pareja o hijos y no es su primer contrato (implica mudanza de ciudad o de país), puede mencionarse de pasada cómo afecta el cambio a su vida fuera del campo — no en cada fichaje, pero sí cuando aporte algo.
 - Al menos una opción debe modificar el patrimonio (prima de fichaje, o coste de contratar un abogado, etc.) con una cifra distinta a la del salario.`;
 
-  return callEventTool(prompt, "representante", isFirstSigning ? "contrato-debut" : "contrato");
+  const event = await callEventTool(prompt, "representante", isFirstSigning ? "contrato-debut" : "contrato");
+
+  // Marcar como milestone: la firma del contrato es un momento visual y memorable
+  if (event) {
+    const imageScene = enhanceImagePrompt(
+      `${age}-year-old footballer in formal corporate boardroom shaking hands firmly with club director in business suit, ${agent} visible watching in background, official contract on polished wooden table, team crest on wall, professional photography, warm office lighting from windows, genuine determined expression, proud moment, shareable social media moment`,
+      "firma"
+    );
+    return {
+      ...event,
+      isMilestone: true,
+      milestoneType: "contrato",
+      imageScene,
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -656,6 +805,12 @@ ${COMMON_RULES}
 
   const event = await callEventTool(prompt, "entrenamiento", "debut-pretemp-2");
   if (!event) return null;
+
+  // Mejorar image_scene si es necesario: debe ser visual, específico, compartible
+  if (event.imageScene) {
+    event.imageScene = enhanceImagePrompt(event.imageScene, theme);
+  }
+
   return { ...event, id: "debut-pretemp-2", isMilestone: true, milestoneType: "lesion_debut" };
 }
 
@@ -672,6 +827,77 @@ ${COMMON_RULES}
 
   const event = await callEventTool(prompt, "vida", "debut-pretemp-3");
   return event ? { ...event, id: "debut-pretemp-3" } : null;
+}
+
+const PRESEASON_THEMES = [
+  "se encuentra con ex compañeros de sus años en la cantera y uno le cuenta cómo le va en otro club",
+  "el cuerpo técnico lo reta a competir por la titularidad con un refuerzo que acaba de fichar",
+  "vuelve a trabajar en el estadio después del descanso y siente la adrenalina del regreso",
+  "tiene una lesión menor en pretemporada que lo hace cuestionarse si está al 100%",
+  "el vestuario ha cambiado mucho: nuevas caras, nuevos liderazgos, tiene que encontrar su lugar",
+  "gana un amistoso de forma destacada y el entrenador le da un voto de confianza directo",
+  "sufre un enfrentamiento físico en un entrenamiento táctico que refleja la tensión del verano",
+  "la pareja o la familia cuestionan el nivel de dedicación que requiere la pretemporada",
+  "negocia una renovación de contrato antes de que arranque la temporada oficial",
+];
+
+export async function generatePreseasoneEvent(
+  player: Player,
+  season: number,
+  history: HistoryItem[],
+): Promise<GameEvent | null> {
+  const theme = pickOne(PRESEASON_THEMES);
+  const historyText = history.length
+    ? history
+        .slice(-5)
+        .map(
+          (h) =>
+            `- "${h.title}" → eligió: "${h.chosen}"` +
+            (h.freeText ? ` — y escribió: "${h.freeText}"` : ""),
+        )
+        .join("\n")
+    : "(últimos eventos de su carrera)";
+
+  const seasonContext = getSeasonContext(player.week, player.nation);
+  const tournamentNote = seasonContext.hasMajorTournament
+    ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)}`
+    : "";
+
+  const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
+Genera una escena de PRETEMPORADA para esta temporada (verano de ${2026 + season}). La escena es: ${theme}.
+
+JUGADOR:
+- Apellido: ${player.last_name}
+- Edad: ${playerAge(player.week)} años
+- Club: ${player.club}
+- Posición: ${player.position}
+- Personalidad: ${player.personality}
+- Media: ${player.media}/99, Moral: ${player.moral}/100
+
+ÚLTIMOS EVENTOS:
+${historyText}
+
+CONTEXTO TEMPORAL:
+- Período de temporada: ${seasonContext.period.toUpperCase()} (${seasonContext.monthApprox})
+- ${seasonContext.description}${tournamentNote}
+
+INSTRUCCIONES:
+- Escena de PRETEMPORADA: entrenamientos, amistosos, adaptación a nuevos compañeros, presión del verano.
+- Debe ser un momento visual/memorable (es decir, marca is_milestone en true).
+- 2 opciones sobre cómo afrontar este momento de pretemporada.
+- Escribe image_scene en inglés describiendo la escena (estadio, vestuario, o área de entrenamientos).
+- allow_free_text: true con una pregunta corta.
+- Haz que refleje la etapa de su carrera: a mayor media/fama, más presión; a menor, más competencia por hacerse un hueco.`;
+
+  const event = await callEventTool(prompt, "entrenamiento", `preseason-${season}`);
+  return event
+    ? {
+        ...event,
+        id: `preseason-${season}`,
+        isMilestone: true,
+        milestoneType: "pretemporada",
+      }
+    : null;
 }
 
 const SECOND_LIFE_CONTEXT: Record<SecondCareerRole, string> = {

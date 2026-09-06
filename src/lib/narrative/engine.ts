@@ -10,6 +10,7 @@ import { generateAiEvent, generateMatchResult, generateNextEventDynamic, type Hi
 import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
 import { buildMatchContext } from "@/lib/constants";
+import { playerAge } from "@/types/career";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -283,6 +284,25 @@ export async function pickNextEventDynamic(
   history: HistoryItem[],
 ): Promise<GameEvent> {
   console.log(`[pickNextEventDynamic] Starting for ${player.last_name}, week=${player.week}, fama=${player.fama}`);
+
+  // Detecta si estamos en pretemporada (inicio de nueva temporada)
+  // Pretemporada ocurre en las semanas 1, 11, 21, 31... (inicio de cada temporada)
+  const weekInSeason = ((player.week - 1) % 10) + 1;
+  const season = Math.floor((player.week - 1) / 10);
+  const age = playerAge(player.week);
+
+  const isPreseasson = weekInSeason === 1 && season > 0 && age >= 17;
+
+  if (isPreseasson) {
+    console.log(`[pickNextEventDynamic] Preseason detected for ${player.last_name}, season ${season}, age ${age}`);
+    const { generatePreseasoneEvent } = await import("./ai");
+    const preseasoneEvent = await generatePreseasoneEvent(player, season, history);
+    if (preseasoneEvent) {
+      console.log(`[pickNextEventDynamic] Generated preseason event: "${preseasoneEvent.title}"`);
+      return maybeAddFreeText(addMatchContext(preseasoneEvent, player));
+    }
+  }
+
   const event = await generateNextEventDynamic(player, history);
   if (event) {
     console.log(`[pickNextEventDynamic] Got event from AI: "${event.title}"`);

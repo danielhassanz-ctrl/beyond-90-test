@@ -52,7 +52,7 @@ export function EventScene({
   const sceneUrl = CATEGORY_SCENES[category];
 
   return (
-    <div className="relative h-52 w-full overflow-hidden rounded-lg bg-neutral-900">
+    <div className="relative h-40 w-full overflow-hidden rounded-lg bg-neutral-900">
       {sceneUrl && <Image src={sceneUrl} alt="" fill className="object-cover" />}
       <div
         className="absolute inset-0"

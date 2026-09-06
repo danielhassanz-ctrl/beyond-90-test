@@ -126,48 +126,32 @@ export default async function CarreraPage() {
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
 
   return (
-    <main className="flex flex-1 justify-center p-6 pb-24">
-      <div className="w-full max-w-lg space-y-6 pb-12">
-        <div className="flex items-center justify-between gap-3">
+    <main className="flex flex-1 justify-center p-4 pb-24">
+      <div className="w-full max-w-lg space-y-4 pb-8">
+        <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-gold">
               Temporada {seasonLabel(player.week)} · {playerAge(player.week)} años · {player.club}
             </p>
-            <h1 className="text-xl font-bold text-neutral-100">{player.last_name}</h1>
-            <Link href="/mi-jugador" className="text-sm text-neutral-400 hover:text-gold">
-              Mi jugador
-            </Link>
+            <h1 className="text-lg font-bold text-neutral-100">{player.last_name}</h1>
           </div>
           <MediaBadge value={player.media} />
         </div>
 
-        <div className="grid grid-cols-3 gap-3 rounded-lg border border-panel-border bg-panel p-4">
+        <div className="grid grid-cols-3 gap-2 rounded-lg border border-panel-border bg-panel p-3 text-xs">
           <StatBar label="Forma" value={player.forma} />
           <StatBar label="Moral" value={player.moral} />
           <StatBar label="Fama" value={player.fama} />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 rounded-lg border border-panel-border bg-panel p-4">
+        <div className="grid grid-cols-2 gap-2 rounded-lg border border-panel-border bg-panel p-3 text-xs">
           <StatBar label="Entrenador" value={player.rel_entrenador} />
           <StatBar label="Afición" value={player.rel_aficion} />
           <StatBar label="Vestuario" value={player.rel_vestuario} />
           <StatBar label="Representante" value={player.rel_representante} />
         </div>
 
-        <Link
-          href="/mi-jugador/patrimonio"
-          className="flex items-center justify-between rounded-lg border border-panel-border bg-panel px-4 py-3 hover:border-gold/50"
-        >
-          <span className="text-xs uppercase tracking-wide text-neutral-400">Patrimonio</span>
-          <span className="flex items-center gap-1 text-base font-bold text-gold">
-            {player.patrimonio.toLocaleString("es")} €
-            <span className="text-neutral-500">›</span>
-          </span>
-        </Link>
-
-        <LifeThreads flags={player.flags} />
-
-        <div className="space-y-3 rounded-xl border border-panel-border bg-panel p-5 shadow-sm">
+        <div className="space-y-2 rounded-xl border border-panel-border bg-panel p-4 shadow-sm">
           {event.category === "partido" && event.rivalClub ? (
             <MatchScene club={player.club} rivalClub={event.rivalClub} titles={clubTitleCount} />
           ) : (
@@ -176,11 +160,11 @@ export default async function CarreraPage() {
           <p className="text-xs font-medium uppercase tracking-wide text-gold">
             {CATEGORY_LABELS[event.category]}
           </p>
-          <h2 className="text-lg font-bold text-neutral-100">{event.title}</h2>
-          <p className="text-sm text-neutral-400">{event.description}</p>
+          <h2 className="text-base font-bold text-neutral-100">{event.title}</h2>
+          <p className="text-xs text-neutral-400">{event.description}</p>
 
           {whatIsAtStake(event).length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-1">
+            <div className="flex flex-wrap gap-1 pt-0.5">
               <span className="text-xs text-neutral-500">En juego:</span>
               {whatIsAtStake(event).map((key) => (
                 <span
@@ -193,7 +177,7 @@ export default async function CarreraPage() {
             </div>
           )}
 
-          <form action={resolveEvent} className="space-y-3 pt-2">
+          <form action={resolveEvent} className="space-y-2 pt-1">
             <input type="hidden" name="event_id" value={event.id} />
 
             <div className="space-y-2">

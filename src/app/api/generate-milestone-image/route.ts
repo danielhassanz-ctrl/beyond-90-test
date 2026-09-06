@@ -1,41 +1,64 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
+import { createClient } from "@/lib/supabase/server";
 
-export async function POST(req: NextRequest) {
+export const maxDuration = 60;
+
+export async function POST(request: Request) {
   try {
-    const { milestoneId, photoUrl, imagePrompt, userId } = await req.json();
+    const { milestoneId, photoUrl, imagePrompt, userId } = await request.json();
 
     if (!milestoneId || !photoUrl || !imagePrompt || !userId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return Response.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    // Genera la imagen en background (no espera)
-    // Esta función se ejecuta sin bloquear la respuesta
-    (async () => {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    console.log(`[generate-milestone-image] Starting for milestone ${milestoneId}, prompt length: ${imagePrompt.length}`);
+
+    // Genera imagen combinando foto del jugador con el prompt
+    const buffer = await generatePlayerImage(photoUrl, imagePrompt);
+    if (!buffer) {
+      console.error(`[generate-milestone-image] Image generation returned null`);
+      return Response.json(
+        { error: "Image generation failed" },
+        { status: 500 }
       );
+    }
 
-      const buffer = await generatePlayerImage(photoUrl, imagePrompt);
-      if (buffer) {
-        const imageUrl = await uploadGeneratedImage(supabase, userId, buffer, "hito");
-        if (imageUrl) {
-          // Actualiza el milestone con la imagen generada
-          await supabase
-            .from("milestones")
-            .update({ image_url: imageUrl })
-            .eq("id", milestoneId);
-        }
-      }
-    })();
+    // Sube la imagen generada
+    const supabase = await createClient();
+    const imageUrl = await uploadGeneratedImage(supabase, userId, buffer, "milestone");
+    if (!imageUrl) {
+      console.error(`[generate-milestone-image] Image upload failed`);
+      return Response.json(
+        { error: "Image upload failed" },
+        { status: 500 }
+      );
+    }
 
-    // Responde inmediatamente sin esperar a que termine la generación
-    return NextResponse.json({ success: true, milestoneId });
+    // Actualiza el milestone con la URL de la imagen
+    const { error: updateError } = await supabase
+      .from("milestones")
+      .update({ image_url: imageUrl })
+      .eq("id", milestoneId);
+
+    if (updateError) {
+      console.error(`[generate-milestone-image] Milestone update failed:`, updateError.message);
+      return Response.json(
+        { error: "Milestone update failed" },
+        { status: 500 }
+      );
+    }
+
+    console.log(`[generate-milestone-image] SUCCESS: milestone ${milestoneId} updated with image`);
+    return Response.json({ success: true, imageUrl });
   } catch (error) {
-    console.error("[generate-milestone-image]", error);
-    return NextResponse.json({ error: "Failed to start image generation" }, { status: 500 });
+    console.error("[generate-milestone-image] Exception:", error);
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
   }
 }
