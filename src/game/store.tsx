@@ -34,12 +34,33 @@ interface GameContextValue {
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
+const BACKUP_SAVE_KEY = `${SAVE_KEY}:backup`;
+
+function parseSave(raw: string | null): GameState | null {
+  if (!raw) return null;
+  try {
+    return migrate(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
 
 function read(): GameState | null {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return null;
-    return migrate(JSON.parse(raw));
+    const primaryRaw = localStorage.getItem(SAVE_KEY);
+    const primary = parseSave(primaryRaw);
+    if (primary) return primary;
+
+    const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
+    const backup = parseSave(backupRaw);
+    if (!backup) return null;
+
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(backup));
+    } catch {
+      /* Safari/private storage can reject writes; recovered game stays playable in memory. */
+    }
+    return backup;
   } catch {
     return null;
   }
@@ -47,8 +68,18 @@ function read(): GameState | null {
 
 function write(state: GameState | null) {
   try {
-    if (!state) localStorage.removeItem(SAVE_KEY);
-    else localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    if (!state) {
+      localStorage.removeItem(SAVE_KEY);
+      localStorage.removeItem(BACKUP_SAVE_KEY);
+      return;
+    }
+
+    const nextRaw = JSON.stringify(state);
+    const currentRaw = localStorage.getItem(SAVE_KEY);
+    if (parseSave(currentRaw)) {
+      localStorage.setItem(BACKUP_SAVE_KEY, currentRaw as string);
+    }
+    localStorage.setItem(SAVE_KEY, nextRaw);
   } catch {
     /* almacenamiento lleno o bloqueado: la partida sigue en memoria */
   }
