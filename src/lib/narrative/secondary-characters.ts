@@ -50,9 +50,18 @@ export function trackSecondaryCharacter(
 
 /**
  * Lee todos los personajes secundarios del jugador del historial.
+ * OPTIMIZACIÓN: caching para no parsear JSON cada vez
  */
+const characterCache = new Map<string, SecondaryCharacter[]>();
+
 export function getSecondaryCharacters(player: Player): SecondaryCharacter[] {
   if (!player.flags) return [];
+
+  // Cache check por player ID
+  const cacheKey = player.id;
+  if (characterCache.has(cacheKey)) {
+    return characterCache.get(cacheKey)!;
+  }
 
   const characters: SecondaryCharacter[] = [];
   for (const [key, value] of Object.entries(player.flags)) {
@@ -64,7 +73,17 @@ export function getSecondaryCharacters(player: Player): SecondaryCharacter[] {
       }
     }
   }
+
+  // Cache for this player
+  characterCache.set(cacheKey, characters);
   return characters;
+}
+
+/**
+ * Invalida cache cuando se actualiza un personaje (rara operación)
+ */
+function invalidateCache(playerId: string): void {
+  characterCache.delete(playerId);
 }
 
 /**
@@ -141,6 +160,7 @@ export function updateCharacterLastSeen(
         if (char.id === characterId) {
           char.lastSeenWeek = player.week;
           player.flags[key] = JSON.stringify(char);
+          invalidateCache(player.id);
           break;
         }
       } catch {

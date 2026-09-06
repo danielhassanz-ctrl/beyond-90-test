@@ -198,7 +198,7 @@ const COMMON_RULES = `- Escribe en castellano de España (tú, nunca vos/tenés/
 - Las consecuencias numéricas deben ser sutiles para stats/relaciones (entre -10 y +10). El patrimonio puede moverse más si la escena lo justifica (ej. una prima de fichaje, un contrato nuevo).
 - Cualquier persona famosa que aparezca (cantante, influencer, otro futbolista) debe ser CLARAMENTE FICTICIA — nunca un nombre real.`;
 
-async function callEventTool(
+export async function callEventTool(
   prompt: string,
   category: EventCategory,
   idPrefix: string,

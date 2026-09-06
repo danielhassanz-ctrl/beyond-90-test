@@ -17,21 +17,36 @@ export interface AdversityTracker {
   adversitiesCount: number;
 }
 
+// Cache para rastreadores de adversidad (optimización)
+const adversityTrackerCache = new Map<string, AdversityTracker>();
+
 /**
  * Obtiene el rastreador de adversidades del jugador.
+ * OPTIMIZACIÓN: caching para evitar parse JSON repetido
  */
 export function getAdversityTracker(player: Player): AdversityTracker {
   if (!player.flags) player.flags = {};
 
+  // Check cache first
+  const cached = adversityTrackerCache.get(player.id);
+  if (cached) {
+    return cached;
+  }
+
   const stored = player.flags.adversity_tracker;
+  let tracker: AdversityTracker = { lastAdversityWeek: 0, adversitiesCount: 0 };
+
   if (typeof stored === "string") {
     try {
-      return JSON.parse(stored);
+      tracker = JSON.parse(stored);
     } catch {
-      return { lastAdversityWeek: 0, adversitiesCount: 0 };
+      tracker = { lastAdversityWeek: 0, adversitiesCount: 0 };
     }
   }
-  return { lastAdversityWeek: 0, adversitiesCount: 0 };
+
+  // Cache it
+  adversityTrackerCache.set(player.id, tracker);
+  return tracker;
 }
 
 /**
@@ -42,6 +57,9 @@ export function updateAdversityTracker(player: Player, tracker: AdversityTracker
   tracker.lastAdversityWeek = player.week;
   tracker.adversitiesCount++;
   player.flags.adversity_tracker = JSON.stringify(tracker);
+  // Invalidate cache
+  adversityTrackerCache.delete(player.id);
+  adversityTrackerCache.set(player.id, tracker);
   return player;
 }
 
