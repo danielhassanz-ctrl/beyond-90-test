@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { applyConsequences, nextWeekGap, resolveOption } from "@/lib/narrative/engine";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
@@ -275,5 +276,6 @@ export async function resolveEvent(formData: FormData) {
     redirect("/carrera/retiro");
   }
 
+  // Redirect siempre fuerza el navegador a recarga el servidor
   redirect("/carrera");
 }

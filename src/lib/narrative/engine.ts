@@ -15,6 +15,7 @@ import { getSeasonContext } from "@/lib/calendar/season";
 import { shouldGenerateAdversity, pickAdversityType, describeAdversity, buildAdversityPrompt, updateAdversityTracker } from "@/lib/narrative/adversity";
 import { detectDeclineSignals, buildDeclinePrompt, describeDeclineContext } from "@/lib/narrative/decline";
 import { pickCharacterToReappear, describeCharacterReappearance, updateCharacterLastSeen } from "@/lib/narrative/secondary-characters";
+import { shouldBeeFunnyMoment, pickRandomFunnyMoment } from "@/lib/narrative/funny-surreal";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -389,6 +390,42 @@ REGLAS:
           category: "vida",
         });
       }
+    }
+  }
+
+  // Momentos cómicos y surrealistas (~10% de eventos)
+  // Para romper la tensión y crear momentos memorables ridículos/absurdos
+  if (shouldBeeFunnyMoment()) {
+    console.log(
+      `[pickNextEventDynamic] Generating funny/surreal moment for ${player.last_name}`
+    );
+    const funnyMoment = pickRandomFunnyMoment();
+    const age = playerAge(player.week);
+    const funnyPrompt = `Eres el director narrativo de "Beyond 90", el simulador de carrera de futbolista.
+
+JUGADOR: ${player.last_name}, ${age} años, media ${player.media}, en ${player.club}
+
+MOMENTO ABSURDO/CÓMICO:
+"${funnyMoment}"
+
+REGLAS:
+- Crea un evento que use este momento absurdo/cómico como base narrativa
+- Tono: humor, absurdo, surrealismo — rompe la tensión y sorprende
+- 2-3 opciones sobre cómo reaccionar (reír, avergonzarse, aprovechar, ignorar)
+- Consecuencias mayormente positivas en moral/fama (la gente ama los momentos raros)
+- image_scene: DEBE ser visualmente ridícula/absurda/memorable — es compartible
+- allow_free_text: true
+- is_milestone: true si es particularmente viral/memorable
+- Marcar como "divertido" o "absurdo" en el título`;
+
+    const funnyEvent = await callEventTool(funnyPrompt, "especial", `funny-${Date.now()}`);
+    if (funnyEvent) {
+      return maybeAddFreeText({
+        ...funnyEvent,
+        id: `funny-${Date.now()}`,
+        category: "especial",
+        isMilestone: Math.random() < 0.4,
+      });
     }
   }
 
