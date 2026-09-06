@@ -4460,6 +4460,58 @@ export const EVENTS: GameEvent[] = [
     ],
   },
 
+  // ── PREMIOS Y TROFEOS INDIVIDUALES ────────────────────────────
+  {
+    id: "premio-pichichi",
+    category: "especial",
+    priority: true,
+    title: "Pichichi: máximo goleador",
+    description:
+      "Terminada la temporada, los números hablan por sí solos. Eres el máximo goleador de la liga. 40 goles en 38 partidos. Los periodistas lo confirman antes incluso de que se haga oficial.",
+    isMilestone: true,
+    milestoneType: "premio",
+    minWeek: 50,
+    options: [
+      {
+        id: "a",
+        label: "Celebrarlo con el equipo",
+        subtitle: "+Rel_vestuario, +Fama",
+        consequences: { fama: 16, rel_vestuario: 10, moral: 10 },
+      },
+      {
+        id: "b",
+        label: "Mantenerlo discreto, ya hay Champions",
+        subtitle: "Pragmático",
+        consequences: { fama: 8, forma: 3 },
+      },
+    ],
+  },
+  {
+    id: "premio-mvp-torneo",
+    category: "especial",
+    priority: true,
+    title: "MVP de la Copa del Rey",
+    description:
+      "Después de jugar toda la Copa del Rey y llegar a la final, los votos están claros: eres el mejor jugador del torneo. El trofeo de MVP y una placa con tu nombre en el museo.",
+    isMilestone: true,
+    milestoneType: "premio",
+    minWeek: 45,
+    options: [
+      {
+        id: "a",
+        label: "Agradecer públicamente y dedicar el premio al equipo",
+        subtitle: "+Moral, +Rel_vestuario",
+        consequences: { fama: 12, moral: 12, rel_vestuario: 8 },
+      },
+      {
+        id: "b",
+        label: "Reconocer que fue un esfuerzo colectivo",
+        subtitle: "Humildad",
+        consequences: { fama: 8, moral: 8 },
+      },
+    ],
+  },
+
   // ── RETIRO (solo modo Pro) ─────────────────────────────────────
   {
     id: "fork-retiro-pro",

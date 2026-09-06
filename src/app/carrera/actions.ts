@@ -37,6 +37,8 @@ const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
   "sel-mundial": "Photorealistic sports photography of [AGE] [FACE] in his national team kit celebrating passionately on a World Cup stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting, momentous occasion, international tournament atmosphere",
   "sel-eurocopa": "Photorealistic sports photography of [AGE] [FACE] in his national team kit on a European championship pitch, celebrating with intensity, European stadium atmosphere, crowd in background, continental tournament moment",
   "sel-copa-america": "Photorealistic sports photography of [AGE] [FACE] in his national team kit celebrating on a South American stadium pitch, tropical atmosphere, crowd visible, continental tournament moment",
+  "premio-pichichi": "Photorealistic sports photography of [AGE] [FACE] holding a trophy awarded for being the league's top scorer, trophy held high, stadium background, golden moment of recognition, professional sports photography",
+  "premio-mvp-torneo": "Photorealistic photo of [AGE] [FACE] on a stage with a large MVP trophy, holding it proudly, standing next to club officials and the trophy presentation table, award ceremony lighting, official moment of recognition",
 };
 
 function getMilestoneImagePrompt(eventId: string, age: number, club?: string): string | null {
