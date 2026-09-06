@@ -18,13 +18,17 @@ Cada evento importante (hito) genera una tarjeta compartible con una imagen. En 
 - **Ascenso**: jugador en uniforme celebrando en el campo
 - **Renovación**: jugador sosteniendo camiseta del club
 
-En cada prompt, reemplaza `[FACE]` con la URL de la foto del jugador. El resto describe el contexto.
+En cada prompt, reemplaza:
+- `[FACE]` con la URL de la foto del jugador
+- `[AGE]` con el contexto de edad (ej: "16-year-old young footballer", "30-year-old experienced footballer")
+
+La foto generada mostrará al jugador envejecido según su edad en el juego.
 
 ## Prompts por evento
 
 ### Fichaje (contrato-*)
 ```
-Photorealistic photo of [FACE] holding up a [CLUB_KIT] football jersey with both hands at an official club unveiling event, a club president in a suit next to him extending a handshake, camera flashes, official club office backdrop, professional sports photography style
+Photorealistic photo of [AGE] [FACE] holding up a [CLUB_KIT] football jersey with both hands at an official club unveiling event, a club president in a suit next to him extending a handshake, camera flashes, official club office backdrop, professional sports photography style
 ```
 
 ### Hat-trick (par-hat-trick)
