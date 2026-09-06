@@ -11,7 +11,7 @@ export function ShareButton({
   title: string;
   text: string;
 }) {
-  const [status, setStatus] = useState<"idle" | "sharing" | "copied">("idle");
+  const [status, setStatus] = useState<"idle" | "sharing" | "copied" | "success">("idle");
 
   async function handleShare() {
     setStatus("sharing");
@@ -29,7 +29,8 @@ export function ShareButton({
 
         if (nav.canShare && nav.share && nav.canShare({ files: [file] })) {
           await nav.share({ files: [file], title, text });
-          setStatus("idle");
+          setStatus("success");
+          setTimeout(() => setStatus("idle"), 2000);
           return;
         }
       } catch {
@@ -42,7 +43,8 @@ export function ShareButton({
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       a.click();
-      setStatus("idle");
+      setStatus("success");
+      setTimeout(() => setStatus("idle"), 2000);
       return;
     }
 
@@ -50,7 +52,8 @@ export function ShareButton({
     try {
       if (nav.share) {
         await nav.share({ title, text });
-        setStatus("idle");
+        setStatus("success");
+        setTimeout(() => setStatus("idle"), 2000);
         return;
       }
     } catch {
@@ -70,15 +73,21 @@ export function ShareButton({
     <button
       onClick={handleShare}
       disabled={status === "sharing"}
-      className="w-full rounded-md bg-amber-500 px-5 py-2 text-sm font-semibold text-neutral-950 hover:bg-amber-400 disabled:opacity-60"
+      className={`w-full rounded-lg px-6 py-3 font-semibold text-sm uppercase tracking-wide transition-all duration-300 ${
+        status === "sharing"
+          ? "opacity-60 cursor-wait bg-amber-500 text-neutral-950"
+          : status === "success"
+            ? "bg-green-500 text-white shadow-lg shadow-green-500/50"
+            : status === "copied"
+              ? "bg-blue-500 text-white shadow-lg shadow-blue-500/50"
+              : "bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 hover:from-amber-400 hover:to-amber-500 shadow-lg hover:shadow-amber-500/50"
+      }`}
     >
-      {status === "sharing"
-        ? "Preparando..."
-        : status === "copied"
-          ? "¡Copiado! Pégalo donde quieras"
-          : imageUrl
-            ? "Compartir imagen"
-            : "Compartir"}
+      {status === "sharing" && "✨ Preparando..."}
+      {status === "success" && "✅ ¡Compartido con éxito!"}
+      {status === "copied" && "📋 ¡Copiado al portapapeles!"}
+      {status === "idle" && imageUrl && "📸 Compartir momento"}
+      {status === "idle" && !imageUrl && "🔗 Compartir"}
     </button>
   );
 }
