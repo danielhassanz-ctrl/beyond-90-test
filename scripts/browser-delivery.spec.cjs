@@ -70,3 +70,45 @@ test("iPhone WebKit completes onboarding, shows four academies and keeps the sav
 
   expect(pageErrors).toEqual([]);
 });
+
+test("iPhone WebKit restores the last valid backup after primary save corruption", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto("http://127.0.0.1:4173/");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.getByRole("button", { name: "Nueva carrera" }).click();
+  await page.getByPlaceholder("Álvaro Nieto").fill("Jugador QA Recovery");
+  await page.getByRole("button", { name: /Ambicioso/ }).click();
+  await page.getByRole("button", { name: /Leal/ }).click();
+  await page.getByRole("button", { name: "Elegir cantera" }).click();
+  await page.getByRole("button", { name: /Real Betis/ }).click();
+  await page.getByRole("button", { name: "Firmar en la cantera" }).click();
+  await expect(page).toHaveURL(/\/historia$/);
+
+  const slots = await page.evaluate(() => ({
+    primary: localStorage.getItem("beyond90:save:v1"),
+    backup: localStorage.getItem("beyond90:save:v1:backup"),
+  }));
+  expect(slots.primary).toBeTruthy();
+  expect(slots.backup).toBeTruthy();
+
+  await page.evaluate(() => localStorage.setItem("beyond90:save:v1", "{corrupt-save"));
+  await page.reload();
+
+  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
+
+  const healed = await page.evaluate(() => {
+    const primary = localStorage.getItem("beyond90:save:v1");
+    try {
+      return Boolean(primary && JSON.parse(primary));
+    } catch {
+      return false;
+    }
+  });
+  expect(healed).toBeTruthy();
+  expect(pageErrors).toEqual([]);
+});
