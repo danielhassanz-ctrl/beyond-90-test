@@ -18,7 +18,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { MediaBadge } from "@/components/MediaBadge";
 import { EventScene } from "@/components/EventScene";
 import { MatchScene } from "@/components/MatchScene";
-import { EventDecisionForm } from "@/components/EventDecisionForm";
+import { resolveEvent } from "./actions";
 
 const CATEGORY_LABELS: Record<string, string> = {
   entrenamiento: "Entrenamiento",
@@ -180,7 +180,7 @@ export default async function CarreraPage() {
             </div>
           )}
 
-          <EventDecisionForm>
+          <form action={resolveEvent} className="space-y-2 pt-1">
             <input type="hidden" name="event_id" value={event.id} />
 
             <div className="space-y-2">
@@ -224,7 +224,7 @@ export default async function CarreraPage() {
             >
               Confirmar decisión
             </button>
-          </EventDecisionForm>
+          </form>
         </div>
       </div>
       <BottomNav active="carrera" />
