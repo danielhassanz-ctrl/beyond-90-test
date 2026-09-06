@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
-import { pickNextEventSmart, whatIsAtStake } from "@/lib/narrative/engine";
+import { pickNextEventDynamic, whatIsAtStake } from "@/lib/narrative/engine";
 import {
-  EVENTS,
   buildEleccionRepresentanteEvent,
   buildInicioFichajeEvent,
   buildCasaEvent,
@@ -120,7 +119,7 @@ export default async function CarreraPage() {
       freeText: h.free_text_response as string | null,
     }));
 
-    event = await pickNextEventSmart(EVENTS, player, usedEventIds, historyForAi);
+    event = await pickNextEventDynamic(player, historyForAi);
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 

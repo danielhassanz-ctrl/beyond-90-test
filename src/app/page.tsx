@@ -91,7 +91,18 @@ export default async function Home() {
           Cada decisión importa.
         </p>
 
-        <div className="mt-8 w-full max-w-xs space-y-3">
+        <div className="mt-auto w-full max-w-xs space-y-3 pb-8">
+          <Link
+            href="/login"
+            className="flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-bold uppercase tracking-wide text-neutral-950 hover:bg-gold-soft"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+              <circle cx="12" cy="8" r="3.5" />
+              <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" strokeLinecap="round" />
+            </svg>
+            Iniciar sesión
+          </Link>
+
           <Link
             href="/login"
             className="flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-bold uppercase tracking-wide text-neutral-950 hover:bg-gold-soft"
@@ -100,17 +111,6 @@ export default async function Home() {
               <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3.2l2.4 1.8-.9 2.7H10.5l-.9-2.7L12 5.2zM6.6 8.9l2.5 1.8-1 3-2.9.1a8 8 0 011.4-4.9zm.5 8.6l1.1-2.9 2.9-.1 1.4 2.6a8 8 0 01-5.4.4zm7.8 0a8 8 0 01-1.9-.1l1.4-2.6 2.9.1 1.1 2.9c-.5.3-1 .5-1.5.7zm2.5-3.7l-1-3 2.5-1.8a8 8 0 011.4 4.9z" />
             </svg>
             Nueva carrera
-          </Link>
-
-          <Link
-            href="/login"
-            className="flex items-center justify-center gap-2 rounded-full border border-gold/60 px-6 py-3 text-sm font-bold uppercase tracking-wide text-gold hover:bg-gold/10"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
-              <circle cx="12" cy="8" r="3.5" />
-              <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" strokeLinecap="round" />
-            </svg>
-            Iniciar sesión
           </Link>
         </div>
 

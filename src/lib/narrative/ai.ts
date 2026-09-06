@@ -217,6 +217,112 @@ async function callEventTool(
   }
 }
 
+/**
+ * Genera TODOS los eventos con IA, nunca repitiendo premisa.
+ * Contextualizado a: edad/etapa, posición, club, vida personal, historia previa.
+ * ~40-50% eventos de vida real, ~50-60% futbolísticos según posición.
+ */
+export async function generateNextEventDynamic(
+  player: Player,
+  history: HistoryItem[],
+): Promise<GameEvent | null> {
+  const age = playerAge(player.week);
+
+  // Determina la etapa de carrera
+  const stage = age < 19 ? "Canterano" : age < 25 ? "Ascenso" : age < 29 ? "Pico" : "Veterano";
+
+  // Categoría: ~40% vida, ~60% fútbol
+  const lifeChance = Math.random();
+  const category: EventCategory = lifeChance < 0.4
+    ? (["vida"] as const)[0] // 40% vida real
+    : (["entrenamiento", "partido", "vestuario", "representante", "prensa", "especial"] as const)[
+        Math.floor(Math.random() * 6)
+      ]; // 60% fútbol
+
+  const historyText = history.length
+    ? history
+        .map(
+          (h) =>
+            `- "${h.title}" → eligió: "${h.chosen}"` +
+
+            (h.freeText ? ` — y escribió: "${h.freeText}"` : ""),
+        )
+        .join("\n")
+    : "(todavía no vivió ningún evento)";
+
+  // Context de posición para eventos futbolísticos
+  let positionContext = "";
+  if (category !== "vida") {
+    switch (player.position) {
+      case "Delantero":
+        positionContext =
+          "Este jugador es DELANTERO — énfasis en goles, Pichichi, jugadas individuales, presión de anotar, referencias a hat-tricks o momentos clave del área.";
+        break;
+      case "Centrocampista":
+        positionContext =
+          "Este jugador es CENTROCAMPISTA — énfasis en control del medio, pases clave, visión de juego, defensa/ataque, liderazgo del juego.";
+        break;
+      case "Defensa":
+        positionContext =
+          "Este jugador es DEFENSA — énfasis en duelos, robos, liderazgo defensivo, tarjetas, decisiones de riesgo en el área.";
+        break;
+      case "Portero":
+        positionContext =
+          "Este jugador es PORTERO — énfasis en penaltis, atajadas, distribución de balón, liderazgo de área, decisiones bajo presión.";
+        break;
+    }
+  }
+
+  const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista.
+Genera el PRÓXIMO evento ÚNICO para este jugador. **NUNCA repitas la premisa de los últimos eventos.**
+
+JUGADOR:
+- Apellido: ${player.last_name}
+- Nacionalidad: ${player.nation}
+- Edad: ${age} años (ETAPA: ${stage})
+- Club: ${player.club}
+- Posición: ${player.position}
+- Personalidad: ${player.personality}
+- Representante: ${player.agent_name ?? "sin definir"}
+- Forma: ${player.forma}/100, Moral: ${player.moral}/100, Fama: ${player.fama}/100, Media: ${player.media}/99
+- Patrimonio: ${player.patrimonio} €
+
+SU VIDA PERSONAL (ya existe — úsala):
+${describePersonalLife(player.flags)}
+
+ÚLTIMOS EVENTOS (no repitas estos temas):
+${historyText}
+
+TIPO DE EVENTO AHORA: ${category === "vida" ? "VIDA REAL (fiestas, pareja, familia, dinero, vacaciones)" : `FUTBOLÍSTICO en categoría "${category}"`}
+${positionContext}
+
+CONTEXTO DE EDAD/ETAPA (${stage}):
+${
+  stage === "Canterano"
+    ? "Joven sin experiencia. Fiestas con compañeros, primeras novias, padres presionan, amigos de barrio, competencia interna, cedencias."
+    : stage === "Ascenso"
+      ? "Ganando experiencia, primeros goles/éxitos, lesiones leves, selección sub-21, presión aumenta, pareja importante, transferencia a club mayor."
+      : stage === "Pico"
+        ? "Eres una estrella: Champions, fichaje a club gigante, boda, hijo, portadas, oferta Arabia, presión mediática, lesiones serias."
+        : "Veterano: últimas oportunidades, mentoring joven, lesiones cuestionan futuro, divorcio posible, hijo adulto, retiro cerca, nostalgia."
+}
+
+REGLAS CRÍTICAS:
+${COMMON_RULES}
+- **OBLIGATORIO**: Este evento debe ser DIFERENTE de los anteriores. Mira "ÚLTIMOS EVENTOS" y NO repitas:
+  * El tema/premisa (si ya hubo "presión del entrenador", esta vez puede ser otra cosa)
+  * El personaje (si acabas de generar un momento con su pareja, no repitas pareja en el siguiente)
+  * La categoría de decisión (variar entre deportiva, personal, económica)
+- Esta ES su historia real, no una plantilla. Si ya tiene pareja/hijos/títulos (mira "SU VIDA PERSONAL"), tráelos cuando tenga sentido.
+- Si es evento futbolístico: incluye contexto de su posición específica (${player.position}).
+- Si es evento de vida: incluye dilemas reales (carrera vs. familia, gastar vs. ahorrar, diversión vs. enfoque).
+- Las decisiones deben tener consecuencias que se recuerden más adelante (si ignora a un amigo ahora, reaparece resentido luego).
+- is_milestone en true SOLO si es visualmente memorable (1 de cada 4-5 eventos). Si true, image_scene en inglés.
+- Nunca repitas ni referencias genéricas — nombres específicos, situaciones concretas.`;
+
+  return callEventTool(prompt, category, "dynamic");
+}
+
 export async function generateAiEvent(
   player: Player,
   history: HistoryItem[],

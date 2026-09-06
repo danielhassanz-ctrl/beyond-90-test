@@ -6,7 +6,7 @@ import type {
   GameEvent,
   ResolutionOutcome,
 } from "@/types/career";
-import { generateAiEvent, generateMatchResult, type HistoryItem } from "./ai";
+import { generateAiEvent, generateMatchResult, generateNextEventDynamic, type HistoryItem } from "./ai";
 import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
 import { buildMatchContext } from "@/lib/constants";
@@ -271,5 +271,42 @@ export function resolveOption(option: EventOption, state: CareerState): Resoluti
     text: outcome.text,
     consequences: outcome.consequences,
     success: isSuccess,
+  };
+}
+
+/**
+ * Genera TODOS los eventos con IA, nunca repitiendo premisa.
+ * Reemplaza el pool de 40 eventos fijos con generación dinámica contextualizada.
+ */
+export async function pickNextEventDynamic(
+  player: Player,
+  history: HistoryItem[],
+): Promise<GameEvent> {
+  const event = await generateNextEventDynamic(player, history);
+  if (event) {
+    return maybeAddFreeText(addMatchContext(event, player));
+  }
+
+  // Fallback si la IA falla (raramente debería pasar)
+  console.error("[pickNextEventDynamic] IA generation failed, returning placeholder");
+  return {
+    id: `fallback-${Date.now()}`,
+    category: "vida",
+    title: "Momento de reflexión",
+    description: "Es un buen momento para pensar en dónde estás en tu carrera.",
+    options: [
+      {
+        id: "0",
+        label: "Seguir adelante",
+        subtitle: "Concentrarte en el siguiente partido",
+        consequences: {},
+      },
+      {
+        id: "1",
+        label: "Descansar",
+        subtitle: "Tomarte un tiempo para recuperarte",
+        consequences: { moral: 3 },
+      },
+    ],
   };
 }
