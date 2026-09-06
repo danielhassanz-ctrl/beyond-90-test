@@ -45,7 +45,7 @@ export default async function LoginPage({
 
           <div className="space-y-1">
             <label htmlFor="password" className="text-sm font-medium text-neutral-300">
-              Contraseña
+              Contraseña <span className="text-xs text-neutral-500">(mínimo 8 caracteres)</span>
             </label>
             <input
               id="password"
