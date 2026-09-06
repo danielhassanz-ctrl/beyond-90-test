@@ -16,6 +16,7 @@ import { shouldGenerateAdversity, pickAdversityType, describeAdversity, buildAdv
 import { detectDeclineSignals, buildDeclinePrompt, describeDeclineContext } from "@/lib/narrative/decline";
 import { pickCharacterToReappear, describeCharacterReappearance, updateCharacterLastSeen } from "@/lib/narrative/secondary-characters";
 import { shouldBeeFunnyMoment, pickRandomFunnyMoment } from "@/lib/narrative/funny-surreal";
+import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -287,6 +288,7 @@ export function resolveOption(option: EventOption, state: CareerState): Resoluti
 export async function pickNextEventDynamic(
   player: Player,
   history: HistoryItem[],
+  usedEventIds: string[] = [],
 ): Promise<GameEvent> {
   console.log(`[pickNextEventDynamic] Starting for ${player.last_name}, week=${player.week}, fama=${player.fama}`);
 
@@ -390,6 +392,22 @@ REGLAS:
           category: "vida",
         });
       }
+    }
+  }
+
+  // Patrocinios y endorsements para jugadores de alta fama (~15% si elegibles)
+  // Solo si fama >= 65 y el evento no ha sido usado antes
+  if (isEligibleForSponsorship(player.fama) && Math.random() < 0.15) {
+    const availableSponsorships = Object.values(SPONSORSHIP_EVENTS).filter(
+      (event) => !usedEventIds.includes(event.id)
+    );
+
+    if (availableSponsorships.length > 0) {
+      const sponsorshipEvent = availableSponsorships[Math.floor(Math.random() * availableSponsorships.length)];
+      console.log(
+        `[pickNextEventDynamic] Sponsorship event for ${player.last_name}: "${sponsorshipEvent.title}"`
+      );
+      return maybeAddFreeText(sponsorshipEvent as GameEvent);
     }
   }
 

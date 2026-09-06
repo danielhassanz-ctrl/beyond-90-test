@@ -122,7 +122,7 @@ export default async function CarreraPage() {
       freeText: h.free_text_response as string | null,
     }));
 
-    event = await pickNextEventDynamic(player, historyForAi);
+    event = await pickNextEventDynamic(player, historyForAi, usedEventIds);
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 
