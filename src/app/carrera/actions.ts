@@ -111,36 +111,11 @@ export async function resolveEvent(formData: FormData) {
   const willRetire = !isRetirementDecision && player.mode !== "pro" && newWeek > targetWeeks;
 
   // Imágenes generadas (opcional): solo si el jugador subió una foto y el
-  // evento las pide. Si falla por lo que sea, seguimos sin imagen.
+  // evento las pide. Se generan en background sin bloquear la respuesta.
   // Usa prompts contextuales de la skill cartas-compartibles.
-  let milestoneImageUrl: string | null = null;
-  let updatedProfilePhotoUrl: string | null = null;
-
-  if (milestoneAchieved && player.photo_url) {
-    // Intenta obtener prompt contextual; si no existe, usa el del evento como fallback
-    const newClub = typeof consequences.club === "string" ? consequences.club : player.club;
-    const currentAge = playerAge(player.week);
-    const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub);
-    const imagePrompt = contextualPrompt
-      ? contextualPrompt.replace("[FACE]", player.photo_url)
-      : event.imageScene;
-
-    if (imagePrompt) {
-      const buffer = await generatePlayerImage(player.photo_url, imagePrompt);
-      if (buffer) {
-        milestoneImageUrl = await uploadGeneratedImage(supabase, user.id, buffer, "hito");
-        // También guarda como foto de perfil para que el jugador evolucione visualmente
-        updatedProfilePhotoUrl = milestoneImageUrl;
-      }
-    }
-  }
+  let imagePromptForBackground: string | null = null;
 
   const playerUpdate: Record<string, unknown> = { ...patch };
-
-  // Actualiza la foto de perfil si se generó una imagen de hito
-  if (updatedProfilePhotoUrl) {
-    playerUpdate.current_photo_url = updatedProfilePhotoUrl;
-  }
 
   if (consequences.flags || event.memorableThread) {
     playerUpdate.flags = {
@@ -231,6 +206,7 @@ export async function resolveEvent(formData: FormData) {
 
   let milestoneId: string | null = null;
   if (milestoneAchieved) {
+    // Crea el milestone sin imagen (responde rápido)
     const { data: milestone, error: milestoneError } = await supabase
       .from("milestones")
       .insert({
@@ -241,7 +217,7 @@ export async function resolveEvent(formData: FormData) {
         subtitle: isRetirementDecision
           ? `Después de ${player.week} semanas como profesional`
           : (outcomeText ?? option.subtitle),
-        image_url: milestoneImageUrl,
+        image_url: null, // Sin imagen por ahora (se genera en background)
       })
       .select("id")
       .single();
@@ -249,6 +225,16 @@ export async function resolveEvent(formData: FormData) {
       console.error("[resolveEvent] milestones insert failed:", milestoneError.message);
     }
     milestoneId = milestone?.id ?? null;
+
+    // Prepara para generar imagen en background (solo si hay contexto)
+    if (milestoneId && player.photo_url && !isRetirementDecision) {
+      const newClub = typeof consequences.club === "string" ? consequences.club : player.club;
+      const currentAge = playerAge(player.week);
+      const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub);
+      imagePromptForBackground = contextualPrompt
+        ? contextualPrompt.replace("[FACE]", player.photo_url)
+        : event.imageScene ?? null;
+    }
   }
 
   const { error: playerUpdateError } = await supabase
@@ -263,6 +249,20 @@ export async function resolveEvent(formData: FormData) {
 
   if (playerUpdateError) {
     console.error("[resolveEvent] players update failed:", playerUpdateError.message);
+  }
+
+  // Genera imagen en background sin bloquear (fire-and-forget)
+  if (milestoneId && imagePromptForBackground && player.photo_url) {
+    fetch("/api/generate-milestone-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        milestoneId,
+        photoUrl: player.photo_url,
+        imagePrompt: imagePromptForBackground,
+        userId: user.id,
+      }),
+    }).catch((err) => console.error("[background image gen]", err));
   }
 
   if (milestoneId) {
