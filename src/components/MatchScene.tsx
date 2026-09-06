@@ -1,6 +1,10 @@
 import { ClubCrest } from "./ClubCrest";
+import { getClubColors } from "@/lib/clubColors";
 
-/** Cabecera tipo marcador para eventos de partido: escudo propio vs escudo rival. */
+/**
+ * Cabecera tipo marcador para eventos de partido: escudo propio vs escudo rival.
+ * Mejorado con: efectos visuales dinámicos, colores del club, mejor composición.
+ */
 export function MatchScene({
   club,
   rivalClub,
@@ -10,21 +14,75 @@ export function MatchScene({
   rivalClub: string;
   titles?: number;
 }) {
+  const clubColors = getClubColors(club);
+  const rivalColors = getClubColors(rivalClub);
+
   return (
-    <div className="flex items-center justify-center gap-4 rounded-lg border border-panel-border bg-panel py-4">
-      <div className="flex flex-col items-center gap-1">
-        <ClubCrest club={club} size={44} titles={titles} />
-        <span className="max-w-[6rem] truncate text-center text-xs font-medium text-neutral-300">
-          {club}
-        </span>
+    <div className="relative overflow-hidden rounded-xl border border-amber-500/20 shadow-lg">
+      {/* Fondo degradado con colores de ambos equipos */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `linear-gradient(90deg, ${clubColors.primary}33, ${clubColors.secondary}22, ${rivalColors.secondary}22, ${rivalColors.primary}33)`,
+        }}
+      />
+
+      {/* Contenedor principal */}
+      <div className="relative flex items-center justify-between gap-2 px-4 py-5 sm:gap-4">
+        {/* Equipo local */}
+        <div className="flex flex-1 flex-col items-center gap-2 text-center">
+          <div className="relative">
+            <div
+              className="absolute inset-0 blur-xl opacity-30 rounded-full"
+              style={{ background: clubColors.primary }}
+            />
+            <div className="relative">
+              <ClubCrest club={club} size={52} titles={titles} />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <span className="block max-w-[7rem] truncate text-xs font-bold uppercase tracking-widest text-white drop-shadow-sm">
+              {club}
+            </span>
+            {titles > 0 && (
+              <span className="text-[10px] text-amber-300 font-semibold">
+                {titles} título{titles !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Separador VS */}
+        <div className="flex flex-col items-center gap-1">
+          <div className="h-8 border-l border-r border-amber-500/50" />
+          <span className="text-xs font-black uppercase tracking-[0.3em] text-amber-300 drop-shadow-md">
+            VS
+          </span>
+          <div className="h-8 border-l border-r border-amber-500/50" />
+        </div>
+
+        {/* Equipo rival */}
+        <div className="flex flex-1 flex-col items-center gap-2 text-center">
+          <div className="relative">
+            <div
+              className="absolute inset-0 blur-xl opacity-30 rounded-full"
+              style={{ background: rivalColors.primary }}
+            />
+            <div className="relative">
+              <ClubCrest club={rivalClub} size={52} />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <span className="block max-w-[7rem] truncate text-xs font-bold uppercase tracking-widest text-white drop-shadow-sm">
+              {rivalClub}
+            </span>
+            <span className="text-[10px] text-neutral-400 font-semibold">Rival</span>
+          </div>
+        </div>
       </div>
-      <span className="text-sm font-black uppercase tracking-widest text-neutral-500">vs</span>
-      <div className="flex flex-col items-center gap-1">
-        <ClubCrest club={rivalClub} size={44} />
-        <span className="max-w-[6rem] truncate text-center text-xs font-medium text-neutral-300">
-          {rivalClub}
-        </span>
-      </div>
+
+      {/* Decoración inferior */}
+      <div className="h-1 bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
     </div>
   );
 }
