@@ -143,11 +143,12 @@ async function callEventTool(
   idPrefix: string,
 ): Promise<GameEvent | null> {
   if (!process.env.ANTHROPIC_API_KEY) {
-    console.error(`[callEventTool:${idPrefix}] no ANTHROPIC_API_KEY set`);
+    console.error(`[callEventTool:${idPrefix}] FATAL: no ANTHROPIC_API_KEY set`);
     return null;
   }
 
   try {
+    console.log(`[callEventTool:${idPrefix}] calling Claude API with category=${category}...`);
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const response = await client.messages.create({
@@ -158,9 +159,13 @@ async function callEventTool(
       messages: [{ role: "user", content: prompt }],
     });
 
+    console.log(`[callEventTool:${idPrefix}] API response received, analyzing...`);
+
     const toolUse = response.content.find((block) => block.type === "tool_use");
     if (!toolUse || toolUse.type !== "tool_use") {
-      console.error(`[callEventTool:${idPrefix}] no tool_use block in response`, JSON.stringify(response.content).slice(0, 500));
+      console.error(
+        `[callEventTool:${idPrefix}] FAIL: no tool_use block in response. response.content=${JSON.stringify(response.content).slice(0, 200)}`
+      );
       return null;
     }
 
@@ -177,7 +182,9 @@ async function callEventTool(
     };
 
     if (!data.title || !data.description || !data.options || data.options.length < 2) {
-      console.error(`[callEventTool:${idPrefix}] incomplete tool input`, JSON.stringify(data).slice(0, 500));
+      console.error(
+        `[callEventTool:${idPrefix}] FAIL: incomplete tool input. title=${!!data.title}, description=${!!data.description}, options.length=${data.options?.length ?? 0}`
+      );
       return null;
     }
 
@@ -191,13 +198,12 @@ async function callEventTool(
       }));
 
     if (options.length < 2) {
-      console.error(`[callEventTool:${idPrefix}] fewer than 2 valid options after filtering`);
+      console.error(`[callEventTool:${idPrefix}] FAIL: only ${options.length} valid options after filtering`);
       return null;
     }
 
     const isMilestone = Boolean(data.is_milestone);
-
-    return {
+    const result = {
       id: `${idPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       category,
       title: data.title,
@@ -211,8 +217,13 @@ async function callEventTool(
       memorableThread: data.memorable_thread || undefined,
       options,
     };
+
+    console.log(`[callEventTool:${idPrefix}] SUCCESS: "${result.title}" (${options.length} options, milestone=${isMilestone})`);
+    return result;
   } catch (err) {
-    console.error(`[callEventTool:${idPrefix}] threw`, err instanceof Error ? err.message : err);
+    console.error(
+      `[callEventTool:${idPrefix}] EXCEPTION: ${err instanceof Error ? err.message : JSON.stringify(err).slice(0, 200)}`
+    );
     return null;
   }
 }
@@ -238,6 +249,8 @@ export async function generateNextEventDynamic(
     : (["entrenamiento", "partido", "vestuario", "representante", "prensa", "especial"] as const)[
         Math.floor(Math.random() * 6)
       ]; // 60% fútbol
+
+  console.log(`[generateNextEventDynamic] Generating for ${player.last_name}, age ${age} (${stage}), category: ${category}`);
 
   const historyText = history.length
     ? history
@@ -320,7 +333,13 @@ ${COMMON_RULES}
 - is_milestone en true SOLO si es visualmente memorable (1 de cada 4-5 eventos). Si true, image_scene en inglés.
 - Nunca repitas ni referencias genéricas — nombres específicos, situaciones concretas.`;
 
-  return callEventTool(prompt, category, "dynamic");
+  const result = await callEventTool(prompt, category, "dynamic");
+  if (result) {
+    console.log(`[generateNextEventDynamic] FINAL: Generated event "${result.title}" for ${player.last_name}`);
+  } else {
+    console.error(`[generateNextEventDynamic] FINAL: Event generation FAILED for ${player.last_name}, returning null`);
+  }
+  return result;
 }
 
 export async function generateAiEvent(

@@ -20,25 +20,25 @@ import {
 import { MODE_TARGET_WEEKS, playerAge } from "@/types/career";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 
-/** Prompts contextuales para tarjetas compartibles (skill: cartas-compartibles) */
+/** Prompts contextuales para tarjetas compartibles — SIN [FACE], deja que IA genere cara envejecida */
 const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
-  "contrato-debut": "Photorealistic photo of [AGE] [FACE] holding up a [CLUB_KIT] football jersey with both hands at an official club unveiling event, a club president in a suit next to him extending a handshake, camera flashes, official club office backdrop, professional sports photography style",
-  "contrato-fallback": "Photorealistic photo of [AGE] [FACE] holding up a [CLUB_KIT] football jersey with both hands at an official club unveiling event, a club director in a suit next to him, official contract on table, camera moment, official club photography",
-  "par-hat-trick": "Photorealistic sports photography of [AGE] [FACE] on a professional football pitch celebrating a goal, holding up three fingers proudly, teammates in background, stadium lights and crowd, dramatic moment, photojournalism style",
-  "fork-titulo-liga": "Photorealistic sports photography of [AGE] [FACE] lifting a large league trophy above his head on the pitch after winning, confetti falling around him, teammates and crowd in the background, stadium floodlights, triumphant moment, professional sports photography",
-  "fork-champions": "Photorealistic sports photography of [AGE] [FACE] lifting a large European club trophy on the pitch after winning a continental final, fireworks and confetti in the background, massive crowd, dramatic stadium lighting, celebratory moment, international sports photography",
-  "vid-boda": "Photorealistic wedding photo of [AGE] [FACE] in a formal suit, smiling warmly, with a few teammates and a coach figure visible in the background, elegant wedding venue, warm golden hour light, joyful celebration atmosphere, wedding photography style",
-  "par-mvp-partido-clave": "Photorealistic sports photography of [AGE] [FACE] receiving a man-of-the-match award trophy on the pitch after a game, holding the trophy proudly, stadium lights, teammates applauding in the background, camera flashes, professional sports moment",
-  "rep-renovacion-contrato": "Photorealistic photo of [AGE] [FACE] holding up a [CLUB_KIT] football jersey with both hands in a professional club office, a club director in a suit next to him, official contract on table, camera moment, official club photography",
-  "fork-ascenso-division": "Photorealistic sports photography of [AGE] [FACE] celebrating on the pitch after his team wins promotion, arms raised in joy, teammates joining the celebration, crowd visible in background, stadium atmosphere, triumphant moment",
-  "premio-balon-oro": "Photorealistic photo of [AGE] [FACE] on a red carpet in a formal tuxedo at an award show gala, holding the Balón de Oro award, award show lighting, flashes from photographers, elegant awards ceremony atmosphere, sports awards ceremony style",
-  "sel-primera-convocatoria": "Photorealistic sports photography of [AGE] [FACE] in his national team kit on a professional football pitch, proud expression, national flag visible in background, stadium atmosphere, professional sports moment",
-  "sel-capitania": "Photorealistic sports photography of [AGE] [FACE] wearing the captain's armband of his national team, holding the armband proudly, national team kit, stadium background, leadership moment, professional sports photography",
-  "sel-mundial": "Photorealistic sports photography of [AGE] [FACE] in his national team kit celebrating passionately on a World Cup stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting, momentous occasion, international tournament atmosphere",
-  "sel-eurocopa": "Photorealistic sports photography of [AGE] [FACE] in his national team kit on a European championship pitch, celebrating with intensity, European stadium atmosphere, crowd in background, continental tournament moment",
-  "sel-copa-america": "Photorealistic sports photography of [AGE] [FACE] in his national team kit celebrating on a South American stadium pitch, tropical atmosphere, crowd visible, continental tournament moment",
-  "premio-pichichi": "Photorealistic sports photography of [AGE] [FACE] holding a trophy awarded for being the league's top scorer, trophy held high, stadium background, golden moment of recognition, professional sports photography",
-  "premio-mvp-torneo": "Photorealistic photo of [AGE] [FACE] on a stage with a large MVP trophy, holding it proudly, standing next to club officials and the trophy presentation table, award ceremony lighting, official moment of recognition",
+  "contrato-debut": "Photorealistic professional portrait of [AGE] footballer holding up a [CLUB_KIT] football jersey with both hands at an official club unveiling event, a club president in a suit next to him extending a handshake, camera flashes, official club office backdrop, professional sports photography style, facial details clear and identifiable",
+  "contrato-fallback": "Photorealistic professional portrait of [AGE] footballer holding up a [CLUB_KIT] football jersey with both hands at an official club unveiling event, a club director in a suit next to him, official contract on table, camera moment, official club photography, clear facial expression",
+  "par-hat-trick": "Photorealistic sports photography of [AGE] footballer on a professional football pitch celebrating a goal, holding up three fingers proudly, teammates in background, stadium lights and crowd, dramatic moment, photojournalism style, face visible and clear",
+  "fork-titulo-liga": "Photorealistic sports photography of [AGE] footballer lifting a large league trophy above his head on the pitch after winning, confetti falling around him, teammates and crowd in the background, stadium floodlights, triumphant moment, professional sports photography, happy expression",
+  "fork-champions": "Photorealistic sports photography of [AGE] footballer lifting a large European club trophy on the pitch after winning a continental final, fireworks and confetti in the background, massive crowd, dramatic stadium lighting, celebratory moment, international sports photography, triumphant expression",
+  "vid-boda": "Photorealistic wedding photo of [AGE] footballer in a formal suit, smiling warmly, with a few teammates and a coach figure visible in the background, elegant wedding venue, warm golden hour light, joyful celebration atmosphere, wedding photography style, clear facial features",
+  "par-mvp-partido-clave": "Photorealistic sports photography of [AGE] footballer receiving a man-of-the-match award trophy on the pitch after a game, holding the trophy proudly, stadium lights, teammates applauding in the background, camera flashes, professional sports moment, proud expression",
+  "rep-renovacion-contrato": "Photorealistic professional portrait of [AGE] footballer holding up a [CLUB_KIT] football jersey with both hands in a professional club office, a club director in a suit next to him, official contract on table, camera moment, official club photography, confident expression",
+  "fork-ascenso-division": "Photorealistic sports photography of [AGE] footballer celebrating on the pitch after his team wins promotion, arms raised in joy, teammates joining the celebration, crowd visible in background, stadium atmosphere, triumphant moment, joyful expression",
+  "premio-balon-oro": "Photorealistic photo of [AGE] footballer on a red carpet in a formal tuxedo at an award show gala, holding the Balón de Oro award, award show lighting, flashes from photographers, elegant awards ceremony atmosphere, sports awards ceremony style, proud expression",
+  "sel-primera-convocatoria": "Photorealistic sports photography of [AGE] footballer in his national team kit on a professional football pitch, proud expression, national flag visible in background, stadium atmosphere, professional sports moment, clear facial features",
+  "sel-capitania": "Photorealistic sports photography of [AGE] footballer wearing the captain's armband of his national team, holding the armband proudly, national team kit, stadium background, leadership moment, professional sports photography, confident look",
+  "sel-mundial": "Photorealistic sports photography of [AGE] footballer in his national team kit celebrating passionately on a World Cup stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting, momentous occasion, international tournament atmosphere, ecstatic expression",
+  "sel-eurocopa": "Photorealistic sports photography of [AGE] footballer in his national team kit on a European championship pitch, celebrating with intensity, European stadium atmosphere, crowd in background, continental tournament moment, emotional expression",
+  "sel-copa-america": "Photorealistic sports photography of [AGE] footballer in his national team kit celebrating on a South American stadium pitch, tropical atmosphere, crowd visible, continental tournament moment, joyful expression",
+  "premio-pichichi": "Photorealistic sports photography of [AGE] footballer holding a trophy awarded for being the league's top scorer, trophy held high, stadium background, golden moment of recognition, professional sports photography, proud expression",
+  "premio-mvp-torneo": "Photorealistic photo of [AGE] footballer on a stage with a large MVP trophy, holding it proudly, standing next to club officials and the trophy presentation table, award ceremony lighting, official moment of recognition, confident look",
 };
 
 function getMilestoneImagePrompt(eventId: string, age: number, club?: string): string | null {
@@ -227,13 +227,11 @@ export async function resolveEvent(formData: FormData) {
     milestoneId = milestone?.id ?? null;
 
     // Prepara para generar imagen en background (solo si hay contexto)
-    if (milestoneId && player.photo_url && !isRetirementDecision) {
+    if (milestoneId && !isRetirementDecision) {
       const newClub = typeof consequences.club === "string" ? consequences.club : player.club;
       const currentAge = playerAge(player.week);
       const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub);
-      imagePromptForBackground = contextualPrompt
-        ? contextualPrompt.replace("[FACE]", player.photo_url)
-        : event.imageScene ?? null;
+      imagePromptForBackground = contextualPrompt ?? event.imageScene ?? null;
     }
   }
 

@@ -282,13 +282,17 @@ export async function pickNextEventDynamic(
   player: Player,
   history: HistoryItem[],
 ): Promise<GameEvent> {
+  console.log(`[pickNextEventDynamic] Starting for ${player.last_name}, week=${player.week}, fama=${player.fama}`);
   const event = await generateNextEventDynamic(player, history);
   if (event) {
+    console.log(`[pickNextEventDynamic] Got event from AI: "${event.title}"`);
     return maybeAddFreeText(addMatchContext(event, player));
   }
 
   // Fallback si la IA falla (raramente debería pasar)
-  console.error("[pickNextEventDynamic] IA generation failed, returning placeholder");
+  console.error(
+    `[pickNextEventDynamic] CRITICAL: IA generation returned null for ${player.last_name}, returning placeholder fallback`
+  );
   return {
     id: `fallback-${Date.now()}`,
     category: "vida",
