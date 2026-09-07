@@ -202,46 +202,68 @@ export async function resolveEvent(formData: FormData) {
     playerUpdate.pending_event = contractEvent;
   }
 
-  // Secuencia de pretemporada garantizada + cadena de rookie progresión
-  // Encadena eventos en orden narrativo correcto hasta el primer partido oficial
+  // SECUENCIA COMPLETA DE CARRERA ROOKIE (semanas 4-11)
+  // Pretemporada expandida (7 eventos) + Progresión hacia debut garantizado
   if (!willRetire) {
-    // Pretemporada inicial (semanas 4-6)
+    // Pretemporada expandida (semanas 4-10, reemplaza los 3 eventos antiguos)
     if (event.id.startsWith("contrato-debut")) {
-      playerUpdate.pending_event =
-        (await generateDebutPretemp1(player.club)) ?? buildDebutPretemp1(player.club);
-    } else if (event.id === "debut-pretemp-1") {
-      playerUpdate.pending_event =
-        (await generateDebutPretemp2(player.club)) ?? buildDebutPretemp2();
-    } else if (event.id === "debut-pretemp-2") {
-      playerUpdate.pending_event = (await generateDebutPretemp3()) ?? buildDebutPretemp3();
+      const { buildPreseasonBienvenidaEvent } = await import(
+        "@/lib/narrative/preseason-expanded"
+      );
+      playerUpdate.pending_event = buildPreseasonBienvenidaEvent(player.club);
+    } else if (event.id === "pretemp-bienvenida") {
+      const { buildPreseasonFisicoEvent } = await import(
+        "@/lib/narrative/preseason-expanded"
+      );
+      playerUpdate.pending_event = buildPreseasonFisicoEvent();
+    } else if (event.id === "pretemp-fisico") {
+      const { buildPreseasonCompetenciaEvent } = await import(
+        "@/lib/narrative/preseason-expanded"
+      );
+      playerUpdate.pending_event = buildPreseasonCompetenciaEvent();
+    } else if (event.id === "pretemp-competencia") {
+      const { buildPreseasonTacticaEvent } = await import(
+        "@/lib/narrative/preseason-expanded"
+      );
+      playerUpdate.pending_event = buildPreseasonTacticaEvent();
+    } else if (event.id === "pretemp-tactica") {
+      const { buildPreseasonCapitan } = await import(
+        "@/lib/narrative/preseason-expanded"
+      );
+      playerUpdate.pending_event = buildPreseasonCapitan();
+    } else if (event.id === "pretemp-capitan") {
+      const { buildPreseasonPasado } = await import(
+        "@/lib/narrative/preseason-expanded"
+      );
+      playerUpdate.pending_event = buildPreseasonPasado();
+    } else if (event.id === "pretemp-pasado") {
+      const { buildPreseasonAmistoso } = await import(
+        "@/lib/narrative/preseason-expanded"
+      );
+      playerUpdate.pending_event = buildPreseasonAmistoso();
     }
-    // Cadena de rookie: filial → tactica → debut oficial (semanas 7-11)
-    else if (event.id === "debut-pretemp-3") {
-      // Después de pretemporada, comienza la fase de reservas
+    // Cadena de rookie: filial → tactica → debut oficial (semanas 11-15)
+    else if (event.id === "pretemp-amistoso") {
       const { buildReservaIntroduccionEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
       playerUpdate.pending_event = buildReservaIntroduccionEvent();
     } else if (event.id === "rookie-reserva-introduccion") {
-      // Después de intro a reservas, primer partido en filial
       const { buildReservaPartidoEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
       playerUpdate.pending_event = buildReservaPartidoEvent();
     } else if (event.id === "rookie-reserva-partido") {
-      // Después de filial, reunión táctica con primer entrenador
       const { buildTacticaMisterEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
       playerUpdate.pending_event = buildTacticaMisterEvent();
     } else if (event.id === "rookie-tactica-mister") {
-      // Después de tactica, anuncio de debut
       const { buildDebutAnuncioEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
       playerUpdate.pending_event = buildDebutAnuncioEvent();
     } else if (event.id === "rookie-debut-anuncio") {
-      // Después de anuncio, primer partido oficial con el primer equipo
       const { buildDebutOficialEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
