@@ -156,9 +156,11 @@ export async function resolveEvent(formData: FormData) {
   }
 
   const evolveLookNow =
-    event.lookEvolution && player.photo_url && (event.id !== "fork-retiro-pro" || isRetirementDecision);
+    player.photo_url && (event.id !== "fork-retiro-pro" || isRetirementDecision);
   if (evolveLookNow) {
-    const buffer = await generatePlayerImage(player.photo_url as string, event.lookEvolution as string);
+    // Usar prompt contextual si existe, si no usar lookEvolution del evento
+    const imagePrompt = imagePromptForBackground || event.lookEvolution || "fotografía del jugador";
+    const buffer = await generatePlayerImage(player.photo_url as string, imagePrompt as string);
     if (buffer) {
       const evolvedUrl = await uploadGeneratedImage(supabase, user.id, buffer, "look");
       if (evolvedUrl) {
