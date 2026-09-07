@@ -6,6 +6,7 @@ import { SECOND_CAREER_LABELS, seasonLabel, playerAge } from "@/types/career";
 import { withShareLink } from "@/lib/constants";
 import { CareerStatCard } from "@/components/CareerStatCard";
 import { ShareableCard } from "@/components/ShareableCard";
+import { beginSecondLife } from "./actions";
 
 export default async function RetiroPage() {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
@@ -143,14 +144,18 @@ export default async function RetiroPage() {
             </p>
           </div>
 
-          {/* Segunda vida button */}
+          {/* Segunda vida button: pasa por beginSecondLife() para dejar el
+              status en awaiting_second_life -- sin eso, /carrera/segunda-vida
+              devolvía al jugador aquí mismo en bucle. */}
           {!player.second_career && (
-            <Link
-              href="/carrera/segunda-vida"
-              className="inline-block mt-4 px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg hover:shadow-emerald-500/50"
-            >
-              🚀 Comienza tu segunda vida
-            </Link>
+            <form action={beginSecondLife}>
+              <button
+                type="submit"
+                className="inline-block mt-4 px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg hover:shadow-emerald-500/50"
+              >
+                🚀 Comienza tu segunda vida
+              </button>
+            </form>
           )}
 
           {player.second_career && (

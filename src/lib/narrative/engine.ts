@@ -21,7 +21,6 @@ import { shouldExcludeEvent, weirdEventByRarity, suggestNextEventType, type Even
 import { getNextMatch, isMatchWeekNext, getMatchThisWeek } from "@/lib/calendar/match-calendar";
 import { calculateCareerArc, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, handleOngoingInjury, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
-import { buildSecondCareerChoiceEvent } from "@/lib/narrative/second-career-events";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
 
 const PERCENT_FIELDS = [
@@ -478,23 +477,12 @@ export async function pickNextEventDynamic(
   const season = Math.floor((playerWithDynamics.week - 1) / 10);
   const age = playerAge(playerWithDynamics.week);
 
-  // Si el jugador está esperando elegir segunda carrera, mostrar ese evento primero
-  if (playerWithDynamics.status === "awaiting_second_life") {
-    console.log(`[pickNextEventDynamic] Player awaiting_second_life: offering second career choice`);
-    return maybeAddFreeText(buildSecondCareerChoiceEvent(playerWithDynamics));
-  }
-
-  // Si el jugador está en segunda vida, generar eventos específicos de esa carrera con IA
-  if (playerWithDynamics.status === "second_life" && playerWithDynamics.second_career) {
-    console.log(`[pickNextEventDynamic] Generating second life event for ${playerWithDynamics.second_career}`);
-    const { generateSecondLifeEvent } = await import("./ai");
-    const secondLifeEvent = await generateSecondLifeEvent(playerWithDynamics, playerWithDynamics.second_career, history);
-
-    if (secondLifeEvent) {
-      console.log(`[pickNextEventDynamic] Second life event: "${secondLifeEvent.title}"`);
-      return maybeAddFreeText(secondLifeEvent);
-    }
-  }
+  // NOTA: pickNextEventDynamic solo se llama desde /carrera/page.tsx, que
+  // ya redirige fuera (a /carrera/segunda-vida/elegir o /carrera/segunda-vida)
+  // antes de llegar aquí cuando el status es awaiting_second_life o
+  // second_life — esos dos estados nunca llegan a este punto. La página
+  // de segunda vida real genera sus propios eventos directamente con
+  // generateSecondLifeEvent (ver src/app/carrera/segunda-vida/page.tsx).
 
   // Verificar TRANSICIONES DE CARRERA AUTOMÁTICAS (pico, decline, retiro)
   const careerTransition = detectCareerTransition(playerWithDynamics);
