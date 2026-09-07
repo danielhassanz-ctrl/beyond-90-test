@@ -25,61 +25,69 @@ export function extractStatsFromEvent(event: GameEvent): StatUpdate {
 
   const text = `${event.title} ${event.description}`.toLowerCase();
 
-  // Detectar si fue un partido (increment matches)
-  if (
+  // Detectar si fue un partido
+  const isMatch =
     event.category === "partido" ||
+    event.id?.startsWith("matchday-") ||
     text.includes("partido") ||
-    text.includes("jornada") ||
-    text.includes("match") ||
-    text.includes("gol")
-  ) {
+    text.includes("jornada");
+  if (isMatch) {
     update.matches_played = 1;
   }
 
-  // Detectar goles
-  const goalMatches = text.match(/(\d+)\s*gol|gol.*(\d+)|hat[\s-]*trick|triplete/gi);
-  if (goalMatches) {
-    if (text.includes("hat") || text.includes("triplete")) {
-      update.goals = 3;
-    } else if (text.includes("doblete") || text.includes("dos goles")) {
-      update.goals = 2;
-    } else if (text.includes("gol") && !text.includes("0 gol")) {
-      update.goals = 1;
-    }
+  // Los eventos de partido (a mano y generados por IA) siguen todos el
+  // mismo formato "Goles: N. Asistencias: N. ... jugaste N minutos" —
+  // parsear el número exacto es mucho más fiable que buscar la palabra
+  // "gol" suelta. Antes, "Goles: 0" contaba como gol marcado porque
+  // "Goles" contiene literalmente "gol": todo partido sin goles se
+  // registraba igualmente como gol anotado, disparando la Media sin que
+  // el jugador hubiera marcado nunca (visto en una partida real: Media 99
+  // a los 17 años tras varios partidos con "Goles: 0").
+  const goalsMatch = text.match(/goles?:\s*(\d+)/);
+  const assistsMatch = text.match(/asistencias?:\s*(\d+)/);
+  const minutesMatch = text.match(/(\d+)\s*minutos/);
+
+  if (goalsMatch) {
+    const n = parseInt(goalsMatch[1], 10);
+    if (n > 0) update.goals = n;
+  } else if (/\bhat[\s-]*trick\b|\btriplete\b/.test(text)) {
+    update.goals = 3;
+  } else if (text.includes("doblete") || text.includes("dos goles")) {
+    update.goals = 2;
+  } else if (/\bmarc[oó] (un |el )?gol\b|\banot[oó] (un |el )?gol\b|\bmete(s)? (un )?gol\b/.test(text)) {
+    update.goals = 1;
   }
 
-  // Detectar asistencias
-  if (text.includes("asistencia") || text.includes("pase gol")) {
+  if (assistsMatch) {
+    const n = parseInt(assistsMatch[1], 10);
+    if (n > 0) update.assists = n;
+  } else if (/\bdas? una asistencia\b|\bpase de gol\b/.test(text)) {
     update.assists = 1;
   }
 
-  // Detectar tarjetas
-  if (text.includes("roja") || text.includes("red card")) {
+  if (minutesMatch) {
+    update.minutes_played = parseInt(minutesMatch[1], 10);
+  } else if (text.includes("partido completo") || text.includes("los 90 minutos")) {
+    update.minutes_played = 90;
+  }
+
+  // Tarjetas: frases concretas, no la palabra suelta (evita falsos
+  // positivos con "amarilla"/"roja" usadas fuera de contexto de tarjeta)
+  if (/tarjeta roja|expulsad[oa]/.test(text)) {
     update.red_cards = 1;
-  } else if (text.includes("amarilla") || text.includes("yellow")) {
+  } else if (/tarjeta amarilla/.test(text)) {
     update.yellow_cards = 1;
   }
 
-  // Detectar títulos
+  // Títulos: exige lenguaje explícito de VICTORIA, no solo mencionar el
+  // nombre de una competición — jugar una eliminatoria de Copa o un
+  // partido de Champions NO es ganar un título, y antes contaba como uno.
   if (
-    text.includes("campeón") ||
-    text.includes("título") ||
-    text.includes("copa") ||
-    text.includes("champions") ||
-    text.includes("championship") ||
-    text.includes("ganador")
+    /\bcampeón(es)?\b|\bganas? el título\b|\blevantas? (el|la) (trofeo|copa)\b|\bte proclamas campeón\b|\bconquistas? (la|el) (liga|copa|champions)\b/.test(
+      text,
+    )
   ) {
     update.titles = 1;
-  }
-
-  // Detectar minutos (parsing crude)
-  const minutesMatch = text.match(/(\d+)\s*minutos/i);
-  if (minutesMatch) {
-    update.minutes_played = parseInt(minutesMatch[1], 10);
-  } else if (text.includes("90") || text.includes("full match")) {
-    update.minutes_played = 90;
-  } else if (text.includes("entrada") || text.includes("entra")) {
-    update.minutes_played = 45; // Aproximación para entrada en segundo tiempo
   }
 
   return update;

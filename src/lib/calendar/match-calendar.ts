@@ -75,30 +75,55 @@ export function buildMatchCalendar(playerClub: string, season: number): MatchWee
     });
   }
 
-  // Semana 9: Copa del Rey
+  // Semana 9: Copa del Rey — sorpresa clásica del torneo: un equipo de
+  // categoría inferior que le pone las cosas difíciles al grande
+  const copaRivals = [
+    "CD Mirandés",
+    "Racing de Ferrol",
+    "UD Ibiza",
+    "CD Eldense",
+    "SD Ponferradina",
+    "Real Unión",
+    "CD Tenerife",
+    "Cultural Leonesa",
+  ];
+  const copaRival = copaRivals[Math.floor(Math.random() * copaRivals.length)];
   calendar.push({
     week: baseWeek + 9,
     season,
     matchday: 1,
     competition: "copa",
     homeTeam: playerClub,
-    awayTeam: `Rival Copa`,
-    rivalClub: `Rival Copa`,
+    awayTeam: copaRival,
+    rivalClub: copaRival,
     mandatory: false,
-    description: `Copa del Rey - Fase`,
+    description: `Copa del Rey - Eliminatoria ante ${copaRival}`,
   });
 
-  // Semana 10: Champions/Europa (si aplica)
+  // Semana 10: Champions/Europa — élite continental
+  const europeanRivals = [
+    "Bayern Múnich",
+    "Manchester City",
+    "Paris Saint-Germain",
+    "Inter de Milán",
+    "Liverpool FC",
+    "Borussia Dortmund",
+    "Juventus",
+    "Benfica",
+  ];
+  const europeanRival = europeanRivals.filter((c) => c !== playerClub)[
+    Math.floor(Math.random() * (europeanRivals.length - 1))
+  ];
   calendar.push({
     week: baseWeek + 10,
     season,
     matchday: 1,
     competition: "champions",
     homeTeam: playerClub,
-    awayTeam: "Rival Champions",
-    rivalClub: "Rival Champions",
+    awayTeam: europeanRival,
+    rivalClub: europeanRival,
     mandatory: false,
-    description: "Champions League / Europa League",
+    description: `Champions League - Fase de grupos ante ${europeanRival}`,
   });
 
   return calendar;
