@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { SECOND_CAREER_LABELS, seasonLabel } from "@/types/career";
@@ -27,84 +28,140 @@ export default async function RetiroPage() {
     | string
     | undefined;
 
+  const totalWeeks = player.week;
+  const seasons = Math.ceil(totalWeeks / 38);
   const shareText = withShareLink(
-    `${player.last_name} colgó las botas en el ${player.club}, después de ${milestones?.length ?? 0} momentos clave y una carrera que ya es leyenda. Juega la tuya en Beyond 90.`,
+    `${player.last_name} colgó las botas. Carrera de ${seasons} temporadas, ${milestones?.length ?? 0} momentos épicos, ${player.fama} de fama. ¿La tuya será mayor? Juega en Beyond 90.`,
   );
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-neutral-950 p-6">
-      <div className="w-full max-w-md space-y-6 rounded-2xl border border-amber-500/30 bg-gradient-to-b from-neutral-900 to-neutral-950 p-6 text-white shadow-xl">
+    <main className="flex flex-1 justify-center bg-gradient-to-b from-neutral-950 via-neutral-950 to-neutral-900 p-4 sm:p-6">
+      <div className="w-full max-w-2xl space-y-8 pb-12">
+        {/* Header épico */}
+        <div className="space-y-4 text-center">
+          <p className="text-6xl">👑</p>
+          <h1 className="text-4xl sm:text-5xl font-black text-white">
+            Leyenda <span className="text-gold">{player.last_name}</span>
+          </h1>
+          <p className="text-sm text-neutral-400 max-w-lg mx-auto">
+            Tu carrera ha terminado. Ahora eres parte de la historia del fútbol.
+          </p>
+        </div>
+
+        {/* Imagen héroe */}
         {heroImage && (
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg border border-amber-500/20">
+          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-amber-500/30 shadow-2xl shadow-amber-500/10">
             <Image src={heroImage} alt={player.last_name} fill className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent" />
           </div>
         )}
 
+        {/* Shareable card */}
         <ShareableCard title="Beyond 90" text={shareText}>
           <CareerStatCard player={player} />
         </ShareableCard>
 
-        <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
-            Fin de la carrera
-          </p>
-          <h1 className="text-2xl font-bold">{player.last_name}</h1>
-          <p className="text-sm text-neutral-400">
-            {player.club} · Última temporada como jugador {seasonLabel(player.week)}
-          </p>
+        {/* Stats principales */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-4 text-center">
+            <p className="text-2xl font-black text-gold">{seasons}</p>
+            <p className="text-xs text-neutral-400 mt-1">Temporadas</p>
+          </div>
+          <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-4 text-center">
+            <p className="text-2xl font-black text-gold">{player.fama}</p>
+            <p className="text-xs text-neutral-400 mt-1">Fama</p>
+          </div>
+          <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-4 text-center">
+            <p className="text-2xl font-black text-gold">{player.patrimonio.toLocaleString("es", { maximumFractionDigits: 0 })}</p>
+            <p className="text-xs text-neutral-400 mt-1">€ Patrimonio</p>
+          </div>
+          <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-4 text-center">
+            <p className="text-2xl font-black text-gold">{milestones?.length ?? 0}</p>
+            <p className="text-xs text-neutral-400 mt-1">Momentos épicos</p>
+          </div>
+        </div>
+
+        {/* Info carrera */}
+        <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-300">Club actual</span>
+            <span className="font-bold text-gold">{player.club}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-300">Edad al retiro</span>
+            <span className="font-bold text-gold">{player.age} años</span>
+          </div>
           {player.second_career && (
-            <p className="text-sm text-amber-400">
-              Después: {SECOND_CAREER_LABELS[player.second_career]}
-            </p>
+            <div className="flex items-center justify-between pt-4 border-t border-amber-500/20">
+              <span className="text-neutral-300">Tu nueva vida</span>
+              <span className="font-bold text-emerald-400">{SECOND_CAREER_LABELS[player.second_career]}</span>
+            </div>
+          )}
+          {player.second_career && (
+            <div className="flex items-center justify-between">
+              <span className="text-neutral-300">Reputación</span>
+              <span className="font-bold text-gold">{player.reputacion}</span>
+            </div>
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 rounded-lg border border-amber-500/20 bg-black/30 p-3 text-center text-sm">
-          <div>
-            <p className="text-lg font-bold">{player.fama}</p>
-            <p className="text-xs text-neutral-400">Fama</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold">{player.patrimonio.toLocaleString("es")} €</p>
-            <p className="text-xs text-neutral-400">Patrimonio</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold">{milestones?.length ?? 0}</p>
-            <p className="text-xs text-neutral-400">Momentos clave</p>
-          </div>
-        </div>
-
-        {player.second_career && (
-          <div className="rounded-lg border border-amber-500/20 bg-black/30 p-3 text-center text-sm">
-            <p className="text-lg font-bold">{player.reputacion}</p>
-            <p className="text-xs text-neutral-400">
-              Reputación como {SECOND_CAREER_LABELS[player.second_career].toLowerCase()}
-            </p>
-          </div>
-        )}
-
+        {/* Timeline de momentos */}
         {milestones && milestones.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-              Tu historia
-            </p>
-            <ul className="space-y-2">
-              {milestones.map((m) => (
-                <li key={m.id} className="rounded-md border border-amber-500/10 bg-black/20 p-3 text-sm">
-                  <p className="font-medium">{m.title}</p>
-                  <p className="text-xs text-neutral-400">
-                    Temporada {seasonLabel(m.week)}
-                    {m.subtitle ? ` · ${m.subtitle}` : ""}
-                  </p>
-                </li>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">📅</span>
+              <h2 className="text-xl font-bold text-white">Tu historia en {seasons} actos</h2>
+            </div>
+            <div className="space-y-3">
+              {milestones.map((m, idx) => (
+                <div
+                  key={m.id}
+                  className="rounded-lg border border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-transparent p-4 flex gap-4"
+                >
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full border border-gold bg-black flex items-center justify-center font-bold text-gold text-sm">
+                    {idx + 1}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-white">{m.title}</p>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      📆 Temporada {seasonLabel(m.week)}
+                      {m.subtitle ? ` · ${m.subtitle}` : ""}
+                    </p>
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
 
-        <p className="text-center text-xs text-neutral-500">
-          Tu carrera terminó aquí. Gracias por jugarla.
-        </p>
+        {/* Cierre */}
+        <div className="space-y-4 text-center py-6">
+          <div className="space-y-2">
+            <p className="text-2xl font-black text-gold">Fin de la carrera</p>
+            <p className="text-sm text-neutral-400">
+              Tu legado vivirá para siempre en Beyond 90
+            </p>
+          </div>
+
+          {/* Segunda vida button */}
+          {!player.second_career && (
+            <Link
+              href="/carrera/segunda-vida"
+              className="inline-block mt-4 px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg hover:shadow-emerald-500/50"
+            >
+              🚀 Comienza tu segunda vida
+            </Link>
+          )}
+
+          {player.second_career && (
+            <Link
+              href="/carrera"
+              className="inline-block mt-4 px-6 py-3 rounded-lg bg-gradient-to-r from-amber-500 to-gold text-neutral-950 font-bold hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg hover:shadow-amber-500/50"
+            >
+              📚 Ver mi legado en carrera
+            </Link>
+          )}
+        </div>
       </div>
     </main>
   );
