@@ -1,0 +1,38 @@
+name: Beyond 90 V1 QA
+
+on:
+  push:
+    branches:
+      - "product-v4-*"
+  workflow_dispatch:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run qa:career
+      - run: npm run qa:branches
+      - run: npm run build
+      - name: Install WebKit test runtime
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+      - name: iPhone WebKit delivery and persistence
+        run: npx playwright test scripts/browser-delivery.spec.cjs --project=webkit --reporter=line

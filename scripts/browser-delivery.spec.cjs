@@ -112,3 +112,40 @@ test("iPhone WebKit restores the last valid backup after primary save corruption
   expect(healed).toBeTruthy();
   expect(pageErrors).toEqual([]);
 });
+
+
+test("iPhone WebKit keeps the primary save when backup writes are rejected", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.addInitScript(() => {
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key === "beyond90:save:v1:backup") {
+        throw new DOMException("Simulated Safari backup quota failure", "QuotaExceededError");
+      }
+      return originalSetItem.call(this, key, value);
+    };
+  });
+
+  await page.goto("http://127.0.0.1:4173/");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.getByRole("button", { name: "Nueva carrera" }).click();
+  await page.getByPlaceholder("Álvaro Nieto").fill("Jugador QA Backup Failure");
+  await page.getByRole("button", { name: /Ambicioso/ }).click();
+  await page.getByRole("button", { name: /Leal/ }).click();
+  await page.getByRole("button", { name: "Elegir cantera" }).click();
+  await page.getByRole("button", { name: /Real Betis/ }).click();
+  await page.getByRole("button", { name: "Firmar en la cantera" }).click();
+  await expect(page).toHaveURL(/\/historia$/);
+
+  const primary = await page.evaluate(() => localStorage.getItem("beyond90:save:v1"));
+  expect(primary).toBeTruthy();
+
+  await page.reload();
+  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
+  expect(pageErrors).toEqual([]);
+});
