@@ -20,6 +20,8 @@ import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sp
 import { shouldExcludeEvent, weirdEventByRarity, suggestNextEventType, type EventHistory } from "@/lib/narrative/event-tracking";
 import { getNextMatch, isMatchWeekNext } from "@/lib/calendar/match-calendar";
 import { calculateCareerArc, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, handleOngoingInjury, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
+import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
+import { buildSecondCareerChoiceEvent } from "@/lib/narrative/second-career-events";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -309,7 +311,7 @@ PRÓXIMO PARTIDO:
 - Rival: ${match.rivalClub}
 - Competición: ${match.competition}
 
-CONTEXTO: ${compContext[match.competition] || "Partido importante"}
+CONTEXTO: ${compContext[match.competition as keyof typeof compContext] || "Partido importante"}
 FORMA DEL JUGADOR: ${player.forma}/100
 MORAL: ${player.moral}/100
 
@@ -376,16 +378,77 @@ export async function pickNextEventDynamic(
   const season = Math.floor((playerWithDynamics.week - 1) / 10);
   const age = playerAge(playerWithDynamics.week);
 
+  // Si el jugador está esperando elegir segunda carrera, mostrar ese evento primero
+  if (playerWithDynamics.status === "awaiting_second_life") {
+    console.log(`[pickNextEventDynamic] Player awaiting_second_life: offering second career choice`);
+    return maybeAddFreeText(buildSecondCareerChoiceEvent(playerWithDynamics));
+  }
+
+  // Si el jugador está en segunda vida, generar eventos específicos de esa carrera
+  if (playerWithDynamics.status === "second_life" && playerWithDynamics.second_career) {
+    const { buildCoachEvents, buildCommentatorEvents, buildEntrepreneurEvents, buildAmbassadorEvents, buildPrivateLifeEvents } = await import("./second-career-events");
+
+    let secondLifeEvent: GameEvent | null = null;
+    switch (playerWithDynamics.second_career) {
+      case "entrenador":
+        secondLifeEvent = buildCoachEvents(playerWithDynamics, playerWithDynamics.week);
+        break;
+      case "comentarista":
+        secondLifeEvent = buildCommentatorEvents(playerWithDynamics, playerWithDynamics.week);
+        break;
+      case "empresario":
+        secondLifeEvent = buildEntrepreneurEvents(playerWithDynamics, playerWithDynamics.week);
+        break;
+      case "embajador":
+        secondLifeEvent = buildAmbassadorEvents(playerWithDynamics, playerWithDynamics.week);
+        break;
+      case "privado":
+        secondLifeEvent = buildPrivateLifeEvents(playerWithDynamics, playerWithDynamics.week);
+        break;
+    }
+
+    if (secondLifeEvent) {
+      console.log(`[pickNextEventDynamic] Second life event for ${playerWithDynamics.second_career}: "${secondLifeEvent.title}"`);
+      return maybeAddFreeText(secondLifeEvent);
+    }
+  }
+
+  // Verificar TRANSICIONES DE CARRERA AUTOMÁTICAS (pico, decline, retiro)
+  const careerTransition = detectCareerTransition(playerWithDynamics);
+  if (careerTransition) {
+    console.log(`[pickNextEventDynamic] Career transition detected: ${careerTransition}`);
+    let transitionEvent: GameEvent | null = null;
+
+    switch (careerTransition) {
+      case "entering_peak":
+        transitionEvent = buildEnteringPeakEvent();
+        break;
+      case "exiting_peak":
+        transitionEvent = buildExitingPeakEvent();
+        break;
+      case "entering_decline":
+        transitionEvent = buildEnteringDeclineEvent();
+        break;
+      case "ready_to_retire":
+        transitionEvent = buildReadyToRetireEvent();
+        break;
+    }
+
+    if (transitionEvent) {
+      return maybeAddFreeText(transitionEvent);
+    }
+  }
+
   // Verificar si hay un partido importante próximo (la próxima semana)
   // Si es así, generar un evento pre-partido narrativo
-  if (isMatchWeekNext(player.week, player.club)) {
-    const nextMatch = getNextMatch(player.week, player.club);
+  if (isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club)) {
+    const nextMatch = getNextMatch(playerWithDynamics.week, playerWithDynamics.club);
     if (nextMatch) {
       console.log(
         `[pickNextEventDynamic] Next week is match week (${nextMatch.competition}): ${nextMatch.description}. Generating pre-match narrative.`
       );
       // Generar evento pre-partido contextualizado
-      const preMatchEvent = await generatePreMatchEvent(player, nextMatch, history);
+      const preMatchEvent = await generatePreMatchEvent(playerWithDynamics, nextMatch, history);
       if (preMatchEvent) {
         return maybeAddFreeText(preMatchEvent);
       }

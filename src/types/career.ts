@@ -10,7 +10,7 @@ export type EventCategory =
   | "especial"
   | "segunda_vida";
 
-export type SecondCareerRole = "entrenador" | "agente" | "presidente";
+export type SecondCareerRole = "entrenador" | "agente" | "presidente" | "comentarista" | "empresario" | "embajador" | "privado";
 
 export type PlayerStatus = "active" | "awaiting_second_life" | "second_life" | "retired";
 
@@ -30,6 +30,10 @@ export interface Consequences {
   agent_name?: string;
   /** Abre o actualiza un hilo de vida persistente (pareja, familia, lesión...) */
   flags?: Record<string, string | boolean>;
+  /** Estado del jugador (active, awaiting_second_life, second_life, retired) */
+  status?: PlayerStatus;
+  /** Segunda carrera elegida después de retirarse */
+  second_career?: SecondCareerRole;
 }
 
 export const CONSEQUENCE_LABELS: Record<string, string> = {
@@ -170,6 +174,10 @@ export const SECOND_CAREER_LABELS: Record<SecondCareerRole, string> = {
   entrenador: "Entrenador",
   agente: "Agente",
   presidente: "Presidente",
+  comentarista: "Comentarista",
+  empresario: "Empresario",
+  embajador: "Embajador",
+  privado: "Vida Privada",
 };
 
 export const MODE_LABELS: Record<CareerMode, string> = {

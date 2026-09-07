@@ -21,6 +21,7 @@ import {
 import { MODE_TARGET_WEEKS, playerAge } from "@/types/career";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/player/update-stats";
+import { buildSecondCareerChoiceEvent } from "@/lib/narrative/second-career-events";
 
 /** Prompts contextuales para tarjetas compartibles — cinematografía deportiva de máximo impacto */
 const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
@@ -144,7 +145,10 @@ export async function resolveEvent(formData: FormData) {
   const consequences = resolution ? resolution.consequences : option.consequences;
   const outcomeText = resolution ? resolution.text : null;
 
-  const isRetirementDecision = event.id === "fork-retiro-pro" && option.id === "retirarse";
+  const isRetirementDecision =
+    (event.id === "fork-retiro-pro" && option.id === "retirarse") ||
+    (event.id === "transition-ready-to-retire" && option.id === "retirarse");
+  const isSecondCareerChoice = event.id === "fork-segunda-vida-elegir";
   const milestoneAchieved =
     (event.isMilestone && (!resolution || resolution.success)) || isRetirementDecision;
 
@@ -166,6 +170,18 @@ export async function resolveEvent(formData: FormData) {
   let imagePromptForBackground: string | null = null;
 
   const playerUpdate: Record<string, unknown> = { ...patch };
+
+  // Si es elección de segunda carrera, guardar la carrera elegida
+  if (isSecondCareerChoice) {
+    const secondCareerMap: Record<string, string> = {
+      entrenador: "entrenador",
+      comentarista: "comentarista",
+      empresario: "empresario",
+      embajador: "embajador",
+      alejarse: "privado",
+    };
+    playerUpdate.second_career = secondCareerMap[option.id] || null;
+  }
 
   // Actualizar estadísticas del jugador basándose en el evento
   const statUpdate = extractStatsFromEvent(event);
@@ -363,7 +379,7 @@ export async function resolveEvent(formData: FormData) {
       pending_event: null,
       ...playerUpdate,
       week: newWeek,
-      status: isRetirementDecision ? "awaiting_second_life" : willRetire ? "retired" : "active",
+      status: isSecondCareerChoice ? "second_life" : isRetirementDecision ? "awaiting_second_life" : willRetire ? "retired" : "active",
     })
     .eq("id", player.id);
 

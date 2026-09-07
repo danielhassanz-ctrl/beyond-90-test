@@ -981,6 +981,10 @@ const SECOND_LIFE_CONTEXT: Record<SecondCareerRole, string> = {
   entrenador: "dirige un equipo desde el banquillo: decisiones tácticas, vestuario, presión de la directiva por resultados",
   agente: "representa a jugadores: negociaciones, comisiones, clientes que van y vienen, presión mediática",
   presidente: "gestiona un club entero: fichajes, presupuesto, socios, presión institucional",
+  comentarista: "analiza el fútbol desde un plató de televisión: comentarios en directo, análisis técnico, opinión pública",
+  empresario: "construye un imperio empresarial en el mundo del deporte: startups, inversiones, negocios deportivos",
+  embajador: "es la cara visible de su club: eventos, caridad, relaciones públicas, legado viviente",
+  privado: "vive lejos de los reflectores: vida tranquila, familia, negocios personales, anonimato relativo",
 };
 
 const SECOND_LIFE_STYLE: Record<SecondCareerRole, string> = {
@@ -990,6 +994,14 @@ const SECOND_LIFE_STYLE: Record<SecondCareerRole, string> = {
     "Los clientes más memorables son perlas de cantera (de cualquier gran academia española) que están a punto de explotar, o antiguos compañeros de vestuario del propio personaje que ahora confían en él para dar el salto. Dales nombre y contexto propio, nunca genéricos.",
   presidente:
     "Inspírate libremente (sin nombrarlos ni citarlos) en arquetipos reales de presidentes históricos: el que ficha galácticos cada verano sea cual sea la necesidad táctica, el dueño con fortuna personal que financia gastos sin límite a cambio de control, el candidato carismático que gana una asamblea de socios con promesas ambiciosas. Usa esos arquetipos como inspiración de tono, no como personajes reales.",
+  comentarista:
+    "Evoluciona desde comentarista deportivo local a figura mediática reconocida: primero en radios y canales regionales, después en televisiones nacionales. Sus análisis son más profundos y sus opiniones generan debate.",
+  empresario:
+    "Los proyectos empresariales escalan con ambición: desde una pequeña academia de fútbol a una red de academias, desde un app de entrenamiento a una plataforma global, desde ropa deportiva a un imperio deportivo diversificado.",
+  embajador:
+    "Los eventos de caridad y apariciones públicas definen su imagen: inauguraciones, partidos benéficos, eventos con niños en situación vulnerable, defensa de causas sociales que lo apasionan. Su nombre genera dinero para las causas.",
+  privado:
+    "La vida tranquila lejos de los reflectores: puede ser empresario discreto, asesor, inversionista ángel, o simplemente vivir de las inversiones inteligentes hechas durante su carrera. La privacidad es su valor más preciado.",
 };
 
 /**

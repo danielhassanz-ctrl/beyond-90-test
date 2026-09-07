@@ -3,7 +3,8 @@
  * Se llama después de resolver un evento para registrar logros.
  */
 
-import type { Player, GameEvent } from "@/types";
+import type { Player } from "@/types/player";
+import type { GameEvent } from "@/types/career";
 
 export interface StatUpdate {
   matches_played?: number;
