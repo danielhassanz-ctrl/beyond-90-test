@@ -3,37 +3,15 @@ import { PRO_RETIREMENT_MIN_WEEK } from "@/types/career";
 import type { Player } from "@/types/player";
 import { STARTING_AGENTS, pickStartingClubOffers } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
+import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
 
 /**
- * Muy primer evento de toda carrera: elegir quién negocia por ti. Sin esto
- * definido no hay narrativa de representante coherente después. El agente
- * se sortea entre unos pocos ficticios para que no sea siempre el mismo
- * nombre en cada carrera nueva.
+ * Primer evento de carrera: elegir representante. Ahora es dinámico con 15+ variantes
+ * para que cada carrera comience diferente. Puede ser agente hambriento, desconocido,
+ * competición de agentes, o casos inesperados. La narrativa y el contexto cambian.
  */
 export function buildEleccionRepresentanteEvent(): GameEvent {
-  const agent = STARTING_AGENTS[Math.floor(Math.random() * STARTING_AGENTS.length)];
-
-  return {
-    id: "eleccion-representante",
-    category: "representante",
-    title: "¿Quién negocia por ti?",
-    description:
-      "Antes de firmar nada, alguien tiene que sentarse a hablar con los clubes en tu nombre. Tienes 16 años: es tu primera gran decisión fuera del campo.",
-    options: [
-      {
-        id: "padre",
-        label: "Que tu padre lleve las negociaciones",
-        subtitle: "Confianza total, pero sin experiencia en el mundo del fútbol",
-        consequences: { agent_name: "Tu padre", moral: 4 },
-      },
-      {
-        id: "agente",
-        label: `Firmar con ${agent.name}, ${agent.article} en la cantera`,
-        subtitle: agent.pitch,
-        consequences: { agent_name: agent.name, patrimonio: -agent.fee },
-      },
-    ],
-  };
+  return getRandomFirstSigningVariant();
 }
 
 /**

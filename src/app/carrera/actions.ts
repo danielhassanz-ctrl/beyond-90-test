@@ -5,6 +5,7 @@ import { applyConsequences, nextWeekGap, resolveOption } from "@/lib/narrative/e
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { describeKit } from "@/lib/clubColors";
+import { getContextualImagePrompt } from "@/lib/narrative/contextual-image-prompts";
 import {
   generateContractEvent,
   generateDebutPretemp1,
@@ -57,7 +58,17 @@ const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
   "premio-mvp-torneo": "Tournament MVP crowning moment: [AGE] footballer on stage holding massive MVP trophy, standing between club officials or ceremony presenters. Stage background with tournament branding visible. Professional event lighting creating perfect visibility of trophy and expression. Audience visible (blurred), creating atmosphere. Formal presentation moment captured. Color palette: stage lighting tones, trophy gold, formal blacks and whites, crowd bokeh. This represents tournament-level individual dominance. Premium award ceremony photography, official tournament imagery, prestige and achievement captured",
 };
 
-function getMilestoneImagePrompt(eventId: string, age: number, club?: string): string | null {
+function getMilestoneImagePrompt(eventId: string, age: number, club?: string, playerName?: string): string | null {
+  // Primero intenta usar prompts contextuales específicos
+  if (playerName) {
+    const contextualPrompt = getContextualImagePrompt(eventId, playerName, age, {
+      clubName: club,
+      agentName: "agente",
+    });
+    if (contextualPrompt) return contextualPrompt;
+  }
+
+  // Fallback a milestone prompts existentes
   const basePrompt = MILESTONE_IMAGE_PROMPTS[eventId];
   if (!basePrompt) return null;
 
@@ -246,7 +257,7 @@ export async function resolveEvent(formData: FormData) {
     if (milestoneId && !isRetirementDecision) {
       const newClub = typeof consequences.club === "string" ? consequences.club : player.club;
       const currentAge = playerAge(player.week);
-      const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub);
+      const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub, player.last_name);
       imagePromptForBackground = contextualPrompt ?? event.imageScene ?? null;
     }
   }
