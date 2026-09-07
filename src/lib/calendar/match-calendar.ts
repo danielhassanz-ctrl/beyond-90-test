@@ -141,7 +141,8 @@ function generateLaLigaFixture(playerClub: string): string[] {
  * Retorna null si no hay más partidos en la temporada.
  */
 export function getNextMatch(currentWeek: number, playerClub: string): MatchWeek | null {
-  const season = Math.floor((currentWeek - 1) / 52);
+  const WEEKS_PER_SEASON = 10;
+  const season = Math.floor((currentWeek - 1) / WEEKS_PER_SEASON);
   const calendar = buildMatchCalendar(playerClub, season);
 
   // Buscar el próximo partido que no haya pasado
@@ -168,7 +169,8 @@ export function isMatchWeekNext(currentWeek: number, playerClub: string): boolea
  * Obtiene estadísticas de partidos jugados hasta una semana.
  */
 export function getMatchStats(playerClub: string, upToWeek: number) {
-  const season = Math.floor((upToWeek - 1) / 52);
+  const WEEKS_PER_SEASON = 10;
+  const season = Math.floor((upToWeek - 1) / WEEKS_PER_SEASON);
   const calendar = buildMatchCalendar(playerClub, season);
 
   const played = calendar.filter((m) => m.week <= upToWeek);
