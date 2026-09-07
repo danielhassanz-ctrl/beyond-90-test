@@ -16,7 +16,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run qa:career
       - run: npm run qa:branches
