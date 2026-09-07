@@ -231,6 +231,20 @@ function clamp(value: number | undefined, min: number, max: number) {
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
+/**
+ * A veces el modelo, al rellenar el campo de texto de la tool call, se
+ * lía y deja fragmentos tipo XML de su propio formato interno pegados al
+ * final del texto real (visto en partida real: una crónica de partido
+ * perfectamente correcta seguida de `</description> <parameter
+ * name="rival_club">Sevilla FC`, visible tal cual para el jugador). El
+ * contenido bueno siempre viene ANTES del fragmento roto, así que basta
+ * con cortar ahí en vez de descartar todo el evento.
+ */
+function stripLeakedToolSyntax(text: string): string {
+  const cutIndex = text.search(/<\/?[a-z_]+(\s|>)|<parameter\b/i);
+  return cutIndex === -1 ? text.trim() : text.slice(0, cutIndex).trim();
+}
+
 function sanitizeConsequences(raw: Consequences): Consequences {
   return {
     forma: clamp(raw.forma, -15, 15),
@@ -302,12 +316,19 @@ export async function callEventTool(
       return null;
     }
 
+    const cleanTitle = stripLeakedToolSyntax(data.title);
+    const cleanDescription = stripLeakedToolSyntax(data.description);
+    if (!cleanTitle || !cleanDescription) {
+      console.error(`[callEventTool:${idPrefix}] FAIL: title/description empty after stripping leaked tool syntax`);
+      return null;
+    }
+
     const options = data.options
       .filter((o) => o.label && o.subtitle)
       .map((o, i) => ({
         id: String(i),
-        label: o.label as string,
-        subtitle: o.subtitle as string,
+        label: stripLeakedToolSyntax(o.label as string),
+        subtitle: stripLeakedToolSyntax(o.subtitle as string),
         consequences: sanitizeConsequences(o.consequences ?? {}),
       }));
 
@@ -320,8 +341,8 @@ export async function callEventTool(
     const result = {
       id: `${idPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       category,
-      title: data.title,
-      description: data.description,
+      title: cleanTitle,
+      description: cleanDescription,
       allowFreeText: Boolean(data.allow_free_text),
       freeTextPrompt: data.free_text_prompt,
       isMilestone,

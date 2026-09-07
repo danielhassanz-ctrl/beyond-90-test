@@ -130,7 +130,7 @@ export function buildDebutOficialEvent(club: string, rivalry: string = "rival lo
     category: "partido",
     title: `Tu primer partido con el ${club}`,
     description:
-      `Debut oficial en La Liga. Entras en el minuto 67 por la banda. El equipo gana 1-0. Nota personal: 6.8/10. Goles: 0. Asistencias: 0. Marcador: 2-0 final. No fue espectacular pero tampoco cometiste errores. Hiciste lo que pidieron: estar en posición, no meter la pata. Es un debut sólido.`,
+      `Debut oficial en La Liga. Entras en el minuto 67 por la banda. Nota personal: 6.8/10. Goles: 0. Asistencias: 0. Marcador: 2-0 final a favor. No fue espectacular pero tampoco cometiste errores. Hiciste lo que pidieron: estar en posición, no meter la pata. Es un debut sólido.`,
     rivalClub: rivalry,
     isMilestone: true,
     milestoneType: "debut",
