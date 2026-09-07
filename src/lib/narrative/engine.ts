@@ -296,32 +296,69 @@ async function generatePreMatchEvent(
   history: HistoryItem[]
 ): Promise<GameEvent | null> {
   const age = playerAge(player.week);
-  const compContext = {
-    liga: "Liga: última jornada antes del partido, análisis de estrategia",
-    copa: "Copa: competición de eliminación, presión de no equivocarse",
-    champions: "Champions: escenario europeo, nivel élite, portadas internacionales",
-    amistoso: "Amistoso: menos presión, oportunidad de experimentar",
+
+  // Contexto específico del rival
+  const rivalContext: Record<string, string> = {
+    "Real Madrid": "gigante histórico, equipo con más títulos, rival de referencia absoluta",
+    "FC Barcelona": "otra potencia mundial, clásico emocional en El Clásico, presión máxima",
+    "Atlético de Madrid": "batalla táctica feroz, rival de ciudad, derbi intenso y defensivo",
+    "Sevilla FC": "equipo europeo de nivel, experiencia en competiciones, táctica madura",
+    "Real Betis": "rival madrileño de nivel, fútbol atractivo, buen equipo defensivo",
+    "Valencia CF": "escuela histórica, buen nivel, rival competitivo",
+    "Villarreal CF": "equipo compacto, táctica defensiva, difícil de romper",
+    "Real Sociedad": "elegancia táctica, buen juego de posición, rival técnico",
+    "Athletic Club": "identidad clara, gran afición, intensidad defensiva enorme",
+    "Getafe CF": "rival defensivo, táctica de bloque cerrado, marcaje agresivo",
   };
 
-  const prompt = `Eres el director narrativo de "Beyond 90".
-Genera un evento pre-partido para ${player.last_name} (${age} años, media ${player.media}).
+  const compContext = {
+    liga: `La Liga - Lucha por puntos cruciales. ${rivalContext[match.rivalClub] || "Rival de la liga"}.`,
+    copa: "Copa del Rey - Eliminatoria directa. No hay segundo partido: o pasas o te elimina.",
+    champions: "Champions League - El escenario más grande. Nivel élite europeo. Portadas internacionales. Presión máxima.",
+    europa: "Europa League - Competición europea importante. Experiencia internacional.",
+    amistoso: "Amistoso - Menos presión, pero oportunidad de mostrar nivel. Evaluación física.",
+    internacional: "Partido internacional - Representar al país. Mayor presión colectiva.",
+  };
 
-PRÓXIMO PARTIDO:
-- ${match.description}
+  const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista profesional.
+
+PRÓXIMO PARTIDO (semana ${match.week}):
+- Jornada: ${match.description}
 - Rival: ${match.rivalClub}
-- Competición: ${match.competition}
+- Contexto: ${match.homeTeam === player.club ? `Local, en tu estadio` : `Visitante, en ${match.awayTeam}`}
+- Competición: ${compContext[match.competition as keyof typeof compContext] || "Partido importante"}
 
-CONTEXTO: ${compContext[match.competition as keyof typeof compContext] || "Partido importante"}
-FORMA DEL JUGADOR: ${player.forma}/100
-MORAL: ${player.moral}/100
+TU SITUACIÓN ACTUAL:
+- Jugador: ${player.last_name}, ${age} años
+- Media: ${player.media}/100
+- Forma física: ${player.forma}/100
+- Moral/ánimo: ${player.moral}/100
+- Relación entrenador: ${player.rel_entrenador}/100
 
-REGLAS:
-- Evento narrativo sobre preparación mental/emocional para el partido
-- NO es el partido en sí, es los días/horas antes
-- 2-3 opciones sobre cómo afrontar el partido
-- Consecuencias que afecten moral, forma, rel_entrenador
-- allow_free_text: false
-- is_milestone: false`;
+EVENTO NARRATIVO:
+Genera un evento PRE-PARTIDO (días o horas antes del encuentro).
+Es sobre PREPARACIÓN MENTAL/EMOCIONAL, no el partido en sí.
+
+Ejemplos de escenas válidas:
+- Charla emocional del entrenador en el vestuario
+- Tu reacción nerviosa/confiada viendo el vídeo del rival
+- Conversación con pareja/familia sobre cómo te sientes
+- Momento de reflexión personal antes de dormir
+- Interacción con compañeros en el hotel
+- Ánimo de afición o presión mediática pre-partido
+- Recuerdo de un partido anterior contra este rival
+
+REGLAS CRÍTICAS:
+- NO describas el partido, solo la preparación
+- 2-3 opciones sobre cómo afrontarás el partido
+- Las opciones deben generar consecuencias emocionales reales:
+  * Opción 1: confianza/agresividad → puede mejorar forma pero riesgo de lesión
+  * Opción 2: cautela/pragmatismo → estabilidad pero menos oportunidades
+  * Opción 3: algo intermedio o único
+- Consecuencias típicas tocan: forma, moral, rel_entrenador, rel_vestuario
+- is_milestone: false (pre-partidos NO son hitos, solo preparación)
+- allow_free_text: true (el jugador puede escribir cómo se siente)
+- TONO: emocional, realista, tensión futbolística pura`;
 
   return callEventTool(prompt, "entrenamiento", `prematch-${match.week}`);
 }
