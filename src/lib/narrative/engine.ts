@@ -172,20 +172,23 @@ export function maybeAddFreeText(event: GameEvent): GameEvent {
 /**
  * Cuántas semanas de calendario pasan tras una decisión. No es 1 semana
  * fija: la mayoría de las veces no avanza nada (varias decisiones pueden
- * vivirse "la misma semana") para que una temporada (10 semanas) dé sitio
- * a 20-25 decisiones al principio de la carrera, y más (30-35) cuando el
- * jugador ya es una figura — la vida de un futbolista de época se llena
- * de más momentos que la de un juvenil recién debutado.
+ * vivirse "la misma semana"), así que el número de situaciones que caben
+ * en una temporada (10 semanas) NO es un número fijo — varía con la media
+ * del jugador y con el modo, y ninguna partida tiene por qué tener la
+ * misma cantidad de decisiones por temporada que otra.
  */
 export function nextWeekGap(media = 50, mode: "express" | "standard" | "pro" = "standard") {
-  // Cada modo tiene diferente densidad de eventos por temporada:
-  // Express: ~15 decisiones/temporada (avanza más semanas entre eventos)
-  // Standard: ~20-25 decisiones/temporada (media)
-  // Pro: ~30-35 decisiones/temporada (muchos eventos)
+  // Los tres modos viven temporadas con densidad narrativa parecida
+  // (aprox. 13-20 situaciones/temporada, depende de las decisiones): lo
+  // que los diferencia de verdad es cuántas temporadas dura la carrera
+  // (MODE_TARGET_WEEKS), no cuántos eventos caben en cada una.
+  // Express avanza el calendario un poco más rápido (menos "relleno" por
+  // semana, encaja con una carrera corta); Pro se recrea un poco más en
+  // cada semana (más textura, encaja con una carrera larga).
   const modeMultipliers: Record<string, number> = {
-    express: 0.65,
+    express: 1.2,
     standard: 1.0,
-    pro: 1.5,
+    pro: 0.85,
   };
   const multiplier = modeMultipliers[mode] ?? 1.0;
   const baseChance = Math.max(0.28, 0.5 - (media - 50) * 0.005);

@@ -60,64 +60,94 @@ const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
   "premio-mvp-torneo": "Tournament MVP crowning moment: [AGE] footballer on stage holding massive MVP trophy, standing between club officials or ceremony presenters. Stage background with tournament branding visible. Professional event lighting creating perfect visibility of trophy and expression. Audience visible (blurred), creating atmosphere. Formal presentation moment captured. Color palette: stage lighting tones, trophy gold, formal blacks and whites, crowd bokeh. This represents tournament-level individual dominance. Premium award ceremony photography, official tournament imagery, prestige and achievement captured",
 };
 
-function getMilestoneImagePrompt(eventId: string, age: number, club?: string, playerName?: string, milestoneType?: string): string | null {
+/**
+ * Traduce los milestoneType usados en el motor narrativo a los tipos de
+ * escena que sabe dibujar contextual-image-prompts.ts. Cualquier tipo que
+ * no aparezca aquí cae al event.imageScene (que la IA ya genera contextual
+ * por evento) en vez de forzar un genérico.
+ */
+const MILESTONE_TYPE_TO_CONTEXT_TYPE: Record<string, string> = {
+  representante: "representante_primera_firma",
+  fichaje_agente: "representante_primera_firma",
+  puja_agente: "representante_primera_firma",
+  agencia: "representante_primera_firma",
+  contrato: "transferencia_fichaje",
+  fichaje_galactico: "transferencia_fichaje",
+  oferta_fondo: "transferencia_fichaje",
+  cantera: "transferencia_fichaje",
+  cantera_propia: "transferencia_fichaje",
+  canterano: "transferencia_fichaje",
+  filial: "transferencia_fichaje",
+  debut: "debut_primer_partido",
+  lesion_debut: "debut_primer_partido",
+  gol: "gol_celebracion",
+  gol_decisivo: "gol_celebracion",
+  hat: "gol_celebracion",
+  titulo: "trofeo_levantando",
+  titulo_presidente: "trofeo_levantando",
+  final_champions: "trofeo_levantando",
+  copa_america: "trofeo_levantando",
+  eurocopa: "trofeo_levantando",
+  mundial: "trofeo_levantando",
+  capitania: "capitan_brazalete",
+  premio: "recordista_marca",
+  balon_oro_cliente: "recordista_marca",
+  hall_fama: "recordista_marca",
+  prensa: "entrevista_prensa",
+  fondo_deportivo: "beneficencia_caridad",
+  mvp: "victoria_epica",
+  tactica: "entrenamiento_intenso",
+  pretemp: "entrenamiento_intenso",
+  pretemporada: "entrenamiento_intenso",
+  seleccion: "debut_internacional",
+  presidente_federacion: "debut_internacional",
+};
+
+function getMilestoneImagePrompt(
+  eventId: string,
+  age: number,
+  club?: string,
+  playerName?: string,
+  milestoneType?: string,
+  agentName?: string,
+): string | null {
   const safePlayerName = playerName || "jugador";
 
-  // Primero intenta por eventId exacto (eventos pre-definidos)
-  const contextualPrompt = getContextualImagePrompt(eventId, safePlayerName, age, {
-    clubName: club || "",
-    agentName: "agente",
-  });
-  if (contextualPrompt) return contextualPrompt;
-
-  // Si no hay match por eventId, genera un prompt por milestoneType
-  if (milestoneType) {
+  // 1) Prompts cinematográficos hechos a mano para IDs de evento conocidos
+  //    (los más elaborados: fichaje, hat-trick, título, boda, Balón de Oro...)
+  const basePrompt = MILESTONE_IMAGE_PROMPTS[eventId];
+  if (basePrompt) {
+    let prompt = basePrompt;
     const ageContext =
       age < 18
-        ? "young 16-17 year old"
+        ? "young 16-17 year old footballer"
         : age < 23
-          ? "young 20-23 year old"
+          ? "young 20-23 year old footballer"
           : age < 28
-            ? "experienced 25-28 year old"
+            ? "experienced 25-28 year old footballer"
             : age < 32
-              ? "veteran 30-32 year old"
-              : "35+ year old veteran";
-
-    if (milestoneType === "debut") {
-      return `Photorealistic Getty Images quality photo of a ${ageContext} footballer ${safePlayerName} playing in the field during a match, focused, determined look, stadium lights, action moment, professional sports photography`;
-    } else if (milestoneType === "contrato") {
-      return `Photorealistic Getty Images quality photo of ${safePlayerName} holding up a ${describeKit(club || "team")} football jersey with both hands at an official club presentation, smiling, proud moment, press room or stadium background, official unveiling style`;
-    } else if (milestoneType === "hito" || milestoneType === "escena") {
-      return `Photorealistic Getty Images quality photo of ${safePlayerName} in an action moment related to a significant career milestone, showing emotion and intensity, professional sports quality`;
+              ? "veteran 30-32 year old footballer"
+              : "35+ year old experienced veteran footballer";
+    prompt = prompt.replace("[AGE]", ageContext);
+    if (club && prompt.includes("[CLUB_KIT]")) {
+      prompt = prompt.replace("[CLUB_KIT]", describeKit(club));
     }
+    return prompt;
   }
 
-  // Fallback a milestone prompts existentes
-  const basePrompt = MILESTONE_IMAGE_PROMPTS[eventId];
-  if (!basePrompt) return null;
-
-  let prompt = basePrompt;
-
-  // Reemplaza [AGE] con descripción de edad
-  const ageContext =
-    age < 18
-      ? "young 16-17 year old footballer"
-      : age < 23
-        ? "young 20-23 year old footballer"
-        : age < 28
-          ? "experienced 25-28 year old footballer"
-          : age < 32
-            ? "veteran 30-32 year old footballer"
-            : "35+ year old experienced veteran footballer";
-
-  prompt = prompt.replace("[AGE]", ageContext);
-
-  // Reemplaza [CLUB_KIT] si el evento incluye información de club
-  if (club && prompt.includes("[CLUB_KIT]")) {
-    prompt = prompt.replace("[CLUB_KIT]", describeKit(club));
+  // 2) Sin ID exacto: mapea el milestoneType a un tipo de escena contextual
+  //    real (agente, camiseta, gol, trofeo...), nunca al eventId crudo.
+  const mappedType = milestoneType ? MILESTONE_TYPE_TO_CONTEXT_TYPE[milestoneType] : undefined;
+  if (mappedType) {
+    return getContextualImagePrompt(mappedType, safePlayerName, age, {
+      clubName: club || "",
+      agentName: agentName || "su representante",
+    });
   }
 
-  return prompt;
+  // 3) Sin match conocido: deja que el caller use event.imageScene, que la
+  //    IA ya genera específico para ese evento — mejor que un genérico.
+  return null;
 }
 
 export async function resolveEvent(formData: FormData) {
@@ -356,7 +386,8 @@ export async function resolveEvent(formData: FormData) {
     if (milestoneId && !isRetirementDecision) {
       const newClub = typeof consequences.club === "string" ? consequences.club : player.club;
       const currentAge = playerAge(player.week);
-      const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub, player.last_name, event.milestoneType);
+      const currentAgentName = (playerUpdate.agent_name as string | undefined) ?? player.agent_name ?? undefined;
+      const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub, player.last_name, event.milestoneType, currentAgentName);
       imagePromptForBackground = contextualPrompt ?? event.imageScene ?? null;
     }
 

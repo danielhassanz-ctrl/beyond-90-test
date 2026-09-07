@@ -382,5 +382,8 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
 ];
 
 export function getRandomFirstSigningVariant(): GameEvent {
-  return FIRST_SIGNING_VARIANTS[Math.floor(Math.random() * FIRST_SIGNING_VARIANTS.length)];
+  const variant = FIRST_SIGNING_VARIANTS[Math.floor(Math.random() * FIRST_SIGNING_VARIANTS.length)];
+  // Es la carta de presentación del juego: siempre genera tarjeta compartible
+  // (foto contextual junto al representante), sea cual sea la decisión.
+  return { ...variant, isMilestone: true, milestoneType: "representante" };
 }
