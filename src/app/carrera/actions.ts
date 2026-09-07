@@ -155,11 +155,13 @@ export async function resolveEvent(formData: FormData) {
     playerUpdate.agent_name = consequences.agent_name;
   }
 
+  // Solo generar imagen en momentos épicos (milestones)
+  // No en decisiones normales de partido
   const evolveLookNow =
-    player.photo_url && (event.id !== "fork-retiro-pro" || isRetirementDecision);
+    milestoneId && player.photo_url && (event.id !== "fork-retiro-pro" || isRetirementDecision);
   if (evolveLookNow) {
-    // Usar prompt contextual si existe, si no usar lookEvolution del evento
-    const imagePrompt = imagePromptForBackground || event.lookEvolution || "fotografía del jugador";
+    // Usar prompt contextual para momento épico
+    const imagePrompt = imagePromptForBackground || event.imageScene || "jugador celebrando momento épico";
     const buffer = await generatePlayerImage(player.photo_url as string, imagePrompt as string);
     if (buffer) {
       const evolvedUrl = await uploadGeneratedImage(supabase, user.id, buffer, "look");
