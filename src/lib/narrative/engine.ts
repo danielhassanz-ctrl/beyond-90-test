@@ -19,6 +19,7 @@ import { shouldBeeFunnyMoment, pickRandomFunnyMoment } from "@/lib/narrative/fun
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, weirdEventByRarity, suggestNextEventType, type EventHistory } from "@/lib/narrative/event-tracking";
 import { getNextMatch, isMatchWeekNext } from "@/lib/calendar/match-calendar";
+import { calculateCareerArc, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, handleOngoingInjury, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -327,18 +328,53 @@ REGLAS:
  * Genera TODOS los eventos con IA, nunca repitiendo premisa.
  * Reemplaza el pool de 40 eventos fijos con generación dinámica contextualizada.
  */
+/**
+ * Aplica cambios automáticos de carrera (forma degrada, relaciones sufren, presión mediática).
+ * Se llama al principio de cada turno.
+ */
+function applyCareerDynamics(player: Player): Player {
+  let updated = { ...player };
+
+  // Aplicar degradación de forma si no ha jugado
+  updated.forma = naturalFormaDegradation(updated);
+
+  // Aplicar declive por edad (si >32 años)
+  const mediaAfterAge = ageBasedMediaDecline(updated);
+  if (mediaAfterAge < updated.media) {
+    updated.media = mediaAfterAge;
+  }
+
+  // Manejar lesiones en curso
+  updated = handleOngoingInjury(updated);
+
+  // Aplicar deterioro de relaciones
+  const relChanges = deteriorateRelationships(updated);
+  Object.assign(updated, relChanges);
+
+  // Presión mediática afecta moral
+  const { mortalAfect } = calculateMediaPressure(updated);
+  if (mortalAfect < 0) {
+    updated.moral = Math.max(0, (updated.moral || 50) + mortalAfect);
+  }
+
+  return updated;
+}
+
 export async function pickNextEventDynamic(
   player: Player,
   history: HistoryItem[],
   usedEventIds: string[] = [],
 ): Promise<GameEvent> {
-  console.log(`[pickNextEventDynamic] Starting for ${player.last_name}, week=${player.week}, fama=${player.fama}`);
+  // PRIMERO: Aplicar dinámica de carrera automáticamente
+  const playerWithDynamics = applyCareerDynamics(player);
+
+  console.log(`[pickNextEventDynamic] Starting for ${playerWithDynamics.last_name}, week=${playerWithDynamics.week}, fama=${playerWithDynamics.fama}, forma=${playerWithDynamics.forma}`);
 
   // Detecta si estamos en pretemporada (inicio de nueva temporada)
   // Pretemporada ocurre en las semanas 1, 11, 21, 31... (inicio de cada temporada)
-  const weekInSeason = ((player.week - 1) % 10) + 1;
-  const season = Math.floor((player.week - 1) / 10);
-  const age = playerAge(player.week);
+  const weekInSeason = ((playerWithDynamics.week - 1) % 10) + 1;
+  const season = Math.floor((playerWithDynamics.week - 1) / 10);
+  const age = playerAge(playerWithDynamics.week);
 
   // Verificar si hay un partido importante próximo (la próxima semana)
   // Si es así, generar un evento pre-partido narrativo
