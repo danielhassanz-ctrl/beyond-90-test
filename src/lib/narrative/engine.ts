@@ -17,6 +17,7 @@ import { detectDeclineSignals, buildDeclinePrompt, describeDeclineContext } from
 import { pickCharacterToReappear, describeCharacterReappearance, updateCharacterLastSeen } from "@/lib/narrative/secondary-characters";
 import { shouldBeeFunnyMoment, pickRandomFunnyMoment } from "@/lib/narrative/funny-surreal";
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
+import { shouldExcludeEvent, weirdEventByRarity, suggestNextEventType, type EventHistory } from "@/lib/narrative/event-tracking";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -447,10 +448,31 @@ REGLAS:
     }
   }
 
+  // Convertir usedEventIds a EventHistory para tracking
+  const eventHistory: EventHistory[] = history.map((h, idx) => ({
+    eventId: `event-${idx}`,
+    category: "partido", // Por defecto, será actualizado si tenemos más info
+    title: h.title,
+    week: player.week - (history.length - idx), // Aproximación de semana
+  }));
+
+  // Generar evento con IA, pero con validación de no-repetición
   const event = await generateNextEventDynamic(player, history);
-  if (event) {
+  if (event && !shouldExcludeEvent(event.id, event.category, eventHistory, player.week)) {
     console.log(`[pickNextEventDynamic] Got event from AI: "${event.title}"`);
     return maybeAddFreeText(addMatchContext(event, player));
+  }
+
+  // Si el evento generado fue excluido, reintentar una sola vez
+  if (event && shouldExcludeEvent(event.id, event.category, eventHistory, player.week)) {
+    console.warn(
+      `[pickNextEventDynamic] Excluded event "${event.title}" due to recency. Retrying...`
+    );
+    const retryEvent = await generateNextEventDynamic(player, history);
+    if (retryEvent && !shouldExcludeEvent(retryEvent.id, retryEvent.category, eventHistory, player.week)) {
+      console.log(`[pickNextEventDynamic] Got event from AI (retry): "${retryEvent.title}"`);
+      return maybeAddFreeText(addMatchContext(retryEvent, player));
+    }
   }
 
   // Fallback si la IA falla (raramente debería pasar)
