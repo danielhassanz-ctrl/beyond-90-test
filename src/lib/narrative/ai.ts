@@ -480,15 +480,25 @@ ${
         : "Veterano. Pretemporada: compitiendo con jóvenes por minutos, últimas oportunidades. Últimas oportunidades, mentoring joven, lesiones cuestionan futuro, divorcio posible, hijo adulto, retiro cerca, nostalgia."
 }
 
-REGLAS CRÍTICAS:
+REGLAS CRÍTICAS - ANTI-REPETICIÓN EXTREMA:
 ${COMMON_RULES}
-- **OBLIGATORIO: NUNCA REPITAS PREMISA EXACTA**: Mira los títulos en "ÚLTIMOS EVENTOS". Si ves:
-  * "Presión del entrenador" → NO hagas otra escena de "entrenador presiona"
-  * "Pareja te reclama tiempo" + "Momento con pareja" → NO repitas pareja
-  * "Un cantante te menciona" + cualquier celebridad → NO generes otra celebridad mencionándote
-  * "Lesión leve en el tobillo" → NO hagas otra lesión sin importar qué parte del cuerpo
 
-- Esta ES su historia real, no una plantilla. Si ya tiene pareja/hijos/títulos (mira "SU VIDA PERSONAL"), tráelos PERO como parte de una NUEVA premisa, no repetida.
+**PROHIBIDO ABSOLUTO (rompe la inmersión)**:
+- Misma SITUACIÓN exacta: Si ya hubo "presión del entrenador", NO hagas "entrenador vuelve a presionar"
+- Mismo PERSONAJE en rol similar: Si pareja ya reclamó tiempo, NO otra escena pareja vs. carrera (distinto contexto SÍ, rol igual NO)
+- Misma CATEGORÍA 3+ veces: Si últimos 3 eventos fueron "vida" "vida" "prensa", OBLIGA partido/entrenamiento ahora
+- Mismo DILEMA: Si ya eligió "carrera vs. familia", NO repitas ese dilema (puede haber otros: dinero vs. fama, lesión vs. gloria, etc)
+- Misma EMOCIÓN consecutiva: Si último evento fue "emoción", ahora algo distinto (acción, sorpresa, reflexión)
+
+**CUANDO VEAS EN ÚLTIMOS EVENTOS**:
+- "Lesión" → NUNCA otra lesión en 10 semanas (cualquier tipo, cualquier parte)
+- "Celebridad/famoso" → NO OTRA CELEBRIDAD sin pasar 15+ semanas
+- "Fichaje/transferencia" → NO OTRO FICHAJE en 12+ semanas (cambios de rol SÍ, pero no de equipo)
+- "Pareja" → NO DRAMA PAREJA en 8 semanas (puede aparecer apoyo, no conflicto)
+- "Dinero/patrimonio" → NO OTRO EVENTO dinero en 6 semanas
+- "Tarjeta roja/sanción" → IMPOSIBLE otra tarjeta roja antes de 20 semanas
+
+- Esta ES su historia real, no una plantilla. Si ya tiene pareja/hijos/títulos (mira "SU VIDA PERSONAL"), tráelos PERO en CONTEXTO TOTALMENTE NUEVO, nunca repetido.
 - Si es evento futbolístico: incluye contexto de su posición específica (${player.position}).
 - Si es evento de vida: incluye dilemas reales (carrera vs. familia, gastar vs. ahorrar, diversión vs. enfoque).
 - Las decisiones deben tener consecuencias que se recuerden más adelante (si ignora a un amigo ahora, reaparece resentido luego).
