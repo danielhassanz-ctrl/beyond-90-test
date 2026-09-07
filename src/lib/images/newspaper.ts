@@ -71,11 +71,11 @@ export async function composeWarcaCover(
     </linearGradient>
   </defs>
 
-  <!-- Masthead -->
-  <rect x="0" y="0" width="${WIDTH}" height="${MASTHEAD_HEIGHT}" fill="#D81E05" />
-  <text x="40" y="${MASTHEAD_HEIGHT / 2 + 32}" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="92" font-style="italic" fill="#FFFFFF" letter-spacing="2">WARCA</text>
-  <text x="${WIDTH - 40}" y="${MASTHEAD_HEIGHT / 2 + 34}" font-family="Arial, sans-serif" font-weight="700" font-size="22" fill="#FFE9A8" text-anchor="end">EDICIÓN ESPECIAL</text>
-  <rect x="0" y="${MASTHEAD_HEIGHT - 8}" width="${WIDTH}" height="8" fill="#F5B740" />
+  <!-- Masthead: fondo blanco, letras rojas — estilo prensa deportiva española -->
+  <rect x="0" y="0" width="${WIDTH}" height="${MASTHEAD_HEIGHT}" fill="#FFFFFF" />
+  <text x="40" y="${MASTHEAD_HEIGHT / 2 + 34}" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="96" font-style="italic" fill="#E30613" letter-spacing="1">WARCA</text>
+  <text x="${WIDTH - 40}" y="${MASTHEAD_HEIGHT / 2 + 34}" font-family="Arial, sans-serif" font-weight="700" font-size="22" fill="#333333" text-anchor="end">EDICIÓN ESPECIAL</text>
+  <rect x="0" y="${MASTHEAD_HEIGHT - 8}" width="${WIDTH}" height="8" fill="#E30613" />
 
   <!-- Degradado inferior para que el titular se lea sobre la foto -->
   <rect x="0" y="${MASTHEAD_HEIGHT}" width="${WIDTH}" height="${HEIGHT - MASTHEAD_HEIGHT}" fill="url(#fade)" />

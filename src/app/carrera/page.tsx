@@ -131,7 +131,11 @@ export default async function CarreraPage() {
     }));
 
     event = await pickNextEventDynamic(player, historyForAi, usedEventIds);
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+    // pickNextEventDynamic puede mutar player.flags en memoria (p.ej. el
+    // cooldown de adversidades o del gol de chilena) — sin guardar flags
+    // aquí, esa mutación se perdía siempre y esos cooldowns nunca
+    // funcionaban de verdad.
+    await supabase.from("players").update({ pending_event: event, flags: player.flags }).eq("id", player.id);
   }
 
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;

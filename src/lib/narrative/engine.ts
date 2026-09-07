@@ -22,7 +22,7 @@ import { getNextMatch, isMatchWeekNext } from "@/lib/calendar/match-calendar";
 import { calculateCareerArc, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, handleOngoingInjury, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { buildSecondCareerChoiceEvent } from "@/lib/narrative/second-career-events";
-import { shouldTriggerGolChilena, buildGolChilenaEvent, GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
+import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -513,10 +513,13 @@ export async function pickNextEventDynamic(
     }
   }
 
-  // Gol de chilena: momento único por carrera, hecho a mano porque
-  // dispara la portada "WARCA" (composición especial, no una foto normal)
-  if (shouldTriggerGolChilena(player, usedEventIds.includes(GOL_CHILENA_EVENT_ID))) {
+  // Gol de chilena: puede repetirse (más probable cuanto más figura eres),
+  // hecho a mano porque dispara la portada "WARCA" (composición especial,
+  // no una foto normal). markGolChilenaTriggered anota el cooldown en
+  // player.flags — page.tsx ya persiste esa mutación tras esta llamada.
+  if (shouldTriggerGolChilena(player)) {
     console.log(`[pickNextEventDynamic] Triggering gol de chilena for ${player.last_name}`);
+    markGolChilenaTriggered(player);
     return maybeAddFreeText(buildGolChilenaEvent(player.club));
   }
 

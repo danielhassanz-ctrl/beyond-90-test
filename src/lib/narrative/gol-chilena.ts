@@ -2,25 +2,59 @@ import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 
 /**
- * Gol de chilena: momento único por carrera, hecho a mano (no generado
- * por IA) porque necesita disparar la portada "WARCA" — una composición
- * de imagen especial (ver src/lib/images/newspaper.ts) que no encaja en
- * el sistema normal de fotos contextuales.
+ * Gol de chilena: momento que puede repetirse a lo largo de la carrera
+ * (no es un "una vez y ya" — cuanto más grande te haces, más natural que
+ * te vuelva a pasar), hecho a mano porque dispara la portada "WARCA" —
+ * una composición de imagen especial (ver src/lib/images/newspaper.ts)
+ * que no encaja en el sistema normal de fotos contextuales.
  */
 export const GOL_CHILENA_EVENT_ID = "gol-chilena";
 
+interface ChilenaTracker {
+  lastWeek: number;
+}
+
+function getTracker(player: Player): ChilenaTracker {
+  const stored = player.flags?.gol_chilena_tracker;
+  if (typeof stored === "string") {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      // sigue con el valor por defecto
+    }
+  }
+  return { lastWeek: 0 };
+}
+
+/** Se llama cuando el evento realmente se dispara, para anotar el cooldown. */
+export function markGolChilenaTriggered(player: Player): void {
+  if (!player.flags) player.flags = {};
+  player.flags.gol_chilena_tracker = JSON.stringify({ lastWeek: player.week } satisfies ChilenaTracker);
+}
+
 /**
  * Solo tiene sentido que un gol de chilena sea portada si el jugador ya
- * tiene algo de nombre — nadie hace primera plana con 16 años recién
- * debutando. Fama/media moderadas como umbral razonable, y una
- * probabilidad baja para que sea un momento raro y especial, no algo que
- * se repita cada pocas semanas.
+ * tiene algo de nombre. A partir de ahí, cuanto más figura eres (media y
+ * fama más altas), más probable que te vuelva a pasar — un fenómeno de
+ * verdad acumula varios goles así en su carrera, no solo uno.
  */
-export function shouldTriggerGolChilena(player: Player, alreadyUsed: boolean): boolean {
-  if (alreadyUsed) return false;
-  if ((player.media ?? 0) < 60) return false;
-  if ((player.fama ?? 0) < 20) return false;
-  return Math.random() < 0.05;
+export function shouldTriggerGolChilena(player: Player): boolean {
+  const media = player.media ?? 0;
+  const fama = player.fama ?? 0;
+  if (media < 55 || fama < 20) return false;
+
+  const { lastWeek } = getTracker(player);
+  const weeksSinceLast = player.week - lastWeek;
+  // Cooldown mínimo de 12 semanas: no se amontonan aunque la tirada salga
+  if (lastWeek > 0 && weeksSinceLast < 12) return false;
+
+  // De ~1%/turno para alguien recién llegado al umbral, hasta ~8%/turno
+  // para una superestrella (media 99, fama 100).
+  const starFactor = Math.min(1, Math.max(0, (media - 55) / 45));
+  const famaFactor = Math.min(1, Math.max(0, (fama - 20) / 80));
+  const chance = 0.01 + (starFactor * 0.5 + famaFactor * 0.5) * 0.07;
+
+  return Math.random() < chance;
 }
 
 export function buildGolChilenaEvent(club: string): GameEvent {
@@ -31,7 +65,7 @@ export function buildGolChilenaEvent(club: string): GameEvent {
     description: `Balón que llega alto por la izquierda. Das la espalda a la portería, saltas, y conectas una chilena perfecta que se cuela por la escuadra. El estadio entero se levanta de golpe. Ni tú mismo te lo crees todavía cuando tus compañeros te sepultan en la celebración. Al día siguiente, tu cara está en la portada de todos los periódicos deportivos.`,
     isMilestone: true,
     milestoneType: "gol_chilena",
-    imageScene: `Dynamic action photograph: footballer executing a perfect bicycle kick (overhead kick) mid-air, full extension, ball just leaving the boot toward goal, ${club} kit, stadium lights, dramatic athletic pose frozen mid-motion, professional sports photography, Getty Images quality`,
+    imageScene: `Dynamic action photograph: footballer executing a perfect bicycle kick (overhead kick), body fully horizontal in mid-air, back arched, both legs scissoring above his head with one leg striking the ball at the peak of the motion, back to the goal, falling backward, ${club} kit, stadium lights, frozen dramatic mid-air moment, professional sports photography, Getty Images quality`,
     options: [
       {
         id: "humilde",
@@ -41,7 +75,7 @@ export function buildGolChilenaEvent(club: string): GameEvent {
       },
       {
         id: "disfrutar",
-        label: "Disfrutar el momento a fondo: es un gol de una vez en la vida",
+        label: "Disfrutar el momento a fondo: es un golazo de los que hacen historia",
         subtitle: "Dejar que el mundo lo celebre contigo",
         consequences: { moral: 10, fama: 10, media: 1 },
       },
