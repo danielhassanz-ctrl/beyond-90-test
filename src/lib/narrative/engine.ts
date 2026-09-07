@@ -6,7 +6,7 @@ import type {
   GameEvent,
   ResolutionOutcome,
 } from "@/types/career";
-import { generateAiEvent, generateMatchResult, generateNextEventDynamic, callEventTool, type HistoryItem } from "./ai";
+import { generateAiEvent, generateMatchResult, generateNextEventDynamic, callEventTool, COMMON_RULES, type HistoryItem } from "./ai";
 import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
 import { buildMatchContext } from "@/lib/constants";
@@ -18,7 +18,7 @@ import { pickCharacterToReappear, describeCharacterReappearance, updateCharacter
 import { shouldBeeFunnyMoment, pickRandomFunnyMoment } from "@/lib/narrative/funny-surreal";
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, weirdEventByRarity, suggestNextEventType, type EventHistory } from "@/lib/narrative/event-tracking";
-import { getNextMatch, isMatchWeekNext } from "@/lib/calendar/match-calendar";
+import { getNextMatch, isMatchWeekNext, getMatchThisWeek } from "@/lib/calendar/match-calendar";
 import { calculateCareerArc, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, handleOngoingInjury, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { buildSecondCareerChoiceEvent } from "@/lib/narrative/second-career-events";
@@ -368,6 +368,65 @@ REGLAS CRÍTICAS:
 }
 
 /**
+ * Genera el partido en sí, con marcador y rendimiento personal — a
+ * diferencia de generatePreMatchEvent (la víspera), esto es el resultado
+ * real, y usa el MISMO rival/competición programados para que no se
+ * contradigan entre la previa y el partido.
+ *
+ * Sin esto, el motor solo generaba "la noche antes del partido" jornada
+ * tras jornada sin que el partido llegara a jugarse nunca — encontrado
+ * jugando una carrera real de principio a fin.
+ */
+async function generateMatchDayEvent(
+  player: Player,
+  match: any, // MatchWeek type
+  history: HistoryItem[]
+): Promise<GameEvent | null> {
+  const age = playerAge(player.week);
+
+  const compLabel: Record<string, string> = {
+    liga: "La Liga",
+    copa: "Copa del Rey",
+    champions: "Champions League",
+    europa: "Europa League",
+    amistoso: "Amistoso",
+    internacional: "Partido internacional",
+  };
+
+  const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista profesional.
+
+EL PARTIDO YA SE HA JUGADO. Genera su ficha con resultado real.
+
+PARTIDO (semana ${match.week}) — ESTOS DATOS SON FIJOS, NO SE INVENTAN:
+- Rival: ${match.rivalClub}
+- Competición: ${compLabel[match.competition as keyof typeof compLabel] ?? "Partido importante"}
+- Jornada: ${match.description}
+- Contexto: ${match.homeTeam === player.club ? "Jugaste en tu estadio" : `Jugaste como visitante en ${match.awayTeam}`}
+
+TU SITUACIÓN:
+- Jugador: ${player.last_name}, ${age} años, ${player.position}
+- Media: ${player.media}/99, Forma: ${player.forma}/100, Moral: ${player.moral}/100
+
+REGLAS CRÍTICAS:
+${COMMON_RULES}
+- PROHIBIDO ABSOLUTO: mencionar cualquier rival o competición que NO sea "${match.rivalClub}" en "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}". No inventes otro equipo, otra jornada ni otro torneo — es EL PARTIDO PROGRAMADO, no uno libre. rival_club debe ser exactamente "${match.rivalClub}".
+- OBLIGATORIO en la descripción, en este orden: (1) "${match.rivalClub}" y "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}" tal cual, (2) marcador EXACTO (ej "2-1"), (3) minutos jugados, (4) tu nota (0-10, decimal), (5) GOLES exactos (0, 1, 2+), (6) asistencias. Crónica corta (3-5 frases) — que quede clarísimo si metiste gol o no, es el dato más importante de todo el evento.
+- FORMATO RECOMENDADO: "Ante ${match.rivalClub} en ${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}, jugaste [X] minutos. Nota: [X.X]/10. Goles: [0/1/2+]. Asistencias: [X]. Marcador: [X-X]."
+- El resultado y rendimiento deben ser coherentes con forma ${player.forma}/100 y media ${player.media}/99 — a veces se pierde, a veces juegas mal o no sales, variación realista. No siempre eres el héroe.
+- Las opciones son sobre cómo reaccionas DESPUÉS (prensa, vestuario, redes, autocrítica), no sobre cómo jugar — el partido ya pasó.
+- OBLIGATORIO: cada opción lleva el MISMO cambio de media en consequences (el partido ya ocurrió, no depende de la opción elegida). Nota 8+/gol decisivo → +2 a +5. Nota <6 → -1 a -3. Discreto → 0 a +1.
+- is_milestone true SOLO si fue excepcional (hat-trick, gol decisivo en el descuento, debut soñado, lesión grave) — no en partidos normales. Si true, escribe image_scene específico de esa acción.`;
+
+  const event = await callEventTool(prompt, "partido", `matchday-${match.week}`);
+  if (!event) return null;
+
+  // No confiar en que la IA respete el rival/competición del prompt: se
+  // fuerzan aquí a los datos reales del calendario, pase lo que pase con
+  // el texto libre que haya escrito.
+  return { ...event, rivalClub: match.rivalClub };
+}
+
+/**
  * Genera TODOS los eventos con IA, nunca repitiendo premisa.
  * Reemplaza el pool de 40 eventos fijos con generación dinámica contextualizada.
  */
@@ -460,6 +519,20 @@ export async function pickNextEventDynamic(
 
     if (transitionEvent) {
       return maybeAddFreeText(transitionEvent);
+    }
+  }
+
+  // Verificar si el partido programado es ESTA semana — tiene que
+  // comprobarse ANTES que "la próxima semana", o el partido nunca llega
+  // a jugarse (el motor solo generaba la víspera una y otra vez).
+  const matchThisWeek = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club);
+  if (matchThisWeek) {
+    console.log(
+      `[pickNextEventDynamic] This week IS match week (${matchThisWeek.competition}): ${matchThisWeek.description}. Resolving the match.`
+    );
+    const matchDayEvent = await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history);
+    if (matchDayEvent) {
+      return maybeAddFreeText(addMatchContext(matchDayEvent, playerWithDynamics));
     }
   }
 

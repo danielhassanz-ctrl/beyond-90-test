@@ -166,6 +166,20 @@ export function isMatchWeekNext(currentWeek: number, playerClub: string): boolea
 }
 
 /**
+ * El partido programado para ESTA semana exacta (no la próxima). Se
+ * comprueba antes que isMatchWeekNext en el motor narrativo: sin esto,
+ * el juego solo generaba "la noche antes del partido" una y otra vez,
+ * jornada tras jornada, sin que el partido en sí llegara a jugarse nunca
+ * — un fallo real, encontrado jugando una carrera de principio a fin.
+ */
+export function getMatchThisWeek(currentWeek: number, playerClub: string): MatchWeek | null {
+  const WEEKS_PER_SEASON = 10;
+  const season = Math.floor((currentWeek - 1) / WEEKS_PER_SEASON);
+  const calendar = buildMatchCalendar(playerClub, season);
+  return calendar.find((match) => match.week === currentWeek) ?? null;
+}
+
+/**
  * Obtiene estadísticas de partidos jugados hasta una semana.
  */
 export function getMatchStats(playerClub: string, upToWeek: number) {
