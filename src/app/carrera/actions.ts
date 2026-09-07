@@ -58,14 +58,37 @@ const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
   "premio-mvp-torneo": "Tournament MVP crowning moment: [AGE] footballer on stage holding massive MVP trophy, standing between club officials or ceremony presenters. Stage background with tournament branding visible. Professional event lighting creating perfect visibility of trophy and expression. Audience visible (blurred), creating atmosphere. Formal presentation moment captured. Color palette: stage lighting tones, trophy gold, formal blacks and whites, crowd bokeh. This represents tournament-level individual dominance. Premium award ceremony photography, official tournament imagery, prestige and achievement captured",
 };
 
-function getMilestoneImagePrompt(eventId: string, age: number, club?: string, playerName?: string): string | null {
-  // Primero intenta usar prompts contextuales específicos
+function getMilestoneImagePrompt(eventId: string, age: number, club?: string, playerName?: string, milestoneType?: string): string | null {
   const safePlayerName = playerName || "jugador";
+
+  // Primero intenta por eventId exacto (eventos pre-definidos)
   const contextualPrompt = getContextualImagePrompt(eventId, safePlayerName, age, {
     clubName: club || "",
     agentName: "agente",
   });
   if (contextualPrompt) return contextualPrompt;
+
+  // Si no hay match por eventId, genera un prompt por milestoneType
+  if (milestoneType) {
+    const ageContext =
+      age < 18
+        ? "young 16-17 year old"
+        : age < 23
+          ? "young 20-23 year old"
+          : age < 28
+            ? "experienced 25-28 year old"
+            : age < 32
+              ? "veteran 30-32 year old"
+              : "35+ year old veteran";
+
+    if (milestoneType === "debut") {
+      return `Photorealistic Getty Images quality photo of a ${ageContext} footballer ${safePlayerName} playing in the field during a match, focused, determined look, stadium lights, action moment, professional sports photography`;
+    } else if (milestoneType === "contrato") {
+      return `Photorealistic Getty Images quality photo of ${safePlayerName} holding up a ${describeKit(club || "team")} football jersey with both hands at an official club presentation, smiling, proud moment, press room or stadium background, official unveiling style`;
+    } else if (milestoneType === "hito" || milestoneType === "escena") {
+      return `Photorealistic Getty Images quality photo of ${safePlayerName} in an action moment related to a significant career milestone, showing emotion and intensity, professional sports quality`;
+    }
+  }
 
   // Fallback a milestone prompts existentes
   const basePrompt = MILESTONE_IMAGE_PROMPTS[eventId];
@@ -244,7 +267,7 @@ export async function resolveEvent(formData: FormData) {
     if (milestoneId && !isRetirementDecision) {
       const newClub = typeof consequences.club === "string" ? consequences.club : player.club;
       const currentAge = playerAge(player.week);
-      const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub, player.last_name);
+      const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub, player.last_name, event.milestoneType);
       imagePromptForBackground = contextualPrompt ?? event.imageScene ?? null;
     }
 
