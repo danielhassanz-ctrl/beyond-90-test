@@ -1,15 +1,17 @@
 /**
- * Sistema de calendario de partidos REALISTA para un futbolista.
+ * Sistema de calendario de partidos para un futbolista.
  *
- * La Liga: 38 jornadas (Sept-May)
- * Copa del Rey: 4-6 partidos (Oct-May)
- * Champions/Europa: 8-13 partidos (Sept-May)
+ * NOTA: El juego usa 10 semanas por temporada (no 52 como el fútbol real).
+ * Esto es un compromiso entre realismo y jugabilidad rápida.
+ * Se adapta a la escala del juego:
+ * - 10 semanas/temporada = ~2.6 años por 26 weeks de juego
+ * - Partidos cada 1-2 semanas en temporada (no cada 3-7 días como realidad)
  *
- * Un jugador activo típicamente juega:
- * - 25-35 partidos de liga por temporada
- * - 3-5 de copa
- * - 5-10 europeos
- * Total: ~40-50 partidos/año para un titular
+ * Un jugador en modo carrera típicamente juega:
+ * - 6-8 partidos de liga por temporada (en escala 10 semanas)
+ * - 2-3 de copa
+ * - 2-3 europeos
+ * Total: ~10-15 partidos/temporada virtual
  */
 
 export type CompetitionType = "liga" | "copa" | "champions" | "europa" | "amistoso" | "internacional";
@@ -17,7 +19,7 @@ export type CompetitionType = "liga" | "copa" | "champions" | "europa" | "amisto
 export interface MatchWeek {
   week: number;
   season: number;
-  matchday: number; // 1-38 para Liga, etc
+  matchday: number; // 1-8 para Liga en escala 10 semanas, etc
   competition: CompetitionType;
   homeTeam: string;
   awayTeam: string;
@@ -27,17 +29,18 @@ export interface MatchWeek {
 }
 
 /**
- * Estructura del calendario de una temporada.
- * Semana 1-4: Pretemporada
- * Semana 5-42: Temporada regular (38 jornadas Liga)
- * Semana 43-52: Período de transición/playoffs/segunda vuelta
+ * Estructura del calendario de una temporada (escala 10 semanas).
+ * Semana 1-2: Pretemporada
+ * Semana 3-8: Temporada regular (6 jornadas Liga, espaciadas)
+ * Semana 9-10: Copa + Europeo
  */
 export function buildMatchCalendar(playerClub: string, season: number): MatchWeek[] {
+  const WEEKS_PER_SEASON = 10;
   const calendar: MatchWeek[] = [];
-  const baseWeek = season * 52;
+  const baseWeek = season * WEEKS_PER_SEASON;
 
-  // Semanas 1-4: Pretemporada (amistosos opcionales)
-  for (let i = 1; i <= 4; i++) {
+  // Semana 1-2: Pretemporada (amistosos opcionales)
+  for (let i = 1; i <= 2; i++) {
     calendar.push({
       week: baseWeek + i,
       season,
@@ -51,54 +54,51 @@ export function buildMatchCalendar(playerClub: string, season: number): MatchWee
     });
   }
 
-  // Semanas 5-42: Jornadas de Liga (38 jornadas en ~38 semanas)
+  // Semanas 3-8: Jornadas de Liga (6 jornadas en escala de 10 semanas)
+  // En realidad la Liga tiene 38, pero en escala simplificada jugamos 6
   const laLigaRivals = generateLaLigaFixture(playerClub);
-  for (let jornada = 1; jornada <= 38; jornada++) {
-    const rival = laLigaRivals[(jornada - 1) % laLigaRivals.length];
-    const isHome = jornada % 2 === 1; // Alternancia simple
+  const ligaMatchdays = [3, 4, 5, 6, 7, 8]; // Una jornada cada semana aprox
+  for (let i = 0; i < ligaMatchdays.length; i++) {
+    const rival = laLigaRivals[i % laLigaRivals.length];
+    const isHome = i % 2 === 0;
 
     calendar.push({
-      week: baseWeek + 4 + jornada,
+      week: baseWeek + ligaMatchdays[i],
       season,
-      matchday: jornada,
+      matchday: i + 1,
       competition: "liga",
       homeTeam: isHome ? playerClub : rival,
       awayTeam: isHome ? rival : playerClub,
       rivalClub: rival,
       mandatory: true,
-      description: `La Liga - Jornada ${jornada}`,
+      description: `La Liga - Jornada ${(season * 6 + i + 1)}`,
     });
   }
 
-  // Semanas 43-48: Copa del Rey (4-6 partidos típico)
-  const copaDates = [baseWeek + 43, baseWeek + 45, baseWeek + 47];
-  const copaMoments = ["Dieciseisavos", "Octavos", "Cuartos"];
-  for (let i = 0; i < copaMoments.length; i++) {
-    calendar.push({
-      week: copaDates[i],
-      season,
-      matchday: i + 1,
-      competition: "copa",
-      homeTeam: playerClub,
-      awayTeam: `Rival ${copaMoments[i]}`,
-      rivalClub: `Rival ${copaMoments[i]}`,
-      mandatory: false, // No todos los equipos llegan a todos los turnos
-      description: `Copa del Rey - ${copaMoments[i]}`,
-    });
-  }
-
-  // Semanas 49-52: Champions/Europa (si el club está en competición)
-  // Simplificado: 2-3 partidos en grupo + posibilidad de KO
+  // Semana 9: Copa del Rey
   calendar.push({
-    week: baseWeek + 49,
+    week: baseWeek + 9,
+    season,
+    matchday: 1,
+    competition: "copa",
+    homeTeam: playerClub,
+    awayTeam: `Rival Copa`,
+    rivalClub: `Rival Copa`,
+    mandatory: false,
+    description: `Copa del Rey - Fase`,
+  });
+
+  // Semana 10: Champions/Europa (si aplica)
+  calendar.push({
+    week: baseWeek + 10,
     season,
     matchday: 1,
     competition: "champions",
     homeTeam: playerClub,
-    awayTeam: "Rival Champions 1",
-    rivalClub: "Rival Champions 1",
+    awayTeam: "Rival Champions",
+    rivalClub: "Rival Champions",
     mandatory: false,
-    description: "Champions League - Jornada 1",
+    description: "Champions League / Europa League",
   });
 
   return calendar;
