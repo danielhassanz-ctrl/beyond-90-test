@@ -155,22 +155,6 @@ export async function resolveEvent(formData: FormData) {
     playerUpdate.agent_name = consequences.agent_name;
   }
 
-  // Solo generar imagen en momentos épicos (milestones)
-  // No en decisiones normales de partido
-  const evolveLookNow =
-    milestoneId && player.photo_url && (event.id !== "fork-retiro-pro" || isRetirementDecision);
-  if (evolveLookNow) {
-    // Usar prompt contextual para momento épico
-    const imagePrompt = imagePromptForBackground || event.imageScene || "jugador celebrando momento épico";
-    const buffer = await generatePlayerImage(player.photo_url as string, imagePrompt as string);
-    if (buffer) {
-      const evolvedUrl = await uploadGeneratedImage(supabase, user.id, buffer, "look");
-      if (evolvedUrl) {
-        playerUpdate.current_photo_url = evolvedUrl;
-      }
-    }
-  }
-
   // Cada vez que hay un fichaje (el inicial o cualquier traspaso), la
   // siguiente pantalla es la firma del contrato con el míster, el
   // presidente y el representante — nunca se vuelve al pool normal
@@ -262,6 +246,18 @@ export async function resolveEvent(formData: FormData) {
       const currentAge = playerAge(player.week);
       const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub, player.last_name);
       imagePromptForBackground = contextualPrompt ?? event.imageScene ?? null;
+    }
+
+    // Solo generar imagen en momentos épicos (milestones)
+    if (milestoneId && player.photo_url && (event.id !== "fork-retiro-pro" || isRetirementDecision)) {
+      const imagePrompt = imagePromptForBackground || event.imageScene || "jugador celebrando momento épico";
+      const buffer = await generatePlayerImage(player.photo_url as string, imagePrompt as string);
+      if (buffer) {
+        const evolvedUrl = await uploadGeneratedImage(supabase, user.id, buffer, "look");
+        if (evolvedUrl) {
+          playerUpdate.current_photo_url = evolvedUrl;
+        }
+      }
     }
   }
 
