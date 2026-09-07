@@ -720,12 +720,13 @@ ${historyText}
 
 REGLAS:
 ${COMMON_RULES}
-- OBLIGATORIO en la descripción: nombre del rival, competición, marcador final (ej. "2-1"), y la línea personal del jugador con cifras concretas: minutos jugados, nota del partido (escala 0-10, con un decimal, ej. "7.4"), goles y asistencias. Todo en 3-4 frases, como una crónica corta, no una lista.
-- OBLIGATORIO: rellena también rival_club con el nombre corto del club rival, exactamente igual a como aparece en la descripción (ej. "Villarreal CF"), para poder mostrar su escudo.
-- El resultado y el rendimiento tienen que ser coherentes con la forma (${player.forma}/100) y con si es titular habitual o no — no siempre gana el equipo, no siempre juega bien, a veces ni siquiera suma minutos relevantes.
-- OBLIGATORIO: cada opción debe incluir un cambio de media coherente con el rendimiento narrado en la descripción (no con la reacción elegida). Nota alta (8+) o gol/asistencia decisiva → media +2 a +5. Nota floja (por debajo de 6) o pocos/ningún minuto → media -1 a -3. Partido discreto sin nada destacable → sin cambio o un +1 simbólico. Esta media debe ser la MISMA en todas las opciones del evento, porque el partido ya pasó y no depende de cómo reacciones.
-- Las opciones son sobre cómo reaccionar al resultado (declaraciones, actitud en el vestuario, redes sociales), no sobre el partido en sí (eso ya pasó).
-- Marca is_milestone en true si el partido fue especialmente bueno, malo o decisivo, y en ese caso escribe image_scene (en inglés, fotorrealista) mostrando al jugador celebrando o reaccionando en el campo con el estadio de fondo.`;
+- OBLIGATORIO en la descripción: SIEMPRE incluye (1) nombre rival, (2) competición, (3) marcador EXACTO (ej "2-1"), (4) minutos tuyos, (5) tu nota (0-10, decimal), (6) número exacto de GOLES que metiste (0, 1, 2+), (7) asistencias. TODO DEBE QUEDAR CLARO Y EXPLÍCITO. Redacta como crónica corta (3-5 frases), pero que se entienda perfectamente si metiste gol o no — es la información más importante.
+- FORMATO RECOMENDADO: "Ante [RIVAL] en [COMPETICIÓN], jugaste [X] minutos. Nota: [X.X]/10. Goles: [0/1/2+]. Asistencias: [X]. Marcador: [X-X]."
+- OBLIGATORIO: rellena rival_club con el nombre EXACTO del club rival tal como aparece en tu descripción (ej "Villarreal CF"), para poder mostrar su escudo.
+- El resultado y rendimiento deben ser coherentes con forma ${player.forma}/100 — a veces pierdes, a veces juegas mal, a veces no juegas minutos. Variación realista.
+- OBLIGATORIO: cada opción tiene el MISMO cambio de media en consequences (porque el partido ya pasó, no depende de cómo reacciones). Gol/nota 8+ → +2 a +5. Nota floja (<6) → -1 a -3. Discreto → +0 a +1.
+- Las opciones son cómo reaccionar (prensa, vestuario, redes), no cómo jugó (eso ya está en la descripción).
+- Marca is_milestone true si fue excepcional (hat-trick, gol decisivo, lesión grave), no para partidos normales. Si true, escribe image_scene.`;
 
   return callEventTool(prompt, "partido", "partido");
 }
