@@ -384,31 +384,14 @@ export async function pickNextEventDynamic(
     return maybeAddFreeText(buildSecondCareerChoiceEvent(playerWithDynamics));
   }
 
-  // Si el jugador está en segunda vida, generar eventos específicos de esa carrera
+  // Si el jugador está en segunda vida, generar eventos específicos de esa carrera con IA
   if (playerWithDynamics.status === "second_life" && playerWithDynamics.second_career) {
-    const { buildCoachEvents, buildCommentatorEvents, buildEntrepreneurEvents, buildAmbassadorEvents, buildPrivateLifeEvents } = await import("./second-career-events");
-
-    let secondLifeEvent: GameEvent | null = null;
-    switch (playerWithDynamics.second_career) {
-      case "entrenador":
-        secondLifeEvent = buildCoachEvents(playerWithDynamics, playerWithDynamics.week);
-        break;
-      case "comentarista":
-        secondLifeEvent = buildCommentatorEvents(playerWithDynamics, playerWithDynamics.week);
-        break;
-      case "empresario":
-        secondLifeEvent = buildEntrepreneurEvents(playerWithDynamics, playerWithDynamics.week);
-        break;
-      case "embajador":
-        secondLifeEvent = buildAmbassadorEvents(playerWithDynamics, playerWithDynamics.week);
-        break;
-      case "privado":
-        secondLifeEvent = buildPrivateLifeEvents(playerWithDynamics, playerWithDynamics.week);
-        break;
-    }
+    console.log(`[pickNextEventDynamic] Generating second life event for ${playerWithDynamics.second_career}`);
+    const { generateSecondLifeEvent } = await import("./ai");
+    const secondLifeEvent = await generateSecondLifeEvent(playerWithDynamics, playerWithDynamics.second_career, history);
 
     if (secondLifeEvent) {
-      console.log(`[pickNextEventDynamic] Second life event for ${playerWithDynamics.second_career}: "${secondLifeEvent.title}"`);
+      console.log(`[pickNextEventDynamic] Second life event: "${secondLifeEvent.title}"`);
       return maybeAddFreeText(secondLifeEvent);
     }
   }
