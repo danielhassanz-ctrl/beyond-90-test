@@ -4,20 +4,11 @@ import { redirect } from "next/navigation";
 import { applyConsequences, nextWeekGap, resolveOption } from "@/lib/narrative/engine";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
+import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
 import { describeKit } from "@/lib/clubColors";
 import { getContextualImagePrompt } from "@/lib/narrative/contextual-image-prompts";
-import {
-  generateContractEvent,
-  generateDebutPretemp1,
-  generateDebutPretemp2,
-  generateDebutPretemp3,
-} from "@/lib/narrative/ai";
-import {
-  buildDebutPretemp1,
-  buildDebutPretemp2,
-  buildDebutPretemp3,
-  buildFallbackContractEvent,
-} from "@/lib/narrative/events";
+import { generateContractEvent } from "@/lib/narrative/ai";
+import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, playerAge } from "@/types/career";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/player/update-stats";
@@ -184,13 +175,37 @@ export async function resolveEvent(formData: FormData) {
 
   const patch = applyConsequences(player, consequences);
 
-  // La secuencia de bienvenida (elegir representante, primeras ofertas,
-  // firma del contrato, pretemporada) es parte del mismo arranque de la
-  // carrera: no debe "gastar" calendario, o el modo Express se termina
-  // antes de que el jugador llegue a jugar nada.
-  const ONBOARDING_EVENT_IDS = new Set(["eleccion-representante", "inicio-fichaje-agente", "debut-pretemp-1", "debut-pretemp-2", "debut-pretemp-3"]);
-  const isOnboarding = ONBOARDING_EVENT_IDS.has(event.id) || event.id.startsWith("contrato-debut");
-  const newWeek = player.week + (isOnboarding ? 1 : nextWeekGap(player.media, player.mode));
+  // La secuencia garantizada de arranque (elegir representante, ofertas,
+  // firma del contrato, pretemporada, filial hasta el debut oficial) es
+  // TODA pretemporada narrativamente — no debe adelantar el calendario real,
+  // o la edad (que es una función pura de la semana) sube antes de que el
+  // jugador llegue siquiera a debutar. Solo dos saltos deliberados de una
+  // semana: al cerrar la pretemporada con el amistoso, y al debutar de
+  // verdad, que es cuando entra la temporada real (Liga desde semana 3).
+  const CALENDAR_LOCKED_EVENT_IDS = new Set([
+    "inicio-fichaje-agente",
+    "pretemp-bienvenida",
+    "pretemp-fisico",
+    "pretemp-competencia",
+    "pretemp-tactica",
+    "pretemp-capitan",
+    "pretemp-pasado",
+    "rookie-reserva-introduccion",
+    "rookie-reserva-partido",
+    "rookie-tactica-mister",
+    "rookie-debut-anuncio",
+  ]);
+  const SEASON_CHECKPOINT_EVENT_IDS = new Set(["pretemp-amistoso", "rookie-debut-oficial"]);
+  const isCalendarLocked =
+    CALENDAR_LOCKED_EVENT_IDS.has(event.id) ||
+    event.id.startsWith("first-signing-") ||
+    event.id.startsWith("contrato-debut");
+  const isSeasonCheckpoint = SEASON_CHECKPOINT_EVENT_IDS.has(event.id);
+  const newWeek = isCalendarLocked
+    ? player.week
+    : isSeasonCheckpoint
+      ? player.week + 1
+      : player.week + nextWeekGap(player.media, player.mode);
   const targetWeeks = MODE_TARGET_WEEKS[player.mode];
   const willRetire = !isRetirementDecision && player.mode !== "pro" && newWeek > targetWeeks;
 
@@ -400,10 +415,27 @@ export async function resolveEvent(formData: FormData) {
     // dos veces la misma escena, y la de la tarjeta iba a un fetch con URL
     // relativa que siempre fallaba en el server action — la tarjeta nunca
     // tuvo imagen).
-    if (milestoneId && player.photo_url && (event.id !== "fork-retiro-pro" || isRetirementDecision)) {
+    //
+    // Antes de gastar en Replicate, comprueba el freno de gasto (por usuario
+    // y global — ver src/lib/images/quota.ts). Si no hay hueco, el hito se
+    // crea igual, solo sin milestoneImageUrl: la página de hito ya tiene un
+    // fallback con la foto propia del jugador sin editar, así que nadie ve
+    // un error, el juego nunca se rompe por esto.
+    const quota = milestoneId && player.photo_url ? await checkImageGenerationQuota(supabase, user.id) : null;
+    if (quota && !quota.allowed) {
+      console.warn(`[resolveEvent] Image generation skipped (${quota.reason}) for milestone ${milestoneId}`);
+    }
+
+    if (
+      milestoneId &&
+      player.photo_url &&
+      quota?.allowed &&
+      (event.id !== "fork-retiro-pro" || isRetirementDecision)
+    ) {
       const imagePrompt = milestoneImagePrompt || event.imageScene || "jugador celebrando momento épico";
       const buffer = await generatePlayerImage(player.photo_url as string, imagePrompt as string);
       if (buffer) {
+        await logImageGeneration(supabase, user.id);
         const [evolvedUrl, milestoneImageUrl] = await Promise.all([
           uploadGeneratedImage(supabase, user.id, buffer, "look"),
           uploadGeneratedImage(supabase, user.id, buffer, "milestone"),
