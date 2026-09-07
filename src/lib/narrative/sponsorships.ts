@@ -1,6 +1,6 @@
-import type { EventTemplate } from "@/types/event";
+import type { GameEvent } from "@/types/career";
 
-export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
+export const SPONSORSHIP_EVENTS: Record<string, GameEvent> = {
   "sponsor-adidas-botas": {
     id: "sponsor-adidas-botas",
     category: "especial",
@@ -13,7 +13,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-adidas-botas",
         label: "Aceptar: firma el acuerdo",
         subtitle: "Botas personalizadas, acuerdos de exclusividad y dinero mensual",
-        consequences: { dinero: 15, fama: 8, rel_representante: 3 },
+        consequences: { patrimonio: 15, fama: 8, rel_representante: 3 },
       },
       {
         id: "rechazar-adidas-botas",
@@ -25,7 +25,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "negociar-adidas-botas",
         label: "Negociar: solo si añaden beneficios adicionales",
         subtitle: "Intentas mejorar los términos del contrato",
-        consequences: { dinero: 18, fama: 10, forma: 2 },
+        consequences: { patrimonio: 18, fama: 10, forma: 2 },
       },
     ],
   },
@@ -42,7 +42,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-nike",
         label: "Firmar con Nike",
         subtitle: "Prestigio internacional y ingresos consistentes",
-        consequences: { dinero: 20, fama: 12, moral: 5 },
+        consequences: { patrimonio: 20, fama: 12, moral: 5 },
       },
       {
         id: "rechazar-nike",
@@ -54,7 +54,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "negociar-nike",
         label: "Negociar plazos y exclusividades",
         subtitle: "Quieres libertad para otras colaboraciones menores",
-        consequences: { dinero: 22, fama: 13, rel_representante: 5 },
+        consequences: { patrimonio: 22, fama: 13, rel_representante: 5 },
       },
     ],
   },
@@ -71,7 +71,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-startup",
         label: "Apostar por la startup",
         subtitle: "Menos dinero ahora, pero acciones de la empresa y mayor protagonismo",
-        consequences: { dinero: 12, fama: 6, forma: 3 },
+        consequences: { patrimonio: 12, fama: 6, forma: 3 },
       },
       {
         id: "jugar-seguro-startup",
@@ -83,7 +83,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "dual-patrocinio",
         label: "Proponer: yo con ambas marcas (botas y ropa)",
         subtitle: "Intentas monetizar ambos espacios sin conflicto",
-        consequences: { dinero: 16, fama: 7, rel_representante: 3 },
+        consequences: { patrimonio: 16, fama: 7, rel_representante: 3 },
       },
     ],
   },
@@ -100,7 +100,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-reloj-lujo",
         label: "Aceptar: quiero imagen de élite",
         subtitle: "Dinero, prestigio y un reloj de colección",
-        consequences: { dinero: 18, fama: 10, moral: 4 },
+        consequences: { patrimonio: 18, fama: 10, moral: 4 },
       },
       {
         id: "rechazar-reloj",
@@ -123,7 +123,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-bebida",
         label: "Aceptar: ingresos pasivos fáciles",
         subtitle: "Dinero constante sin mucho esfuerzo",
-        consequences: { dinero: 8, fama: 5 },
+        consequences: { patrimonio: 8, fama: 5 },
       },
       {
         id: "rechazar-bebida",
@@ -135,7 +135,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "renegociar-bebida",
         label: "Solo si es una marca natural/saludable",
         subtitle: "Aceptas pero con condiciones sobre el tipo de producto",
-        consequences: { dinero: 10, fama: 6, moral: 2 },
+        consequences: { patrimonio: 10, fama: 6, moral: 2 },
       },
     ],
   },
@@ -152,7 +152,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-videojuego",
         label: "Firmar: dinero por usar mi cara",
         subtitle: "Acuerdo simple, ingresos directos",
-        consequences: { dinero: 12, fama: 8 },
+        consequences: { patrimonio: 12, fama: 8 },
       },
       {
         id: "rechazar-videojuego",
@@ -175,7 +175,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-casual",
         label: "Aceptar: quiero ser diseñador",
         subtitle: "Ingresos creativos, presencia en moda",
-        consequences: { dinero: 14, fama: 9, moral: 3 },
+        consequences: { patrimonio: 14, fama: 9, moral: 3 },
       },
       {
         id: "rechazar-casual",
@@ -198,7 +198,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-inmobiliaria",
         label: "Aceptar: ingresos pasivos vía bienes raíces",
         subtitle: "Dinero ahora, posible inversión después",
-        consequences: { dinero: 20, fama: 10 },
+        consequences: { patrimonio: 20, fama: 10 },
       },
       {
         id: "rechazar-inmobiliaria",
@@ -210,7 +210,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "negocios-inmobiliaria",
         label: "Negociar: además de cara visible, quiero participación",
         subtitle: "Intentas ser socio, no solo embajador",
-        consequences: { dinero: 25, fama: 12, rel_representante: 5 },
+        consequences: { patrimonio: 25, fama: 12, rel_representante: 5 },
       },
     ],
   },
@@ -227,7 +227,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-banca",
         label: "Aceptar: finanzas + publicidad",
         subtitle: "Dinero y acceso a crédito privilegiado",
-        consequences: { dinero: 16, fama: 8, rel_representante: 4 },
+        consequences: { patrimonio: 16, fama: 8, rel_representante: 4 },
       },
       {
         id: "rechazar-banca",
@@ -250,7 +250,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "aceptar-local",
         label: "Aceptar: apoyar lo local",
         subtitle: "Dinero moderado pero conexión con la comunidad",
-        consequences: { dinero: 10, fama: 6, moral: 4 },
+        consequences: { patrimonio: 10, fama: 6, moral: 4 },
       },
       {
         id: "rechazar-local",
@@ -285,7 +285,7 @@ export const SPONSORSHIP_EVENTS: Record<string, EventTemplate> = {
         id: "dual-social-comercial",
         label: "Aceptar + una marca comercial simultáneamente",
         subtitle: "Dinero de una marca + reputación de la ONG",
-        consequences: { dinero: 12, moral: 6, fama: 10 },
+        consequences: { patrimonio: 12, moral: 6, fama: 10 },
       },
     ],
   },
@@ -295,7 +295,7 @@ export function isEligibleForSponsorship(media: number): boolean {
   return media >= 65;
 }
 
-export function getRandomSponsorshipEvent(): EventTemplate {
+export function getRandomSponsorshipEvent(): GameEvent {
   const events = Object.values(SPONSORSHIP_EVENTS);
   return events[Math.floor(Math.random() * events.length)];
 }

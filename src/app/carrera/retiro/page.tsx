@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
-import { SECOND_CAREER_LABELS, seasonLabel } from "@/types/career";
+import { SECOND_CAREER_LABELS, seasonLabel, playerAge } from "@/types/career";
 import { withShareLink } from "@/lib/constants";
 import { CareerStatCard } from "@/components/CareerStatCard";
 import { ShareableCard } from "@/components/ShareableCard";
@@ -89,7 +89,7 @@ export default async function RetiroPage() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-neutral-300">Edad al retiro</span>
-            <span className="font-bold text-gold">{player.age} años</span>
+            <span className="font-bold text-gold">{playerAge(player.week)} años</span>
           </div>
           {player.second_career && (
             <div className="flex items-center justify-between pt-4 border-t border-amber-500/20">

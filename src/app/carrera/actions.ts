@@ -60,13 +60,12 @@ const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
 
 function getMilestoneImagePrompt(eventId: string, age: number, club?: string, playerName?: string): string | null {
   // Primero intenta usar prompts contextuales específicos
-  if (playerName) {
-    const contextualPrompt = getContextualImagePrompt(eventId, playerName, age, {
-      clubName: club,
-      agentName: "agente",
-    });
-    if (contextualPrompt) return contextualPrompt;
-  }
+  const safePlayerName = playerName || "jugador";
+  const contextualPrompt = getContextualImagePrompt(eventId, safePlayerName, age, {
+    clubName: club || "",
+    agentName: "agente",
+  });
+  if (contextualPrompt) return contextualPrompt;
 
   // Fallback a milestone prompts existentes
   const basePrompt = MILESTONE_IMAGE_PROMPTS[eventId];

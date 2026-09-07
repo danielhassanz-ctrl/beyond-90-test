@@ -145,7 +145,7 @@ export default async function ResultadoPage({
                     }`}
                   >
                     <p className="text-2xl font-black">
-                      {isPositive ? "+" : ""}{value}
+                      {isPositive ? "+" : ""}{value as number}
                     </p>
                     <p className="text-[10px] uppercase tracking-wide font-semibold mt-1">
                       {CONSEQUENCE_LABELS[key as keyof typeof CONSEQUENCE_LABELS] || key}

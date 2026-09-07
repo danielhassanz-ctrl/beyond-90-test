@@ -3,17 +3,17 @@
  * Cada tipo de evento genera una imagen acorde a la narrativa, no solo la cara del jugador.
  */
 
-export const CONTEXTUAL_IMAGE_PROMPTS = {
+export const CONTEXTUAL_IMAGE_PROMPTS: Record<string, (playerName: string, contextValue: string | number) => string> = {
   // REPRESENTANTE - Primera firma
-  representante_primera_firma: (playerName: string, agentName: string) =>
-    `Professional photograph: young footballer ${playerName} and agent ${agentName} shaking hands and signing contract, modern office with desk, warm lighting, formal business setting, Getty Images quality, high resolution`,
+  representante_primera_firma: (playerName: string, agentName: string | number) =>
+    `Professional photograph: young footballer ${playerName} and agent ${String(agentName)} shaking hands and signing contract, modern office with desk, warm lighting, formal business setting, Getty Images quality, high resolution`,
 
   // TRANSFERENCIA - Fichaje por nuevo equipo
-  transferencia_fichaje: (playerName: string, clubName: string, kitColor: string) =>
-    `Official team photo: young footballer ${playerName} posing with ${clubName} jersey over shoulders, smiling confidently, stadium background, ${kitColor} team colors dominant, professional club photography style, Getty Images quality`,
+  transferencia_fichaje: (playerName: string, clubName: string | number) =>
+    `Official team photo: young footballer ${playerName} posing with ${String(clubName)} jersey over shoulders, smiling confidently, stadium background, team colors dominant, professional club photography style, Getty Images quality`,
 
   // GOL - Celebración
-  gol_celebracion: (playerName: string, clubName: string) =>
+  gol_celebracion: (playerName: string, clubName: string | number) =>
     `Action photograph: footballer ${playerName} mid-celebration after goal, arms raised, fist pump, intensity and joy, night match stadium lights, packed stadium in background, Getty Images sports photography style`,
 
   // LESIÓN - Momento dramático
@@ -21,15 +21,15 @@ export const CONTEXTUAL_IMAGE_PROMPTS = {
     `Dramatic photograph: young footballer ${playerName} on ground, injured, medical staff approaching, pitch, emotional moment, serious atmosphere, professional sports photography`,
 
   // TROFEO - Levantando títulos
-  trofeo_levantando: (playerName: string, trophyName: string) =>
-    `Victory photograph: footballer ${playerName} lifting ${trophyName} trophy, joy and pride, teammates around, confetti, stadium lights, professional sports photography, Getty Images quality`,
+  trofeo_levantando: (playerName: string, trophyName: string | number) =>
+    `Victory photograph: footballer ${playerName} lifting ${String(trophyName)} trophy, joy and pride, teammates around, confetti, stadium lights, professional sports photography, Getty Images quality`,
 
   // DEBUT - Primer partido
-  debut_primer_partido: (playerName: string, clubName: string) =>
-    `Professional action shot: young footballer ${playerName} in ${clubName} kit during match, focused concentration, running with ball, match action, professional sports photography`,
+  debut_primer_partido: (playerName: string, clubName: string | number) =>
+    `Professional action shot: young footballer ${playerName} in ${String(clubName)} kit during match, focused concentration, running with ball, match action, professional sports photography`,
 
   // CAPITÁN - Armband ceremony
-  capitan_brazalete: (playerName: string, clubName: string) =>
+  capitan_brazalete: (playerName: string, clubName: string | number) =>
     `Ceremonial photograph: footballer ${playerName} receiving captain's armband, coach or captain emeritus placing it, emotional moment, teammates watching, stadium background, professional photography`,
 
   // ESCÁNDALO - Confrontación
@@ -37,8 +37,8 @@ export const CONTEXTUAL_IMAGE_PROMPTS = {
     `Dramatic photograph: young footballer ${playerName} in tense confrontation, emotional turmoil, serious facial expression, dimmed lighting, intense atmosphere, dramatic sports photography`,
 
   // RECORDISTA - Breaking record
-  recordista_marca: (playerName: string, recordName: string) =>
-    `Celebratory photograph: footballer ${playerName} breaking record for ${recordName}, pointing at scoreboard, emotion and achievement, stadium lights, professional sports photography`,
+  recordista_marca: (playerName: string, recordName: string | number) =>
+    `Celebratory photograph: footballer ${playerName} breaking record for ${String(recordName)}, pointing at scoreboard, emotion and achievement, stadium lights, professional sports photography`,
 
   // ENTREVISTA - Media attention
   entrevista_prensa: (playerName: string) =>
@@ -49,35 +49,35 @@ export const CONTEXTUAL_IMAGE_PROMPTS = {
     `Warm photograph: footballer ${playerName} with children at charity event, smiling, genuine connection, helping others, community setting, humanitarian focus, warm natural lighting`,
 
   // VICTORIA_ÉPICA - Championship moment
-  victoria_epica: (playerName: string, competition: string) =>
-    `Triumphant photograph: footballer ${playerName} celebrating ${competition} victory, arms raised, teammates embracing, trophy visible, confetti, emotional intensity, professional sports photography`,
+  victoria_epica: (playerName: string, competition: string | number) =>
+    `Triumphant photograph: footballer ${playerName} celebrating ${String(competition)} victory, arms raised, teammates embracing, trophy visible, confetti, emotional intensity, professional sports photography`,
 
   // ENTRENAMIENTO - Determination
-  entrenamiento_intenso: (playerName: string, clubName: string) =>
-    `Training ground photograph: footballer ${playerName} focused during intense training session, ${clubName} facilities, determination visible, professional athletic photography`,
+  entrenamiento_intenso: (playerName: string, clubName: string | number) =>
+    `Training ground photograph: footballer ${playerName} focused during intense training session, ${String(clubName)} facilities, determination visible, professional athletic photography`,
 
   // RIVALES - Duel moment
-  rivales_confrontacion: (playerName: string, rivalClubName: string) =>
-    `Action photograph: intense duel between footballer ${playerName} and ${rivalClubName} player, physical confrontation, focus and determination, match setting, professional sports photography`,
+  rivales_confrontacion: (playerName: string, rivalClubName: string | number) =>
+    `Action photograph: intense duel between footballer ${playerName} and ${String(rivalClubName)} player, physical confrontation, focus and determination, match setting, professional sports photography`,
 
   // DEBUT_INTERNACIONAL - First national team
-  debut_internacional: (playerName: string, countryFlag: string) =>
-    `Official photograph: young footballer ${playerName} in national team jersey ${countryFlag}, proud and honored expression, national stadium background, professional sports photography`,
+  debut_internacional: (playerName: string, countryFlag: string | number) =>
+    `Official photograph: young footballer ${playerName} in national team jersey ${String(countryFlag)}, proud and honored expression, national stadium background, professional sports photography`,
 
   // REGRESO_LESIÓN - Comeback from injury
   regreso_lesion: (playerName: string) =>
     `Triumphant photograph: footballer ${playerName} returning to field after injury, determined expression, warm welcome from teammates, emotional comeback moment, professional sports photography`,
 
   // RÉCORD_JOVEN - Youth record breaker
-  record_joven: (playerName: string, achievement: string) =>
-    `Celebratory photograph: young footballer ${playerName} achieving youngest ${achievement}, pride and emotion, professional sports photography, achievement focus`,
+  record_joven: (playerName: string, achievement: string | number) =>
+    `Celebratory photograph: young footballer ${playerName} achieving youngest ${String(achievement)}, pride and emotion, professional sports photography, achievement focus`,
 
   // CONTRATO_RENOVACIÓN - New deal
-  contrato_renovacion: (playerName: string, clubName: string) =>
-    `Professional photograph: footballer ${playerName} signing contract renewal with ${clubName}, smiling and confident, club representatives present, office setting, professional business photography`,
+  contrato_renovacion: (playerName: string, clubName: string | number) =>
+    `Professional photograph: footballer ${playerName} signing contract renewal with ${String(clubName)}, smiling and confident, club representatives present, office setting, professional business photography`,
 
   // DEFAULT - Generic if nothing matches
-  default: (playerName: string, age: number) =>
+  default: (playerName: string, age: string | number) =>
     `Professional portrait: young footballer ${playerName}, age ${age}, confident expression, sports lighting, Getty Images quality professional photography`,
 };
 
