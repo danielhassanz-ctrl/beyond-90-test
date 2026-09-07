@@ -197,7 +197,7 @@ export async function resolveEvent(formData: FormData) {
   // Imágenes generadas (opcional): solo si el jugador subió una foto y el
   // evento las pide. Se generan en background sin bloquear la respuesta.
   // Usa prompts contextuales de la skill cartas-compartibles.
-  let imagePromptForBackground: string | null = null;
+  let milestoneImagePrompt: string | null = null;
 
   const playerUpdate: Record<string, unknown> = { ...patch };
 
@@ -213,14 +213,18 @@ export async function resolveEvent(formData: FormData) {
     playerUpdate.second_career = secondCareerMap[option.id] || null;
   }
 
-  // Actualizar estadísticas del jugador basándose en el evento
+  // Actualizar estadísticas del jugador basándose en el evento. Van en un
+  // update SEPARADO del resto (más abajo): si alguna columna stats_* no
+  // existe todavía en la tabla, Supabase rechaza la query entera — no debe
+  // poder tumbar el avance de semana, el cambio de club o la foto, que son
+  // el update crítico del turno.
   const statUpdate = extractStatsFromEvent(event);
+  let statsPatch: Record<string, unknown> | null = null;
   if (Object.keys(statUpdate).length > 0) {
     const updatedPlayer = applyStatUpdate(player, statUpdate);
-    const newMedia = recalculateMedia(updatedPlayer);
+    playerUpdate.media = recalculateMedia(updatedPlayer, statUpdate); // esto sí es crítico
 
-    // Aplicar cambios de stats al playerUpdate
-    Object.assign(playerUpdate, {
+    statsPatch = {
       stats_matches_played: updatedPlayer.stats_matches_played,
       stats_goals: updatedPlayer.stats_goals,
       stats_assists: updatedPlayer.stats_assists,
@@ -228,8 +232,7 @@ export async function resolveEvent(formData: FormData) {
       stats_red_cards: updatedPlayer.stats_red_cards,
       stats_yellow_cards: updatedPlayer.stats_yellow_cards,
       stats_titles: updatedPlayer.stats_titles,
-      media: newMedia, // Recalcular media basada en nuevos stats
-    });
+    };
   }
 
   if (consequences.flags || event.memorableThread) {
@@ -388,18 +391,37 @@ export async function resolveEvent(formData: FormData) {
       const currentAge = playerAge(player.week);
       const currentAgentName = (playerUpdate.agent_name as string | undefined) ?? player.agent_name ?? undefined;
       const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub, player.last_name, event.milestoneType, currentAgentName);
-      imagePromptForBackground = contextualPrompt ?? event.imageScene ?? null;
+      milestoneImagePrompt = contextualPrompt ?? event.imageScene ?? null;
     }
 
-    // Solo generar imagen en momentos épicos (milestones)
+    // Solo generar imagen en momentos épicos (milestones). Una sola llamada
+    // a Replicate por hito: la misma imagen sirve para la foto que evoluciona
+    // al jugador y para la tarjeta compartible del hito (antes se generaban
+    // dos veces la misma escena, y la de la tarjeta iba a un fetch con URL
+    // relativa que siempre fallaba en el server action — la tarjeta nunca
+    // tuvo imagen).
     if (milestoneId && player.photo_url && (event.id !== "fork-retiro-pro" || isRetirementDecision)) {
-      const imagePrompt = imagePromptForBackground || event.imageScene || "jugador celebrando momento épico";
+      const imagePrompt = milestoneImagePrompt || event.imageScene || "jugador celebrando momento épico";
       const buffer = await generatePlayerImage(player.photo_url as string, imagePrompt as string);
       if (buffer) {
-        const evolvedUrl = await uploadGeneratedImage(supabase, user.id, buffer, "look");
+        const [evolvedUrl, milestoneImageUrl] = await Promise.all([
+          uploadGeneratedImage(supabase, user.id, buffer, "look"),
+          uploadGeneratedImage(supabase, user.id, buffer, "milestone"),
+        ]);
         if (evolvedUrl) {
           playerUpdate.current_photo_url = evolvedUrl;
         }
+        if (milestoneImageUrl) {
+          const { error: milestoneImageError } = await supabase
+            .from("milestones")
+            .update({ image_url: milestoneImageUrl })
+            .eq("id", milestoneId);
+          if (milestoneImageError) {
+            console.error("[resolveEvent] milestone image_url update failed:", milestoneImageError.message);
+          }
+        }
+      } else {
+        console.error(`[resolveEvent] Image generation failed for milestone ${milestoneId} (prompt: ${imagePrompt.slice(0, 120)}...)`);
       }
     }
   }
@@ -418,18 +440,16 @@ export async function resolveEvent(formData: FormData) {
     console.error("[resolveEvent] players update failed:", playerUpdateError.message);
   }
 
-  // Genera imagen en background sin bloquear (fire-and-forget)
-  if (milestoneId && imagePromptForBackground && player.photo_url) {
-    fetch("/api/generate-milestone-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        milestoneId,
-        photoUrl: player.photo_url,
-        imagePrompt: imagePromptForBackground,
-        userId: user.id,
-      }),
-    }).catch((err) => console.error("[background image gen]", err));
+  // Update de stats aparte y best-effort: si falta alguna columna stats_*
+  // en la tabla, que se quede corta la estadística, no la partida entera.
+  if (statsPatch) {
+    const { error: statsUpdateError } = await supabase
+      .from("players")
+      .update(statsPatch)
+      .eq("id", player.id);
+    if (statsUpdateError) {
+      console.error("[resolveEvent] stats update failed (non-blocking):", statsUpdateError.message);
+    }
   }
 
   if (milestoneId) {

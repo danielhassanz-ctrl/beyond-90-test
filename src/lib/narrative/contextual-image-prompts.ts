@@ -82,6 +82,43 @@ export const CONTEXTUAL_IMAGE_PROMPTS: Record<string, (playerName: string, conte
 };
 
 /**
+ * Cada plantilla espera un tipo concreto de segundo dato (nombre de club,
+ * de agente, de trofeo...). Sin este mapa, un extraContext con varios
+ * campos a la vez (agentName Y clubName, que es el caso normal) coleaba
+ * el que ganara por orden de prioridad, sin mirar qué pide la plantilla
+ * — así una foto de "camiseta nueva" podía acabar con el nombre del
+ * agente en vez del club.
+ */
+const EVENT_TYPE_CONTEXT_KEY: Record<string, keyof ReturnType<typeof buildExtraContextDefaults>> = {
+  representante_primera_firma: "agentName",
+  transferencia_fichaje: "clubName",
+  gol_celebracion: "clubName",
+  trofeo_levantando: "trophyName",
+  debut_primer_partido: "clubName",
+  capitan_brazalete: "clubName",
+  recordista_marca: "recordName",
+  victoria_epica: "competition",
+  entrenamiento_intenso: "clubName",
+  rivales_confrontacion: "rivalClubName",
+  debut_internacional: "countryFlag",
+  record_joven: "achievement",
+  contrato_renovacion: "clubName",
+};
+
+function buildExtraContextDefaults(extraContext: Record<string, string>) {
+  return {
+    agentName: extraContext.agentName ?? "",
+    clubName: extraContext.clubName ?? "",
+    trophyName: extraContext.trophyName ?? "",
+    recordName: extraContext.recordName ?? "",
+    competition: extraContext.competition ?? "",
+    rivalClubName: extraContext.rivalClubName ?? "",
+    countryFlag: extraContext.countryFlag ?? "",
+    achievement: extraContext.achievement ?? "",
+  };
+}
+
+/**
  * Get the appropriate image prompt for an event type
  */
 export function getContextualImagePrompt(
@@ -97,10 +134,13 @@ export function getContextualImagePrompt(
     return CONTEXTUAL_IMAGE_PROMPTS.default(playerName, playerAge);
   }
 
-  // Pass extra context if available (agentName, clubName, etc.)
-  if (extraContext) {
-    return promptFn(playerName, extraContext.agentName || extraContext.clubName || playerName);
+  if (!extraContext) {
+    return promptFn(playerName, "");
   }
 
-  return promptFn(playerName, "");
+  const values = buildExtraContextDefaults(extraContext);
+  const wantedKey = EVENT_TYPE_CONTEXT_KEY[key];
+  const contextValue = wantedKey ? values[wantedKey] : "";
+
+  return promptFn(playerName, contextValue || playerName);
 }

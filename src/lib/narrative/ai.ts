@@ -812,7 +812,10 @@ ${COMMON_RULES}
     ...event,
     id: "inicio-fichaje-agente",
     isMilestone: true,
-    milestoneType: "debut",
+    // "contrato", no "debut": aquí solo eliges quién te ficha, todavía no
+    // has jugado ni un minuto — la imagen debe ser de fichaje/presentación,
+    // no de acción en el campo.
+    milestoneType: "contrato",
     options: event.options.slice(0, 3).map((option, i) => ({
       ...option,
       id: clubs[i].club,

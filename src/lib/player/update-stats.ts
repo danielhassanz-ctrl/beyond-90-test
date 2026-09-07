@@ -103,23 +103,31 @@ export function applyStatUpdate(player: Player, update: StatUpdate): Player {
 }
 
 /**
- * Calcula la media futbolística basándose en stats y performance.
- * Media = (forma + goles/partidos + min_jugados + títulos) / 4
- * Normalizado a escala 0-99
+ * Ajusta la media futbolística de forma incremental a partir de lo que pasó
+ * en ESTE evento — no la recalcula desde cero cada vez. Recalcularla como
+ * promedio absoluto de stats acumuladas machacaba a cualquier jugador que
+ * aún no tuviera partidos jugados (p.ej. media 100 en forma pero 0 partidos
+ * caía a ~25, porque forma pesaba 0-100 pero los otros tres factores solo
+ * sumaban hasta 20-30 sobre el mismo divisor de 4). Con un ajuste pequeño
+ * anclado a la media actual, un evento sin relevancia estadística real
+ * (firmar un contrato, una entrevista) no mueve la media en absoluto.
  */
-export function recalculateMedia(player: Player): number {
-  const matches = Math.max(1, player.stats_matches_played ?? 1);
-  const goalsPerMatch = (player.stats_goals ?? 0) / matches;
-  const minutesFactor = Math.min(1, (player.stats_minutes_played ?? 0) / (matches * 90));
-  const titlesFactor = Math.min(1, (player.stats_titles ?? 0) / 5);
+export function recalculateMedia(player: Player, statUpdate: StatUpdate): number {
+  const currentMedia = player.media ?? 50;
 
-  const components = [
-    player.forma ?? 50, // Forma actual
-    (goalsPerMatch * 20) || 0, // Goles (hasta 20 puntos)
-    minutesFactor * 30, // Minutos jugados
-    titlesFactor * 20, // Títulos
-  ];
+  if (!statUpdate.matches_played && !statUpdate.goals && !statUpdate.titles && !statUpdate.red_cards) {
+    return currentMedia;
+  }
 
-  const average = components.reduce((a, b) => a + b, 0) / 4;
-  return Math.max(0, Math.min(99, Math.round(average)));
+  let delta = 0;
+  if (statUpdate.goals) delta += statUpdate.goals * 2;
+  if (statUpdate.assists) delta += statUpdate.assists;
+  if (statUpdate.matches_played && !statUpdate.goals) delta += 0.5;
+  if (statUpdate.titles) delta += 5;
+  if (statUpdate.red_cards) delta -= 3;
+
+  // La forma empuja un poco la dirección: buena forma acelera la progresión
+  delta += ((player.forma ?? 50) - 50) / 50;
+
+  return Math.max(40, Math.min(99, Math.round(currentMedia + delta)));
 }

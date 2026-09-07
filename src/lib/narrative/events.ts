@@ -69,7 +69,8 @@ export function buildInicioFichajeEvent(agentName: string): GameEvent {
     description: hasGiant
       ? `${agentName} se reúne contigo con una noticia enorme: uno de los clubes interesados en ti es un auténtico gigante. Los otros dos son puertas de entrada más modestas, pero esta vez hay una oportunidad que casi nunca llega.`
       : `${agentName} se reúne contigo con dos o tres clubes modestos interesados en darte tu primer contrato profesional. Ninguno es un gigante, pero todos son una puerta de entrada.`,
-    milestoneType: "debut",
+    isMilestone: true,
+    milestoneType: "contrato",
     options: offers.map((offer) => ({
       id: offer.club,
       label: `Firmar por el ${offer.club}`,
