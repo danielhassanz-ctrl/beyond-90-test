@@ -18,6 +18,7 @@ import { pickCharacterToReappear, describeCharacterReappearance, updateCharacter
 import { shouldBeeFunnyMoment, pickRandomFunnyMoment } from "@/lib/narrative/funny-surreal";
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, weirdEventByRarity, suggestNextEventType, type EventHistory } from "@/lib/narrative/event-tracking";
+import { getNextMatch, isMatchWeekNext } from "@/lib/calendar/match-calendar";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -283,6 +284,46 @@ export function resolveOption(option: EventOption, state: CareerState): Resoluti
 }
 
 /**
+ * Genera evento narrativo pre-partido.
+ * Contextualizado al rival, competición, y situación del jugador.
+ */
+async function generatePreMatchEvent(
+  player: Player,
+  match: any, // MatchWeek type
+  history: HistoryItem[]
+): Promise<GameEvent | null> {
+  const age = playerAge(player.week);
+  const compContext = {
+    liga: "Liga: última jornada antes del partido, análisis de estrategia",
+    copa: "Copa: competición de eliminación, presión de no equivocarse",
+    champions: "Champions: escenario europeo, nivel élite, portadas internacionales",
+    amistoso: "Amistoso: menos presión, oportunidad de experimentar",
+  };
+
+  const prompt = `Eres el director narrativo de "Beyond 90".
+Genera un evento pre-partido para ${player.last_name} (${age} años, media ${player.media}).
+
+PRÓXIMO PARTIDO:
+- ${match.description}
+- Rival: ${match.rivalClub}
+- Competición: ${match.competition}
+
+CONTEXTO: ${compContext[match.competition] || "Partido importante"}
+FORMA DEL JUGADOR: ${player.forma}/100
+MORAL: ${player.moral}/100
+
+REGLAS:
+- Evento narrativo sobre preparación mental/emocional para el partido
+- NO es el partido en sí, es los días/horas antes
+- 2-3 opciones sobre cómo afrontar el partido
+- Consecuencias que afecten moral, forma, rel_entrenador
+- allow_free_text: false
+- is_milestone: false`;
+
+  return callEventTool(prompt, "entrenamiento", `prematch-${match.week}`);
+}
+
+/**
  * Genera TODOS los eventos con IA, nunca repitiendo premisa.
  * Reemplaza el pool de 40 eventos fijos con generación dinámica contextualizada.
  */
@@ -298,6 +339,22 @@ export async function pickNextEventDynamic(
   const weekInSeason = ((player.week - 1) % 10) + 1;
   const season = Math.floor((player.week - 1) / 10);
   const age = playerAge(player.week);
+
+  // Verificar si hay un partido importante próximo (la próxima semana)
+  // Si es así, generar un evento pre-partido narrativo
+  if (isMatchWeekNext(player.week, player.club)) {
+    const nextMatch = getNextMatch(player.week, player.club);
+    if (nextMatch) {
+      console.log(
+        `[pickNextEventDynamic] Next week is match week (${nextMatch.competition}): ${nextMatch.description}. Generating pre-match narrative.`
+      );
+      // Generar evento pre-partido contextualizado
+      const preMatchEvent = await generatePreMatchEvent(player, nextMatch, history);
+      if (preMatchEvent) {
+        return maybeAddFreeText(preMatchEvent);
+      }
+    }
+  }
 
   const isPreseasson = weekInSeason === 1 && season > 0 && age >= 17;
 
