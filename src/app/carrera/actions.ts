@@ -20,6 +20,7 @@ import {
 } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, playerAge } from "@/types/career";
 import { getCurrentUserAndPlayer } from "@/lib/player";
+import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/player/update-stats";
 
 /** Prompts contextuales para tarjetas compartibles — cinematografía deportiva de máximo impacto */
 const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
@@ -165,6 +166,25 @@ export async function resolveEvent(formData: FormData) {
   let imagePromptForBackground: string | null = null;
 
   const playerUpdate: Record<string, unknown> = { ...patch };
+
+  // Actualizar estadísticas del jugador basándose en el evento
+  const statUpdate = extractStatsFromEvent(event);
+  if (Object.keys(statUpdate).length > 0) {
+    const updatedPlayer = applyStatUpdate(player, statUpdate);
+    const newMedia = recalculateMedia(updatedPlayer);
+
+    // Aplicar cambios de stats al playerUpdate
+    Object.assign(playerUpdate, {
+      stats_matches_played: updatedPlayer.stats_matches_played,
+      stats_goals: updatedPlayer.stats_goals,
+      stats_assists: updatedPlayer.stats_assists,
+      stats_minutes_played: updatedPlayer.stats_minutes_played,
+      stats_red_cards: updatedPlayer.stats_red_cards,
+      stats_yellow_cards: updatedPlayer.stats_yellow_cards,
+      stats_titles: updatedPlayer.stats_titles,
+      media: newMedia, // Recalcular media basada en nuevos stats
+    });
+  }
 
   if (consequences.flags || event.memorableThread) {
     playerUpdate.flags = {
