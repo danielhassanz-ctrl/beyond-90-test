@@ -55,22 +55,24 @@ export default async function MiJugadorPage() {
       ) : (
         <div className="w-full max-w-sm space-y-4">
           <div className="overflow-hidden rounded-xl border border-panel-border bg-panel shadow-sm">
-            <div className="relative h-56 w-full bg-neutral-900">
+            <div className="relative flex flex-col items-center justify-center gap-3 bg-neutral-900 py-6">
               {player.current_photo_url || player.photo_url ? (
-                <Image
-                  src={player.current_photo_url ?? player.photo_url ?? ""}
-                  alt={player.last_name}
-                  fill
-                  className="object-cover"
-                />
+                <div className="relative h-48 w-40 overflow-hidden rounded-lg">
+                  <Image
+                    src={player.current_photo_url ?? player.photo_url ?? ""}
+                    alt={player.last_name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
               ) : (
-                <div className="flex h-full items-center justify-center text-neutral-500">
+                <div className="flex h-48 w-40 items-center justify-center rounded-lg border border-neutral-700 bg-black/30 text-neutral-500">
                   Sin foto
                 </div>
               )}
-              <span className="absolute right-3 top-3 rounded-full bg-gold px-3 py-1 text-lg font-bold text-neutral-950">
+              <div className="absolute right-3 top-3 rounded-full bg-gold px-3 py-1 text-lg font-bold text-neutral-950">
                 #{player.number}
-              </span>
+              </div>
               <div className="absolute left-3 top-3">
                 <MediaBadge value={player.media} />
               </div>

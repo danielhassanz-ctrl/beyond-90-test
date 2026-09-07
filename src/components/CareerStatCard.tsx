@@ -46,7 +46,7 @@ export function CareerStatCard({ player }: { player: Player }) {
     <div className="relative w-full overflow-hidden rounded-2xl border-2 border-amber-400/80 bg-gradient-to-b from-amber-900/20 via-neutral-900 to-black p-5 shadow-[0_0_50px_-10px_rgba(245,183,64,0.35)]">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-col items-center justify-center rounded-lg bg-amber-400 px-3 py-1.5 leading-none text-neutral-950">
-          <span className="text-[9px] font-bold uppercase">OVR</span>
+          <span className="text-[9px] font-bold uppercase">Media</span>
           <span className="text-2xl font-black">{stats.ovr}</span>
         </div>
         <span className="rounded-full border border-amber-400/50 bg-black/40 px-2.5 py-1.5 text-lg leading-none">
