@@ -30,6 +30,22 @@ export default async function PatrimonioPage() {
     })
     .filter((m): m is { id: string; week: number; title: string; monto: number } => m !== null);
 
+  // Las casas/mansiones se registran como flags "propiedad_..." (ver
+  // buildCasaEvent / buildMansionEvent) — antes no se guardaban en
+  // ningún sitio y esta sección estaba siempre vacía, comprases lo que
+  // comprases.
+  const propiedades = Object.entries(player.flags ?? {})
+    .filter(([key]) => key.startsWith("propiedad_"))
+    .map(([key, value]) => {
+      try {
+        const parsed = JSON.parse(String(value)) as { name: string; price: number; downPayment: number };
+        return { key, ...parsed };
+      } catch {
+        return null;
+      }
+    })
+    .filter((p): p is { key: string; name: string; price: number; downPayment: number } => p !== null);
+
   return (
     <main className="flex flex-1 justify-center p-6 pb-24">
       <div className="w-full max-w-lg space-y-6 pb-12">
@@ -51,10 +67,21 @@ export default async function PatrimonioPage() {
           <p className="mb-3 text-xs uppercase tracking-wide text-neutral-400">
             Propiedades e inversiones
           </p>
-          <p className="text-xs text-neutral-600">
-            Todavía no hay nada que registrar aquí — las casas, coches e inversiones que vayas
-            comprando en tu carrera van a aparecer en esta sección.
-          </p>
+          {propiedades.length === 0 ? (
+            <p className="text-xs text-neutral-600">
+              Todavía no hay nada que registrar aquí — las casas, coches e inversiones que vayas
+              comprando en tu carrera van a aparecer en esta sección.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {propiedades.map((p) => (
+                <li key={p.key} className="flex items-center justify-between text-xs">
+                  <span className="text-neutral-200">{p.name}</span>
+                  <span className="text-gold font-semibold">{p.price.toLocaleString("es")} €</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="space-y-2">

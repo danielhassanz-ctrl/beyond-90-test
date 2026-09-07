@@ -132,7 +132,15 @@ export function buildCasaEvent(player: Player): GameEvent {
           id: `casa-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,
           subtitle: `Entrada: ${downPayment.toLocaleString("es")} €`,
-          consequences: { patrimonio: -downPayment, moral: 5 },
+          // Sin este flag, la compra se registraba como un simple gasto en
+          // el ledger y desaparecía — "Propiedades e inversiones" en la
+          // pantalla de Patrimonio llevaba vacía siempre, para cualquier
+          // jugador, porque nada escribía ahí nunca.
+          consequences: {
+            patrimonio: -downPayment,
+            moral: 5,
+            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment }) },
+          },
         };
       }),
       {
@@ -171,7 +179,12 @@ export function buildMansionEvent(player: Player): GameEvent {
           id: `mansion-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,
           subtitle: `Entrada: ${downPayment.toLocaleString("es")} €`,
-          consequences: { patrimonio: -downPayment, moral: 8, fama: 3 },
+          consequences: {
+            patrimonio: -downPayment,
+            moral: 8,
+            fama: 3,
+            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment }) },
+          },
         };
       }),
       {

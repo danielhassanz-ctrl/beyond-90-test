@@ -90,7 +90,19 @@ export default async function CarreraPage() {
 
   // Comprar casa necesita 3 opciones con precios sorteados en el momento,
   // así que no puede vivir como una entrada estática más del pool normal.
-  if (!event && player.week >= 8 && !usedEventIds.includes("vid-casa")) {
+  // Exige un mínimo de patrimonio ahorrado: sin esto, el evento aparecía
+  // en la semana 8 sin importar cuánto llevara ganado el jugador, ofreciendo
+  // entradas de 20-38k€ a alguien recién debutado con 1-2k€ ahorrados —
+  // el patrimonio se quedaba clavado en 0 (tiene suelo) mientras el
+  // listado de movimientos seguía mostrando el gasto completo, dos
+  // números que no cuadraban entre sí. Encontrado jugando una carrera real.
+  const MIN_PATRIMONIO_FOR_HOME = 15000;
+  if (
+    !event &&
+    player.week >= 8 &&
+    player.patrimonio >= MIN_PATRIMONIO_FOR_HOME &&
+    !usedEventIds.includes("vid-casa")
+  ) {
     event = buildCasaEvent(player);
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }

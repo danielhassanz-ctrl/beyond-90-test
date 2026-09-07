@@ -195,6 +195,17 @@ export async function resolveEvent(formData: FormData) {
 
   const patch = applyConsequences(player, consequences);
 
+  // patrimonio tiene suelo en 0 (ver applyConsequences): si un gasto pedía
+  // más de lo que había, el patrimonio final se recorta pero el registro
+  // de movimientos guardaba el gasto completo pedido, no el que realmente
+  // se aplicó — dos cifras que no cuadraban entre sí en la pantalla de
+  // Patrimonio. Se guarda aparte el delta real para el ledger, sin tocar
+  // `consequences` (que otras partes del código siguen leyendo tal cual).
+  const ledgerConsequences =
+    patch.patrimonio !== undefined && consequences.patrimonio !== undefined
+      ? { ...consequences, patrimonio: patch.patrimonio - player.patrimonio }
+      : consequences;
+
   // La secuencia garantizada de arranque (elegir representante, ofertas,
   // firma del contrato, pretemporada, filial hasta el debut oficial) es
   // TODA pretemporada narrativamente — no debe adelantar el calendario real,
@@ -392,7 +403,7 @@ export async function resolveEvent(formData: FormData) {
       chosen_option_id: option.id,
       chosen_option_label: option.label,
       free_text_response: freeText,
-      consequences,
+      consequences: ledgerConsequences,
       outcome_text: outcomeText,
     })
     .select("id")
