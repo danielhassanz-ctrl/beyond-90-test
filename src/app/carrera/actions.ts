@@ -202,12 +202,10 @@ export async function resolveEvent(formData: FormData) {
     playerUpdate.pending_event = contractEvent;
   }
 
-  // Secuencia de pretemporada garantizada tras el primer contrato: se
-  // encadena un beat detrás de otro antes de caer en el pool normal, para
-  // que el arranque de la carrera se sienta narrado. Cada beat se genera
-  // con IA (para que no suene siempre igual) con la versión escrita a mano
-  // como reserva si la IA falla.
+  // Secuencia de pretemporada garantizada + cadena de rookie progresión
+  // Encadena eventos en orden narrativo correcto hasta el primer partido oficial
   if (!willRetire) {
+    // Pretemporada inicial (semanas 4-6)
     if (event.id.startsWith("contrato-debut")) {
       playerUpdate.pending_event =
         (await generateDebutPretemp1(player.club)) ?? buildDebutPretemp1(player.club);
@@ -217,6 +215,39 @@ export async function resolveEvent(formData: FormData) {
     } else if (event.id === "debut-pretemp-2") {
       playerUpdate.pending_event = (await generateDebutPretemp3()) ?? buildDebutPretemp3();
     }
+    // Cadena de rookie: filial → tactica → debut oficial (semanas 7-11)
+    else if (event.id === "debut-pretemp-3") {
+      // Después de pretemporada, comienza la fase de reservas
+      const { buildReservaIntroduccionEvent } = await import(
+        "@/lib/narrative/rookie-progression"
+      );
+      playerUpdate.pending_event = buildReservaIntroduccionEvent();
+    } else if (event.id === "rookie-reserva-introduccion") {
+      // Después de intro a reservas, primer partido en filial
+      const { buildReservaPartidoEvent } = await import(
+        "@/lib/narrative/rookie-progression"
+      );
+      playerUpdate.pending_event = buildReservaPartidoEvent();
+    } else if (event.id === "rookie-reserva-partido") {
+      // Después de filial, reunión táctica con primer entrenador
+      const { buildTacticaMisterEvent } = await import(
+        "@/lib/narrative/rookie-progression"
+      );
+      playerUpdate.pending_event = buildTacticaMisterEvent();
+    } else if (event.id === "rookie-tactica-mister") {
+      // Después de tactica, anuncio de debut
+      const { buildDebutAnuncioEvent } = await import(
+        "@/lib/narrative/rookie-progression"
+      );
+      playerUpdate.pending_event = buildDebutAnuncioEvent();
+    } else if (event.id === "rookie-debut-anuncio") {
+      // Después de anuncio, primer partido oficial con el primer equipo
+      const { buildDebutOficialEvent } = await import(
+        "@/lib/narrative/rookie-progression"
+      );
+      playerUpdate.pending_event = buildDebutOficialEvent(player.club);
+    }
+    // Después de rookie-debut-oficial, cae en el pool normal pero YA HA DEBUTADO
   }
 
   const { data: insertedEvent, error: careerEventError } = await supabase
