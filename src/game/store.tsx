@@ -49,7 +49,17 @@ function read(): GameState | null {
   try {
     const primaryRaw = localStorage.getItem(SAVE_KEY);
     const primary = parseSave(primaryRaw);
-    if (primary) return primary;
+    if (primary) {
+      const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
+      if (!parseSave(backupRaw)) {
+        try {
+          localStorage.setItem(BACKUP_SAVE_KEY, primaryRaw as string);
+        } catch {
+          /* Best-effort backup priming for Safari/private storage. */
+        }
+      }
+      return primary;
+    }
 
     const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
     const backup = parseSave(backupRaw);
@@ -76,9 +86,16 @@ function write(state: GameState | null) {
 
     const nextRaw = JSON.stringify(state);
     const currentRaw = localStorage.getItem(SAVE_KEY);
-    if (parseSave(currentRaw)) {
+    const current = parseSave(currentRaw);
+
+    if (current) {
       localStorage.setItem(BACKUP_SAVE_KEY, currentRaw as string);
+    } else {
+      // First save (or a corrupt primary): seed both slots so the very first
+      // persisted career can recover from a torn/corrupt primary write.
+      localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
     }
+
     localStorage.setItem(SAVE_KEY, nextRaw);
   } catch {
     /* almacenamiento lleno o bloqueado: la partida sigue en memoria */
