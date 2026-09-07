@@ -14,6 +14,8 @@ import {
   buildInicioFichajeEvent,
   buildCasaEvent,
   buildMansionEvent,
+  buildYachtEvent,
+  buildJetEvent,
   buildOfertaArabiaEvent,
 } from "@/lib/narrative/events";
 import { generateEleccionRepresentanteEvent, generateClubOffersEvent } from "@/lib/narrative/ai";
@@ -103,12 +105,50 @@ export default async function CarreraPage() {
     player.patrimonio >= MIN_PATRIMONIO_FOR_HOME &&
     !usedEventIds.includes("vid-casa")
   ) {
-    event = buildCasaEvent(player);
+    event = await buildCasaEvent(player, supabase);
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 
-  if (!event && player.week >= 65 && !usedEventIds.includes("vid-mansion-lujo")) {
-    event = buildMansionEvent(player);
+  // Mismo mínimo de patrimonio que la primera vivienda, y por la misma
+  // razón: sin esto, se podían ofrecer mansiones de 1,2-3,4M€ a alguien
+  // que no las puede pagar ni de lejos.
+  const MIN_PATRIMONIO_FOR_MANSION = 400000;
+  if (
+    !event &&
+    player.week >= 65 &&
+    player.patrimonio >= MIN_PATRIMONIO_FOR_MANSION &&
+    !usedEventIds.includes("vid-mansion-lujo")
+  ) {
+    event = await buildMansionEvent(player, supabase);
+    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+  }
+
+  // Caprichos de "crack": yate y jet privado. Solo tienen sentido con
+  // fama y media de estrella de verdad, no solo porque haya pasado el
+  // tiempo — y con dinero de sobra para el capricho.
+  if (
+    !event &&
+    player.week >= 30 &&
+    player.fama >= 55 &&
+    player.media >= 75 &&
+    player.patrimonio >= 100000 &&
+    !usedEventIds.includes("vid-yate") &&
+    Math.random() < 0.2
+  ) {
+    event = await buildYachtEvent(player, supabase);
+    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+  }
+
+  if (
+    !event &&
+    player.week >= 80 &&
+    player.fama >= 75 &&
+    player.media >= 85 &&
+    player.patrimonio >= 3000000 &&
+    !usedEventIds.includes("vid-jet-privado") &&
+    Math.random() < 0.15
+  ) {
+    event = await buildJetEvent(player, supabase);
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 
@@ -221,6 +261,14 @@ export default async function CarreraPage() {
                     defaultChecked={i === 0}
                     className="mt-1"
                   />
+                  {option.imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={option.imageUrl}
+                      alt={option.label}
+                      className="h-16 w-24 shrink-0 rounded object-cover"
+                    />
+                  )}
                   <span>
                     <span className="block font-medium text-neutral-100">{option.label}</span>
                     <span className="block text-xs text-neutral-500">{option.subtitle}</span>

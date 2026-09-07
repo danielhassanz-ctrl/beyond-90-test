@@ -60,6 +60,8 @@ export interface EventOption {
   id: string;
   label: string;
   subtitle: string;
+  /** Foto de la opción (p.ej. la vivienda concreta) — solo en decisiones tipo catálogo */
+  imageUrl?: string;
   /** Efecto directo, para opciones sin incertidumbre */
   consequences: Consequences;
   /**

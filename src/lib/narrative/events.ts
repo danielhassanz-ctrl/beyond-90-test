@@ -1,9 +1,11 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GameEvent } from "@/types/career";
 import { PRO_RETIREMENT_MIN_WEEK } from "@/types/career";
 import type { Player } from "@/types/player";
 import { STARTING_AGENTS, pickStartingClubOffers } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
 import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
+import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
 
 /**
  * Primer evento de carrera: elegir representante. Ahora es dinámico con 15+ variantes
@@ -90,33 +92,127 @@ function pickThree<T>(items: T[]): T[] {
 }
 
 const HOME_LISTINGS = [
-  { name: "Piso de dos habitaciones cerca de la ciudad deportiva", min: 90000, max: 130000 },
-  { name: "Ático con terraza en pleno centro", min: 140000, max: 190000 },
-  { name: "Casa a las afueras, cerca de donde creciste", min: 100000, max: 150000 },
-  { name: "Dúplex nuevo en una zona residencial tranquila", min: 110000, max: 160000 },
-  { name: "Piso reformado junto al estadio", min: 95000, max: 135000 },
+  {
+    name: "Piso de dos habitaciones cerca de la ciudad deportiva",
+    min: 90000,
+    max: 130000,
+    prompt: "Real estate photography, modern two-bedroom apartment building exterior near a sports training facility, clean architecture, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Ático con terraza en pleno centro",
+    min: 140000,
+    max: 190000,
+    prompt: "Real estate photography, rooftop penthouse terrace in a city center, modern building, skyline view, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Casa a las afueras, cerca de donde creciste",
+    min: 100000,
+    max: 150000,
+    prompt: "Real estate photography, cozy suburban house with small garden, quiet residential street, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Dúplex nuevo en una zona residencial tranquila",
+    min: 110000,
+    max: 160000,
+    prompt: "Real estate photography, brand new modern duplex house, quiet residential neighborhood, clean lines, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso reformado junto al estadio",
+    min: 95000,
+    max: 135000,
+    prompt: "Real estate photography, renovated modern apartment building exterior near a football stadium, daylight, professional listing photo, photorealistic, no people",
+  },
 ];
 
 const MANSION_LISTINGS = [
-  { name: "Mansión con piscina en una urbanización exclusiva", min: 1800000, max: 2600000 },
-  { name: "Ático de lujo con vistas a toda la ciudad", min: 1200000, max: 1900000 },
-  { name: "Finca con terreno propio y zona de entrenamiento personal", min: 2200000, max: 3400000 },
-  { name: "Villa moderna junto al mar", min: 1600000, max: 2400000 },
-  { name: "Casa histórica reformada en el barrio más exclusivo", min: 1900000, max: 2800000 },
+  {
+    name: "Mansión con piscina en una urbanización exclusiva",
+    min: 1800000,
+    max: 2600000,
+    prompt: "Real estate photography, luxury mansion with large swimming pool, exclusive gated community, palm trees, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Ático de lujo con vistas a toda la ciudad",
+    min: 1200000,
+    max: 1900000,
+    prompt: "Real estate photography, luxury penthouse terrace with panoramic city skyline view, modern glass architecture, golden hour, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Finca con terreno propio y zona de entrenamiento personal",
+    min: 2200000,
+    max: 3400000,
+    prompt: "Real estate photography, large private estate with green land and a personal outdoor sports training area, countryside, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Villa moderna junto al mar",
+    min: 1600000,
+    max: 2400000,
+    prompt: "Real estate photography, modern minimalist villa right by the sea, infinity pool facing the ocean, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Casa histórica reformada en el barrio más exclusivo",
+    min: 1900000,
+    max: 2800000,
+    prompt: "Real estate photography, beautifully renovated historic mansion in an exclusive upscale neighborhood, elegant facade, daylight, professional listing photo, photorealistic, no people",
+  },
+];
+
+/**
+ * Caprichos de "crack": solo tienen sentido cuando el jugador ya es una
+ * figura de verdad (fama y media altas), no algo que aparezca porque sí
+ * ha pasado el tiempo — comprarse un yate con 20 años y fama de barrio no
+ * cuadra.
+ */
+const YACHT_LISTINGS = [
+  {
+    name: "Yate deportivo de 15 metros",
+    min: 450000,
+    max: 700000,
+    prompt: "Real estate photography, sleek 15-meter sport yacht docked in a marina, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Yate de lujo con cabina para invitados",
+    min: 900000,
+    max: 1400000,
+    prompt: "Real estate photography, luxury motor yacht with guest cabins, docked in an exclusive marina, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Barco pequeño para fines de semana",
+    min: 60000,
+    max: 120000,
+    prompt: "Real estate photography, small elegant weekend motorboat docked in a marina, bright daylight, professional listing photo, photorealistic, no people",
+  },
+];
+
+const JET_LISTINGS = [
+  {
+    name: "Jet privado de segunda mano, corto alcance",
+    min: 2500000,
+    max: 4000000,
+    prompt: "Real estate photography, small private business jet parked on a sunny airport tarmac, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Jet privado de largo alcance",
+    min: 6000000,
+    max: 9000000,
+    prompt: "Real estate photography, long-range private jet parked on an airport tarmac, bright daylight, professional listing photo, photorealistic, no people",
+  },
 ];
 
 /**
  * Comprar la primera vivienda: 3 opciones sorteadas de un catálogo, cada
  * una con un precio real que se descuenta del patrimonio tal cual, no una
  * cifra aproximada fija. Si el jugador ya tiene pareja, su opinión entra
- * en la decisión en vez de comprar en solitario.
+ * en la decisión en vez de comprar en solitario. Cada opción trae su foto
+ * real (generada una vez por listado y cacheada — ver property-photos.ts).
  */
-export function buildCasaEvent(player: Player): GameEvent {
+export async function buildCasaEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
   const listings = pickThree(HOME_LISTINGS).map((l) => ({
     ...l,
     price: randomPrice(l.min, l.max, 5000),
   }));
   const partner = typeof player.flags?.pareja === "string" ? player.flags.pareja : null;
+  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
 
   return {
     id: "vid-casa",
@@ -132,6 +228,7 @@ export function buildCasaEvent(player: Player): GameEvent {
           id: `casa-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,
           subtitle: `Entrada: ${downPayment.toLocaleString("es")} €`,
+          imageUrl: photos[i] ?? undefined,
           // Sin este flag, la compra se registraba como un simple gasto en
           // el ledger y desaparecía — "Propiedades e inversiones" en la
           // pantalla de Patrimonio llevaba vacía siempre, para cualquier
@@ -156,14 +253,15 @@ export function buildCasaEvent(player: Player): GameEvent {
 
 /**
  * La segunda vivienda, ya con la carrera consolidada: mismo mecanismo que
- * buildCasaEvent pero con un catálogo de lujo.
+ * buildCasaEvent pero con un catálogo de lujo y foto por listado.
  */
-export function buildMansionEvent(player: Player): GameEvent {
+export async function buildMansionEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
   const listings = pickThree(MANSION_LISTINGS).map((l) => ({
     ...l,
     price: randomPrice(l.min, l.max, 50000),
   }));
   const partner = typeof player.flags?.pareja === "string" ? player.flags.pareja : null;
+  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
 
   return {
     id: "vid-mansion-lujo",
@@ -179,6 +277,7 @@ export function buildMansionEvent(player: Player): GameEvent {
           id: `mansion-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,
           subtitle: `Entrada: ${downPayment.toLocaleString("es")} €`,
+          imageUrl: photos[i] ?? undefined,
           consequences: {
             patrimonio: -downPayment,
             moral: 8,
@@ -195,6 +294,79 @@ export function buildMansionEvent(player: Player): GameEvent {
       },
     ],
     minWeek: 65,
+  };
+}
+
+/**
+ * Caprichos de "crack": yate y jet privado. Solo aparecen cuando el
+ * jugador ya es una figura de verdad (fama y media altas) — no algo que
+ * salga solo porque ha pasado el tiempo, como si acabara de debutar.
+ */
+export async function buildYachtEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
+  const listings = YACHT_LISTINGS.map((l) => ({ ...l, price: randomPrice(l.min, l.max, 10000) }));
+  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+
+  return {
+    id: "vid-yate",
+    category: "vida",
+    title: "Un capricho de crack",
+    description:
+      "Tu nombre ya suena en cualquier lado. Un amigo del gremio te comenta que se ha comprado un barco y que 'no hay nada como desconectar en el agua'. Tu representante te manda un par de opciones, por si te apetece.",
+    options: [
+      ...listings.map((l, i) => ({
+        id: `yate-${i}`,
+        label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+        subtitle: "Capricho de crack",
+        imageUrl: photos[i] ?? undefined,
+        consequences: {
+          patrimonio: -l.price,
+          moral: 6,
+          fama: 2,
+          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price }) },
+        },
+      })),
+      {
+        id: "pasar",
+        label: "Pasar, no es tu estilo",
+        subtitle: "Los pies en el suelo",
+        consequences: { moral: 2 },
+      },
+    ],
+    minWeek: 30,
+  };
+}
+
+export async function buildJetEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
+  const listings = JET_LISTINGS.map((l) => ({ ...l, price: randomPrice(l.min, l.max, 100000) }));
+  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+
+  return {
+    id: "vid-jet-privado",
+    category: "vida",
+    title: "¿Vuelas por tu cuenta?",
+    description:
+      "Entre viajes de selección, publicidad y vacaciones, tu representante hace cuentas: 'A este ritmo, un jet privado se paga solo en comodidad. Es una pasada de dinero, pero míralo tú mismo.'",
+    options: [
+      ...listings.map((l, i) => ({
+        id: `jet-${i}`,
+        label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+        subtitle: "El lujo definitivo",
+        imageUrl: photos[i] ?? undefined,
+        consequences: {
+          patrimonio: -l.price,
+          moral: 8,
+          fama: 4,
+          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price }) },
+        },
+      })),
+      {
+        id: "pasar",
+        label: "Seguir volando en primera clase, sin más",
+        subtitle: "Discreción",
+        consequences: { moral: 2 },
+      },
+    ],
+    minWeek: 80,
   };
 }
 
