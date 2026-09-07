@@ -220,7 +220,11 @@ export async function resolveEvent(formData: FormData) {
     CALENDAR_LOCKED_EVENT_IDS.has(event.id) ||
     event.id.startsWith("first-signing-") ||
     event.id.startsWith("contrato-debut");
-  const isSeasonCheckpoint = SEASON_CHECKPOINT_EVENT_IDS.has(event.id);
+  // Un partido resuelto (matchday-*) TIENE que avanzar la semana siempre:
+  // si se deja al avance probabilístico normal, cuando sale 0 el jugador
+  // vuelve a caer en la misma jornada y el partido se narra dos veces con
+  // el mismo marcador — encontrado jugando una carrera real.
+  const isSeasonCheckpoint = SEASON_CHECKPOINT_EVENT_IDS.has(event.id) || event.id.startsWith("matchday-");
   const newWeek = isCalendarLocked
     ? player.week
     : isSeasonCheckpoint
