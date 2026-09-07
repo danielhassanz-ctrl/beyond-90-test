@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+// Necesario para que la generación de imagen en segundo plano (after() en
+// resolveEvent, en actions.ts) tenga tiempo de terminar: Flux Kontext Pro
+// puede tardar hasta ~3 minutos en un arranque en frío (medido en pruebas
+// reales). Si el plan de Vercel tiene un tope menor, Vercel lo recorta
+// solo — no falla el build por pedir más de lo permitido.
+export const maxDuration = 300;
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { pickNextEventDynamic, whatIsAtStake } from "@/lib/narrative/engine";
 import {

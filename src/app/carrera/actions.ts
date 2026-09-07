@@ -1,10 +1,14 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { applyConsequences, nextWeekGap, resolveOption } from "@/lib/narrative/engine";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
+import { generateFromTemplate, saveAsTemplateIfMissing } from "@/lib/images/templates";
+import { composeWarcaCover } from "@/lib/images/newspaper";
+import { GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
 import { describeKit } from "@/lib/clubColors";
 import { getContextualImagePrompt } from "@/lib/narrative/contextual-image-prompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
@@ -74,6 +78,9 @@ const MILESTONE_TYPE_TO_CONTEXT_TYPE: Record<string, string> = {
   gol: "gol_celebracion",
   gol_decisivo: "gol_celebracion",
   hat: "gol_celebracion",
+  primer_gol: "gol_celebracion",
+  primer_hat_trick: "gol_celebracion",
+  primer_titulo: "trofeo_levantando",
   titulo: "trofeo_levantando",
   titulo_presidente: "trofeo_levantando",
   final_champions: "trofeo_levantando",
@@ -170,8 +177,21 @@ export async function resolveEvent(formData: FormData) {
     (event.id === "fork-retiro-pro" && option.id === "retirarse") ||
     (event.id === "transition-ready-to-retire" && option.id === "retirarse");
   const isSecondCareerChoice = event.id === "fork-segunda-vida-elegir";
+
+  // Los "primeros" de verdad (primer gol, primer título) no dependen de
+  // que la IA decida marcar el partido como memorable — se detectan por
+  // las estadísticas reales del jugador, así siempre generan su momento
+  // especial pase lo que pase con el resto del evento.
+  const statUpdate = extractStatsFromEvent(event);
+  const isFirstGoalEver = (player.stats_goals ?? 0) === 0 && (statUpdate.goals ?? 0) > 0;
+  const isFirstHatTrickDebut = isFirstGoalEver && (statUpdate.goals ?? 0) >= 3;
+  const isFirstTitleEver = (player.stats_titles ?? 0) === 0 && (statUpdate.titles ?? 0) > 0;
+
   const milestoneAchieved =
-    (event.isMilestone && (!resolution || resolution.success)) || isRetirementDecision;
+    (event.isMilestone && (!resolution || resolution.success)) ||
+    isRetirementDecision ||
+    isFirstGoalEver ||
+    isFirstTitleEver;
 
   const patch = applyConsequences(player, consequences);
 
@@ -228,12 +248,12 @@ export async function resolveEvent(formData: FormData) {
     playerUpdate.second_career = secondCareerMap[option.id] || null;
   }
 
-  // Actualizar estadísticas del jugador basándose en el evento. Van en un
-  // update SEPARADO del resto (más abajo): si alguna columna stats_* no
-  // existe todavía en la tabla, Supabase rechaza la query entera — no debe
-  // poder tumbar el avance de semana, el cambio de club o la foto, que son
-  // el update crítico del turno.
-  const statUpdate = extractStatsFromEvent(event);
+  // Aplica los cambios de stats (statUpdate ya se calculó arriba, para
+  // poder detectar "primer gol"/"primer título" antes de decidir si este
+  // evento es un hito). Van en un update SEPARADO del resto (más abajo):
+  // si alguna columna stats_* no existe todavía en la tabla, Supabase
+  // rechaza la query entera — no debe poder tumbar el avance de semana,
+  // el cambio de club o la foto, que son el update crítico del turno.
   let statsPatch: Record<string, unknown> | null = null;
   if (Object.keys(statUpdate).length > 0) {
     const updatedPlayer = applyStatUpdate(player, statUpdate);
@@ -380,18 +400,86 @@ export async function resolveEvent(formData: FormData) {
 
   let milestoneId: string | null = null;
   if (milestoneAchieved) {
-    // Crea el milestone sin imagen (responde rápido)
+    const currentAge = playerAge(player.week);
+    const newClub = typeof consequences.club === "string" ? consequences.club : player.club;
+    const currentAgentName = (playerUpdate.agent_name as string | undefined) ?? player.agent_name ?? undefined;
+
+    // Título/tipo especiales para los "primeros" reales del jugador: no
+    // dependen de cómo tituló la IA el partido, se imponen porque son
+    // hechos objetivos de la carrera (ver detección más arriba).
+    const overrideTitle = isFirstHatTrickDebut
+      ? "¡Debut con HAT-TRICK!"
+      : isFirstGoalEver
+        ? "¡Tu primer gol como profesional!"
+        : isFirstTitleEver
+          ? "¡Tu primer título!"
+          : null;
+    const overrideMilestoneType = isFirstHatTrickDebut
+      ? "primer_hat_trick"
+      : isFirstGoalEver
+        ? "primer_gol"
+        : isFirstTitleEver
+          ? "primer_titulo"
+          : null;
+
+    if (!isRetirementDecision) {
+      const contextualPrompt = getMilestoneImagePrompt(
+        event.id,
+        currentAge,
+        newClub,
+        player.last_name,
+        overrideMilestoneType ?? event.milestoneType,
+        currentAgentName,
+      );
+      milestoneImagePrompt = contextualPrompt ?? event.imageScene ?? null;
+    }
+
+    // Los momentos garantizados de toda carrera (firma con el primer
+    // equipo, debut oficial, primer gol/hat-trick, primer título) usan
+    // una plantilla reutilizable + face-swap en vez de generar la escena
+    // de cero cada vez: mismo club, misma composición — solo cambia la
+    // cara del jugador. Ver src/lib/images/templates.ts.
+    let templateKey: string | null = null;
+    if (event.id.startsWith("contrato-debut")) {
+      templateKey = `primera-firma:${newClub}`;
+    } else if (event.id === "rookie-debut-oficial") {
+      templateKey = `debut-liga:${newClub}`;
+    } else if (isFirstHatTrickDebut) {
+      templateKey = `primer-hat-trick:${newClub}`;
+    } else if (isFirstGoalEver) {
+      templateKey = `primer-gol:${newClub}`;
+    } else if (isFirstTitleEver) {
+      templateKey = `primer-titulo:${newClub}`;
+    } else if (event.id === GOL_CHILENA_EVENT_ID) {
+      templateKey = `gol-chilena:${newClub}`;
+    }
+
+    // Antes de gastar en Replicate, comprueba el freno de gasto (por
+    // usuario y global — ver src/lib/images/quota.ts).
+    const willAttemptImage = !isRetirementDecision && Boolean(player.photo_url) && event.id !== "fork-retiro-pro";
+    const quota = willAttemptImage ? await checkImageGenerationQuota(supabase, user.id) : null;
+    if (quota && !quota.allowed) {
+      console.warn(`[resolveEvent] Image generation will be skipped (${quota.reason}) for this milestone`);
+    }
+    const willGenerate = willAttemptImage && quota?.allowed === true;
+
+    // Crea el milestone al instante, sin esperar a ninguna imagen — el
+    // turno del jugador no debe bloquearse por una llamada a Replicate
+    // que puede tardar minutos. image_status dice si hay foto en camino.
     const { data: milestone, error: milestoneError } = await supabase
       .from("milestones")
       .insert({
         player_id: player.id,
         week: player.week,
-        type: isRetirementDecision ? "retiro_jugador" : (event.milestoneType ?? "hito"),
-        title: isRetirementDecision ? "Cuelga las botas" : event.title,
+        type: isRetirementDecision ? "retiro_jugador" : (overrideMilestoneType ?? event.milestoneType ?? "hito"),
+        title: isRetirementDecision ? "Cuelga las botas" : (overrideTitle ?? event.title),
         subtitle: isRetirementDecision
           ? `Después de ${player.week} semanas como profesional`
-          : (outcomeText ?? option.subtitle),
-        image_url: null, // Sin imagen por ahora (se genera en background)
+          : overrideTitle
+            ? event.title
+            : (outcomeText ?? option.subtitle),
+        image_url: null,
+        image_status: willGenerate ? "pending" : "none",
       })
       .select("id")
       .single();
@@ -400,61 +488,86 @@ export async function resolveEvent(formData: FormData) {
     }
     milestoneId = milestone?.id ?? null;
 
-    // Prepara para generar imagen en background (solo si hay contexto)
-    if (milestoneId && !isRetirementDecision) {
-      const newClub = typeof consequences.club === "string" ? consequences.club : player.club;
-      const currentAge = playerAge(player.week);
-      const currentAgentName = (playerUpdate.agent_name as string | undefined) ?? player.agent_name ?? undefined;
-      const contextualPrompt = getMilestoneImagePrompt(event.id, currentAge, newClub, player.last_name, event.milestoneType, currentAgentName);
-      milestoneImagePrompt = contextualPrompt ?? event.imageScene ?? null;
-    }
+    // La generación real ocurre DESPUÉS de responder al jugador (after()),
+    // así que ni la más lenta llamada a Kontext Pro (~3 min en frío,
+    // medido) le bloquea el turno. Cuando termine, un pequeño componente
+    // en la app avisa de que la foto está lista.
+    if (milestoneId && willGenerate) {
+      const finalMilestoneId = milestoneId;
+      const finalPrompt = milestoneImagePrompt || event.imageScene || "jugador celebrando momento épico";
+      const finalPhotoUrl = player.photo_url as string;
+      const finalTemplateKey = templateKey;
+      const finalUserId = user.id;
+      const finalPlayerId = player.id;
+      const finalIsGolChilena = event.id === GOL_CHILENA_EVENT_ID;
+      const finalClub = newClub;
+      const finalPlayerName = player.last_name;
 
-    // Solo generar imagen en momentos épicos (milestones). Una sola llamada
-    // a Replicate por hito: la misma imagen sirve para la foto que evoluciona
-    // al jugador y para la tarjeta compartible del hito (antes se generaban
-    // dos veces la misma escena, y la de la tarjeta iba a un fetch con URL
-    // relativa que siempre fallaba en el server action — la tarjeta nunca
-    // tuvo imagen).
-    //
-    // Antes de gastar en Replicate, comprueba el freno de gasto (por usuario
-    // y global — ver src/lib/images/quota.ts). Si no hay hueco, el hito se
-    // crea igual, solo sin milestoneImageUrl: la página de hito ya tiene un
-    // fallback con la foto propia del jugador sin editar, así que nadie ve
-    // un error, el juego nunca se rompe por esto.
-    const quota = milestoneId && player.photo_url ? await checkImageGenerationQuota(supabase, user.id) : null;
-    if (quota && !quota.allowed) {
-      console.warn(`[resolveEvent] Image generation skipped (${quota.reason}) for milestone ${milestoneId}`);
-    }
+      after(async () => {
+        try {
+          let buffer: Buffer | null = null;
+          let isFreshGeneration = false;
 
-    if (
-      milestoneId &&
-      player.photo_url &&
-      quota?.allowed &&
-      (event.id !== "fork-retiro-pro" || isRetirementDecision)
-    ) {
-      const imagePrompt = milestoneImagePrompt || event.imageScene || "jugador celebrando momento épico";
-      const buffer = await generatePlayerImage(player.photo_url as string, imagePrompt as string);
-      if (buffer) {
-        await logImageGeneration(supabase, user.id);
-        const [evolvedUrl, milestoneImageUrl] = await Promise.all([
-          uploadGeneratedImage(supabase, user.id, buffer, "look"),
-          uploadGeneratedImage(supabase, user.id, buffer, "milestone"),
-        ]);
-        if (evolvedUrl) {
-          playerUpdate.current_photo_url = evolvedUrl;
-        }
-        if (milestoneImageUrl) {
-          const { error: milestoneImageError } = await supabase
-            .from("milestones")
-            .update({ image_url: milestoneImageUrl })
-            .eq("id", milestoneId);
-          if (milestoneImageError) {
-            console.error("[resolveEvent] milestone image_url update failed:", milestoneImageError.message);
+          if (finalTemplateKey) {
+            const result = await generateFromTemplate(supabase, finalTemplateKey, finalPhotoUrl, finalPrompt);
+            if (result) {
+              buffer = result.buffer;
+              isFreshGeneration = result.isFreshGeneration;
+            }
+          } else {
+            buffer = await generatePlayerImage(finalPhotoUrl, finalPrompt);
           }
+
+          if (!buffer) {
+            console.error(`[resolveEvent:after] Image generation failed for milestone ${finalMilestoneId}`);
+            await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
+            return;
+          }
+
+          await logImageGeneration(supabase, finalUserId);
+
+          // El gol de chilena no comparte una foto de acción tal cual —
+          // esa foto se compone dentro de la portada "WARCA" (ver
+          // src/lib/images/newspaper.ts). La foto de perfil que evoluciona
+          // sí usa la foto de acción normal, no la portada del periódico.
+          let milestoneBuffer = buffer;
+          if (finalIsGolChilena) {
+            try {
+              milestoneBuffer = await composeWarcaCover(buffer, finalPlayerName, finalClub);
+            } catch (err) {
+              console.error("[resolveEvent:after] WARCA cover compositing failed, using plain photo:", err);
+            }
+          }
+
+          const [evolvedUrl, milestoneImageUrl] = await Promise.all([
+            uploadGeneratedImage(supabase, finalUserId, buffer, "look"),
+            uploadGeneratedImage(supabase, finalUserId, milestoneBuffer, "milestone"),
+          ]);
+
+          if (evolvedUrl) {
+            await supabase.from("players").update({ current_photo_url: evolvedUrl }).eq("id", finalPlayerId);
+          }
+
+          if (milestoneImageUrl) {
+            await supabase
+              .from("milestones")
+              .update({ image_url: milestoneImageUrl, image_status: "ready" })
+              .eq("id", finalMilestoneId);
+
+            // La plantilla reutilizable siempre es la foto plana (evolvedUrl),
+            // nunca la portada WARCA compuesta — el face-swap de la próxima
+            // vez opera sobre una foto, no sobre un periódico con texto.
+            if (finalTemplateKey && isFreshGeneration && evolvedUrl) {
+              await saveAsTemplateIfMissing(supabase, finalTemplateKey, evolvedUrl);
+            }
+          } else {
+            await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
+          }
+        } catch (err) {
+          console.error(`[resolveEvent:after] Exception generating image for milestone ${finalMilestoneId}:`, err);
+          await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
         }
-      } else {
-        console.error(`[resolveEvent] Image generation failed for milestone ${milestoneId} (prompt: ${imagePrompt.slice(0, 120)}...)`);
-      }
+      });
     }
   }
 

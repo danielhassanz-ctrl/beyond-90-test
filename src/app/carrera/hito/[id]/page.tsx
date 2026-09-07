@@ -85,7 +85,16 @@ export default async function HitoPage({
 
         {/* Imagen o tarjeta compartible */}
         <div className="rounded-2xl overflow-hidden border border-amber-500/20 shadow-2xl bg-neutral-900">
-          {milestone.image_url ? (
+          {milestone.image_status === "pending" ? (
+            <div className="flex flex-col items-center justify-center gap-3 p-12 text-center">
+              <span className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
+              <p className="text-sm text-neutral-400">
+                Preparando tu foto de este momento — puede tardar un par de minutos.
+                <br />
+                Sigue jugando, te avisamos en cuanto esté lista.
+              </p>
+            </div>
+          ) : milestone.image_url ? (
             <>
               <div className="relative w-full max-w-md mx-auto aspect-[4/5] overflow-hidden">
                 <Image
