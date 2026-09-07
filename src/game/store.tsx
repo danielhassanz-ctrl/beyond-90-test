@@ -77,28 +77,37 @@ function read(): GameState | null {
 }
 
 function write(state: GameState | null) {
+  if (!state) {
+    try { localStorage.removeItem(SAVE_KEY); } catch {}
+    try { localStorage.removeItem(BACKUP_SAVE_KEY); } catch {}
+    return;
+  }
+
+  let nextRaw: string;
   try {
-    if (!state) {
-      localStorage.removeItem(SAVE_KEY);
-      localStorage.removeItem(BACKUP_SAVE_KEY);
-      return;
-    }
+    nextRaw = JSON.stringify(state);
+  } catch {
+    return;
+  }
 
-    const nextRaw = JSON.stringify(state);
-    const currentRaw = localStorage.getItem(SAVE_KEY);
+  let currentRaw: string | null = null;
+  try {
+    currentRaw = localStorage.getItem(SAVE_KEY);
+  } catch {
+    /* A blocked read must not prevent a best-effort primary write. */
+  }
+
+  try {
     const current = parseSave(currentRaw);
+    localStorage.setItem(BACKUP_SAVE_KEY, current ? (currentRaw as string) : nextRaw);
+  } catch {
+    /* Backup is best effort and must never block the newer primary save. */
+  }
 
-    if (current) {
-      localStorage.setItem(BACKUP_SAVE_KEY, currentRaw as string);
-    } else {
-      // First save (or a corrupt primary): seed both slots so the very first
-      // persisted career can recover from a torn/corrupt primary write.
-      localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
-    }
-
+  try {
     localStorage.setItem(SAVE_KEY, nextRaw);
   } catch {
-    /* almacenamiento lleno o bloqueado: la partida sigue en memoria */
+    /* Storage blocked/full: the current session remains playable in memory. */
   }
 }
 
