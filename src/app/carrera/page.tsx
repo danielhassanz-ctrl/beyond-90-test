@@ -62,7 +62,8 @@ export default async function CarreraPage() {
   let event = player.pending_event;
 
   if (!event && !player.agent_name) {
-    event = (await generateEleccionRepresentanteEvent()) ?? buildEleccionRepresentanteEvent();
+    // Usar las 15 variantes narrativas de primera firma (sin generar con IA)
+    event = buildEleccionRepresentanteEvent();
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 

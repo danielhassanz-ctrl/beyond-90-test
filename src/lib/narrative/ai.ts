@@ -267,6 +267,7 @@ export async function callEventTool(
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 800,
+      temperature: 1.2, // Temperatura alta para garantizar variación - cada partida diferente
       tools: [EVENT_TOOL],
       tool_choice: { type: "tool", name: "emit_event" },
       messages: [{ role: "user", content: prompt }],
