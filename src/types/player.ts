@@ -33,4 +33,14 @@ export interface Player {
   current_photo_url: string | null;
   agent_name: string | null;
   flags: Record<string, string | boolean>;
+
+  // Estadísticas de carrera (career stats)
+  stats_matches_played?: number; // Total partidos jugados
+  stats_goals?: number; // Total goles marcados
+  stats_assists?: number; // Total asistencias
+  stats_minutes_played?: number; // Total minutos
+  stats_red_cards?: number; // Tarjetas rojas
+  stats_yellow_cards?: number; // Tarjetas amarillas
+  stats_titles?: number; // Títulos ganados (Liga, Copa, Champions)
+  stats_clean_sheets?: number; // Solo porterías (para porteros)
 }
