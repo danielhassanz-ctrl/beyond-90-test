@@ -36,4 +36,4 @@ jobs:
           cat /tmp/beyond90-preview.log
           exit 1
       - name: iPhone WebKit delivery and persistence
-        run: npx playwright test scripts/browser-delivery.spec.cjs --project=webkit --reporter=line
+        run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line
