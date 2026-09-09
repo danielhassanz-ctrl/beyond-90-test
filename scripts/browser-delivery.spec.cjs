@@ -1,6 +1,6 @@
 const { test, expect, devices } = require("@playwright/test");
 
-const baseURL = process.env.BEYOND90_URL || appURL();
+const baseURL = process.env.BEYOND90_URL || "http://127.0.0.1:4173/";
 const appURL = (path = "") =>
   new URL(String(path).replace(/^\/+/, ""), baseURL.endsWith("/") ? baseURL : `${baseURL}/`).toString();
 
