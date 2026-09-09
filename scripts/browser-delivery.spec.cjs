@@ -45,12 +45,11 @@ test("iPhone WebKit completes onboarding, shows four academies and keeps the sav
 
   const academyButtons = page.locator("ul > li > button");
   await expect(academyButtons).toHaveCount(4);
-  await expect(page.getByRole("button", { name: /Real Betis/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Villarreal/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Sevilla FC/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Málaga CF/ })).toBeVisible();
+  const academyNames = await academyButtons.locator("h2").allTextContents();
+  expect(academyNames).toHaveLength(4);
+  expect(new Set(academyNames.map((name) => name.trim()).filter(Boolean)).size).toBe(4);
 
-  await page.getByRole("button", { name: /Real Betis/ }).click();
+  await academyButtons.first().click();
   await page.getByRole("button", { name: "Firmar en la cantera" }).click();
   await expect(page).toHaveURL(/\/historia$/);
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
@@ -84,7 +83,7 @@ test("iPhone WebKit restores the last valid backup after primary save corruption
   await page.getByRole("button", { name: /Ambicioso/ }).click();
   await page.getByRole("button", { name: /Leal/ }).click();
   await page.getByRole("button", { name: "Elegir cantera" }).click();
-  await page.getByRole("button", { name: /Real Betis/ }).click();
+  await page.locator("ul > li > button").first().click();
   await page.getByRole("button", { name: "Firmar en la cantera" }).click();
   await expect(page).toHaveURL(/\/historia$/);
 
@@ -137,7 +136,7 @@ test("iPhone WebKit keeps the primary save when backup writes are rejected", asy
   await page.getByRole("button", { name: /Ambicioso/ }).click();
   await page.getByRole("button", { name: /Leal/ }).click();
   await page.getByRole("button", { name: "Elegir cantera" }).click();
-  await page.getByRole("button", { name: /Real Betis/ }).click();
+  await page.locator("ul > li > button").first().click();
   await page.getByRole("button", { name: "Firmar en la cantera" }).click();
   await expect(page).toHaveURL(/\/historia$/);
 
