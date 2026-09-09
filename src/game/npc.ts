@@ -26,11 +26,27 @@ export function careerSeed(s: GameState): number {
   return anyS.careerSeed;
 }
 
-/** Hash determinista y estable (sin dependencias). */
+/**
+ * Hash determinista y estable (sin dependencias).
+ *
+ * La versión anterior era un polinomio lineal módulo 2^31-1. Servía para
+ * nombres, pero al encadenar muchas selecciones narrativas con el mismo seed
+ * producía correlaciones visibles entre candidatos y primeros arcos. Esta
+ * mezcla FNV-1a + avalancha final conserva reproducibilidad y separa mucho
+ * mejor semillas/textos cercanos.
+ */
 export function hash(seed: number, text: string): number {
-  let h = (seed % 2147483647) || 1;
-  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) % 2147483647;
-  return h;
+  let h = (2166136261 ^ (seed >>> 0)) >>> 0;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x7feb352d) >>> 0;
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x846ca68b) >>> 0;
+  h ^= h >>> 16;
+  return h & 0x7fffffff;
 }
 
 function nameFor(s: GameState, key: string, female = false): string {

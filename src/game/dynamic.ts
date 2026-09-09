@@ -73,6 +73,7 @@ const THREAD_VIEWS: Record<string, ThreadView> = {
     choices: [
       { id: "afrontar", label: "Mostrar interés y escuchar", hint: "Ambición, ruido en el vestuario" },
       { id: "evitar", label: "Cortarlo: aquí estás creciendo", hint: "Club y afición lo valoran" },
+      { id: "aplazar", label: "Pedir 48 horas antes de responder", hint: "Ganas tiempo, el agente pierde paciencia" },
     ],
     free: "¿Qué dices cuando te preguntan por ese club?",
   },
@@ -85,6 +86,7 @@ const THREAD_VIEWS: Record<string, ThreadView> = {
     choices: [
       { id: "afrontar", label: "Pedirle una oportunidad clara", hint: "Puede ganarte minutos" },
       { id: "evitar", label: "Callar y trabajar en silencio", hint: "Nada cambia hoy" },
+      { id: "aplazar", label: "Pedir hablar después del próximo partido", hint: "Evitas el choque, pero enfrías al míster" },
     ],
     free: "¿Qué le contestas al entrenador?",
   },
@@ -97,6 +99,7 @@ const THREAD_VIEWS: Record<string, ThreadView> = {
     choices: [
       { id: "afrontar", label: "Responderle delante del grupo", hint: "Respeto o guerra" },
       { id: "evitar", label: "Aguantar y hablarlo aparte", hint: "Cabeza" },
+      { id: "aplazar", label: "No entrar hoy y buscar al capitán después", hint: "El conflicto sigue vivo" },
     ],
     free: "¿Qué respondes en el vestuario?",
   },
@@ -109,6 +112,7 @@ const THREAD_VIEWS: Record<string, ThreadView> = {
     choices: [
       { id: "afrontar", label: "Dar la entrevista", hint: "Notoriedad, exposición" },
       { id: "evitar", label: "Declinar por el club", hint: "Perfil bajo" },
+      { id: "aplazar", label: "Ofrecer hablar solo de fútbol más adelante", hint: "Controlas el foco, no cierras la puerta" },
     ],
     free: "¿Qué le dices al periodista?",
   },
@@ -121,6 +125,7 @@ const THREAD_VIEWS: Record<string, ThreadView> = {
     choices: [
       { id: "afrontar", label: "Firmar el acuerdo", hint: "Dinero y ruido" },
       { id: "evitar", label: "Aparcarlo hasta consolidarte", hint: "Foco en el campo" },
+      { id: "aplazar", label: "Pedir una oferta más corta y revisarla", hint: "Menos compromiso, menos dinero" },
     ],
   },
   national_call: {
@@ -132,6 +137,7 @@ const THREAD_VIEWS: Record<string, ThreadView> = {
     choices: [
       { id: "afrontar", label: "Ir y jugártela allí", hint: "Escaparate" },
       { id: "evitar", label: "Alegar cansancio y quedarte", hint: "El club lo agradece" },
+      { id: "aplazar", label: "Hablar con club y selección antes de decidir", hint: "Prudencia, pero puedes parecer dubitativo" },
     ],
   },
   family_worry: {
@@ -143,6 +149,7 @@ const THREAD_VIEWS: Record<string, ThreadView> = {
     choices: [
       { id: "afrontar", label: "Implicarte y ayudar", hint: "Familia arriba, cabeza ocupada" },
       { id: "evitar", label: "Delegarlo y centrarte en jugar", hint: "Rendimiento primero" },
+      { id: "aplazar", label: "Pedir una semana para ordenar números juntos", hint: "No huyes, pero tampoco lo cargas todo hoy" },
     ],
     free: "¿Qué dices en casa?",
   },
@@ -175,7 +182,6 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
           { id: "protocolo", label: "Seguir el protocolo del club", hint: "Plazos reales, cero riesgos" },
           { id: "arriesgar", label: "Forzar y volver antes de tiempo", hint: "Menos partidos fuera, riesgo de recaída" },
           { id: "segunda", label: "Pedir una segunda opinión", hint: "Puede cambiar el diagnóstico" },
-          { id: "rehab", label: "Rehabilitación intensiva con preparador propio", hint: "Cuesta dinero y esfuerzo" },
         ],
       };
     }
@@ -189,6 +195,7 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         choices: [
           { id: "prudente", label: "Reaparecer con cabeza", hint: "Físico primero" },
           { id: "hambre", label: "Salir con hambre desde el primer rondo", hint: "Forma arriba, riesgo físico" },
+          { id: "individual", label: "Pedir una semana extra de trabajo individual", hint: "Pierdes ritmo, reduces el riesgo" },
         ],
       };
     case "agent_intro":
@@ -297,6 +304,7 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         choices: [
           { id: "asumir", label: "Asumirlo y mirar adelante", hint: "Cabeza fría" },
           { id: "hablar", label: "Hablarlo con el míster", hint: "Puede salir bien o mal" },
+          { id: "entrenar", label: "Responder con una semana extra de trabajo", hint: "Forma y disciplina, más carga física" },
         ],
       };
     }
@@ -310,10 +318,10 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         choices: [
           { id: "sincero", label: "Contarle la verdad", hint: "Confianza" },
           { id: "cerrar", label: "Quitarle importancia", hint: "Te guardas el problema" },
+          { id: "quedar", label: "Pedir verle mañana en persona", hint: "No lo evitas, pero tampoco lo hablas por teléfono" },
         ],
         freeform: { prompt: `¿Qué le contestas a ${agentName}?`, placeholder: "Escribe lo que quieras…" },
       };
-    /* ===================== FASE 6 · mercado y retirada ===================== */
     case "market_offer": {
       const kind = str(d, "kind", "transfer");
       const clubName = str(d, "clubName", "un club");
@@ -333,7 +341,11 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         choices: [
           { id: "aceptar", label: kind === "renewal" ? "Renovar" : "Aceptar y firmar", hint: "Cambio real en tu carrera" },
           { id: "rechazar", label: "Rechazar", hint: "Te quedas donde estás" },
-          ...(kind === "transfer" ? [{ id: "negociar", label: "Pedir más ficha", hint: "Puede caerse la operación" }] : []),
+          {
+            id: "negociar",
+            label: kind === "renewal" ? "Pedir más ficha" : kind === "loan" ? "Exigir un rol claro antes de ir" : "Pedir más ficha",
+            hint: "Puede mejorar el acuerdo o romperlo",
+          },
         ],
         freeform: { prompt: "¿Qué dices al respecto?", placeholder: "Habla claro…" },
       };
@@ -347,7 +359,8 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         text: `${num(d, "age", 35)} años, el cuerpo pidiendo tregua y una carrera de ${str(d, "tier", "profesional")} detrás. El club te ofrece cerrar aquí, con homenaje y campo lleno.`,
         choices: [
           { id: "retirar", label: "Anunciar la retirada", hint: "Cierras tu carrera" },
-          { id: "seguir", label: "Aguantar una temporada más", hint: "Riesgo de acabar peor" },
+          { id: "seguir", label: "Aguantar una temporada más al máximo", hint: "Riesgo de acabar peor" },
+          { id: "rol_menor", label: "Jugar un último año aceptando un rol menor", hint: "Menos ego, despedida más larga" },
         ],
       };
     case "career_end":
@@ -371,12 +384,12 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         choices: view?.choices ?? [
           { id: "afrontar", label: "Afrontarlo de frente" },
           { id: "evitar", label: "Dejarlo pasar" },
+          { id: "aplazar", label: "Pedir tiempo antes de responder" },
         ],
         ...(view?.free ? { freeform: { prompt: view.free, placeholder: "Escribe lo que quieras…" } } : {}),
       };
     }
     default:
-
       return {
         kicker: "Carrera",
         title: "Semana de trabajo",
@@ -411,6 +424,16 @@ export function resolveDynamic(
         stat(s, "form", 10);
         stat(s, "fitness", -6);
         return { title: "Vuelta con hambre", text: "El fisio te grita, tú sonríes. La primera semana vuelas y la segunda lo pagas.", tone: "neutral" };
+      }
+      if (choiceId === "individual") {
+        stat(s, "fitness", 9);
+        stat(s, "form", 4);
+        stat(s, "discipline", 5);
+        return {
+          title: "Una semana más",
+          text: "Pides siete días de trabajo individual antes de competir. Pierdes algo de ritmo, pero vuelves sin miedo al primer choque.",
+          tone: "good",
+        };
       }
       stat(s, "fitness", 14);
       stat(s, "form", 3);
@@ -453,6 +476,12 @@ export function resolveDynamic(
           ? { title: "Conversación útil", text: "El míster te explica qué quiere de ti y te da un plan concreto.", tone: "good" }
           : { title: "Portazo suave", text: "\"Cuando toque, jugarás\". Sales del despacho igual que entraste.", tone: "bad" };
       }
+      if (choiceId === "entrenar") {
+        stat(s, "discipline", 5);
+        stat(s, "form", 4);
+        stat(s, "fitness", -3);
+        return { title: "Respuesta en el césped", text: "No pides explicaciones. Añades una sesión extra durante una semana y obligas al cuerpo técnico a volver a mirarte.", tone: "good" };
+      }
       stat(s, "discipline", 2);
       return { title: "Cabeza fría", text: "Guardas el enfado para el campo.", tone: "neutral" };
     }
@@ -475,6 +504,11 @@ export function resolveDynamic(
         rel(s, "agent", 4);
         return { title: "Todo sobre la mesa", text: `${s.agent.name} escucha veinte minutos sin interrumpir. Sirve.`, tone: "good" };
       }
+      if (choiceId === "quedar") {
+        s.agent.trust = clamp(s.agent.trust + 2);
+        remember(s, `Preferiste hablar de ${str(d, "topic", "lo importante")} cara a cara`);
+        return { title: "Mañana, en persona", text: `No quieres resolverlo a las once de la noche. ${s.agent.name} acepta: "A las diez, café y sin móviles".`, tone: "neutral" };
+      }
       s.agent.trust = clamp(s.agent.trust - 3);
       return { title: "Te lo guardas", text: "\"Como quieras. Pero yo me entero igual\".", tone: "neutral" };
     }
@@ -485,10 +519,24 @@ export function resolveDynamic(
     case "retirement": {
       if (choiceId === "seguir") {
         stat(s, "morale", 4);
+        stat(s, "fitness", -3);
         return {
           title: "Una más",
-          text: "Aprietas los dientes y firmas un año más. Puede salir bonito o puede salir triste.",
+          text: "Aprietas los dientes y firmas un año más con la idea de competir como siempre. Puede salir bonito o puede salir triste.",
           tone: "neutral",
+        };
+      }
+      if (choiceId === "rol_menor") {
+        stat(s, "morale", 8);
+        stat(s, "discipline", 5);
+        s.salary = Math.max(30, Math.round(s.salary * 0.65));
+        s.contractYears = 1;
+        s.contract = "Última temporada · rol de veterano";
+        s.flags["ultima_temporada"] = 1;
+        return {
+          title: "Último baile, otro papel",
+          text: "Aceptas cobrar menos y jugar menos. No prometes ser titular: prometes despedirte dentro del campo y ayudar al siguiente que llegue con 18 años.",
+          tone: "gold",
         };
       }
       s.retired = true;
@@ -521,7 +569,6 @@ export function resolveDynamic(
   }
 }
 
-/** FASE 6 · Mercado: fichajes, renovaciones y cesiones con consecuencias reales. */
 function resolveMarket(
   s: GameState,
   card: DynamicCard,
@@ -540,9 +587,23 @@ function resolveMarket(
   if (choiceId === "negociar") {
     const ok = s.overall >= 78 || s.agent.trust >= 65 ? Math.random() < 0.6 : Math.random() < 0.3;
     if (ok) {
-      moveToClub(s, clubId, Math.round(salary * 1.15), years);
+      if (kind === "renewal") {
+        s.salary = Math.round(salary * 1.15);
+        s.contractYears = years;
+        s.contract = `${years} temporada${years > 1 ? "s" : ""} · ${s.salary}.000 €`;
+        s.agent.trust = clamp(s.agent.trust + 5);
+        rel(s, "fans", 3);
+        return { title: "Renovación mejorada", text: `El ${clubName} sube la ficha y firmas sin cambiar de camiseta.`, tone: "gold" };
+      }
+      moveToClub(s, clubId, Math.round(salary * 1.15), years, kind === "loan");
       s.agent.trust = clamp(s.agent.trust + 5);
-      return { title: "Operación mejorada", text: `El ${clubName} sube la ficha y firmas. Tu representante se lleva su parte y su gloria.`, tone: "gold" };
+      return {
+        title: kind === "loan" ? "Cesión con condiciones" : "Operación mejorada",
+        text: kind === "loan"
+          ? `El ${clubName} acepta darte un rol más claro y la cesión sale adelante.`
+          : `El ${clubName} sube la ficha y firmas. Tu representante se lleva su parte y su gloria.`,
+        tone: "gold",
+      };
     }
     s.agent.trust = clamp(s.agent.trust - 6);
     return { title: "Se cae la operación", text: `El ${clubName} se retira al oír tus condiciones. Te quedas donde estabas y con la sensación de haber apurado demasiado.`, tone: "bad" };
@@ -592,7 +653,6 @@ function resolveMarket(
   };
 }
 
-/** Resolución de hilos: cada cierre puede abrir consecuencias diferidas. */
 function resolveThread(
   s: GameState,
   card: DynamicCard,
@@ -600,13 +660,42 @@ function resolveThread(
   interp: Interpretation | null,
 ): DynamicResult {
   const kind = str(card.data, "threadKind", "club_interest");
-  const face = choiceId !== "evitar";
+  const face = choiceId === "afrontar";
   const hostile = interp?.intent === "aggressive" || interp?.intent === "defiant";
   const warm = interp?.intent === "conciliatory" || interp?.intent === "professional" || interp?.intent === "loyal";
 
+  if (choiceId === "aplazar") {
+    switch (kind) {
+      case "club_interest":
+        s.agent.trust = clamp(s.agent.trust - 2);
+        return { title: "Cuarenta y ocho horas", text: "Pides dos días para pensarlo. La puerta sigue abierta, pero tu representante te recuerda que el mercado no espera.", tone: "neutral" };
+      case "coach_upset":
+        rel(s, "coach", -2);
+        return { title: "Conversación aplazada", text: "El míster acepta hablar tras el próximo partido. No se enfada, pero tampoco le entusiasma que hoy no tengas respuesta.", tone: "neutral" };
+      case "teammate_jealous":
+        rel(s, "dressing", -1);
+        return { title: "El capitán hará de puente", text: "No contestas delante de todos. Buscas al capitán después; el conflicto baja de volumen, no desaparece.", tone: "neutral" };
+      case "press_digging":
+        stat(s, "fame", -1);
+        return { title: "Solo fútbol, más adelante", text: "No cierras la puerta, pero marcas límites. El reportaje pierde fuerza y tú mantienes algo de control.", tone: "neutral" };
+      case "sponsor_call":
+        stat(s, "discipline", 2);
+        return { title: "Contrato corto o nada", text: "Pides menos publicaciones y una duración menor. La marca se lo piensa; tú no atas tu nombre por años.", tone: "neutral" };
+      case "national_call":
+        stat(s, "fitness", 2);
+        stat(s, "fame", -2);
+        return { title: "Llamadas antes de decidir", text: "Hablas con ambos cuerpos técnicos. Ganas claridad y descanso, aunque desde fuera parezca que dudas de una convocatoria que otros aceptarían corriendo.", tone: "neutral" };
+      default:
+        rel(s, "family", -2);
+        return { title: "Una semana para ordenar la casa", text: "No miras hacia otro lado, pero tampoco decides en caliente. En casa aceptan esperar, con cierta inquietud.", tone: "neutral" };
+    }
+  }
+
+  const effectiveFace = interp ? hostile || warm || face : face;
+
   switch (kind) {
     case "club_interest": {
-      if (face) {
+      if (effectiveFace) {
         stat(s, "fame", 6);
         rel(s, "dressing", -4);
         s.agent.trust = clamp(s.agent.trust + 5);
@@ -624,7 +713,7 @@ function resolveThread(
         s.flags["nolist"] = 1;
         return { title: "Conversación rota", text: "Te levantas antes de que acabe. El domingo no estás en la lista.", tone: "bad" };
       }
-      if (face || warm) {
+      if (effectiveFace || warm) {
         rel(s, "coach", 8);
         stat(s, "morale", 5);
         s.flags["status"] = Math.max(s.flags["status"] ?? 0, 1);
@@ -634,7 +723,7 @@ function resolveThread(
       return { title: "Silencio", text: "Trabajas callado. Ni mejora ni empeora, pero el tiempo corre.", tone: "neutral" };
     }
     case "teammate_jealous": {
-      if (hostile || face) {
+      if (hostile || effectiveFace) {
         rel(s, "dressing", hostile ? -8 : 6);
         stat(s, "fame", 2);
         s.memory.conflicts.push("Choque con el veterano del vestuario");
@@ -646,7 +735,7 @@ function resolveThread(
       return { title: "Hablado aparte", text: "En el gimnasio arreglas lo que en grupo era imposible.", tone: "good" };
     }
     case "press_digging": {
-      if (face) {
+      if (effectiveFace) {
         stat(s, "fame", 10);
         rel(s, "family", hostile ? -6 : 2);
         rel(s, "coach", -2);
@@ -657,7 +746,7 @@ function resolveThread(
       return { title: "Perfil bajo", text: "El club responde por ti y el tema muere en dos días.", tone: "good" };
     }
     case "sponsor_call": {
-      if (face) {
+      if (effectiveFace) {
         s.salary += 25;
         stat(s, "fame", 8);
         rel(s, "family", 4);
@@ -668,7 +757,7 @@ function resolveThread(
       return { title: "Aparcado", text: "\"Cuando juegue de verdad\". Tu representante suspira, pero lo respeta.", tone: "neutral" };
     }
     case "national_call": {
-      if (face) {
+      if (effectiveFace) {
         stat(s, "fame", 12);
         stat(s, "fitness", -8);
         milestone(s, "Convocatoria con la selección de tu categoría.");
@@ -692,7 +781,7 @@ function resolveThread(
       return { title: "Te quedas en el club", text: "Descansas y el míster lo apunta a tu favor.", tone: "neutral" };
     }
     default: {
-      if (face) {
+      if (effectiveFace) {
         rel(s, "family", 8);
         stat(s, "form", -4);
         return { title: "Das la cara en casa", text: "Te implicas de lleno. La cabeza lo paga en el campo unas semanas.", tone: "neutral" };
@@ -702,8 +791,6 @@ function resolveThread(
     }
   }
 }
-
-
 
 function remember(s: GameState, text: string) {
   if (!s.agent.memories.includes(text)) s.agent.memories.unshift(text);
@@ -734,11 +821,6 @@ function resolveInjury(s: GameState, card: DynamicCard, choiceId: string): Dynam
       stat(s, "morale", -6);
       return { title: "Segunda opinión", text: "El especialista es más pesimista que el club. Un partido más de baja y una noche mala.", tone: "bad" };
     }
-    case "rehab":
-      stat(s, "fitness", 8);
-      stat(s, "discipline", 5);
-      s.salary = Math.max(0, s.salary - 5);
-      return { title: "Rehabilitación intensiva", text: "Dos sesiones diarias, pagadas de tu bolsillo. Vuelves más fuerte de lo que te fuiste.", tone: "good" };
     default:
       rel(s, "coach", 3);
       stat(s, "discipline", 3);
@@ -760,6 +842,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
       s.agent.commission = commission;
       s.agent.trust = clamp(s.agent.trust + 20, 0, 100);
       rel(s, "agent", 25);
+      s.rel.agent = Math.max(s.rel.agent, 30);
       achieve(s, "representante");
       remember(s, "Primera reunión seria: te tomó en serio desde el minuto uno");
       milestone(s, `${s.agent.name} pasa a ser tu representante.`);
@@ -771,6 +854,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
       s.agent.commission = Math.max(5, commission - 1);
       s.agent.trust = clamp(s.agent.trust + 10);
       rel(s, "agent", 15);
+      s.rel.agent = Math.max(s.rel.agent, 24);
       achieve(s, "representante");
       remember(s, "Le dejaste claro que quieres llegar arriba");
       return { title: "Acuerdo con carácter", text: `Le pones condiciones y le rebajas la comisión al ${s.agent.commission}%. "Me gusta que sepas lo que vales".`, tone: "good" };
@@ -779,6 +863,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
     s.hasAgent = true;
     s.agent.commission = commission;
     rel(s, "agent", 10);
+    s.rel.agent = Math.max(s.rel.agent, 20);
     achieve(s, "representante");
     return { title: "Acuerdo tibio", text: `Firmáis sin entusiasmo. ${s.agent.name} se guarda tu falta de claridad para otro día.`, tone: "neutral" };
   }
@@ -793,6 +878,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
     s.agent.commission = Math.max(5, commission - 2);
     s.agent.trust = clamp(s.agent.trust + 8);
     rel(s, "agent", 14);
+    s.rel.agent = Math.max(s.rel.agent, 24);
     achieve(s, "representante");
     remember(s, "Le negociaste la comisión desde el primer día");
     return { title: "Comisión negociada", text: `Cierras un ${s.agent.commission}%. Él se ríe: "Vas a ser de los complicados. Mejor".`, tone: "good" };
@@ -802,6 +888,7 @@ function resolveAgentIntro(s: GameState, card: DynamicCard, choiceId: string, i:
   s.agent.commission = commission;
   s.agent.trust = clamp(s.agent.trust + 15);
   rel(s, "agent", 22);
+  s.rel.agent = Math.max(s.rel.agent, 28);
   achieve(s, "representante");
   milestone(s, `${s.agent.name} pasa a ser tu representante.`);
   return { title: "Tienes representante", text: `Firmas en una servilleta y luego en papel de verdad. Ya no estás solo en esto.`, tone: "gold" };

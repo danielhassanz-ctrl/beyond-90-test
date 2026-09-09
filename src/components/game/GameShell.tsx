@@ -14,16 +14,32 @@ export function GameShell({ children }: { children: (args: { state: NonNullable<
     else if (!state.clubId) void navigate({ to: "/cantera" });
   }, [ready, state, navigate]);
 
-  if (!ready || !state || !state.clubId) {
+  if (!ready) {
     return (
-      <div className="grid min-h-screen place-items-center bg-background">
+      <div className="grid min-h-[100dvh] place-items-center bg-background px-6">
         <p className="text-kicker animate-pulse">Cargando carrera…</p>
       </div>
     );
   }
 
+  if (!state || !state.clubId) {
+    return (
+      <div className="grid min-h-[100dvh] place-items-center bg-background px-6 text-center">
+        <div>
+          <p className="text-kicker">{!state ? "Volviendo a portada…" : "Preparando tu cantera…"}</p>
+          <button
+            onClick={() => void navigate({ to: !state ? "/" : "/cantera" })}
+            className="mt-4 rounded-lg border border-gold/60 px-4 py-3 font-cond text-xs font-bold uppercase tracking-[0.14em] text-gold"
+          >
+            Continuar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100dvh] bg-background">
       <GameHeader state={state} />
       <main className="mx-auto max-w-md px-4 pt-4 safe-bottom">
         {error && (

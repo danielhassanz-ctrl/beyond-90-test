@@ -49,6 +49,29 @@ function rid(): string {
   return Math.random().toString(36).slice(2, 9);
 }
 
+function memoryRecallKey(text: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return `recall:${(h >>> 0).toString(36)}`;
+}
+
+function memoryThreadKind(text: string): ThreadKind | null {
+  const lower = text.toLowerCase();
+  const hasAny = (...terms: string[]) => terms.some((term) => lower.includes(term));
+
+  if (hasAny("entrenador", "míster", "mister", "técnico", "tecnico")) return "coach_upset";
+  if (hasAny("vestuario", "compañ", "capitán", "capitan", "rival", "jerarquía", "jerarquia")) return "teammate_jealous";
+  if (hasAny("familia", "madre", "padre", "casa", "pareja", "hijo", "herman")) return "family_worry";
+
+  // No inventamos una categoría para recuerdos ambiguos. Si el texto no
+  // identifica a quién afecta, esperamos a otra memoria en vez de convertir
+  // cualquier conflicto en un problema familiar.
+  return null;
+}
+
 export function hasThread(s: GameState, kind: ThreadKind): boolean {
   return (s.threads ?? []).some((t) => t.kind === kind);
 }
@@ -76,8 +99,40 @@ export function spawnThread(
 }
 
 export function dueThread(s: GameState): Thread | null {
-  if (!Array.isArray(s.threads)) return null;
-  return s.threads.find((t) => (s.sceneCount ?? 0) >= t.dueScene) ?? null;
+  if (!Array.isArray(s.threads)) s.threads = [];
+  const due = s.threads.find((t) => (s.sceneCount ?? 0) >= t.dueScene);
+  if (due) return due;
+
+  const scene = s.sceneCount ?? 0;
+  if (scene < 6 || (s.flags["memory_thread_season"] ?? -1) === s.seasonIndex) return null;
+  if (scene - (s.flags["ultimo_hilo"] ?? -99) < 4) return null;
+
+  const entries = [...new Set([
+    ...(Array.isArray(s.memory.promises) ? s.memory.promises : []),
+    ...(Array.isArray(s.memory.conflicts) ? s.memory.conflicts : []),
+  ])].filter(
+    (entry): entry is string =>
+      typeof entry === "string" &&
+      entry.trim().length >= 12 &&
+      memoryThreadKind(entry) !== null &&
+      (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0,
+  );
+  if (entries.length === 0) return null;
+
+  const remembered = entries[Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 13 + scene * 5) % entries.length]!;
+  s.memory.threads[memoryRecallKey(remembered)] = 1;
+  const kind = memoryThreadKind(remembered);
+  if (!kind) return null;
+
+  s.flags["memory_thread_season"] = s.seasonIndex;
+  s.flags["ultimo_hilo"] = scene;
+  return {
+    id: `memory-${s.seasonIndex}-${scene}`,
+    kind,
+    teaser: `Hace tiempo quedó esto anotado: ${remembered}. Ahora vuelve a tener consecuencias.`,
+    dueScene: scene,
+    payload: { remembered: remembered.slice(0, 240) },
+  };
 }
 
 export function closeThread(s: GameState, id: string): void {

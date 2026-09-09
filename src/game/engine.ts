@@ -617,6 +617,9 @@ export function advance(state: GameState): GameState {
 function agentCard(s: GameState): Card | null {
   if (agentEligible(s)) return dyn("agent_intro", { commission: 8 + Math.floor(Math.random() * 3) });
   if (!s.agent.present) return null;
+  const scene = s.sceneCount ?? 0;
+  const lastAgentScene = s.flags["agent_last_scene"] ?? -99;
+  if (scene - lastAgentScene < 5) return null;
   if (s.agent.teaser) {
     const suitor = randomSuitor(s);
     s.agent.teaser = null;
@@ -784,6 +787,9 @@ export function resolveDynamicCard(
   if (card.kind === "thread") {
     const id = typeof card.data["threadId"] === "string" ? card.data["threadId"] : "";
     if (id) closeThread(s, id);
+  }
+  if (card.kind.startsWith("agent_")) {
+    s.flags["agent_last_scene"] = s.sceneCount ?? 0;
   }
   s.pending = null;
   const deltas = diff(before, s);

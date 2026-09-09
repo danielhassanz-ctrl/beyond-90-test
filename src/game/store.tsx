@@ -12,6 +12,7 @@ import {
   resolveEventFree,
   resolveMatch,
 } from "./engine";
+import { choosePostCareerPath, choosePostCareerStyle, type PostCareerPath, type PostCareerStyle } from "./postcareer";
 import type { DynamicCard, GameState, MatchData, Player } from "./types";
 
 interface GameContextValue {
@@ -26,28 +27,83 @@ interface GameContextValue {
   answerFree: (eventId: string, text: string) => void;
   answerDynamic: (card: DynamicCard, choiceId: string, text?: string) => void;
   playMatch: (match: MatchData, keyChoiceId?: string) => void;
+  choosePostCareer: (path: PostCareerPath) => void;
+  choosePostCareerStyle: (style: PostCareerStyle) => void;
   next: () => void;
   reset: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
+const BACKUP_SAVE_KEY = `${SAVE_KEY}:backup`;
 
-function read(): GameState | null {
+function parseSave(raw: string | null): GameState | null {
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return null;
     return migrate(JSON.parse(raw));
   } catch {
     return null;
   }
 }
 
-function write(state: GameState | null) {
+function read(): GameState | null {
   try {
-    if (!state) localStorage.removeItem(SAVE_KEY);
-    else localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    const primaryRaw = localStorage.getItem(SAVE_KEY);
+    const primary = parseSave(primaryRaw);
+    if (primary) {
+      const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
+      if (!parseSave(backupRaw)) {
+        try {
+          localStorage.setItem(BACKUP_SAVE_KEY, primaryRaw as string);
+        } catch {
+          /* Best-effort backup priming for Safari/private storage. */
+        }
+      }
+      return primary;
+    }
+
+    const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
+    const backup = parseSave(backupRaw);
+    if (!backup) return null;
+
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(backup));
+    } catch {
+      /* Safari/private storage can reject writes; recovered game stays playable in memory. */
+    }
+    return backup;
   } catch {
-    /* almacenamiento lleno o bloqueado: la partida sigue en memoria */
+    return null;
+  }
+}
+
+function write(state: GameState | null) {
+  if (!state) {
+    try { localStorage.removeItem(SAVE_KEY); } catch {}
+    try { localStorage.removeItem(BACKUP_SAVE_KEY); } catch {}
+    return;
+  }
+
+  let nextRaw: string;
+  try {
+    nextRaw = JSON.stringify(state);
+  } catch {
+    return;
+  }
+
+  let primaryWritten = false;
+  try {
+    localStorage.setItem(SAVE_KEY, nextRaw);
+    primaryWritten = true;
+  } catch {
+    /* Storage blocked/full: the current session remains playable in memory. */
+  }
+
+  if (primaryWritten) {
+    try {
+      localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
+    } catch {
+      /* Backup is best effort and must never invalidate the newer primary save. */
+    }
   }
 }
 
@@ -112,6 +168,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       apply((prev) => (keyChoiceId ? resolveMatch(prev, match, keyChoiceId) : resolveMatch(prev, match))),
     [apply],
   );
+  const choosePostCareer = useCallback(
+    (path: PostCareerPath) => apply((prev) => choosePostCareerPath(prev, path)),
+    [apply],
+  );
+  const choosePostCareerStyleAction = useCallback(
+    (style: PostCareerStyle) => apply((prev) => choosePostCareerStyle(prev, style)),
+    [apply],
+  );
   const next = useCallback(() => apply((prev) => advance(prev)), [apply]);
   const reset = useCallback(() => commit(null), [commit]);
 
@@ -128,10 +192,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       answerFree,
       answerDynamic,
       playMatch,
+      choosePostCareer,
+      choosePostCareerStyle: choosePostCareerStyleAction,
       next,
       reset,
     }),
-    [state, ready, error, start, pickClub, answerEvent, answerFree, answerDynamic, playMatch, next, reset],
+    [state, ready, error, start, pickClub, answerEvent, answerFree, answerDynamic, playMatch, choosePostCareer, choosePostCareerStyleAction, next, reset],
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

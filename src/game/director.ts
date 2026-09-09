@@ -192,6 +192,19 @@ function remember(s: GameState, text: string): void {
   s.memory.promises = s.memory.promises.slice(0, 24);
 }
 
+function thirdWayResult(s: GameState): Res {
+  const variants = [
+    { title: "Pides margen", text: "No respondes en caliente. Escuchas una versión más, fijas un plazo y haces que el resto espere tu decisión." },
+    { title: "Cambias el terreno", text: "Sacas la conversación del foco público y la llevas a una mesa pequeña. Pierdes impacto inmediato, ganas información." },
+    { title: "Ni sí ni no", text: "No compras ninguno de los dos extremos. Pides condiciones concretas y dejas claro que decidirás cuando tengas todos los datos." },
+    { title: "Veinticuatro horas", text: "Te reservas un día para hablar con quien realmente está implicado. La situación no desaparece, pero deja de decidir por ti." },
+    { title: "Una salida intermedia", text: "Propones una solución menos vistosa y más controlable. Nadie sale del todo satisfecho, que a veces es señal de un acuerdo real." },
+    { title: "Lo enfrías", text: "Bajas el volumen, haces dos preguntas incómodas y pospones la respuesta. El problema sigue ahí, pero ahora conoces mejor su precio." },
+  ] as const;
+  const key = "third-way-" + (s.sceneCount ?? 0) + "-" + (s.beat ?? 0) + "-" + s.seasonIndex;
+  const i = hash(careerSeed(s), key) % variants.length;
+  return { ...variants[i]!, tone: "neutral" };
+}
 function callback(s: GameState, id: string, text: string, inScenes = 8): void {
   const d = directorState(s);
   if (d.callbacks.some((c) => c.id === id)) return;
@@ -360,7 +373,18 @@ const ARCS: Arc[] = [
               return { title: "Petición registrada", text: "El club lo estudiará en el mercado de invierno. Se abre otra historia.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "jerarquia",
@@ -387,6 +411,103 @@ const ARCS: Arc[] = [
               };
             },
           },
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+          {
+            id: "consultar_entorno",
+            label: "No responder en caliente y ganarte margen en el campo",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
+      },
+    ],
+  },
+
+  /* ---------------- 1B. ADAPTACIÓN A LA CANTERA ---------------- */
+  {
+    id: "arc_adaptacion_cantera",
+    label: "Encajar en la cantera",
+    family: "adaptacion",
+    requires: (s) => s.stage === "youth" && s.age <= 18,
+    weight: (s) => 22 + (s.rel.dressing < 50 ? 12 : 0),
+    chapters: [
+      {
+        family: "adaptacion",
+        image: "locker",
+        category: "life",
+        kicker: (c) => `${c.month} · vestuario de cantera`,
+        title: () => "Tu sitio en la mesa",
+        text: (c) => `${c.captain} te señala un asiento al fondo. Los veteranos de la categoría tienen sus bromas, sus grupos y sus códigos. Nadie te trata mal, pero nadie va a hacerte hueco porque sí.`,
+        choices: [
+          { id: "entrar", label: "Meterte en el grupo desde el primer día", apply: (c) => { rel(c.s, "dressing", 7); stat(c.s, "morale", 3); return { title: "Uno más", text: "Te ríes aunque no entiendas dos chistes. A la semana ya te guardan sitio.", tone: "good" }; } },
+          { id: "observar", label: "Escuchar más que hablar", apply: (c) => { stat(c.s, "discipline", 4); rel(c.s, "dressing", 2); return { title: "Perfil bajo", text: "No fuerzas nada. Poco a poco empiezan a preguntarte cosas en vez de ignorarte.", tone: "neutral" }; } },
+          { id: "competir", label: "Dejar claro que vienes a quitar puestos", apply: (c) => { stat(c.s, "form", 4); rel(c.s, "dressing", -4); remember(c.s, "Entraste en la cantera dejando claro que venías a competir por un sitio"); return { title: "Mensaje recibido", text: "Nadie duda de tu ambición. Tampoco de que ahora te van a medir cada día.", tone: "neutral" }; } },
+        ],
+      },
+      {
+        family: "adaptacion",
+        image: "training",
+        category: "training",
+        skip: "Tres semanas después",
+        kicker: (c) => `${c.month} · entrenamiento`,
+        title: () => "Ya saben quién eres",
+        text: (c) => `${c.coach} para el ejercicio y te usa como ejemplo, para bien o para mal. El grupo ya tiene una opinión sobre ti y toca decidir qué haces con ella.`,
+        choices: [
+          { id: "seguir", label: "Seguir exactamente igual", apply: (c) => { stat(c.s, "discipline", 3); return { title: "Identidad", text: "No cambias por gustar. El vestuario termina entendiendo qué puede esperar de ti.", tone: "neutral", end: true }; } },
+          { id: "acercarte", label: "Acercarte a dos compañeros concretos", apply: (c) => { rel(c.s, "dressing", 6); return { title: "Dos aliados", text: "No necesitas caerle bien a treinta. Con dos ya cambia el día a día.", tone: "good", end: true }; } },
+          { id: "hablar_mister", label: "Preguntar al entrenador qué espera de ti", apply: (c) => { rel(c.s, "coach", 5); stat(c.s, "discipline", 2); return { title: "Expectativas claras", text: "Sales con dos tareas concretas y menos ruido en la cabeza.", tone: "good", end: true }; } },
+        ],
+      },
+    ],
+  },
+
+  /* ---------------- 1C. ESTUDIOS Y FÚTBOL ---------------- */
+  {
+    id: "arc_estudios_cantera",
+    label: "Dos vidas a la vez",
+    family: "estudios",
+    requires: (s) => s.stage === "youth" && s.age <= 18,
+    weight: (s) => 18 + (s.rel.family >= 60 ? 8 : 0),
+    chapters: [
+      {
+        family: "estudios",
+        image: "family",
+        category: "life",
+        kicker: (c) => `${c.month} · casa`,
+        title: () => "Mañana hay examen",
+        text: () => `Llegas a casa tarde después de entrenar y tienes un examen a primera hora. En la mesa hay apuntes, una cena recalentada y un mensaje del tutor diciendo que llevas demasiadas faltas. El fútbol empieza a comerse el resto de tu vida.`,
+        choices: [
+          { id: "estudiar", label: "Estudiar aunque duermas poco", apply: (c) => { rel(c.s, "family", 6); stat(c.s, "fitness", -3); stat(c.s, "discipline", 4); return { title: "Noche corta", text: "Apruebas por poco y entrenas con sueño. Has salvado las dos cosas, de momento.", tone: "neutral" }; } },
+          { id: "futbol", label: "Dormir y priorizar el entrenamiento", apply: (c) => { c.s.xp += 18; rel(c.s, "family", -5); remember(c.s, "Empezaste a priorizar el fútbol sobre los estudios a los 16"); return { title: "Una apuesta", text: "Entrenas bien. El examen sale mal. En casa nadie lo llama casualidad.", tone: "neutral" }; } },
+          { id: "negociar", label: "Pedir un plan especial al instituto", apply: (c) => { stat(c.s, "discipline", 3); rel(c.s, "family", 3); return { title: "Plan B", text: "No te regalan nada, pero te dejan recuperar tareas en los viajes. Ganas margen, no una excusa.", tone: "good" }; } },
+        ],
+      },
+      {
+        family: "estudios",
+        image: "travel",
+        category: "life",
+        skip: "Un mes después",
+        kicker: (c) => `${c.month} · autobús del equipo`,
+        title: () => "Lo que estás dejando atrás",
+        text: () => `Mientras tus compañeros duermen en el autobús, tú miras el calendario del instituto en el móvil. Ya no puedes fingir que todo cabe sin elegir prioridades.`,
+        choices: [
+          { id: "doble", label: "Mantener las dos cosas este curso", apply: (c) => { stat(c.s, "discipline", 4); rel(c.s, "family", 4); return { title: "Doble turno", text: "Será cansado, pero terminas el curso sin cerrar ninguna puerta.", tone: "good", end: true }; } },
+          { id: "todo_futbol", label: "Hablar en casa y apostar por el fútbol", apply: (c) => { c.s.xp += 25; rel(c.s, "family", -3); flag(c.s, "estudios_aparcados", 1); return { title: "Una sola vía", text: "La decisión queda apuntada en casa. Desde ahora cada entrenamiento pesa un poco más.", tone: "neutral", end: true }; } },
+          { id: "revisar", label: "Esperar hasta final de temporada para decidir", apply: (c) => { stat(c.s, "morale", 2); remember(c.s, "Aplazaste la decisión entre estudios y fútbol hasta final de temporada"); return { title: "Decisión aplazada", text: "No es escapar: te das unos meses para saber si el fútbol de verdad está abriendo la puerta.", tone: "neutral", end: true }; } },
         ],
       },
     ],
@@ -432,7 +553,18 @@ const ARCS: Arc[] = [
               return { title: "Como si fuera normal", text: "Cenas, duermes ocho horas y llegas al campo como el que va a trabajar.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "debut",
@@ -474,7 +606,18 @@ const ARCS: Arc[] = [
               return { title: "Se te va larga", text: "Pierdes el balón dos veces en zona mala. El míster mira al suelo. Debutaste, pero no como querías.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "debut",
@@ -506,7 +649,18 @@ const ARCS: Arc[] = [
               return { title: "Demasiado pronto", text: `"Llevas doce minutos como profesional y ya vienes a pedir. Vuelve cuando lleves doce partidos".`, tone: "bad", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -596,7 +750,18 @@ const ARCS: Arc[] = [
               return { title: "El chico del grande", text: "Juegas bien y caes mal. Aquí eso se paga en los balones que no te llegan.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "family", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "cesion",
@@ -635,7 +800,18 @@ const ARCS: Arc[] = [
               return { title: "Otro año fuera", text: "Aquí juegas. Es menos glamuroso y más carrera.", tone: "neutral", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -679,7 +855,18 @@ const ARCS: Arc[] = [
               return { title: "Portada", text: "\"Quiero jugar la Champions antes de los 23\". Mañana lo tendrás recortado en tu taquilla.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Responder solo lo imprescindible y salir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "revelacion",
@@ -712,7 +899,18 @@ const ARCS: Arc[] = [
               return { title: "Prisas", text: "Cuando el jugador empuja, el club sube el precio y la operación se complica. Ya está en marcha.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir tiempo y marcar tus propias condiciones",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "revelacion",
@@ -743,7 +941,18 @@ const ARCS: Arc[] = [
               return { title: "Te secan", text: "Dos partidos sin aparecer y la prensa ya escribe \"se ha apagado\". Es el mismo jugador, otro contexto.", tone: "bad", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -790,7 +999,18 @@ const ARCS: Arc[] = [
               return { title: "Un año más", text: "El club respira. Tú te quedas con la duda de qué habría pasado.", tone: "good", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "salto",
@@ -822,7 +1042,18 @@ const ARCS: Arc[] = [
               return { title: "Nostalgia", text: "Videollamadas hasta las tres. Al día siguiente el míster ve las piernas, no la nostalgia.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "salto",
@@ -853,7 +1084,18 @@ const ARCS: Arc[] = [
               return { title: "Vuelta a casa", text: "Vuelves a un vestuario donde entiendes los chistes. Y eso, ahora, importa.", tone: "neutral", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -896,7 +1138,18 @@ const ARCS: Arc[] = [
               return { title: "Se oye en el pasillo", text: "Dos frases y un portazo. Mañana lo sabrá la prensa.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "conflicto",
@@ -971,7 +1224,28 @@ const ARCS: Arc[] = [
               return { title: "Reconciliación", text: "No os vais a llamar por Navidad, pero jugáis juntos y eso ya es suficiente.", tone: "good", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+          {
+            id: "consultar_entorno",
+            label: "Pedir tiempo y buscar una tercera vía",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -1014,7 +1288,18 @@ const ARCS: Arc[] = [
               return { title: "Contra el reloj", text: "Fisio privado, dos sesiones diarias y una fecha en la cabeza. El club no firma ese plan.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Consultar el plan con el fisio antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "lesion",
@@ -1045,7 +1330,18 @@ const ARCS: Arc[] = [
               return { title: "Presente", text: "Estás en cada charla y en cada autobús. Cuando vuelvas, nadie tendrá que presentarte.", tone: "good" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Consultar el plan con el fisio antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "lesion",
@@ -1081,7 +1377,18 @@ const ARCS: Arc[] = [
               return { title: "Con freno", text: "Vuelves entero pero a medio gas. El entrenador lo nota y espera.", tone: "neutral", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -1170,7 +1477,18 @@ const ARCS: Arc[] = [
               return { title: "Se cae la operación", text: "Vuelves al vestuario con la sensación de que ya eres un tema y no un compañero.", tone: "bad", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -1212,7 +1530,18 @@ const ARCS: Arc[] = [
               return { title: "Distancia", text: "\"Tú mismo\", dice, y se gira. En este vestuario eso pesa.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "vestuario",
@@ -1246,7 +1575,18 @@ const ARCS: Arc[] = [
               return { title: "Respuesta en el campo", text: "No abres la boca y firmas tu mejor partido del año.", tone: "good", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "coach", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -1352,6 +1692,126 @@ const ARCS: Arc[] = [
               return { title: "Sigues de alquiler", text: "Ni casa ni deuda. En este oficio no es mala idea.", tone: "neutral", end: true };
             },
           },
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "family", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
+      },
+    ],
+  },
+
+  /* ---------------- 10B. IDENTIDAD / ORIGEN ---------------- */
+  {
+    id: "arc_identidad",
+    label: "Quién quieres ser",
+    family: "identidad",
+    requires: (s) => s.age <= 20 && s.stage !== "first",
+    weight: (s) => 24 + (s.player.traits.includes("carismatico") ? 8 : 0) + (s.player.traits.includes("familiar") ? 5 : 0),
+    chapters: [
+      {
+        family: "identidad",
+        image: "press",
+        category: "story",
+        kicker: (c) => `${c.month} · ciudad deportiva`,
+        title: () => "Tu primera cámara",
+        text: (c) =>
+          `El ${c.club} quiere grabar una pieza con tres canteranos y te ponen delante de una cámara por primera vez. Te preguntan de dónde vienes, a quién quieres parecerte y dónde te ves en cinco años. El responsable de comunicación te pide una frase más ambiciosa porque “queda mejor para redes”. Detrás de la cámara, dos compañeros esperan a ver qué personaje eliges ser.`,
+        freeform: "¿Qué dirías cuando te preguntan dónde te ves en cinco años?",
+        choices: [
+          {
+            id: "ambicion",
+            label: "Decir que quieres llegar al primer equipo",
+            hint: "Te expones pronto",
+            apply: (c) => {
+              stat(c.s, "fame", 5);
+              stat(c.s, "morale", 4);
+              rel(c.s, "coach", -1);
+              remember(c.s, "Delante de tu primera cámara dijiste que querías llegar al primer equipo");
+              callback(c.s, "cb_primera_camara", "Aquel vídeo en el que prometiste llegar al primer equipo sigue circulando", 10);
+              return { title: "Lo dices en voz alta", text: "El clip funciona y tu móvil empieza a llenarse de mensajes. Al día siguiente el entrenador te recuerda que las cámaras no entrenan por ti.", tone: "neutral" };
+            },
+          },
+          {
+            id: "origen",
+            label: "Hablar de tu familia y de tu barrio",
+            hint: "Menos titular, más raíz",
+            apply: (c) => {
+              rel(c.s, "family", 9);
+              rel(c.s, "dressing", 4);
+              stat(c.s, "fame", 2);
+              remember(c.s, "En tu primera entrevista pusiste a tu familia y a tu barrio por delante del fútbol");
+              return { title: "Sin personaje", text: "No das el titular que buscaban, pero en casa guardan el vídeo. En el vestuario alguno empieza a verte como alguien que no se ha olvidado de dónde viene.", tone: "good" };
+            },
+          },
+          {
+            id: "limite",
+            label: "Pedir que no te conviertan en una promesa antes de tiempo",
+            hint: "Marcas límites al club",
+            apply: (c) => {
+              stat(c.s, "discipline", 5);
+              stat(c.s, "morale", 2);
+              rel(c.s, "coach", 3);
+              remember(c.s, "Pediste al club que no vendiera una versión de ti que todavía no existía");
+              return { title: "Sin eslogan", text: "El responsable de comunicación resopla y corta esa parte. El entrenador, en cambio, te cruza en el pasillo y te dice que has hecho bien.", tone: "good" };
+            },
+          },
+        ],
+      },
+      {
+        family: "identidad",
+        image: "family",
+        category: "life",
+        skip: "Unas semanas después",
+        kicker: (c) => `${c.month} · mensaje pendiente`,
+        title: () => "El grupo del barrio",
+        text: (c) =>
+          `El grupo de WhatsApp de tus amigos no para: este fin de semana juegan el torneo que disputabais desde niños. Quieren que vayas aunque sea a ver la final, pero el lunes tienes una sesión que el cuerpo técnico considera importante. Uno de tus amigos te suelta que “desde que estás en la cantera ya nunca puedes”. No es una gran crisis, pero por primera vez notas que tu vida antigua y la nueva ya no caben enteras en la misma agenda.`,
+        freeform: "¿Qué les contestas a tus amigos?",
+        choices: [
+          {
+            id: "volver",
+            label: "Ir unas horas y volver esa misma noche",
+            hint: "Recuperas a los tuyos, llegas cansado",
+            apply: (c) => {
+              rel(c.s, "family", 6);
+              stat(c.s, "morale", 7);
+              stat(c.s, "fitness", -4);
+              remember(c.s, "Volviste al torneo del barrio aunque al día siguiente entrenabas");
+              return { title: "Dos vidas en un día", text: "No juegas ni un minuto, pero acabas celebrando como antes. El lunes las piernas pesan y la cabeza está bastante más ligera.", tone: "good", end: true };
+            },
+          },
+          {
+            id: "quedarte",
+            label: "Quedarte y priorizar el entrenamiento",
+            hint: "Profesionalidad con coste personal",
+            apply: (c) => {
+              stat(c.s, "discipline", 6);
+              rel(c.s, "coach", 5);
+              rel(c.s, "family", -3);
+              remember(c.s, "Elegiste entrenar cuando tus amigos te pidieron volver al torneo del barrio");
+              return { title: "El lunes primero", text: "Entrenas muy bien y el cuerpo técnico lo ve. En el grupo del barrio hay menos mensajes durante unos días.", tone: "neutral", end: true };
+            },
+          },
+          {
+            id: "invitar",
+            label: "Invitarlos a verte entrenar otro día",
+            hint: "Intentas unir las dos vidas",
+            apply: (c) => {
+              rel(c.s, "family", 5);
+              rel(c.s, "dressing", 2);
+              stat(c.s, "discipline", 2);
+              remember(c.s, "Intentaste que tus amigos entendieran tu nueva vida en vez de desaparecer de la suya");
+              return { title: "Que vean tu mundo", text: "No arregla el torneo perdido, pero dos semanas después aparecen en la valla de la ciudad deportiva. Entienden un poco mejor por qué ya no siempre puedes estar.", tone: "good", end: true };
+            },
+          },
         ],
       },
     ],
@@ -1396,7 +1856,18 @@ const ARCS: Arc[] = [
               return { title: "Diez minutos", text: "Se va con el bocadillo que había traído para ti. No se queja.", tone: "bad" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "family", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "familia",
@@ -1429,7 +1900,18 @@ const ARCS: Arc[] = [
               return { title: "Domingos de videollamada", text: "Funciona, hasta que un domingo nadie coge el teléfono porque están en una boda.", tone: "neutral", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "family", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -1470,7 +1952,18 @@ const ARCS: Arc[] = [
               return { title: "Sin brazalete", text: "\"Yo lidero jugando\". Medio vestuario lo entiende, el otro medio no.", tone: "neutral" };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "dressing", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
       {
         family: "legado",
@@ -1505,7 +1998,18 @@ const ARCS: Arc[] = [
               return { title: "Uno de los suyos", text: `${netWorth(c.s) >= 3000 ? "Ya tienes el dinero hecho." : "No serás el más rico."} Serás el que se quedó.`, tone: "gold", end: true };
             },
           },
-        ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            apply: (c) => {
+              stat(c.s, "discipline", 2);
+              stat(c.s, "morale", 1);
+              rel(c.s, "agent", 2);
+              return thirdWayResult(c.s);
+            },
+          },
+],
       },
     ],
   },
@@ -1524,7 +2028,213 @@ interface Beat {
   build: (s: GameState) => { kicker: string; title: string; text: string; choices: { id: string; label: string; hint?: string; apply: (s: GameState) => Res }[]; freeform?: string };
 }
 
+
+const EARLY_VARIETY_STORIES = [
+  { id: "beat_early_0a", bucket: 0, family: "origen", image: "locker", category: "life", title: "La taquilla equivocada", text: "El utillero te ha colocado en la esquina del vestuario y durante dos días usas una taquilla que no era la tuya. Cuando aparece el dueño, un veterano, nadie dice nada y todos esperan a ver cómo reaccionas.", actions: ["Pedir disculpas y cambiarte", "Preguntar dónde debes colocarte", "Hacer una broma y quitar hierro"] },
+  { id: "beat_early_0b", bucket: 0, family: "entorno", image: "travel", category: "life", title: "Cena de gasolinera", text: "El autobús vuelve tarde y la única cena abierta está en una gasolinera. Los mayores compran cualquier cosa; tú todavía tienes mañana clase y un entrenamiento temprano. La vida de cantera empieza a parecer menos glamurosa de lo que imaginabas.", actions: ["Comer ligero y dormir", "Sentarte con los veteranos", "Llamar a casa durante la parada"] },
+  { id: "beat_early_rare_0", bucket: 0, family: "rareza", image: "office", category: "story", title: "Te confunden con el fisio", text: "Un patrocinador visita la ciudad deportiva y te pide que le indiques dónde está la sala de masaje porque cree que trabajas allí. Antes de que puedas responder, un compañero se parte de risa. Nadie del grupo parece dispuesto a aclararlo por ti.", actions: ["Acompañarlo sin decir nada", "Aclarar que eres jugador", "Seguir la broma hasta el final"] },
+  { id: "beat_early_1a", bucket: 1, family: "origen", image: "family", category: "life", title: "La llamada después de perder", text: "Has jugado mal y al salir ves tres llamadas perdidas de casa. Sabes exactamente qué quieren decirte: que no pasa nada. Ahora mismo esa frase te molesta más que cualquier crítica del entrenador.", actions: ["Devolver la llamada", "Esperar a estar más tranquilo", "Contarles exactamente cómo te sientes"] },
+  { id: "beat_early_1b", bucket: 1, family: "entorno", image: "travel", category: "story", title: "Tu primer viaje con los mayores", text: "Falta uno para completar la convocatoria y te suben al autobús del filial. Nadie te ha explicado dónde sentarte. Hay sitios libres, pero cada asiento parece pertenecer a alguien aunque no haya ningún cartel.", actions: ["Sentarte al fondo", "Preguntar al capitán", "Esperar a que alguien te haga sitio"] },
+  { id: "beat_early_rare_1", bucket: 1, family: "rareza", image: "locker", category: "life", title: "Tus botas desaparecen", text: "Llegas al vestuario y tus botas no están. Diez minutos después aparecen dentro de una nevera portátil, perfectamente colocadas junto a dos bebidas isotónicas. Nadie admite haber sido el autor.", actions: ["Reírte y entrenar", "Preguntar quién ha sido", "Preparar una devolución de la broma"] },
+  { id: "beat_early_2a", bucket: 2, family: "origen", image: "locker", category: "life", title: "Botas prestadas", text: "Una de tus botas se abre por la suela antes del entrenamiento. El club puede darte un par básico o puedes pedirle unas a un compañero con medio número más. El míster ya está en el césped mirando el reloj.", actions: ["Usar las del club", "Pedir las del compañero", "Avisar al míster y arreglarlo bien"] },
+  { id: "beat_early_2b", bucket: 2, family: "entorno", image: "press", category: "press", title: "Tu nombre en una cuenta local", text: "Una cuenta pequeña de fútbol base sube un vídeo tuyo y te llama 'la próxima joya'. Tiene pocos seguidores, pero en el instituto ya lo han visto. Por primera vez notas que alguien construye una versión pública de ti sin conocerte.", actions: ["No responder", "Compartirlo con humor", "Pedir que bajen el tono"] },
+  { id: "beat_early_rare_2", bucket: 2, family: "rareza", image: "training", category: "training", title: "Entrenas con dos botas izquierdas", text: "El utillero se equivoca en una bolsa de material y durante un ejercicio descubres que el par de repuesto lleva dos botas izquierdas. El entrenador no detiene la sesión. Tus compañeros quieren saber cuánto tardas en darte cuenta.", actions: ["Seguir hasta que termine el ejercicio", "Parar y cambiar el material", "Convertirlo en una apuesta con el grupo"] },
+  { id: "beat_early_3a", bucket: 3, family: "origen", image: "family", category: "life", title: "La camiseta para casa", text: "Te entregan tu primera camiseta oficial con tu apellido. En casa ya han decidido quién se la queda y la discusión lleva dos días. Tú aún no has jugado un minuto con ella.", actions: ["Dársela a tus padres", "Guardarla tú", "Prometer la siguiente a quien falte"] },
+  { id: "beat_early_3b", bucket: 3, family: "entorno", image: "office", category: "story", title: "Tu nombre en la pizarra", text: "Entras a por agua y ves tu apellido escrito en una pizarra del cuerpo técnico, junto a tres palabras que no alcanzas a leer bien. Nadie sabe que lo has visto. El entrenamiento empieza en cinco minutos.", actions: ["No preguntar nada", "Preguntar al segundo entrenador", "Usarlo como motivación sin saber qué pone"] },
+  { id: "beat_early_rare_3", bucket: 3, family: "rareza", image: "press", category: "story", title: "El vídeo que no era para ti", text: "El analista te manda por error un vídeo individual de otro jugador con tu mismo nombre. Durante seis minutos estudias tus supuestos errores hasta que reconoces que ni siquiera eres tú. El mensaje de corrección llega justo después.", actions: ["Avisar del error", "Ver el vídeo completo igualmente", "Bromear con el analista al día siguiente"] },
+] as const;
+
+const EARLY_VARIETY_BEATS: Beat[] = EARLY_VARIETY_STORIES.map((story) => ({
+  id: story.id,
+  family: story.family,
+  image: story.image,
+  category: story.category,
+  requires: (s) => s.age <= 19 && s.seasonIndex <= 2 && hash(careerSeed(s), "early-flavour") % 4 === story.bucket,
+  build: (s) => ({
+    kicker: `${currentMonth(s)} · primeros años`,
+    title: story.title,
+    text: story.text,
+    choices: [
+      { id: "calma", label: story.actions[0], apply: (st) => { stat(st, "discipline", 2); rel(st, "dressing", 3); return { title: "Lo resuelves sin ruido", text: "La escena pasa, pero te deja una pequeña lección sobre cómo funciona este mundo.", tone: "good" }; } },
+      { id: "preguntar", label: story.actions[1], apply: (st) => { rel(st, "coach", 2); stat(st, "morale", 2); return { title: "Preguntas antes de asumir", text: "Obtienes una respuesta que no siempre te gusta, pero entiendes mejor dónde estás.", tone: "neutral" }; } },
+      { id: "personal", label: story.actions[2], apply: (st) => { stat(st, "form", 2); stat(st, "fame", 1); rel(st, "dressing", 1); return { title: "Lo haces a tu manera", text: "No es la reacción más discreta, pero el vestuario empieza a reconocer tu forma de estar en el grupo.", tone: "neutral" }; } },
+    ],
+  }),
+}));
+
 const BEATS: Beat[] = [
+  ...EARLY_VARIETY_BEATS,
+
+  {
+    id: "beat_pos_dc",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "DC",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · área pequeña`,
+      title: "El entrenador te cuenta los remates",
+      text: `${who(s, "coach")} pone a los delanteros a finalizar veinte centros y apunta cada remate. Al terminar te enseña la hoja: no quiere goles bonitos, quiere que llegues antes que el central.`,
+      choices: [
+        { id: "primer_palo", label: "Trabajar el primer palo", apply: (st) => { st.xp += 18; stat(st, "form", 3); return { title: "Medio metro", text: "Empiezas a ganar un espacio que antes llegaba tarde.", tone: "good" }; } },
+        { id: "fisico", label: "Pelear cada balón con el central", apply: (st) => { stat(st, "fitness", 3); rel(st, "dressing", -2); return { title: "Choques", text: "Acabas lleno de golpes y el central deja de regalarte el área.", tone: "neutral" }; } },
+        { id: "preguntar", label: "Pedir al míster que te enseñe tus movimientos", apply: (st) => { rel(st, "coach", 5); stat(st, "discipline", 2); return { title: "Vídeo después de comer", text: "Veis seis jugadas y descubres dos carreras que nunca hacías.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_ext",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "EXT",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · banda`,
+      title: "El lateral ya sabe tu regate",
+      text: `En el partidillo, el lateral te espera siempre hacia dentro. ${who(s, "coach")} para dos veces la jugada: si solo tienes un regate, en unas semanas todos lo conocerán.`,
+      choices: [
+        { id: "fuera", label: "Practicar la salida por fuera", apply: (st) => { st.xp += 16; stat(st, "form", 3); return { title: "Otra puerta", text: "No es tan vistoso, pero el defensor ya no puede adivinarte.", tone: "good" }; } },
+        { id: "insistir", label: "Insistir con tu mejor recurso", apply: (st) => { stat(st, "form", 2); stat(st, "discipline", -2); return { title: "Tu jugada", text: "A veces funciona porque eres bueno; otras, porque el rival se equivoca.", tone: "neutral" }; } },
+        { id: "asociarte", label: "Buscar una pared en vez del uno contra uno", apply: (st) => { rel(st, "dressing", 5); stat(st, "discipline", 2); return { title: "Dos contra uno", text: "Dejas de necesitar ganar cada duelo tú solo.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_mc",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "MC",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · rondo`,
+      title: "Dos segundos antes",
+      text: `${who(s, "coach")} te corrige sin parar: recibes bien, pero miras tarde. Te obliga a decir en voz alta dónde está el compañero libre antes de que te llegue el balón.`,
+      choices: [
+        { id: "perfil", label: "Trabajar el perfil corporal", apply: (st) => { st.xp += 18; stat(st, "discipline", 3); return { title: "Antes de recibir", text: "Empiezas a jugar la siguiente acción antes de tocar la pelota.", tone: "good" }; } },
+        { id: "riesgo", label: "Probar pases más difíciles", apply: (st) => { stat(st, "form", 4); rel(st, "coach", -2); return { title: "Alguno rompe líneas", text: "Pierdes balones, pero también empiezas a ver pases que otros no ven.", tone: "neutral" }; } },
+        { id: "simple", label: "Jugar fácil durante unas semanas", apply: (st) => { rel(st, "coach", 4); stat(st, "discipline", 2); return { title: "Fiable", text: "No sales en el resumen, pero el equipo empieza a buscarte siempre.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_mco",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "MCO",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · entre líneas`,
+      title: "No siempre hay espacio",
+      text: `El segundo entrenador te pone un peto distinto y te obliga a recibir con dos rivales encima. En juveniles podías girarte; aquí la pelota llega y la ventana ya se está cerrando.`,
+      choices: [
+        { id: "un_toque", label: "Entrenar a un toque", apply: (st) => { st.xp += 18; stat(st, "form", 2); return { title: "Más rápido", text: "Empiezas a crear ventajas sin necesidad de girarte.", tone: "good" }; } },
+        { id: "aguantar", label: "Aguantar el contacto y girar", apply: (st) => { stat(st, "fitness", 4); stat(st, "form", 2); return { title: "Espalda fuerte", text: "Pierdes alguna, pero ya no te sacan de la jugada con un empujón.", tone: "neutral" }; } },
+        { id: "moverte", label: "Cambiar dónde recibes", apply: (st) => { rel(st, "coach", 4); stat(st, "discipline", 3); return { title: "Otro mapa", text: "Dejas de esperar el espacio perfecto y empiezas a fabricarlo.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_lat",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "LAT",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · banda larga`,
+      title: "Sesenta metros para volver",
+      text: `Subes al ataque y el ejercicio no termina: el preparador lanza otro balón a tu espalda. ${who(s, "coach")} quiere saber si eres lateral cuando atacas y también cuando toca correr hacia tu portería.`,
+      choices: [
+        { id: "fondo", label: "Priorizar resistencia", apply: (st) => { stat(st, "fitness", 5); st.xp += 10; return { title: "Otra carrera", text: "La quinta repetición ya no parece una condena.", tone: "good" }; } },
+        { id: "centro", label: "Quedarte después practicando centros", apply: (st) => { stat(st, "form", 4); stat(st, "fitness", -2); return { title: "Treinta balones", text: "Algunos siguen acabando en la grada, pero ya hay una zona donde caen casi siempre.", tone: "neutral" }; } },
+        { id: "orden", label: "Preguntar cuándo debes subir", apply: (st) => { rel(st, "coach", 5); stat(st, "discipline", 3); return { title: "Semáforo", text: "Entiendes que llegar mucho no sirve si eliges mal cuándo.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_pos_dfc",
+    family: "posicion",
+    image: "training",
+    category: "training",
+    requires: (s) => s.age <= 19 && s.player.position === "DFC",
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · línea defensiva`,
+      title: "Un paso que mueve a cuatro",
+      text: `${who(s, "captain")} te grita que salgas y tú dudas medio segundo. El ejercicio acaba en gol. Después te explica que un central joven no puede defender solo: tiene que conseguir que los demás den el paso con él.`,
+      choices: [
+        { id: "mandar", label: "Empezar a hablar más", apply: (st) => { rel(st, "dressing", 4); stat(st, "discipline", 3); return { title: "Se te oye", text: "Al principio suena forzado. A las dos semanas ya reaccionan a tu voz.", tone: "good" }; } },
+        { id: "duelo", label: "Centrarte en ganar tus duelos", apply: (st) => { stat(st, "fitness", 4); stat(st, "form", 2); return { title: "Tu metro cuadrado", text: "No arreglas toda la línea, pero empiezas por no perder la tuya.", tone: "neutral" }; } },
+        { id: "capitan", label: "Pedir al capitán que te corrija", apply: (st) => { rel(st, "dressing", 6); st.xp += 12; return { title: "Después de entrenar", text: "Os quedáis diez minutos moviendo conos y hablando de distancias.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_lane_a",
+    family: "origen",
+    image: "locker",
+    category: "life",
+    requires: (s) => s.age <= 19 && hash(careerSeed(s), "early-flavour") % 4 === 0,
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · vestuario`,
+      title: "La multa que no conocías",
+      text: `Llegas treinta segundos tarde a una charla y encuentras una moneda pegada con cinta a tu taquilla. Es la multa simbólica del vestuario. Nadie te había explicado la norma.`,
+      choices: [
+        { id: "pagar", label: "Pagar y reírte", apply: (st) => { rel(st, "dressing", 5); return { title: "Norma aprendida", text: "Te explican otras tres antes de que vuelvas a meter la pata.", tone: "good" }; } },
+        { id: "protestar", label: "Decir que nadie te avisó", apply: (st) => { rel(st, "dressing", -4); stat(st, "discipline", -1); return { title: "Peor que la multa", text: "La discusión cuesta más que la moneda.", tone: "bad" }; } },
+        { id: "preguntar", label: "Preguntar qué otras reglas hay", apply: (st) => { stat(st, "discipline", 3); rel(st, "dressing", 2); return { title: "Manual invisible", text: "Descubres que el vestuario tiene un reglamento que nunca se escribió.", tone: "neutral" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_lane_b",
+    family: "origen",
+    image: "travel",
+    category: "life",
+    requires: (s) => s.age <= 19 && hash(careerSeed(s), "early-flavour") % 4 === 1,
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · vuelta a casa`,
+      title: "El último autobús",
+      text: `El entrenamiento se alarga y pierdes tu conexión habitual. Te quedan apuntes en la mochila, hambre y una hora extra de trayecto. Por primera vez notas el coste pequeño y repetido de perseguir esto.`,
+      choices: [
+        { id: "rutina", label: "Organizar mejor la semana", apply: (st) => { stat(st, "discipline", 4); return { title: "Calendario nuevo", text: "No hace el trayecto más corto, pero deja de pillarte por sorpresa.", tone: "good" }; } },
+        { id: "quejar", label: "Quejarte en casa", apply: (st) => { rel(st, "family", 3); stat(st, "morale", 2); return { title: "Te escuchan", text: "No solucionan el autobús, pero la cena está esperando.", tone: "neutral" }; } },
+        { id: "aguantar", label: "No decir nada a nadie", apply: (st) => { stat(st, "morale", -2); stat(st, "discipline", 2); return { title: "Otra noche", text: "Lo haces solo. Funciona, aunque no siempre es lo mismo que estar bien.", tone: "neutral" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_lane_c",
+    family: "origen",
+    image: "family",
+    category: "life",
+    requires: (s) => s.age <= 19 && hash(careerSeed(s), "early-flavour") % 4 === 2,
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · domingo`,
+      title: "Tus amigos ya no esperan",
+      text: `Abres el móvil después del partido y ves una foto de tus amigos sin ti. No hay reproche, que casi es peor. Sus horarios empiezan a dejar de contar contigo.`,
+      choices: [
+        { id: "llamar", label: "Llamar a uno de ellos", apply: (st) => { stat(st, "morale", 4); rel(st, "family", 1); return { title: "Veinte minutos", text: "No recuperas el domingo, pero la conversación sigue siendo la de siempre.", tone: "good" }; } },
+        { id: "asumir", label: "Asumir que tu vida está cambiando", apply: (st) => { stat(st, "discipline", 3); return { title: "Otra etapa", text: "No dramatizas. Solo entiendes que elegir también significa perder cosas.", tone: "neutral" }; } },
+        { id: "aparecer", label: "Ir a verlos aunque llegues tarde", apply: (st) => { stat(st, "fitness", -2); stat(st, "morale", 5); return { title: "Una hora", text: "Llegas cuando algunos se van. Aun así, merecía la pena.", tone: "good" }; } },
+      ],
+    }),
+  },
+  {
+    id: "beat_lane_d",
+    family: "origen",
+    image: "office",
+    category: "club",
+    requires: (s) => s.age <= 19 && hash(careerSeed(s), "early-flavour") % 4 === 3,
+    build: (s) => ({
+      kicker: `${currentMonth(s)} · pasillo`,
+      title: "El nombre mal escrito",
+      text: `En la hoja del gimnasio han escrito mal tu apellido por tercera vez. Es una tontería, pero resume bastante bien tu sitio actual en el club: todavía eres alguien a quien están aprendiendo a reconocer.`,
+      choices: [
+        { id: "corregir", label: "Corregirlo con una sonrisa", apply: (st) => { rel(st, "dressing", 3); stat(st, "morale", 2); return { title: "Ya está bien", text: "Al día siguiente aparece escrito correctamente.", tone: "good" }; } },
+        { id: "pasar", label: "Pasar del tema", apply: (st) => { stat(st, "discipline", 2); return { title: "Que hablen tus botas", text: "No necesitas que sepan escribirlo todavía.", tone: "neutral" }; } },
+        { id: "broma", label: "Convertirlo en una broma del grupo", apply: (st) => { rel(st, "dressing", 5); stat(st, "morale", 2); return { title: "Nuevo mote", text: "No era el objetivo, pero ahora nadie olvida tu nombre.", tone: "good" }; } },
+      ],
+    }),
+  },
   {
     id: "beat_pretemporada_test",
     family: "pretemporada",
@@ -1538,7 +2248,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "apretar", label: "Terminar primero cueste lo que cueste", hint: "Impresión alta, físico justo", apply: (st) => { stat(st, "fitness", -4); rel(st, "coach", 6); return { title: "Primero en la cuesta", text: "Llegas sin aire y con el respeto del cuerpo técnico.", tone: "good" }; } },
         { id: "medir", label: "Administrar y no romperte en julio", hint: "Sensato", apply: (st) => { stat(st, "fitness", 7); return { title: "Julio largo", text: "No destacas y llegas entero a septiembre, que es cuando se juega.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Seguir el plan del cuerpo técnico sin hacer ruido",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1554,7 +2275,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "pedir", label: "Pedir un dorsal bajo", hint: "Ambición visible", apply: (st) => { rel(st, "dressing", -4); stat(st, "fame", 4); return { title: "Se ríen", text: "\"El 10 lo tiene alguien que lleva ocho años aquí\". Toca esperar.", tone: "neutral" }; } },
         { id: "aceptar", label: "Quedarte el que te dan", apply: (st) => { rel(st, "dressing", 5); return { title: "Sin ruido", text: "Coges tu camiseta y tu sitio del fondo del autobús.", tone: "good" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Seguir el plan del cuerpo técnico sin hacer ruido",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1570,12 +2302,23 @@ const BEATS: Beat[] = [
       choices: [
         { id: "gym", label: "Entrenar el domingo mientras juegan", apply: (st) => { stat(st, "fitness", 6); st.xp += 14; return { title: "Domingo de gimnasio", text: "El estadio se oye desde la sala de pesas. Trabajas igual.", tone: "neutral" }; } },
         { id: "preguntar", label: "Preguntar al entrenador por qué", apply: (st) => { const ok = st.rel.coach >= 50; rel(st, "coach", ok ? 3 : -6); return ok ? { title: "Respuesta honesta", text: "\"Es semana de gente hecha. La siguiente entras\".", tone: "neutral" } : { title: "Mala respuesta", text: "\"Cuando tenga que explicarte algo, te llamo yo\".", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
     id: "beat_grupo_equivocado",
-    family: "humor",
+    family: "rareza",
     image: "locker",
     category: "gossip",
     requires: (s) => totalApps(s) >= 3,
@@ -1587,7 +2330,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "asumir", label: "Asumirlo y disculparte en el grupo", apply: (st) => { rel(st, "dressing", 4); rel(st, "coach", -5); stat(st, "discipline", 3); return { title: "Cara al frente", text: "Al día siguiente el míster no dice nada, que es peor.", tone: "neutral" }; } },
         { id: "hackeado", label: "Decir que te han cogido el móvil", apply: (st) => { rel(st, "dressing", -8); return { title: "Nadie se lo cree", text: "El chiste dura tres meses y la frase se queda como mote.", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Quitarte del foco y resolverlo en privado",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1603,7 +2357,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "ir", label: "Aceptar los 5.000 €", apply: (st) => { const f = ensureFinance(st); f.cash += 5; f.history.unshift({ season: "", text: "Cachet videoclip", amount: 5 }); stat(st, "fame", 16); rel(st, "coach", -5); callback(st, "cb_malum", "El videoclip de Malum-a se estrena y alguien lo comenta", 9); return { title: "Tres segundos de gloria", text: "Sales apoyado en un coche que no es tuyo, con gafas que no te pegan.", tone: "neutral" }; } },
         { id: "no", label: "Decir que no", apply: (st) => { rel(st, "coach", 4); stat(st, "discipline", 3); return { title: "Sin videoclip", text: "El representante de la cantante insiste dos semanas y se rinde.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Quitarte del foco y resolverlo en privado",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1619,7 +2384,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "jugar", label: "Meterte en la liga y picarte", apply: (st) => { rel(st, "dressing", 7); return { title: "Liga interna", text: "Pierdes la jornada y pagas el desayuno de doce personas.", tone: "good" }; } },
         { id: "ignorar", label: "Pasar del tema", apply: (st) => { stat(st, "discipline", 2); return { title: "Sin Fantasy", text: "Te llaman aburrido en tres idiomas.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Quitarte del foco y resolverlo en privado",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1636,7 +2412,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "diplomacia", label: "Contestar sin dar titular", apply: (st) => { rel(st, "coach", 5); stat(st, "fame", 2); return { title: "Nada que rascar", text: "Sales del atril y el jefe de prensa te da una palmada.", tone: "good" }; } },
         { id: "sincero", label: "Decir la verdad aunque duela", apply: (st) => { stat(st, "fame", 9); rel(st, "coach", -8); flag(st, "hablo_alto", 1); return { title: "Titular servido", text: "Mañana está en portada y el míster lo lee en el desayuno.", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Responder solo lo imprescindible y salir",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1652,7 +2439,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "sensato", label: "Comprar el coche sensato", apply: (st) => { const f = ensureFinance(st); f.cash -= 25; f.properties.push({ name: "Coche sensato", value: 22, debt: 0 }); return { title: "Coche de gente normal", text: "Nadie te mira en el parking y llegas a los entrenamientos igual.", tone: "good" }; } },
         { id: "absurdo", label: "Comprar el coche absurdo", hint: "Vestuario y entrenador lo verán", apply: (st) => { const f = ensureFinance(st); const price = Math.min(f.cash, 95); f.cash -= price; f.properties.push({ name: "Coche absurdo", value: Math.round(price * 0.7), debt: 0 }); stat(st, "fame", 8); rel(st, "coach", -6); rel(st, "dressing", -3); callback(st, "cb_coche", "Alguien va a opinar de tu coche cuando el equipo pierda", 7); return { title: "Naranja", text: "Suena al arrancar y se oye desde el vestuario. Mala idea preciosa.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "agent", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1668,7 +2466,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "seguir", label: "Dejar el curso y apostar todo al fútbol", apply: (st) => { rel(st, "family", -6); st.xp += 25; remember(st, "Dejaste los estudios para apostar todo al fútbol"); return { title: "Todo al fútbol", text: "Tu madre firma el papel sin mirarte. Ahora hay una sola puerta.", tone: "neutral" }; } },
         { id: "compaginar", label: "Compaginar aunque cueste", apply: (st) => { rel(st, "family", 10); stat(st, "fitness", -4); stat(st, "discipline", 5); return { title: "Dos frentes", text: "Estudias en autobuses y duermes mal. Tu madre respira.", tone: "good" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Hablarlo con los tuyos antes de decidir",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "family", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1684,7 +2493,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "desmentir", label: "Desmentirlo y jugar limpio", apply: (st) => { st.agent.trust = clamp(st.agent.trust + 8); rel(st, "coach", 4); return { title: "Ruido apagado", text: "A la mañana siguiente nadie habla del tema.", tone: "good" }; } },
         { id: "dejar", label: "Dejarlo correr", apply: (st) => { stat(st, "fame", 7); rel(st, "dressing", -5); flag(st, "presiono_mercado", 1); return { title: "Que corra", text: "El club llama al agente antes de comer. Ha funcionado y ha costado.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir tiempo y marcar tus propias condiciones",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "agent", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1700,7 +2520,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "escuchar", label: "Escucharle y pedir tiempo", apply: (st) => { flag(st, "agente_aplazado", 1); return { title: "Lo pensarás", text: "Te quedas su número en la nota del móvil, sin nombre.", tone: "neutral" }; } },
         { id: "cortar", label: "Cortarlo: de esto se encarga tu padre", apply: (st) => { rel(st, "family", 6); return { title: "Tu padre lo lleva", text: "Tu padre no sabe de cláusulas, pero sabe cuándo alguien miente.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir tiempo y marcar tus propias condiciones",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "agent", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1716,7 +2547,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "aplaudir", label: "Aplaudir a la grada al salir", apply: (st) => { rel(st, "fans", 8); return { title: "Gesto", text: "Los silbidos bajan. La gente perdona el error, no el desprecio.", tone: "good" }; } },
         { id: "responder", label: "Responder con un gesto", apply: (st) => { rel(st, "fans", -14); stat(st, "fame", 6); flag(st, "afición_contra", 1); return { title: "Se lía", text: "El gesto se hace vídeo antes de que llegues al vestuario.", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1732,7 +2574,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "ir", label: "Ir a las seis de la mañana", apply: (st) => { stat(st, "fitness", 8); st.xp += 30; stat(st, "fame", 5); return { title: "Seis de la mañana", text: "Vomitas en la papelera y él se ríe: \"ahora ya eres profesional\".", tone: "good" }; } },
         { id: "dormir", label: "Dormir tus ocho horas", apply: (st) => { stat(st, "morale", 4); return { title: "Duermes", text: "Descansas bien y te enteras por Instagram de lo que te has perdido.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir un plan individual y demostrarlo entrenando",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1748,7 +2601,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "ir", label: "Ir con la selección", apply: (st) => { stat(st, "fame", 10); rel(st, "coach", -5); milestone(st, "Internacional en categorías inferiores"); return { title: "Camiseta nacional", text: "Debutas con la sub-21 y vuelves con la pierna cargada.", tone: "good" }; } },
         { id: "quedarme", label: "Alegar molestias y quedarte", apply: (st) => { rel(st, "coach", 8); stat(st, "fame", -4); return { title: "Te quedas", text: "Juegas el domingo. En la federación apuntan tu nombre con lápiz.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1764,7 +2628,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "concentrarse", label: "Aislarte del ruido", apply: (st) => { stat(st, "form", 5); stat(st, "discipline", 3); return { title: "Semana en silencio", text: "Móvil apagado y dos vídeos del rival al día.", tone: "good" }; } },
         { id: "calentar", label: "Calentar el partido en redes", apply: (st) => { stat(st, "fame", 9); rel(st, "fans", 6); rel(st, "coach", -6); return { title: "Ruido", text: "El rival imprime tu frase y la cuelga en su vestuario.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Hablar con alguien de confianza antes de decidir",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "dressing", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1780,7 +2655,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "recibir", label: "Recibirle bien y medirte en el campo", apply: (st) => { rel(st, "dressing", 6); stat(st, "form", 4); npc(st, "rival"); return { title: "Bienvenida", text: "Le enseñas el vestuario y le quitas el sitio en el rondo.", tone: "good" }; } },
         { id: "quejarse", label: "Pedir explicaciones al club", apply: (st) => { rel(st, "coach", -6); flag(st, "quiere_salir", 1); return { title: "Mala señal", text: "\"Un club ficha, no pide permiso\". Sales del despacho peor de lo que entraste.", tone: "bad" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir 48 horas y comparar el coste real",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "agent", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
   {
@@ -1796,7 +2682,18 @@ const BEATS: Beat[] = [
       choices: [
         { id: "preguntar", label: "Preguntarle si cuentas para el año que viene", apply: (st) => { const ok = computeRole(st) >= 50; rel(st, "coach", ok ? 4 : -2); return ok ? { title: "Cuentas", text: "\"Vuelve el 8 de julio con la cabeza en su sitio\".", tone: "good" } : { title: "No cuenta contigo", text: "\"Hablará el club contigo\". Eso, en fútbol, es un no.", tone: "bad" }; } },
         { id: "vacaciones", label: "Irte de vacaciones sin preguntar nada", apply: (st) => { stat(st, "morale", 8); stat(st, "fitness", 6); return { title: "Desconectar", text: "Tres semanas sin balón y una llamada pendiente para agosto.", tone: "neutral" }; } },
-      ],
+
+          {
+            id: "tercera_via",
+            label: "Pedir una conversación privada y buscar un punto medio",
+            apply: (st) => {
+              stat(st, "discipline", 2);
+              stat(st, "morale", 1);
+              rel(st, "coach", 2);
+              return thirdWayResult(st);
+            },
+          },
+],
     }),
   },
 ];
@@ -1880,13 +2777,17 @@ export function directorNewSeason(s: GameState): void {
     return !!arc && a.chapter < arc.chapters.length;
   });
   if (d.active.length > 1) d.active = [d.active[0]!];
-  const pool = ARCS.filter(
+  const contextualPool = ARCS.filter(
     (a) => !d.completed.includes(a.id) && !d.active.some((x) => x.id === a.id) && statusOk(s, a.family) && a.requires(s),
   );
-  // Sorteo ponderado: la misma situación no produce siempre los mismos arcos.
+  const laneThreshold = s.stage === "youth" ? 55 : 65;
+  const lanePool = contextualPool.filter((a) => hash(careerSeed(s), `arc-lane|${d.profile}|${a.id}`) % 100 < laneThreshold);
+  const minLane = s.stage === "youth" ? 1 : 2;
+  const pool = lanePool.length >= minLane ? lanePool : contextualPool;
   const bag = pool.map((a) => ({ id: a.id, w: Math.max(1, a.weight(s)) + (hash(careerSeed(s), `${a.id}${s.seasonIndex}${d.profile}`) % 26) }));
   const chosen: string[] = [];
-  const target = 3 + (hash(careerSeed(s), `ncand${s.seasonIndex}`) % 3);
+  const wanted = s.stage === "youth" ? 1 + (hash(careerSeed(s), `ncand-youth${s.seasonIndex}`) % 2) : 2 + (hash(careerSeed(s), `ncand${s.seasonIndex}`) % 3);
+  const target = Math.min(pool.length, wanted);
   let salt = hash(careerSeed(s), `pickarc${s.seasonIndex}`);
   while (bag.length > 0 && chosen.length < target) {
     const total = bag.reduce((acc, x) => acc + x.w, 0);
@@ -1913,7 +2814,8 @@ function openArc(s: GameState): ActiveArc | null {
     return !!arc && statusOk(s, arc.family) && arc.requires(s) && !familyBlocked(s, arc.family);
   });
   if (eligible.length > 0) {
-    const id = eligible[hash(careerSeed(s), `open${s.sceneCount ?? 0}`) % eligible.length]!;
+    const identity = `${d.profile}|${s.player.position}|${s.player.city}|${s.clubId}|${s.seasonIndex}`;
+    const id = eligible[hash(careerSeed(s), `open|${identity}|${s.sceneCount ?? 0}`) % eligible.length]!;
     const arc = arcById(id)!;
     const active: ActiveArc = { id, chapter: 0, opened: s.sceneCount ?? 0, params: arc.open ? arc.open(s) : {} };
     d.active.push(active);
@@ -1946,7 +2848,17 @@ export function directorCard(s: GameState): DynamicCard | null {
   if (pre) {
     const preMax = 1 + (hash(careerSeed(s), `pre${s.seasonIndex}`) % 2);
     if ((d.preseasonUsed ?? 0) >= preMax) return null;
-    if (sinceAny(s, d) < 2) return null;
+    // La primera escena de pretemporada no se pierde por un cooldown previo.
+    if ((d.preseasonUsed ?? 0) > 0 && sinceAny(s, d) < 2) return null;
+
+    // La pretemporada debe sentirse al menos una vez cuando hay material válido.
+    // Antes competía con todos los arcos y podía desaparecer por completo.
+    const preBeats = BEATS.filter((b) => b.family === "pretemporada" && !seen(s, b.id) && b.requires(s));
+    if (preBeats.length > 0) {
+      const beat = preBeats[hash(careerSeed(s), `prebeat${s.seasonIndex}${d.preseasonUsed ?? 0}`) % preBeats.length]!;
+      d.lastBeatBeat = beatNow;
+      return { type: "dynamic", kind: "arc_beat", data: { beatId: beat.id } };
+    }
   }
 
   // 1. Callback pendiente que ya vence (y con aire desde la última escena).
@@ -1994,15 +2906,36 @@ export function directorCard(s: GameState): DynamicCard | null {
     }
   }
 
-  // 4. Escena secundaria contextual: poco frecuente y nunca de relleno.
-  const beatGap = 4 + (hash(careerSeed(s), `bgap${s.sceneCount ?? 0}`) % 4);
+  // 4. Escena secundaria contextual: diversidad real entre carreras.
+  const identity = `${d.profile}|${s.player.position}|${s.player.city}|${s.clubId}`;
+  const beatGap = 3 + (hash(careerSeed(s), `bgap|${identity}|${s.sceneCount ?? 0}`) % 4);
   if (beatNow - (d.lastBeatBeat ?? -99) < beatGap || sinceAny(s, d) < 3) return null;
-  // Filtro extra reproducible: la mayoría de huecos se quedan en rutina.
-  if (hash(careerSeed(s), `bchance${beatNow}${s.seasonIndex}`) % 100 >= 45) return null;
-  const beats = BEATS.filter((b) => !seen(s, b.id) && !familyBlocked(s, b.family) && statusOk(s, b.family) && b.requires(s));
+  if (hash(careerSeed(s), `bchance|${identity}|${beatNow}|${s.seasonIndex}`) % 100 >= 58) return null;
+  const earlyCareer = s.age <= 19 && s.seasonIndex <= 2;
+  const contextualBeats = BEATS.filter((b) => {
+    if (seen(s, b.id) || familyBlocked(s, b.family) || !statusOk(s, b.family) || !b.requires(s)) return false;
+    if (!earlyCareer) return true;
+    // Durante los primeros años cada carrera recibe un catálogo secundario
+    // diferente. Las escenas creadas específicamente para su semilla y su
+    // posición siempre pueden entrar; el resto se reparte por carriles.
+    if (b.id.startsWith("beat_early_") || b.family === "posicion") return true;
+    return hash(careerSeed(s), `early-catalog|${d.profile}|${b.id}`) % 100 < 42;
+  });
+  const laneBeats = contextualBeats.filter((b) =>
+    b.id.startsWith("beat_early_") || b.family === "posicion" ||
+    hash(careerSeed(s), `beat-lane|${d.profile}|${b.id}`) % 100 < (earlyCareer ? 46 : 55)
+  );
+  const beats = laneBeats.length >= 2 ? laneBeats : contextualBeats;
   if (beats.length > 0) {
-    const h = hash(careerSeed(s), `beat${s.sceneCount ?? 0}`);
-    const beat = beats[h % beats.length]!;
+    const ranked = [...beats].sort((a, b) =>
+      (hash(careerSeed(s), `rank|${identity}|${s.seasonIndex}|${s.sceneCount ?? 0}|${a.id}`) % 10000) -
+      (hash(careerSeed(s), `rank|${identity}|${s.seasonIndex}|${s.sceneCount ?? 0}|${b.id}`) % 10000)
+    );
+    const rare = ranked.filter((b) => b.family === "rareza");
+    const rareRoll = hash(careerSeed(s), `rare|${identity}|${beatNow}|${s.seasonIndex}|${s.sceneCount ?? 0}`) % 100;
+    const beat = rare.length > 0 && rareRoll < 45
+      ? rare[hash(careerSeed(s), `rarepick|${identity}|${s.sceneCount ?? 0}`) % rare.length]!
+      : ranked[0]!;
     d.lastBeatBeat = beatNow;
     return { type: "dynamic", kind: "arc_beat", data: { beatId: beat.id } };
   }
@@ -2073,6 +3006,7 @@ export function renderDirector(s: GameState, card: DynamicCard): DirectorView | 
       choices: [
         { id: "afrontar", label: "Afrontarlo de frente" },
         { id: "esquivar", label: "Esquivarlo por ahora", hint: "Puede volver peor" },
+        { id: "consultar", label: "Hablar con alguien implicado antes de cerrar", hint: "Menos impulso, más contexto" },
       ],
     };
   }
@@ -2121,6 +3055,11 @@ export function resolveDirector(s: GameState, card: DynamicCard, choiceId: strin
   if (card.kind === "arc_callback") {
     const id = typeof card.data["cbId"] === "string" ? card.data["cbId"] : "cb";
     markScene(s, `cb_scene_${id}`, "callback");
+    if (choiceId === "consultar") {
+      stat(s, "discipline", 2);
+      rel(s, "dressing", 3);
+      return { title: "Buscas contexto", text: "Antes de responder, hablas con quien estuvo dentro de aquella historia. Cambia el tono, no borra lo ocurrido.", tone: "neutral" };
+    }
     if (choiceId === "esquivar") {
       d.callbacks.push({ id: `${id}_bis`, text: typeof card.data["text"] === "string" ? card.data["text"] : "Sigue pendiente", dueScene: (s.sceneCount ?? 0) + 6 });
       stat(s, "morale", -3);

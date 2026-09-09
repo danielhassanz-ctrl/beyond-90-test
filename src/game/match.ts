@@ -78,9 +78,7 @@ const KEY_MOMENTS: KeyMoment[] = [
     prompt: "Penalti a favor en el 71'. El capitán te mira y te deja el balón.",
     minute: 71,
     options: [
-      { id: "izq", label: "Ajustado a la izquierda", success: 0.74, note: "Colocado, sin fuerza." },
-      { id: "der", label: "Ajustado a la derecha", success: 0.74, note: "Tu lado natural." },
-      { id: "fuerte", label: "Fuerte y arriba", success: 0.8, note: "Si entra, es un cañonazo." },
+      { id: "penalti", label: "Tirarlo seguro a tu lado natural", success: 0.76, note: "La opción clásica: colocación y convicción." },
       { id: "panenka", label: "Panenka", success: 0.48, note: "Gloria o ridículo eterno." },
       { id: "ceder", label: "Cederlo a un compañero", success: 0.78, note: "Vestuario contento, focos para otro." },
     ],
@@ -100,6 +98,7 @@ const KEY_MOMENTS: KeyMoment[] = [
     options: [
       { id: "obedecer", label: "Bajar y defender", success: 0.85, note: "El míster lo apunta." },
       { id: "quedarte", label: "Quedarte arriba buscando el contragolpe", success: 0.42, note: "Riesgo alto." },
+      { id: "proteger", label: "Cerrar por dentro y temporizar", success: 0.7, note: "Menos metros, más lectura táctica." },
     ],
   },
   {
@@ -108,6 +107,7 @@ const KEY_MOMENTS: KeyMoment[] = [
     options: [
       { id: "meter", label: "Meter la pierna sin miedo", success: 0.6, note: "Puede salir caro." },
       { id: "proteger", label: "Proteger el cuerpo y aguantar", success: 0.82, note: "Cabeza fría." },
+      { id: "falta", label: "Cortar antes con una falta táctica", success: 0.72, note: "Pierdes la jugada, evitas el golpe." },
     ],
   },
 ];

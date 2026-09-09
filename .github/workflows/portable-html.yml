@@ -1,0 +1,56 @@
+name: Beyond 90 portable HTML
+
+on:
+  push:
+    branches:
+      - recovery-v4-19-delivery-gate
+  workflow_dispatch:
+
+jobs:
+  portable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install app dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save @playwright/test
+          npx playwright install --with-deps webkit
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build portable single-file SPA
+        env:
+          PORTABLE_SINGLE_FILE: "1"
+          VITE_PORTABLE_SINGLE_FILE: "1"
+        run: npm run build
+
+      - name: Prepare truly self-contained portable HTML
+        run: |
+          test -f dist/client/_shell.html
+          node scripts/prepare-portable-html.mjs dist/client/_shell.html dist/client/Beyond90.html
+          test -s dist/client/Beyond90.html
+
+      - name: iPhone WebKit portable file smoke
+        env:
+          BEYOND90_HTML: dist/client/Beyond90.html
+        run: node scripts/browser-smoke-portable.mjs
+
+      - name: Upload verified portable HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: beyond90-portable-html
+          path: dist/client/Beyond90.html
+          if-no-files-found: error
+          retention-days: 7

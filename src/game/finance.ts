@@ -296,9 +296,10 @@ export function moneyCard(s: GameState): DynamicCard | null {
     return { type: "dynamic", kind: "money", data: { offer: "patrocinio", brand, price: 0 } };
   }
 
-  const candidates = OFFERS.filter(
-    (o) => !f.boughtIds.includes(o.id) && f.cash >= o.minCash && (!o.requires || o.requires(s)),
-  );
+  const candidates = OFFERS.filter((o) => {
+    const minimumUpfront = o.financeable ? Math.round(o.price / 2) : o.price;
+    return !f.boughtIds.includes(o.id) && f.cash >= Math.max(o.minCash, minimumUpfront) && (!o.requires || o.requires(s));
+  });
   if (candidates.length === 0) return null;
   if (Math.random() < 0.35) return null;
   const offer = candidates[Math.floor(Math.random() * candidates.length)]!;
@@ -329,8 +330,17 @@ export function renderMoney(s: GameState, card: DynamicCard): DynamicView | null
   const offer = OFFERS.find((o) => o.id === id);
   if (!offer) return null;
   const choices: { id: string; label: string; hint?: string }[] = [];
-  if (f.cash >= offer.price) choices.push({ id: "cash", label: `Pagarlo al contado (${offer.price}.000 €)`, hint: `Saldo: ${f.cash}.000 €` });
-  if (offer.financeable) choices.push({ id: "finance", label: "Financiar la mitad", hint: "Menos caja hoy, deuda a plazos" });
+  if (f.cash >= offer.price) {
+    choices.push({ id: "cash", label: `Pagarlo al contado (${offer.price}.000 €)`, hint: `Saldo: ${f.cash}.000 €` });
+    if (offer.financeable) choices.push({ id: "finance", label: "Financiar la mitad", hint: "Conservas caja, asumes deuda" });
+    else choices.push({ id: "plan", label: "Revisarlo con tu asesor antes de pagar", hint: "No compras hoy; ganas contexto" });
+  } else if (offer.financeable) {
+    choices.push({ id: "finance", label: "Financiar la mitad", hint: "Es la vía asumible con tu caja actual" });
+    choices.push({ id: "plan", label: "Esperar y ahorrar para reducir la deuda", hint: "Disciplina financiera, sin compra hoy" });
+  } else {
+    choices.push({ id: "cash", label: `Pagarlo al contado (${offer.price}.000 €)`, hint: `Saldo: ${f.cash}.000 €` });
+    choices.push({ id: "plan", label: "Revisarlo con tu asesor antes de pagar", hint: "No compras hoy; ganas contexto" });
+  }
   choices.push({ id: "no", label: "Dejarlo pasar", hint: "Sigues como estás" });
   return {
     kicker: offer.kicker,
@@ -383,6 +393,12 @@ export function resolveMoney(s: GameState, card: DynamicCard, choiceId: string):
 
   const offer = OFFERS.find((o) => o.id === id);
   if (!offer) return null;
+  if (choiceId === "plan") {
+    s.discipline = Math.min(100, s.discipline + 3);
+    f.history.unshift({ season: s.seasons[s.seasons.length - 1]?.season ?? `Temporada ${s.seasonIndex}`, text: `Aplazas ${offer.title} para revisar números.`, amount: 0 });
+    f.history = f.history.slice(0, 14);
+    return { title: "Primero, los números", text: "No firmas ni compras hoy. Pides el coste completo, comparas deuda y caja y dejas la decisión para cuando puedas asumirla sin improvisar.", tone: "neutral" };
+  }
   if (choiceId === "no" || choiceId === "free") {
     return { title: "No es el momento", text: "Lo dejas pasar. El dinero sigue donde estaba y tú también.", tone: "neutral" };
   }
