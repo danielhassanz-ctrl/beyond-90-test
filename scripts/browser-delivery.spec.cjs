@@ -57,9 +57,21 @@ test("iPhone WebKit completes onboarding, shows four academies and keeps the sav
   const viewportFits = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
   expect(viewportFits).toBeTruthy();
 
+  const savedAfterSigning = await page.evaluate(() => ({
+    primary: localStorage.getItem("beyond90:save:v1"),
+    backup: localStorage.getItem("beyond90:save:v1:backup"),
+  }));
+  expect(savedAfterSigning.primary).toBeTruthy();
+  expect(savedAfterSigning.backup).toBe(savedAfterSigning.primary);
+  expect(savedAfterSigning.primary).toContain("Jugador QA Mobile");
+
   await page.reload();
   await expect(page).toHaveURL(/\/historia$/);
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
+
+  const savedAfterReload = await page.evaluate(() => localStorage.getItem("beyond90:save:v1"));
+  expect(savedAfterReload).toBe(savedAfterSigning.primary);
+  expect(savedAfterReload).toContain("Jugador QA Mobile");
 
   await page.goto("http://127.0.0.1:4173/");
   await expect(page.getByText("Partida guardada")).toBeVisible();
