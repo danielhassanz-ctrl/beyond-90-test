@@ -90,24 +90,20 @@ function write(state: GameState | null) {
     return;
   }
 
-  let currentRaw: string | null = null;
-  try {
-    currentRaw = localStorage.getItem(SAVE_KEY);
-  } catch {
-    /* A blocked read must not prevent a best-effort primary write. */
-  }
-
-  try {
-    const current = parseSave(currentRaw);
-    localStorage.setItem(BACKUP_SAVE_KEY, current ? (currentRaw as string) : nextRaw);
-  } catch {
-    /* Backup is best effort and must never block the newer primary save. */
-  }
-
+  let primaryWritten = false;
   try {
     localStorage.setItem(SAVE_KEY, nextRaw);
+    primaryWritten = true;
   } catch {
     /* Storage blocked/full: the current session remains playable in memory. */
+  }
+
+  if (primaryWritten) {
+    try {
+      localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
+    } catch {
+      /* Backup is best effort and must never invalidate the newer primary save. */
+    }
   }
 }
 
