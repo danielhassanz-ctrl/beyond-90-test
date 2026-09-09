@@ -1,5 +1,9 @@
 const { test, expect, devices } = require("@playwright/test");
 
+const baseURL = process.env.BEYOND90_URL || appURL();
+const appURL = (path = "") =>
+  new URL(String(path).replace(/^\/+/, ""), baseURL.endsWith("/") ? baseURL : `${baseURL}/`).toString();
+
 test.use({
   ...devices["iPhone 13"],
 });
@@ -8,12 +12,12 @@ test("iPhone WebKit recovers a deep link without a save", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  await page.goto("http://127.0.0.1:4173/historia");
+  await page.goto(appURL("historia"));
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
   await expect(page.getByText(/Volviendo a portada|Cargando carrera|Simulador narrativo de carrera/)).toBeVisible();
-  await page.waitForURL("http://127.0.0.1:4173/", { timeout: 5000 }).catch(() => {});
+  await page.waitForURL(appURL(), { timeout: 5000 }).catch(() => {});
 
   if (page.url().endsWith("/historia")) {
     await page.getByRole("button", { name: "Continuar" }).click();
@@ -27,7 +31,7 @@ test("iPhone WebKit completes onboarding, shows four academies and keeps the sav
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  await page.goto("http://127.0.0.1:4173/");
+  await page.goto(appURL());
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
@@ -61,7 +65,7 @@ test("iPhone WebKit completes onboarding, shows four academies and keeps the sav
   await expect(page).toHaveURL(/\/historia$/);
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
 
-  await page.goto("http://127.0.0.1:4173/");
+  await page.goto(appURL());
   await expect(page.getByText("Partida guardada")).toBeVisible();
   await expect(page.getByRole("button", { name: "Continuar" })).toBeEnabled();
   await page.getByRole("button", { name: "Continuar" }).click();
@@ -74,7 +78,7 @@ test("iPhone WebKit restores the last valid backup after primary save corruption
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  await page.goto("http://127.0.0.1:4173/");
+  await page.goto(appURL());
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
@@ -127,7 +131,7 @@ test("iPhone WebKit keeps the primary save when backup writes are rejected", asy
     };
   });
 
-  await page.goto("http://127.0.0.1:4173/");
+  await page.goto(appURL());
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
