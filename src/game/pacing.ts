@@ -75,6 +75,7 @@ export function decisionTarget(s: GameState): number {
 }
 
 const ROTATION: EventCategory[] = ["life", "training", "agent", "story", "press", "life", "gossip", "market", "club"];
+const isNarrativeSlot = (slot: Slot): boolean => slot.kind === "event" || slot.kind === "agent" || slot.kind === "life";
 
 function pendingNarrativeDecisions(s: GameState): number {
   return s.pending?.type === "event" ? 1 : 0;
@@ -84,12 +85,37 @@ function pendingMatchDecisions(s: GameState): number {
   return s.pending?.type === "match" ? 1 : 0;
 }
 
+/** Keep narrative beats spread through the year when a faster mode compresses a denser plan. */
+function compressNarrative(slots: Slot[], keepCount: number): Slot[] {
+  const indices = slots.map((slot, i) => ({ slot, i })).filter((x) => isNarrativeSlot(x.slot)).map((x) => x.i);
+  if (indices.length <= keepCount) return slots;
+  if (keepCount <= 0) return slots.filter((slot) => !isNarrativeSlot(slot));
+
+  const keep = new Set<number>();
+  if (keepCount === 1) keep.add(indices[0]!);
+  else {
+    for (let n = 0; n < keepCount; n++) {
+      const pos = Math.round((n * (indices.length - 1)) / (keepCount - 1));
+      keep.add(indices[pos]!);
+    }
+  }
+
+  // An adviser beat is structural, not filler. Preserve one if the base plan contains it.
+  const adviserIndex = indices.find((i) => slots[i]?.kind === "agent");
+  if (adviserIndex !== undefined && !keep.has(adviserIndex)) {
+    const replaceable = [...keep].reverse().find((i) => slots[i]?.kind === "event" && slots[i]?.category !== "preseason");
+    if (replaceable !== undefined) keep.delete(replaceable);
+    keep.add(adviserIndex);
+  }
+
+  return slots.filter((slot, i) => !isNarrativeSlot(slot) || keep.has(i));
+}
+
 /**
  * Applies the selected pacing to an already-created season plan.
- * It is intentionally idempotent per season. Informational/sim slots never
- * count as decisions. The card already open on screen belongs to the season
- * budget too; otherwise Nueva carrera could silently exceed the advertised
- * range by one decision.
+ * Informational/sim slots never count as decisions. The card already open on
+ * screen belongs to the season budget too. Faster modes compress secondary
+ * beats; slower modes add interactive beats without manufacturing matches.
  */
 export function applyCareerPacing(s: GameState): void {
   if (!s.clubId || !Array.isArray(s.queue)) return;
@@ -102,8 +128,8 @@ export function applyCareerPacing(s: GameState): void {
 
   const openMatches = pendingMatchDecisions(s);
   const wantedQueuedMatches = Math.max(0, wantedMatches - openMatches);
-  const matchIndices = s.queue.map((slot, i) => ({ slot, i })).filter((x) => x.slot.kind === "match");
-  let removeMatches = Math.max(0, matchIndices.length - wantedQueuedMatches);
+  const queuedMatches = s.queue.filter((slot) => slot.kind === "match").length;
+  let removeMatches = Math.max(0, queuedMatches - wantedQueuedMatches);
   if (removeMatches > 0) {
     const next: Slot[] = [];
     for (const slot of s.queue) {
@@ -117,10 +143,13 @@ export function applyCareerPacing(s: GameState): void {
   }
 
   const openNarrative = pendingNarrativeDecisions(s);
-  const existingQueuedNarrative = s.queue.filter((x) => x.kind === "event" || x.kind === "agent" || x.kind === "life").length;
-  const missing = Math.max(0, wantedNarrative - openNarrative - existingQueuedNarrative);
+  const wantedQueuedNarrative = Math.max(0, wantedNarrative - openNarrative);
+  s.queue = compressNarrative(s.queue, wantedQueuedNarrative);
+
+  const existingQueuedNarrative = s.queue.filter(isNarrativeSlot).length;
+  const missing = Math.max(0, wantedQueuedNarrative - existingQueuedNarrative);
   if (missing > 0) {
-    const insertEvery = Math.max(1, Math.floor(s.queue.length / missing));
+    const insertEvery = Math.max(1, Math.floor(Math.max(1, s.queue.length) / missing));
     const expanded: Slot[] = [];
     let added = 0;
     for (let i = 0; i < s.queue.length; i++) {
