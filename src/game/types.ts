@@ -9,7 +9,6 @@ export type TraitId =
   | "carismatico";
 
 export type Stage = "youth" | "reserves" | "first";
-export type CareerPacingMode = "express" | "standard" | "pro";
 
 export interface ClubInfo {
   id: string;
@@ -340,8 +339,8 @@ export interface GameState {
   version: number;
   /** Semilla de carrera: da personalidad propia al reparto de eventos y NPCs. */
   careerSeed?: number;
-  /** Densidad narrativa elegida para la carrera. Saves antiguos caen a standard. */
-  careerPacing?: CareerPacingMode;
+  /** Densidad narrativa elegida. Los saves antiguos se interpretan como Standard. */
+  careerMode?: import("./pacing").CareerMode;
   /** Ruta narrativa principal de esta carrera (persistida para coherencia). */
   storyRoute?: string;
   /** Estado del Narrative Director: arcos activos, memoria y callbacks. */
