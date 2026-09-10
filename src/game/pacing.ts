@@ -75,6 +75,7 @@ export function decisionTarget(s: GameState): number {
 }
 
 const ROTATION: EventCategory[] = ["life", "training", "agent", "story", "press", "life", "gossip", "market", "club"];
+const EXTRA_KEY_TAGS: NonNullable<Slot["tag"]>[] = ["decisive", "cup", "scouts"];
 const isNarrativeSlot = (slot: Slot): boolean => slot.kind === "event" || slot.kind === "agent" || slot.kind === "life";
 
 function pendingNarrativeDecisions(s: GameState): number {
@@ -111,11 +112,38 @@ function compressNarrative(slots: Slot[], keepCount: number): Slot[] {
   return slots.filter((slot, i) => !isNarrativeSlot(slot) || keep.has(i));
 }
 
+function reduceSimulatedMatches(slots: Slot[], amount: number): void {
+  let left = amount;
+  for (let i = slots.length - 1; i >= 0 && left > 0; i--) {
+    const slot = slots[i];
+    if (slot?.kind !== "sim") continue;
+    const current = slot.matches ?? 0;
+    const reducible = Math.max(0, current - 2);
+    const cut = Math.min(left, reducible);
+    if (cut > 0) {
+      slot.matches = current - cut;
+      left -= cut;
+    }
+  }
+}
+
+function addKeyMatches(slots: Slot[], amount: number): Slot[] {
+  if (amount <= 0) return slots;
+  reduceSimulatedMatches(slots, amount);
+  const out = [...slots];
+  for (let n = 0; n < amount; n++) {
+    const tag = EXTRA_KEY_TAGS[n % EXTRA_KEY_TAGS.length]!;
+    const insertAt = Math.max(1, Math.round(((n + 1) * out.length) / (amount + 1)));
+    out.splice(insertAt, 0, { kind: "match", tag, ...(tag === "cup" ? { tie: true } : {}) });
+  }
+  return out;
+}
+
 /**
  * Applies the selected pacing to an already-created season plan.
  * Informational/sim slots never count as decisions. The card already open on
  * screen belongs to the season budget too. Faster modes compress secondary
- * beats; slower modes add interactive beats without manufacturing matches.
+ * beats; slower modes add interactive beats without manufacturing filler.
  */
 export function applyCareerPacing(s: GameState): void {
   if (!s.clubId || !Array.isArray(s.queue)) return;
@@ -141,6 +169,10 @@ export function applyCareerPacing(s: GameState): void {
     }
     s.queue = next;
   }
+
+  const afterRemovalMatches = s.queue.filter((slot) => slot.kind === "match").length;
+  const missingMatches = Math.max(0, wantedQueuedMatches - afterRemovalMatches);
+  if (missingMatches > 0) s.queue = addKeyMatches(s.queue, missingMatches);
 
   const openNarrative = pendingNarrativeDecisions(s);
   const wantedQueuedNarrative = Math.max(0, wantedNarrative - openNarrative);
