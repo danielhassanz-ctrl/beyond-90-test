@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { advance, chooseClub, createGame, resolveDynamicCard, resolveEvent, resolveMatch } from "../src/game/engine";
 import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
-import { CAREER_MODES, careerModeConfig, setCareerMode, type CareerMode } from "../src/game/pacing";
+import { CAREER_MODES, applyCareerPacing, careerModeConfig, setCareerMode, type CareerMode } from "../src/game/pacing";
 import type { GameState, Player } from "../src/game/types";
 
 function rng(seed: number) {
@@ -62,6 +62,10 @@ function runFirstSeason(mode: CareerMode, seed: number) {
     const offer = s.offers[0];
     assert.ok(offer, `${mode}/${seed}: no initial club offer`);
     s = chooseClub(s, offer.clubId);
+    // GameProvider applies pacing immediately after every state transition.
+    // Mirror that runtime path here; testing chooseClub alone bypasses the
+    // integration point and measures the unpaced legacy season plan instead.
+    applyCareerPacing(s);
 
     const startAge = s.age;
     let decisions = 0;
@@ -76,6 +80,7 @@ function runFirstSeason(mode: CareerMode, seed: number) {
         kinds.push(s.pending?.type === "dynamic" ? `dynamic:${s.pending.kind}` : s.pending?.type ?? "none");
       }
       s = resolvePending(s);
+      applyCareerPacing(s);
       steps += 1;
     }
 
