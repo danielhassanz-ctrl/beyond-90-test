@@ -50,11 +50,14 @@ jobs:
           DEPLOY_BASE: /beyond-90-test/
         run: npm run build
 
-      - name: Prepare SPA entry
+      - name: Prepare SPA entry at GitHub Pages base path
         run: |
           test -f dist/client/_shell.html
-          cp dist/client/_shell.html dist/client/index.html
-          cp dist/client/_shell.html dist/client/404.html
+          rm -rf dist/client/beyond-90-test
+          mkdir -p dist/client/beyond-90-test
+          cp dist/client/_shell.html dist/client/beyond-90-test/index.html
+          cp dist/client/_shell.html dist/client/beyond-90-test/404.html
+          cp -R dist/client/assets dist/client/beyond-90-test/assets
 
       - name: Start production preview
         run: |
