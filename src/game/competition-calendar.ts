@@ -87,9 +87,20 @@ export function europeanStoryEligible(s: GameState): boolean {
 
 export type KeyMatchKind = "debut" | "derby" | "cup" | "europe" | "title_decider" | "exclub" | "international" | "major_tournament";
 
+function careerApps(s: GameState): number {
+  return s.seasons.reduce((sum, season) => sum + season.apps, 0);
+}
+
+function titleDeciderEligible(s: GameState): boolean {
+  const lateSeason = (s.director?.sceneInSeason ?? s.beat ?? 0) >= 5;
+  return s.stage === "first" && s.tablePosition <= 4 && lateSeason;
+}
+
 /** Ordered narrative menu; the engine can sample from this without inventing implausible finals. */
 export function eligibleKeyMatchKinds(s: GameState): KeyMatchKind[] {
-  const out: KeyMatchKind[] = ["debut", "derby", "cup", "title_decider"];
+  const out: KeyMatchKind[] = ["derby", "cup"];
+  if (careerApps(s) === 0 && s.stage === "first") out.unshift("debut");
+  if (titleDeciderEligible(s)) out.push("title_decider");
   if (europeanStoryEligible(s)) out.push("europe");
   if (s.memory.rejectedClubs.length || s.memory.conflicts.length) out.push("exclub");
   if (seniorInternationalEligible(s)) {
