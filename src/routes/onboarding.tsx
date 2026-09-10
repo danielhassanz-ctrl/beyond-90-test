@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Camera, Check } from "lucide-react";
 import { useRef, useState } from "react";
 import { POSITIONS, TRAITS } from "@/game/data";
+import { CAREER_MODES, DEFAULT_CAREER_MODE, type CareerMode } from "@/game/pacing";
 import { useGame } from "@/game/store";
 import type { Position, TraitId } from "@/game/types";
 import { fileToAvatar } from "@/lib/image";
@@ -11,9 +12,9 @@ export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
       { title: "Crea tu futbolista — BEYOND 90" },
-      { name: "description", content: "Nombre, posición, origen, foto y rasgos: define al futbolista de 16 años con el que empieza tu historia." },
+      { name: "description", content: "Nombre, posición, origen, foto, rasgos y ritmo de carrera: define al futbolista de 16 años con el que empieza tu historia." },
       { property: "og:title", content: "Crea tu futbolista — BEYOND 90" },
-      { property: "og:description", content: "Define nombre, posición, origen y dos rasgos de carácter antes de elegir cantera." },
+      { property: "og:description", content: "Define tu futbolista y decide cuánto quieres vivir de cada temporada." },
     ],
   }),
   component: Onboarding,
@@ -31,6 +32,7 @@ function Onboarding() {
   const [city, setCity] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [traits, setTraits] = useState<TraitId[]>([]);
+  const [careerMode, setCareerMode] = useState<CareerMode>(DEFAULT_CAREER_MODE);
   const [error, setError] = useState("");
 
   const toggleTrait = (id: TraitId) => {
@@ -60,7 +62,7 @@ function Onboarding() {
       city: city.trim(),
       avatar,
       traits,
-    });
+    }, careerMode);
     void navigate({ to: "/cantera" });
   };
 
@@ -181,9 +183,7 @@ function Onboarding() {
                     )}
                   >
                     <span className="min-w-0">
-                      <span className="block font-cond text-base font-semibold uppercase tracking-[0.1em]">
-                        {t.label}
-                      </span>
+                      <span className="block font-cond text-base font-semibold uppercase tracking-[0.1em]">{t.label}</span>
                       <span className="block text-xs text-muted-foreground">{t.desc}</span>
                     </span>
                     {active && <Check className="h-5 w-5 shrink-0 text-gold" aria-hidden />}
@@ -192,6 +192,36 @@ function Onboarding() {
               );
             })}
           </ul>
+        </section>
+
+        <section className="panel mt-4 p-4">
+          <p className="text-kicker">Ritmo de carrera</p>
+          <h2 className="mt-1 font-display text-2xl">¿Cuánto quieres vivir de cada temporada?</h2>
+          <p className="mt-2 text-xs text-muted-foreground">
+            El modo cambia la cantidad de decisiones, no tu potencial ni la dificultad deportiva.
+          </p>
+          <div className="mt-4 space-y-2">
+            {CAREER_MODES.map((mode) => {
+              const active = careerMode === mode.id;
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setCareerMode(mode.id)}
+                  className={cn(
+                    "w-full rounded-xl border px-4 py-3 text-left transition-colors",
+                    active ? "border-gold/70 bg-surface-2" : "border-border bg-surface",
+                  )}
+                >
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="font-cond text-base font-bold uppercase tracking-[0.14em]">{mode.label}</span>
+                    <span className="font-num text-sm text-gold">{mode.decisions[0]}–{mode.decisions[1]}</span>
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">{mode.description}</span>
+                </button>
+              );
+            })}
+          </div>
         </section>
 
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
