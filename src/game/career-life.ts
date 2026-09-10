@@ -44,6 +44,28 @@ function seedNpc(s: GameState, key: string, p: CareerPerson, role: string): void
   if (!s.memory.npcs[key]) s.memory.npcs[key] = { name: p.name, role, mood: p.relation };
 }
 
+/**
+ * Keep the existing agent channel alive from age 16, but allow the person
+ * guiding the player to be a professional representative, the father or a
+ * trusted friend. The rest of the engine can therefore call the same adviser
+ * system without anonymous "your environment" cards.
+ */
+function syncAdviserChannel(s: GameState, cast: CareerCast): void {
+  s.agent.present = true;
+  s.hasAgent = true;
+  s.agent.name = cast.adviser.name;
+  s.agentName = cast.adviser.name;
+  s.agent.trust = Math.max(s.agent.trust || 0, cast.adviserKind === "agent" ? 45 : 60);
+  if (cast.adviserKind !== "agent") s.agent.commission = 0;
+  s.rel.agent = Math.max(s.rel.agent || 0, cast.adviserKind === "agent" ? 45 : 60);
+  seedNpc(
+    s,
+    "agent",
+    cast.adviser,
+    cast.adviserKind === "agent" ? "Representante" : cast.adviserKind === "father" ? "Padre y asesor" : "Amigo y asesor",
+  );
+}
+
 /** Persistent named people: a career is a biography, not anonymous cards. */
 export function ensureCareerCast(s: GameState): CareerCast {
   const holder = s.memory as typeof s.memory & { careerCast?: CareerCast };
@@ -68,11 +90,7 @@ export function ensureCareerCast(s: GameState): CareerCast {
   seedNpc(s, "captain", cast.captain, "Capitán");
   seedNpc(s, "friend", cast.teammate, "Compañero de confianza");
   seedNpc(s, "social", cast.social, "Contacto de redes");
-
-  if (cast.adviserKind === "agent") {
-    s.agent.name = cast.adviser.name;
-    s.agentName = cast.adviser.name;
-  }
+  syncAdviserChannel(s, cast);
   return cast;
 }
 
