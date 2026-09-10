@@ -30,6 +30,8 @@ jobs:
         run: npm run qa:pacing:runtime
       - name: Career story chronology
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/career-story-smoke.ts
+      - name: Competition-aware pacing
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/competition-pacing-smoke.ts
       - name: Full career smoke
         run: npm run qa:career
       - name: Narrative branch QA
