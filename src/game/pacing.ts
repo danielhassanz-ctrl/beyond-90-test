@@ -1,4 +1,5 @@
 import { europeanCompetition } from "./career";
+import { careerEra } from "./career-life";
 import { eligibleKeyMatchKinds } from "./competition-calendar";
 import { careerSeed, hash } from "./npc";
 import type { EventCategory, GameState, Slot } from "./types";
@@ -23,7 +24,18 @@ export function narrativeTarget(s:GameState):number { return seededRange(s,"narr
 export function keyMatchTarget(s:GameState):number { return seededRange(s,"key-match-target",careerModeConfig(careerModeOf(s)).keyMatches); }
 export function decisionTarget(s:GameState):number { return narrativeTarget(s)+keyMatchTarget(s); }
 
-const ROTATION:EventCategory[]=["life","training","agent","story","press","life","gossip","market","club"];
+/** Decision mix ages with the player instead of repeating the same season forever. */
+export function narrativeRotationFor(s:GameState):EventCategory[]{
+  switch(careerEra(s)){
+    case "academy": return ["agent","training","club","life","training","agent","gossip","story","club"];
+    case "breakthrough": return ["club","training","agent","market","press","life","gossip","agent","story"];
+    case "established": return ["club","market","press","agent","life","training","gossip","market","story"];
+    case "prime": return ["market","press","club","agent","life","story","press","medical","market"];
+    case "veteran": return ["medical","club","agent","life","press","market","story","medical","life"];
+    case "legacy": return ["life","agent","medical","press","story","market","life","club","medical"];
+  }
+}
+
 const isNarrativeSlot=(slot:Slot):boolean=>slot.kind==="event"||slot.kind==="agent"||slot.kind==="life";
 const pendingNarrativeDecisions=(s:GameState):number=>s.pending?.type==="event"?1:0;
 const pendingMatchDecisions=(s:GameState):number=>s.pending?.type==="match"?1:0;
@@ -131,12 +143,13 @@ export function applyCareerPacing(s:GameState):void{
   const existingQueuedNarrative=s.queue.filter(isNarrativeSlot).length;
   const missing=Math.max(0,wantedQueuedNarrative-existingQueuedNarrative);
   if(missing>0){
+    const rotation=narrativeRotationFor(s);
     const insertEvery=Math.max(1,Math.floor(Math.max(1,s.queue.length)/missing)); const expanded:Slot[]=[]; let added=0;
     for(let i=0;i<s.queue.length;i++){
       expanded.push(s.queue[i]!);
-      if(added<missing&&(i+1)%insertEvery===0&&s.queue[i]?.kind!=="match"){expanded.push({kind:"event",category:ROTATION[(i+added)%ROTATION.length]!});added+=1;}
+      if(added<missing&&(i+1)%insertEvery===0&&s.queue[i]?.kind!=="match"){expanded.push({kind:"event",category:rotation[(i+added)%rotation.length]!});added+=1;}
     }
-    while(added<missing){expanded.push({kind:"event",category:ROTATION[added%ROTATION.length]!});added+=1;}
+    while(added<missing){expanded.push({kind:"event",category:rotation[added%rotation.length]!});added+=1;}
     s.queue=expanded;
   }
   restoreSeasonMatchUnits(s.queue,originalQueueMatchUnits);
