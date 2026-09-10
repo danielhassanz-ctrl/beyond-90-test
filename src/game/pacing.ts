@@ -1,3 +1,5 @@
+import { europeanCompetition } from "./career";
+import { eligibleKeyMatchKinds } from "./competition-calendar";
 import { careerSeed, hash } from "./npc";
 import type { EventCategory, GameState, Slot } from "./types";
 
@@ -22,7 +24,6 @@ export function keyMatchTarget(s:GameState):number { return seededRange(s,"key-m
 export function decisionTarget(s:GameState):number { return narrativeTarget(s)+keyMatchTarget(s); }
 
 const ROTATION:EventCategory[]=["life","training","agent","story","press","life","gossip","market","club"];
-const EXTRA_KEY_TAGS:NonNullable<Slot["tag"]>[]=["decisive","cup","scouts"];
 const isNarrativeSlot=(slot:Slot):boolean=>slot.kind==="event"||slot.kind==="agent"||slot.kind==="life";
 const pendingNarrativeDecisions=(s:GameState):number=>s.pending?.type==="event"?1:0;
 const pendingMatchDecisions=(s:GameState):number=>s.pending?.type==="match"?1:0;
@@ -67,14 +68,40 @@ function restoreSeasonMatchUnits(slots:Slot[],target:number):void{
     if(cut<current-target) throw new Error(`Career pacing cannot preserve season calendar: target ${target}, current ${current}`);
   }
 }
-function addKeyMatches(slots:Slot[],amount:number):Slot[]{
+
+/**
+ * Extra playable matches must come from the player's actual football context.
+ * We deliberately do not fake senior-national-team matches through the club
+ * match renderer; those require their own national-team match context.
+ */
+function contextualKeySlots(s:GameState,amount:number):Slot[]{
+  if(amount<=0)return[];
+  const eligible=eligibleKeyMatchKinds(s);
+  const candidates:Slot[]=[];
+  const euro=europeanCompetition(s);
+  const push=(slot:Slot)=>{ if(candidates.length<amount)candidates.push(slot); };
+
+  if(eligible.includes("europe")&&euro&&!s.queue.some((slot)=>slot.kind==="match"&&slot.tag==="euro")) push({kind:"match",tag:"euro",tie:true,competition:euro});
+  if(eligible.includes("exclub")&&!s.queue.some((slot)=>slot.kind==="match"&&slot.tag==="exclub")) push({kind:"match",tag:"exclub"});
+  if(eligible.includes("derby")&&!s.queue.some((slot)=>slot.kind==="match"&&slot.tag==="derby")) push({kind:"match",tag:"derby"});
+  if(eligible.includes("cup")) push({kind:"match",tag:"cup",tie:true});
+  if(eligible.includes("title_decider")) push({kind:"match",tag:"decisive"});
+  if(eligible.includes("debut")&&!s.queue.some((slot)=>slot.kind==="match"&&slot.tag==="debut")) push({kind:"match",tag:"debut"});
+
+  const fallback:Slot[]=[{kind:"match",tag:"decisive"},{kind:"match",tag:"cup",tie:true},{kind:"match",tag:"scouts"}];
+  let i=0;
+  while(candidates.length<amount){ candidates.push(fallback[i%fallback.length]!); i+=1; }
+  return candidates.slice(0,amount);
+}
+
+function addKeyMatches(s:GameState,slots:Slot[],amount:number):Slot[]{
   if(amount<=0)return slots;
   const out=[...slots];
-  for(let n=0;n<amount;n++){
-    const tag=EXTRA_KEY_TAGS[n%EXTRA_KEY_TAGS.length]!;
-    const insertAt=Math.max(1,Math.round(((n+1)*out.length)/(amount+1)));
-    out.splice(insertAt,0,{kind:"match",tag,...(tag==="cup"?{tie:true}:{})});
-  }
+  const additions=contextualKeySlots({...s,queue:out},amount);
+  additions.forEach((slot,n)=>{
+    const insertAt=Math.max(1,Math.round(((n+1)*out.length)/(additions.length+1)));
+    out.splice(insertAt,0,slot);
+  });
   return out;
 }
 
@@ -97,7 +124,7 @@ export function applyCareerPacing(s:GameState):void{
     s.queue=next;
   }
   const currentQueuedMatches=s.queue.filter((slot)=>slot.kind==="match").length;
-  s.queue=addKeyMatches(s.queue,Math.max(0,wantedQueuedMatches-currentQueuedMatches));
+  s.queue=addKeyMatches(s,s.queue,Math.max(0,wantedQueuedMatches-currentQueuedMatches));
 
   const wantedQueuedNarrative=Math.max(0,wantedNarrative-pendingNarrativeDecisions(s));
   s.queue=compressNarrative(s.queue,wantedQueuedNarrative);
