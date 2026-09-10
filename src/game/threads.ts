@@ -18,30 +18,44 @@ const TEASERS: Record<ThreadKind, string[]> = {
   club_interest: [
     "Un club ha pedido tus últimos partidos en vídeo. Nadie dice qué club.",
     "Dos hombres con acreditación de invitados preguntaron por ti en la ciudad deportiva.",
+    "Tu agente ha recibido una llamada y, por primera vez, no te ha dicho de quién era.",
+    "En la grada había un ojeador tomando notas solo cuando tocabas el balón.",
   ],
   coach_upset: [
-    "El míster llevas dos sesiones sin corregirte. Eso, en él, es mala señal.",
+    "El míster lleva dos sesiones sin corregirte. Eso, en él, es mala señal.",
     "El segundo entrenador te ha pedido que te quedes un día a hablar. No dice de qué.",
+    "Al terminar el entrenamiento, el míster ha borrado tu nombre de la pizarra sin mirarte.",
+    "Hoy has salido del rondo y el cuerpo técnico se ha quedado hablando de ti a veinte metros.",
   ],
   teammate_jealous: [
     "Alguien del vestuario ha dejado de saludarte por la mañana.",
     "En el grupo de WhatsApp del equipo hay un pique que va contigo.",
+    "Tu sitio en el vestuario ha aparecido cambiado. Nadie admite haberlo hecho.",
+    "Un compañero ha cortado la conversación en cuanto has entrado en la sala de fisio.",
   ],
   press_digging: [
     "Un periodista local está preguntando por tu entorno.",
     "Han pedido tu ficha y tus datos de cantera a la oficina de prensa.",
+    "Un redactor que nunca cubre entrenamientos lleva dos días esperando a la salida.",
+    "Tu agente te ha reenviado una pregunta de un periodista que sabe demasiado sobre tu semana.",
   ],
   sponsor_call: [
     "Una marca de botas ha escrito al club preguntando por tu talla.",
     "Un patrocinador quiere una reunión de quince minutos.",
+    "Te han mandado unas botas sin remitente, con tus iniciales grabadas.",
+    "El responsable comercial del club quiere verte antes del próximo entrenamiento.",
   ],
   national_call: [
     "Se habla de una lista de la selección en tu categoría.",
     "Un ojeador federativo ha estado en el último partido con carpeta.",
+    "El delegado te ha preguntado, como quien no quiere la cosa, si tienes el pasaporte en regla.",
+    "En el vestuario corre el rumor de que la federación ha pedido informes sobre dos jugadores. Uno podrías ser tú.",
   ],
   family_worry: [
     "En casa hay un tema que nadie te cuenta del todo.",
     "Tu madre te ha llamado dos veces sin dejar mensaje.",
+    "En el grupo familiar han escrito 'luego hablamos' y nadie ha vuelto a decir nada.",
+    "Alguien de tu familia ha preguntado cuándo vuelves a casa sin explicar por qué.",
   ],
 };
 
@@ -70,6 +84,33 @@ function memoryThreadKind(text: string): ThreadKind | null {
   // identifica a quién afecta, esperamos a otra memoria en vez de convertir
   // cualquier conflicto en un problema familiar.
   return null;
+}
+
+function recallTeaser(s: GameState, kind: ThreadKind, remembered: string): string {
+  const clean = remembered.trim().replace(/[.!?]+$/, "");
+  const seed = Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 17 + (s.sceneCount ?? 0) * 7 + clean.length);
+  const variants: Record<Extract<ThreadKind, "coach_upset" | "teammate_jealous" | "family_worry">, string[]> = {
+    coach_upset: [
+      `El cuerpo técnico no lo ha olvidado: ${clean}. Hoy el míster vuelve a poner aquel episodio encima de la mesa.`,
+      `Creías que aquello había muerto: ${clean}. Esta mañana el entrenador te ha pedido que cierres la puerta al entrar.`,
+      `Una decisión antigua regresa al despacho del míster: ${clean}. Lo que pase ahora puede cambiar tu sitio en el equipo.`,
+      `El entrenador ha esperado hasta hoy para cobrarse aquella conversación: ${clean}. Ya no es un detalle del pasado.`,
+    ],
+    teammate_jealous: [
+      `El vestuario tiene memoria: ${clean}. Hoy notas que aquella historia ha cambiado de bando a varios compañeros.`,
+      `Parecía enterrado, pero alguien ha vuelto a sacar esto delante del grupo: ${clean}. El silencio posterior dice bastante.`,
+      `Aquello que pasó con el vestuario —${clean}— vuelve justo cuando más necesitas al grupo de tu lado.`,
+      `Un compañero te recuerda, palabra por palabra, algo que dabas por cerrado: ${clean}. La conversación se pone seria.`,
+    ],
+    family_worry: [
+      `En casa seguían dándole vueltas aunque tú no lo supieras: ${clean}. Hoy ya no pueden seguir aplazando la conversación.`,
+      `Tu familia vuelve a un asunto que parecía resuelto: ${clean}. Esta vez esperan una respuesta distinta de ti.`,
+      `El fútbol te había permitido escapar de esto: ${clean}. Una llamada desde casa te obliga a mirarlo de frente otra vez.`,
+      `Pensabas que aquello no tendría segunda parte: ${clean}. Tu familia acaba de demostrarte lo contrario.`,
+    ],
+  };
+  const pool = variants[kind as keyof typeof variants];
+  return pool ? pool[seed % pool.length]! : `Algo que hiciste vuelve a perseguirte: ${clean}.`;
 }
 
 export function hasThread(s: GameState, kind: ThreadKind): boolean {
@@ -129,7 +170,7 @@ export function dueThread(s: GameState): Thread | null {
   return {
     id: `memory-${s.seasonIndex}-${scene}`,
     kind,
-    teaser: `Hace tiempo quedó esto anotado: ${remembered}. Ahora vuelve a tener consecuencias.`,
+    teaser: recallTeaser(s, kind, remembered),
     dueScene: scene,
     payload: { remembered: remembered.slice(0, 240) },
   };
