@@ -3,6 +3,7 @@ name: Beyond 90 public delivery
 on:
   push:
     branches:
+      - main
       - recovery-v4-19-delivery-gate
       - product-v4-20-polish
   workflow_dispatch:
