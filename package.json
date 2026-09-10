@@ -14,6 +14,7 @@
     "qa:branches": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/branch-coverage-smoke.ts",
     "qa:pacing": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/pacing-smoke.ts",
     "qa:competition-pacing": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/competition-pacing-smoke.ts",
+    "qa:persistent-cast": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/persistent-cast-smoke.ts",
     "format": "prettier --write ."
   },
   "dependencies": {

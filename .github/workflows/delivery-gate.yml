@@ -38,6 +38,9 @@ jobs:
       - name: Competition-aware pacing QA
         run: npm run qa:competition-pacing
 
+      - name: Persistent career cast QA
+        run: npm run qa:persistent-cast
+
       - name: Full career smoke QA
         run: npm run qa:career
 
