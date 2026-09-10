@@ -44,6 +44,12 @@ function seedNpc(s: GameState, key: string, p: CareerPerson, role: string): void
   if (!s.memory.npcs[key]) s.memory.npcs[key] = { name: p.name, role, mood: p.relation };
 }
 
+function adviserRole(kind: AdviserKind): string {
+  if (kind === "father") return "Padre y asesor";
+  if (kind === "friend") return "Amigo y asesor";
+  return "Representante";
+}
+
 /** Persistent named people: a career is a biography, not anonymous cards. */
 export function ensureCareerCast(s: GameState): CareerCast {
   const holder = s.memory as typeof s.memory & { careerCast?: CareerCast };
@@ -68,11 +74,20 @@ export function ensureCareerCast(s: GameState): CareerCast {
   seedNpc(s, "captain", cast.captain, "Capitán");
   seedNpc(s, "friend", cast.teammate, "Compañero de confianza");
   seedNpc(s, "social", cast.social, "Contacto de redes");
+  seedNpc(s, "adviser", cast.adviser, adviserRole(cast.adviserKind));
 
-  if (cast.adviserKind === "agent") {
-    s.agent.name = cast.adviser.name;
-    s.agentName = cast.adviser.name;
+  // The existing game engine already routes contract/market guidance through
+  // AgentState. Keep that system, but make the career adviser real from scene
+  // one even when the role is filled by the player's father or a trusted friend.
+  s.agent.present = true;
+  s.hasAgent = true;
+  s.agent.name = cast.adviser.name;
+  s.agentName = cast.adviser.name;
+  if (s.rel.agent <= 0) s.rel.agent = cast.adviser.relation;
+  if (!s.agent.memories.includes(`adviser:${cast.adviserKind}`)) {
+    s.agent.memories.unshift(`adviser:${cast.adviserKind}`);
   }
+
   return cast;
 }
 
