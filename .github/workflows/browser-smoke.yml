@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - recovery-v4-19-delivery-gate
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -30,28 +33,43 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Build production SPA
+      - name: Full career smoke QA
+        run: npm run qa:career
+
+      - name: Targeted narrative branch QA
+        run: npm run qa:branches
+
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+
+      - name: Build GitHub Pages SPA
         env:
-          DEPLOY_BASE: /
+          DEPLOY_BASE: /beyond-90-test/
         run: npm run build
 
-      - name: Prepare SPA entry
+      - name: Prepare SPA entry at GitHub Pages base path
         run: |
           test -f dist/client/_shell.html
-          cp dist/client/_shell.html dist/client/index.html
-          cp dist/client/_shell.html dist/client/404.html
+          rm -rf dist/client/beyond-90-test
+          mkdir -p dist/client/beyond-90-test
+          cp dist/client/_shell.html dist/client/beyond-90-test/index.html
+          cp dist/client/_shell.html dist/client/beyond-90-test/404.html
+          cp -R dist/client/assets dist/client/beyond-90-test/assets
 
       - name: Start production preview
         run: |
           npx vite preview --host 127.0.0.1 --port 4173 > /tmp/beyond90-preview.log 2>&1 &
           for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            if curl -fsS http://127.0.0.1:4173/beyond-90-test/ >/dev/null; then exit 0; fi
             sleep 1
           done
           cat /tmp/beyond90-preview.log
           exit 1
 
-      - name: iPhone WebKit cold-start and first-flow smoke
+      - name: iPhone WebKit Nueva carrera, persistence and legacy smoke
         env:
-          BEYOND90_URL: http://127.0.0.1:4173
+          BEYOND90_URL: http://127.0.0.1:4173/beyond-90-test/
         run: node scripts/browser-smoke.mjs
