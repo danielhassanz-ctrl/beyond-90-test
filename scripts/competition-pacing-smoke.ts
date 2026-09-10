@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createGame } from "../src/game/engine";
-import { applyCareerPacing, setCareerMode } from "../src/game/pacing";
+import { applyCareerPacing, narrativeRotationFor, setCareerMode } from "../src/game/pacing";
 import type { GameState, Player } from "../src/game/types";
 
 const player: Player = {
@@ -69,6 +69,24 @@ function base(): GameState {
   applyCareerPacing(s);
   const matches = s.queue.filter((slot) => slot.kind === "match");
   assert.ok(!matches.some((slot) => slot.tag === "euro"), "unknown 16-year-old academy player must never get a senior European match");
+  const youthMix = narrativeRotationFor(s);
+  assert.ok(youthMix.includes("training") && youthMix.includes("agent") && youthMix.includes("life"));
+  assert.ok(!youthMix.includes("medical"), "healthy academy pacing should not be dominated by veteran medical themes");
 }
 
-console.log("COMPETITION_PACING_SMOKE_OK: added key matches respect club level, qualification context and youth chronology.");
+{
+  const s = base();
+  s.age = 29;
+  const primeMix = narrativeRotationFor(s);
+  assert.ok(primeMix.includes("market") && primeMix.includes("press") && primeMix.includes("life"));
+  assert.notDeepEqual(primeMix, narrativeRotationFor({ ...s, age: 17 }), "a 29-year-old star cannot receive the same seasonal decision mix as a 17-year-old prospect");
+}
+
+{
+  const s = base();
+  s.age = 35;
+  const legacyMix = narrativeRotationFor(s);
+  assert.ok(legacyMix.includes("medical") && legacyMix.includes("life") && legacyMix.includes("agent"));
+}
+
+console.log("COMPETITION_PACING_SMOKE_OK: key matches respect competition context and narrative density changes with career age.");
