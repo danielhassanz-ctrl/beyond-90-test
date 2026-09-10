@@ -26,7 +26,7 @@ function clean(v: string): string {
 
 export function normalizedNationality(value: string): string {
   const key = clean(value || "España");
-  return NORMALIZED[key] ?? value.trim() || "España";
+  return NORMALIZED[key] ?? (value.trim() || "España");
 }
 
 export function confederationFor(nationality: string): Confederation {
@@ -53,7 +53,7 @@ export function continentalTournament(nationality: string): string {
 /** Calendar years are derived from 2026/27 as season zero. */
 export function seasonStartYear(s: GameState): number { return 2026 + s.seasonIndex; }
 
-/** Major international competitions only appear on their real four-year rhythm. */
+/** Major international competitions only appear on their real calendar rhythm. */
 export function majorInternationalTournament(s: GameState): string | null {
   const year = seasonStartYear(s) + 1;
   if (year >= 2030 && (year - 2030) % 4 === 0) return "Copa Mundial de la FIFA";
