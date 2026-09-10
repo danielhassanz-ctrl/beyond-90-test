@@ -1,4 +1,5 @@
 import { rememberBeat } from "./archetype";
+import { ensureCareerCast } from "./career-life";
 import { eventById } from "./events";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -40,9 +41,11 @@ const BACKUP_SAVE_KEY = `${SAVE_KEY}:backup`;
 function parseSave(raw: string | null): GameState | null {
   if (!raw) return null;
   try {
-    const state = migrate(JSON.parse(raw));
+    const decoded = JSON.parse(raw) as { careerMode?: CareerMode };
+    const state = migrate(decoded);
     if (state) {
-      setCareerMode(state, (JSON.parse(raw) as { careerMode?: CareerMode }).careerMode ?? DEFAULT_CAREER_MODE);
+      setCareerMode(state, decoded.careerMode ?? DEFAULT_CAREER_MODE);
+      ensureCareerCast(state);
       applyCareerPacing(state);
     }
     return state;
@@ -127,7 +130,8 @@ function write(state: GameState | null) {
   }
 }
 
-function withPacing(next: GameState): GameState {
+function withRuntime(next: GameState): GameState {
+  ensureCareerCast(next);
   applyCareerPacing(next);
   return next;
 }
@@ -153,7 +157,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       let next: GameState;
       try {
         setError(null);
-        next = withPacing(fn(prev));
+        next = withRuntime(fn(prev));
       } catch {
         setError("Esa acción no se pudo aplicar. Pulsa \u00abReintentar escena\u00bb para seguir tu carrera.");
         return prev;
@@ -166,6 +170,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const start = useCallback((player: Player, mode: CareerMode = DEFAULT_CAREER_MODE) => {
     const game = createGame(player);
     setCareerMode(game, mode);
+    ensureCareerCast(game);
     commit(game);
   }, [commit]);
   const pickClub = useCallback((clubId: string) => apply((prev) => chooseClub(prev, clubId)), [apply]);
