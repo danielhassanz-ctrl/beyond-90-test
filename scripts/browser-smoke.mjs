@@ -6,8 +6,15 @@ const browser = await webkit.launch();
 const context = await browser.newContext({ ...devices["iPhone 14"] });
 const page = await context.newPage();
 page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
+page.on("response", (response) => {
+  if (response.status() >= 400) errors.push(`http ${response.status()}: ${response.url()}`);
+});
 page.on("console", (msg) => {
-  if (msg.type() === "error") errors.push(`console: ${msg.text()}`);
+  if (msg.type() === "error") {
+    const location = msg.location();
+    const source = location?.url ? ` @ ${location.url}${location.lineNumber != null ? `:${location.lineNumber}` : ""}` : "";
+    errors.push(`console: ${msg.text()}${source}`);
+  }
 });
 
 async function assertNoFatal(label) {
