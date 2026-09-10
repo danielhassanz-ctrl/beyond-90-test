@@ -59,6 +59,32 @@ function compressNarrative(slots: Slot[], keepCount: number): Slot[] {
   return slots.filter((slot, i) => !isNarrativeSlot(slot) || keep.has(i));
 }
 
+/**
+ * Some base season plans naturally contain fewer key matches than Pro asks for.
+ * Fill only the deficit, using decisive league fixtures and spacing them through
+ * the existing calendar. These are real playable choices, not filler cards.
+ */
+function addMissingKeyMatches(slots: Slot[], missing: number): Slot[] {
+  if (missing <= 0) return slots;
+  const out = [...slots];
+  for (let n = 0; n < missing; n++) {
+    const candidates = out
+      .map((slot, i) => ({ slot, i }))
+      .filter(({ slot }) => slot.kind === "sim" || isNarrativeSlot(slot))
+      .map(({ i }) => i);
+    const fallback = Math.max(0, out.length - 1);
+    const pickIndex = candidates.length
+      ? candidates[Math.floor(((n + 1) * candidates.length) / (missing + 1))]!
+      : fallback;
+    out.splice(pickIndex + 1, 0, {
+      kind: "match",
+      tag: "decisive",
+      label: n === 0 ? "Partido clave de la temporada" : `Partido clave ${n + 1}`,
+    });
+  }
+  return out;
+}
+
 export function applyCareerPacing(s: GameState): void {
   if (!s.clubId || !Array.isArray(s.queue)) return;
   const marker = 10_000 + s.seasonIndex;
@@ -78,6 +104,9 @@ export function applyCareerPacing(s: GameState): void {
     }
     s.queue = next;
   }
+
+  const currentQueuedMatches = s.queue.filter((slot) => slot.kind === "match").length;
+  s.queue = addMissingKeyMatches(s.queue, Math.max(0, wantedQueuedMatches - currentQueuedMatches));
 
   const wantedQueuedNarrative = Math.max(0, wantedNarrative - pendingNarrativeDecisions(s));
   s.queue = compressNarrative(s.queue, wantedQueuedNarrative);
