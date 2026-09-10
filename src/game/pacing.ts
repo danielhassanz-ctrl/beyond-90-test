@@ -70,13 +70,26 @@ export function keyMatchTarget(s: GameState): number {
   return seededRange(s, "key-match-target", careerModeConfig(careerModeOf(s)).keyMatches);
 }
 
+export function decisionTarget(s: GameState): number {
+  return narrativeTarget(s) + keyMatchTarget(s);
+}
+
 const ROTATION: EventCategory[] = ["life", "training", "agent", "story", "press", "life", "gossip", "market", "club"];
+
+function pendingNarrativeDecisions(s: GameState): number {
+  return s.pending?.type === "event" ? 1 : 0;
+}
+
+function pendingMatchDecisions(s: GameState): number {
+  return s.pending?.type === "match" ? 1 : 0;
+}
 
 /**
  * Applies the selected pacing to an already-created season plan.
  * It is intentionally idempotent per season. Informational/sim slots never
- * count as decisions. Extra density is made of interactive narrative slots,
- * not fake match cards.
+ * count as decisions. The card already open on screen belongs to the season
+ * budget too; otherwise Nueva carrera could silently exceed the advertised
+ * range by one decision.
  */
 export function applyCareerPacing(s: GameState): void {
   if (!s.clubId || !Array.isArray(s.queue)) return;
@@ -87,8 +100,10 @@ export function applyCareerPacing(s: GameState): void {
   const wantedMatches = keyMatchTarget(s);
   if (s.director) s.director.budget = wantedNarrative;
 
+  const openMatches = pendingMatchDecisions(s);
+  const wantedQueuedMatches = Math.max(0, wantedMatches - openMatches);
   const matchIndices = s.queue.map((slot, i) => ({ slot, i })).filter((x) => x.slot.kind === "match");
-  let removeMatches = Math.max(0, matchIndices.length - wantedMatches);
+  let removeMatches = Math.max(0, matchIndices.length - wantedQueuedMatches);
   if (removeMatches > 0) {
     const next: Slot[] = [];
     for (const slot of s.queue) {
@@ -101,8 +116,9 @@ export function applyCareerPacing(s: GameState): void {
     s.queue = next;
   }
 
-  const existingInteractive = s.queue.filter((x) => x.kind === "event" || x.kind === "agent" || x.kind === "life").length;
-  const missing = Math.max(0, wantedNarrative - existingInteractive);
+  const openNarrative = pendingNarrativeDecisions(s);
+  const existingQueuedNarrative = s.queue.filter((x) => x.kind === "event" || x.kind === "agent" || x.kind === "life").length;
+  const missing = Math.max(0, wantedNarrative - openNarrative - existingQueuedNarrative);
   if (missing > 0) {
     const insertEvery = Math.max(1, Math.floor(s.queue.length / missing));
     const expanded: Slot[] = [];
