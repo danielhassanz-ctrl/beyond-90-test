@@ -37,6 +37,13 @@ try {
   await page.getByPlaceholder("Álvaro Nieto").fill("Daniel QA");
   await page.getByRole("button", { name: /^Ambicioso/ }).click();
   await page.getByRole("button", { name: /^Leal/ }).click();
+
+  // The three requested career lengths are a product contract, not hidden config.
+  for (const mode of ["Express", "Standard", "Pro"]) {
+    await page.getByRole("button", { name: new RegExp(`^${mode}\\b`, "i") }).waitFor({ state: "visible", timeout: 10_000 });
+  }
+  await page.getByRole("button", { name: /^Pro\b/i }).click();
+
   await page.getByRole("button", { name: "Elegir cantera" }).click();
   await page.waitForURL(/\/cantera$/, { timeout: 10_000 });
   await page.getByRole("heading", { name: "Cuatro canteras te quieren" }).waitFor({ state: "visible" });
@@ -47,6 +54,14 @@ try {
   await page.getByRole("button", { name: "Firmar en la cantera" }).click();
   await page.waitForURL(/\/historia$/, { timeout: 10_000 });
   await assertNoFatal("first story render");
+
+  const saveKey = "beyond90:save:v1";
+  const selectedMode = await page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw).careerMode ?? null;
+  }, saveKey);
+  if (selectedMode !== "pro") throw new Error(`career mode selection did not persist: ${selectedMode}`);
 
   const firstAction = page.locator("article button").first();
   await firstAction.waitFor({ state: "visible", timeout: 10_000 });
@@ -61,9 +76,14 @@ try {
   await page.waitForTimeout(200);
   if (!/\/historia$/.test(page.url())) throw new Error(`reload lost route: ${page.url()}`);
   await page.locator("article").waitFor({ state: "visible", timeout: 10_000 });
+  const reloadedMode = await page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw).careerMode ?? null;
+  }, saveKey);
+  if (reloadedMode !== "pro") throw new Error(`career mode changed after reload: ${reloadedMode}`);
   await assertNoFatal("saved career reload");
 
-  const saveKey = "beyond90:save:v1";
   const backupKey = `${saveKey}:backup`;
   const backupReady = await page.evaluate(([primaryKey, recoveryKey]) => {
     const primaryRaw = localStorage.getItem(primaryKey);
@@ -83,10 +103,10 @@ try {
   const recoveredPrimary = await page.evaluate((key) => {
     const raw = localStorage.getItem(key);
     if (!raw) return false;
-    JSON.parse(raw);
-    return true;
+    const state = JSON.parse(raw);
+    return state.careerMode === "pro";
   }, saveKey);
-  if (!recoveredPrimary) throw new Error("save recovery: backup did not repair corrupted primary save");
+  if (!recoveredPrimary) throw new Error("save recovery: backup did not repair corrupted primary save with career mode intact");
   await assertNoFatal("corrupted save recovery");
 
   const retirementPrepared = await page.evaluate((key) => {
@@ -142,7 +162,7 @@ try {
   if (!persistedPostCareer) throw new Error("post-career coach path/style did not persist after reload");
   await assertNoFatal("post-career persistence");
 
-  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} route=${page.url()} recovery=ok legacy=ok postCareer=coach-a`);
+  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} mode=pro route=${page.url()} recovery=ok legacy=ok postCareer=coach-a`);
 } finally {
   await browser.close();
 }

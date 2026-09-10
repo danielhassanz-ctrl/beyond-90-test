@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "qa:career": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-career-smoke.ts",
     "qa:branches": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/branch-coverage-smoke.ts",
+    "qa:pacing": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/pacing-smoke.ts",
     "format": "prettier --write ."
   },
   "dependencies": {
