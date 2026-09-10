@@ -90,8 +90,16 @@ export function applyCareerPacing(s: GameState): void {
   const marker = 10_000 + s.seasonIndex;
   if (s.flags["career_pacing_season"] === marker) return;
 
-  const wantedNarrative = narrativeTarget(s);
+  const config = careerModeConfig(careerModeOf(s));
   const wantedMatches = keyMatchTarget(s);
+  /*
+   * Runtime can legitimately consume a planned narrative slot without showing
+   * a player decision (injury, eligibility gate, director cooldown, etc.).
+   * Plan up to the mode ceiling rather than a fragile exact seed target: this
+   * leaves recovery capacity while the hard ceiling still guarantees that a
+   * perfect-conversion season cannot exceed 15 / 25 / 40 decisions.
+   */
+  const wantedNarrative = Math.max(narrativeTarget(s), config.decisions[1] - wantedMatches);
   if (s.director) s.director.budget = wantedNarrative;
 
   const wantedQueuedMatches = Math.max(0, wantedMatches - pendingMatchDecisions(s));
