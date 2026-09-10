@@ -64,6 +64,31 @@ try {
   await assertNoFatal("saved career reload");
 
   const saveKey = "beyond90:save:v1";
+  const backupKey = `${saveKey}:backup`;
+  const backupReady = await page.evaluate(([primaryKey, recoveryKey]) => {
+    const primaryRaw = localStorage.getItem(primaryKey);
+    const backupRaw = localStorage.getItem(recoveryKey);
+    if (!primaryRaw || !backupRaw) return false;
+    JSON.parse(primaryRaw);
+    JSON.parse(backupRaw);
+    return true;
+  }, [saveKey, backupKey]);
+  if (!backupReady) throw new Error("save recovery: valid primary/backup pair was not created");
+
+  await page.evaluate((key) => localStorage.setItem(key, "{corrupted-save"), saveKey);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(200);
+  if (!/\/historia$/.test(page.url())) throw new Error(`save recovery lost route: ${page.url()}`);
+  await page.locator("article").waitFor({ state: "visible", timeout: 10_000 });
+  const recoveredPrimary = await page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+    if (!raw) return false;
+    JSON.parse(raw);
+    return true;
+  }, saveKey);
+  if (!recoveredPrimary) throw new Error("save recovery: backup did not repair corrupted primary save");
+  await assertNoFatal("corrupted save recovery");
+
   const retirementPrepared = await page.evaluate((key) => {
     const raw = localStorage.getItem(key);
     if (!raw) return false;
@@ -117,7 +142,7 @@ try {
   if (!persistedPostCareer) throw new Error("post-career coach path/style did not persist after reload");
   await assertNoFatal("post-career persistence");
 
-  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} route=${page.url()} legacy=ok postCareer=coach-a`);
+  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} route=${page.url()} recovery=ok legacy=ok postCareer=coach-a`);
 } finally {
   await browser.close();
 }
