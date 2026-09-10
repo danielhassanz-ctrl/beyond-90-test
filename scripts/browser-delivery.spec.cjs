@@ -1,6 +1,6 @@
 const { test, expect, devices } = require("@playwright/test");
 
-const BASE_URL = (process.env.TEST_BASE_URL || routeUrl()).replace(/\/?$/, "/");
+const BASE_URL = (process.env.TEST_BASE_URL || "http://127.0.0.1:4173/").replace(/\/?$/, "/");
 const routeUrl = (route = "") => new URL(route.replace(/^\//, ""), BASE_URL).toString();
 
 test.use({
