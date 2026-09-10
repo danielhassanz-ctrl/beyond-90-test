@@ -26,15 +26,6 @@ export function careerSeed(s: GameState): number {
   return anyS.careerSeed;
 }
 
-/**
- * Hash determinista y estable (sin dependencias).
- *
- * La versión anterior era un polinomio lineal módulo 2^31-1. Servía para
- * nombres, pero al encadenar muchas selecciones narrativas con el mismo seed
- * producía correlaciones visibles entre candidatos y primeros arcos. Esta
- * mezcla FNV-1a + avalancha final conserva reproducibilidad y separa mucho
- * mejor semillas/textos cercanos.
- */
 export function hash(seed: number, text: string): number {
   let h = (2166136261 ^ (seed >>> 0)) >>> 0;
   for (let i = 0; i < text.length; i++) {
@@ -65,12 +56,54 @@ const ROLES: Record<string, { role: string; female?: boolean }> = {
   press: { role: "Periodista" },
   physio: { role: "Fisioterapeuta" },
   partner: { role: "Pareja", female: true },
+  social: { role: "Contacto de redes", female: true },
+  adviser: { role: "Representante" },
   scout: { role: "Ojeador" },
 };
+
+type CastPerson = { name: string; relation?: number; role?: string };
+type CastMemory = GameState["memory"] & {
+  careerCast?: {
+    adviserKind?: "agent" | "father" | "friend";
+    adviser?: CastPerson;
+    coach?: CastPerson;
+    physio?: CastPerson;
+    captain?: CastPerson;
+    teammate?: CastPerson;
+    social?: CastPerson;
+  };
+};
+
+function castPerson(s: GameState, key: string): { name: string; role: string; mood: number } | null {
+  const cast = (s.memory as CastMemory).careerCast;
+  if (!cast) return null;
+  const map: Record<string, CastPerson | undefined> = {
+    coach: cast.coach,
+    physio: cast.physio,
+    captain: cast.captain,
+    friend: cast.teammate,
+    social: cast.social,
+    partner: cast.social,
+    adviser: cast.adviser,
+  };
+  const p = map[key];
+  if (!p?.name) return null;
+  let role = ROLES[key]?.role ?? "Conocido";
+  if (key === "adviser") {
+    role = cast.adviserKind === "father" ? "Padre y asesor" : cast.adviserKind === "friend" ? "Amigo y asesor" : "Representante";
+  }
+  return { name: p.name, role, mood: typeof p.relation === "number" ? p.relation : 50 };
+}
 
 /** Devuelve (creando si hace falta) el NPC persistente de un rol. */
 export function npc(s: GameState, key: keyof typeof ROLES | string): { name: string; role: string; mood: number } {
   if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
+  const cast = castPerson(s, key);
+  if (cast) {
+    const existing = s.memory.npcs[key];
+    if (!existing || existing.name !== cast.name) s.memory.npcs[key] = cast;
+    return s.memory.npcs[key]!;
+  }
   const existing = s.memory.npcs[key];
   if (existing && typeof existing.name === "string") return existing;
   const meta = ROLES[key] ?? { role: "Conocido" };
@@ -85,6 +118,18 @@ export const npcName = (s: GameState, key: string): string => npc(s, key).name;
 export function npcMood(s: GameState, key: string, delta: number): void {
   const n = npc(s, key);
   n.mood = Math.max(0, Math.min(100, Math.round(n.mood + delta)));
+  const cast = (s.memory as CastMemory).careerCast;
+  const map: Record<string, CastPerson | undefined> = {
+    coach: cast?.coach,
+    physio: cast?.physio,
+    captain: cast?.captain,
+    friend: cast?.teammate,
+    social: cast?.social,
+    partner: cast?.social,
+    adviser: cast?.adviser,
+  };
+  const p = map[key];
+  if (p && typeof p.relation === "number") p.relation = n.mood;
 }
 
 /** "Nombre, rol" para que el jugador nunca tenga que adivinar quién habla. */
