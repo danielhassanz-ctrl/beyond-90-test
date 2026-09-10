@@ -31,7 +31,8 @@ function countPlan(s: GameState) {
   const openMatches = s.pending?.type === "match" ? 1 : 0;
   const narrative = openNarrative + s.queue.filter(isNarrativeSlot).length;
   const matches = openMatches + s.queue.filter((x) => x.kind === "match").length;
-  return { narrative, matches, decisions: narrative + matches };
+  const simulated = s.queue.reduce((sum, slot) => sum + (slot.kind === "sim" ? (slot.matches ?? 0) : 0), 0);
+  return { narrative, matches, decisions: narrative + matches, simulated, seasonMatches: matches + simulated };
 }
 
 assert.equal(careerModeOf(createGame(player)), DEFAULT_CAREER_MODE, "legacy/new states without a mode must default to Standard");
@@ -71,6 +72,7 @@ function assertMode(mode: CareerMode, seed: number) {
     actual.matches >= config.keyMatches[0] && actual.matches <= config.keyMatches[1],
     `${mode}/${seed}: ${actual.matches} key matches outside ${config.keyMatches[0]}-${config.keyMatches[1]}`,
   );
+  assert.equal(actual.seasonMatches, 34, `${mode}/${seed}: pacing must keep the football calendar at 34 matches, got ${actual.seasonMatches}`);
 
   const before = JSON.stringify(s.queue);
   applyCareerPacing(s);
@@ -81,4 +83,4 @@ for (const { id } of CAREER_MODES) {
   for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertMode(id, seed);
 }
 
-console.log("Career pacing QA passed: Express 10-15, Standard 20-25, Pro 30-40; open cards count and key matches stay capped.");
+console.log("Career pacing QA passed: Express 10-15, Standard 20-25, Pro 30-40; open cards count, key matches stay capped, and seasons stay at 34 matches.");
