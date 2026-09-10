@@ -47,6 +47,7 @@ function state(): GameState {
 
 {
   const s = state();
+  s.age = 16;
   const cast = ensureCareerCast(s);
   assert.ok(cast.adviser.name);
   assert.ok(cast.coach.name);
@@ -58,6 +59,13 @@ function state(): GameState {
   assert.equal(s.memory.npcs.physio?.name, cast.physio.name);
   assert.equal(s.memory.npcs.captain?.name, cast.captain.name);
   assert.equal(s.memory.npcs.friend?.name, cast.teammate.name);
+  assert.equal(s.memory.npcs.agent?.name, cast.adviser.name);
+  assert.equal(s.agent.present, true, "the adviser channel must exist from age 16");
+  assert.equal(s.hasAgent, true, "the career cannot begin with an anonymous/no-adviser state");
+  assert.equal(s.agent.name, cast.adviser.name, "all adviser cards must use the persistent named adviser");
+  assert.ok(s.rel.agent >= 45, "the starting adviser must already have a meaningful relationship with the player");
+  if (cast.adviserKind === "agent") assert.ok(s.agent.commission > 0, "professional representatives keep a commission");
+  else assert.equal(s.agent.commission, 0, "father/friend advisers cannot charge an agent commission");
   assert.deepEqual(ensureCareerCast(s), cast, "cast must persist rather than reroll");
 }
 
@@ -131,4 +139,4 @@ function state(): GameState {
   assert.equal(majorInternationalTournament(s), "Copa Mundial de la FIFA");
 }
 
-console.log("CAREER_STORY_SMOKE_OK: ordered age/status story context, persistent cast, pacing, Europe and nationality-aware tournament chronology are guarded.");
+console.log("CAREER_STORY_SMOKE_OK: ordered age/status story context, persistent cast, age-16 adviser, pacing, Europe and nationality-aware tournament chronology are guarded.");
