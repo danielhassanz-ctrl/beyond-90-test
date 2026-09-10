@@ -32,8 +32,11 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Career pacing QA
+      - name: Career pacing plan QA
         run: npm run qa:pacing
+
+      - name: Career pacing runtime QA
+        run: npm run qa:pacing:runtime
 
       - name: Full career smoke QA
         run: npm run qa:career
