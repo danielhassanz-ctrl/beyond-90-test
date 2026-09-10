@@ -8,6 +8,8 @@ import {
   majorInternationalTournament,
   seniorInternationalEligible,
 } from "../src/game/competition-calendar";
+import { adviserContactEveryScenes, footballCareerStoryContext } from "../src/game/football-career-story";
+import { setCareerMode } from "../src/game/pacing";
 import type { GameState, Player } from "../src/game/types";
 
 const basePlayer: Player = {
@@ -68,6 +70,45 @@ function state(): GameState {
   assert.equal(careerStatus(s), "prospect");
   assert.equal(seniorInternationalEligible(s), false, "unknown academy players cannot reach senior tournaments");
   assert.equal(europeanStoryEligible(s), false, "academy players cannot receive European-night stories");
+  const ctx = footballCareerStoryContext(s);
+  assert.ok(ctx.themes.includes("adviser"));
+  assert.ok(ctx.themes.includes("coach"));
+  assert.ok(ctx.themes.includes("captain"));
+  assert.ok(ctx.themes.includes("teammate"));
+  assert.ok(ctx.themes.includes("family"));
+  assert.ok(!ctx.themes.includes("sponsor"), "unknown 16-year-olds cannot receive superstar sponsorship arcs");
+  assert.ok(!ctx.themes.includes("property"), "unknown 16-year-olds cannot receive luxury property arcs");
+  assert.equal(adviserContactEveryScenes(s), 2, "the adviser must be a frequent early-career voice");
+}
+
+{
+  const s = state();
+  s.age = 28;
+  s.stage = "first";
+  s.overall = 91;
+  s.fame = 92;
+  s.salary = 1500;
+  s.wealth = 5000;
+  s.titles = ["Liga", "Champions", "Copa", "Supercopa", "Mundial de Clubes"];
+  s.awards = ["Balón de Oro", "The Best"];
+  const ctx = footballCareerStoryContext(s);
+  assert.equal(ctx.era, "prime");
+  assert.equal(ctx.status, "legend");
+  assert.ok(ctx.themes.includes("sponsor"));
+  assert.ok(ctx.themes.includes("property"));
+  assert.ok(ctx.themes.includes("leadership"));
+  assert.ok(ctx.themes.includes("national_team"));
+  assert.ok(!ctx.themes.includes("legacy"), "retirement/legacy arcs should not dominate a 28-year-old legend");
+}
+
+{
+  const s = state();
+  setCareerMode(s, "express");
+  assert.deepEqual(footballCareerStoryContext(s).seasonDecisionRange, [10, 15]);
+  setCareerMode(s, "standard");
+  assert.deepEqual(footballCareerStoryContext(s).seasonDecisionRange, [20, 25]);
+  setCareerMode(s, "pro");
+  assert.deepEqual(footballCareerStoryContext(s).seasonDecisionRange, [30, 40]);
 }
 
 {
@@ -90,4 +131,4 @@ function state(): GameState {
   assert.equal(majorInternationalTournament(s), "Copa Mundial de la FIFA");
 }
 
-console.log("CAREER_STORY_SMOKE_OK: age/status, persistent cast, Europe and nationality-aware tournament chronology are guarded.");
+console.log("CAREER_STORY_SMOKE_OK: ordered age/status story context, persistent cast, pacing, Europe and nationality-aware tournament chronology are guarded.");
