@@ -1,76 +1,84 @@
 import assert from "node:assert/strict";
+import { chooseClub, createGame } from "../src/game/engine";
 import {
   CAREER_MODES,
   DEFAULT_CAREER_MODE,
   applyCareerPacing,
   careerModeConfig,
   careerModeOf,
+  decisionTarget,
   keyMatchTarget,
   narrativeTarget,
   setCareerMode,
   type CareerMode,
 } from "../src/game/pacing";
-import type { GameState, Slot } from "../src/game/types";
+import type { GameState, Player, Slot } from "../src/game/types";
 
-function state(mode?: CareerMode): GameState {
-  const queue: Slot[] = [
-    { kind: "event", category: "preseason" },
-    { kind: "match", tag: "debut" },
-    { kind: "sim", matches: 5 },
-    { kind: "event", category: "training" },
-    { kind: "match", tag: "scouts" },
-    { kind: "sim", matches: 5 },
-    { kind: "event", category: "life" },
-    { kind: "match", tag: "euro" },
-    { kind: "sim", matches: 5 },
-    { kind: "event", category: "agent" },
-    { kind: "match", tag: "cup" },
-    { kind: "sim", matches: 5 },
-    { kind: "event", category: "press" },
-    { kind: "match", tag: "decisive" },
-    { kind: "sim", matches: 5 },
-    { kind: "event", category: "story" },
-    { kind: "match", tag: "scouts" },
-    { kind: "sim", matches: 4 },
-    { kind: "event", category: "life" },
-  ];
-  const s = {
-    careerSeed: 12345,
-    seasonIndex: 3,
-    clubId: "real-madrid",
-    queue,
-    flags: {},
-    director: { budget: 7 },
-  } as unknown as GameState;
-  if (mode) setCareerMode(s, mode);
-  return s;
+const player: Player = {
+  name: "QA Player",
+  nickname: "",
+  position: "MC",
+  nationality: "España",
+  city: "Madrid",
+  avatar: null,
+  traits: ["ambicioso", "profesional"],
+};
+
+const isNarrativeSlot = (slot: Slot) => slot.kind === "event" || slot.kind === "agent" || slot.kind === "life";
+
+function countPlan(s: GameState) {
+  const openNarrative = s.pending?.type === "event" ? 1 : 0;
+  const openMatches = s.pending?.type === "match" ? 1 : 0;
+  const narrative = openNarrative + s.queue.filter(isNarrativeSlot).length;
+  const matches = openMatches + s.queue.filter((x) => x.kind === "match").length;
+  return { narrative, matches, decisions: narrative + matches };
 }
 
-assert.equal(careerModeOf(state()), DEFAULT_CAREER_MODE, "legacy saves must default to Standard");
+assert.equal(careerModeOf(createGame(player)), DEFAULT_CAREER_MODE, "legacy/new states without a mode must default to Standard");
 assert.deepEqual(CAREER_MODES.map((m) => [m.id, ...m.decisions]), [
   ["express", 10, 15],
   ["standard", 20, 25],
   ["pro", 30, 40],
 ]);
 
-for (const mode of ["express", "standard", "pro"] as const) {
-  const s = state(mode);
-  const config = careerModeConfig(mode);
-  const n = narrativeTarget(s);
-  const k = keyMatchTarget(s);
-  assert.ok(n >= config.narrative[0] && n <= config.narrative[1], `${mode}: narrative target outside range`);
-  assert.ok(k >= config.keyMatches[0] && k <= config.keyMatches[1], `${mode}: key-match target outside range`);
+function assertMode(mode: CareerMode, seed: number) {
+  let s = createGame(player);
+  s.careerSeed = seed;
+  setCareerMode(s, mode);
+  const firstOffer = s.offers[0];
+  assert.ok(firstOffer, "a new career must have an initial club offer");
 
+  // chooseClub opens the first card immediately. The open card MUST count in
+  // the advertised season budget; this protects Nueva carrera from +1 drift.
+  s = chooseClub(s, firstOffer.clubId);
+  setCareerMode(s, mode);
   applyCareerPacing(s);
-  assert.equal(s.director?.budget, n, `${mode}: director budget not updated`);
-  const interactive = s.queue.filter((x) => x.kind === "event" || x.kind === "agent" || x.kind === "life").length;
-  const matches = s.queue.filter((x) => x.kind === "match").length;
-  assert.ok(interactive >= n, `${mode}: not enough interactive narrative slots`);
-  assert.ok(matches <= Math.max(k, 3), `${mode}: too many key matches after pacing`);
+
+  const config = careerModeConfig(mode);
+  const expectedNarrative = narrativeTarget(s);
+  const expectedMatches = keyMatchTarget(s);
+  const expectedDecisions = decisionTarget(s);
+  const actual = countPlan(s);
+
+  assert.equal(actual.narrative, expectedNarrative, `${mode}/${seed}: wrong narrative decision count`);
+  assert.equal(actual.matches, expectedMatches, `${mode}/${seed}: wrong key-match count`);
+  assert.equal(actual.decisions, expectedDecisions, `${mode}/${seed}: wrong total decision count`);
+  assert.ok(
+    actual.decisions >= config.decisions[0] && actual.decisions <= config.decisions[1],
+    `${mode}/${seed}: ${actual.decisions} outside ${config.decisions[0]}-${config.decisions[1]}`,
+  );
+  assert.ok(
+    actual.matches >= config.keyMatches[0] && actual.matches <= config.keyMatches[1],
+    `${mode}/${seed}: ${actual.matches} key matches outside ${config.keyMatches[0]}-${config.keyMatches[1]}`,
+  );
 
   const before = JSON.stringify(s.queue);
   applyCareerPacing(s);
-  assert.equal(JSON.stringify(s.queue), before, `${mode}: pacing must be idempotent within a season`);
+  assert.equal(JSON.stringify(s.queue), before, `${mode}/${seed}: pacing must be idempotent within a season`);
 }
 
-console.log("Career pacing smoke: Express / Standard / Pro ranges, legacy default and idempotence OK");
+for (const { id } of CAREER_MODES) {
+  for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertMode(id, seed);
+}
+
+console.log("Career pacing QA passed: Express 10-15, Standard 20-25, Pro 30-40; open cards count and key matches stay capped.");
