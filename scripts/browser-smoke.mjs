@@ -1,6 +1,6 @@
 import { webkit, devices } from "@playwright/test";
 
-const baseURL = process.env.BEYOND90_URL || "http://127.0.0.1:4173";
+const baseURL = (process.env.BEYOND90_URL || "http://127.0.0.1:4173/").replace(/\/?$/, "/");
 const errors = [];
 const browser = await webkit.launch();
 const context = await browser.newContext({ ...devices["iPhone 14"] });
@@ -20,19 +20,20 @@ async function assertNoFatal(label) {
 
 try {
   await page.goto(baseURL, { waitUntil: "domcontentloaded", timeout: 30_000 });
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: "Nueva carrera" }).waitFor({ state: "visible", timeout: 10_000 });
   await assertNoFatal("cold start");
 
   await page.getByRole("button", { name: "Nueva carrera" }).click();
   await page.waitForURL(/\/onboarding$/, { timeout: 10_000 });
-  await page.getByLabel("Nombre y apellidos").fill("Daniel QA");
-  await page.getByLabel("Ciudad").fill("Madrid");
+  await page.getByPlaceholder("Álvaro Nieto").fill("Daniel QA");
   await page.getByRole("button", { name: /^Ambicioso/ }).click();
-  await page.getByRole("button", { name: /^Profesional/ }).click();
+  await page.getByRole("button", { name: /^Leal/ }).click();
   await page.getByRole("button", { name: "Elegir cantera" }).click();
   await page.waitForURL(/\/cantera$/, { timeout: 10_000 });
   await page.getByRole("heading", { name: "Cuatro canteras te quieren" }).waitFor({ state: "visible" });
-  const clubButtons = page.locator("ul button");
+  const clubButtons = page.locator("ul > li > button");
   const clubCount = await clubButtons.count();
   if (clubCount !== 4) throw new Error(`club selection: expected 4 offers, got ${clubCount}`);
   await clubButtons.first().click();
