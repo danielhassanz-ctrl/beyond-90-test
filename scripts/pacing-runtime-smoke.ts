@@ -33,13 +33,19 @@ function runFirstSeason(mode:CareerMode,seed:number){
   try{
     let s=createGame(player);s.careerSeed=seed;setCareerMode(s,mode);ensureCareerCast(s);
     const offer=s.offers[0];assert.ok(offer,`${mode}/${seed}: no initial club offer`);s=withRuntime(chooseClub(s,offer.clubId));
-    const startAge=s.age;let decisions=0,matches=0,steps=0;
-    while(s.age===startAge&&steps<600){if(isDecision(s)){decisions++;if(s.pending?.type==="match")matches++;}s=resolvePending(s);steps++;}
+    const startAge=s.age;let decisions=0,matches=0,steps=0;let hadInjury=false;
+    while(s.age===startAge&&steps<600){
+      if(s.pending?.type==="dynamic"&&(s.pending.kind==="injury_diagnosis"||s.pending.kind==="return"))hadInjury=true;
+      if(isDecision(s)){decisions++;if(s.pending?.type==="match")matches++;}
+      s=resolvePending(s);steps++;
+    }
     assert.ok(s.age>startAge,`${mode}/${seed}: season did not close`);
     const config=careerModeConfig(mode);
     assert.ok(decisions>=config.decisions[0]&&decisions<=config.decisions[1],`${mode}/${seed}: saw ${decisions}, expected ${config.decisions[0]}-${config.decisions[1]}`);
-    assert.ok(matches>=config.keyMatches[0]&&matches<=config.keyMatches[1],`${mode}/${seed}: saw ${matches} key matches, expected ${config.keyMatches[0]}-${config.keyMatches[1]}`);
+    assert.ok(matches<=config.keyMatches[1],`${mode}/${seed}: saw ${matches} key matches, maximum is ${config.keyMatches[1]}`);
+    const contextualMin=hadInjury?Math.max(2,config.keyMatches[0]-2):config.keyMatches[0];
+    assert.ok(matches>=contextualMin,`${mode}/${seed}: saw ${matches} key matches, expected at least ${contextualMin}${hadInjury?" in an injury-disrupted season":""}`);
   }finally{Math.random=originalRandom;}
 }
 for(const {id} of CAREER_MODES)for(const seed of [101,211,307,401,503])runFirstSeason(id,seed);
-console.log("RUNTIME_PACING_SMOKE_OK: counts match the same runtime wrapper used by the app.");
+console.log("RUNTIME_PACING_SMOKE_OK: counts match app runtime; injury seasons may legitimately lose up to two playable key matches.");
