@@ -22,13 +22,12 @@ export const CAREER_MODES: readonly CareerModeConfig[] = [
 ] as const;
 
 export const DEFAULT_CAREER_MODE: CareerMode = "standard";
-type WithCareerMode = GameState & { careerMode?: CareerMode };
 
-export function careerModeOf(s: GameState): CareerMode {
-  const mode = (s as WithCareerMode).careerMode;
+export function careerModeOf(s: Pick<GameState, "careerMode">): CareerMode {
+  const mode = s.careerMode;
   return mode === "express" || mode === "pro" || mode === "standard" ? mode : DEFAULT_CAREER_MODE;
 }
-export function setCareerMode(s: GameState, mode: CareerMode): void { (s as WithCareerMode).careerMode = mode; }
+export function setCareerMode(s: GameState, mode: CareerMode): void { s.careerMode = mode; }
 export function careerModeConfig(mode: CareerMode): CareerModeConfig { return CAREER_MODES.find((x) => x.id === mode) ?? CAREER_MODES[1]!; }
 
 function seededRange(s: GameState, key: string, range: readonly [number, number]): number {

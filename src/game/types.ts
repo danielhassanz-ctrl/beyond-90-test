@@ -165,7 +165,6 @@ export interface Thread {
   payload: Record<string, string | number>;
 }
 
-
 export interface AutoBlock {
   title: string;
   text: string;
@@ -340,6 +339,8 @@ export interface GameState {
   version: number;
   /** Semilla de carrera: da personalidad propia al reparto de eventos y NPCs. */
   careerSeed?: number;
+  /** Densidad narrativa elegida. Los saves antiguos se interpretan como Standard. */
+  careerMode?: import("./pacing").CareerMode;
   /** Ruta narrativa principal de esta carrera (persistida para coherencia). */
   storyRoute?: string;
   /** Estado del Narrative Director: arcos activos, memoria y callbacks. */
@@ -406,4 +407,3 @@ export interface GameState {
   pending: Card | null;
   lastOutcome: Outcome | null;
 }
-
