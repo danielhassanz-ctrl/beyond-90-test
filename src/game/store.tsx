@@ -12,6 +12,7 @@ import {
   resolveEventFree,
   resolveMatch,
 } from "./engine";
+import { applyCareerPacing, DEFAULT_CAREER_MODE, setCareerMode, type CareerMode } from "./pacing";
 import { choosePostCareerPath, choosePostCareerStyle, type PostCareerPath, type PostCareerStyle } from "./postcareer";
 import type { DynamicCard, GameState, MatchData, Player } from "./types";
 
@@ -21,7 +22,7 @@ interface GameContextValue {
   hasSave: boolean;
   error: string | null;
   clearError: () => void;
-  start: (player: Player) => void;
+  start: (player: Player, mode?: CareerMode) => void;
   pickClub: (clubId: string) => void;
   answerEvent: (eventId: string, choiceId: string) => void;
   answerFree: (eventId: string, text: string) => void;
@@ -39,7 +40,12 @@ const BACKUP_SAVE_KEY = `${SAVE_KEY}:backup`;
 function parseSave(raw: string | null): GameState | null {
   if (!raw) return null;
   try {
-    return migrate(JSON.parse(raw));
+    const state = migrate(JSON.parse(raw));
+    if (state) {
+      setCareerMode(state, (JSON.parse(raw) as { careerMode?: CareerMode }).careerMode ?? DEFAULT_CAREER_MODE);
+      applyCareerPacing(state);
+    }
+    return state;
   } catch {
     return null;
   }
@@ -90,8 +96,6 @@ function write(state: GameState | null) {
     return;
   }
 
-  // Keep the last readable primary as a true rollback point before replacing it.
-  // This intentionally makes backup one successful transaction behind primary.
   let previousPrimaryRaw: string | null = null;
   try {
     previousPrimaryRaw = localStorage.getItem(SAVE_KEY);
@@ -114,7 +118,6 @@ function write(state: GameState | null) {
     /* Storage blocked/full: the current session remains playable in memory. */
   }
 
-  // First save has no previous primary, so seed backup with the new valid state.
   if (primaryWritten && !parseSave(previousPrimaryRaw)) {
     try {
       localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
@@ -122,6 +125,11 @@ function write(state: GameState | null) {
       /* Backup is best effort and must never invalidate the newer primary save. */
     }
   }
+}
+
+function withPacing(next: GameState): GameState {
+  applyCareerPacing(next);
+  return next;
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -145,7 +153,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       let next: GameState;
       try {
         setError(null);
-        next = fn(prev);
+        next = withPacing(fn(prev));
       } catch {
         setError("Esa acción no se pudo aplicar. Pulsa \u00abReintentar escena\u00bb para seguir tu carrera.");
         return prev;
@@ -155,7 +163,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const start = useCallback((player: Player) => commit(createGame(player)), [commit]);
+  const start = useCallback((player: Player, mode: CareerMode = DEFAULT_CAREER_MODE) => {
+    const game = createGame(player);
+    setCareerMode(game, mode);
+    commit(game);
+  }, [commit]);
   const pickClub = useCallback((clubId: string) => apply((prev) => chooseClub(prev, clubId)), [apply]);
   const answerEvent = useCallback(
     (eventId: string, choiceId: string) =>
