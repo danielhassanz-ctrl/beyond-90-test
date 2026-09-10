@@ -26,15 +26,6 @@ export function careerSeed(s: GameState): number {
   return anyS.careerSeed;
 }
 
-/**
- * Hash determinista y estable (sin dependencias).
- *
- * La versión anterior era un polinomio lineal módulo 2^31-1. Servía para
- * nombres, pero al encadenar muchas selecciones narrativas con el mismo seed
- * producía correlaciones visibles entre candidatos y primeros arcos. Esta
- * mezcla FNV-1a + avalancha final conserva reproducibilidad y separa mucho
- * mejor semillas/textos cercanos.
- */
 export function hash(seed: number, text: string): number {
   let h = (2166136261 ^ (seed >>> 0)) >>> 0;
   for (let i = 0; i < text.length; i++) {
@@ -65,11 +56,42 @@ const ROLES: Record<string, { role: string; female?: boolean }> = {
   press: { role: "Periodista" },
   physio: { role: "Fisioterapeuta" },
   partner: { role: "Pareja", female: true },
+  social: { role: "Contacto de redes", female: true },
   scout: { role: "Ojeador" },
+  adviser: { role: "Representante" },
 };
+
+/** Keep the adviser identity synchronized with the live NPC system. */
+function ensureAdviser(s: GameState): void {
+  if (!s.agent || !s.memory) return;
+  if (!Array.isArray(s.agent.memories)) s.agent.memories = [];
+
+  let kind = s.agent.memories.find((m) => m.startsWith("adviser:"))?.split(":")[1];
+  if (kind !== "agent" && kind !== "father" && kind !== "friend") {
+    kind = (["agent", "father", "friend"] as const)[hash(careerSeed(s), "adviser-kind") % 3]!;
+    s.agent.memories.unshift(`adviser:${kind}`);
+  }
+
+  if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
+  const existing = s.memory.npcs["adviser"];
+  if (existing?.name) {
+    s.agent.name = existing.name;
+  } else {
+    const name = kind === "father" ? "Papá" : kind === "friend" ? nameFor(s, "career-friend") : nameFor(s, "career-agent");
+    const role = kind === "father" ? "Padre y asesor" : kind === "friend" ? "Amigo y asesor" : "Representante";
+    s.memory.npcs["adviser"] = { name, role, mood: 50 };
+    s.agent.name = name;
+  }
+
+  s.agent.present = true;
+  s.hasAgent = true;
+  s.agentName = s.agent.name;
+  if (s.rel && s.rel.agent <= 0) s.rel.agent = 50;
+}
 
 /** Devuelve (creando si hace falta) el NPC persistente de un rol. */
 export function npc(s: GameState, key: keyof typeof ROLES | string): { name: string; role: string; mood: number } {
+  ensureAdviser(s);
   if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
   const existing = s.memory.npcs[key];
   if (existing && typeof existing.name === "string") return existing;
