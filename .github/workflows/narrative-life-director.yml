@@ -1,0 +1,42 @@
+name: Beyond 90 narrative life director
+
+on:
+  push:
+    branches:
+      - narrative-life-director-v1
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  narrative:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Static pacing contract
+        run: npm run qa:pacing
+      - name: Runtime pacing contract
+        run: npm run qa:pacing:runtime
+      - name: Career story chronology
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/career-story-smoke.ts
+      - name: Full career smoke
+        run: npm run qa:career
+      - name: Narrative branch QA
+        run: npm run qa:branches
+      - name: Anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+      - name: Build
+        run: npm run build
