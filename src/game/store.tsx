@@ -90,6 +90,22 @@ function write(state: GameState | null) {
     return;
   }
 
+  // Keep the last readable primary as a true rollback point before replacing it.
+  // This intentionally makes backup one successful transaction behind primary.
+  let previousPrimaryRaw: string | null = null;
+  try {
+    previousPrimaryRaw = localStorage.getItem(SAVE_KEY);
+    if (parseSave(previousPrimaryRaw)) {
+      try {
+        localStorage.setItem(BACKUP_SAVE_KEY, previousPrimaryRaw as string);
+      } catch {
+        /* Backup is best effort; never block a current-session update. */
+      }
+    }
+  } catch {
+    /* Storage reads can fail in Safari/private mode; continue with in-memory state. */
+  }
+
   let primaryWritten = false;
   try {
     localStorage.setItem(SAVE_KEY, nextRaw);
@@ -98,7 +114,8 @@ function write(state: GameState | null) {
     /* Storage blocked/full: the current session remains playable in memory. */
   }
 
-  if (primaryWritten) {
+  // First save has no previous primary, so seed backup with the new valid state.
+  if (primaryWritten && !parseSave(previousPrimaryRaw)) {
     try {
       localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
     } catch {
