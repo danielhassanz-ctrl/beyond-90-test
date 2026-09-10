@@ -1,3 +1,6 @@
+import { europeanCompetition } from "./career";
+import { careerEra } from "./career-life";
+import { eligibleKeyMatchKinds } from "./competition-calendar";
 import { careerSeed, hash } from "./npc";
 import type { EventCategory, GameState, Slot } from "./types";
 
@@ -37,7 +40,17 @@ export function narrativeTarget(s: GameState): number { return seededRange(s, "n
 export function keyMatchTarget(s: GameState): number { return seededRange(s, "key-match-target", careerModeConfig(careerModeOf(s)).keyMatches); }
 export function decisionTarget(s: GameState): number { return narrativeTarget(s) + keyMatchTarget(s); }
 
-const ROTATION: EventCategory[] = ["life", "training", "agent", "story", "press", "life", "gossip", "market", "club"];
+export function narrativeRotationFor(s: GameState): EventCategory[] {
+  switch (careerEra(s)) {
+    case "academy": return ["agent", "training", "club", "life", "training", "agent", "gossip", "story", "club"];
+    case "breakthrough": return ["club", "training", "agent", "market", "press", "life", "gossip", "agent", "story"];
+    case "established": return ["club", "market", "press", "agent", "life", "training", "gossip", "market", "story"];
+    case "prime": return ["market", "press", "club", "agent", "life", "story", "press", "medical", "market"];
+    case "veteran": return ["medical", "club", "agent", "life", "press", "market", "story", "medical", "life"];
+    case "legacy": return ["life", "agent", "medical", "press", "story", "market", "life", "club", "medical"];
+  }
+}
+
 const isNarrativeSlot = (slot: Slot): boolean => slot.kind === "event" || slot.kind === "agent" || slot.kind === "life";
 const pendingNarrativeDecisions = (s: GameState): number => s.pending?.type === "event" ? 1 : 0;
 const pendingMatchDecisions = (s: GameState): number => s.pending?.type === "match" ? 1 : 0;
@@ -59,29 +72,46 @@ function compressNarrative(slots: Slot[], keepCount: number): Slot[] {
   return slots.filter((slot, i) => !isNarrativeSlot(slot) || keep.has(i));
 }
 
-/**
- * Some base season plans naturally contain fewer key matches than Pro asks for.
- * Fill only the deficit, using decisive league fixtures and spacing them through
- * the existing calendar. These are real playable choices, not filler cards.
- */
-function addMissingKeyMatches(slots: Slot[], missing: number): Slot[] {
+function contextualKeySlots(s: GameState, missing: number): Slot[] {
+  if (missing <= 0) return [];
+  const eligible = eligibleKeyMatchKinds(s);
+  const euro = europeanCompetition(s);
+  const additions: Slot[] = [];
+  const hasTag = (tag: NonNullable<Slot["tag"]>) => s.queue.some((slot) => slot.kind === "match" && slot.tag === tag);
+  const push = (slot: Slot) => { if (additions.length < missing) additions.push(slot); };
+
+  if (eligible.includes("europe") && euro && !hasTag("euro")) push({ kind: "match", tag: "euro", tie: true, competition: euro });
+  if (eligible.includes("exclub") && !hasTag("exclub")) push({ kind: "match", tag: "exclub" });
+  if (eligible.includes("derby") && !hasTag("derby")) push({ kind: "match", tag: "derby" });
+  if (eligible.includes("cup")) push({ kind: "match", tag: "cup", tie: true });
+  if (eligible.includes("title_decider")) push({ kind: "match", tag: "decisive" });
+  if (eligible.includes("debut") && !hasTag("debut")) push({ kind: "match", tag: "debut" });
+
+  const fallback: Slot[] = [
+    { kind: "match", tag: "decisive", label: "Partido clave de la temporada" },
+    { kind: "match", tag: "cup", tie: true },
+    { kind: "match", tag: "scouts" },
+  ];
+  let i = 0;
+  while (additions.length < missing) additions.push(fallback[i++ % fallback.length]!);
+  return additions;
+}
+
+function addMissingKeyMatches(s: GameState, slots: Slot[], missing: number): Slot[] {
   if (missing <= 0) return slots;
   const out = [...slots];
-  for (let n = 0; n < missing; n++) {
+  const additions = contextualKeySlots({ ...s, queue: out }, missing);
+  additions.forEach((addition, n) => {
     const candidates = out
       .map((slot, i) => ({ slot, i }))
       .filter(({ slot }) => slot.kind === "sim" || isNarrativeSlot(slot))
       .map(({ i }) => i);
     const fallback = Math.max(0, out.length - 1);
     const pickIndex = candidates.length
-      ? candidates[Math.floor(((n + 1) * candidates.length) / (missing + 1))]!
+      ? candidates[Math.floor(((n + 1) * candidates.length) / (additions.length + 1))]!
       : fallback;
-    out.splice(pickIndex + 1, 0, {
-      kind: "match",
-      tag: "decisive",
-      label: n === 0 ? "Partido clave de la temporada" : `Partido clave ${n + 1}`,
-    });
-  }
+    out.splice(pickIndex + 1, 0, addition);
+  });
   return out;
 }
 
@@ -106,24 +136,25 @@ export function applyCareerPacing(s: GameState): void {
   }
 
   const currentQueuedMatches = s.queue.filter((slot) => slot.kind === "match").length;
-  s.queue = addMissingKeyMatches(s.queue, Math.max(0, wantedQueuedMatches - currentQueuedMatches));
+  s.queue = addMissingKeyMatches(s, s.queue, Math.max(0, wantedQueuedMatches - currentQueuedMatches));
 
   const wantedQueuedNarrative = Math.max(0, wantedNarrative - pendingNarrativeDecisions(s));
   s.queue = compressNarrative(s.queue, wantedQueuedNarrative);
   const existingQueuedNarrative = s.queue.filter(isNarrativeSlot).length;
   const missing = Math.max(0, wantedQueuedNarrative - existingQueuedNarrative);
   if (missing > 0) {
+    const rotation = narrativeRotationFor(s);
     const insertEvery = Math.max(1, Math.floor(Math.max(1, s.queue.length) / missing));
     const expanded: Slot[] = [];
     let added = 0;
     for (let i = 0; i < s.queue.length; i++) {
       expanded.push(s.queue[i]!);
       if (added < missing && (i + 1) % insertEvery === 0 && s.queue[i]?.kind !== "match") {
-        expanded.push({ kind: "event", category: ROTATION[(i + added) % ROTATION.length]! });
+        expanded.push({ kind: "event", category: rotation[(i + added) % rotation.length]! });
         added += 1;
       }
     }
-    while (added < missing) { expanded.push({ kind: "event", category: ROTATION[added % ROTATION.length]! }); added += 1; }
+    while (added < missing) { expanded.push({ kind: "event", category: rotation[added % rotation.length]! }); added += 1; }
     s.queue = expanded;
   }
   s.flags["career_pacing_season"] = marker;
