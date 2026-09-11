@@ -91,6 +91,21 @@ function resolvePending(s: GameState): GameState {
 }
 
 function narrativeObservation(s: GameState): NarrativeObservation | null {
+  if (s.pending?.type === "event") {
+    const event = eventById(s.pending.eventId);
+    if (!event) return null;
+    const text = typeof event.text === "function" ? event.text(s) : event.text;
+    return {
+      key: `event:${event.id}`,
+      title: event.title.trim(),
+      text: text.trim(),
+      choices: event.choices.map((choice) => choice.label.trim()),
+      category: event.category ?? "life",
+      scene: s.sceneCount ?? 0,
+      strictTitle: true,
+    };
+  }
+
   if (s.pending?.type !== "dynamic") return null;
   const kind = s.pending.kind;
   const authored = kind === "arc" || kind === "arc_beat" || kind === "arc_callback" || kind === "thread" || kind.startsWith("cons_");
@@ -233,4 +248,4 @@ const diversity = new Set(results.map((r) => `${r.authoredScenes}:${r.distinctTi
 assert(diversity.size >= 3, "Narrative careers are converging too strongly across seeds");
 
 console.table(results);
-console.log(`NARRATIVE_QUALITY_SMOKE_OK careers=${results.length} sourceBan=agent_check antiRepeat=exact+setup+near memoryDedup=ok diversity=${diversity.size}`);
+console.log(`NARRATIVE_QUALITY_SMOKE_OK careers=${results.length} sourceBan=agent_check antiRepeat=events+exact+setup+near memoryDedup=ok diversity=${diversity.size}`);
