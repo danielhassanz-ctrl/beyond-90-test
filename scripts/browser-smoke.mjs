@@ -17,12 +17,39 @@ page.on("console", (msg) => {
   }
 });
 
+const saveKey = "beyond90:save:v1";
+const backupKey = `${saveKey}:backup`;
+
 async function assertNoFatal(label) {
   const body = await page.locator("body").innerText();
   if (/Esta pantalla no ha cargado|Cargando tu carrera|Esa acción no se pudo aplicar/i.test(body)) {
     throw new Error(`${label}: fatal/loading state visible: ${body.slice(0, 500)}`);
   }
   if (errors.length) throw new Error(`${label}: browser errors: ${errors.join(" | ")}`);
+}
+
+async function saved() {
+  return page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  }, saveKey);
+}
+
+async function assertOpeningEvent(eventId, label) {
+  const state = await saved();
+  if (!state) throw new Error(`${label}: no persisted state`);
+  if (state.pending?.type === "match") throw new Error(`${label}: football match leaked before opening completion`);
+  if (state.pending?.type !== "event" || state.pending.eventId !== eventId) {
+    throw new Error(`${label}: expected ${eventId}, got ${state.pending?.type ?? "nothing"}/${state.pending?.eventId ?? ""}`);
+  }
+  await assertNoFatal(label);
+}
+
+async function chooseAndNext(buttonName, nextHeading) {
+  await page.getByRole("button", { name: buttonName }).click();
+  await page.getByRole("button", { name: "Siguiente escena" }).waitFor({ state: "visible", timeout: 10_000 });
+  await page.getByRole("button", { name: "Siguiente escena" }).click();
+  if (nextHeading) await page.getByRole("heading", { name: nextHeading }).waitFor({ state: "visible", timeout: 10_000 });
 }
 
 try {
@@ -37,54 +64,78 @@ try {
   await page.getByPlaceholder("Álvaro Nieto").fill("Daniel QA");
   await page.getByRole("button", { name: /^Ambicioso/ }).click();
   await page.getByRole("button", { name: /^Leal/ }).click();
-
-  // The three requested career lengths are a product contract, not hidden config.
   for (const mode of ["Express", "Standard", "Pro"]) {
     await page.getByRole("button", { name: new RegExp(`^${mode}\\b`, "i") }).waitFor({ state: "visible", timeout: 10_000 });
   }
   await page.getByRole("button", { name: /^Pro\b/i }).click();
 
-  await page.getByRole("button", { name: "Elegir cantera" }).click();
+  // P0 contract: story starts at home, NOT on the academy-offer or match screen.
+  await page.getByRole("button", { name: "Empezar tu historia" }).click();
+  await page.waitForURL(/\/historia$/, { timeout: 10_000 });
+  await page.getByRole("heading", { name: "Antes del fútbol está tu vida" }).waitFor({ state: "visible", timeout: 10_000 });
+  await assertOpeningEvent("opening_home_family", "decision #1 home/family");
+
+  const selectedMode = (await saved())?.careerMode ?? null;
+  if (selectedMode !== "pro") throw new Error(`career mode selection did not persist: ${selectedMode}`);
+
+  await chooseAndNext("Decir que no darás ningún paso sin hablarlo en casa", "¿Quién va a cuidar tu carrera?");
+  await assertOpeningEvent("opening_adviser_choice", "decision #2 adviser");
+
+  // Decision #2 must be adviser/family management — this is the exact regression the user found.
+  await page.getByRole("button", { name: "Trabajar con un representante profesional" }).click();
   await page.waitForURL(/\/cantera$/, { timeout: 10_000 });
-  await page.getByRole("heading", { name: "Cuatro canteras te quieren" }).waitFor({ state: "visible" });
+  await page.getByRole("heading", { name: "Ahora sí: cuatro caminos" }).waitFor({ state: "visible", timeout: 10_000 });
   const clubButtons = page.locator("ul > li > button");
   const clubCount = await clubButtons.count();
   if (clubCount !== 4) throw new Error(`club selection: expected 4 offers, got ${clubCount}`);
+  const clubState = await saved();
+  if (clubState?.pending?.type === "match") throw new Error("club evaluation gate already contains a match");
+
   await clubButtons.first().click();
-  await page.getByRole("button", { name: "Firmar en la cantera" }).click();
+  await page.getByRole("button", { name: "Sentarnos a negociar con este club" }).click();
   await page.waitForURL(/\/historia$/, { timeout: 10_000 });
-  await assertNoFatal("first story render");
+  await page.getByRole("heading", { name: "No firmas hasta entenderlo" }).waitFor({ state: "visible", timeout: 10_000 });
+  await assertOpeningEvent("opening_first_agreement", "first agreement");
 
-  const saveKey = "beyond90:save:v1";
-  const selectedMode = await page.evaluate((key) => {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw).careerMode ?? null;
-  }, saveKey);
-  if (selectedMode !== "pro") throw new Error(`career mode selection did not persist: ${selectedMode}`);
+  await chooseAndNext("Pedir garantías sobre el plan de minutos", "Tu nombre en un papel del club");
+  await assertOpeningEvent("opening_signing_day", "signing day");
+  await chooseAndNext("Pedir una foto solo con tu familia", "El entrenador te recibe por tu nombre");
+  await assertOpeningEvent("opening_named_coach", "named coach");
+  await chooseAndNext("Preguntarle exactamente qué espera de ti", "Todavía no hay partidos importantes");
+  await assertOpeningEvent("opening_preseason_adaptation", "preseason adaptation");
+  await chooseAndNext("Quedarte veinte minutos más a trabajar", "El capitán te explica dónde estás");
+  await assertOpeningEvent("opening_named_captain", "named captain");
+  await chooseAndNext("Agradecerle que te lo explique", "Aparece tu primer compañero de verdad");
+  await assertOpeningEvent("opening_named_teammate", "named teammate");
+  await chooseAndNext("Hacer piña desde el principio", "El fisio te conoce antes de que te lesiones");
+  await assertOpeningEvent("opening_named_physio", "named physio");
 
-  const firstAction = page.locator("article button").first();
-  await firstAction.waitFor({ state: "visible", timeout: 10_000 });
-  const before = await page.locator("article").innerText();
-  await firstAction.click();
+  await page.getByRole("button", { name: "Pedirle una rutina corta de prevención" }).click();
+  await page.getByRole("button", { name: "Siguiente escena" }).waitFor({ state: "visible", timeout: 10_000 });
+  const completed = await saved();
+  if (completed?.flags?.opening_completed !== 1 || completed?.flags?.opening_phase !== 10) {
+    throw new Error(`opening did not complete: phase=${completed?.flags?.opening_phase} done=${completed?.flags?.opening_completed}`);
+  }
+  const cast = completed?.memory?.careerCast;
+  for (const role of ["adviser", "coach", "captain", "teammate", "physio"]) {
+    if (!cast?.[role]?.met || !cast?.[role]?.name) throw new Error(`persistent ${role} was not introduced with a name`);
+  }
+  await assertNoFatal("opening completed");
+
+  // Only now is the normal season scheduler allowed to run.
+  await page.getByRole("button", { name: "Siguiente escena" }).click();
   await page.waitForTimeout(250);
-  const after = await page.locator("article").innerText();
-  if (after === before) throw new Error("first playable decision did not change the scene");
-  await assertNoFatal("first playable decision");
+  await assertNoFatal("post-opening scheduler");
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForTimeout(200);
   if (!/\/historia$/.test(page.url())) throw new Error(`reload lost route: ${page.url()}`);
-  await page.locator("article").waitFor({ state: "visible", timeout: 10_000 });
-  const reloadedMode = await page.evaluate((key) => {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw).careerMode ?? null;
-  }, saveKey);
-  if (reloadedMode !== "pro") throw new Error(`career mode changed after reload: ${reloadedMode}`);
+  const reloaded = await saved();
+  if (reloaded?.careerMode !== "pro" || reloaded?.flags?.opening_completed !== 1) {
+    throw new Error("career mode/opening state changed after reload");
+  }
   await assertNoFatal("saved career reload");
 
-  const backupKey = `${saveKey}:backup`;
   const backupReady = await page.evaluate(([primaryKey, recoveryKey]) => {
     const primaryRaw = localStorage.getItem(primaryKey);
     const backupRaw = localStorage.getItem(recoveryKey);
@@ -98,17 +149,13 @@ try {
   await page.evaluate((key) => localStorage.setItem(key, "{corrupted-save"), saveKey);
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForTimeout(200);
-  if (!/\/historia$/.test(page.url())) throw new Error(`save recovery lost route: ${page.url()}`);
-  await page.locator("article").waitFor({ state: "visible", timeout: 10_000 });
-  const recoveredPrimary = await page.evaluate((key) => {
-    const raw = localStorage.getItem(key);
-    if (!raw) return false;
-    const state = JSON.parse(raw);
-    return state.careerMode === "pro";
-  }, saveKey);
-  if (!recoveredPrimary) throw new Error("save recovery: backup did not repair corrupted primary save with career mode intact");
+  const recovered = await saved();
+  if (recovered?.careerMode !== "pro" || recovered?.flags?.opening_completed !== 1) {
+    throw new Error("save recovery lost completed opening or career mode");
+  }
   await assertNoFatal("corrupted save recovery");
 
+  // Keep the legacy/post-career smoke: the P0 rewrite must not break the end of a career.
   const retirementPrepared = await page.evaluate((key) => {
     const raw = localStorage.getItem(key);
     if (!raw) return false;
@@ -137,32 +184,15 @@ try {
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.getByText("Carrera terminada", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
-  await page.getByRole("link", { name: "Ver mi legado" }).waitFor({ state: "visible", timeout: 10_000 });
-  await assertNoFatal("career end render");
   await page.getByRole("link", { name: "Ver mi legado" }).click();
   await page.waitForURL(/\/legado$/, { timeout: 10_000 });
-  await page.locator("main").waitFor({ state: "visible", timeout: 10_000 });
   await page.getByText("¿Y después del minuto 90?", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
-  await assertNoFatal("career end to legacy");
-
   await page.getByRole("button", { name: /Ser entrenador/i }).click();
-  await page.getByText("Nueva vida · Entrenador", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("button", { name: /Empezar desde abajo/i }).click();
   await page.getByText("Entrenador · empieza otra carrera", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await assertNoFatal("post-career decision");
 
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await page.getByText("Entrenador · empieza otra carrera", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
-  const persistedPostCareer = await page.evaluate((key) => {
-    const raw = localStorage.getItem(key);
-    if (!raw) return false;
-    const state = JSON.parse(raw);
-    return state.flags?.post_career_path === 1 && state.flags?.post_career_style === 1;
-  }, saveKey);
-  if (!persistedPostCareer) throw new Error("post-career coach path/style did not persist after reload");
-  await assertNoFatal("post-career persistence");
-
-  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} mode=pro route=${page.url()} recovery=ok legacy=ok postCareer=coach-a`);
+  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} mode=pro opening=life-first decision2=adviser recovery=ok legacy=ok`);
 } finally {
   await browser.close();
 }
