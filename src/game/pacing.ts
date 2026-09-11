@@ -35,9 +35,13 @@ function seededRange(s: GameState, key: string, range: readonly [number, number]
   if (max <= min) return min;
   return min + (hash(careerSeed(s), `${key}|${s.seasonIndex}|${careerModeOf(s)}`) % (max - min + 1));
 }
-export function narrativeTarget(s: GameState): number { return seededRange(s, "narrative-target", careerModeConfig(careerModeOf(s)).narrative); }
+
+/** Total de decisiones prometido por el modo. No depende de cuántos partidos tenga sentido jugar. */
+export function decisionTarget(s: GameState): number { return seededRange(s, "decision-target", careerModeConfig(careerModeOf(s)).decisions); }
+/** Techo deseado de partidos clave; solo se alcanza si la temporada ofrece contextos reales para ello. */
 export function keyMatchTarget(s: GameState): number { return seededRange(s, "key-match-target", careerModeConfig(careerModeOf(s)).keyMatches); }
-export function decisionTarget(s: GameState): number { return narrativeTarget(s) + keyMatchTarget(s); }
+/** Referencia narrativa previa al ajuste contextual. La cuota real absorbe partidos que no sean plausibles. */
+export function narrativeTarget(s: GameState): number { return Math.max(0, decisionTarget(s) - keyMatchTarget(s)); }
 
 export function narrativeRotationFor(s: GameState): EventCategory[] {
   switch (careerEra(s)) {
@@ -71,28 +75,27 @@ function compressNarrative(slots: Slot[], keepCount: number): Slot[] {
   return slots.filter((slot, i) => !isNarrativeSlot(slot) || keep.has(i));
 }
 
+/**
+ * Crea únicamente partidos que el contexto futbolístico habilita de verdad.
+ * No existe fallback sintético: si no hay Europa, derbi, copa, exclub, etc.,
+ * el hueco vuelve al presupuesto narrativo en vez de inventar un partido.
+ */
 function contextualKeySlots(s: GameState, missing: number): Slot[] {
   if (missing <= 0) return [];
   const eligible = eligibleKeyMatchKinds(s);
   const euro = europeanCompetition(s);
   const additions: Slot[] = [];
-  const hasTag = (tag: NonNullable<Slot["tag"]>) => s.queue.some((slot) => slot.kind === "match" && slot.tag === tag);
+  const hasTag = (tag: NonNullable<Slot["tag"]>) =>
+    s.queue.some((slot) => slot.kind === "match" && slot.tag === tag) || additions.some((slot) => slot.kind === "match" && slot.tag === tag);
   const push = (slot: Slot) => { if (additions.length < missing) additions.push(slot); };
 
+  if (eligible.includes("debut") && !hasTag("debut")) push({ kind: "match", tag: "debut" });
   if (eligible.includes("europe") && euro && !hasTag("euro")) push({ kind: "match", tag: "euro", tie: true, competition: euro });
   if (eligible.includes("exclub") && !hasTag("exclub")) push({ kind: "match", tag: "exclub" });
   if (eligible.includes("derby") && !hasTag("derby")) push({ kind: "match", tag: "derby" });
-  if (eligible.includes("cup")) push({ kind: "match", tag: "cup", tie: true });
-  if (eligible.includes("title_decider")) push({ kind: "match", tag: "decisive" });
-  if (eligible.includes("debut") && !hasTag("debut")) push({ kind: "match", tag: "debut" });
+  if (eligible.includes("cup") && !hasTag("cup")) push({ kind: "match", tag: "cup", tie: true });
+  if (eligible.includes("title_decider") && !hasTag("decisive")) push({ kind: "match", tag: "decisive" });
 
-  const fallback: Slot[] = [
-    { kind: "match", tag: "decisive", label: "Partido clave de la temporada" },
-    { kind: "match", tag: "cup", tie: true },
-    { kind: "match", tag: "scouts" },
-  ];
-  let i = 0;
-  while (additions.length < missing) additions.push(fallback[i++ % fallback.length]!);
   return additions;
 }
 
@@ -119,9 +122,8 @@ export function applyCareerPacing(s: GameState): void {
   const marker = 10_000 + s.seasonIndex;
   if (s.flags["career_pacing_season"] === marker) return;
 
-  const wantedNarrative = narrativeTarget(s);
+  const wantedDecisions = decisionTarget(s);
   const wantedMatches = keyMatchTarget(s);
-  if (s.director) s.director.budget = wantedNarrative;
 
   const wantedQueuedMatches = Math.max(0, wantedMatches - pendingMatchDecisions(s));
   let removeMatches = Math.max(0, s.queue.filter((slot) => slot.kind === "match").length - wantedQueuedMatches);
@@ -136,6 +138,12 @@ export function applyCareerPacing(s: GameState): void {
 
   const currentQueuedMatches = s.queue.filter((slot) => slot.kind === "match").length;
   s.queue = addMissingKeyMatches(s, s.queue, Math.max(0, wantedQueuedMatches - currentQueuedMatches));
+
+  // La cuota global manda. Si no existen suficientes partidos clave plausibles,
+  // esas decisiones pasan a personaje/vida/agente/club en lugar de inventar fútbol.
+  const actualMatches = pendingMatchDecisions(s) + s.queue.filter((slot) => slot.kind === "match").length;
+  const wantedNarrative = Math.max(0, wantedDecisions - actualMatches);
+  if (s.director) s.director.budget = wantedNarrative;
 
   const wantedQueuedNarrative = Math.max(0, wantedNarrative - pendingNarrativeDecisions(s));
   s.queue = compressNarrative(s.queue, wantedQueuedNarrative);
