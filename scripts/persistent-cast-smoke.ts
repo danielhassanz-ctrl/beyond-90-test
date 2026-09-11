@@ -40,9 +40,13 @@ const requiredLiveScenes = [
   "people_adviser_first_money",
   "people_coach_intro",
   "people_captain_intro",
+  "people_captain_callback",
   "people_teammate_intro",
+  "people_teammate_callback",
   "people_physio_intro",
+  "people_physio_injury_callback",
   "people_social_dm_intro",
+  "people_social_dm_followup",
 ];
 for (const id of requiredLiveScenes) {
   if (!eventById(id)) throw new Error(`${id} exists in source but is not installed in the live event registry`);
@@ -62,6 +66,30 @@ state.salary = 20;
 const adviserMoney = eventById("people_adviser_first_money")!;
 if (!adviserMoney.requires(state)) throw new Error("early adviser money follow-up is not eligible once salary becomes meaningful");
 
+state.flags["people_coach_intro"] = 1;
+state.flags["people_captain_intro"] = 1;
+state.sceneCount = 8;
+const captainCallback = eventById("people_captain_callback")!;
+if (!captainCallback.requires(state)) throw new Error("captain does not return after his introduction");
+
+state.flags["people_teammate_intro"] = 1;
+state.sceneCount = 10;
+const teammateCallback = eventById("people_teammate_callback")!;
+if (!teammateCallback.requires(state)) throw new Error("teammate does not develop into a second scene");
+
+state.flags["people_physio_intro"] = 1;
+state.injury = { label: "esguince de tobillo", severity: "medium", matchesOut: 3, treated: false };
+const physioCallback = eventById("people_physio_injury_callback")!;
+if (!physioCallback.requires(state)) throw new Error("known physio does not return when a real injury occurs");
+
+state.flags["social_dm_intro"] = 1;
+state.flags["social_dm_replied"] = 1;
+state.sceneCount = 10;
+const socialFollowup = eventById("people_social_dm_followup")!;
+if (!socialFollowup.requires(state)) throw new Error("replied social DM does not open a later personal scene");
+
+state.age = 25;
+if (socialFollowup.requires(state)) throw new Error("early social-DM follow-up leaks into a late career stage");
 state.age = 22;
 if (adviserMoney.requires(state)) throw new Error("first-money adviser scene leaks into an implausibly late career stage");
 
@@ -76,4 +104,4 @@ if (!repeated.startsWith(`${cast.coach.name}, `)) {
   throw new Error("coach identity changed across repeated Director lookups");
 }
 
-console.log(`Persistent cast QA OK: live people scenes=8; adviser thread=intro+plan+money; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
+console.log(`Persistent cast QA OK: live people scenes=${requiredLiveScenes.length}; recurring threads=adviser+captain+teammate+physio+social; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
