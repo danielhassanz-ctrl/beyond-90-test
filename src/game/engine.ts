@@ -273,6 +273,7 @@ export function migrate(raw: unknown): GameState | null {
   const validCards = ["event", "match", "season", "dynamic"];
   if (s.pending && !validCards.includes(s.pending.type)) s.pending = null;
   if (s.pending?.type === "match" && !s.pending.match?.ctx) s.pending = null;
+  if (s.pending?.type === "dynamic" && s.pending.kind === "match_flash") s.pending = null;
   return s;
 }
 
@@ -464,7 +465,7 @@ export function advance(state: GameState): GameState {
     s.queue = makeSeasonPlan(s);
   }
 
-  for (let guard = 0; guard < 16; guard++) {
+  for (let guard = 0; guard < 64; guard++) {
     // 1. Lesión sin diagnosticar: siempre manda.
     if (s.injury && !s.injury.treated) {
       s.pending = dyn("injury_diagnosis", {
@@ -512,25 +513,10 @@ export function advance(state: GameState): GameState {
     if (slot.kind === "sim") {
       const run = applyRun(s, slot.matches ?? 3);
       if (run.notable) {
-        // Lo simulado nunca es una pantalla informativa: solo abre escena si la
-        // consecuencia es interactiva (conflicto, expulsión, ostracismo, crisis).
-        const interactive = ["red", "snub", "crisis", "bad", "injury"].includes(run.notable.kind);
-        note(s, run.notable.text, interactive ? "bad" : "good");
-        if (interactive) {
-          s.pending = dyn("match_flash", {
-            kind: run.notable.kind,
-            text: run.notable.text,
-            opponent: run.notable.opponent,
-            wins: run.wins,
-            draws: run.draws,
-            losses: run.losses,
-            goals: run.goals,
-            matches: run.matches,
-          });
-          return touch(s);
-        }
+        note(s, run.notable.text, ["red", "snub", "crisis", "bad", "injury"].includes(run.notable.kind) ? "bad" : "good");
       }
-      continue; // sin escena: el siguiente clic lleva a una decisión real
+      // Los bloques simulados son contexto estadístico, no decisiones.
+      continue;
     }
 
     if (slot.kind === "match") {
@@ -591,22 +577,11 @@ export function advance(state: GameState): GameState {
     applyRun(s, 2);
   }
 
-  // RITMO: con el director dosificado, muchos huecos son rutina. Si tras el
-  // recorrido no ha salido escena y la temporada sigue viva, contamos el
-  // tramo de calendario en vez de cerrar la temporada por agotamiento.
+  // Sin decisión narrativa válida no fabricamos una tarjeta de resumen.
+  // Consumimos calendario y seguimos buscando una decisión real.
   if (s.queue.length > 0) {
-    const run = applyRun(s, 3);
-    s.pending = dyn("match_flash", {
-      kind: run.notable?.kind ?? "run",
-      text: run.notable?.text ?? "Semanas de rutina: entrenar, viajar, competir.",
-      opponent: run.notable?.opponent ?? "",
-      wins: run.wins,
-      draws: run.draws,
-      losses: run.losses,
-      goals: run.goals,
-      matches: run.matches,
-    });
-    return touch(s);
+    applyRun(s, 3);
+    return advance(s);
   }
 
   s.pending = { type: "season", summary: closeSeason(s) };
