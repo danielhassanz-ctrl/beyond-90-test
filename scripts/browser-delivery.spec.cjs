@@ -115,6 +115,55 @@ test("iPhone WebKit restores the last valid backup after primary save corruption
   expect(pageErrors).toEqual([]);
 });
 
+test("iPhone WebKit heals a valid but stale backup before recovery is needed", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto(routeUrl());
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.getByRole("button", { name: "Nueva carrera" }).click();
+  await page.getByPlaceholder("Álvaro Nieto").fill("Jugador QA Fresh State");
+  await page.getByRole("button", { name: /Ambicioso/ }).click();
+  await page.getByRole("button", { name: /Leal/ }).click();
+  await page.getByRole("button", { name: "Elegir cantera" }).click();
+  await page.locator("ul > li > button").first().click();
+  await page.getByRole("button", { name: "Firmar en la cantera" }).click();
+  await expect(page).toHaveURL(/\/historia$/);
+
+  await page.evaluate(() => {
+    const primaryRaw = localStorage.getItem("beyond90:save:v1");
+    if (!primaryRaw) throw new Error("missing primary save");
+    const stale = JSON.parse(primaryRaw);
+    stale.player.name = "Jugador QA Stale State";
+    localStorage.setItem("beyond90:save:v1:backup", JSON.stringify(stale));
+  });
+
+  // A normal boot with a valid primary must refresh an older-but-valid backup.
+  await page.reload();
+  const synchronized = await page.evaluate(() => {
+    const primaryRaw = localStorage.getItem("beyond90:save:v1");
+    const backupRaw = localStorage.getItem("beyond90:save:v1:backup");
+    if (!primaryRaw || !backupRaw) return false;
+    return JSON.parse(primaryRaw).player.name === JSON.parse(backupRaw).player.name;
+  });
+  expect(synchronized).toBeTruthy();
+
+  // If the primary then corrupts, recovery must return the current career, not
+  // the stale snapshot that was valid before the synchronization boot.
+  await page.evaluate(() => localStorage.setItem("beyond90:save:v1", "{corrupt-save"));
+  await page.reload();
+  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
+
+  const recoveredName = await page.evaluate(() => {
+    const primaryRaw = localStorage.getItem("beyond90:save:v1");
+    return primaryRaw ? JSON.parse(primaryRaw).player.name : null;
+  });
+  expect(recoveredName).toBe("Jugador QA Fresh State");
+  expect(pageErrors).toEqual([]);
+});
 
 test("iPhone WebKit keeps the primary save when backup writes are rejected", async ({ page }) => {
   const pageErrors = [];
