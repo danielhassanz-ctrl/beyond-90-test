@@ -4,7 +4,7 @@ import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
 import { setCareerMode, type CareerMode } from "../src/game/pacing";
-import type { GameState, Player } from "../src/game/types";
+import type { DynamicCard, GameState, Player } from "../src/game/types";
 
 function rng(seed: number) {
   let x = seed >>> 0;
@@ -39,6 +39,22 @@ function eventText(s: GameState, id: string): string {
   return typeof e.text === "function" ? e.text(s) : e.text;
 }
 
+function dynamicFamily(card: DynamicCard, fallback: string): string {
+  if (card.kind === "arc") return `arc:${String(card.data["arcId"] ?? fallback)}`;
+  if (card.kind === "arc_callback") return "callback";
+  if (card.kind === "thread") return `thread:${String(card.data["threadKind"] ?? fallback)}`;
+  if (card.kind === "arc_beat") {
+    const id = String(card.data["beatId"] ?? fallback);
+    if (id.startsWith("beat_pos_")) return "beat:position";
+    if (id.includes("pretemporada")) return "beat:preseason";
+    if (id.startsWith("beat_early_")) return "beat:early-life";
+    if (id.startsWith("beat_lane_")) return "beat:origin-lane";
+    return `beat:${id}`;
+  }
+  if (card.kind.startsWith("cons_")) return `consequence:${card.kind}`;
+  return `${fallback}:${card.kind}`;
+}
+
 function describe(s: GameState): SeenDecision | null {
   const p = s.pending;
   if (!p) return null;
@@ -63,7 +79,7 @@ function describe(s: GameState): SeenDecision | null {
   }
   assert(p.kind !== "match_flash", `BANNED match_flash reached playable state: ${JSON.stringify(p.data)}`);
   const v = renderDynamic(s, p);
-  return { title: v.title, text: v.text, choices: v.choices.map((c) => c.label), family: v.category, kind: `dynamic:${p.kind}` };
+  return { title: v.title, text: v.text, choices: v.choices.map((c) => c.label), family: dynamicFamily(p, v.category), kind: `dynamic:${p.kind}` };
 }
 
 function resolveCurrent(s: GameState): GameState {
