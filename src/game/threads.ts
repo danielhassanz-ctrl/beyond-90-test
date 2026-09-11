@@ -104,7 +104,10 @@ export function dueThread(s: GameState): Thread | null {
   if (due) return due;
 
   const scene = s.sceneCount ?? 0;
-  if (scene < 6 || (s.flags["memory_thread_season"] ?? -1) === s.seasonIndex) return null;
+  // Un recuerdo de largo recorrido no puede aparecer en la misma temporada en
+  // la que el jugador acaba de tomar la decisión. Eso convertía decisiones de
+  // cantera recientes en falsos "hace tiempo" pocas escenas después.
+  if (scene < 6 || s.seasonIndex < 1 || (s.flags["memory_thread_season"] ?? -1) === s.seasonIndex) return null;
   if (scene - (s.flags["ultimo_hilo"] ?? -99) < 4) return null;
 
   const entries = [...new Set([
@@ -120,19 +123,26 @@ export function dueThread(s: GameState): Thread | null {
   if (entries.length === 0) return null;
 
   const remembered = entries[Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 13 + scene * 5) % entries.length]!;
-  s.memory.threads[memoryRecallKey(remembered)] = 1;
   const kind = memoryThreadKind(remembered);
   if (!kind) return null;
 
-  s.flags["memory_thread_season"] = s.seasonIndex;
-  s.flags["ultimo_hilo"] = scene;
-  return {
+  // Persistimos el hilo antes de devolverlo. Antes el recuerdo se marcaba como
+  // consumido pero solo existía en el valor de retorno; si se perdía `pending`
+  // durante una recuperación, ese callback no podía reconstruirse. Al quedar en
+  // `threads`, dueThread lo vuelve a ofrecer hasta que resolveDynamicCard lo
+  // cierre explícitamente.
+  const thread: Thread = {
     id: `memory-${s.seasonIndex}-${scene}`,
     kind,
     teaser: `Hace tiempo quedó esto anotado: ${remembered}. Ahora vuelve a tener consecuencias.`,
     dueScene: scene,
     payload: { remembered: remembered.slice(0, 240) },
   };
+  s.threads.push(thread);
+  s.memory.threads[memoryRecallKey(remembered)] = 1;
+  s.flags["memory_thread_season"] = s.seasonIndex;
+  s.flags["ultimo_hilo"] = scene;
+  return thread;
 }
 
 export function closeThread(s: GameState, id: string): void {
