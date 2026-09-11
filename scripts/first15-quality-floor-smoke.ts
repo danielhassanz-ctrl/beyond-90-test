@@ -18,13 +18,13 @@ function semanticFamily(p:DynamicCard):string{
  return `dynamic:${p.kind}`;
 }
 
-type D={title:string;family:string;kind:string;choices:string[]};
+type D={title:string;family:string;category:string;kind:string;choices:string[]};
 function describe(s:GameState):D|null{
  const p=s.pending;if(!p||p.type==="season")return null;
- if(p.type==="event"){const e=eventById(p.eventId);assert(e,`missing ${p.eventId}`);return{title:e.title,family:e.family??e.category,kind:`event:${e.id}`,choices:e.choices.map(c=>c.label)};}
- if(p.type==="match"){if(!p.match.keyMoment)return null;return{title:`${p.match.ctx.storyLabel} · ${p.match.opponent}`,family:"match",kind:"match",choices:p.match.keyMoment.options.map(o=>o.label)};}
+ if(p.type==="event"){const e=eventById(p.eventId);assert(e,`missing ${p.eventId}`);return{title:e.title,family:e.family??e.category,category:e.category,kind:`event:${e.id}`,choices:e.choices.map(c=>c.label)};}
+ if(p.type==="match"){if(!p.match.keyMoment)return null;return{title:`${p.match.ctx.storyLabel} · ${p.match.opponent}`,family:"match",category:"match",kind:"match",choices:p.match.keyMoment.options.map(o=>o.label)};}
  assert(p.kind!=="match_flash",`match_flash leaked: ${JSON.stringify(p.data)}`);
- const v=renderDynamic(s,p);return{title:v.title,family:semanticFamily(p),kind:`dynamic:${p.kind}`,choices:v.choices.map(c=>c.label)};
+ const v=renderDynamic(s,p);return{title:v.title,family:semanticFamily(p),category:v.category,kind:`dynamic:${p.kind}`,choices:v.choices.map(c=>c.label)};
 }
 function resolveCurrent(s:GameState):GameState{
  if(s.lastOutcome)return advance(s);const p=s.pending;if(!p||p.type==="season")return advance(s);
@@ -35,14 +35,14 @@ function resolveCurrent(s:GameState):GameState{
 function run(mode:CareerMode,seed:number){const old=Math.random;Math.random=rng(seed);try{
  let s=createGame(player(seed));s.careerSeed=seed;setCareerMode(s,mode);ensureCareerCast(s);initializeOpening(s);const seen:D[]=[];let guard=0;
  while(seen.length<15&&guard++<600){
-  if((s.flags[OPENING_PHASE]??OpeningPhase.DONE)===OpeningPhase.CLUB_CHOICE&&!s.clubId){const offer=s.offers[0]?.clubId;assert(offer,`${mode}/${seed}: no club offer`);seen.push({title:"Elegir primer club",family:"club_choice",kind:"club_choice",choices:s.offers.slice(0,4).map(o=>o.clubId)});s=afterOpeningClubChoice(chooseClub(s,offer));continue;}
+  if((s.flags[OPENING_PHASE]??OpeningPhase.DONE)===OpeningPhase.CLUB_CHOICE&&!s.clubId){const offer=s.offers[0]?.clubId;assert(offer,`${mode}/${seed}: no club offer`);seen.push({title:"Elegir primer club",family:"club_choice",category:"club",kind:"club_choice",choices:s.offers.slice(0,4).map(o=>o.clubId)});s=afterOpeningClubChoice(chooseClub(s,offer));continue;}
   const d=describe(s);if(d)seen.push(d);
   if(s.pending?.type==="event"&&(s.flags[OPENING_PHASE]??OPENING_DONE)<OPENING_DONE){const id=s.pending.eventId;const choices:Record<string,string>={opening_home_family:"familia",opening_adviser_choice:seed%3===0?"father":seed%3===1?"agent":"friend",opening_first_agreement:"minutes",opening_signing_day:"family",opening_named_coach:"listen",opening_preseason_adaptation:"extra",opening_named_captain:"respect",opening_named_teammate:"friend",opening_named_physio:"trust"};const next=resolveEvent(s,id,choices[id]??eventById(id)!.choices[0]!.id);s=forceOpeningPending(next)??next;}else s=resolveCurrent(s);
  }
  assert(seen.length===15,`${mode}/${seed}: only ${seen.length} decisions`);
  const matches=seen.filter(x=>x.kind==="match").length;
- const human=seen.filter(x=>/opening|life|agent|club|story|gossip|arc:|beat:|thread:/.test(`${x.family} ${x.kind}`)).length;
- const footballDevelopment=seen.filter(x=>/preseason|training|medical|beat:beat_pos|beat:beat_pretemporada/.test(`${x.family} ${x.kind}`)).length;
+ const human=seen.filter(x=>/life|agent|club|story|gossip/.test(x.category)||/opening/.test(x.kind)).length;
+ const footballDevelopment=seen.filter(x=>/preseason|training|medical/.test(x.category)).length;
  assert(matches<=5,`${mode}/${seed}: ${matches}/15 decisions are key matches; early career is too match-heavy`);
  assert(human>=8,`${mode}/${seed}: only ${human}/15 human/career-context decisions`);
  assert(footballDevelopment>=2,`${mode}/${seed}: only ${footballDevelopment}/15 development/adaptation decisions`);
@@ -61,7 +61,7 @@ function run(mode:CareerMode,seed:number){const old=Math.random;Math.random=rng(
  let streak=1;
  for(let i=1;i<seen.length;i++){
   streak=seen[i]!.family===seen[i-1]!.family?streak+1:1;
-  assert(streak<=2,`${mode}/${seed}: three consecutive decisions in semantic family ${seen[i]!.family} at ${i}-${i+2}: ${seen.slice(Math.max(0,i-2),i+1).map(x=>x.title).join(" / ")}`);
+  assert(streak<=2,`${mode}/${seed}: three consecutive decisions in semantic family ${seen[i]!.family}: ${seen.slice(Math.max(0,i-2),i+1).map(x=>x.title).join(" / ")}`);
  }
  const postOpening=seen.slice(10);
  assert(new Set(postOpening.map(x=>x.family)).size>=3,`${mode}/${seed}: post-opening first five decisions span fewer than 3 semantic families: ${postOpening.map(x=>`${x.family}:${x.title}`).join(" | ")}`);
