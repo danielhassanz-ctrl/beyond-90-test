@@ -1,0 +1,34 @@
+name: QA first-15 quality floor
+
+on:
+  push:
+    branches:
+      - qa-first15-quality-floor
+  pull_request:
+    branches:
+      - main
+    paths:
+      - scripts/first15-quality-floor-smoke.ts
+      - .github/workflows/qa-first15-quality-floor.yml
+      - src/game/**
+
+permissions:
+  contents: read
+
+jobs:
+  quality-floor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: First-15 decision quality floor
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
+      - name: Existing real-career first-15 gate
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
