@@ -117,6 +117,27 @@ function normalizePerson(
   };
 }
 
+function isPersonComplete(p: LegacyCastPerson | undefined): p is CastPerson {
+  return !!p
+    && typeof p.id === "string" && p.id.length > 0
+    && typeof p.name === "string" && p.name.length > 0
+    && typeof p.relation === "number" && Number.isFinite(p.relation)
+    && typeof p.role === "string" && p.role.length > 0
+    && typeof p.met === "boolean"
+    && typeof p.lastContactScene === "number" && Number.isFinite(p.lastContactScene);
+}
+
+function isCastComplete(cast: CareerCast | LegacyCareerCast | undefined): cast is CareerCast {
+  return !!cast
+    && (cast.adviserKind === "agent" || cast.adviserKind === "father" || cast.adviserKind === "friend")
+    && isPersonComplete(cast.adviser)
+    && isPersonComplete(cast.coach)
+    && isPersonComplete(cast.physio)
+    && isPersonComplete(cast.captain)
+    && isPersonComplete(cast.teammate)
+    && isPersonComplete(cast.social);
+}
+
 function syncNpc(s: GameState, key: string, person: CastPerson, role = person.role): void {
   if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
   const existing = s.memory.npcs[key];
@@ -130,29 +151,37 @@ function syncNpc(s: GameState, key: string, person: CastPerson, role = person.ro
 /**
  * ÚNICA fuente de verdad del reparto fijo de una carrera. Normaliza también
  * saves antiguos para impedir que dos subsistemas inventen nombres distintos
- * para el representante, el entrenador o el resto del vestuario.
+ * para el representante, el entrenador o el resto del vestuario. Una vez
+ * normalizado preserva la identidad del objeto: callbacks y relaciones mutan
+ * el mismo reparto que conserva el Director.
  */
 export function ensureCast(s: GameState): CareerCast {
   const memory = s.memory as CastMemory;
   const stored = memory.careerCast;
-  const seed = careerSeed(s);
-  const adviserKind: AdviserKind = stored?.adviserKind ?? (["agent", "father", "friend"] as const)[hash(seed, "adviser-kind") % 3]!;
-  const adviserName = adviserKind === "father"
-    ? "Papá"
-    : adviserKind === "friend"
-      ? nameFor(s, "career-friend")
-      : nameFor(s, "career-adviser");
+  let cast: CareerCast;
 
-  const cast: CareerCast = {
-    adviserKind,
-    adviser: normalizePerson(s, "adviser", stored?.adviser, adviserName, adviserRole(adviserKind), 50),
-    coach: normalizePerson(s, "coach", stored?.coach, nameFor(s, "career-coach"), "Entrenador", s.rel.coach || 45),
-    physio: normalizePerson(s, "physio", stored?.physio, nameFor(s, "career-physio"), "Fisioterapeuta", 50),
-    captain: normalizePerson(s, "captain", stored?.captain, nameFor(s, "career-captain"), "Capitán", s.rel.dressing || 45),
-    teammate: normalizePerson(s, "teammate", stored?.teammate, nameFor(s, "career-teammate"), "Compañero de confianza", s.rel.dressing || 45),
-    social: normalizePerson(s, "social", stored?.social, nameFor(s, "career-social", true), "Contacto de redes", 50),
-  };
-  memory.careerCast = cast;
+  if (isCastComplete(stored)) {
+    cast = stored;
+  } else {
+    const seed = careerSeed(s);
+    const adviserKind: AdviserKind = stored?.adviserKind ?? (["agent", "father", "friend"] as const)[hash(seed, "adviser-kind") % 3]!;
+    const adviserName = adviserKind === "father"
+      ? "Papá"
+      : adviserKind === "friend"
+        ? nameFor(s, "career-friend")
+        : nameFor(s, "career-adviser");
+
+    cast = {
+      adviserKind,
+      adviser: normalizePerson(s, "adviser", stored?.adviser, adviserName, adviserRole(adviserKind), 50),
+      coach: normalizePerson(s, "coach", stored?.coach, nameFor(s, "career-coach"), "Entrenador", s.rel.coach || 45),
+      physio: normalizePerson(s, "physio", stored?.physio, nameFor(s, "career-physio"), "Fisioterapeuta", 50),
+      captain: normalizePerson(s, "captain", stored?.captain, nameFor(s, "career-captain"), "Capitán", s.rel.dressing || 45),
+      teammate: normalizePerson(s, "teammate", stored?.teammate, nameFor(s, "career-teammate"), "Compañero de confianza", s.rel.dressing || 45),
+      social: normalizePerson(s, "social", stored?.social, nameFor(s, "career-social", true), "Contacto de redes", 50),
+    };
+    memory.careerCast = cast;
+  }
 
   syncNpc(s, "adviser", cast.adviser, adviserRole(cast.adviserKind));
   syncNpc(s, "coach", cast.coach);
