@@ -1,4 +1,4 @@
-name: P0 apply agent market narrative fix
+name: P0 apply narrative source fixes
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - p0-real-career-director-repetition
     paths:
       - scripts/fix-p0-agent-market-repetition.mjs
+      - scripts/fix-p0-minor-injury-return-repetition.mjs
       - .github/workflows/p0-apply-agent-market-fix.yml
 
 permissions:
@@ -25,7 +26,10 @@ jobs:
       - name: Apply agent market chronology and repetition fix
         run: node scripts/fix-p0-agent-market-repetition.mjs
 
-      - name: Commit generated engine change
+      - name: Suppress repeated routine minor-injury return cards
+        run: node scripts/fix-p0-minor-injury-return-repetition.mjs
+
+      - name: Commit generated engine changes
         run: |
           if git diff --quiet -- src/game/engine.ts; then
             echo "No engine changes required"
@@ -34,5 +38,5 @@ jobs:
           git config user.name "beyond90-qa-bot"
           git config user.email "actions@users.noreply.github.com"
           git add src/game/engine.ts
-          git commit -m "P0: gate repetitive youth agent market calls"
+          git commit -m "P0: suppress repetitive youth market and minor-injury cards"
           git push origin HEAD:p0-real-career-director-repetition
