@@ -13,6 +13,7 @@ import {
   resolveEventFree,
   resolveMatch,
 } from "./engine";
+import { scrubDisallowedNarrative } from "./narrative-safety";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening } from "./opening";
 import { applyCareerPacing, DEFAULT_CAREER_MODE, setCareerMode, type CareerMode } from "./pacing";
 import { choosePostCareerPath, choosePostCareerStyle, type PostCareerPath, type PostCareerStyle } from "./postcareer";
@@ -62,6 +63,7 @@ function parseSave(raw: string | null): GameState | null {
         opening.beat = beat;
         return opening;
       }
+      return scrubDisallowedNarrative(state);
     }
     return state;
   } catch {
@@ -138,7 +140,7 @@ function write(state: GameState | null) {
 function withRuntime(next: GameState): GameState {
   ensureCareerCast(next);
   applyCareerPacing(next);
-  return next;
+  return scrubDisallowedNarrative(next);
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
