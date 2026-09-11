@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,11 +36,23 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Career pacing QA
+        run: npm run qa:pacing
+
+      - name: Competition pacing QA
+        run: npm run qa:competition-pacing
+
+      - name: Persistent cast QA
+        run: npm run qa:persistent-cast
+
       - name: Full career QA
         run: npm run qa:career
 
       - name: Branch QA
         run: npm run qa:branches
+
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
 
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
