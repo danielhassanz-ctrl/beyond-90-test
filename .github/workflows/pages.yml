@@ -36,6 +36,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Mandatory life-first opening QA
+        run: npm run qa:opening
+
       - name: Career pacing QA
         run: npm run qa:pacing
 
