@@ -10,6 +10,7 @@ on:
     paths:
       - src/game/**
       - scripts/real-career-playtest-smoke.ts
+      - scripts/match-flash-source-ban-smoke.mjs
       - scripts/apply-p0-match-flash-suppression.mjs
       - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
       - qa/REAL_CAREER_PLAYTEST_GATE.md
@@ -49,6 +50,9 @@ jobs:
             git commit -m "P0: make simulated match blocks background-only"
             git push origin HEAD:p0-real-career-director-repetition
           fi
+
+      - name: Ban playable match_flash emission at source
+        run: node scripts/match-flash-source-ban-smoke.mjs
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
