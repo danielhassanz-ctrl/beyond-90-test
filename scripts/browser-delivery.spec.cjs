@@ -20,7 +20,7 @@ async function clearAndStart(page, name) {
   await expect(page).toHaveURL(/\/historia$/);
 }
 
-async function reachFirstAgreement(page, name) {
+async function reachFirstAgreement(page, name, adviserButton = "Trabajar con un representante profesional") {
   await clearAndStart(page, name);
   await expect(page.getByRole("heading", { name: "Antes del fútbol está tu vida" })).toBeVisible();
   let state = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
@@ -34,7 +34,7 @@ async function reachFirstAgreement(page, name) {
   expect(state.pending.type).not.toBe("match");
   expect(state.pending.eventId).toBe("opening_adviser_choice");
 
-  await page.getByRole("button", { name: "Trabajar con un representante profesional" }).click();
+  await page.getByRole("button", { name: adviserButton }).click();
   await expect(page).toHaveURL(/\/cantera$/);
   await expect(page.getByRole("heading", { name: "Ahora sí: cuatro caminos" })).toBeVisible();
   const academyButtons = page.locator("ul > li > button");
@@ -46,7 +46,7 @@ async function reachFirstAgreement(page, name) {
   state = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
   expect(state.pending.type).toBe("event");
   expect(state.pending.eventId).toBe("opening_first_agreement");
-  return academyButtons;
+  return state;
 }
 
 test("iPhone WebKit recovers a deep link without a save", async ({ page }) => {
@@ -79,6 +79,27 @@ test("iPhone WebKit starts with life/adviser before four academies and persists"
   await expect(page.getByText("Partida guardada")).toBeVisible();
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/historia$/);
+  expect(pageErrors).toEqual([]);
+});
+
+test("iPhone WebKit persists father as adviser through club negotiation and reload", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  let state = await reachFirstAgreement(page, "Jugador QA Father", "Que tu padre lleve tus primeros pasos");
+
+  expect(state.agent.name).toBe("Papá");
+  expect(state.agentName).toBe("Papá");
+  expect(state.agent.commission).toBe(0);
+  expect(state.memory.careerCast.adviserKind).toBe("father");
+  expect(state.memory.careerCast.adviser.name).toBe("Papá");
+
+  await page.reload();
+  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page.getByRole("heading", { name: "No firmas hasta entenderlo" })).toBeVisible();
+  state = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
+  expect(state.agent.name).toBe("Papá");
+  expect(state.agent.commission).toBe(0);
+  expect(state.memory.careerCast.adviserKind).toBe("father");
   expect(pageErrors).toEqual([]);
 });
 
