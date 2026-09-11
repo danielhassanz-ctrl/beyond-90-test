@@ -274,6 +274,7 @@ export function migrate(raw: unknown): GameState | null {
   if (s.pending && !validCards.includes(s.pending.type)) s.pending = null;
   if (s.pending?.type === "match" && !s.pending.match?.ctx) s.pending = null;
   if (s.pending?.type === "dynamic" && s.pending.kind === "match_flash") s.pending = null;
+  if (s.pending?.type === "dynamic" && s.pending.kind === "match_flash") s.pending = null;
   return s;
 }
 
