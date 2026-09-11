@@ -1,5 +1,5 @@
 import { createGame } from "../src/game/engine";
-import { closeThread, dueThread, spawnThread, type ThreadKind } from "../src/game/threads";
+import { closeThread, dueThread, maybeSpawnThreads, spawnThread, type ThreadKind } from "../src/game/threads";
 import type { Player } from "../src/game/types";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -43,6 +43,32 @@ for (const kind of kinds) {
   assert(s.memory.threads[kind] === 1, `${kind}: repeat attempt mutated the occurrence counter`);
 }
 
+// An exhausted high-priority setup must not consume the cadence or block a
+// different eligible story. This catches the subtle failure where an already
+// used coach thread returned early and silently prevented club/family threads.
+{
+  const originalRandom = Math.random;
+  Math.random = () => 0;
+  try {
+    const s = createGame(player);
+    s.threads = [];
+    s.sceneCount = 20;
+    s.flags["ultimo_hilo"] = -99;
+    s.memory.threads = { coach_upset: 1 };
+    s.rel.coach = 10;
+    s.agent.present = true;
+    s.hasAgent = true;
+    s.fame = 50;
+
+    maybeSpawnThreads(s);
+    assert(s.threads.length === 1, "exhausted coach thread blocked all later eligible threads");
+    assert(s.threads[0]!.kind === "club_interest", `expected club_interest fallback, got ${s.threads[0]!.kind}`);
+    assert(s.flags["ultimo_hilo"] === 20, "successful fallback did not consume thread cadence at the actual spawn scene");
+  } finally {
+    Math.random = originalRandom;
+  }
+}
+
 // Long-term callbacks are different: they are consequences of a remembered
 // player decision, so consuming a generic family/coach thread must not suppress
 // a later callback with new context.
@@ -63,4 +89,4 @@ for (const kind of kinds) {
   assert(callback.payload["remembered"], "memory callback lost the original player decision");
 }
 
-console.log(`THREAD_REPETITION_SMOKE_OK genericKinds=${kinds.length} repeatBlocked=ok memoryCallbacks=ok`);
+console.log(`THREAD_REPETITION_SMOKE_OK genericKinds=${kinds.length} repeatBlocked=ok exhaustedFallback=ok memoryCallbacks=ok`);
