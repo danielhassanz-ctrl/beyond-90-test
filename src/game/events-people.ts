@@ -25,6 +25,44 @@ export const PEOPLE_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: "people_adviser_first_plan",
+    kicker: "Primeros meses · Llamada del asesor",
+    title: "Tu carrera ya necesita un plan",
+    image: "agent",
+    priority: 405,
+    category: "agent",
+    family: "people_adviser_plan",
+    requires: (s) => s.age <= 19 && !!s.flags["people_adviser_intro"] && s.sceneCount >= 3 && !s.flags["people_adviser_first_plan"],
+    text: (s) => {
+      const c = ensureCareerCast(s);
+      return `${c.adviser.name} vuelve a llamarte. Ya no habla de ilusión, sino de los próximos doce meses. "Necesito saber qué quieres priorizar: jugar, crecer aquí o acelerar si aparece una oportunidad. Si no lo decidimos nosotros, lo decidirán otros".`;
+    },
+    choices: [
+      { id:"minutos", label:"Priorizar minutos por encima del nombre del club", hint:"Favorece decisiones de cesión o salida si te estancas", outcome:"Lo apunta como línea roja: primero jugar, luego presumir de escudo.", apply:(s)=>{const p=ensureCareerCast(s).adviser;touch(p,s,6);rel(s,"agent",5);flag(s,"people_adviser_first_plan",1);flag(s,"career_plan_minutes",1);note(s,`${p.name} y tú acordaste priorizar minutos en la primera etapa de la carrera.`);} },
+      { id:"club", label:"Quedarte y ganarte el sitio donde estás", hint:"Apuesta por continuidad y paciencia", outcome:"Acepta el plan, pero te avisa de que la paciencia también tiene fecha de caducidad.", apply:(s)=>{const p=ensureCareerCast(s).adviser;touch(p,s,4);rel(s,"agent",3);stat(s,"discipline",3);flag(s,"people_adviser_first_plan",1);flag(s,"career_plan_continuity",1);} },
+      { id:"ambicion", label:"Pedirle que escuche cualquier salto importante", hint:"Más agresivo en mercado", outcome:"Se ríe. \"Vale. Pero una oferta grande no siempre es un paso grande.\"", apply:(s)=>{const p=ensureCareerCast(s).adviser;touch(p,s,2);stat(s,"fame",2);flag(s,"people_adviser_first_plan",1);flag(s,"career_plan_ambition",1);} },
+    ],
+  },
+  {
+    id: "people_adviser_first_money",
+    kicker: "Primer sueldo serio · Videollamada",
+    title: "Cobrar más no significa ser rico",
+    image: "office",
+    priority: 335,
+    category: "agent",
+    family: "people_adviser_money",
+    requires: (s) => s.age <= 21 && !!s.flags["people_adviser_first_plan"] && s.salary >= 20 && s.sceneCount >= 7 && !s.flags["people_adviser_first_money"],
+    text: (s) => {
+      const c = ensureCareerCast(s);
+      return `${c.adviser.name} comparte pantalla contigo: sueldo, impuestos, ahorro y lo que queda de verdad. "Ahora es cuando muchos empiezan a vivir como si la carrera no pudiera torcerse. Quiero saber qué hacemos con tu primer dinero serio".`;
+    },
+    choices: [
+      { id:"ahorrar",label:"Guardar una parte importante y vivir normal",hint:"Más margen para futuras decisiones",outcome:"No es espectacular, pero construyes una base antes de pensar en coches o casas.",apply:(s)=>{const p=ensureCareerCast(s).adviser;touch(p,s,7);rel(s,"agent",5);stat(s,"discipline",4);flag(s,"people_adviser_first_money",1);flag(s,"money_style_prudent",1);note(s,`${p.name} te convenció de construir un colchón con tus primeros ingresos serios.`);} },
+      { id:"invertir",label:"Reservar dinero para una primera inversión",hint:"Abre una línea patrimonial temprana, sin lujos absurdos",outcome:"Acordáis que primero estudiaréis opciones sencillas y líquidas. Nada de jugar a empresario con dieciocho años.",apply:(s)=>{const p=ensureCareerCast(s).adviser;touch(p,s,8);rel(s,"agent",6);flag(s,"people_adviser_first_money",1);flag(s,"money_style_invest",1);} },
+      { id:"disfrutar",label:"Decir que también quieres disfrutar lo que has ganado",hint:"Más libertad, menos prudencia",outcome:"No te lo prohíbe. Solo te obliga a fijar un límite antes de gastar.",apply:(s)=>{const p=ensureCareerCast(s).adviser;touch(p,s,-1);stat(s,"morale",4);stat(s,"discipline",-2);flag(s,"people_adviser_first_money",1);flag(s,"money_style_spend",1);} },
+    ],
+  },
+  {
     id: "people_coach_intro",
     kicker: "Pretemporada · Despacho",
     title: "El entrenador te pone nombre y objetivo",

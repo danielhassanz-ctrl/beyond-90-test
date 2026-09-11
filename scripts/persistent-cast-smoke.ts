@@ -36,6 +36,8 @@ for (const [role, name] of expectations) {
 
 const requiredLiveScenes = [
   "people_adviser_intro",
+  "people_adviser_first_plan",
+  "people_adviser_first_money",
   "people_coach_intro",
   "people_captain_intro",
   "people_teammate_intro",
@@ -49,6 +51,20 @@ for (const id of requiredLiveScenes) {
 const adviserIntro = eventById("people_adviser_intro")!;
 if (!adviserIntro.requires(state)) throw new Error("adviser introduction is not eligible at the start of a 16-year-old career");
 
+state.flags["people_adviser_intro"] = 1;
+state.sceneCount = 3;
+const adviserPlan = eventById("people_adviser_first_plan")!;
+if (!adviserPlan.requires(state)) throw new Error("early adviser career-plan follow-up is not eligible after the introduction");
+
+state.flags["people_adviser_first_plan"] = 1;
+state.sceneCount = 7;
+state.salary = 20;
+const adviserMoney = eventById("people_adviser_first_money")!;
+if (!adviserMoney.requires(state)) throw new Error("early adviser money follow-up is not eligible once salary becomes meaningful");
+
+state.age = 22;
+if (adviserMoney.requires(state)) throw new Error("first-money adviser scene leaks into an implausibly late career stage");
+
 const before = cast.coach.relation;
 npcMood(state, "coach", 7);
 if (cast.coach.relation !== Math.min(100, before + 7)) {
@@ -60,4 +76,4 @@ if (!repeated.startsWith(`${cast.coach.name}, `)) {
   throw new Error("coach identity changed across repeated Director lookups");
 }
 
-console.log(`Persistent cast QA OK: live introductions=6; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
+console.log(`Persistent cast QA OK: live people scenes=8; adviser thread=intro+plan+money; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
