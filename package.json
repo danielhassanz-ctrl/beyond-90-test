@@ -15,6 +15,7 @@
     "qa:pacing": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/pacing-smoke.ts",
     "qa:competition-pacing": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/competition-pacing-smoke.ts",
     "qa:persistent-cast": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/persistent-cast-smoke.ts",
+    "qa:opening": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/opening-flow-smoke.ts",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -80,10 +81,9 @@
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
-    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-hooks": "^7.0.4",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
-    "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3",
