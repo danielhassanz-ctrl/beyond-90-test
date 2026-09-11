@@ -61,18 +61,37 @@ const ROLES: Record<string, { role: string; female?: boolean }> = {
   scout: { role: "Ojeador" },
 };
 
-type CastPerson = { name: string; relation?: number; role?: string };
-type AdviserKind = "agent" | "father" | "friend";
-type CareerCast = {
-  adviserKind?: AdviserKind;
-  adviser?: CastPerson;
-  coach?: CastPerson;
-  physio?: CastPerson;
-  captain?: CastPerson;
-  teammate?: CastPerson;
-  social?: CastPerson;
+export type AdviserKind = "agent" | "father" | "friend";
+
+export interface CastPerson {
+  id: string;
+  name: string;
+  relation: number;
+  role: string;
+  met: boolean;
+  lastContactScene: number;
+}
+
+export interface CareerCast {
+  adviserKind: AdviserKind;
+  adviser: CastPerson;
+  coach: CastPerson;
+  physio: CastPerson;
+  captain: CastPerson;
+  teammate: CastPerson;
+  social: CastPerson;
+}
+
+type LegacyCastPerson = Partial<CastPerson> & { name?: string };
+type LegacyCareerCast = Partial<Omit<CareerCast, "adviser" | "coach" | "physio" | "captain" | "teammate" | "social">> & {
+  adviser?: LegacyCastPerson;
+  coach?: LegacyCastPerson;
+  physio?: LegacyCastPerson;
+  captain?: LegacyCastPerson;
+  teammate?: LegacyCastPerson;
+  social?: LegacyCastPerson;
 };
-type CastMemory = GameState["memory"] & { careerCast?: CareerCast };
+type CastMemory = GameState["memory"] & { careerCast?: CareerCast | LegacyCareerCast };
 
 function adviserRole(kind: AdviserKind | undefined): string {
   if (kind === "father") return "Padre y asesor";
@@ -80,43 +99,59 @@ function adviserRole(kind: AdviserKind | undefined): string {
   return "Representante";
 }
 
-/**
- * Garantiza un reparto fijo incluso en partidas antiguas que aún no traían
- * careerCast. Esto convierte los nombres que ya usa el Narrative Director en
- * personajes persistentes y sincroniza el asesor con AgentState desde el
- * primer contacto narrativo.
- */
-function ensureCast(s: GameState): CareerCast {
-  const memory = s.memory as CastMemory;
-  if (!memory.careerCast) {
-    const seed = careerSeed(s);
-    const adviserKind = (["agent", "father", "friend"] as const)[hash(seed, "adviser-kind") % 3]!;
-    const adviserName = adviserKind === "father"
-      ? "Papá"
-      : adviserKind === "friend"
-        ? nameFor(s, "career-friend")
-        : nameFor(s, "career-adviser");
-    memory.careerCast = {
-      adviserKind,
-      adviser: { name: adviserName, relation: 50, role: adviserRole(adviserKind) },
-      coach: { name: nameFor(s, "career-coach"), relation: s.rel.coach || 45, role: "Entrenador" },
-      physio: { name: nameFor(s, "career-physio"), relation: 50, role: "Fisioterapeuta" },
-      captain: { name: nameFor(s, "career-captain"), relation: s.rel.dressing || 45, role: "Capitán" },
-      teammate: { name: nameFor(s, "career-teammate"), relation: s.rel.dressing || 45, role: "Compañero de confianza" },
-      social: { name: nameFor(s, "career-social", true), relation: 50, role: "Contacto de redes" },
-    };
-  }
+function normalizePerson(
+  s: GameState,
+  key: "adviser" | "coach" | "physio" | "captain" | "teammate" | "social",
+  stored: LegacyCastPerson | undefined,
+  fallbackName: string,
+  fallbackRole: string,
+  fallbackRelation: number,
+): CastPerson {
+  return {
+    id: typeof stored?.id === "string" && stored.id ? stored.id : `${key}-${hash(careerSeed(s), `cast-${key}`)}`,
+    name: typeof stored?.name === "string" && stored.name ? stored.name : fallbackName,
+    relation: typeof stored?.relation === "number" && Number.isFinite(stored.relation) ? stored.relation : fallbackRelation,
+    role: typeof stored?.role === "string" && stored.role ? stored.role : fallbackRole,
+    met: stored?.met === true,
+    lastContactScene: typeof stored?.lastContactScene === "number" && Number.isFinite(stored.lastContactScene) ? stored.lastContactScene : -99,
+  };
+}
 
-  const cast = memory.careerCast;
-  if (cast.adviser?.name) {
-    s.hasAgent = true;
-    s.agent.present = true;
-    s.agent.name = cast.adviser.name;
-    s.agentName = cast.adviser.name;
-    if (s.rel.agent <= 0) s.rel.agent = cast.adviser.relation ?? 50;
-    const marker = `adviser:${cast.adviserKind ?? "agent"}`;
-    if (!s.agent.memories.includes(marker)) s.agent.memories.unshift(marker);
-  }
+/**
+ * ÚNICA fuente de verdad del reparto fijo de una carrera. Normaliza también
+ * saves antiguos para impedir que dos subsistemas inventen nombres distintos
+ * para el representante, el entrenador o el resto del vestuario.
+ */
+export function ensureCast(s: GameState): CareerCast {
+  const memory = s.memory as CastMemory;
+  const stored = memory.careerCast;
+  const seed = careerSeed(s);
+  const adviserKind: AdviserKind = stored?.adviserKind ?? (["agent", "father", "friend"] as const)[hash(seed, "adviser-kind") % 3]!;
+  const adviserName = adviserKind === "father"
+    ? "Papá"
+    : adviserKind === "friend"
+      ? nameFor(s, "career-friend")
+      : nameFor(s, "career-adviser");
+
+  const cast: CareerCast = {
+    adviserKind,
+    adviser: normalizePerson(s, "adviser", stored?.adviser, adviserName, adviserRole(adviserKind), 50),
+    coach: normalizePerson(s, "coach", stored?.coach, nameFor(s, "career-coach"), "Entrenador", s.rel.coach || 45),
+    physio: normalizePerson(s, "physio", stored?.physio, nameFor(s, "career-physio"), "Fisioterapeuta", 50),
+    captain: normalizePerson(s, "captain", stored?.captain, nameFor(s, "career-captain"), "Capitán", s.rel.dressing || 45),
+    teammate: normalizePerson(s, "teammate", stored?.teammate, nameFor(s, "career-teammate"), "Compañero de confianza", s.rel.dressing || 45),
+    social: normalizePerson(s, "social", stored?.social, nameFor(s, "career-social", true), "Contacto de redes", 50),
+  };
+  memory.careerCast = cast;
+
+  s.hasAgent = true;
+  s.agent.present = true;
+  s.agent.name = cast.adviser.name;
+  s.agentName = cast.adviser.name;
+  if (s.rel.agent <= 0) s.rel.agent = cast.adviser.relation;
+  const marker = `adviser:${cast.adviserKind}`;
+  if (!s.agent.memories.includes(marker)) s.agent.memories.unshift(marker);
+
   return cast;
 }
 
@@ -133,9 +168,8 @@ function castPerson(s: GameState, key: string): { name: string; role: string; mo
   };
   const p = map[key];
   if (!p?.name) return null;
-  let role = ROLES[key]?.role ?? "Conocido";
-  if (key === "adviser") role = adviserRole(cast.adviserKind);
-  return { name: p.name, role, mood: typeof p.relation === "number" ? p.relation : 50 };
+  const role = key === "adviser" ? adviserRole(cast.adviserKind) : (ROLES[key]?.role ?? p.role ?? "Conocido");
+  return { name: p.name, role, mood: p.relation };
 }
 
 /** Devuelve (creando si hace falta) el NPC persistente de un rol. */
@@ -172,7 +206,7 @@ export function npcMood(s: GameState, key: string, delta: number): void {
     adviser: cast.adviser,
   };
   const p = map[key];
-  if (p && typeof p.relation === "number") p.relation = n.mood;
+  if (p) p.relation = n.mood;
 }
 
 /** "Nombre, rol" para que el jugador nunca tenga que adivinar quién habla. */
