@@ -166,7 +166,15 @@ export function makeContext(state: GameState, slot: Slot, index = 0): MatchConte
  * jugador, asistencias, rating y relato salen todos de aquí y son coherentes.
  */
 export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, index = 0): MatchData {
-  const ctx = makeContext(state, slot, index);
+  let ctx = makeContext(state, slot, index);
+  // Key matches should not feel like the fixture generator is stuck. Avoid
+  // surfacing the same opponent twice in the same season when an alternative
+  // valid context exists. Real repeat meetings remain possible in later years.
+  for (let retry = 0; retry < 6 && state.seenEvents.includes(`match_opponent:${state.seasonIndex}:${ctx.opponent}`); retry += 1) {
+    ctx = makeContext(state, slot, index + retry + 1);
+  }
+  const opponentMarker = `match_opponent:${state.seasonIndex}:${ctx.opponent}`;
+  if (!state.seenEvents.includes(opponentMarker)) state.seenEvents.push(opponentMarker);
   const role = computeRole(state);
   const oppDef = defById(CLUB_POOL.find((c) => c.name === ctx.opponent)?.id ?? "") ?? null;
   const oppPrestige = oppDef?.prestige ?? 3;
