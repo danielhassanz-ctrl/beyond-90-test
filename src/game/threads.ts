@@ -20,7 +20,7 @@ const TEASERS: Record<ThreadKind, string[]> = {
     "Dos hombres con acreditación de invitados preguntaron por ti en la ciudad deportiva.",
   ],
   coach_upset: [
-    "El míster llevas dos sesiones sin corregirte. Eso, en él, es mala señal.",
+    "El míster lleva dos sesiones sin corregirte. Eso, en él, es mala señal.",
     "El segundo entrenador te ha pedido que te quedes un día a hablar. No dice de qué.",
   ],
   teammate_jealous: [
@@ -72,6 +72,10 @@ function memoryThreadKind(text: string): ThreadKind | null {
   return null;
 }
 
+function kindAlreadyUsed(s: GameState, kind: ThreadKind): boolean {
+  return (s.memory.threads?.[kind] ?? 0) > 0;
+}
+
 export function hasThread(s: GameState, kind: ThreadKind): boolean {
   return (s.threads ?? []).some((t) => t.kind === kind);
 }
@@ -83,7 +87,10 @@ export function spawnThread(
   delay = 1 + Math.floor(Math.random() * 4),
 ): Thread | null {
   if (!Array.isArray(s.threads)) s.threads = [];
-  if (hasThread(s, kind)) return null;
+  // Un hilo genérico es una situación, no una ruleta reutilizable. Una vez
+  // vivido, ese conflicto solo puede volver como callback escrito con contexto
+  // nuevo, nunca como la misma tarjeta/título/opciones otra vez.
+  if (hasThread(s, kind) || kindAlreadyUsed(s, kind)) return null;
   if (s.threads.length >= 3) return null;
   const pool = TEASERS[kind];
   const thread: Thread = {
@@ -94,7 +101,7 @@ export function spawnThread(
     payload,
   };
   s.threads.push(thread);
-  s.memory.threads[kind] = (s.memory.threads[kind] ?? 0) + 1;
+  s.memory.threads[kind] = 1;
   return thread;
 }
 
@@ -113,24 +120,23 @@ export function dueThread(s: GameState): Thread | null {
   const entries = [...new Set([
     ...(Array.isArray(s.memory.promises) ? s.memory.promises : []),
     ...(Array.isArray(s.memory.conflicts) ? s.memory.conflicts : []),
-  ])].filter(
-    (entry): entry is string =>
-      typeof entry === "string" &&
-      entry.trim().length >= 12 &&
-      memoryThreadKind(entry) !== null &&
-      (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0,
-  );
+  ])].filter((entry): entry is string => {
+    if (typeof entry !== "string" || entry.trim().length < 12) return false;
+    const kind = memoryThreadKind(entry);
+    if (!kind) return false;
+    // THREAD_VIEWS tiene un título/opciones por kind. Reusar el mismo kind,
+    // aunque cambie el teaser, produce exactamente la repetición que percibe
+    // el jugador. Reservamos cada plantilla una sola vez por carrera.
+    return !kindAlreadyUsed(s, kind) && (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0;
+  });
   if (entries.length === 0) return null;
 
   const remembered = entries[Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 13 + scene * 5) % entries.length]!;
   const kind = memoryThreadKind(remembered);
-  if (!kind) return null;
+  if (!kind || kindAlreadyUsed(s, kind)) return null;
 
-  // Persistimos el hilo antes de devolverlo. Antes el recuerdo se marcaba como
-  // consumido pero solo existía en el valor de retorno; si se perdía `pending`
-  // durante una recuperación, ese callback no podía reconstruirse. Al quedar en
-  // `threads`, dueThread lo vuelve a ofrecer hasta que resolveDynamicCard lo
-  // cierre explícitamente.
+  // Persistimos el hilo antes de devolverlo. Si se pierde `pending` durante una
+  // recuperación, dueThread vuelve a ofrecer el mismo hilo hasta cerrarlo.
   const thread: Thread = {
     id: `memory-${s.seasonIndex}-${scene}`,
     kind,
@@ -139,6 +145,7 @@ export function dueThread(s: GameState): Thread | null {
     payload: { remembered: remembered.slice(0, 240) },
   };
   s.threads.push(thread);
+  s.memory.threads[kind] = 1;
   s.memory.threads[memoryRecallKey(remembered)] = 1;
   s.flags["memory_thread_season"] = s.seasonIndex;
   s.flags["ultimo_hilo"] = scene;
