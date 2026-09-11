@@ -184,7 +184,7 @@ function run(mode: CareerMode, seed: number) {
 
     for (const d of seen) {
       if (s.age <= 17) {
-        assert(!/bal[oó]n de oro|champions|mill[oó]n|selecci[oó]n absoluta/i.test(`${d.title} ${d.text}`), `${mode}/${seed}: elite/status leakage in teenage opening: ${d.title}`);
+        assert(!/bal[oó]n de oro|champions|selecci[oó]n absoluta|contrato millonario|salario millonario|cobra(?:s)? millones/i.test(`${d.title} ${d.text}`), `${mode}/${seed}: elite/status leakage in teenage opening: ${d.title}`);
       }
     }
 
