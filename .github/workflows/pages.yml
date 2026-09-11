@@ -6,6 +6,7 @@ on:
       - main
       - recovery-v4-19-delivery-gate
       - product-v4-20-polish
+      - qa-promote-decision-coherence
   workflow_dispatch:
 
 permissions:
@@ -20,7 +21,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,6 +60,15 @@ jobs:
 
       - name: Human-style first-15-decision QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: Per-decision career state coherence
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/decision-state-coherence-smoke.ts
+
+      - name: Full-season boredom/coherence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
+
+      - name: Ban generic match-flash filler at source
+        run: node scripts/match-flash-source-ban-smoke.mjs
 
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
