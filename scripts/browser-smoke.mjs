@@ -38,7 +38,6 @@ try {
   await page.getByRole("button", { name: /^Ambicioso/ }).click();
   await page.getByRole("button", { name: /^Leal/ }).click();
 
-  // The three requested career lengths are a product contract, not hidden config.
   for (const mode of ["Express", "Standard", "Pro"]) {
     await page.getByRole("button", { name: new RegExp(`^${mode}\\b`, "i") }).waitFor({ state: "visible", timeout: 10_000 });
   }
@@ -46,42 +45,97 @@ try {
 
   await page.getByRole("button", { name: "Elegir cantera" }).click();
   await page.waitForURL(/\/cantera$/, { timeout: 10_000 });
-  await page.getByRole("heading", { name: "Cuatro canteras te quieren" }).waitFor({ state: "visible" });
+
+  // P0 contract: life and family must precede football and club choice.
+  await page.getByRole("heading", { name: "Esta noche todavía eres el de siempre" }).waitFor({ state: "visible" });
+  await page.getByRole("button", { name: /Escuchar y disfrutarlo con ellos/i }).click();
+  await page.getByRole("button", { name: "Seguir" }).click();
+
+  // The player explicitly chooses who will advise/manage the career.
+  await page.getByRole("heading", { name: "Alguien quiere llevar tu carrera" }).waitFor({ state: "visible" });
+  await page.getByRole("button", { name: /Álvaro Montes · representante profesional/i }).click();
+  await page.getByRole("button", { name: "Escuchar ofertas" }).click();
+
+  await page.getByRole("heading", { name: "Ahora sí: cuatro canteras te quieren" }).waitFor({ state: "visible" });
   const clubButtons = page.locator("ul > li > button");
   const clubCount = await clubButtons.count();
   if (clubCount !== 4) throw new Error(`club selection: expected 4 offers, got ${clubCount}`);
   await clubButtons.first().click();
-  await page.getByRole("button", { name: "Firmar en la cantera" }).click();
+  await page.getByRole("button", { name: "Sentarnos a negociar" }).click();
+
+  // First agreement is negotiated with the chosen adviser before arrival.
+  await page.getByRole("heading", { name: /La mesa del / }).waitFor({ state: "visible" });
+  await page.getByRole("button", { name: /Pedir un camino claro hacia minutos/i }).click();
+  await page.getByRole("button", { name: "Firmar y conocer al míster" }).click();
   await page.waitForURL(/\/historia$/, { timeout: 10_000 });
   await assertNoFatal("first story render");
 
+  // The live flow must now force named club introductions before any match.
+  await page.getByRole("heading", { name: "El entrenador te pone nombre y objetivo" }).waitFor({ state: "visible", timeout: 10_000 });
+  const firstStoryText = await page.locator("article").innerText();
+  if (/Salir al campo|Ver el partido|Jugada clave/i.test(firstStoryText)) {
+    throw new Error("opening order: a football match surfaced before the named coach introduction");
+  }
+
   const saveKey = "beyond90:save:v1";
-  const selectedMode = await page.evaluate((key) => {
+  const openingPersisted = await page.evaluate((key) => {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
-    return JSON.parse(raw).careerMode ?? null;
+    const state = JSON.parse(raw);
+    return {
+      mode: state.careerMode ?? null,
+      family: state.flags?.opening_family_done === 1,
+      adviser: state.flags?.opening_adviser_agent === 1,
+      contract: state.flags?.opening_contract_minutes === 1,
+      adviserName: state.agent?.name ?? null,
+      pending: state.pending?.eventId ?? null,
+    };
   }, saveKey);
-  if (selectedMode !== "pro") throw new Error(`career mode selection did not persist: ${selectedMode}`);
+  if (openingPersisted?.mode !== "pro") throw new Error(`career mode selection did not persist: ${openingPersisted?.mode}`);
+  if (!openingPersisted?.family || !openingPersisted?.adviser || !openingPersisted?.contract) {
+    throw new Error(`opening choices did not persist: ${JSON.stringify(openingPersisted)}`);
+  }
+  if (openingPersisted?.adviserName !== "Álvaro Montes") throw new Error(`chosen adviser identity did not persist: ${openingPersisted?.adviserName}`);
+  if (openingPersisted?.pending !== "people_coach_intro") throw new Error(`coach intro was not forced after signing: ${openingPersisted?.pending}`);
 
-  const firstAction = page.locator("article button").first();
-  await firstAction.waitFor({ state: "visible", timeout: 10_000 });
-  const before = await page.locator("article").innerText();
-  await firstAction.click();
+  await page.locator("article button").first().click();
+  await page.getByRole("button", { name: "Siguiente escena" }).click();
+  await page.getByRole("heading", { name: "El capitán se sienta a tu lado" }).waitFor({ state: "visible", timeout: 10_000 });
+  const captainText = await page.locator("article").innerText();
+  if (/Salir al campo|Ver el partido/i.test(captainText)) throw new Error("opening order: match surfaced before captain introduction");
+
+  await page.locator("article button").first().click();
+  await page.getByRole("button", { name: "Siguiente escena" }).click();
+  await page.getByRole("heading", { name: "Tu primer aliado dentro" }).waitFor({ state: "visible", timeout: 10_000 });
+  await assertNoFatal("mandatory opening chain");
+
+  await page.locator("article button").first().click();
+  await page.getByRole("button", { name: "Siguiente escena" }).click();
   await page.waitForTimeout(250);
-  const after = await page.locator("article").innerText();
-  if (after === before) throw new Error("first playable decision did not change the scene");
-  await assertNoFatal("first playable decision");
+  await assertNoFatal("first post-opening scene");
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForTimeout(200);
   if (!/\/historia$/.test(page.url())) throw new Error(`reload lost route: ${page.url()}`);
   await page.locator("article").waitFor({ state: "visible", timeout: 10_000 });
-  const reloadedMode = await page.evaluate((key) => {
+  const reloadedOpening = await page.evaluate((key) => {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
-    return JSON.parse(raw).careerMode ?? null;
+    const state = JSON.parse(raw);
+    return {
+      mode: state.careerMode ?? null,
+      family: state.flags?.opening_family_done === 1,
+      coach: state.flags?.people_coach_intro === 1,
+      captain: state.flags?.people_captain_intro === 1,
+      teammate: state.flags?.people_teammate_intro === 1,
+      adviserName: state.agent?.name ?? null,
+    };
   }, saveKey);
-  if (reloadedMode !== "pro") throw new Error(`career mode changed after reload: ${reloadedMode}`);
+  if (reloadedOpening?.mode !== "pro") throw new Error(`career mode changed after reload: ${reloadedOpening?.mode}`);
+  if (!reloadedOpening?.family || !reloadedOpening?.coach || !reloadedOpening?.captain || !reloadedOpening?.teammate) {
+    throw new Error(`mandatory opening chain did not survive reload: ${JSON.stringify(reloadedOpening)}`);
+  }
+  if (reloadedOpening?.adviserName !== "Álvaro Montes") throw new Error(`persistent adviser identity changed after reload: ${reloadedOpening?.adviserName}`);
   await assertNoFatal("saved career reload");
 
   const backupKey = `${saveKey}:backup`;
@@ -104,9 +158,9 @@ try {
     const raw = localStorage.getItem(key);
     if (!raw) return false;
     const state = JSON.parse(raw);
-    return state.careerMode === "pro";
+    return state.careerMode === "pro" && state.flags?.opening_family_done === 1 && state.agent?.name === "Álvaro Montes";
   }, saveKey);
-  if (!recoveredPrimary) throw new Error("save recovery: backup did not repair corrupted primary save with career mode intact");
+  if (!recoveredPrimary) throw new Error("save recovery: backup did not repair the opening career state");
   await assertNoFatal("corrupted save recovery");
 
   const retirementPrepared = await page.evaluate((key) => {
@@ -162,7 +216,7 @@ try {
   if (!persistedPostCareer) throw new Error("post-career coach path/style did not persist after reload");
   await assertNoFatal("post-career persistence");
 
-  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} mode=pro route=${page.url()} recovery=ok legacy=ok postCareer=coach-a`);
+  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} mode=pro opening=family-adviser-contract-coach-captain-teammate recovery=ok legacy=ok postCareer=coach-a`);
 } finally {
   await browser.close();
 }
