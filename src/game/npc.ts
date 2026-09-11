@@ -117,6 +117,16 @@ function normalizePerson(
   };
 }
 
+function syncNpc(s: GameState, key: string, person: CastPerson, role = person.role): void {
+  if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
+  const existing = s.memory.npcs[key];
+  s.memory.npcs[key] = {
+    name: person.name,
+    role,
+    mood: typeof existing?.mood === "number" ? existing.mood : person.relation,
+  };
+}
+
 /**
  * ÚNICA fuente de verdad del reparto fijo de una carrera. Normaliza también
  * saves antiguos para impedir que dos subsistemas inventen nombres distintos
@@ -143,6 +153,13 @@ export function ensureCast(s: GameState): CareerCast {
     social: normalizePerson(s, "social", stored?.social, nameFor(s, "career-social", true), "Contacto de redes", 50),
   };
   memory.careerCast = cast;
+
+  syncNpc(s, "adviser", cast.adviser, adviserRole(cast.adviserKind));
+  syncNpc(s, "coach", cast.coach);
+  syncNpc(s, "physio", cast.physio);
+  syncNpc(s, "captain", cast.captain);
+  syncNpc(s, "friend", cast.teammate);
+  syncNpc(s, "social", cast.social);
 
   s.hasAgent = true;
   s.agent.present = true;
