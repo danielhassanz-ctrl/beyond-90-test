@@ -1,0 +1,38 @@
+name: P0 apply agent market narrative fix
+
+on:
+  push:
+    branches:
+      - p0-real-career-director-repetition
+    paths:
+      - scripts/fix-p0-agent-market-repetition.mjs
+      - .github/workflows/p0-apply-agent-market-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout P0 branch
+        uses: actions/checkout@v4
+        with:
+          ref: p0-real-career-director-repetition
+          fetch-depth: 0
+
+      - name: Apply agent market chronology and repetition fix
+        run: node scripts/fix-p0-agent-market-repetition.mjs
+
+      - name: Commit generated engine change
+        run: |
+          if git diff --quiet -- src/game/engine.ts; then
+            echo "No engine changes required"
+            exit 0
+          fi
+          git config user.name "beyond90-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/game/engine.ts
+          git commit -m "P0: gate repetitive youth agent market calls"
+          git push origin HEAD:p0-real-career-director-repetition
