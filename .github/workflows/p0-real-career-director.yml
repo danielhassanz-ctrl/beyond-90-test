@@ -11,13 +11,12 @@ on:
       - src/game/**
       - scripts/real-career-playtest-smoke.ts
       - scripts/match-flash-source-ban-smoke.mjs
-      - scripts/apply-p0-match-flash-suppression.mjs
       - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
       - qa/REAL_CAREER_PLAYTEST_GATE.md
       - .github/workflows/p0-real-career-director.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   story-director:
@@ -27,7 +26,6 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
@@ -35,27 +33,11 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Apply P0 match-flash suppression
-        run: node scripts/apply-p0-match-flash-suppression.mjs
-
-      - name: Commit engine patch if required
-        if: github.event_name == 'push'
-        run: |
-          if git diff --quiet -- src/game/engine.ts; then
-            echo "Engine already patched"
-          else
-            git config user.name "beyond90-qa-bot"
-            git config user.email "actions@users.noreply.github.com"
-            git add src/game/engine.ts
-            git commit -m "P0: make simulated match blocks background-only"
-            git push origin HEAD:p0-real-career-director-repetition
-          fi
-
       - name: Ban playable match_flash emission at source
         run: node scripts/match-flash-source-ban-smoke.mjs
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Typecheck
         run: npm run typecheck
