@@ -662,6 +662,10 @@ function agentCard(s: GameState): Card | null {
 /* ============ Partidos resueltos en SEGUNDO PLANO (sin pantalla) ============ */
 
 function applyRun(s: GameState, count: number): SimRun {
+  // A simulated block represents real weeks of calendar, not zero-time glue.
+  // Advancing narrative time here lets the Story Director surface life/club
+  // beats between sparse key matches instead of producing football-card runs.
+  s.beat += Math.max(1, Math.ceil(count / 2));
   const run = simulateRun(s, count);
   const season = currentSeason(s);
   if (season) {
