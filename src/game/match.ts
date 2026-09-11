@@ -226,7 +226,20 @@ export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, 
   }
   moments.sort((a, b) => a.minute - b.minute);
 
-  const keyMoment = minutes >= 30 && Math.random() < 0.6 ? { ...pick(KEY_MOMENTS) } : undefined;
+  // A key-match decision is authored narrative, not renewable filler. Once a
+  // choice set has appeared in this career it cannot be selected again. If the
+  // small authored pool is exhausted, the match simply has no key decision.
+  let keyMoment: KeyMoment | undefined;
+  if (minutes >= 30 && Math.random() < 0.6) {
+    const unseen = KEY_MOMENTS
+      .map((moment, index) => ({ moment, index }))
+      .filter(({ index }) => !state.seenEvents.includes(`key_moment_${index}`));
+    if (unseen.length > 0) {
+      const chosen = pick(unseen);
+      state.seenEvents.push(`key_moment_${chosen.index}`);
+      keyMoment = { ...chosen.moment, options: chosen.moment.options.map((option) => ({ ...option })) };
+    }
+  }
 
   const match: MatchData = {
     ctx,
