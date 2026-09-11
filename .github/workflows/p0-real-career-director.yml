@@ -10,6 +10,7 @@ on:
     paths:
       - src/game/**
       - scripts/real-career-playtest-smoke.ts
+      - scripts/full-season-boredom-smoke.ts
       - scripts/match-flash-source-ban-smoke.mjs
       - scripts/apply-key-moment-antirepeat.mjs
       - scripts/apply-match-opponent-antirepeat.mjs
@@ -51,6 +52,9 @@ jobs:
 
       - name: Real-career first-15 human-style playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: Full-season boredom/coherence playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
 
       - name: Pacing budget QA
         run: npm run qa:pacing
