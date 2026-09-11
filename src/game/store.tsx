@@ -15,7 +15,14 @@ import {
 } from "./engine";
 import { applyCareerPacing, DEFAULT_CAREER_MODE, setCareerMode, type CareerMode } from "./pacing";
 import { choosePostCareerPath, choosePostCareerStyle, type PostCareerPath, type PostCareerStyle } from "./postcareer";
+import type { AdviserKind } from "./npc";
 import type { DynamicCard, GameState, MatchData, Player } from "./types";
+
+export interface OpeningSetup {
+  familyChoice: "support" | "grounded" | "study";
+  adviserKind: AdviserKind;
+  contractChoice: "minutes" | "development" | "security";
+}
 
 interface GameContextValue {
   state: GameState | null;
@@ -24,7 +31,7 @@ interface GameContextValue {
   error: string | null;
   clearError: () => void;
   start: (player: Player, mode?: CareerMode) => void;
-  pickClub: (clubId: string) => void;
+  pickClub: (clubId: string, opening?: OpeningSetup) => void;
   answerEvent: (eventId: string, choiceId: string) => void;
   answerFree: (eventId: string, text: string) => void;
   answerDynamic: (card: DynamicCard, choiceId: string, text?: string) => void;
@@ -59,10 +66,6 @@ function read(): GameState | null {
     const primaryRaw = localStorage.getItem(SAVE_KEY);
     const primary = parseSave(primaryRaw);
     if (primary) {
-      // The primary slot is canonical whenever it parses successfully. Keep the
-      // recovery slot byte-for-byte aligned even when an older backup is still
-      // valid, otherwise a later primary corruption can silently roll a player
-      // back to an earlier career state.
       const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
       if (backupRaw !== primaryRaw) {
         try {
@@ -126,6 +129,63 @@ function withRuntime(next: GameState): GameState {
   return next;
 }
 
+function applyOpeningSetup(state: GameState, opening: OpeningSetup): GameState {
+  const cast = ensureCareerCast(state);
+  cast.adviserKind = opening.adviserKind;
+  cast.adviser.name = opening.adviserKind === "father"
+    ? "Papá"
+    : opening.adviserKind === "friend"
+      ? "Álex"
+      : "Álvaro Montes";
+  cast.adviser.role = opening.adviserKind === "father"
+    ? "Padre y asesor"
+    : opening.adviserKind === "friend"
+      ? "Amigo y asesor"
+      : "Representante";
+  cast.adviser.met = true;
+  cast.adviser.lastContactScene = state.sceneCount ?? 0;
+  state.hasAgent = true;
+  state.agent.present = true;
+  state.agent.name = cast.adviser.name;
+  state.agentName = cast.adviser.name;
+  state.rel.agent = Math.max(state.rel.agent, 50);
+  state.flags["opening_family_done"] = 1;
+  state.flags[`opening_family_${opening.familyChoice}`] = 1;
+  state.flags["people_adviser_intro"] = 1;
+  state.flags["opening_adviser_chosen"] = 1;
+  state.flags[`opening_adviser_${opening.adviserKind}`] = 1;
+  state.flags["opening_contract_done"] = 1;
+  state.flags[`opening_contract_${opening.contractChoice}`] = 1;
+  state.memory.promises.unshift(
+    opening.contractChoice === "minutes"
+      ? `${cast.adviser.name} y tú priorizasteis minutos en el primer acuerdo de cantera.`
+      : opening.contractChoice === "development"
+        ? `${cast.adviser.name} y tú priorizasteis desarrollo deportivo en el primer acuerdo de cantera.`
+        : `${cast.adviser.name} y tú priorizasteis estabilidad en el primer acuerdo de cantera.`,
+  );
+  state.memory.promises = state.memory.promises.slice(0, 24);
+  state.agent.memories = [
+    `adviser:${opening.adviserKind}`,
+    `opening-family:${opening.familyChoice}`,
+    `opening-contract:${opening.contractChoice}`,
+    ...state.agent.memories.filter((m) => !m.startsWith("adviser:") && !m.startsWith("opening-")),
+  ].slice(0, 12);
+  // The coach is the first football-world person the player meets after signing.
+  // This explicit pending card cannot be bypassed by the generic Narrative Director.
+  state.pending = { type: "event", eventId: "people_coach_intro" };
+  return state;
+}
+
+function forceOpeningContinuation(state: GameState, eventId: string): GameState {
+  if (state.age > 18 || state.seasonIndex > 0) return state;
+  if (eventId === "people_coach_intro" && state.flags["people_coach_intro"] === 1) {
+    state.pending = { type: "event", eventId: "people_captain_intro" };
+  } else if (eventId === "people_captain_intro" && state.flags["people_captain_intro"] === 1) {
+    state.pending = { type: "event", eventId: "people_teammate_intro" };
+  }
+  return state;
+}
+
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState | null>(null);
   const [ready, setReady] = useState(false);
@@ -163,21 +223,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
     ensureCareerCast(game);
     commit(game);
   }, [commit]);
-  const pickClub = useCallback((clubId: string) => apply((prev) => chooseClub(prev, clubId)), [apply]);
+
+  const pickClub = useCallback((clubId: string, opening?: OpeningSetup) => {
+    apply((prev) => {
+      const next = chooseClub(prev, clubId);
+      return opening ? applyOpeningSetup(next, opening) : next;
+    });
+  }, [apply]);
+
   const answerEvent = useCallback(
     (eventId: string, choiceId: string) =>
       apply((prev) => {
         const next = resolveEvent(prev, eventId, choiceId);
         const label = eventById(eventId)?.choices.find((c) => c.id === choiceId)?.label;
         if (label) rememberBeat(next, label);
-        return next;
+        return forceOpeningContinuation(next, eventId);
       }),
     [apply],
   );
+
   const answerFree = useCallback(
     (eventId: string, text: string) => apply((prev) => resolveEventFree(prev, eventId, text)),
     [apply],
   );
+
   const answerDynamic = useCallback(
     (card: DynamicCard, choiceId: string, text?: string) =>
       apply((prev) => {
@@ -187,19 +256,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }),
     [apply],
   );
+
   const playMatch = useCallback(
     (match: MatchData, keyChoiceId?: string) =>
       apply((prev) => (keyChoiceId ? resolveMatch(prev, match, keyChoiceId) : resolveMatch(prev, match))),
     [apply],
   );
+
   const choosePostCareer = useCallback(
     (path: PostCareerPath) => apply((prev) => choosePostCareerPath(prev, path)),
     [apply],
   );
+
   const choosePostCareerStyleAction = useCallback(
     (style: PostCareerStyle) => apply((prev) => choosePostCareerStyle(prev, style)),
     [apply],
   );
+
   const next = useCallback(() => apply((prev) => advance(prev)), [apply]);
   const reset = useCallback(() => commit(null), [commit]);
 
