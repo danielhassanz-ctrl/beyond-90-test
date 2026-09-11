@@ -1,94 +1,24 @@
-import { careerSeed, hash } from "./npc";
+import {
+  ensureCast,
+  type AdviserKind as NpcAdviserKind,
+  type CareerCast as NpcCareerCast,
+  type CastPerson,
+} from "./npc";
 import type { GameState } from "./types";
 
 export type CareerEra = "academy" | "breakthrough" | "established" | "prime" | "veteran" | "legacy";
 export type CareerStatus = "prospect" | "squad" | "starter" | "star" | "elite" | "legend";
-export type AdviserKind = "agent" | "father" | "friend";
+export type AdviserKind = NpcAdviserKind;
+export type CareerPerson = CastPerson;
+export type CareerCast = NpcCareerCast;
 
-export interface CareerPerson {
-  id: string;
-  name: string;
-  role: "adviser" | "coach" | "physio" | "captain" | "teammate" | "social";
-  relation: number;
-  met: boolean;
-  lastContactScene: number;
-}
-export interface CareerCast {
-  adviserKind: AdviserKind;
-  adviser: CareerPerson;
-  coach: CareerPerson;
-  physio: CareerPerson;
-  captain: CareerPerson;
-  teammate: CareerPerson;
-  social: CareerPerson;
-}
-const NAMES = {
-  adviser: ["Álex Salas", "Mario Vega", "Javi Romero", "Rubén Costa", "Sergio León"],
-  coach: ["Rafa Molina", "Óscar Mena", "Iñaki Torres", "Luis Aranda", "Pablo Ríos"],
-  physio: ["Clara Vidal", "Marta Sanz", "Álvaro Rey", "Nuria Campos", "David Serra"],
-  captain: ["Álex Moreno", "Dani Rivas", "Marcos Vidal", "Jorge Peña", "Iván Santos"],
-  teammate: ["Nico Lara", "Hugo Rey", "Mateo Cruz", "Iker Vidal", "Adrián Soler"],
-  social: ["Lucía", "Marta", "Alba", "Carla", "Sofía"],
-} as const;
-
-function pick(s: GameState, key: keyof typeof NAMES): string {
-  const list = NAMES[key];
-  return list[hash(careerSeed(s), `career-person-${key}`) % list.length]!;
-}
-
-function person(s: GameState, role: CareerPerson["role"], key: keyof typeof NAMES): CareerPerson {
-  return { id: `${role}-${hash(careerSeed(s), role)}`, name: pick(s, key), role, relation: 50, met: false, lastContactScene: -99 };
-}
-
-function seedNpc(s: GameState, key: string, p: CareerPerson, role: string): void {
-  if (!s.memory.npcs[key]) s.memory.npcs[key] = { name: p.name, role, mood: p.relation };
-}
-
-function adviserRole(kind: AdviserKind): string {
-  if (kind === "father") return "Padre y asesor";
-  if (kind === "friend") return "Amigo y asesor";
-  return "Representante";
-}
-
-/** Persistent named people: a career is a biography, not anonymous cards. */
+/**
+ * Fachada narrativa del reparto persistente. La creación y migración viven
+ * exclusivamente en npc.ts para que todo el juego comparta exactamente las
+ * mismas identidades durante una carrera completa.
+ */
 export function ensureCareerCast(s: GameState): CareerCast {
-  const holder = s.memory as typeof s.memory & { careerCast?: CareerCast };
-  if (!holder.careerCast) {
-    const adviserKind: AdviserKind = (["agent", "father", "friend"] as const)[hash(careerSeed(s), "adviser-kind") % 3]!;
-    const adviser = person(s, "adviser", "adviser");
-    adviser.name = adviserKind === "father" ? "Papá" : adviserKind === "friend" ? pick(s, "teammate") : pick(s, "adviser");
-    holder.careerCast = {
-      adviserKind,
-      adviser,
-      coach: person(s, "coach", "coach"),
-      physio: person(s, "physio", "physio"),
-      captain: person(s, "captain", "captain"),
-      teammate: person(s, "teammate", "teammate"),
-      social: person(s, "social", "social"),
-    };
-  }
-
-  const cast = holder.careerCast;
-  seedNpc(s, "coach", cast.coach, "Entrenador");
-  seedNpc(s, "physio", cast.physio, "Fisioterapeuta");
-  seedNpc(s, "captain", cast.captain, "Capitán");
-  seedNpc(s, "friend", cast.teammate, "Compañero de confianza");
-  seedNpc(s, "social", cast.social, "Contacto de redes");
-  seedNpc(s, "adviser", cast.adviser, adviserRole(cast.adviserKind));
-
-  // The existing game engine already routes contract/market guidance through
-  // AgentState. Keep that system, but make the career adviser real from scene
-  // one even when the role is filled by the player's father or a trusted friend.
-  s.agent.present = true;
-  s.hasAgent = true;
-  s.agent.name = cast.adviser.name;
-  s.agentName = cast.adviser.name;
-  if (s.rel.agent <= 0) s.rel.agent = cast.adviser.relation;
-  if (!s.agent.memories.includes(`adviser:${cast.adviserKind}`)) {
-    s.agent.memories.unshift(`adviser:${cast.adviserKind}`);
-  }
-
-  return cast;
+  return ensureCast(s);
 }
 
 export function careerEra(s: GameState): CareerEra {
@@ -123,8 +53,8 @@ export function canReceiveSocialDm(s: GameState): boolean {
   return s.age >= 17 && s.fame >= 18 && !s.flags["social_dm_intro"];
 }
 
-export function touch(p: CareerPerson, s: GameState, delta = 0): void {
-  p.met = true;
-  p.lastContactScene = s.sceneCount;
-  p.relation = Math.max(0, Math.min(100, p.relation + delta));
+export function touch(person: CareerPerson, s: GameState, delta = 0): void {
+  person.met = true;
+  person.lastContactScene = s.sceneCount;
+  person.relation = Math.max(0, Math.min(100, person.relation + delta));
 }
