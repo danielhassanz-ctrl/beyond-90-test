@@ -142,13 +142,14 @@ test("iPhone WebKit heals a valid but stale backup before recovery is needed", a
 
   // A normal boot with a valid primary must refresh an older-but-valid backup.
   await page.reload();
-  const synchronized = await page.evaluate(() => {
+  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
+  await expect.poll(async () => page.evaluate(() => {
     const primaryRaw = localStorage.getItem("beyond90:save:v1");
     const backupRaw = localStorage.getItem("beyond90:save:v1:backup");
     if (!primaryRaw || !backupRaw) return false;
     return JSON.parse(primaryRaw).player.name === JSON.parse(backupRaw).player.name;
-  });
-  expect(synchronized).toBeTruthy();
+  })).toBeTruthy();
 
   // If the primary then corrupts, recovery must return the current career, not
   // the stale snapshot that was valid before the synchronization boot.
@@ -157,11 +158,10 @@ test("iPhone WebKit heals a valid but stale backup before recovery is needed", a
   await expect(page).toHaveURL(/\/historia$/);
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
 
-  const recoveredName = await page.evaluate(() => {
+  await expect.poll(async () => page.evaluate(() => {
     const primaryRaw = localStorage.getItem("beyond90:save:v1");
     return primaryRaw ? JSON.parse(primaryRaw).player.name : null;
-  });
-  expect(recoveredName).toBe("Jugador QA Fresh State");
+  })).toBe("Jugador QA Fresh State");
   expect(pageErrors).toEqual([]);
 });
 
