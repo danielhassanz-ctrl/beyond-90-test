@@ -39,6 +39,17 @@ export function careerEra(s: GameState): CareerEra {
 export function careerStatus(s: GameState): CareerStatus {
   const titles = s.titles?.length ?? 0;
   const awards = s.awards?.length ?? 0;
+
+  // Age is a hard narrative prerequisite, not just another stat. An exceptional
+  // academy player may already be a star, but must not unlock established-elite
+  // or legend scenes before the career has actually reached those eras.
+  if (s.age <= 18) {
+    if (s.overall >= 83 || s.fame >= 75 || awards >= 1) return "star";
+    if (s.overall >= 76 || s.fame >= 45) return "starter";
+    if (s.overall >= 70) return "squad";
+    return "prospect";
+  }
+
   if (s.age >= 27 && s.overall >= 89 && (titles >= 4 || awards >= 2)) return "legend";
   if (s.overall >= 88 || awards >= 1) return "elite";
   if (s.overall >= 83 || s.fame >= 75) return "star";
