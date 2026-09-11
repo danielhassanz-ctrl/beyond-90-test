@@ -1,4 +1,5 @@
 import { canReceiveSocialDm, ensureCareerCast, touch } from "./career-life";
+import { ALL_EVENTS } from "./events";
 import { flag, note, rel, stat } from "./mutate";
 import type { GameEvent } from "./types";
 
@@ -104,3 +105,18 @@ export const PEOPLE_EVENTS: GameEvent[] = [
     ],
   },
 ];
+
+let installed = false;
+/**
+ * Compatibility bridge while the live selector still owns ALL_EVENTS in events.ts.
+ * Called after module initialization from npc.ts, so the cycle never reads ALL_EVENTS
+ * during evaluation. This keeps the people scenes in the real selector without
+ * duplicating the legacy event bank.
+ */
+export function installPeopleEvents(): void {
+  if (installed) return;
+  const existing = new Set(ALL_EVENTS.map((event) => event.id));
+  const missing = PEOPLE_EVENTS.filter((event) => !existing.has(event.id));
+  if (missing.length) ALL_EVENTS.unshift(...missing);
+  installed = true;
+}
