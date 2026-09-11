@@ -7,13 +7,14 @@ const required = [
   's.flags["agent_teaser_season"] !== s.seasonIndex',
   's.flags["agent_offer_season"] === s.seasonIndex',
   's.flags["agent_commission_season"] !== s.seasonIndex',
+  's.flags["volvio_pendiente"] = recoveredSeverity === "minor" ? 0 : 1;',
 ];
 for (const token of required) {
-  if (!engine.includes(token)) throw new Error(`Missing agent-market chronology guard: ${token}`);
+  if (!engine.includes(token)) throw new Error(`Missing P0 chronology/anti-repeat guard: ${token}`);
 }
 
 const matchFlashGuard = 'if (s.pending?.type === "dynamic" && s.pending.kind === "match_flash") s.pending = null;';
 const occurrences = engine.split(matchFlashGuard).length - 1;
 if (occurrences !== 1) throw new Error(`Expected exactly one legacy match_flash migration guard, found ${occurrences}`);
 
-console.log("AGENT_MARKET_CHRONOLOGY_OK youthTransferCalls=blocked seasonalTeaser=one seasonalOffer=one migrationGuard=deduped");
+console.log("AGENT_MARKET_CHRONOLOGY_OK youthTransferCalls=blocked seasonalTeaser=one seasonalOffer=one minorReturnCards=background migrationGuard=deduped");
