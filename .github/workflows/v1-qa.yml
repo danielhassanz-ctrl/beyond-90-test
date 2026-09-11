@@ -3,6 +3,7 @@ name: Beyond 90 V1 QA
 on:
   push:
     branches:
+      - main
       - "product-v4-*"
       - "p0-*"
   pull_request:
@@ -21,7 +22,7 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Typecheck
         run: npm run typecheck
       - name: Mandatory life-first opening QA
