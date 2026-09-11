@@ -59,12 +59,16 @@ function read(): GameState | null {
     const primaryRaw = localStorage.getItem(SAVE_KEY);
     const primary = parseSave(primaryRaw);
     if (primary) {
+      // The primary slot is canonical whenever it parses successfully. Keep the
+      // recovery slot byte-for-byte aligned even when an older backup is still
+      // valid, otherwise a later primary corruption can silently roll a player
+      // back to an earlier career state.
       const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
-      if (!parseSave(backupRaw)) {
+      if (backupRaw !== primaryRaw) {
         try {
           localStorage.setItem(BACKUP_SAVE_KEY, primaryRaw as string);
         } catch {
-          /* Best-effort backup priming for Safari/private storage. */
+          /* Best-effort backup healing for Safari/private storage. */
         }
       }
       return primary;
