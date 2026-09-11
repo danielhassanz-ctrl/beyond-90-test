@@ -31,53 +31,66 @@ replaceOnce(
         continue;
       }
       s.pending = { type: "match", match: simulateMatch(s, slot, s.beat) };
+      s.flags["playable_match_streak"] = (s.flags["playable_match_streak"] ?? 0) + 1;
       return touch(s);
     }`,
 "match presentation gate",
 );
 
 replaceOnce(
-`  finishScene(s, event.title, outcomeText, before);
-  return touch(s);`,
-`  finishScene(s, event.title, outcomeText, before);
-  s.flags["playable_match_streak"] = 0;
-  return touch(s);`,
-"resolveEvent streak reset",
+`    const cons = consequenceCard(s);
+    if (cons) {
+      s.pending = cons;
+      return touch(s);
+    }`,
+`    const cons = consequenceCard(s);
+    if (cons) {
+      s.pending = cons;
+      s.flags["playable_match_streak"] = 0;
+      return touch(s);
+    }`,
+"consequence reset",
 );
 
 replaceOnce(
-`  finishScene(s, event.title, `${'${reaction} (${interp.label})'}`, before);
-  return touch(s);`,
-`  finishScene(s, event.title, `${'${reaction} (${interp.label})'}`, before);
-  s.flags["playable_match_streak"] = 0;
-  return touch(s);`,
-"resolveEventFree streak reset",
+`    const thread = dueThread(s);
+    if (thread) {
+      s.pending = dyn("thread", {`,
+`    const thread = dueThread(s);
+    if (thread) {
+      s.flags["playable_match_streak"] = 0;
+      s.pending = dyn("thread", {`,
+"thread reset",
 );
 
 replaceOnce(
-`  note(s, `${'${result.title}: ${result.text}'}`, result.tone === "gold" ? "gold" : result.tone);
-  return touch(s);`,
-`  note(s, `${'${result.title}: ${result.text}'}`, result.tone === "gold" ? "gold" : result.tone);
-  s.flags["playable_match_streak"] = 0;
-  return touch(s);`,
-"resolveDynamic streak reset",
+`    const dirCard = directorCard(s);
+    if (dirCard) {
+      s.pending = dirCard;
+      return touch(s);
+    }`,
+`    const dirCard = directorCard(s);
+    if (dirCard) {
+      s.pending = dirCard;
+      s.flags["playable_match_streak"] = 0;
+      return touch(s);
+    }`,
+"director reset",
 );
 
 replaceOnce(
-`  note(
-    s,
-    `${'${final.ctx.competition} · ${final.ctx.homeTeam} ${final.ctx.isHome ? final.goalsFor : final.goalsAgainst}-${final.ctx.isHome ? final.goalsAgainst : final.goalsFor} ${final.ctx.awayTeam}${final.minutes ? ` (${final.minutes}\', ${final.rating.toFixed(1)})` : " (sin minutos)"}'}`,
-    won ? "good" : drew ? "neutral" : "bad",
-  );
-  return touch(s);`,
-`  note(
-    s,
-    `${'${final.ctx.competition} · ${final.ctx.homeTeam} ${final.ctx.isHome ? final.goalsFor : final.goalsAgainst}-${final.ctx.isHome ? final.goalsAgainst : final.goalsFor} ${final.ctx.awayTeam}${final.minutes ? ` (${final.minutes}\', ${final.rating.toFixed(1)})` : " (sin minutos)"}'}`,
-    won ? "good" : drew ? "neutral" : "bad",
-  );
-  s.flags["playable_match_streak"] = (s.flags["playable_match_streak"] ?? 0) + 1;
-  return touch(s);`,
-"resolveMatch streak increment",
+`    const card = agentCard(s);
+    if (card) {
+      s.pending = card;
+      return touch(s);
+    }`,
+`    const card = agentCard(s);
+    if (card) {
+      s.pending = card;
+      s.flags["playable_match_streak"] = 0;
+      return touch(s);
+    }`,
+"agent reset",
 );
 
 fs.writeFileSync(file, src);
