@@ -1,3 +1,4 @@
+import { installPeopleEvents } from "./events-people";
 import type { GameState } from "./types";
 
 /* =========================================================================
@@ -19,6 +20,10 @@ const LAST = [
 const FEMALE = ["Lucía", "Carla", "Marta", "Irene", "Nerea", "Paula", "Alba", "Sara", "Elena", "Noa"];
 
 export function careerSeed(s: GameState): number {
+  // Install after the ESM graph has initialized; event selection calls careerSeed
+  // before hashing narrative candidates, so persistent-people scenes enter the
+  // same live registry as the rest of the career bank.
+  installPeopleEvents();
   const anyS = s as GameState & { careerSeed?: number };
   if (typeof anyS.careerSeed !== "number" || !Number.isFinite(anyS.careerSeed)) {
     anyS.careerSeed = Math.floor(Math.random() * 1_000_000) + 1;
