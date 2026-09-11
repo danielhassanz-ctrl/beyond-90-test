@@ -9,7 +9,7 @@ on:
 jobs:
   qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,10 +18,24 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - run: npm run typecheck
-      - run: npm run qa:career
-      - run: npm run qa:branches
-      - run: npm run build
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Career pacing QA
+        run: npm run qa:pacing
+      - name: Competition pacing QA
+        run: npm run qa:competition-pacing
+      - name: Persistent cast QA
+        run: npm run qa:persistent-cast
+      - name: Full career QA
+        run: npm run qa:career
+      - name: Branch QA
+        run: npm run qa:branches
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+      - name: Build
+        run: npm run build
       - name: Install WebKit test runtime
         run: |
           npm install --no-save @playwright/test@1.55.0
