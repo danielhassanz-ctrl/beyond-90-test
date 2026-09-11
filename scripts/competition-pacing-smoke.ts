@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { eligibleKeyMatchKinds } from "../src/game/competition-calendar";
+import { confederationFor, continentalTournament, eligibleKeyMatchKinds } from "../src/game/competition-calendar";
 import { createGame } from "../src/game/engine";
 import { applyCareerPacing, decisionTarget, keyMatchTarget, narrativeRotationFor, narrativeTarget, setCareerMode } from "../src/game/pacing";
 import type { GameState, Player } from "../src/game/types";
@@ -25,6 +25,24 @@ function base(): GameState {
   s.fame = 78;
   setCareerMode(s, "pro");
   return s;
+}
+
+{
+  const cases: Array<[string, ReturnType<typeof confederationFor>, string]> = [
+    ["Canada", "CONCACAF", "Copa Oro"],
+    ["Cameroon", "CAF", "Copa Africana de Naciones"],
+    ["Egypt", "CAF", "Copa Africana de Naciones"],
+    ["Ivory Coast", "CAF", "Copa Africana de Naciones"],
+    ["Saudi Arabia", "AFC", "Copa Asiática"],
+    ["Iran", "AFC", "Copa Asiática"],
+    ["United Arab Emirates", "AFC", "Copa Asiática"],
+    ["New Zealand", "OFC", "Copa de Naciones de la OFC"],
+    ["Fiji", "OFC", "Copa de Naciones de la OFC"],
+  ];
+  for (const [nationality, confederation, tournament] of cases) {
+    assert.equal(confederationFor(nationality), confederation, `${nationality} mapped to the wrong confederation`);
+    assert.equal(continentalTournament(nationality), tournament, `${nationality} mapped to the wrong continental tournament`);
+  }
 }
 
 {
@@ -101,4 +119,4 @@ function base(): GameState {
   assert.ok(legacyMix.includes("medical") && legacyMix.includes("life") && legacyMix.includes("agent"));
 }
 
-console.log("COMPETITION_PACING_SMOKE_OK: key matches respect competition/stage context; youth/reserves shift excess match density into narrative decisions; narrative mix changes with career age.");
+console.log("COMPETITION_PACING_SMOKE_OK: nationality aliases map to the correct confederation/tournament; key matches respect competition/stage context; youth/reserves shift excess match density into narrative decisions; narrative mix changes with career age.");
