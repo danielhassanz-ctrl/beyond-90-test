@@ -1,0 +1,106 @@
+name: P0 real-career Story Director
+
+on:
+  push:
+    branches:
+      - p0-real-career-director-repetition
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/game/**
+      - scripts/real-career-playtest-smoke.ts
+      - scripts/full-season-boredom-smoke.ts
+      - scripts/match-flash-source-ban-smoke.mjs
+      - scripts/agent-market-chronology-smoke.mjs
+      - scripts/apply-key-moment-antirepeat.mjs
+      - scripts/apply-match-opponent-antirepeat.mjs
+      - scripts/apply-playable-match-streak-gate.mjs
+      - scripts/apply-minor-injury-card-dedupe.mjs
+      - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
+      - qa/REAL_CAREER_PLAYTEST_GATE.md
+      - .github/workflows/p0-real-career-director.yml
+
+permissions:
+  contents: read
+
+jobs:
+  story-director:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Ban playable match_flash emission at source
+        run: node scripts/match-flash-source-ban-smoke.mjs
+
+      - name: Lock youth agent market chronology
+        run: node scripts/agent-market-chronology-smoke.mjs
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Mandatory life-first opening QA
+        run: npm run qa:opening
+
+      - name: Real-career first-15 human-style playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: Full-season boredom/coherence playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
+
+      - name: Pacing budget QA
+        run: npm run qa:pacing
+
+      - name: Competition chronology QA
+        run: npm run qa:competition-pacing
+
+      - name: Persistent cast QA
+        run: npm run qa:persistent-cast
+
+      - name: Branch/narrative QA
+        run: npm run qa:branches
+
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+
+      - name: Thread scheduler anti-starvation QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/thread-scheduler-smoke.ts
+
+      - name: Full-career QA
+        run: npm run qa:career
+
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+
+      - name: Build
+        run: npm run build
+
+      - name: Install WebKit test runtime
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+
+      - name: iPhone WebKit delivery and persistence
+        run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line

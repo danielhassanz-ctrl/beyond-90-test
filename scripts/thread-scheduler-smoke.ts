@@ -24,9 +24,9 @@ try {
   s.sceneCount = 20;
   s.flags["ultimo_hilo"] = -99;
 
-  // coach_upset has already happened, but its condition remains strong. Before
-  // the fix the scheduler returned immediately after the failed respawn and
-  // also spent the four-scene cooldown, starving the next eligible storyline.
+  // coach_upset has already happened, but its condition remains strong. The
+  // scheduler must skip that exhausted story and keep looking instead of
+  // spending the cadence on a thread that cannot be created.
   s.memory.threads = { coach_upset: 1 };
   s.rel.coach = 10;
   s.agent.present = true;

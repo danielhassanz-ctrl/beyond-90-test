@@ -273,6 +273,7 @@ export function migrate(raw: unknown): GameState | null {
   const validCards = ["event", "match", "season", "dynamic"];
   if (s.pending && !validCards.includes(s.pending.type)) s.pending = null;
   if (s.pending?.type === "match" && !s.pending.match?.ctx) s.pending = null;
+  if (s.pending?.type === "dynamic" && s.pending.kind === "match_flash") s.pending = null;
   return s;
 }
 
@@ -319,6 +320,24 @@ function finalPlausible(s: GameState): boolean {
 function keyMatchSpecs(s: GameState): KeySpec[] {
   const debut = !s.achievements.includes(s.stage === "first" ? "debut_pro" : "debut_juvenil");
   const derby = derbyRivalOf(clubDef(s.clubId));
+
+  // Juveniles and reserve/B teams do not magically enter the senior Copa del
+  // Rey or Europe. Their key matches are development milestones: debut,
+  // derbies, scouts and genuinely decisive league/category fixtures.
+  if (s.stage !== "first") {
+    const developmental: KeySpec[] = [
+      { tag: debut ? "debut" : "scouts" },
+      ...(derby ? [{ tag: "derby" as const, opponentId: derby.id }] : []),
+      { tag: "decisive" },
+      { tag: "scouts" },
+      { tag: "decisive" },
+      { tag: "scouts" },
+      { tag: "decisive" },
+    ];
+    if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) developmental.splice(3, 0, { tag: "exclub" });
+    return developmental.slice(0, 7);
+  }
+
   const specs: KeySpec[] = [
     { tag: debut ? "debut" : "scouts" },
     ...(derby ? [{ tag: "derby" as const, opponentId: derby.id }] : []),
@@ -327,7 +346,7 @@ function keyMatchSpecs(s: GameState): KeySpec[] {
     { tag: "scouts" },
     { tag: "decisive" },
   ];
-  // FASE 6: si el club juega competición europea, uno de los partidos clave lo es.
+  // Senior-only: European and cup stories require a first-team career.
   const euro = europeanCompetition(s);
   if (euro) specs.splice(2, 0, { tag: "euro", tie: true, competition: euro });
   if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) specs.splice(3, 0, { tag: "exclub" });
@@ -464,9 +483,18 @@ export function advance(state: GameState): GameState {
     s.queue = makeSeasonPlan(s);
   }
 
-  for (let guard = 0; guard < 16; guard++) {
+  for (let guard = 0; guard < 64; guard++) {
     // 1. Lesión sin diagnosticar: siempre manda.
     if (s.injury && !s.injury.treated) {
+      // A second minor knock in the same season is medical routine, not another
+      // identical player decision. Surface the first diagnosis; subsequent minor
+      // injuries are treated in the background unless severity escalates.
+      if (s.injury.severity === "minor" && s.flags["minor_injury_card_season"] === s.seasonIndex) {
+        s.injury.treated = true;
+        note(s, `Parte médico: ${s.injury.label}. Tratamiento rutinario, sin nueva decisión.`, "neutral");
+        continue;
+      }
+      if (s.injury.severity === "minor") s.flags["minor_injury_card_season"] = s.seasonIndex;
       s.pending = dyn("injury_diagnosis", {
         label: s.injury.label,
         severity: s.injury.severity,
@@ -512,25 +540,10 @@ export function advance(state: GameState): GameState {
     if (slot.kind === "sim") {
       const run = applyRun(s, slot.matches ?? 3);
       if (run.notable) {
-        // Lo simulado nunca es una pantalla informativa: solo abre escena si la
-        // consecuencia es interactiva (conflicto, expulsión, ostracismo, crisis).
-        const interactive = ["red", "snub", "crisis", "bad", "injury"].includes(run.notable.kind);
-        note(s, run.notable.text, interactive ? "bad" : "good");
-        if (interactive) {
-          s.pending = dyn("match_flash", {
-            kind: run.notable.kind,
-            text: run.notable.text,
-            opponent: run.notable.opponent,
-            wins: run.wins,
-            draws: run.draws,
-            losses: run.losses,
-            goals: run.goals,
-            matches: run.matches,
-          });
-          return touch(s);
-        }
+        note(s, run.notable.text, ["red", "snub", "crisis", "bad", "injury"].includes(run.notable.kind) ? "bad" : "good");
       }
-      continue; // sin escena: el siguiente clic lleva a una decisión real
+      // Los bloques simulados son contexto estadístico, no decisiones.
+      continue;
     }
 
     if (slot.kind === "match") {
@@ -538,6 +551,10 @@ export function advance(state: GameState): GameState {
         applyRun(s, 3);
         continue;
       }
+      // Slots marked as key matches are already sparse and separated by
+      // narrative/simulation slots in makeSeasonPlan. Do not silently erase
+      // them just because an optional narrative slot failed to surface a card.
+      // Repetition is controlled by one-shot key moments and opponent guards.
       s.pending = { type: "match", match: simulateMatch(s, slot, s.beat) };
       return touch(s);
     }
@@ -591,22 +608,11 @@ export function advance(state: GameState): GameState {
     applyRun(s, 2);
   }
 
-  // RITMO: con el director dosificado, muchos huecos son rutina. Si tras el
-  // recorrido no ha salido escena y la temporada sigue viva, contamos el
-  // tramo de calendario en vez de cerrar la temporada por agotamiento.
+  // Sin decisión narrativa válida no fabricamos una tarjeta de resumen.
+  // Consumimos calendario y seguimos buscando una decisión real.
   if (s.queue.length > 0) {
-    const run = applyRun(s, 3);
-    s.pending = dyn("match_flash", {
-      kind: run.notable?.kind ?? "run",
-      text: run.notable?.text ?? "Semanas de rutina: entrenar, viajar, competir.",
-      opponent: run.notable?.opponent ?? "",
-      wins: run.wins,
-      draws: run.draws,
-      losses: run.losses,
-      goals: run.goals,
-      matches: run.matches,
-    });
-    return touch(s);
+    applyRun(s, 3);
+    return advance(s);
   }
 
   s.pending = { type: "season", summary: closeSeason(s) };
@@ -620,21 +626,34 @@ function agentCard(s: GameState): Card | null {
   const scene = s.sceneCount ?? 0;
   const lastAgentScene = s.flags["agent_last_scene"] ?? -99;
   if (scene - lastAgentScene < 5) return null;
+  // Market conversations are milestone stories, not renewable filler. A youth
+  // player cannot receive repeated late-night transfer calls simply because
+  // simulated fame drift crossed a threshold.
+  const marketReady = s.stage !== "youth" && s.age >= 18 && totalApps(s) >= 10;
   if (s.agent.teaser) {
-    const suitor = randomSuitor(s);
-    s.agent.teaser = null;
-    return dyn("agent_offer", { clubName: suitor, salary: 150 + Math.floor(Math.random() * 500) });
+    // Legacy saves may carry a teaser into an ineligible youth context. Drop it
+    // instead of surfacing a chronologically impossible offer.
+    if (!marketReady || s.flags["agent_offer_season"] === s.seasonIndex) {
+      s.agent.teaser = null;
+    } else {
+      const suitor = randomSuitor(s);
+      s.agent.teaser = null;
+      s.flags["agent_offer_season"] = s.seasonIndex;
+      return dyn("agent_offer", { clubName: suitor, salary: 150 + Math.floor(Math.random() * 500) });
+    }
   }
-  if (s.fame >= 30 && Math.random() < 0.5) {
+  if (marketReady && s.flags["agent_teaser_season"] !== s.seasonIndex && Math.random() < 0.5) {
     const teaser = pick([
       "Ha llamado un club importante preguntando por ti",
       "Hay un ojeador que ha pedido tus últimos tres partidos en vídeo",
       "Me han preguntado por tu cláusula desde fuera de España",
     ]);
     s.agent.teaser = teaser;
+    s.flags["agent_teaser_season"] = s.seasonIndex;
     return dyn("agent_teaser", { teaser });
   }
-  if (s.agent.trust >= 50 && Math.random() < 0.3) {
+  if (s.age >= 18 && s.stage !== "youth" && s.agent.trust >= 50 && s.flags["agent_commission_season"] !== s.seasonIndex && Math.random() < 0.3) {
+    s.flags["agent_commission_season"] = s.seasonIndex;
     return dyn("agent_commission", { commission: Math.min(15, s.agent.commission + 2) });
   }
   return null;
@@ -643,6 +662,10 @@ function agentCard(s: GameState): Card | null {
 /* ============ Partidos resueltos en SEGUNDO PLANO (sin pantalla) ============ */
 
 function applyRun(s: GameState, count: number): SimRun {
+  // A simulated block represents real weeks of calendar, not zero-time glue.
+  // Advancing narrative time here lets the Story Director surface life/club
+  // beats between sparse key matches instead of producing football-card runs.
+  s.beat += Math.max(1, Math.ceil(count / 2));
   const run = simulateRun(s, count);
   const season = currentSeason(s);
   if (season) {
@@ -678,7 +701,11 @@ function applyRun(s: GameState, count: number): SimRun {
     s.injury.matchesOut -= count;
     s.fitness = clamp(s.fitness + 5);
     if (s.injury.matchesOut <= 0) {
-      s.flags["volvio_pendiente"] = 1;
+      const recoveredSeverity = s.injury.severity;
+      // Routine minor knocks resolve in the background. Repeating an identical
+      // "Alta médica" choice after every overload is filler, not narrative.
+      // Only medium/severe injuries earn a playable comeback scene.
+      s.flags["volvio_pendiente"] = recoveredSeverity === "minor" ? 0 : 1;
       note(s, `Alta médica: ${s.injury.label} superada.`, "good");
       s.injury = null;
     }

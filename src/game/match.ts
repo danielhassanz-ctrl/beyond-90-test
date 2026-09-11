@@ -166,7 +166,15 @@ export function makeContext(state: GameState, slot: Slot, index = 0): MatchConte
  * jugador, asistencias, rating y relato salen todos de aquí y son coherentes.
  */
 export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, index = 0): MatchData {
-  const ctx = makeContext(state, slot, index);
+  let ctx = makeContext(state, slot, index);
+  // Key matches should not feel like the fixture generator is stuck. Avoid
+  // surfacing the same opponent twice in the same season when an alternative
+  // valid context exists. Real repeat meetings remain possible in later years.
+  for (let retry = 0; retry < 6 && state.seenEvents.includes(`match_opponent:${state.seasonIndex}:${ctx.opponent}`); retry += 1) {
+    ctx = makeContext(state, slot, index + retry + 1);
+  }
+  const opponentMarker = `match_opponent:${state.seasonIndex}:${ctx.opponent}`;
+  if (!state.seenEvents.includes(opponentMarker)) state.seenEvents.push(opponentMarker);
   const role = computeRole(state);
   const oppDef = defById(CLUB_POOL.find((c) => c.name === ctx.opponent)?.id ?? "") ?? null;
   const oppPrestige = oppDef?.prestige ?? 3;
@@ -226,7 +234,20 @@ export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, 
   }
   moments.sort((a, b) => a.minute - b.minute);
 
-  const keyMoment = minutes >= 30 && Math.random() < 0.6 ? { ...pick(KEY_MOMENTS) } : undefined;
+  // A key-match decision is authored narrative, not renewable filler. Once a
+  // choice set has appeared in this career it cannot be selected again. If the
+  // small authored pool is exhausted, the match simply has no key decision.
+  let keyMoment: KeyMoment | undefined;
+  if (minutes >= 30 && Math.random() < 0.6) {
+    const unseen = KEY_MOMENTS
+      .map((moment, index) => ({ moment, index }))
+      .filter(({ index }) => !state.seenEvents.includes(`key_moment_${index}`));
+    if (unseen.length > 0) {
+      const chosen = pick(unseen);
+      state.seenEvents.push(`key_moment_${chosen.index}`);
+      keyMoment = { ...chosen.moment, options: chosen.moment.options.map((option) => ({ ...option })) };
+    }
+  }
 
   const match: MatchData = {
     ctx,
