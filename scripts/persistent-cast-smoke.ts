@@ -2,6 +2,7 @@ import { canReceiveSocialDm, careerStatus, ensureCareerCast } from "../src/game/
 import { createGame } from "../src/game/engine";
 import { eventById } from "../src/game/events";
 import { npcMood, who } from "../src/game/npc";
+import { closeThread, dueThread } from "../src/game/threads";
 import type { Player } from "../src/game/types";
 
 const player: Player = {
@@ -133,4 +134,32 @@ if (!repeated.startsWith(`${cast.coach.name}, `)) {
   throw new Error("coach identity changed across repeated Director lookups");
 }
 
-console.log(`Persistent cast QA OK: live people scenes=${requiredLiveScenes.length}; age-gated status=academy-star/breakthrough-elite/proven-legend; social-intro window=17-24; recurring threads=adviser+captain+teammate+physio+social; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
+// Long-memory callbacks are cross-season history, not filler inside the same
+// rookie year. Once generated they must also survive a lost `pending` value:
+// dueThread should reconstruct the same persisted thread until it is resolved.
+const memoryState = createGame(player);
+memoryState.careerSeed = 31337;
+memoryState.sceneCount = 9;
+memoryState.memory.promises = ["Prometiste al entrenador que volverías a ganarte el puesto"];
+memoryState.flags["ultimo_hilo"] = -99;
+if (dueThread(memoryState) !== null) {
+  throw new Error("long-memory callback can fire in the same season as the remembered decision");
+}
+memoryState.seasonIndex = 1;
+const memoryThread = dueThread(memoryState);
+if (!memoryThread || !memoryThread.id.startsWith("memory-")) {
+  throw new Error("remembered decision did not return in a later season");
+}
+if (!(memoryState.threads ?? []).some((thread) => thread.id === memoryThread.id)) {
+  throw new Error("memory callback was marked consumed without being persisted as a recoverable thread");
+}
+const recoveredMemoryThread = dueThread(memoryState);
+if (recoveredMemoryThread?.id !== memoryThread.id) {
+  throw new Error("persisted memory callback cannot be reconstructed after pending-state loss");
+}
+closeThread(memoryState, memoryThread.id);
+if ((memoryState.threads ?? []).some((thread) => thread.id === memoryThread.id)) {
+  throw new Error("resolved memory callback remains stuck in the persistent thread queue");
+}
+
+console.log(`Persistent cast QA OK: live people scenes=${requiredLiveScenes.length}; age-gated status=academy-star/breakthrough-elite/proven-legend; social-intro window=17-24; recurring threads=adviser+captain+teammate+physio+social+cross-season-memory; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
