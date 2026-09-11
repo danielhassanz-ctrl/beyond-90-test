@@ -9,6 +9,7 @@ on:
       - product-v4-22-life-wealth-pressure
       - product-v4-23-legacy-integration
       - "p0-*"
+      - qa-promote-decision-coherence
   pull_request:
     branches:
       - main
@@ -17,7 +18,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,6 +57,15 @@ jobs:
 
       - name: Human-style first-15-decision QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: Per-decision career state coherence
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/decision-state-coherence-smoke.ts
+
+      - name: Full-season boredom/coherence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
+
+      - name: Ban generic match-flash filler at source
+        run: node scripts/match-flash-source-ban-smoke.mjs
 
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
