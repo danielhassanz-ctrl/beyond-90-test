@@ -52,7 +52,7 @@ function describe(s: GameState): SeenDecision | null {
     return {
       // The competition can legitimately repeat; the narrative purpose cannot.
       // A derby and a decisive league meeting against the same rival are not
-      // the same decision, while the same story label + rival is a duplicate.
+      // the same decision, while the same story label + rival + venue is a duplicate.
       title: `${p.match.ctx.storyLabel} · ${p.match.opponent}`,
       text: `${p.match.ctx.competition} · ${p.match.ctx.venue}`,
       choices: p.match.keyMoment?.options.map((o) => o.label) ?? ["Jugar el partido"],
@@ -101,8 +101,12 @@ function assertVariety(mode: CareerMode, seed: number, seen: SeenDecision[]) {
   const choiceSets = new Set<string>();
   for (let i = 0; i < seen.length; i++) {
     const d = seen[i]!;
-    const t = norm(d.title);
-    assert(!titles.has(t), `${mode}/${seed}: repeated title in first 15: ${d.title}`);
+    // For authored narrative, a repeated title is repetition. Football itself is
+    // different: home and away meetings against the same rival are legitimate,
+    // so a match is considered duplicated only when purpose, rival and venue all
+    // repeat. This keeps the gate strict without rejecting normal league structure.
+    const t = d.kind === "match" ? `${norm(d.title)}|${norm(d.text)}` : norm(d.title);
+    assert(!titles.has(t), `${mode}/${seed}: repeated playable setup in first 15: ${d.title}${d.kind === "match" ? ` (${d.text})` : ""}`);
     titles.add(t);
     const choiceKey = d.choices.map(norm).join("|");
     if (d.choices.length >= 3) {
