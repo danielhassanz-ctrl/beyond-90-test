@@ -4,12 +4,19 @@ import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
 import { setCareerMode, type CareerMode } from "../src/game/pacing";
-import type { GameState, Player } from "../src/game/types";
+import type { DynamicCard, GameState, Player } from "../src/game/types";
 
 function rng(seed:number){let x=seed>>>0;return()=>{x=(x*1664525+1013904223)>>>0;return x/0x100000000;};}
 function assert(c:unknown,m:string):asserts c{if(!c)throw new Error(m);}
 function player(seed:number):Player{return{name:`Quality ${seed}`,nickname:"",position:["DC","MC","EXT","DFC"][seed%4] as Player["position"],nationality:"España",city:seed%2?"Sevilla":"Madrid",avatar:null,traits:seed%2?["familiar","leal"]:["ambicioso","profesional"]};}
 function norm(s:string){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();}
+function semanticFamily(p:DynamicCard):string{
+ if(p.kind==="arc")return `arc:${String(p.data["arcId"]??"unknown")}`;
+ if(p.kind==="arc_beat")return `beat:${String(p.data["beatId"]??"unknown")}`;
+ if(p.kind==="arc_callback")return `callback:${String(p.data["cbId"]??"unknown")}`;
+ if(p.kind==="thread")return `thread:${String(p.data["threadKind"]??"unknown")}`;
+ return `dynamic:${p.kind}`;
+}
 
 type D={title:string;family:string;kind:string;choices:string[]};
 function describe(s:GameState):D|null{
@@ -17,7 +24,7 @@ function describe(s:GameState):D|null{
  if(p.type==="event"){const e=eventById(p.eventId);assert(e,`missing ${p.eventId}`);return{title:e.title,family:e.family??e.category,kind:`event:${e.id}`,choices:e.choices.map(c=>c.label)};}
  if(p.type==="match"){if(!p.match.keyMoment)return null;return{title:`${p.match.ctx.storyLabel} · ${p.match.opponent}`,family:"match",kind:"match",choices:p.match.keyMoment.options.map(o=>o.label)};}
  assert(p.kind!=="match_flash",`match_flash leaked: ${JSON.stringify(p.data)}`);
- const v=renderDynamic(s,p);return{title:v.title,family:v.category,kind:`dynamic:${p.kind}`,choices:v.choices.map(c=>c.label)};
+ const v=renderDynamic(s,p);return{title:v.title,family:semanticFamily(p),kind:`dynamic:${p.kind}`,choices:v.choices.map(c=>c.label)};
 }
 function resolveCurrent(s:GameState):GameState{
  if(s.lastOutcome)return advance(s);const p=s.pending;if(!p||p.type==="season")return advance(s);
@@ -34,8 +41,8 @@ function run(mode:CareerMode,seed:number){const old=Math.random;Math.random=rng(
  }
  assert(seen.length===15,`${mode}/${seed}: only ${seen.length} decisions`);
  const matches=seen.filter(x=>x.kind==="match").length;
- const human=seen.filter(x=>/opening|life|agent|club|story|gossip/.test(`${x.family} ${x.kind}`)).length;
- const footballDevelopment=seen.filter(x=>/preseason|training|medical/.test(`${x.family} ${x.kind}`)).length;
+ const human=seen.filter(x=>/opening|life|agent|club|story|gossip|arc:|beat:|thread:/.test(`${x.family} ${x.kind}`)).length;
+ const footballDevelopment=seen.filter(x=>/preseason|training|medical|beat:beat_pos|beat:beat_pretemporada/.test(`${x.family} ${x.kind}`)).length;
  assert(matches<=5,`${mode}/${seed}: ${matches}/15 decisions are key matches; early career is too match-heavy`);
  assert(human>=8,`${mode}/${seed}: only ${human}/15 human/career-context decisions`);
  assert(footballDevelopment>=2,`${mode}/${seed}: only ${footballDevelopment}/15 development/adaptation decisions`);
@@ -54,10 +61,10 @@ function run(mode:CareerMode,seed:number){const old=Math.random;Math.random=rng(
  let streak=1;
  for(let i=1;i<seen.length;i++){
   streak=seen[i]!.family===seen[i-1]!.family?streak+1:1;
-  assert(streak<=2,`${mode}/${seed}: three consecutive decisions in family ${seen[i]!.family} at ${i-1}-${i+1}`);
+  assert(streak<=2,`${mode}/${seed}: three consecutive decisions in semantic family ${seen[i]!.family} at ${i}-${i+2}: ${seen.slice(Math.max(0,i-2),i+1).map(x=>x.title).join(" / ")}`);
  }
  const postOpening=seen.slice(10);
- assert(new Set(postOpening.map(x=>x.family)).size>=3,`${mode}/${seed}: post-opening first five decisions span fewer than 3 families: ${postOpening.map(x=>x.family).join(", ")}`);
+ assert(new Set(postOpening.map(x=>x.family)).size>=3,`${mode}/${seed}: post-opening first five decisions span fewer than 3 semantic families: ${postOpening.map(x=>`${x.family}:${x.title}`).join(" | ")}`);
 }finally{Math.random=old;}}
 const modes:CareerMode[]=["express","standard","pro"];const seeds=[17,101,2026,31337];for(const mode of modes)for(const seed of seeds)run(mode,seed+modes.indexOf(mode)*100000);
 console.log("FIRST15_QUALITY_FLOOR_OK: 12 deterministic careers keep the first 15 decisions human-led, varied, non-repetitive and low on match filler.");
