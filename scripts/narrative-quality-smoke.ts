@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { advance, chooseClub, createGame, resolveDynamicCard, resolveEvent, resolveMatch } from "../src/game/engine";
 import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
+import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
 import type { GameState, Player } from "../src/game/types";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -185,19 +186,57 @@ function assertNarrativeNotRepeated(observations: NarrativeObservation[], seed: 
   }
 }
 
+function resolveOpening(s: GameState, seed: number, observations: NarrativeObservation[]): GameState {
+  initializeOpening(s);
+  let guard = 0;
+  while ((s.flags[OPENING_PHASE] ?? OPENING_DONE) < OPENING_DONE && guard < 20) {
+    const phase = s.flags[OPENING_PHASE] ?? OpeningPhase.HOME;
+    if (phase === OpeningPhase.CLUB_CHOICE) {
+      const offer = s.offers[seed % s.offers.length];
+      assert(offer, `Seed ${seed}: no opening club offer available`);
+      s = afterOpeningClubChoice(chooseClub(s, offer.clubId));
+      guard += 1;
+      continue;
+    }
+
+    s = forceOpeningPending(s) ?? s;
+    assert(s.pending?.type === "event", `Seed ${seed}: opening phase ${phase} did not surface an authored event`);
+    const obs = narrativeObservation(s);
+    assert(obs, `Seed ${seed}: opening event could not be observed`);
+    observations.push(obs);
+
+    const event = eventById(s.pending.eventId);
+    assert(event, `Seed ${seed}: missing opening event ${s.pending.eventId}`);
+    const choice = event.choices[0];
+    assert(choice, `Seed ${seed}: opening event ${event.id} has no choice`);
+    s = resolveEvent(s, event.id, choice.id);
+    s = forceOpeningPending(s) ?? s;
+    guard += 1;
+  }
+  assert((s.flags[OPENING_PHASE] ?? -1) === OPENING_DONE, `Seed ${seed}: mandatory opening did not complete`);
+  return s;
+}
+
 function run(seed: number) {
   const originalRandom = Math.random;
   Math.random = rng(seed);
   try {
     let s = createGame(player(seed));
+    s.careerSeed = seed;
     assert(s.offers.length === 4, `Seed ${seed}: onboarding has ${s.offers.length} club offers; expected exactly 4`);
-    s = chooseClub(s, s.offers[seed % s.offers.length]!.clubId);
 
     const observations: NarrativeObservation[] = [];
+    s = resolveOpening(s, seed, observations);
+
     const seenKeys = new Set<string>();
     const seenTitles = new Map<string, string>();
-    let steps = 0;
+    for (const obs of observations) {
+      assert(!seenKeys.has(obs.key), `Seed ${seed}: repeated opening narrative key ${obs.key}`);
+      seenKeys.add(obs.key);
+      seenTitles.set(obs.title, obs.key);
+    }
 
+    let steps = 0;
     while (steps < 5000) {
       if (s.pending?.type === "dynamic" && s.pending.kind === "career_end") break;
 
@@ -227,7 +266,7 @@ function run(seed: number) {
     assert(distinctCategories.size >= 4, `Seed ${seed}: narrative collapsed to ${distinctCategories.size} categories`);
 
     const early = observations.filter((o) => o.scene <= 35);
-    assert(early.length >= 3, `Seed ${seed}: early career produced only ${early.length} authored scenes`);
+    assert(early.length >= 9, `Seed ${seed}: mandatory opening/early career produced only ${early.length} authored scenes`);
 
     return {
       seed,
@@ -248,4 +287,4 @@ const diversity = new Set(results.map((r) => `${r.authoredScenes}:${r.distinctTi
 assert(diversity.size >= 3, "Narrative careers are converging too strongly across seeds");
 
 console.table(results);
-console.log(`NARRATIVE_QUALITY_SMOKE_OK careers=${results.length} sourceBan=agent_check antiRepeat=events+exact+setup+near memoryDedup=ok diversity=${diversity.size}`);
+console.log(`NARRATIVE_QUALITY_SMOKE_OK careers=${results.length} sourceBan=agent_check antiRepeat=opening+events+exact+setup+near memoryDedup=ok diversity=${diversity.size}`);
