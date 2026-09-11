@@ -49,13 +49,14 @@ function describe(s: GameState): SeenDecision | null {
     return { title: e.title, text: eventText(s, e.id), choices: e.choices.map((c) => c.label), family: e.family ?? e.category, kind: `event:${e.id}` };
   }
   if (p.type === "match") {
+    // A match without a key moment is gameplay/result presentation, not a
+    // meaningful decision. Counting those inflated mode budgets and made the
+    // human-style gate think three passive fixtures were three narrative choices.
+    if (!p.match.keyMoment) return null;
     return {
-      // The competition can legitimately repeat; the narrative purpose cannot.
-      // A derby and a decisive league meeting against the same rival are not
-      // the same decision, while the same story label + rival + venue is a duplicate.
       title: `${p.match.ctx.storyLabel} · ${p.match.opponent}`,
-      text: `${p.match.ctx.competition} · ${p.match.ctx.venue}`,
-      choices: p.match.keyMoment?.options.map((o) => o.label) ?? ["Jugar el partido"],
+      text: `${p.match.ctx.competition} · ${p.match.ctx.venue} · ${p.match.keyMoment.prompt}`,
+      choices: p.match.keyMoment.options.map((o) => o.label),
       family: "match",
       kind: "match",
     };
@@ -104,8 +105,8 @@ function assertVariety(mode: CareerMode, seed: number, seen: SeenDecision[]) {
     // For authored narrative, a repeated title is repetition. Football itself is
     // different: home and away meetings against the same rival are legitimate,
     // so a match is considered duplicated only when purpose, rival and venue all
-    // repeat. This keeps the gate strict without rejecting normal league structure.
-    const t = d.kind === "match" ? `${norm(d.title)}|${norm(d.text)}` : norm(d.title);
+    // repeat. The key-moment prompt remains part of the body similarity check.
+    const t = d.kind === "match" ? `${norm(d.title)}|${norm(d.text.split(" · ").slice(0, 2).join(" · "))}` : norm(d.title);
     assert(!titles.has(t), `${mode}/${seed}: repeated playable setup in first 15: ${d.title}${d.kind === "match" ? ` (${d.text})` : ""}`);
     titles.add(t);
     const choiceKey = d.choices.map(norm).join("|");
@@ -178,7 +179,7 @@ function run(mode: CareerMode, seed: number) {
       }
     }
 
-    assert(seen.length === 15, `${mode}/${seed}: only ${seen.length} playable decisions found`);
+    assert(seen.length === 15, `${mode}/${seed}: only ${seen.length} meaningful decisions found`);
     assert((s.flags["opening_completed"] ?? 0) === 1, `${mode}/${seed}: opening never completed`);
     assertVariety(mode, seed, seen);
 
@@ -204,4 +205,4 @@ function run(mode: CareerMode, seed: number) {
 const modes: CareerMode[] = ["express", "standard", "pro"];
 const seeds = [101, 2026, 31337, 90909];
 for (const mode of modes) for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
-console.log("REAL_CAREER_PLAYTEST_OK: 12 deterministic careers x first 15 playable decisions; no generic match_flash filler.");
+console.log("REAL_CAREER_PLAYTEST_OK: 12 deterministic careers x first 15 meaningful decisions; passive match screens excluded and no generic match_flash filler.");
