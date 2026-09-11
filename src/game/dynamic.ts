@@ -42,17 +42,6 @@ const FLASH_TITLES: Record<string, string> = {
   form: "El calendario ha pasado por encima",
 };
 
-const AGENT_TOPICS: Record<string, string> = {
-  minutos:
-    "Va directo: \"¿Te ha dicho el míster por qué juegas de rotación o te lo estás inventando tú?\". Hay ruido de bar detrás.",
-  prensa:
-    "\"Ha salido una frase tuya recortada. Ni la desmientas ni la repitas. Pero quiero saber qué dijiste exactamente\".",
-  dinero:
-    "\"Tu contrato está desfasado para lo que juegas. Puedo pedir mejora ahora o esperar a que valgas más. Decide tú\".",
-  vida:
-    "\"Te voy a preguntar una cosa como si fuera tu tío: ¿estás durmiendo bien? Porque en el vídeo se te ven las piernas cansadas\".",
-};
-
 interface ThreadView {
   kicker: string;
   title: string;
@@ -308,20 +297,6 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         ],
       };
     }
-    case "agent_check":
-      return {
-        kicker: `Llamada · ${str(d, "hour", "23:17")}`,
-        title: `${agentName} no quiere hablar por WhatsApp`,
-        image: "agent",
-        category: "agent",
-        text: AGENT_TOPICS[str(d, "topic", "minutos")] ?? "Quiere saber cómo estás de verdad.",
-        choices: [
-          { id: "sincero", label: "Contarle la verdad", hint: "Confianza" },
-          { id: "cerrar", label: "Quitarle importancia", hint: "Te guardas el problema" },
-          { id: "quedar", label: "Pedir verle mañana en persona", hint: "No lo evitas, pero tampoco lo hablas por teléfono" },
-        ],
-        freeform: { prompt: `¿Qué le contestas a ${agentName}?`, placeholder: "Escribe lo que quieras…" },
-      };
     case "market_offer": {
       const kind = str(d, "kind", "transfer");
       const clubName = str(d, "clubName", "un club");
@@ -484,33 +459,6 @@ export function resolveDynamic(
       }
       stat(s, "discipline", 2);
       return { title: "Cabeza fría", text: "Guardas el enfado para el campo.", tone: "neutral" };
-    }
-    case "agent_check": {
-      if (interp) {
-        const good = interp.intent === "professional" || interp.intent === "loyal" || interp.intent === "conciliatory";
-        s.agent.trust = clamp(s.agent.trust + (good ? 7 : -5));
-        rel(s, "agent", good ? 4 : -4);
-        remember(s, `Hablasteis de ${str(d, "topic", "todo")} por teléfono de noche`);
-        return {
-          title: good ? "Se queda tranquilo" : "Cuelga raro",
-          text: good
-            ? `${s.agent.name} apunta lo que le dices y promete moverse con cabeza.`
-            : `${s.agent.name} no le gusta el tono. "Ya hablamos otro día".`,
-          tone: good ? "good" : "bad",
-        };
-      }
-      if (choiceId === "sincero") {
-        s.agent.trust = clamp(s.agent.trust + 6);
-        rel(s, "agent", 4);
-        return { title: "Todo sobre la mesa", text: `${s.agent.name} escucha veinte minutos sin interrumpir. Sirve.`, tone: "good" };
-      }
-      if (choiceId === "quedar") {
-        s.agent.trust = clamp(s.agent.trust + 2);
-        remember(s, `Preferiste hablar de ${str(d, "topic", "lo importante")} cara a cara`);
-        return { title: "Mañana, en persona", text: `No quieres resolverlo a las once de la noche. ${s.agent.name} acepta: "A las diez, café y sin móviles".`, tone: "neutral" };
-      }
-      s.agent.trust = clamp(s.agent.trust - 3);
-      return { title: "Te lo guardas", text: "\"Como quieras. Pero yo me entero igual\".", tone: "neutral" };
     }
     case "thread":
       return resolveThread(s, card, choiceId, interp);

@@ -3,6 +3,7 @@ import { advance, chooseClub, clone, createGame, resolveDynamicCard } from "../s
 import { renderDynamic } from "../src/game/dynamic";
 import { interpretFree } from "../src/game/interpret";
 import { simulateMatch } from "../src/game/match";
+import { isDisallowedNarrative, scrubDisallowedNarrative } from "../src/game/narrative-safety";
 import { choosePostCareerPath, choosePostCareerStyle, postCareerStatus, type PostCareerPath } from "../src/game/postcareer";
 import type { DynamicCard, GameState, Player, Slot } from "../src/game/types";
 
@@ -11,9 +12,14 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 const directorSource = readFileSync("src/game/director.ts", "utf8");
+const engineSource = readFileSync("src/game/engine.ts", "utf8");
+const dynamicSource = readFileSync("src/game/dynamic.ts", "utf8");
 assert(!directorSource.includes("Buscas una tercera vía"), "Narrative director still contains generic third-way outcome copy");
 assert(!directorSource.includes("Alternativa prudente con consecuencias propias"), "Narrative director still contains generic third-way hint copy");
 assert(directorSource.includes("function thirdWayResult(s: GameState): Res"), "Narrative third-way variation helper is missing");
+assert(!engineSource.includes('dyn("agent_check"'), "Banned generic agent_check can still be emitted by engine.ts");
+assert(!dynamicSource.includes('case "agent_check"'), "Banned generic agent_check still has a render/resolve branch");
+assert(!dynamicSource.includes("AGENT_TOPICS"), "Generic adviser call copy bank still exists");
 const consultBranches = directorSource.match(/if \(choiceId === "consultar"\)/g)?.length ?? 0;
 assert(consultBranches === 1, `Expected one arc_callback consultar resolver, found ${consultBranches}`);
 
@@ -75,12 +81,24 @@ const decisionCards: DynamicCard[] = [
   { type: "dynamic", kind: "agent_commission", data: { commission: 10 } },
   { type: "dynamic", kind: "contract", data: { years: 3, salary: 150 } },
   { type: "dynamic", kind: "match_flash", data: { kind: "slump", text: "Tres jornadas malas", matches: 3, wins: 0, draws: 1, losses: 2 } },
-  { type: "dynamic", kind: "agent_check", data: { topic: "minutos", hour: "23:17" } },
   { type: "dynamic", kind: "market_offer", data: { kind: "transfer", clubName: "Valencia CF", salary: 500, years: 4, reason: "Quieren apostar por ti" } },
   { type: "dynamic", kind: "retirement", data: { age: 36, tier: "élite" } },
   { type: "dynamic", kind: "thread", data: { threadKind: "coach_upset", teaser: "El míster quería hablar" } },
 ];
 for (const card of decisionCards) assertThree(card);
+
+// Legacy-save guard: agent_check is intentionally unsupported and must be scrubbed
+// before render/resolve. This verifies the compatibility path without pretending
+// the banned card is still a valid three-choice narrative branch.
+const legacyAgentCheck = clone(base);
+legacyAgentCheck.flags["opening_v1"] = 1;
+legacyAgentCheck.flags["opening_completed"] = 1;
+legacyAgentCheck.pending = { type: "dynamic", kind: "agent_check", data: { topic: "prensa", hour: "23:17" } };
+assert(isDisallowedNarrative(legacyAgentCheck), "Legacy agent_check fixture was not recognized as disallowed");
+const legacySceneCount = legacyAgentCheck.sceneCount;
+const scrubbed = scrubDisallowedNarrative(legacyAgentCheck);
+assert(!isDisallowedNarrative(scrubbed), "Legacy agent_check was not scrubbed before playable flow");
+assert(scrubbed.sceneCount === legacySceneCount, "Scrubbing legacy agent_check incorrectly counted a narrative decision");
 
 const retired = clone(base);
 retired.retired = true;
@@ -129,4 +147,4 @@ for (let i = 0; i < 80; i++) {
 }
 assert(keyMoments >= 10, `Expected broad key-moment coverage, observed only ${keyMoments}`);
 
-console.log(`BRANCH_COVERAGE_SMOKE_OK dynamic=${decisionCards.length + 1} keyMoments=${keyMoments} careerEnd=ok semanticCases=${semanticCases.length + 2} postCareer=3x3 genericCopy=0`);
+console.log(`BRANCH_COVERAGE_SMOKE_OK dynamic=${decisionCards.length + 1} keyMoments=${keyMoments} careerEnd=ok semanticCases=${semanticCases.length + 2} postCareer=3x3 genericCopy=0 agentCheck=blocked`);
