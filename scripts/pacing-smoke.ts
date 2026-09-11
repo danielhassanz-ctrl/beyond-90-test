@@ -90,7 +90,12 @@ function assertMode(mode: CareerMode, seed: number) {
   assert.equal(actual.matches, keyMatchTarget(s), `${mode}/${seed}: wrong key-match count`);
   assert.equal(actual.decisions, decisionTarget(s), `${mode}/${seed}: wrong decision count`);
   assert.ok(actual.decisions >= cfg.decisions[0] && actual.decisions <= cfg.decisions[1], `${mode}/${seed}: decisions outside promised range`);
-  assert.ok(actual.matches >= cfg.keyMatches[0] && actual.matches <= cfg.keyMatches[1], `${mode}/${seed}: key matches outside cap`);
+  assert.ok(actual.narrative >= cfg.narrative[0], `${mode}/${seed}: too few narrative/life decisions`);
+  if (s.stage === "first") {
+    assert.ok(actual.matches >= cfg.keyMatches[0] && actual.matches <= cfg.keyMatches[1], `${mode}/${seed}: senior key matches outside cap`);
+  } else {
+    assert.ok(actual.matches >= 2 && actual.matches <= 4, `${mode}/${seed}: youth/reserve season is being inflated with key matches`);
+  }
   assert.equal(s.agent.present, true, `${mode}/${seed}: adviser must survive club selection`);
   const before = JSON.stringify(s.queue);
   applyCareerPacing(s);
@@ -99,4 +104,4 @@ function assertMode(mode: CareerMode, seed: number) {
 
 for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertAdviser(seed);
 for (const { id } of CAREER_MODES) for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertMode(id, seed);
-console.log("Career pacing QA passed: era boundaries; Express 10-15, Standard 20-25, Pro 30-40; adviser active/persistent; key matches capped.");
+console.log("Career pacing QA passed: era boundaries; Express 10-15, Standard 20-25, Pro 30-40; youth/reserve match density contextual; adviser active/persistent.");

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { eligibleKeyMatchKinds } from "../src/game/competition-calendar";
 import { createGame } from "../src/game/engine";
-import { applyCareerPacing, narrativeRotationFor, setCareerMode } from "../src/game/pacing";
+import { applyCareerPacing, decisionTarget, keyMatchTarget, narrativeRotationFor, narrativeTarget, setCareerMode } from "../src/game/pacing";
 import type { GameState, Player } from "../src/game/types";
 
 const player: Player = {
@@ -56,12 +57,33 @@ function base(): GameState {
   s.clubId = "real-madrid";
   s.tablePosition = 1;
   s.queue = [{ kind: "match", tag: "debut" }, { kind: "sim", matches: 33 }];
+
+  const eligible = eligibleKeyMatchKinds(s);
+  assert.deepEqual(eligible, ["debut", "derby"], "academy context must not expose senior Cup/title/Europe/international beats");
   applyCareerPacing(s);
   const matches = s.queue.filter((slot) => slot.kind === "match");
   assert.ok(!matches.some((slot) => slot.tag === "euro"), "unknown 16-year-old academy player must never get a senior European match");
+  assert.ok(!matches.some((slot) => slot.tag === "cup" || slot.tag === "decisive"), "academy pacing must not fabricate senior Cup/title matches");
+  assert.ok(matches.length <= 3, "academy Pro season must shift density into story decisions instead of inflating key matches");
+  assert.equal(matches.length, keyMatchTarget(s), "academy key-match plan must match the contextual target");
+  assert.equal(narrativeTarget(s) + keyMatchTarget(s), decisionTarget(s), "reduced academy matches must be replaced by narrative decisions");
+  assert.ok(narrativeTarget(s) >= 24, "Pro academy mode must preserve deep non-match decision density");
+
   const youthMix = narrativeRotationFor(s);
   assert.ok(youthMix.includes("training") && youthMix.includes("agent") && youthMix.includes("life"));
   assert.ok(!youthMix.includes("medical"), "healthy academy pacing should not be dominated by veteran medical themes");
+}
+
+{
+  const s = base();
+  s.age = 19;
+  s.stage = "reserves";
+  s.clubId = "real-madrid";
+  s.queue = [{ kind: "match", tag: "debut" }, { kind: "sim", matches: 33 }];
+  applyCareerPacing(s);
+  const matches = s.queue.filter((slot) => slot.kind === "match");
+  assert.ok(matches.length <= 4, "reserve season must not be padded to senior key-match density");
+  assert.ok(!matches.some((slot) => slot.tag === "cup" || slot.tag === "decisive" || slot.tag === "euro"), "reserve season leaked senior competition beats");
 }
 
 {
@@ -79,4 +101,4 @@ function base(): GameState {
   assert.ok(legacyMix.includes("medical") && legacyMix.includes("life") && legacyMix.includes("agent"));
 }
 
-console.log("COMPETITION_PACING_SMOKE_OK: key matches respect competition context and narrative density changes with career age.");
+console.log("COMPETITION_PACING_SMOKE_OK: key matches respect competition/stage context; youth/reserves shift excess match density into narrative decisions; narrative mix changes with career age.");
