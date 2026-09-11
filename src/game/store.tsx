@@ -48,6 +48,20 @@ function parseSave(raw: string | null): GameState | null {
       setCareerMode(state, decoded.careerMode ?? DEFAULT_CAREER_MODE);
       ensureCareerCast(state);
       applyCareerPacing(state);
+
+      // `migrate()` is deliberately allowed to rebuild an empty/legacy season
+      // queue, and that legacy path clears `pending`. During the mandatory
+      // opening this used to make Safari/WebKit reloads lose the exact scene
+      // the player was reading (notably the first agreement) even though the
+      // persisted opening phase was correct. Reconstruct the deterministic
+      // opening card from the persisted phase, without advancing narrative
+      // time, so a reload resumes the same decision instead of skipping it.
+      const beat = state.beat;
+      const opening = forceOpeningPending(state);
+      if (opening) {
+        opening.beat = beat;
+        return opening;
+      }
     }
     return state;
   } catch {
