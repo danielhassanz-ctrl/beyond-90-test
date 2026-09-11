@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { ensureCareerCast } from "../src/game/career-life";
+import { careerEra, ensureCareerCast } from "../src/game/career-life";
 import { chooseClub, createGame } from "../src/game/engine";
 import {
   CAREER_MODES,
@@ -35,6 +35,25 @@ assert.equal(careerModeOf(createGame(player)), DEFAULT_CAREER_MODE, "states with
 assert.deepEqual(CAREER_MODES.map((m) => [m.id, ...m.decisions]), [
   ["express", 10, 15], ["standard", 20, 25], ["pro", 30, 40],
 ]);
+
+function stateAtAge(age: number): GameState {
+  const s = createGame(player);
+  s.age = age;
+  return s;
+}
+
+assert.deepEqual(
+  [16, 18, 19, 21, 22, 25, 26, 30, 31, 34, 35, 39].map((age) => [age, careerEra(stateAtAge(age))]),
+  [
+    [16, "academy"], [18, "academy"],
+    [19, "breakthrough"], [21, "breakthrough"],
+    [22, "established"], [25, "established"],
+    [26, "prime"], [30, "prime"],
+    [31, "veteran"], [34, "veteran"],
+    [35, "legacy"], [39, "legacy"],
+  ],
+  "career era boundaries must match the Story Director chronology",
+);
 
 function assertAdviser(seed: number) {
   const s = createGame(player);
@@ -80,4 +99,4 @@ function assertMode(mode: CareerMode, seed: number) {
 
 for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertAdviser(seed);
 for (const { id } of CAREER_MODES) for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertMode(id, seed);
-console.log("Career pacing QA passed: Express 10-15, Standard 20-25, Pro 30-40; adviser is active and persistent from scene one; key matches stay capped.");
+console.log("Career pacing QA passed: era boundaries; Express 10-15, Standard 20-25, Pro 30-40; adviser active/persistent; key matches capped.");
