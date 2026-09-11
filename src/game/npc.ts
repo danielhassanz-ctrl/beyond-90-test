@@ -62,21 +62,66 @@ const ROLES: Record<string, { role: string; female?: boolean }> = {
 };
 
 type CastPerson = { name: string; relation?: number; role?: string };
-type CastMemory = GameState["memory"] & {
-  careerCast?: {
-    adviserKind?: "agent" | "father" | "friend";
-    adviser?: CastPerson;
-    coach?: CastPerson;
-    physio?: CastPerson;
-    captain?: CastPerson;
-    teammate?: CastPerson;
-    social?: CastPerson;
-  };
+type AdviserKind = "agent" | "father" | "friend";
+type CareerCast = {
+  adviserKind?: AdviserKind;
+  adviser?: CastPerson;
+  coach?: CastPerson;
+  physio?: CastPerson;
+  captain?: CastPerson;
+  teammate?: CastPerson;
+  social?: CastPerson;
 };
+type CastMemory = GameState["memory"] & { careerCast?: CareerCast };
+
+function adviserRole(kind: AdviserKind | undefined): string {
+  if (kind === "father") return "Padre y asesor";
+  if (kind === "friend") return "Amigo y asesor";
+  return "Representante";
+}
+
+/**
+ * Garantiza un reparto fijo incluso en partidas antiguas que aún no traían
+ * careerCast. Esto convierte los nombres que ya usa el Narrative Director en
+ * personajes persistentes y sincroniza el asesor con AgentState desde el
+ * primer contacto narrativo.
+ */
+function ensureCast(s: GameState): CareerCast {
+  const memory = s.memory as CastMemory;
+  if (!memory.careerCast) {
+    const seed = careerSeed(s);
+    const adviserKind = (["agent", "father", "friend"] as const)[hash(seed, "adviser-kind") % 3]!;
+    const adviserName = adviserKind === "father"
+      ? "Papá"
+      : adviserKind === "friend"
+        ? nameFor(s, "career-friend")
+        : nameFor(s, "career-adviser");
+    memory.careerCast = {
+      adviserKind,
+      adviser: { name: adviserName, relation: 50, role: adviserRole(adviserKind) },
+      coach: { name: nameFor(s, "career-coach"), relation: s.rel.coach || 45, role: "Entrenador" },
+      physio: { name: nameFor(s, "career-physio"), relation: 50, role: "Fisioterapeuta" },
+      captain: { name: nameFor(s, "career-captain"), relation: s.rel.dressing || 45, role: "Capitán" },
+      teammate: { name: nameFor(s, "career-teammate"), relation: s.rel.dressing || 45, role: "Compañero de confianza" },
+      social: { name: nameFor(s, "career-social", true), relation: 50, role: "Contacto de redes" },
+    };
+  }
+
+  const cast = memory.careerCast;
+  if (cast.adviser?.name) {
+    s.hasAgent = true;
+    s.agent.present = true;
+    s.agent.name = cast.adviser.name;
+    s.agentName = cast.adviser.name;
+    if (s.rel.agent <= 0) s.rel.agent = cast.adviser.relation ?? 50;
+    const marker = `adviser:${cast.adviserKind ?? "agent"}`;
+    if (!s.agent.memories.includes(marker)) s.agent.memories.unshift(marker);
+  }
+  return cast;
+}
 
 function castPerson(s: GameState, key: string): { name: string; role: string; mood: number } | null {
-  const cast = (s.memory as CastMemory).careerCast;
-  if (!cast) return null;
+  const cast = ensureCast(s);
   const map: Record<string, CastPerson | undefined> = {
     coach: cast.coach,
     physio: cast.physio,
@@ -89,9 +134,7 @@ function castPerson(s: GameState, key: string): { name: string; role: string; mo
   const p = map[key];
   if (!p?.name) return null;
   let role = ROLES[key]?.role ?? "Conocido";
-  if (key === "adviser") {
-    role = cast.adviserKind === "father" ? "Padre y asesor" : cast.adviserKind === "friend" ? "Amigo y asesor" : "Representante";
-  }
+  if (key === "adviser") role = adviserRole(cast.adviserKind);
   return { name: p.name, role, mood: typeof p.relation === "number" ? p.relation : 50 };
 }
 
@@ -118,15 +161,15 @@ export const npcName = (s: GameState, key: string): string => npc(s, key).name;
 export function npcMood(s: GameState, key: string, delta: number): void {
   const n = npc(s, key);
   n.mood = Math.max(0, Math.min(100, Math.round(n.mood + delta)));
-  const cast = (s.memory as CastMemory).careerCast;
+  const cast = ensureCast(s);
   const map: Record<string, CastPerson | undefined> = {
-    coach: cast?.coach,
-    physio: cast?.physio,
-    captain: cast?.captain,
-    friend: cast?.teammate,
-    social: cast?.social,
-    partner: cast?.social,
-    adviser: cast?.adviser,
+    coach: cast.coach,
+    physio: cast.physio,
+    captain: cast.captain,
+    friend: cast.teammate,
+    social: cast.social,
+    partner: cast.social,
+    adviser: cast.adviser,
   };
   const p = map[key];
   if (p && typeof p.relation === "number") p.relation = n.mood;
