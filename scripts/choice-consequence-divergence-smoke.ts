@@ -97,18 +97,19 @@ function run(mode: CareerMode, seed: number) {
 
     let decisions = 0;
     let multiChoice = 0;
-    let divergent = 0;
+    let fullyDivergent = 0;
+    let branchPairsChecked = 0;
     let guard = 0;
 
     while (decisions < 15 && guard++ < 700) {
       if ((s.flags[OPENING_PHASE] ?? OpeningPhase.DONE) === OpeningPhase.CLUB_CHOICE && !s.clubId) {
         const offers = s.offers.slice(0, 4);
         assert(offers.length >= 2, `${mode}/${seed}: fewer than two opening club offers`);
-        const a = afterOpeningClubChoice(chooseClub(s, offers[0]!.clubId));
-        const b = afterOpeningClubChoice(chooseClub(s, offers[1]!.clubId));
+        const fingerprints = offers.map((offer) => fingerprint(afterOpeningClubChoice(chooseClub(s, offer.clubId))));
+        assert(new Set(fingerprints).size === fingerprints.length, `${mode}/${seed}: at least two opening clubs produced the same consequence state`);
+        branchPairsChecked += (offers.length * (offers.length - 1)) / 2;
         multiChoice += 1;
-        assert(fingerprint(a) !== fingerprint(b), `${mode}/${seed}: choosing different opening clubs produced the same consequence state`);
-        divergent += 1;
+        fullyDivergent += 1;
         decisions += 1;
         const idx = Math.abs(seed + decisions) % offers.length;
         s = afterOpeningClubChoice(chooseClub(s, offers[idx]!.clubId));
@@ -133,11 +134,18 @@ function run(mode: CareerMode, seed: number) {
       if (ids.length >= 2 && p.type !== "match") {
         multiChoice += 1;
         const branchSeed = seed * 10000 + decisions * 97;
-        const a = resolveChoice(s, ids[0]!, branchSeed);
-        const b = resolveChoice(s, ids[1]!, branchSeed);
-        const differs = fingerprint(a) !== fingerprint(b);
-        assert(differs, `${mode}/${seed}: decorative choices at decision ${decisions}; ${ids[0]} and ${ids[1]} produce the same outcome/state`);
-        divergent += 1;
+        const branches = ids.map((id) => ({ id, state: resolveChoice(s, id, branchSeed) }));
+        const fingerprints = branches.map((branch) => fingerprint(branch.state));
+        for (let i = 0; i < fingerprints.length; i += 1) {
+          for (let j = i + 1; j < fingerprints.length; j += 1) {
+            branchPairsChecked += 1;
+            assert(
+              fingerprints[i] !== fingerprints[j],
+              `${mode}/${seed}: decorative choices at decision ${decisions}; ${branches[i]!.id} and ${branches[j]!.id} produce the same outcome/state`,
+            );
+          }
+        }
+        fullyDivergent += 1;
       }
 
       s = advanceOne(s, seed, decisions);
@@ -145,8 +153,9 @@ function run(mode: CareerMode, seed: number) {
 
     assert(decisions === 15, `${mode}/${seed}: reached only ${decisions} meaningful decisions`);
     assert(multiChoice >= 8, `${mode}/${seed}: only ${multiChoice} multi-choice decisions in first 15`);
-    assert(divergent === multiChoice, `${mode}/${seed}: ${divergent}/${multiChoice} multi-choice decisions actually diverged`);
-    console.log(`${mode}/${seed}: ${divergent}/${multiChoice} early multi-choice decisions have distinct consequences`);
+    assert(fullyDivergent === multiChoice, `${mode}/${seed}: ${fullyDivergent}/${multiChoice} multi-choice decisions have all alternatives divergent`);
+    assert(branchPairsChecked >= multiChoice, `${mode}/${seed}: insufficient pairwise branch coverage`);
+    console.log(`${mode}/${seed}: ${fullyDivergent}/${multiChoice} early multi-choice decisions diverge across every alternative (${branchPairsChecked} branch pairs checked)`);
   } finally {
     Math.random = old;
   }
@@ -158,4 +167,4 @@ for (const mode of modes) {
   for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
 }
 
-console.log("CHOICE_CONSEQUENCE_DIVERGENCE_OK: 12 deterministic careers verify that early non-match alternatives are not decorative duplicates.");
+console.log("CHOICE_CONSEQUENCE_DIVERGENCE_OK: 12 deterministic careers verify that every early non-match alternative, not only the first two, produces a distinct consequence state.");
