@@ -17,4 +17,8 @@ const matchFlashGuard = 'if (s.pending?.type === "dynamic" && s.pending.kind ===
 const occurrences = engine.split(matchFlashGuard).length - 1;
 if (occurrences !== 1) throw new Error(`Expected exactly one legacy match_flash migration guard, found ${occurrences}`);
 
-console.log("AGENT_MARKET_CHRONOLOGY_OK youthTransferCalls=blocked seasonalTeaser=one seasonalOffer=one minorReturnCards=background migrationGuard=deduped");
+if (engine.includes('playable_match_streak')) {
+  throw new Error("Authored key matches are still being silently suppressed by playable_match_streak state");
+}
+
+console.log("P0_CHRONOLOGY_OK youthTransferCalls=blocked seasonalTeaser=one seasonalOffer=one minorReturnCards=background keyMatches=preserved migrationGuard=deduped");
