@@ -50,8 +50,11 @@ function describe(s: GameState): SeenDecision | null {
   }
   if (p.type === "match") {
     return {
-      title: `${p.match.ctx.competition} · ${p.match.opponent}`,
-      text: `${p.match.ctx.storyLabel} ${p.match.ctx.venue}`,
+      // The competition can legitimately repeat; the narrative purpose cannot.
+      // A derby and a decisive league meeting against the same rival are not
+      // the same decision, while the same story label + rival is a duplicate.
+      title: `${p.match.ctx.storyLabel} · ${p.match.opponent}`,
+      text: `${p.match.ctx.competition} · ${p.match.ctx.venue}`,
       choices: p.match.keyMoment?.options.map((o) => o.label) ?? ["Jugar el partido"],
       family: "match",
       kind: "match",
