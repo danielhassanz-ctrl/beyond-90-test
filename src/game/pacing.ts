@@ -75,6 +75,24 @@ function compressNarrative(slots: Slot[], keepCount: number): Slot[] {
   return slots.filter((slot, i) => !isNarrativeSlot(slot) || keep.has(i));
 }
 
+const UNIQUE_KEY_TAGS = new Set<NonNullable<Slot["tag"]>>(["debut", "euro", "exclub", "derby", "cup", "decisive"]);
+
+/**
+ * El plan base puede traer dos slots con el mismo hito (por ejemplo dos copas)
+ * antes de aplicar el modo de carrera. Conservamos solo la primera aparición
+ * de los hitos que narrativamente deben ser únicos y dejamos intactas finales
+ * u otros partidos explícitamente construidos por la temporada.
+ */
+function dedupeUniqueKeyMatches(slots: Slot[]): Slot[] {
+  const seen = new Set<NonNullable<Slot["tag"]>>();
+  return slots.filter((slot) => {
+    if (slot.kind !== "match" || !slot.tag || !UNIQUE_KEY_TAGS.has(slot.tag)) return true;
+    if (seen.has(slot.tag)) return false;
+    seen.add(slot.tag);
+    return true;
+  });
+}
+
 /**
  * Crea únicamente partidos que el contexto futbolístico habilita de verdad.
  * No existe fallback sintético: si no hay Europa, derbi, copa, exclub, etc.,
@@ -124,6 +142,10 @@ export function applyCareerPacing(s: GameState): void {
 
   const wantedDecisions = decisionTarget(s);
   const wantedMatches = keyMatchTarget(s);
+
+  // Primero normalizamos la agenda existente: no tiene sentido contar dos veces
+  // el mismo hito solo porque el plan base lo haya insertado por caminos distintos.
+  s.queue = dedupeUniqueKeyMatches(s.queue);
 
   const wantedQueuedMatches = Math.max(0, wantedMatches - pendingMatchDecisions(s));
   let removeMatches = Math.max(0, s.queue.filter((slot) => slot.kind === "match").length - wantedQueuedMatches);
