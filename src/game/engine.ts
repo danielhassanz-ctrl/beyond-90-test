@@ -637,12 +637,6 @@ function agentCard(s: GameState): Card | null {
   if (s.agent.trust >= 50 && Math.random() < 0.3) {
     return dyn("agent_commission", { commission: Math.min(15, s.agent.commission + 2) });
   }
-  if (Math.random() < 0.3) {
-    return dyn("agent_check", {
-      topic: pick(["minutos", "prensa", "dinero", "vida"]),
-      hour: pick(["23:17", "07:40", "14:05", "22:58"]),
-    });
-  }
   return null;
 }
 
