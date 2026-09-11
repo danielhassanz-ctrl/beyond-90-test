@@ -10,6 +10,7 @@ const required = [
   's.flags["volvio_pendiente"] = recoveredSeverity === "minor" ? 0 : 1;',
   'if (s.stage !== "first") {',
   'const developmental: KeySpec[] = [',
+  's.beat += Math.max(1, Math.ceil(count / 2));',
 ];
 for (const token of required) {
   if (!engine.includes(token)) throw new Error(`Missing P0 chronology/anti-repeat guard: ${token}`);
@@ -28,4 +29,4 @@ if (/tag:\s*"(cup|euro|final)"/.test(nonSeniorBlock)) {
   throw new Error("Youth/reserve key-match plan still contains senior cup/europe/final tags");
 }
 
-console.log("P0_CHRONOLOGY_OK youthTransferCalls=blocked seasonalTeaser=one seasonalOffer=one minorReturnCards=background keyMatches=preserved youthSeniorCompetitions=blocked migrationGuard=deduped");
+console.log("P0_CHRONOLOGY_OK youthTransferCalls=blocked seasonalTeaser=one seasonalOffer=one minorReturnCards=background keyMatches=preserved youthSeniorCompetitions=blocked simulatedWeeksAdvanceTime=yes migrationGuard=deduped");
