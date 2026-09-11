@@ -84,7 +84,13 @@ export function europeanStoryEligible(s: GameState): boolean {
 export type KeyMatchKind = "debut" | "derby" | "cup" | "europe" | "title_decider" | "exclub" | "international" | "major_tournament";
 
 export function eligibleKeyMatchKinds(s: GameState): KeyMatchKind[] {
-  const out: KeyMatchKind[] = ["debut", "derby", "cup", "title_decider"];
+  // Debuts and local rivalries can matter at any level. Senior-cup, title,
+  // European, ex-club and international beats are first-team stories and must
+  // never be fabricated for a youth/reserve season just to satisfy pacing.
+  const out: KeyMatchKind[] = ["debut", "derby"];
+  if (s.stage !== "first") return out;
+
+  out.push("cup", "title_decider");
   if (europeanStoryEligible(s)) out.push("europe");
   if (s.memory.rejectedClubs.length || s.memory.conflicts.length) out.push("exclub");
   if (seniorInternationalEligible(s)) {
