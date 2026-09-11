@@ -1,5 +1,6 @@
 import { ensureCareerCast } from "../src/game/career-life";
 import { chooseClub, createGame, resolveEvent } from "../src/game/engine";
+import { isDisallowedNarrative, scrubDisallowedNarrative } from "../src/game/narrative-safety";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
 import { setCareerMode, type CareerMode } from "../src/game/pacing";
 import type { GameState, Player } from "../src/game/types";
@@ -90,7 +91,19 @@ for (const mode of MODES) {
     if (!cast.adviser.met || !cast.coach.met || !cast.captain.met || !cast.teammate.met || !cast.physio.met) {
       throw new Error(`${mode}/${seed}: persistent named cast was not actually introduced`);
     }
+
+    // Regression for the user-reported repetitive card: even if an old save or
+    // the legacy scheduler produces it, the playable state must scrub it
+    // without resolving its generic copy or mutating it as a seen decision.
+    state.pending = { type: "dynamic", kind: "agent_check", data: { topic: "prensa", hour: "23:17" } };
+    if (!isDisallowedNarrative(state)) throw new Error(`${mode}/${seed}: QA fixture did not create the banned adviser call`);
+    const beforeScenes = state.sceneCount;
+    state = scrubDisallowedNarrative(state);
+    if (isDisallowedNarrative(state)) throw new Error(`${mode}/${seed}: agent_check leaked through narrative safety`);
+    if (state.sceneCount !== beforeScenes) {
+      throw new Error(`${mode}/${seed}: hidden agent_check incorrectly counted as a played narrative scene`);
+    }
   }
 }
 
-console.log(`Opening flow QA OK: ${MODES.length} modes x ${SEEDS.length} seeds; decision #2 adviser, 0 matches before phase ${OPENING_DONE}.`);
+console.log(`Opening flow QA OK: ${MODES.length} modes x ${SEEDS.length} seeds; life-first opening preserved and repetitive agent_check is unplayable.`);
