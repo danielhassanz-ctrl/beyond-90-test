@@ -160,36 +160,33 @@ export function openTeasers(s: GameState): Thread[] {
   return (s.threads ?? []).filter((t) => (s.sceneCount ?? 0) < t.dueScene);
 }
 
-/** Genera hilos según el estado real de la carrera. Máximo 3 abiertos. */
+/** Genera hilos según el estado real de la carrera. Máximo 2 abiertos. */
 export function maybeSpawnThreads(s: GameState): void {
   if (!Array.isArray(s.threads)) s.threads = [];
   if (s.threads.length >= 2) return;
-  // Cadencia: como mucho un hilo nuevo cada 4 escenas.
-  const last = s.flags["ultimo_hilo"] ?? -99;
-  if ((s.sceneCount ?? 0) - last < 4) return;
-  s.flags["ultimo_hilo"] = s.sceneCount ?? 0;
 
-  if (s.rel.coach <= 34 && Math.random() < 0.55) {
-    spawnThread(s, "coach_upset");
-    return;
-  }
-  if (s.agent.present && s.fame >= 28 && Math.random() < 0.4) {
-    spawnThread(s, "club_interest");
-    return;
-  }
+  const scene = s.sceneCount ?? 0;
+  const last = s.flags["ultimo_hilo"] ?? -99;
+  if (scene - last < 4) return;
+
+  // Crucial: no gastamos el cooldown hasta que nace un hilo de verdad. Un
+  // conflicto ya consumido puede seguir cumpliendo su condición (por ejemplo
+  // relación mala con el entrenador), pero no debe bloquear historias nuevas.
+  const attempt = (kind: ThreadKind): boolean => {
+    const created = spawnThread(s, kind);
+    if (!created) return false;
+    s.flags["ultimo_hilo"] = scene;
+    return true;
+  };
+
+  if (s.rel.coach <= 34 && Math.random() < 0.55 && attempt("coach_upset")) return;
+  if (s.agent.present && s.fame >= 28 && Math.random() < 0.4 && attempt("club_interest")) return;
   if (s.fame >= 34 && Math.random() < 0.3) {
-    spawnThread(s, Math.random() < 0.5 ? "press_digging" : "sponsor_call");
-    return;
+    const first: ThreadKind = Math.random() < 0.5 ? "press_digging" : "sponsor_call";
+    const second: ThreadKind = first === "press_digging" ? "sponsor_call" : "press_digging";
+    if (attempt(first) || attempt(second)) return;
   }
-  if (s.stage !== "youth" && s.overall >= 68 && s.age <= 21 && Math.random() < 0.28) {
-    spawnThread(s, "national_call");
-    return;
-  }
-  if (s.rel.dressing <= 42 && Math.random() < 0.35) {
-    spawnThread(s, "teammate_jealous");
-    return;
-  }
-  if (s.rel.family <= 45 && Math.random() < 0.3) {
-    spawnThread(s, "family_worry");
-  }
+  if (s.stage !== "youth" && s.overall >= 68 && s.age <= 21 && Math.random() < 0.28 && attempt("national_call")) return;
+  if (s.rel.dressing <= 42 && Math.random() < 0.35 && attempt("teammate_jealous")) return;
+  if (s.rel.family <= 45 && Math.random() < 0.3) attempt("family_worry");
 }
