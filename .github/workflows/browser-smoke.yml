@@ -3,7 +3,7 @@ name: Beyond 90 iPhone WebKit smoke
 on:
   push:
     branches:
-      - recovery-v4-19-delivery-gate
+      - main
   pull_request:
     branches:
       - main
