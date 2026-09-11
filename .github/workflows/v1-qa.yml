@@ -4,12 +4,16 @@ on:
   push:
     branches:
       - "product-v4-*"
+      - "p0-*"
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,6 +24,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Typecheck
         run: npm run typecheck
+      - name: Mandatory life-first opening QA
+        run: npm run qa:opening
       - name: Career pacing QA
         run: npm run qa:pacing
       - name: Competition pacing QA
@@ -32,6 +38,8 @@ jobs:
         run: npm run qa:branches
       - name: Narrative anti-repetition QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+      - name: Human-style first-15-decision QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
       - name: Build
