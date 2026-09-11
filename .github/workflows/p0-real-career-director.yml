@@ -13,12 +13,13 @@ on:
       - scripts/match-flash-source-ban-smoke.mjs
       - scripts/apply-key-moment-antirepeat.mjs
       - scripts/apply-match-opponent-antirepeat.mjs
+      - scripts/apply-playable-match-streak-gate.mjs
       - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
       - qa/REAL_CAREER_PLAYTEST_GATE.md
       - .github/workflows/p0-real-career-director.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   story-director:
@@ -28,12 +29,29 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
+      - name: Apply playable match streak gate
+        run: node scripts/apply-playable-match-streak-gate.mjs
+
+      - name: Commit generated engine patch
+        if: github.event_name == 'push'
+        run: |
+          if git diff --quiet -- src/game/engine.ts; then
+            echo "Playable match streak gate already committed"
+          else
+            git config user.name "beyond90-qa-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add src/game/engine.ts
+            git commit -m "P0: cap consecutive playable match decisions"
+            git push origin HEAD:p0-real-career-director-repetition
+          fi
 
       - name: Ban playable match_flash emission at source
         run: node scripts/match-flash-source-ban-smoke.mjs
