@@ -13,6 +13,7 @@ import {
   resolveEventFree,
   resolveMatch,
 } from "./engine";
+import { afterOpeningClubChoice, forceOpeningPending, initializeOpening } from "./opening";
 import { applyCareerPacing, DEFAULT_CAREER_MODE, setCareerMode, type CareerMode } from "./pacing";
 import { choosePostCareerPath, choosePostCareerStyle, type PostCareerPath, type PostCareerStyle } from "./postcareer";
 import type { DynamicCard, GameState, MatchData, Player } from "./types";
@@ -161,9 +162,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const game = createGame(player);
     setCareerMode(game, mode);
     ensureCareerCast(game);
+    initializeOpening(game);
     commit(game);
   }, [commit]);
-  const pickClub = useCallback((clubId: string) => apply((prev) => chooseClub(prev, clubId)), [apply]);
+  const pickClub = useCallback(
+    (clubId: string) => apply((prev) => afterOpeningClubChoice(chooseClub(prev, clubId))),
+    [apply],
+  );
   const answerEvent = useCallback(
     (eventId: string, choiceId: string) =>
       apply((prev) => {
@@ -200,7 +205,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (style: PostCareerStyle) => apply((prev) => choosePostCareerStyle(prev, style)),
     [apply],
   );
-  const next = useCallback(() => apply((prev) => advance(prev)), [apply]);
+  const next = useCallback(
+    () => apply((prev) => forceOpeningPending(prev) ?? advance(prev)),
+    [apply],
+  );
   const reset = useCallback(() => commit(null), [commit]);
 
   const value = useMemo<GameContextValue>(
