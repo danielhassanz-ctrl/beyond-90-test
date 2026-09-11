@@ -1,4 +1,4 @@
-import { careerStatus, ensureCareerCast } from "../src/game/career-life";
+import { canReceiveSocialDm, careerStatus, ensureCareerCast } from "../src/game/career-life";
 import { createGame } from "../src/game/engine";
 import { eventById } from "../src/game/events";
 import { npcMood, who } from "../src/game/npc";
@@ -93,6 +93,16 @@ if (socialFollowup.requires(state)) throw new Error("early social-DM follow-up l
 state.age = 22;
 if (adviserMoney.requires(state)) throw new Error("first-money adviser scene leaks into an implausibly late career stage");
 
+// The first social-attention beat must stay in the early career. A player who
+// only becomes visible later can receive other mature social/press stories,
+// but not dialogue pretending it followed one of his first matches.
+delete state.flags["social_dm_intro"];
+state.fame = 40;
+state.age = 24;
+if (!canReceiveSocialDm(state)) throw new Error("social-DM intro is incorrectly blocked inside its early-career window");
+state.age = 25;
+if (canReceiveSocialDm(state)) throw new Error("first social-DM scene can leak into consolidation/prime years");
+
 // Narrative status must respect age as a hard prerequisite. A wonderkid can be
 // a star, but a 16-year-old cannot unlock established-elite or legend scenes.
 state.age = 16;
@@ -123,4 +133,4 @@ if (!repeated.startsWith(`${cast.coach.name}, `)) {
   throw new Error("coach identity changed across repeated Director lookups");
 }
 
-console.log(`Persistent cast QA OK: live people scenes=${requiredLiveScenes.length}; age-gated status=academy-star/breakthrough-elite/proven-legend; recurring threads=adviser+captain+teammate+physio+social; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
+console.log(`Persistent cast QA OK: live people scenes=${requiredLiveScenes.length}; age-gated status=academy-star/breakthrough-elite/proven-legend; social-intro window=17-24; recurring threads=adviser+captain+teammate+physio+social; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
