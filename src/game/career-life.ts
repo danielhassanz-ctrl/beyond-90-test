@@ -21,10 +21,16 @@ export function ensureCareerCast(s: GameState): CareerCast {
   return ensureCast(s);
 }
 
+/**
+ * Etapas cronológicas del Football Career Story Director.
+ * 16-18 promesa · 19-21 irrupción · 22-25 consolidación · 26-30 plenitud ·
+ * 31-34 veterano · 35+ legado. Mantener estos límites en un único lugar evita
+ * que escenas de estrella consolidada aparezcan un año antes de tiempo.
+ */
 export function careerEra(s: GameState): CareerEra {
   if (s.age <= 18) return "academy";
   if (s.age <= 21) return "breakthrough";
-  if (s.age <= 24) return "established";
+  if (s.age <= 25) return "established";
   if (s.age <= 30) return "prime";
   if (s.age <= 34) return "veteran";
   return "legacy";
