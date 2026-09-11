@@ -1,4 +1,5 @@
 import { installPeopleEvents } from "./events-people";
+import { installPeopleFollowups } from "./events-people-followups";
 import type { GameState } from "./types";
 
 /* =========================================================================
@@ -24,6 +25,7 @@ export function careerSeed(s: GameState): number {
   // before hashing narrative candidates, so persistent-people scenes enter the
   // same live registry as the rest of the career bank.
   installPeopleEvents();
+  installPeopleFollowups();
   const anyS = s as GameState & { careerSeed?: number };
   if (typeof anyS.careerSeed !== "number" || !Number.isFinite(anyS.careerSeed)) {
     anyS.careerSeed = Math.floor(Math.random() * 1_000_000) + 1;
