@@ -54,6 +54,12 @@ jobs:
       - name: Narrative anti-repetition QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
 
+      - name: Human-style first-15-decision QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: First-15 decision quality floor
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
+
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
 
