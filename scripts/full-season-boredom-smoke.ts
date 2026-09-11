@@ -4,7 +4,7 @@ import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
 import { setCareerMode, type CareerMode } from "../src/game/pacing";
-import type { GameState, Player } from "../src/game/types";
+import type { DynamicCard, GameState, Player } from "../src/game/types";
 
 function rng(seed: number) {
   let x = seed >>> 0;
@@ -37,6 +37,22 @@ function player(seed: number): Player {
   };
 }
 
+function dynamicFamily(card: DynamicCard, fallback: string): string {
+  if (card.kind === "arc") return `arc:${String(card.data["arcId"] ?? fallback)}`;
+  if (card.kind === "arc_callback") return "callback";
+  if (card.kind === "thread") return `thread:${String(card.data["threadKind"] ?? fallback)}`;
+  if (card.kind === "arc_beat") {
+    const id = String(card.data["beatId"] ?? fallback);
+    if (id.startsWith("beat_pos_")) return "beat:position";
+    if (id.includes("pretemporada")) return "beat:preseason";
+    if (id.startsWith("beat_early_")) return "beat:early-life";
+    if (id.startsWith("beat_lane_")) return "beat:origin-lane";
+    return `beat:${id}`;
+  }
+  if (card.kind.startsWith("cons_")) return `consequence:${card.kind}`;
+  return `${fallback}:${card.kind}`;
+}
+
 function describe(s: GameState): Decision | null {
   const p = s.pending;
   if (!p || p.type === "season") return null;
@@ -61,7 +77,7 @@ function describe(s: GameState): Decision | null {
   }
   assert(p.kind !== "match_flash", `BANNED match_flash surfaced during full season: ${JSON.stringify(p.data)}`);
   const v = renderDynamic(s, p);
-  return { title: v.title, text: v.text, choices: v.choices.map((c) => c.label), family: v.category, kind: `dynamic:${p.kind}`, injured };
+  return { title: v.title, text: v.text, choices: v.choices.map((c) => c.label), family: dynamicFamily(p, v.category), kind: `dynamic:${p.kind}`, injured };
 }
 
 function resolveCurrent(s: GameState): GameState {
@@ -98,8 +114,8 @@ function assertSeason(mode: CareerMode, seed: number, decisions: Decision[]) {
       assert(!(decisions[i - 2]!.family === d.family && decisions[i - 1]!.family === d.family), `${mode}/${seed}: three consecutive ${d.family} decisions`);
     }
   }
-  assert(decisions.some((d) => d.family === "life" || d.family.includes("family") || d.family.includes("opening_home")), `${mode}/${seed}: no personal-life decision in first season`);
-  assert(decisions.some((d) => d.family === "training" || d.family === "preseason" || d.family === "club" || d.family === "match"), `${mode}/${seed}: no football-development decision in first season`);
+  assert(decisions.some((d) => /life|family|opening_home|early-life|origin|arc:familia|thread:family/.test(d.family)), `${mode}/${seed}: no personal-life decision in first season`);
+  assert(decisions.some((d) => /training|preseason|club|match|position|jerarquia/.test(d.family)), `${mode}/${seed}: no football-development decision in first season`);
 }
 
 function run(mode: CareerMode, seed: number) {
@@ -164,4 +180,4 @@ function run(mode: CareerMode, seed: number) {
 for (const [modeIndex, mode] of (["express", "standard", "pro"] as CareerMode[]).entries()) {
   for (const seed of [101, 2026, 31337, 90909]) run(mode, seed + modeIndex * 100000);
 }
-console.log("FULL_SEASON_BOREDOM_OK: 12 deterministic first seasons without match_flash filler, repeated authored setups, three-card family loops, or injury/match contradictions.");
+console.log("FULL_SEASON_BOREDOM_OK: 12 deterministic first seasons without match_flash filler, repeated authored setups, three-card semantic-family loops, or injury/match contradictions.");
