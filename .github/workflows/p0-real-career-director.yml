@@ -21,13 +21,18 @@ permissions:
 jobs:
   story-director:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
       - name: Apply P0 match-flash suppression
         run: node scripts/apply-p0-match-flash-suppression.mjs
@@ -46,7 +51,7 @@ jobs:
           fi
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Typecheck
         run: npm run typecheck
@@ -69,8 +74,35 @@ jobs:
       - name: Branch/narrative QA
         run: npm run qa:branches
 
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+
+      - name: Thread scheduler anti-starvation QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/thread-scheduler-smoke.ts
+
       - name: Full-career QA
         run: npm run qa:career
 
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+
       - name: Build
         run: npm run build
+
+      - name: Install WebKit test runtime
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+
+      - name: iPhone WebKit delivery and persistence
+        run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line
