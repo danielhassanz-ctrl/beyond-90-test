@@ -67,7 +67,10 @@ export function plausibleMoneyScale(s: GameState): "youth" | "pro" | "star" | "s
 }
 
 export function canReceiveSocialDm(s: GameState): boolean {
-  return s.age >= 17 && s.fame >= 18 && !s.flags["social_dm_intro"];
+  // This is explicitly an early-career "first attention" beat. Without the
+  // upper age gate it could surface years later for a veteran whose fame rose
+  // slowly, producing dialogue about "one of your first matches" at 30+.
+  return s.age >= 17 && s.age <= 24 && s.fame >= 18 && !s.flags["social_dm_intro"];
 }
 
 export function touch(person: CareerPerson, s: GameState, delta = 0): void {
