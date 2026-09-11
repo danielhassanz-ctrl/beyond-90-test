@@ -1,4 +1,4 @@
-import { ensureCareerCast } from "../src/game/career-life";
+import { careerStatus, ensureCareerCast } from "../src/game/career-life";
 import { createGame } from "../src/game/engine";
 import { eventById } from "../src/game/events";
 import { npcMood, who } from "../src/game/npc";
@@ -93,6 +93,25 @@ if (socialFollowup.requires(state)) throw new Error("early social-DM follow-up l
 state.age = 22;
 if (adviserMoney.requires(state)) throw new Error("first-money adviser scene leaks into an implausibly late career stage");
 
+// Narrative status must respect age as a hard prerequisite. A wonderkid can be
+// a star, but a 16-year-old cannot unlock established-elite or legend scenes.
+state.age = 16;
+state.overall = 95;
+state.fame = 95;
+state.awards = ["Golden Boy", "MVP"];
+state.titles = ["Liga", "Copa", "Europa", "Supercopa"];
+if (careerStatus(state) !== "star") {
+  throw new Error(`16-year-old wonderkid leaked into ${careerStatus(state)} status`);
+}
+state.age = 19;
+if (careerStatus(state) !== "elite") {
+  throw new Error(`19-year-old elite breakthrough was over-capped as ${careerStatus(state)}`);
+}
+state.age = 27;
+if (careerStatus(state) !== "legend") {
+  throw new Error(`proven 27-year-old elite career failed to unlock legend status: ${careerStatus(state)}`);
+}
+
 const before = cast.coach.relation;
 npcMood(state, "coach", 7);
 if (cast.coach.relation !== Math.min(100, before + 7)) {
@@ -104,4 +123,4 @@ if (!repeated.startsWith(`${cast.coach.name}, `)) {
   throw new Error("coach identity changed across repeated Director lookups");
 }
 
-console.log(`Persistent cast QA OK: live people scenes=${requiredLiveScenes.length}; recurring threads=adviser+captain+teammate+physio+social; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
+console.log(`Persistent cast QA OK: live people scenes=${requiredLiveScenes.length}; age-gated status=academy-star/breakthrough-elite/proven-legend; recurring threads=adviser+captain+teammate+physio+social; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
