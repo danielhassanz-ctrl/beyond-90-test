@@ -63,7 +63,7 @@ function Onboarding() {
       avatar,
       traits,
     }, careerMode);
-    void navigate({ to: "/cantera" });
+    void navigate({ to: "/historia" });
   };
 
   return (
@@ -230,7 +230,7 @@ function Onboarding() {
           onClick={submit}
           className="gold-fill mt-6 w-full rounded-xl px-5 py-4 font-cond text-lg font-bold uppercase tracking-[0.18em] shadow-[var(--shadow-gold)]"
         >
-          Elegir cantera
+          Empezar tu historia
         </button>
         <div className="h-10" />
       </div>
