@@ -12,6 +12,7 @@ on:
       - scripts/real-career-playtest-smoke.ts
       - scripts/full-season-boredom-smoke.ts
       - scripts/match-flash-source-ban-smoke.mjs
+      - scripts/agent-market-chronology-smoke.mjs
       - scripts/apply-key-moment-antirepeat.mjs
       - scripts/apply-match-opponent-antirepeat.mjs
       - scripts/apply-playable-match-streak-gate.mjs
@@ -40,6 +41,9 @@ jobs:
 
       - name: Ban playable match_flash emission at source
         run: node scripts/match-flash-source-ban-smoke.mjs
+
+      - name: Lock youth agent market chronology
+        run: node scripts/agent-market-chronology-smoke.mjs
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
