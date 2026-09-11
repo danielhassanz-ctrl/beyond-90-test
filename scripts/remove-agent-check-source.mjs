@@ -32,16 +32,22 @@ if (topicsStart >= 0) {
   console.log("dynamic.ts: removed dead AGENT_TOPICS copy bank");
 }
 
-const caseStart = dynamic.indexOf('    case "agent_check":');
-if (caseStart >= 0) {
-  const caseEnd = dynamic.indexOf('    case "market_offer":', caseStart);
-  if (caseEnd < 0) throw new Error("Could not locate agent_check render case end");
+let removedCases = 0;
+for (;;) {
+  const caseStart = dynamic.indexOf('    case "agent_check":');
+  if (caseStart < 0) break;
+  const nextCase = dynamic.indexOf('    case "', caseStart + 8);
+  const defaultCase = dynamic.indexOf("    default:", caseStart + 8);
+  const candidates = [nextCase, defaultCase].filter((x) => x >= 0);
+  if (candidates.length === 0) throw new Error("Could not locate the end of an agent_check switch case");
+  const caseEnd = Math.min(...candidates);
   dynamic = dynamic.slice(0, caseStart) + dynamic.slice(caseEnd);
-  console.log("dynamic.ts: removed agent_check render path");
+  removedCases += 1;
 }
+if (removedCases > 0) console.log(`dynamic.ts: removed ${removedCases} agent_check switch path(s)`);
 
 if (engine.includes('dyn("agent_check"')) throw new Error("agent_check emission still present in engine.ts");
-if (dynamic.includes('case "agent_check"')) throw new Error("agent_check render case still present in dynamic.ts");
+if (dynamic.includes('case "agent_check"')) throw new Error("agent_check switch case still present in dynamic.ts");
 if (dynamic.includes("AGENT_TOPICS")) throw new Error("AGENT_TOPICS still present in dynamic.ts");
 
 fs.writeFileSync(engineFile, engine);
