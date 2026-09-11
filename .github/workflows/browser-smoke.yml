@@ -33,8 +33,17 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Mandatory life-first opening QA
+        run: npm run qa:opening
+
       - name: Career pacing QA
-        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/pacing-smoke.ts
+        run: npm run qa:pacing
+
+      - name: Competition pacing QA
+        run: npm run qa:competition-pacing
+
+      - name: Persistent cast QA
+        run: npm run qa:persistent-cast
 
       - name: Full career smoke QA
         run: npm run qa:career

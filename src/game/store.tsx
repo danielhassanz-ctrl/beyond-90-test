@@ -13,6 +13,7 @@ import {
   resolveEventFree,
   resolveMatch,
 } from "./engine";
+import { afterOpeningClubChoice, forceOpeningPending, initializeOpening } from "./opening";
 import { applyCareerPacing, DEFAULT_CAREER_MODE, setCareerMode, type CareerMode } from "./pacing";
 import { choosePostCareerPath, choosePostCareerStyle, type PostCareerPath, type PostCareerStyle } from "./postcareer";
 import type { DynamicCard, GameState, MatchData, Player } from "./types";
@@ -47,6 +48,20 @@ function parseSave(raw: string | null): GameState | null {
       setCareerMode(state, decoded.careerMode ?? DEFAULT_CAREER_MODE);
       ensureCareerCast(state);
       applyCareerPacing(state);
+
+      // `migrate()` is deliberately allowed to rebuild an empty/legacy season
+      // queue, and that legacy path clears `pending`. During the mandatory
+      // opening this used to make Safari/WebKit reloads lose the exact scene
+      // the player was reading (notably the first agreement) even though the
+      // persisted opening phase was correct. Reconstruct the deterministic
+      // opening card from the persisted phase, without advancing narrative
+      // time, so a reload resumes the same decision instead of skipping it.
+      const beat = state.beat;
+      const opening = forceOpeningPending(state);
+      if (opening) {
+        opening.beat = beat;
+        return opening;
+      }
     }
     return state;
   } catch {
@@ -161,9 +176,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const game = createGame(player);
     setCareerMode(game, mode);
     ensureCareerCast(game);
+    initializeOpening(game);
     commit(game);
   }, [commit]);
-  const pickClub = useCallback((clubId: string) => apply((prev) => chooseClub(prev, clubId)), [apply]);
+  const pickClub = useCallback(
+    (clubId: string) => apply((prev) => afterOpeningClubChoice(chooseClub(prev, clubId))),
+    [apply],
+  );
   const answerEvent = useCallback(
     (eventId: string, choiceId: string) =>
       apply((prev) => {
@@ -200,7 +219,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (style: PostCareerStyle) => apply((prev) => choosePostCareerStyle(prev, style)),
     [apply],
   );
-  const next = useCallback(() => apply((prev) => advance(prev)), [apply]);
+  const next = useCallback(
+    () => apply((prev) => forceOpeningPending(prev) ?? advance(prev)),
+    [apply],
+  );
   const reset = useCallback(() => commit(null), [commit]);
 
   const value = useMemo<GameContextValue>(

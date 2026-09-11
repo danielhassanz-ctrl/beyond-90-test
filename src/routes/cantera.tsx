@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Clock, TrendingUp, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { ensureCareerCast } from "@/game/career-life";
 import { clubById } from "@/game/data";
+import { OPENING_MARKER, OPENING_PHASE, OpeningPhase } from "@/game/opening";
 import { useGame } from "@/game/store";
 import { cn } from "@/lib/utils";
 
@@ -27,11 +29,16 @@ function Academy() {
     () => (state?.offers ?? []).map((o) => ({ ...clubById(o.clubId), pitch: o.pitch })),
     [state?.offers],
   );
+  const cast = state ? ensureCareerCast(state) : null;
+  const openingPhase = state?.flags[OPENING_PHASE] ?? OpeningPhase.DONE;
 
   useEffect(() => {
     if (ready && !state) void navigate({ to: "/onboarding" });
     if (ready && state?.clubId) void navigate({ to: "/historia" });
-  }, [ready, state, navigate]);
+    if (ready && state && state.flags[OPENING_MARKER] === 1 && openingPhase < OpeningPhase.CLUB_CHOICE) {
+      void navigate({ to: "/historia" });
+    }
+  }, [ready, state, navigate, openingPhase]);
 
   const confirm = () => {
     if (!selected) return;
@@ -43,10 +50,19 @@ function Academy() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-md px-5 py-8 safe-top">
         <p className="text-kicker">Verano · 16 años</p>
-        <h1 className="mt-2 font-display text-3xl leading-tight">Cuatro canteras te quieren</h1>
+        <h1 className="mt-2 font-display text-3xl leading-tight">Ahora sí: cuatro caminos</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Nadie te asigna un club. Lee bien: cada casa te ofrece un futuro distinto, y ninguna te ofrece garantías.
+          Ya lo has hablado en casa y has decidido quién va a ayudarte. Ningún club te garantiza llegar: compara el camino, no solo el escudo.
         </p>
+
+        {cast && (
+          <div className="panel mt-5 p-4">
+            <p className="text-kicker">Tu mesa de decisión</p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+              {cast.adviserKind === "father" ? "Tu padre" : cast.adviser.name} revisa contigo desarrollo, competencia, minutos y riesgo. En casa te piden una sola cosa: que no elijas por impulso.
+            </p>
+          </div>
+        )}
 
         <ul className="mt-6 space-y-4">
           {offers.map((c) => {
@@ -95,7 +111,7 @@ function Academy() {
           disabled={!selected}
           className="gold-fill mt-6 w-full rounded-xl px-5 py-4 font-cond text-lg font-bold uppercase tracking-[0.18em] disabled:opacity-35"
         >
-          Firmar en la cantera
+          Sentarnos a negociar con este club
         </button>
         <div className="h-10" />
       </div>
