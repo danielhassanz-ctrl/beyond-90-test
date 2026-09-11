@@ -9,9 +9,17 @@ const NORMALIZED: Record<string, string> = {
   portugal: "Portugal", francia: "Francia", france: "Francia", alemania: "Alemania", germany: "Alemania",
   italia: "Italia", italy: "Italia", inglaterra: "Inglaterra", england: "Inglaterra", paisesbajos: "Países Bajos",
   netherlands: "Países Bajos", mexico: "México", mejico: "México", usa: "Estados Unidos", estadosunidos: "Estados Unidos",
-  uruguay: "Uruguay", colombia: "Colombia", chile: "Chile", peru: "Perú", ecuador: "Ecuador",
-  marruecos: "Marruecos", morocco: "Marruecos", senegal: "Senegal", nigeria: "Nigeria", japon: "Japón", japan: "Japón",
-  coreadelsur: "Corea del Sur", southkorea: "Corea del Sur", australia: "Australia", nuevazelanda: "Nueva Zelanda",
+  unitedstates: "Estados Unidos", canada: "Canadá", canadá: "Canadá", costarica: "Costa Rica", panama: "Panamá", jamaica: "Jamaica",
+  uruguay: "Uruguay", colombia: "Colombia", chile: "Chile", peru: "Perú", ecuador: "Ecuador", paraguay: "Paraguay",
+  bolivia: "Bolivia", venezuela: "Venezuela",
+  marruecos: "Marruecos", morocco: "Marruecos", senegal: "Senegal", nigeria: "Nigeria", ghana: "Ghana",
+  camerun: "Camerún", cameroon: "Camerún", costademarfil: "Costa de Marfil", ivorycoast: "Costa de Marfil",
+  cotedivoire: "Costa de Marfil", argelia: "Argelia", algeria: "Argelia", egipto: "Egipto", egypt: "Egipto",
+  tunez: "Túnez", tunisia: "Túnez",
+  japon: "Japón", japan: "Japón", coreadelsur: "Corea del Sur", southkorea: "Corea del Sur", australia: "Australia",
+  arabiasaudi: "Arabia Saudí", saudiarabia: "Arabia Saudí", iran: "Irán", qatar: "Qatar",
+  emiratosarabesunidos: "Emiratos Árabes Unidos", unitedarabemirates: "Emiratos Árabes Unidos", uae: "Emiratos Árabes Unidos",
+  nuevazelanda: "Nueva Zelanda", newzealand: "Nueva Zelanda", fiyi: "Fiyi", fiji: "Fiyi", tahiti: "Tahití",
 };
 
 const CONMEBOL = new Set(["Argentina", "Brasil", "Uruguay", "Colombia", "Chile", "Perú", "Ecuador", "Paraguay", "Bolivia", "Venezuela"]);
