@@ -136,6 +136,7 @@ matchState.fitness = 85;
 matchState.rel.coach = 75;
 const tags: NonNullable<Slot["tag"]>[] = ["debut", "derby", "cup", "scouts", "decisive", "euro", "final"];
 let keyMoments = 0;
+const keyChoiceSets = new Set<string>();
 for (let i = 0; i < 80; i++) {
   const tag = tags[i % tags.length]!;
   const match = simulateMatch(matchState, { kind: "match", tag, ...(tag === "cup" || tag === "euro" || tag === "final" ? { tie: true } : {}) }, i + 1);
@@ -143,8 +144,17 @@ for (let i = 0; i < 80; i++) {
     keyMoments += 1;
     assert(match.keyMoment.options.length === 3, `match key moment ${tag}: expected 3 options, got ${match.keyMoment.options.length}`);
     assert(new Set(match.keyMoment.options.map((o) => o.id)).size === 3, `match key moment ${tag}: duplicate option ids`);
+    const setKey = match.keyMoment.options.map((o) => o.id).join("|");
+    assert(!keyChoiceSets.has(setKey), `match key moment ${tag}: authored choice set repeated`);
+    keyChoiceSets.add(setKey);
   }
 }
-assert(keyMoments >= 10, `Expected broad key-moment coverage, observed only ${keyMoments}`);
+// KEY_MOMENTS currently contains four authored, one-shot situations. The old
+// `>=10` assertion predated the anti-repetition rule and actually rewarded
+// recycling the same four decisions. Coverage now means exhausting all four
+// unique authored situations exactly once, then allowing matches to proceed
+// without fake repeated choices.
+assert(keyMoments === 4, `Expected four unique one-shot key moments, observed ${keyMoments}`);
+assert(keyChoiceSets.size === 4, `Expected four distinct key-moment choice sets, observed ${keyChoiceSets.size}`);
 
 console.log(`BRANCH_COVERAGE_SMOKE_OK dynamic=${decisionCards.length + 1} keyMoments=${keyMoments} careerEnd=ok semanticCases=${semanticCases.length + 2} postCareer=3x3 genericCopy=0 agentCheck=blocked`);
