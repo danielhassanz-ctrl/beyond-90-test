@@ -11,12 +11,13 @@ on:
       - src/game/**
       - scripts/real-career-playtest-smoke.ts
       - scripts/match-flash-source-ban-smoke.mjs
+      - scripts/apply-key-moment-antirepeat.mjs
       - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
       - qa/REAL_CAREER_PLAYTEST_GATE.md
       - .github/workflows/p0-real-career-director.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   story-director:
@@ -26,12 +27,29 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
+      - name: Apply key-match decision anti-repeat
+        run: node scripts/apply-key-moment-antirepeat.mjs
+
+      - name: Commit generated engine patch
+        if: github.event_name == 'push'
+        run: |
+          if git diff --quiet -- src/game/match.ts; then
+            echo "Key-match anti-repeat already committed"
+          else
+            git config user.name "beyond90-qa-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add src/game/match.ts
+            git commit -m "P0: prevent repeated generic key-match decisions"
+            git push origin HEAD:p0-real-career-director-repetition
+          fi
 
       - name: Ban playable match_flash emission at source
         run: node scripts/match-flash-source-ban-smoke.mjs
