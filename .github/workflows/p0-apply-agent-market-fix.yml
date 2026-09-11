@@ -8,6 +8,7 @@ on:
       - scripts/fix-p0-agent-market-repetition.mjs
       - scripts/fix-p0-minor-injury-return-repetition.mjs
       - scripts/fix-p0-key-match-density.mjs
+      - scripts/fix-p0-stage-competition-chronology.mjs
       - .github/workflows/p0-apply-agent-market-fix.yml
 
 permissions:
@@ -33,6 +34,9 @@ jobs:
       - name: Preserve authored key-match density
         run: node scripts/fix-p0-key-match-density.mjs
 
+      - name: Enforce youth/reserve competition chronology
+        run: node scripts/fix-p0-stage-competition-chronology.mjs
+
       - name: Commit generated engine changes
         run: |
           if git diff --quiet -- src/game/engine.ts; then
@@ -42,5 +46,5 @@ jobs:
           git config user.name "beyond90-qa-bot"
           git config user.email "actions@users.noreply.github.com"
           git add src/game/engine.ts
-          git commit -m "P0: enforce narrative anti-repeat without dropping key matches"
+          git commit -m "P0: enforce real-career chronology and anti-repeat"
           git push origin HEAD:p0-real-career-director-repetition
