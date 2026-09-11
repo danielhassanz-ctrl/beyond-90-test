@@ -688,7 +688,11 @@ function applyRun(s: GameState, count: number): SimRun {
     s.injury.matchesOut -= count;
     s.fitness = clamp(s.fitness + 5);
     if (s.injury.matchesOut <= 0) {
-      s.flags["volvio_pendiente"] = 1;
+      const recoveredSeverity = s.injury.severity;
+      // Routine minor knocks resolve in the background. Repeating an identical
+      // "Alta médica" choice after every overload is filler, not narrative.
+      // Only medium/severe injuries earn a playable comeback scene.
+      s.flags["volvio_pendiente"] = recoveredSeverity === "minor" ? 0 : 1;
       note(s, `Alta médica: ${s.injury.label} superada.`, "good");
       s.injury = null;
     }
