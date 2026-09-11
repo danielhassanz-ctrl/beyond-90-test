@@ -274,9 +274,6 @@ export function migrate(raw: unknown): GameState | null {
   if (s.pending && !validCards.includes(s.pending.type)) s.pending = null;
   if (s.pending?.type === "match" && !s.pending.match?.ctx) s.pending = null;
   if (s.pending?.type === "dynamic" && s.pending.kind === "match_flash") s.pending = null;
-  if (s.pending?.type === "dynamic" && s.pending.kind === "match_flash") s.pending = null;
-  if (s.pending?.type === "dynamic" && s.pending.kind === "match_flash") s.pending = null;
-  if (s.pending?.type === "dynamic" && s.pending.kind === "match_flash") s.pending = null;
   return s;
 }
 
@@ -620,21 +617,34 @@ function agentCard(s: GameState): Card | null {
   const scene = s.sceneCount ?? 0;
   const lastAgentScene = s.flags["agent_last_scene"] ?? -99;
   if (scene - lastAgentScene < 5) return null;
+  // Market conversations are milestone stories, not renewable filler. A youth
+  // player cannot receive repeated late-night transfer calls simply because
+  // simulated fame drift crossed a threshold.
+  const marketReady = s.stage !== "youth" && s.age >= 18 && totalApps(s) >= 10;
   if (s.agent.teaser) {
-    const suitor = randomSuitor(s);
-    s.agent.teaser = null;
-    return dyn("agent_offer", { clubName: suitor, salary: 150 + Math.floor(Math.random() * 500) });
+    // Legacy saves may carry a teaser into an ineligible youth context. Drop it
+    // instead of surfacing a chronologically impossible offer.
+    if (!marketReady || s.flags["agent_offer_season"] === s.seasonIndex) {
+      s.agent.teaser = null;
+    } else {
+      const suitor = randomSuitor(s);
+      s.agent.teaser = null;
+      s.flags["agent_offer_season"] = s.seasonIndex;
+      return dyn("agent_offer", { clubName: suitor, salary: 150 + Math.floor(Math.random() * 500) });
+    }
   }
-  if (s.fame >= 30 && Math.random() < 0.5) {
+  if (marketReady && s.flags["agent_teaser_season"] !== s.seasonIndex && Math.random() < 0.5) {
     const teaser = pick([
       "Ha llamado un club importante preguntando por ti",
       "Hay un ojeador que ha pedido tus últimos tres partidos en vídeo",
       "Me han preguntado por tu cláusula desde fuera de España",
     ]);
     s.agent.teaser = teaser;
+    s.flags["agent_teaser_season"] = s.seasonIndex;
     return dyn("agent_teaser", { teaser });
   }
-  if (s.agent.trust >= 50 && Math.random() < 0.3) {
+  if (s.age >= 18 && s.stage !== "youth" && s.agent.trust >= 50 && s.flags["agent_commission_season"] !== s.seasonIndex && Math.random() < 0.3) {
+    s.flags["agent_commission_season"] = s.seasonIndex;
     return dyn("agent_commission", { commission: Math.min(15, s.agent.commission + 2) });
   }
   return null;
