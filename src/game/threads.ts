@@ -83,6 +83,16 @@ export function spawnThread(
   delay = 1 + Math.floor(Math.random() * 4),
 ): Thread | null {
   if (!Array.isArray(s.threads)) s.threads = [];
+  if (!s.memory.threads || typeof s.memory.threads !== "object") s.memory.threads = {};
+
+  // These are generic authored setups with a fixed resolution card. Re-spawning
+  // the same kind later in a career used to reproduce the same premise, title
+  // and three choices with only a different teaser. That reads as a duplicated
+  // story, not as continuity. A generic thread kind can therefore happen once
+  // per career; genuine callbacks are created separately by dueThread() from
+  // remembered player decisions and remain eligible because they use recall:*
+  // keys rather than this generic-kind counter.
+  if ((s.memory.threads[kind] ?? 0) > 0) return null;
   if (hasThread(s, kind)) return null;
   if (s.threads.length >= 3) return null;
   const pool = TEASERS[kind];
