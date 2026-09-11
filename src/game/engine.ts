@@ -483,6 +483,7 @@ export function advance(state: GameState): GameState {
     const cons = consequenceCard(s);
     if (cons) {
       s.pending = cons;
+      s.flags["playable_match_streak"] = 0;
       return touch(s);
     }
 
@@ -496,6 +497,7 @@ export function advance(state: GameState): GameState {
     // 3. Hilo narrativo que vence: resolución de una anticipación previa.
     const thread = dueThread(s);
     if (thread) {
+      s.flags["playable_match_streak"] = 0;
       s.pending = dyn("thread", {
         threadId: thread.id,
         threadKind: thread.kind,
@@ -527,7 +529,15 @@ export function advance(state: GameState): GameState {
         applyRun(s, 3);
         continue;
       }
+      // Two football decisions in a row is enough. If narrative has not had
+      // room to breathe yet, this fixture happens in the background instead
+      // of becoming a third consecutive match card.
+      if ((s.flags["playable_match_streak"] ?? 0) >= 2) {
+        applyRun(s, 1);
+        continue;
+      }
       s.pending = { type: "match", match: simulateMatch(s, slot, s.beat) };
+      s.flags["playable_match_streak"] = (s.flags["playable_match_streak"] ?? 0) + 1;
       return touch(s);
     }
 
@@ -567,12 +577,14 @@ export function advance(state: GameState): GameState {
     const dirCard = directorCard(s);
     if (dirCard) {
       s.pending = dirCard;
+      s.flags["playable_match_streak"] = 0;
       return touch(s);
     }
 
     const card = agentCard(s);
     if (card) {
       s.pending = card;
+      s.flags["playable_match_streak"] = 0;
       return touch(s);
     }
 
