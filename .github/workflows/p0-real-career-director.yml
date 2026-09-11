@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - p0-real-career-director-repetition
+      - qa-decision-state-coherence
   pull_request:
     branches:
       - main
     paths:
       - src/game/**
       - scripts/real-career-playtest-smoke.ts
+      - scripts/decision-state-coherence-smoke.ts
       - scripts/full-season-boredom-smoke.ts
       - scripts/match-flash-source-ban-smoke.mjs
       - scripts/agent-market-chronology-smoke.mjs
@@ -56,6 +58,9 @@ jobs:
 
       - name: Real-career first-15 human-style playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: Per-decision career state coherence
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/decision-state-coherence-smoke.ts
 
       - name: Full-season boredom/coherence playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
