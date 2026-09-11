@@ -170,8 +170,6 @@ function applyOpeningSetup(state: GameState, opening: OpeningSetup): GameState {
     `opening-contract:${opening.contractChoice}`,
     ...state.agent.memories.filter((m) => !m.startsWith("adviser:") && !m.startsWith("opening-")),
   ].slice(0, 12);
-  // The coach is the first football-world person the player meets after signing.
-  // This explicit pending card cannot be bypassed by the generic Narrative Director.
   state.pending = { type: "event", eventId: "people_coach_intro" };
   return state;
 }
@@ -273,7 +271,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [apply],
   );
 
-  const next = useCallback(() => apply((prev) => advance(prev)), [apply]);
+  const next = useCallback(() => apply((prev) => {
+    // During the mandatory rookie opening, answerEvent already queued the next
+    // named person. OutcomeCard still calls `next()`: clear only the outcome so
+    // that advance() cannot overwrite that forced coach/captain/teammate scene.
+    if (prev.lastOutcome && prev.pending) {
+      const nextState = { ...prev, lastOutcome: null };
+      return nextState;
+    }
+    return advance(prev);
+  }), [apply]);
   const reset = useCallback(() => commit(null), [commit]);
 
   const value = useMemo<GameContextValue>(
