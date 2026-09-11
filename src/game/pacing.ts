@@ -16,9 +16,9 @@ export interface CareerModeConfig {
 }
 
 export const CAREER_MODES: readonly CareerModeConfig[] = [
-  { id: "express", label: "Express", description: "10–15 decisiones por temporada. Vive los grandes giros sin alargar los capítulos secundarios.", decisions: [10, 15], narrative: [6, 9], keyMatches: [4, 6] },
-  { id: "standard", label: "Standard", description: "20–25 decisiones por temporada. Equilibrio entre fútbol, vestuario, vida, agente y mercado.", decisions: [20, 25], narrative: [15, 18], keyMatches: [5, 7] },
-  { id: "pro", label: "Pro", description: "30–40 decisiones por temporada. Carrera profunda, con relaciones, vida, dinero y callbacks largos.", decisions: [30, 40], narrative: [24, 32], keyMatches: [6, 8] },
+  { id: "express", label: "Express", description: "10–15 decisiones por temporada. Vive los grandes giros sin alargar los capítulos secundarios.", decisions: [10, 15], narrative: [6, 13], keyMatches: [4, 6] },
+  { id: "standard", label: "Standard", description: "20–25 decisiones por temporada. Equilibrio entre fútbol, vestuario, vida, agente y mercado.", decisions: [20, 25], narrative: [15, 23], keyMatches: [5, 7] },
+  { id: "pro", label: "Pro", description: "30–40 decisiones por temporada. Carrera profunda, con relaciones, vida, dinero y callbacks largos.", decisions: [30, 40], narrative: [24, 38], keyMatches: [6, 8] },
 ] as const;
 
 export const DEFAULT_CAREER_MODE: CareerMode = "standard";
@@ -35,9 +35,33 @@ function seededRange(s: GameState, key: string, range: readonly [number, number]
   if (max <= min) return min;
   return min + (hash(careerSeed(s), `${key}|${s.seasonIndex}|${careerModeOf(s)}`) % (max - min + 1));
 }
-export function narrativeTarget(s: GameState): number { return seededRange(s, "narrative-target", careerModeConfig(careerModeOf(s)).narrative); }
-export function keyMatchTarget(s: GameState): number { return seededRange(s, "key-match-target", careerModeConfig(careerModeOf(s)).keyMatches); }
-export function decisionTarget(s: GameState): number { return narrativeTarget(s) + keyMatchTarget(s); }
+
+function contextualKeyMatchRange(s: GameState): readonly [number, number] {
+  const base = careerModeConfig(careerModeOf(s)).keyMatches;
+  // The published key-match figures describe a senior season. In youth and
+  // reserves the career still keeps the same total decision density, but the
+  // missing football beats are reassigned to meaningful narrative choices
+  // rather than inventing senior Cup/title matches.
+  if (s.stage === "youth") return [Math.min(base[0], 2), Math.min(base[1], 3)];
+  if (s.stage === "reserves") return [Math.min(base[0], 3), Math.min(base[1], 4)];
+  return base;
+}
+
+export function decisionTarget(s: GameState): number {
+  return seededRange(s, "decision-target", careerModeConfig(careerModeOf(s)).decisions);
+}
+
+export function keyMatchTarget(s: GameState): number {
+  const cfg = careerModeConfig(careerModeOf(s));
+  const target = seededRange(s, "key-match-target", contextualKeyMatchRange(s));
+  // Preserve enough non-match decisions for the career to feel like a life
+  // story rather than a fixture list, especially at the low end of each mode.
+  return Math.min(target, Math.max(0, decisionTarget(s) - cfg.narrative[0]));
+}
+
+export function narrativeTarget(s: GameState): number {
+  return Math.max(0, decisionTarget(s) - keyMatchTarget(s));
+}
 
 export function narrativeRotationFor(s: GameState): EventCategory[] {
   switch (careerEra(s)) {
@@ -86,11 +110,17 @@ function contextualKeySlots(s: GameState, missing: number): Slot[] {
   if (eligible.includes("title_decider")) push({ kind: "match", tag: "decisive" });
   if (eligible.includes("debut") && !hasTag("debut")) push({ kind: "match", tag: "debut" });
 
-  const fallback: Slot[] = [
-    { kind: "match", tag: "decisive", label: "Partido clave de la temporada" },
-    { kind: "match", tag: "cup", tie: true },
-    { kind: "match", tag: "scouts" },
-  ];
+  const fallback: Slot[] = s.stage === "first"
+    ? [
+        { kind: "match", tag: "decisive", label: "Partido clave de la temporada" },
+        { kind: "match", tag: "cup", tie: true },
+        { kind: "match", tag: "scouts" },
+      ]
+    : [
+        { kind: "match", tag: "scouts", label: "Partido bajo la mirada del primer equipo" },
+        { kind: "match", tag: "derby", label: "Derbi de formación" },
+        { kind: "match", tag: "debut", label: "Nueva oportunidad para ganarte sitio" },
+      ];
   let i = 0;
   while (additions.length < missing) additions.push(fallback[i++ % fallback.length]!);
   return additions;
