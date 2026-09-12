@@ -1,5 +1,6 @@
 import fs from "node:fs";
 
+// Source migration is idempotent so CI can safely re-run it on the fix branch.
 const file = "src/game/career.ts";
 let src = fs.readFileSync(file, "utf8");
 
