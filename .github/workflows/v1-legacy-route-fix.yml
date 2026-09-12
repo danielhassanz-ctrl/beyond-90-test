@@ -1,0 +1,102 @@
+name: V1 legacy route basepath repair
+
+on:
+  push:
+    branches:
+      - v1-pages-legacy-link-basepath
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v1-pages-legacy-link-basepath
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Make career-end navigation basepath-aware
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          route = Path('src/routes/historia.tsx')
+          text = route.read_text()
+          text = text.replace(
+              'import { createFileRoute } from "@tanstack/react-router";',
+              'import { createFileRoute, Link } from "@tanstack/react-router";'
+          )
+          old = '''      <a
+        href="./legado"
+        className="gold-fill mt-5 block w-full rounded-xl px-5 py-3.5 text-center font-cond text-base font-bold uppercase tracking-[0.18em] active:scale-[0.99]"
+      >
+        Ver mi legado
+      </a>'''
+          new = '''      <Link
+        to="/legado"
+        className="gold-fill mt-5 block w-full rounded-xl px-5 py-3.5 text-center font-cond text-base font-bold uppercase tracking-[0.18em] active:scale-[0.99]"
+      >
+        Ver mi legado
+      </Link>'''
+          if old in text:
+              text = text.replace(old, new)
+          elif new not in text:
+              raise SystemExit('career-end legacy anchor not found')
+          route.write_text(text)
+
+          smoke = Path('scripts/browser-smoke.mjs')
+          text = smoke.read_text()
+          anchor = '''  await page.getByRole("link", { name: "Ver mi legado" }).click();
+  await page.waitForURL(/\\/legado\\/?$/, { timeout: 10_000 });
+'''
+          replacement = '''  await page.getByRole("link", { name: "Ver mi legado" }).click();
+  await page.waitForURL(/\\/legado\\/?$/, { timeout: 10_000 });
+  const expectedLegacyPath = `${new URL(baseURL).pathname.replace(/\\/$/, "")}/legado`.replace(/\\/{2,}/g, "/");
+  const actualLegacyPath = new URL(page.url()).pathname.replace(/\\/$/, "");
+  if (actualLegacyPath !== expectedLegacyPath) {
+    throw new Error(`legacy route escaped deployment basepath: expected=${expectedLegacyPath} actual=${actualLegacyPath}`);
+  }
+'''
+          if anchor in text:
+              text = text.replace(anchor, replacement)
+          elif 'legacy route escaped deployment basepath' not in text:
+              raise SystemExit('legacy browser-smoke navigation block not found')
+          smoke.write_text(text)
+          PY
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Core V1 regression gates
+        run: |
+          npm run qa:opening
+          npm run qa:pacing
+          npm run qa:competition-pacing
+          npm run qa:persistent-cast
+          npm run qa:career
+          npm run qa:branches
+          node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+          node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+          node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+      - name: Build at GitHub Pages basepath
+        env:
+          DEPLOY_BASE: /beyond-90-test/
+        run: npm run build
+      - name: Commit verified repair
+        run: |
+          if git diff --quiet -- src/routes/historia.tsx scripts/browser-smoke.mjs; then
+            echo 'Source already repaired.'
+            exit 0
+          fi
+          git config user.name 'beyond90-qa-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add src/routes/historia.tsx scripts/browser-smoke.mjs
+          git commit -m 'V1: keep legacy navigation inside Pages basepath'
+          git push origin HEAD:v1-pages-legacy-link-basepath
