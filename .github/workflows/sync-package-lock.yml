@@ -1,0 +1,33 @@
+name: Sync package lock
+
+on:
+  push:
+    branches: [v1-family-consequence-cast-gate]
+
+permissions:
+  contents: write
+
+jobs:
+  sync-lock:
+    if: ${{ !contains(github.event.head_commit.message, 'Sync package lock with package metadata') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v1-family-consequence-cast-gate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: npm
+      - name: Refresh npm lockfile only
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Verify clean install
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Commit synchronized lockfile
+        run: |
+          if git diff --quiet package-lock.json; then exit 0; fi
+          git config user.name "beyond90-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "Sync package lock with package metadata"
+          git push origin HEAD:v1-family-consequence-cast-gate
