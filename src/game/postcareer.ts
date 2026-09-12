@@ -1,4 +1,5 @@
 import { clone } from "./engine";
+import { ensureFinance, netWorth } from "./finance";
 import { clamp, note } from "./mutate";
 import type { GameState } from "./types";
 
@@ -55,6 +56,15 @@ const PATHS: Record<PostCareerPath, { label: string; intro: string; styles: Reco
   },
 };
 
+function creditPostCareerIncome(s: GameState, amount: number, label: string): void {
+  const finance = ensureFinance(s);
+  finance.cash = Math.max(0, Math.round(finance.cash + amount));
+  finance.history.unshift({ season: "Postcarrera", text: label, amount });
+  finance.history = finance.history.slice(0, 14);
+  // wealth is a compatibility mirror. Patrimony/Legacy use Finance as the source of truth.
+  s.wealth = netWorth(s);
+}
+
 export function postCareerStatus(s: GameState): PostCareerStatus {
   const path = CODE_PATH[s.flags["post_career_path"] ?? 0] ?? null;
   const style = CODE_STYLE[s.flags["post_career_style"] ?? 0] ?? null;
@@ -95,7 +105,7 @@ export function postCareerStatus(s: GameState): PostCareerStatus {
 }
 
 export function choosePostCareerPath(state: GameState, path: PostCareerPath): GameState {
-  if (!state.retired || !PATH_CODE[path]) return state;
+  if (!state.retired || !PATH_CODE[path] || (state.flags["post_career_style"] ?? 0) > 0) return state;
   const s = clone(state);
   s.flags["post_career_path"] = PATH_CODE[path];
   s.flags["post_career_style"] = 0;
@@ -105,7 +115,9 @@ export function choosePostCareerPath(state: GameState, path: PostCareerPath): Ga
 
 export function choosePostCareerStyle(state: GameState, style: PostCareerStyle): GameState {
   const path = CODE_PATH[state.flags["post_career_path"] ?? 0];
-  if (!state.retired || !path || !STYLE_CODE[style]) return state;
+  // The post-career style is a one-time branch. Replaying it used to mint the
+  // same cash/fame reward repeatedly through direct or stale UI actions.
+  if (!state.retired || !path || !STYLE_CODE[style] || (state.flags["post_career_style"] ?? 0) > 0) return state;
   const s = clone(state);
   s.flags["post_career_style"] = STYLE_CODE[style];
   const def = PATHS[path].styles[style];
@@ -127,7 +139,7 @@ export function choosePostCareerStyle(state: GameState, style: PostCareerStyle):
       s.rel.family = clamp(s.rel.family + 5);
       s.rel.agent = clamp(s.rel.agent + 4);
     } else if (style === "b") {
-      s.wealth = (s.wealth ?? 0) + 350;
+      creditPostCareerIncome(s, 350, "Postcarrera · ingresos iniciales como representante de estrellas.");
       s.fame = clamp(s.fame + 5);
     } else {
       s.rel.fans = clamp(s.rel.fans + 6);
@@ -138,7 +150,7 @@ export function choosePostCareerStyle(state: GameState, style: PostCareerStyle):
       s.rel.fans = clamp(s.rel.fans + 8);
       s.fame = clamp(s.fame + 4);
     } else if (style === "b") {
-      s.wealth = (s.wealth ?? 0) + 500;
+      creditPostCareerIncome(s, 500, "Postcarrera · capital inicial del proyecto con inversores.");
       s.rel.fans = clamp(s.rel.fans - 2);
     } else {
       s.rel.fans = clamp(s.rel.fans + 6);
