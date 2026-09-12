@@ -35,6 +35,7 @@ jobs:
             echo "finance.ts already gated"
             exit 0
           fi
+          git restore package-lock.json || true
           git config user.name "beyond90-qa-bot"
           git config user.email "actions@users.noreply.github.com"
           git add src/game/finance.ts
