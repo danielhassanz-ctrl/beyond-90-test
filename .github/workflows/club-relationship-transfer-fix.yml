@@ -1,0 +1,66 @@
+name: V1 club relationship transfer fix
+
+on:
+  push:
+    branches:
+      - fix-club-relationship-flags
+    paths:
+      - scripts/fix-club-relationship-flags.mjs
+      - scripts/club-relationship-transfer-smoke.ts
+      - .github/workflows/club-relationship-transfer-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix-club-relationship-flags
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply transfer relationship reset
+        run: node scripts/fix-club-relationship-flags.mjs
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Verify club relationship transfer continuity
+        run: npx tsx scripts/club-relationship-transfer-smoke.ts
+
+      - name: Verify persistent cast
+        run: npx tsx scripts/persistent-cast-smoke.ts
+
+      - name: Verify narrative quality
+        run: npx tsx scripts/narrative-quality-smoke.ts
+
+      - name: Verify anti-repetition
+        run: npx tsx scripts/full-season-boredom-smoke.ts
+
+      - name: Verify build
+        run: npm run build
+
+      - name: Commit verified engine change
+        run: |
+          if git diff --quiet -- src/game/career.ts; then
+            echo "No career.ts changes required"
+            exit 0
+          fi
+          git config user.name "beyond90-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/game/career.ts
+          git commit -m "V1: reset club relationship arcs after transfers"
+          git push origin HEAD:fix-club-relationship-flags
