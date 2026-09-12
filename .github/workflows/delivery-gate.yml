@@ -21,50 +21,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Clean install
         run: npm install --no-audit --no-fund
-
       - name: Typecheck
         run: npm run typecheck
-
+      - name: Life and Patrimony chronology QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
       - name: Mandatory life-first opening QA
         run: npm run qa:opening
-
       - name: Career pacing QA
         run: npm run qa:pacing
-
       - name: Competition-aware pacing QA
         run: npm run qa:competition-pacing
-
       - name: Persistent career cast QA
         run: npm run qa:persistent-cast
-
       - name: Full career smoke QA
         run: npm run qa:career
-
       - name: Targeted narrative branch QA
         run: npm run qa:branches
-
       - name: Narrative anti-repetition QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
-
       - name: Human-style first-15-decision QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
-
       - name: First-15 decision quality floor
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
-
       - name: Alternative first-15 branch playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
-
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
-
       - name: Build
         run: npm run build
