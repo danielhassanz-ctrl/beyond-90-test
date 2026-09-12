@@ -74,11 +74,17 @@ jobs:
           DEPLOY_BASE: /beyond-90-test/
         run: npm run build
 
-      - name: Prepare SPA fallbacks
+      - name: Prepare SPA route fallbacks
         run: |
+          set -euo pipefail
           test -f dist/client/_shell.html
           cp dist/client/_shell.html dist/client/index.html
           cp dist/client/_shell.html dist/client/404.html
+          for route in cantera carrera historia legado onboarding patrimonio relaciones; do
+            mkdir -p "dist/client/$route"
+            cp dist/client/_shell.html "dist/client/$route/index.html"
+          done
+          test -f dist/client/historia/index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -123,21 +129,35 @@ jobs:
           npm install --no-save @playwright/test
           npx playwright install --with-deps webkit
 
-      - name: Require real HTTPS deployment
+      - name: Require real HTTPS deployment and direct SPA routes
         run: |
+          set -euo pipefail
           test -n "$DEPLOYED_URL"
           case "$DEPLOYED_URL" in
             https://*) ;;
             *) echo "Pages did not return an HTTPS URL: $DEPLOYED_URL"; exit 1 ;;
           esac
+          base="${DEPLOYED_URL%/}"
           for i in {1..30}; do
-            if curl --fail --silent --show-error --location "$DEPLOYED_URL" >/tmp/beyond90-live.html; then
-              test -s /tmp/beyond90-live.html
+            all_ok=1
+            for path in "" cantera carrera historia legado onboarding patrimonio relaciones; do
+              if [ -n "$path" ]; then
+                url="$base/$path"
+              else
+                url="$base/"
+              fi
+              if ! curl --fail --silent --show-error --location "$url" >/tmp/beyond90-live.html; then
+                all_ok=0
+                break
+              fi
+              test -s /tmp/beyond90-live.html || all_ok=0
+            done
+            if [ "$all_ok" -eq 1 ]; then
               exit 0
             fi
             sleep 2
           done
-          echo "Live Pages URL never became reachable: $DEPLOYED_URL"
+          echo "One or more live SPA routes never became directly reachable over HTTPS"
           exit 1
 
       - name: iPhone WebKit Nueva carrera and persistence on live HTTPS
