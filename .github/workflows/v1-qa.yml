@@ -3,6 +3,7 @@ name: Beyond 90 V1 QA
 on:
   push:
     branches:
+      - main
       - "product-v4-*"
       - "p0-*"
   pull_request:
