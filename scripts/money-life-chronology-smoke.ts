@@ -1,6 +1,7 @@
 import { plausibleMoneyScale } from "../src/game/career-life";
 import { createGame } from "../src/game/engine";
 import { ensureFinance, moneyCard } from "../src/game/finance";
+import { moneyOfferAllowed, sponsorshipAllowed } from "../src/game/money-gating";
 import type { GameState, Player } from "../src/game/types";
 
 const player: Player = {
@@ -62,13 +63,32 @@ try {
       if (!allowedByScale[scale].has(offer)) {
         throw new Error(`${scenario.age}yo/${scale}: implausible Life/Patrimony offer leaked: ${offer}`);
       }
+      if (!moneyOfferAllowed(state, offer)) {
+        throw new Error(`${scenario.age}yo/${scale}: runtime emitted offer rejected by canonical gate: ${offer}`);
+      }
       if (scenario.age < 18 && offer === "coche") {
         throw new Error(`${scenario.age}yo: first-car purchase leaked before adult driving age`);
       }
+    }
+  }
+
+  // Sponsorship is part of the same chronology problem: fame alone must never
+  // turn a 16-year-old youth player into a commercial star.
+  for (const age of [16, 17, 18]) {
+    const youth = richState(age, 96, 99);
+    youth.stage = "youth";
+    const finance = ensureFinance(youth);
+    finance.sponsorName = null;
+    finance.lastOfferScene = -99;
+    Math.random = () => 0.1; // would force the sponsorship branch without the gate
+    if (sponsorshipAllowed(youth)) throw new Error(`${age}yo youth: sponsorship gate incorrectly opened`);
+    const card = moneyCard(youth);
+    if (card?.kind === "money" && String(card.data["offer"] ?? "") === "patrocinio") {
+      throw new Error(`${age}yo youth: sponsorship leaked through moneyCard`);
     }
   }
 } finally {
   Math.random = originalRandom;
 }
 
-console.log("Money/Life chronology QA OK: lifestyle and patrimony offers respect age/status scale.");
+console.log("Money/Life chronology QA OK: lifestyle, patrimony and sponsorship respect age/status scale.");
