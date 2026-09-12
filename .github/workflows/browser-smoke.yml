@@ -133,4 +133,4 @@ jobs:
       - name: iPhone WebKit save recovery regression suite
         env:
           TEST_BASE_URL: http://127.0.0.1:4173/beyond-90-test/
-        run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line
+        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs --browser=webkit --reporter=line
