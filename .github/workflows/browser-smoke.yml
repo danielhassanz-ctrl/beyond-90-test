@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - "v1-*"
   pull_request:
     branches:
       - main
@@ -12,7 +13,7 @@ on:
 jobs:
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,7 +28,7 @@ jobs:
 
       - name: Install Playwright WebKit
         run: |
-          npm install --no-save @playwright/test
+          npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps webkit
 
       - name: Typecheck
@@ -35,6 +36,9 @@ jobs:
 
       - name: Life and Patrimony chronology QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
+
+      - name: Decision/state coherence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/decision-state-coherence-smoke.ts
 
       - name: Mandatory life-first opening QA
         run: npm run qa:opening
@@ -48,6 +52,9 @@ jobs:
       - name: Persistent cast QA
         run: npm run qa:persistent-cast
 
+      - name: Partner/social independence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/partner-cast-smoke.ts
+
       - name: Full career smoke QA
         run: npm run qa:career
 
@@ -57,6 +64,18 @@ jobs:
       - name: Narrative anti-repetition QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
 
+      - name: Full-season boredom and repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
+
+      - name: Narrative thread scheduler QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/thread-scheduler-smoke.ts
+
+      - name: Match-flash source ban QA
+        run: node scripts/match-flash-source-ban-smoke.mjs
+
+      - name: Agent/market chronology QA
+        run: node scripts/agent-market-chronology-smoke.mjs
+
       - name: Human-style first-15-decision QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
 
@@ -65,6 +84,15 @@ jobs:
 
       - name: Alternative first-15 branch playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
+
+      - name: Season title accounting QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/season-finance-title-bonus-smoke.ts
+
+      - name: Retirement hard-cap QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/retirement-hard-cap-smoke.ts
+
+      - name: Post-career Patrimony integration QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/postcareer-finance-integration-smoke.ts
 
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
