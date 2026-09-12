@@ -1,0 +1,50 @@
+name: Apply family consequence cast fix
+
+on:
+  push:
+    branches: [v1-family-consequence-cast-gate]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-engine:
+    if: ${{ !contains(github.event.head_commit.message, 'Fix family consequence partner chronology') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v1-family-consequence-cast-gate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Patch consequence copy to respect partner introduction
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/game/consequences.ts')
+          s = p.read_text()
+          if 'import { ensureCareerCast } from "./career-life";' not in s:
+              s = s.replace('import { who } from "./npc";\n', 'import { who } from "./npc";\nimport { ensureCareerCast } from "./career-life";\n')
+          old = '''    case "cons_family_break":\n      return {\n        kicker: "Consecuencia",\n        title: "En casa se ha roto algo",\n        image: "family",\n        category: "life",\n        text: `Tres meses sin aparecer por casa. Tu madre deja de llamar y ${who(s, "partner")} te dice lo que nadie del club se atreve a decirte.`,'''
+          new = '''    case "cons_family_break": {\n      const partner = ensureCareerCast(s).partner;\n      const familyPressure = partner.met\n        ? `Tres meses sin aparecer por casa. Tu madre deja de llamar y ${partner.name} te dice lo que nadie del club se atreve a decirte.`\n        : "Tres meses sin aparecer por casa. Tu madre deja de llamar y tu familia termina diciéndote claramente que el fútbol no puede justificar desaparecer de sus vidas.";\n      return {\n        kicker: "Consecuencia",\n        title: "En casa se ha roto algo",\n        image: "family",\n        category: "life",\n        text: familyPressure,'''
+          if old not in s and 'const familyPressure = partner.met' not in s:
+              raise SystemExit('family consequence target block not found')
+          s = s.replace(old, new)
+          marker = '        freeform: { prompt: "¿Qué dices en casa?" },\n      };\n    case "cons_fans_war":'
+          if marker in s:
+              s = s.replace(marker, '        freeform: { prompt: "¿Qué dices en casa?" },\n      };\n    }\n    case "cons_fans_war":')
+          p.write_text(s)
+          PY
+      - run: npm ci
+      - run: npm run typecheck
+      - run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/family-consequence-cast-smoke.ts
+      - name: Commit fix
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "beyond90-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/game/consequences.ts
+          git commit -m "Fix family consequence partner chronology"
+          git push origin HEAD:v1-family-consequence-cast-gate
