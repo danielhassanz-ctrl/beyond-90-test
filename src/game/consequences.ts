@@ -4,6 +4,7 @@
  * pareja, entorno) y deja memoria para escenas futuras.
  */
 import { who } from "./npc";
+import { ensureCareerCast } from "./career-life";
 import { clubById } from "./data";
 import { clamp, milestone, note, rel, stat } from "./mutate";
 import { ensureFinance, netWorth, totalDebt } from "./finance";
@@ -138,13 +139,17 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
         ],
         freeform: { prompt: "¿Qué le contestas?" },
       };
-    case "cons_family_break":
+    case "cons_family_break": {
+      const partner = ensureCareerCast(s).partner;
+      const familyPressure = partner.met
+        ? `Tres meses sin aparecer por casa. Tu madre deja de llamar y ${partner.name} te dice lo que nadie del club se atreve a decirte.`
+        : "Tres meses sin aparecer por casa. Tu madre deja de llamar y tu familia termina diciéndote claramente que el fútbol no puede justificar desaparecer de sus vidas.";
       return {
         kicker: "Consecuencia",
         title: "En casa se ha roto algo",
         image: "family",
         category: "life",
-        text: `Tres meses sin aparecer por casa. Tu madre deja de llamar y ${who(s, "partner")} te dice lo que nadie del club se atreve a decirte.`,
+        text: familyPressure,
         choices: [
           { id: "volver", label: "Cortar la semana y volver a casa", hint: "Cuerpo y cabeza" },
           { id: "seguir", label: "Seguir enfocado en el fútbol", hint: "Coste personal real" },
@@ -152,6 +157,7 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
         ],
         freeform: { prompt: "¿Qué dices en casa?" },
       };
+    }
     case "cons_fans_war":
       return {
         kicker: "Consecuencia",
