@@ -12,12 +12,12 @@ async function clearAndStart(page, name) {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.getByRole("button", { name: "Nueva carrera" }).click();
-  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page).toHaveURL(/\/onboarding\/?$/);
   await page.getByPlaceholder("Álvaro Nieto").fill(name);
   await page.getByRole("button", { name: /Ambicioso/ }).click();
   await page.getByRole("button", { name: /Leal/ }).click();
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
-  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page).toHaveURL(/\/historia\/?$/);
 }
 
 async function reachFirstAgreement(page, name) {
@@ -35,13 +35,13 @@ async function reachFirstAgreement(page, name) {
   expect(state.pending.eventId).toBe("opening_adviser_choice");
 
   await page.getByRole("button", { name: "Trabajar con un representante profesional" }).click();
-  await expect(page).toHaveURL(/\/cantera$/);
+  await expect(page).toHaveURL(/\/cantera\/?$/);
   await expect(page.getByRole("heading", { name: "Ahora sí: cuatro caminos" })).toBeVisible();
   const academyButtons = page.locator("ul > li > button");
   await expect(academyButtons).toHaveCount(4);
   await academyButtons.first().click();
   await page.getByRole("button", { name: "Sentarnos a negociar con este club" }).click();
-  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page).toHaveURL(/\/historia\/?$/);
   await expect(page.getByRole("heading", { name: "No firmas hasta entenderlo" })).toBeVisible();
   state = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
   expect(state.pending.type).toBe("event");
@@ -64,7 +64,7 @@ test("iPhone WebKit recovers a deep link without a save", async ({ page }) => {
 
   await expect(page.getByText(/Volviendo a portada|Cargando carrera|Simulador narrativo de carrera/)).toBeVisible();
   await page.waitForURL(routeUrl(), { timeout: 5000 }).catch(() => {});
-  if (page.url().endsWith("/historia")) await page.getByRole("button", { name: "Continuar" }).click();
+  if (/\/historia\/?$/.test(page.url())) await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByRole("button", { name: "Nueva carrera" })).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
@@ -78,14 +78,14 @@ test("iPhone WebKit starts with life/adviser before four academies and persists"
   expect(viewportFits).toBeTruthy();
 
   await page.reload();
-  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page).toHaveURL(/\/historia\/?$/);
   await expect(page.getByRole("heading", { name: "No firmas hasta entenderlo" })).toBeVisible();
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
 
   await page.goto(routeUrl());
   await expect(page.getByText("Partida guardada")).toBeVisible();
   await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page).toHaveURL(/\/historia\/?$/);
   expect(pageErrors).toEqual([]);
 });
 
@@ -103,7 +103,7 @@ test("iPhone WebKit restores the last valid backup after primary corruption", as
 
   await page.evaluate((key) => localStorage.setItem(key, "{corrupt-save"), SAVE_KEY);
   await page.reload();
-  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page).toHaveURL(/\/historia\/?$/);
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
   const healed = await page.evaluate((key) => {
     const raw = localStorage.getItem(key);
@@ -127,7 +127,7 @@ test("iPhone WebKit heals a valid but stale backup before recovery is needed", a
   }, [SAVE_KEY, BACKUP_KEY]);
 
   await page.reload();
-  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page).toHaveURL(/\/historia\/?$/);
   await expect.poll(async () => page.evaluate(([primaryKey, backupKey]) => {
     const primaryRaw = localStorage.getItem(primaryKey);
     const backupRaw = localStorage.getItem(backupKey);
@@ -137,7 +137,7 @@ test("iPhone WebKit heals a valid but stale backup before recovery is needed", a
 
   await page.evaluate((key) => localStorage.setItem(key, "{corrupt-save"), SAVE_KEY);
   await page.reload();
-  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page).toHaveURL(/\/historia\/?$/);
   await expect.poll(async () => page.evaluate((key) => {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw).player.name : null;
@@ -160,7 +160,7 @@ test("iPhone WebKit keeps the primary save when backup writes are rejected", asy
   const primary = await page.evaluate((key) => localStorage.getItem(key), SAVE_KEY);
   expect(primary).toBeTruthy();
   await page.reload();
-  await expect(page).toHaveURL(/\/historia$/);
+  await expect(page).toHaveURL(/\/historia\/?$/);
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
   expect(pageErrors).toEqual([]);
 });
