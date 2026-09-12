@@ -152,27 +152,42 @@ function isIOS(): boolean {
   return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document);
 }
 
+function wasShareCancelled(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "AbortError";
+}
+
 /**
- * Compartir de verdad: primero Web Share API con File (móvil moderno). Si no
- * está soportado, NO fingimos éxito: devolvemos la tarjeta para mostrarla en un
- * modal donde el usuario puede mantener pulsado para guardarla o copiar el texto.
- * La descarga programática solo se ofrece donde es realmente viable.
+ * Compartir de verdad: primero Web Share API con File (móvil moderno). Si el
+ * navegador no admite archivos pero sí share nativo, comparte texto en vez de
+ * mandar al usuario a un falso callejón sin salida. Si tampoco hay share nativo,
+ * devolvemos la tarjeta para mostrarla en un modal donde se puede guardar/copiar.
  */
 export async function shareCareerCard(input: CareerCardInput): Promise<ShareOutcome> {
   const text = shareText(input);
   const blob = await renderCareerCard(input);
   const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
 
-  if (blob && typeof nav.share === "function") {
-    const file = new File([blob], "beyond90.png", { type: "image/png" });
-    if (typeof nav.canShare === "function" && nav.canShare({ files: [file] })) {
-      try {
-        await nav.share({ files: [file], text, title: "BEYOND 90" });
-        return { status: "shared" };
-      } catch (err) {
-        const aborted = err instanceof DOMException && err.name === "AbortError";
-        if (aborted) return { status: "cancelled" };
+  if (typeof nav.share === "function") {
+    if (blob) {
+      const file = new File([blob], "beyond90.png", { type: "image/png" });
+      const canShareFiles = typeof nav.canShare === "function" && nav.canShare({ files: [file] });
+      if (canShareFiles) {
+        try {
+          await nav.share({ files: [file], text, title: "BEYOND 90" });
+          return { status: "shared" };
+        } catch (err) {
+          if (wasShareCancelled(err)) return { status: "cancelled" };
+          // Si falla el share con archivo, probamos el share nativo de texto.
+        }
       }
+    }
+
+    try {
+      await nav.share({ text, title: "BEYOND 90" });
+      return { status: "shared" };
+    } catch (err) {
+      if (wasShareCancelled(err)) return { status: "cancelled" };
+      // Un fallo real del share nativo cae al preview/copia, sin fingir éxito.
     }
   }
 
