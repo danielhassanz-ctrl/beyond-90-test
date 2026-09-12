@@ -1,0 +1,79 @@
+name: Patch club relationship arcs after transfer
+
+on:
+  push:
+    branches:
+      - fix/club-relationship-arcs-after-transfer
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: ${{ !contains(github.event.head_commit.message, '[club-arcs-patched]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Patch club-scoped relationship reset
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          npc = Path('src/game/npc.ts')
+          text = npc.read_text()
+          marker = 'function rotateClubScopeIfNeeded(s: GameState, cast: CareerCast): void {'
+          helper = '''const CLUB_SCOPED_PEOPLE_FLAGS = [\n  "people_coach_intro",\n  "people_captain_intro",\n  "people_captain_callback",\n  "people_teammate_intro",\n  "people_teammate_callback",\n  "people_physio_intro",\n  "people_physio_injury_callback",\n  "teammate_long_term_ally",\n  "teammate_rivalry",\n] as const;\n\nfunction resetClubScopedPeopleFlags(s: GameState): void {\n  for (const key of CLUB_SCOPED_PEOPLE_FLAGS) delete s.flags[key];\n}\n\n'''
+          if 'const CLUB_SCOPED_PEOPLE_FLAGS' not in text:
+              if marker not in text:
+                  raise SystemExit('rotateClubScopeIfNeeded marker missing')
+              text = text.replace(marker, helper + marker, 1)
+
+          needle = '  if (!currentClub || cast.clubScope === currentClub) return;\n\n  cast.coach = scopedPerson'
+          replacement = '  if (!currentClub || cast.clubScope === currentClub) return;\n\n  // A real transfer creates a new dressing room. Re-open only club-bound\n  // relationship arcs; adviser, family and social history stay untouched.\n  resetClubScopedPeopleFlags(s);\n\n  cast.coach = scopedPerson'
+          if 'resetClubScopedPeopleFlags(s);' not in text:
+              if needle not in text:
+                  raise SystemExit('transfer rotation insertion point missing')
+              text = text.replace(needle, replacement, 1)
+          npc.write_text(text)
+
+          qa = Path('scripts/persistent-cast-smoke.ts')
+          q = qa.read_text()
+          needle = '''transferState.clubId = sourceClub.id;\nconst sourceCast = ensureCareerCast(transferState);'''
+          setup = '''transferState.clubId = sourceClub.id;\ntransferState.flags["people_adviser_intro"] = 1;\ntransferState.flags["social_dm_intro"] = 1;\ntransferState.flags["people_social_dm_followup"] = 1;\nfor (const key of [\n  "people_coach_intro",\n  "people_captain_intro",\n  "people_captain_callback",\n  "people_teammate_intro",\n  "people_teammate_callback",\n  "people_physio_intro",\n  "people_physio_injury_callback",\n  "teammate_long_term_ally",\n  "teammate_rivalry",\n]) transferState.flags[key] = 1;\nconst sourceCast = ensureCareerCast(transferState);'''
+          if 'transferState.flags["people_social_dm_followup"] = 1;' not in q:
+              if needle not in q:
+                  raise SystemExit('persistent cast transfer setup marker missing')
+              q = q.replace(needle, setup, 1)
+
+          needle2 = '''if (destinationCast.adviser.id !== sourceSnapshot.adviser) throw new Error("adviser identity changed on club transfer");\nif (destinationCast.social.id !== sourceSnapshot.social) throw new Error("long-term social identity changed on club transfer");'''
+          checks = '''if (destinationCast.adviser.id !== sourceSnapshot.adviser) throw new Error("adviser identity changed on club transfer");\nif (destinationCast.social.id !== sourceSnapshot.social) throw new Error("long-term social identity changed on club transfer");\nfor (const key of [\n  "people_coach_intro",\n  "people_captain_intro",\n  "people_captain_callback",\n  "people_teammate_intro",\n  "people_teammate_callback",\n  "people_physio_intro",\n  "people_physio_injury_callback",\n  "teammate_long_term_ally",\n  "teammate_rivalry",\n]) {\n  if (transferState.flags[key]) throw new Error(`${key} incorrectly survived a real club transfer`);\n}\nif (transferState.flags["people_adviser_intro"] !== 1) throw new Error("adviser relationship history was reset on transfer");\nif (transferState.flags["social_dm_intro"] !== 1 || transferState.flags["people_social_dm_followup"] !== 1) {\n  throw new Error("personal/social relationship history was reset on transfer");\n}\nconst newCoachIntro = eventById("people_coach_intro")!;\nif (!newCoachIntro.requires(transferState)) throw new Error("new club coach introduction did not reopen after transfer");\ntransferState.flags["people_coach_intro"] = 1;\nconst newCaptainIntro = eventById("people_captain_intro")!;\nif (!newCaptainIntro.requires(transferState)) throw new Error("new club captain introduction did not reopen after transfer");\ntransferState.flags["people_captain_intro"] = 1;\nconst newTeammateIntro = eventById("people_teammate_intro")!;\nif (!newTeammateIntro.requires(transferState)) throw new Error("new club teammate introduction did not reopen after transfer");\nconst newPhysioIntro = eventById("people_physio_intro")!;\nif (!newPhysioIntro.requires(transferState)) throw new Error("new club physio introduction did not reopen after transfer");'''
+          if 'new club coach introduction did not reopen after transfer' not in q:
+              if needle2 not in q:
+                  raise SystemExit('persistent cast transfer assertion marker missing')
+              q = q.replace(needle2, checks, 1)
+          qa.write_text(q)
+          PY
+      - run: npm run typecheck
+      - run: npm run qa:persistent-cast
+      - run: npm run qa:career
+      - run: npm run qa:branches
+      - run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-antirepetition-smoke.ts
+      - run: npm run build
+      - name: Commit verified patch
+        run: |
+          if git diff --quiet; then
+            echo "No patch needed"
+            exit 0
+          fi
+          git config user.name beyond90-qa-bot
+          git config user.email actions@users.noreply.github.com
+          git add src/game/npc.ts scripts/persistent-cast-smoke.ts
+          git commit -m "V1: reopen club relationship arcs after transfer [club-arcs-patched]"
+          git push origin HEAD:fix/club-relationship-arcs-after-transfer
