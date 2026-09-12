@@ -7,7 +7,10 @@ on:
     paths:
       - 'src/game/finance.ts'
       - 'src/game/engine.ts'
+      - 'src/game/career.ts'
+      - 'src/game/dynamic.ts'
       - 'scripts/season-finance-title-bonus-smoke.ts'
+      - 'scripts/retirement-hard-cap-smoke.ts'
       - '.github/workflows/season-title-bonus-fix.yml'
   workflow_dispatch:
 
@@ -28,11 +31,13 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Apply accounting fix on working branch
+      - name: Apply V1 defect fixes on working branch
         if: github.event_name == 'push' && github.ref == 'refs/heads/v1-season-title-bonus-fix'
         run: node scripts/apply-season-title-bonus-fix.mjs
       - name: Verify focused finance regression
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/season-finance-title-bonus-smoke.ts
+      - name: Verify retirement hard cap
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/retirement-hard-cap-smoke.ts
       - name: Typecheck
         run: npm run typecheck
       - name: Life and Patrimony chronology QA
@@ -76,7 +81,7 @@ jobs:
           exit 1
       - name: iPhone WebKit delivery and persistence
         run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line
-      - name: Commit source fix
+      - name: Commit source fixes
         if: github.event_name == 'push' && github.ref == 'refs/heads/v1-season-title-bonus-fix'
         run: |
           if git diff --quiet; then
@@ -85,6 +90,6 @@ jobs:
           fi
           git config user.name 'beyond90-qa-bot'
           git config user.email 'actions@users.noreply.github.com'
-          git add src/game/finance.ts src/game/engine.ts
-          git commit -m 'V1: pay title bonuses only in winning season'
+          git add src/game/finance.ts src/game/engine.ts src/game/career.ts src/game/dynamic.ts
+          git commit -m 'V1: fix title accounting and retirement bounds'
           git push origin HEAD:v1-season-title-bonus-fix
