@@ -2,9 +2,9 @@ import { installPeopleEvents } from "./events-people";
 import type { GameState } from "./types";
 
 /* =========================================================================
- * NPCs persistentes por carrera. Se generan una sola vez a partir de
- * careerSeed y se guardan en state.memory.npcs, así reaparecen con el mismo
- * nombre durante toda la carrera y cambian entre partidas.
+ * NPCs persistentes por carrera. El asesor y los contactos personales siguen
+ * al jugador durante toda su carrera; el reparto ligado al club se mantiene
+ * estable dentro de ese club y rota cuando el jugador cambia de equipo.
  * ========================================================================= */
 
 const FIRST = [
@@ -85,6 +85,8 @@ export interface CareerCast {
   captain: CastPerson;
   teammate: CastPerson;
   social: CastPerson;
+  /** Club whose staff/teammate identities are currently represented. */
+  clubScope?: string;
 }
 
 type LegacyCastPerson = Partial<CastPerson> & { name?: string };
@@ -122,6 +124,24 @@ function normalizePerson(
   };
 }
 
+function scopedPerson(
+  s: GameState,
+  key: "coach" | "physio" | "captain" | "teammate",
+  clubId: string,
+  role: string,
+  relation: number,
+): CastPerson {
+  const scope = clubId || "unattached";
+  return {
+    id: `${key}-${hash(careerSeed(s), `cast-${key}|${scope}`)}`,
+    name: nameFor(s, `career-${key}|${scope}`),
+    relation,
+    role,
+    met: false,
+    lastContactScene: -99,
+  };
+}
+
 function isPersonComplete(p: LegacyCastPerson | undefined): p is CastPerson {
   return !!p
     && typeof p.id === "string" && p.id.length > 0
@@ -153,12 +173,44 @@ function syncNpc(s: GameState, key: string, person: CastPerson, role = person.ro
   };
 }
 
+function rotateClubScopeIfNeeded(s: GameState, cast: CareerCast): void {
+  const currentClub = typeof s.clubId === "string" ? s.clubId : "";
+
+  // Migration rule: old saves did not persist a scope marker. Adopt whatever
+  // club they are already in without changing a single name. Only a future
+  // actual club change is allowed to rotate the club-bound cast.
+  if (typeof cast.clubScope !== "string") {
+    cast.clubScope = currentClub;
+    return;
+  }
+
+  // During the life-first opening the cast may exist before a club is chosen.
+  // Binding that same initial cast to the first club is not a transfer.
+  if (!cast.clubScope && currentClub) {
+    cast.clubScope = currentClub;
+    return;
+  }
+
+  if (!currentClub || cast.clubScope === currentClub) return;
+
+  cast.coach = scopedPerson(s, "coach", currentClub, "Entrenador", s.rel.coach || 48);
+  cast.physio = scopedPerson(s, "physio", currentClub, "Fisioterapeuta", 50);
+  cast.captain = scopedPerson(s, "captain", currentClub, "Capitán", s.rel.dressing || 46);
+  cast.teammate = scopedPerson(s, "teammate", currentClub, "Compañero de confianza", s.rel.dressing || 46);
+  cast.clubScope = currentClub;
+
+  // Club-specific unresolved threads belong to the old dressing room. Personal
+  // adviser/family/social threads survive the move and continue normally.
+  if (Array.isArray(s.threads)) {
+    s.threads = s.threads.filter((thread) => thread.kind !== "coach_upset" && thread.kind !== "teammate_jealous");
+  }
+}
+
 /**
- * ÚNICA fuente de verdad del reparto fijo de una carrera. Normaliza también
- * saves antiguos para impedir que dos subsistemas inventen nombres distintos
- * para el representante, el entrenador o el resto del vestuario. Una vez
- * normalizado preserva la identidad del objeto: callbacks y relaciones mutan
- * el mismo reparto que conserva el Director.
+ * ÚNICA fuente de verdad del reparto persistente de una carrera. El asesor y
+ * los contactos personales acompañan al jugador. Entrenador, capitán, fisio y
+ * compañero permanecen estables dentro de un club y se regeneran solo tras un
+ * cambio real de `clubId`.
  */
 export function ensureCast(s: GameState): CareerCast {
   const memory = s.memory as CastMemory;
@@ -184,9 +236,12 @@ export function ensureCast(s: GameState): CareerCast {
       captain: normalizePerson(s, "captain", stored?.captain, nameFor(s, "career-captain"), "Capitán", s.rel.dressing || 45),
       teammate: normalizePerson(s, "teammate", stored?.teammate, nameFor(s, "career-teammate"), "Compañero de confianza", s.rel.dressing || 45),
       social: normalizePerson(s, "social", stored?.social, nameFor(s, "career-social", true), "Contacto de redes", 50),
+      ...(typeof stored?.clubScope === "string" ? { clubScope: stored.clubScope } : {}),
     };
     memory.careerCast = cast;
   }
+
+  rotateClubScopeIfNeeded(s, cast);
 
   syncNpc(s, "adviser", cast.adviser, adviserRole(cast.adviserKind));
   syncNpc(s, "coach", cast.coach);
