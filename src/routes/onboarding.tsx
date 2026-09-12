@@ -45,6 +45,7 @@ function Onboarding() {
     if (!file) return;
     try {
       setAvatar(await fileToAvatar(file));
+      setError("");
     } catch {
       setError("No pudimos procesar esa foto. Prueba con otra.");
     }
@@ -52,6 +53,7 @@ function Onboarding() {
 
   const submit = () => {
     if (name.trim().length < 3) return setError("Escribe tu nombre completo.");
+    if (!avatar) return setError("Sube una foto de ficha para empezar tu carrera.");
     if (traits.length !== 2) return setError("Elige exactamente 2 rasgos.");
     setError("");
     start({
@@ -135,7 +137,7 @@ function Onboarding() {
         </section>
 
         <section className="panel mt-4 p-4">
-          <p className="text-kicker">Foto de ficha</p>
+          <p className="text-kicker">Foto de ficha · obligatoria</p>
           <div className="mt-3 flex items-center gap-4">
             <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-gold/40 bg-surface-2">
               {avatar ? (
@@ -152,7 +154,7 @@ function Onboarding() {
                 {avatar ? "Cambiar foto" : "Subir foto"}
               </button>
               <p className="mt-2 text-xs text-muted-foreground">
-                Se guarda en tu móvil y será tu avatar en toda la carrera.
+                Es obligatoria. Se guarda en tu móvil y será tu avatar durante toda la carrera y en tus hitos compartibles.
               </p>
             </div>
           </div>
