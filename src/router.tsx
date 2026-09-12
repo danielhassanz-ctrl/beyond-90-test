@@ -15,6 +15,10 @@ export const getRouter = () => {
   const router = createRouter({
     routeTree,
     basepath,
+    // GitHub Pages serves route fallback directories as `/route/`. Normalize
+    // those URLs back to the generated TanStack route IDs (`/route`) so a hard
+    // refresh/bookmark hydrates the same screen as an in-app navigation.
+    trailingSlash: "never",
     ...(usePortableHashHistory ? { history: createHashHistory() } : {}),
     context: { queryClient },
     scrollRestoration: true,
