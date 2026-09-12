@@ -5,6 +5,8 @@ on:
     branches: [fix-money-life-status-gating]
     paths:
       - scripts/apply-money-life-gating.mjs
+      - src/game/money-gating.ts
+      - scripts/money-life-chronology-smoke.ts
       - .github/workflows/apply-money-life-gating.yml
 
 permissions:
@@ -24,7 +26,7 @@ jobs:
       - run: node scripts/apply-money-life-gating.mjs
       - name: Verify focused regression
         run: |
-          npm ci
+          npm install --no-audit --no-fund
           npx tsx scripts/money-life-chronology-smoke.ts
           npm run typecheck
       - name: Commit generated source fix
