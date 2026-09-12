@@ -181,10 +181,12 @@ const legacyNames = [legacyCast.coach.id, legacyCast.captain.id, legacyCast.phys
 const migratedLegacy = ensureCareerCast(transferState);
 const migratedNames = [migratedLegacy.coach.id, migratedLegacy.captain.id, migratedLegacy.physio.id, migratedLegacy.teammate.id];
 if (legacyNames.join("|") !== migratedNames.join("|")) throw new Error("legacy save recast staff merely by loading");
+const migratedCoachId = migratedLegacy.coach.id;
+const migratedAdviserId = migratedLegacy.adviser.id;
 moveToClub(transferState, thirdClub.id, 340, 3, false);
 const postLegacyTransfer = ensureCareerCast(transferState);
-if (postLegacyTransfer.coach.id === migratedLegacy.coach.id) throw new Error("legacy-migrated coach did not rotate on the next real transfer");
-if (postLegacyTransfer.adviser.id !== sourceSnapshot.adviser) throw new Error("legacy migration broke adviser continuity");
+if (postLegacyTransfer.coach.id === migratedCoachId) throw new Error("legacy-migrated coach did not rotate on the next real transfer");
+if (postLegacyTransfer.adviser.id !== migratedAdviserId) throw new Error("legacy migration broke adviser continuity");
 
 // Long-memory callbacks are cross-season history, not filler inside the same
 // rookie year. Once generated they must also survive a lost `pending` value:
