@@ -65,4 +65,6 @@ doubleWinner.seasons = [season()];
 seasonFinance(doubleWinner, 0);
 assert(doubleWinner.finance?.bonuses === 0, `Title bonus was repaid in a later season: ${doubleWinner.finance?.bonuses}`);
 
+// This focused smoke stays intentionally tiny; the PR gates run full-career,
+// narrative, build and WebKit persistence checks against the same patched tree.
 console.log("season finance title bonus smoke: OK");
