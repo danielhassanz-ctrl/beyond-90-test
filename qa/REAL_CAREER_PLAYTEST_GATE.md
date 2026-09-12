@@ -16,10 +16,21 @@ For 12 deterministic new-career seeds split across Express / Standard / Pro, rec
 - No red-card incident while the current state says the player is unavailable through injury.
 - No more than two consecutive decisions from the same narrative family.
 - Passive matches without an interactive key moment do not count as meaningful decisions.
-- Persistent adviser, coach, captain and physio names remain unchanged.
+- Adviser/family identities persist; coach/captain/physio/current-teammate identities remain stable while clubId is unchanged.
 - At least five distinct decision families appear among the first 15 decisions.
 - At least one personal/family/life decision and one football-development decision appear after the opening.
 - No elite money, sponsorship, Europe or senior-national-team scene without prerequisites.
+
+## Transfer/cast continuity checks
+
+For sampled careers containing at least one real club transfer:
+
+- adviser and established personal/social identities persist unless an authored breakup/change occurs;
+- coach, captain, physio and current teammate rotate when the player changes clubs;
+- new club-scoped identities remain stable on repeated lookups inside the new club;
+- unresolved coach/teammate conflicts from the former club do not continue as if they belonged to the new dressing room;
+- any former-coach/former-teammate callback is explicitly framed as former-club history;
+- legacy saves without a cast scope marker preserve their current names on load and rotate only after the next real transfer.
 
 ## Full-season boredom checks
 
@@ -38,7 +49,10 @@ Fail if any of these are observed:
 
 Across multiple seeds to retirement, log and reject:
 
-- cast name drift;
+- adviser/family/long-term social identity drift without authored cause;
+- club-scoped cast drift without a transfer;
+- club-scoped people incorrectly following the player after a transfer;
+- silent recasting of legacy saves merely on load;
 - promises never referenced again despite relevant future situations;
 - impossible competition chronology;
 - repeated adviser/family crises;

@@ -66,17 +66,30 @@ Express, Standard and Pro all preserve this spine.
 
 ## 5. Persistent cast
 
-Every career owns one persistent named cast. Generic anonymous substitutes are forbidden once a role has been named.
+Every career owns a coherent named cast, but persistence follows real-world scope. Generic anonymous substitutes are forbidden once a role has been named **inside the scope where that person belongs**.
+
+### Career-scoped people
+
+These identities follow the player across clubs unless the narrative explicitly ends the relationship:
 
 - adviser: agent / father / trusted person
+- family
+- established partner / long-term social contact when plausible
+
+### Club-scoped people
+
+These identities belong to the current club and remain stable while the player stays there:
+
 - coach
 - captain
 - physio
-- teammate(s)
-- family
-- partner/social contact when plausible
+- current teammate(s)
 
-Callbacks must reuse the same names and remember the prior choice. Example: if the player told the adviser at 16 to prioritise minutes, a transfer conversation at 19 should be able to quote or paraphrase that priority.
+A real transfer must create a new club-scoped cast. The old coach, captain, physio and teammate must not silently follow the player to the new club. Club-specific unresolved threads are closed or transformed on transfer; personal/adviser/family threads may continue.
+
+Legacy saves must not recast people merely because they are loaded. They adopt their current club as the existing cast scope and rotate club-scoped identities only on the next real transfer.
+
+Callbacks must reuse the correct identities and remember the prior choice. Example: if the player told the adviser at 16 to prioritise minutes, a transfer conversation at 19 should be able to quote or paraphrase that priority. If the player moves clubs, a later callback from the former coach must be explicitly framed as a former-coach contact, never as if that coach still runs the new dressing room.
 
 ## 6. Narrative arc rules
 
@@ -170,7 +183,7 @@ For at least 12 deterministic seeds across all three pacing modes:
 
 - record the first 15 playable decisions in order
 - verify zero match before opening spine completion
-- verify coach/captain/adviser/physio names persist
+- verify adviser/family identities persist and club-scoped names stay stable while the club is unchanged
 - verify no duplicate title/text/choice set
 - verify at least 5 distinct decision families among first 15 decisions
 - verify no impossible status/money/competition scene
@@ -190,13 +203,16 @@ For the same careers:
 
 Sample multiple careers to retirement and flag:
 
+- adviser/family/long-term social identity drift without an authored breakup/change
+- coach/captain/physio/current-teammate drift without a transfer
+- club-scoped people incorrectly following the player after a transfer
+- legacy saves silently changing cast on load
 - duplicate/near-duplicate text
 - repeated choice triples
 - repeated unresolved setup
 - age/status leakage
 - unearned Europe/national-team scenes
 - money/lifestyle mismatch
-- cast name changes
 - forgotten promises
 - callbacks without new consequence
 
