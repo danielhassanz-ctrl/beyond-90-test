@@ -1,4 +1,6 @@
 import { canReceiveSocialDm, careerStatus, ensureCareerCast } from "../src/game/career-life";
+import { CLUB_POOL } from "../src/game/clubs";
+import { moveToClub } from "../src/game/career";
 import { createGame } from "../src/game/engine";
 import { eventById } from "../src/game/events";
 import { npcMood, who } from "../src/game/npc";
@@ -134,6 +136,56 @@ if (!repeated.startsWith(`${cast.coach.name}, `)) {
   throw new Error("coach identity changed across repeated Director lookups");
 }
 
+// Club-scoped continuity: adviser and social contact follow the player, but
+// coach/captain/physio/current teammate belong to the club and must rotate on a
+// real transfer. Repeated lookups inside each club must stay stable.
+const transferState = createGame(player);
+transferState.careerSeed = 880055;
+const sourceClub = CLUB_POOL[0]!;
+const destinationClub = CLUB_POOL.find((club) => club.id !== sourceClub.id)!;
+const thirdClub = CLUB_POOL.find((club) => club.id !== sourceClub.id && club.id !== destinationClub.id)!;
+transferState.clubId = sourceClub.id;
+const sourceCast = ensureCareerCast(transferState);
+const sourceSnapshot = {
+  adviser: sourceCast.adviser.id,
+  social: sourceCast.social.id,
+  coach: sourceCast.coach.id,
+  captain: sourceCast.captain.id,
+  physio: sourceCast.physio.id,
+  teammate: sourceCast.teammate.id,
+};
+const sourceAgain = ensureCareerCast(transferState);
+if (sourceAgain.coach.id !== sourceSnapshot.coach || sourceAgain.captain.id !== sourceSnapshot.captain) {
+  throw new Error("club-scoped cast drifted without a transfer");
+}
+
+moveToClub(transferState, destinationClub.id, 300, 4, false);
+const destinationCast = ensureCareerCast(transferState);
+for (const key of ["coach", "captain", "physio", "teammate"] as const) {
+  if (destinationCast[key].id === sourceSnapshot[key]) {
+    throw new Error(`${key} incorrectly followed player from ${sourceClub.name} to ${destinationClub.name}`);
+  }
+}
+if (destinationCast.adviser.id !== sourceSnapshot.adviser) throw new Error("adviser identity changed on club transfer");
+if (destinationCast.social.id !== sourceSnapshot.social) throw new Error("long-term social identity changed on club transfer");
+const destinationAgain = ensureCareerCast(transferState);
+for (const key of ["coach", "captain", "physio", "teammate"] as const) {
+  if (destinationAgain[key].id !== destinationCast[key].id) throw new Error(`${key} is unstable after transfer`);
+}
+
+// Legacy saves have no clubScope marker. Loading one must adopt its current
+// club without silently recasting staff; only the next future transfer rotates.
+const legacyCast = destinationCast as typeof destinationCast & { clubScope?: string };
+delete legacyCast.clubScope;
+const legacyNames = [legacyCast.coach.id, legacyCast.captain.id, legacyCast.physio.id, legacyCast.teammate.id];
+const migratedLegacy = ensureCareerCast(transferState);
+const migratedNames = [migratedLegacy.coach.id, migratedLegacy.captain.id, migratedLegacy.physio.id, migratedLegacy.teammate.id];
+if (legacyNames.join("|") !== migratedNames.join("|")) throw new Error("legacy save recast staff merely by loading");
+moveToClub(transferState, thirdClub.id, 340, 3, false);
+const postLegacyTransfer = ensureCareerCast(transferState);
+if (postLegacyTransfer.coach.id === migratedLegacy.coach.id) throw new Error("legacy-migrated coach did not rotate on the next real transfer");
+if (postLegacyTransfer.adviser.id !== sourceSnapshot.adviser) throw new Error("legacy migration broke adviser continuity");
+
 // Long-memory callbacks are cross-season history, not filler inside the same
 // rookie year. Once generated they must also survive a lost `pending` value:
 // dueThread should reconstruct the same persisted thread until it is resolved.
@@ -162,4 +214,4 @@ if ((memoryState.threads ?? []).some((thread) => thread.id === memoryThread.id))
   throw new Error("resolved memory callback remains stuck in the persistent thread queue");
 }
 
-console.log(`Persistent cast QA OK: live people scenes=${requiredLiveScenes.length}; age-gated status=academy-star/breakthrough-elite/proven-legend; social-intro window=17-24; recurring threads=adviser+captain+teammate+physio+social+cross-season-memory; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
+console.log(`Persistent cast QA OK: live people scenes=${requiredLiveScenes.length}; club staff rotate on transfers while adviser/social persist; legacy saves adopt current club before future rotation; age-gated status=academy-star/breakthrough-elite/proven-legend; social-intro window=17-24; recurring threads=adviser+captain+teammate+physio+social+cross-season-memory; adviser=${cast.adviser.name}; coach=${cast.coach.name}; captain=${cast.captain.name}; physio=${cast.physio.name}; teammate=${cast.teammate.name}; social=${cast.social.name}`);
