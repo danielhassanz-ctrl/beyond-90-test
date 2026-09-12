@@ -1,0 +1,77 @@
+name: V1 opening intro dedupe
+
+on:
+  push:
+    branches:
+      - fix-opening-duplicate-intros
+    paths:
+      - scripts/fix-opening-duplicate-intros.mjs
+      - .github/workflows/fix-opening-duplicate-intros.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix-opening-duplicate-intros
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Apply canonical opening continuity patch
+        run: node scripts/fix-opening-duplicate-intros.mjs
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Verify mandatory opening and duplicate intro suppression
+        run: npm run qa:opening
+
+      - name: Verify first-15 real-career playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: Verify branch diversity
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
+
+      - name: Verify persistent cast
+        run: npm run qa:persistent-cast
+
+      - name: Verify narrative quality
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+
+      - name: Verify anti-repetition
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
+
+      - name: Verify full career
+        run: npm run qa:career
+
+      - name: Verify extended gameplay QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit verified engine and regression changes
+        run: |
+          if git diff --quiet -- src/game/opening.ts scripts/opening-flow-smoke.ts; then
+            echo "No opening continuity changes required"
+            exit 0
+          fi
+          git config user.name "beyond90-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/game/opening.ts scripts/opening-flow-smoke.ts
+          git commit -m "V1: make mandatory opening the canonical NPC introduction"
+          git push origin HEAD:fix-opening-duplicate-intros

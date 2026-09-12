@@ -49,7 +49,20 @@ function phase(s: GameState): number {
 function setPhase(s: GameState, value: number): void {
   s.flags[OPENING_MARKER] = 1;
   s.flags[OPENING_PHASE] = value;
-  if (value >= OpeningPhase.DONE) s.flags["opening_completed"] = 1;
+
+  // The mandatory opening is the canonical first introduction for the persistent
+  // people system. Consume the equivalent legacy intro flag at the moment that
+  // introduction has actually completed, so normal scheduling cannot introduce
+  // the same adviser/coach/captain/teammate/physio a second time. Club-scoped
+  // flags may be cleared later by a real transfer; adviser continuity never is.
+  if (value === OpeningPhase.CLUB_CHOICE) s.flags["people_adviser_intro"] = 1;
+  if (value === OpeningPhase.PRESEASON) s.flags["people_coach_intro"] = 1;
+  if (value === OpeningPhase.TEAMMATE) s.flags["people_captain_intro"] = 1;
+  if (value === OpeningPhase.PHYSIO) s.flags["people_teammate_intro"] = 1;
+  if (value >= OpeningPhase.DONE) {
+    s.flags["people_physio_intro"] = 1;
+    s.flags["opening_completed"] = 1;
+  }
 }
 
 function adviserLabel(s: GameState): string {
