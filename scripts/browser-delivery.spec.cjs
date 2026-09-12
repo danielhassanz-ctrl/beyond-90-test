@@ -52,9 +52,14 @@ async function reachFirstAgreement(page, name) {
 test("iPhone WebKit recovers a deep link without a save", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.goto(routeUrl("historia"));
+
+  // Clear storage on a stable route first, then enter the deep link once. Calling
+  // reload() while the app is redirecting /historia -> / is racy in WebKit and
+  // can be cancelled by its navigation policy even when recovery is correct.
+  await page.goto(routeUrl());
   await page.evaluate(() => localStorage.clear());
-  await page.reload();
+  await page.goto(routeUrl("historia"), { waitUntil: "domcontentloaded" });
+
   await expect(page.getByText(/Volviendo a portada|Cargando carrera|Simulador narrativo de carrera/)).toBeVisible();
   await page.waitForURL(routeUrl(), { timeout: 5000 }).catch(() => {});
   if (page.url().endsWith("/historia")) await page.getByRole("button", { name: "Continuar" }).click();
