@@ -19,6 +19,7 @@ page.on("console", (msg) => {
 
 const saveKey = "beyond90:save:v1";
 const backupKey = `${saveKey}:backup`;
+const qaAvatar = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 
 async function assertNoFatal(label) {
   const body = await page.locator("body").innerText();
@@ -68,6 +69,12 @@ try {
     await page.getByRole("button", { name: new RegExp(`^${mode}\\b`, "i") }).waitFor({ state: "visible", timeout: 10_000 });
   }
   await page.getByRole("button", { name: /^Pro\b/i }).click();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "qa-avatar.png",
+    mimeType: "image/png",
+    buffer: qaAvatar,
+  });
+  await page.getByAltText("Vista previa de tu foto").waitFor({ state: "visible", timeout: 10_000 });
 
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
   await page.waitForURL(/\/historia\/?$/, { timeout: 10_000 });
@@ -76,6 +83,7 @@ try {
 
   const selectedMode = (await saved())?.careerMode ?? null;
   if (selectedMode !== "pro") throw new Error(`career mode selection did not persist: ${selectedMode}`);
+  if (!((await saved())?.player?.avatar ?? "").startsWith("data:image/")) throw new Error("required player photo did not persist");
 
   await chooseAndNext("Decir que no darás ningún paso sin hablarlo en casa", "¿Quién va a cuidar tu carrera?");
   await assertOpeningEvent("opening_adviser_choice", "decision #2 adviser");
@@ -131,6 +139,7 @@ try {
   if (reloaded?.careerMode !== "pro" || reloaded?.flags?.opening_completed !== 1) {
     throw new Error("career mode/opening state changed after reload");
   }
+  if (!(reloaded?.player?.avatar ?? "").startsWith("data:image/")) throw new Error("required player photo was lost after reload");
   await assertNoFatal("saved career reload");
 
   const backupReady = await page.evaluate(([primaryKey, recoveryKey]) => {
@@ -150,6 +159,7 @@ try {
   if (recovered?.careerMode !== "pro" || recovered?.flags?.opening_completed !== 1) {
     throw new Error("save recovery lost completed opening or career mode");
   }
+  if (!(recovered?.player?.avatar ?? "").startsWith("data:image/")) throw new Error("save recovery lost required player photo");
   await assertNoFatal("corrupted save recovery");
 
   const retirementPrepared = await page.evaluate((key) => {
@@ -189,12 +199,10 @@ try {
     throw new Error(`legacy route escaped deployment basepath: expected=${expectedLegacyPath} actual=${actualLegacyPath}`);
   }
 
-  // Retirement above is injected outside React purely to keep this end-to-end smoke short.
-  // Rehydrate the destination from the saved state before testing post-career controls. This
-  // separately proves both the real "Ver mi legado" route and a bookmarked/reloaded legacy URL.
   await page.reload({ waitUntil: "domcontentloaded" });
   const legacyState = await saved();
   if (!legacyState?.retired) throw new Error("legacy route lost retired state after rehydrate");
+  if (!(legacyState?.player?.avatar ?? "").startsWith("data:image/")) throw new Error("legacy route lost required player photo");
   await page.getByText("Después del fútbol", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("button", { name: /Ser entrenador/i }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("button", { name: /Ser entrenador/i }).click();
@@ -202,7 +210,7 @@ try {
   await page.getByText("Entrenador · empieza otra carrera", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await assertNoFatal("post-career decision");
 
-  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} mode=pro opening=life-first decision2=adviser recovery=ok legacy=ok`);
+  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} mode=pro photo=required opening=life-first decision2=adviser recovery=ok legacy=ok`);
 } finally {
   await browser.close();
 }
