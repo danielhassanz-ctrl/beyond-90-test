@@ -4,6 +4,10 @@ const BASE_URL = (process.env.TEST_BASE_URL || "http://127.0.0.1:4173/").replace
 const routeUrl = (route = "") => new URL(route.replace(/^\//, ""), BASE_URL).toString();
 const SAVE_KEY = "beyond90:save:v1";
 const BACKUP_KEY = `${SAVE_KEY}:backup`;
+const QA_PLAYER_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+  "base64",
+);
 
 test.use({ ...devices["iPhone 13"] });
 
@@ -16,6 +20,12 @@ async function reachPersistedOpening(page, name) {
   await page.getByPlaceholder("Álvaro Nieto").fill(name);
   await page.getByRole("button", { name: /Ambicioso/ }).click();
   await page.getByRole("button", { name: /Leal/ }).click();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "qa-player.png",
+    mimeType: "image/png",
+    buffer: QA_PLAYER_PNG,
+  });
+  await expect(page.getByAltText("Vista previa de tu foto")).toBeVisible();
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
   await expect(page).toHaveURL(/\/historia\/?$/);
   await expect(page.getByRole("heading", { name: "Antes del fútbol está tu vida" })).toBeVisible();
@@ -48,6 +58,7 @@ test("iPhone WebKit restores a valid backup when the primary save disappears", a
       backupRaw,
       name: primaryRaw ? JSON.parse(primaryRaw).player?.name : null,
       eventId: primaryRaw ? JSON.parse(primaryRaw).pending?.eventId : null,
+      avatar: primaryRaw ? JSON.parse(primaryRaw).player?.avatar : null,
     };
   }, [SAVE_KEY, BACKUP_KEY]);
 
@@ -55,6 +66,7 @@ test("iPhone WebKit restores a valid backup when the primary save disappears", a
   expect(before.backupRaw).toBeTruthy();
   expect(before.name).toBe("Jugador QA Missing Primary");
   expect(before.eventId).toBe("opening_first_agreement");
+  expect(before.avatar).toMatch(/^data:image\//);
 
   await page.evaluate((key) => localStorage.removeItem(key), SAVE_KEY);
   await page.reload();
@@ -74,6 +86,8 @@ test("iPhone WebKit restores a valid backup when the primary save disappears", a
       backupName: backup.player?.name,
       primaryEvent: primary.pending?.eventId,
       backupEvent: backup.pending?.eventId,
+      primaryAvatar: primary.player?.avatar,
+      backupAvatar: backup.player?.avatar,
     };
   }, [SAVE_KEY, BACKUP_KEY]);
 
@@ -82,5 +96,7 @@ test("iPhone WebKit restores a valid backup when the primary save disappears", a
   expect(healed.backupName).toBe("Jugador QA Missing Primary");
   expect(healed.primaryEvent).toBe("opening_first_agreement");
   expect(healed.backupEvent).toBe("opening_first_agreement");
+  expect(healed.primaryAvatar).toMatch(/^data:image\//);
+  expect(healed.backupAvatar).toMatch(/^data:image\//);
   expect(pageErrors).toEqual([]);
 });

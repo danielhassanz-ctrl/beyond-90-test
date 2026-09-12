@@ -4,6 +4,10 @@ const BASE_URL = (process.env.TEST_BASE_URL || "http://127.0.0.1:4173/").replace
 const routeUrl = (route = "") => new URL(route.replace(/^\//, ""), BASE_URL).toString();
 const SAVE_KEY = "beyond90:save:v1";
 const BACKUP_KEY = `${SAVE_KEY}:backup`;
+const QA_PLAYER_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+  "base64",
+);
 
 test.use({ ...devices["iPhone 13"] });
 
@@ -16,8 +20,23 @@ async function clearAndStart(page, name) {
   await page.getByPlaceholder("Álvaro Nieto").fill(name);
   await page.getByRole("button", { name: /Ambicioso/ }).click();
   await page.getByRole("button", { name: /Leal/ }).click();
+
+  await page.getByRole("button", { name: "Empezar tu historia" }).click();
+  await expect(page.getByRole("alert")).toContainText("Sube una foto para empezar tu carrera.");
+  await expect(page).toHaveURL(/\/onboarding\/?$/);
+  expect(await page.evaluate((key) => localStorage.getItem(key), SAVE_KEY)).toBeNull();
+
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "qa-player.png",
+    mimeType: "image/png",
+    buffer: QA_PLAYER_PNG,
+  });
+  await expect(page.getByAltText("Vista previa de tu foto")).toBeVisible();
+
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
   await expect(page).toHaveURL(/\/historia\/?$/);
+  const created = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
+  expect(created.player.avatar).toMatch(/^data:image\//);
 }
 
 async function reachFirstAgreement(page, name) {
@@ -26,6 +45,7 @@ async function reachFirstAgreement(page, name) {
   let state = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
   expect(state.pending.type).toBe("event");
   expect(state.pending.eventId).toBe("opening_home_family");
+  expect(state.player.avatar).toMatch(/^data:image\//);
 
   await page.getByRole("button", { name: "Decir que no darás ningún paso sin hablarlo en casa" }).click();
   await page.getByRole("button", { name: "Siguiente escena" }).click();
@@ -46,6 +66,7 @@ async function reachFirstAgreement(page, name) {
   state = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
   expect(state.pending.type).toBe("event");
   expect(state.pending.eventId).toBe("opening_first_agreement");
+  expect(state.player.avatar).toMatch(/^data:image\//);
   return academyButtons;
 }
 
@@ -81,6 +102,8 @@ test("iPhone WebKit starts with life/adviser before four academies and persists"
   await expect(page).toHaveURL(/\/historia\/?$/);
   await expect(page.getByRole("heading", { name: "No firmas hasta entenderlo" })).toBeVisible();
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
+  const reloaded = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
+  expect(reloaded.player.avatar).toMatch(/^data:image\//);
 
   await page.goto(routeUrl());
   await expect(page.getByText("Partida guardada")).toBeVisible();
@@ -110,6 +133,8 @@ test("iPhone WebKit restores the last valid backup after primary corruption", as
     try { return Boolean(raw && JSON.parse(raw)); } catch { return false; }
   }, SAVE_KEY);
   expect(healed).toBeTruthy();
+  const recovered = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
+  expect(recovered.player.avatar).toMatch(/^data:image\//);
   expect(pageErrors).toEqual([]);
 });
 
@@ -142,6 +167,8 @@ test("iPhone WebKit heals a valid but stale backup before recovery is needed", a
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw).player.name : null;
   }, SAVE_KEY)).toBe("Jugador QA Fresh State");
+  const recovered = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
+  expect(recovered.player.avatar).toMatch(/^data:image\//);
   expect(pageErrors).toEqual([]);
 });
 
@@ -159,6 +186,7 @@ test("iPhone WebKit keeps the primary save when backup writes are rejected", asy
   await reachFirstAgreement(page, "Jugador QA Backup Failure");
   const primary = await page.evaluate((key) => localStorage.getItem(key), SAVE_KEY);
   expect(primary).toBeTruthy();
+  expect(JSON.parse(primary).player.avatar).toMatch(/^data:image\//);
   await page.reload();
   await expect(page).toHaveURL(/\/historia\/?$/);
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);

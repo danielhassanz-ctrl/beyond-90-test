@@ -44,14 +44,17 @@ function Onboarding() {
   const onPhoto = async (file: File | undefined) => {
     if (!file) return;
     try {
+      setError("");
       setAvatar(await fileToAvatar(file));
     } catch {
+      setAvatar(null);
       setError("No pudimos procesar esa foto. Prueba con otra.");
     }
   };
 
   const submit = () => {
     if (name.trim().length < 3) return setError("Escribe tu nombre completo.");
+    if (!avatar) return setError("Sube una foto para empezar tu carrera.");
     if (traits.length !== 2) return setError("Elige exactamente 2 rasgos.");
     setError("");
     start({
@@ -134,8 +137,11 @@ function Onboarding() {
           </div>
         </section>
 
-        <section className="panel mt-4 p-4">
-          <p className="text-kicker">Foto de ficha</p>
+        <section className="panel mt-4 p-4" aria-describedby="player-photo-help">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-kicker">Foto de ficha</p>
+            <span className="rounded-full border border-gold/40 px-2 py-1 font-cond text-[10px] font-bold uppercase tracking-[0.14em] text-gold">Obligatoria</span>
+          </div>
           <div className="mt-3 flex items-center gap-4">
             <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-gold/40 bg-surface-2">
               {avatar ? (
@@ -146,13 +152,14 @@ function Onboarding() {
             </div>
             <div className="min-w-0">
               <button
+                type="button"
                 onClick={() => fileRef.current?.click()}
                 className="rounded-lg border border-gold/50 px-4 py-2 font-cond text-sm font-semibold uppercase tracking-[0.14em] text-gold"
               >
                 {avatar ? "Cambiar foto" : "Subir foto"}
               </button>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Se guarda en tu móvil y será tu avatar en toda la carrera.
+              <p id="player-photo-help" className="mt-2 text-xs text-muted-foreground">
+                Es obligatoria. Se guarda en tu móvil y será tu avatar durante toda la carrera y en los hitos compartibles.
               </p>
             </div>
           </div>
@@ -161,6 +168,7 @@ function Onboarding() {
             type="file"
             accept="image/*"
             className="hidden"
+            aria-label="Foto de ficha obligatoria"
             onChange={(e) => void onPhoto(e.target.files?.[0])}
           />
         </section>
@@ -224,9 +232,10 @@ function Onboarding() {
           </div>
         </section>
 
-        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+        {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
 
         <button
+          type="button"
           onClick={submit}
           className="gold-fill mt-6 w-full rounded-xl px-5 py-4 font-cond text-lg font-bold uppercase tracking-[0.18em] shadow-[var(--shadow-gold)]"
         >
