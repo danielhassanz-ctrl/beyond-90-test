@@ -2,10 +2,11 @@ const { test, expect, devices } = require("@playwright/test");
 
 const BASE_URL = (process.env.TEST_BASE_URL || "http://127.0.0.1:4173/").replace(/\/?$/, "/");
 const routeUrl = (route = "") => new URL(route.replace(/^\//, ""), BASE_URL).toString();
+const QA_AVATAR = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 
 test.use({ ...devices["iPhone 13"] });
 
-test("iPhone WebKit shares a pre-rendered career card in the original tap task", async ({ page }) => {
+test("iPhone WebKit shares the required player photo card in the original tap task", async ({ page }) => {
   await page.addInitScript(() => {
     window.__b90ShareProbe = { calls: 0, sameTask: false, hasImage: false, hasText: false };
     let shareTapTask = false;
@@ -16,8 +17,6 @@ test("iPhone WebKit shares a pre-rendered career card in the original tap task",
         const target = event.target instanceof Element ? event.target.closest("button") : null;
         if (!target || !/Compartir (mi )?carrera/i.test(target.textContent || "")) return;
         shareTapTask = true;
-        // Transient user activation survives microtasks and is consumed at the
-        // browser task boundary. Reset on the next task, not in a microtask.
         setTimeout(() => {
           shareTapTask = false;
         }, 0);
@@ -50,6 +49,12 @@ test("iPhone WebKit shares a pre-rendered career card in the original tap task",
   await page.getByPlaceholder("Álvaro Nieto").fill("Jugador QA Share");
   await page.getByRole("button", { name: /^Ambicioso/ }).click();
   await page.getByRole("button", { name: /^Leal/ }).click();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "qa-avatar.png",
+    mimeType: "image/png",
+    buffer: QA_AVATAR,
+  });
+  await expect(page.getByAltText("Vista previa de tu foto")).toBeVisible();
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
 
   await page.getByRole("button", { name: "Decir que no darás ningún paso sin hablarlo en casa" }).click();
@@ -61,6 +66,12 @@ test("iPhone WebKit shares a pre-rendered career card in the original tap task",
   await clubs.first().click();
   await page.getByRole("button", { name: "Sentarnos a negociar con este club" }).click();
   await expect(page).toHaveURL(/\/historia\/?$/);
+
+  const avatarPersisted = await page.evaluate(() => {
+    const raw = localStorage.getItem("beyond90:save:v1");
+    return raw ? JSON.parse(raw).player.avatar : null;
+  });
+  expect(avatarPersisted).toMatch(/^data:image\//);
 
   await page.goto(routeUrl("legado"));
   const shareButton = page.getByRole("button", { name: "Compartir mi carrera" });
