@@ -1,4 +1,5 @@
 import { ensureCareerCast } from "../src/game/career-life";
+import { PEOPLE_EVENTS } from "../src/game/events-people";
 import { chooseClub, createGame, resolveEvent } from "../src/game/engine";
 import { isDisallowedNarrative, scrubDisallowedNarrative } from "../src/game/narrative-safety";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
@@ -92,6 +93,28 @@ for (const mode of MODES) {
       throw new Error(`${mode}/${seed}: persistent named cast was not actually introduced`);
     }
 
+    // The life-first opening is the canonical introduction. The persistent-people
+    // bank may continue with callbacks, but its five intro cards must already be
+    // consumed and remain ineligible later in the same club.
+    const canonicalIntroFlags = [
+      "people_adviser_intro",
+      "people_coach_intro",
+      "people_captain_intro",
+      "people_teammate_intro",
+      "people_physio_intro",
+    ] as const;
+    for (const introFlag of canonicalIntroFlags) {
+      if (state.flags[introFlag] !== 1) throw new Error(`${mode}/${seed}: opening did not consume ${introFlag}`);
+    }
+
+    const laterSameClub = { ...state, sceneCount: state.sceneCount + 20 };
+    for (const introId of canonicalIntroFlags) {
+      const intro = PEOPLE_EVENTS.find((event) => event.id === introId);
+      if (!intro) throw new Error(`${mode}/${seed}: missing persistent-people intro fixture ${introId}`);
+      if (intro.requires(state) || intro.requires(laterSameClub)) {
+        throw new Error(`${mode}/${seed}: duplicate intro ${introId} remains eligible after canonical opening`);
+      }
+    }
     // Regression for the user-reported repetitive card: even if an old save or
     // the legacy scheduler produces it, the playable state must scrub it
     // without resolving its generic copy or mutating it as a seen decision.
