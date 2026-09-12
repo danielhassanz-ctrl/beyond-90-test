@@ -255,11 +255,27 @@ function pickClubForLevel(s: GameState, level: number, tier: 1 | 2, excludeId: s
   return pool[seed % pool.length]!;
 }
 
+function resetClubScopedRelationshipNarrative(s: GameState): void {
+  const prefixes = ["people_coach_", "people_captain_", "people_teammate_", "people_physio_"] as const;
+  const clubScoped = (id: string): boolean => prefixes.some((prefix) => id.startsWith(prefix));
+
+  // A new dressing room must be allowed to introduce its own coach, captain,
+  // teammate and physio. Personal continuity (adviser, family, social, partner)
+  // is deliberately untouched.
+  for (const key of Object.keys(s.flags)) {
+    if (clubScoped(key)) delete s.flags[key];
+  }
+  if (Array.isArray(s.seenEvents)) s.seenEvents = s.seenEvents.filter((id) => !clubScoped(id));
+  if (Array.isArray(s.eventHistory)) s.eventHistory = s.eventHistory.filter((entry) => !clubScoped(entry.id));
+}
+
 /** Aplica un cambio de club manteniendo coherencia de etapa y plantilla. */
 export function moveToClub(s: GameState, clubId: string, salary: number, years: number, loan = false): void {
   const dest = defById(clubId);
   if (!dest) return;
-  const old = clubDef(s.clubId).name;
+  const previousClubId = s.clubId;
+  const old = clubDef(previousClubId).name;
+  if (previousClubId && previousClubId !== clubId) resetClubScopedRelationshipNarrative(s);
   if (!s.memory.rejectedClubs.includes(old)) s.memory.conflicts = s.memory.conflicts ?? [];
   s.clubId = clubId;
   s.stage = "first";
