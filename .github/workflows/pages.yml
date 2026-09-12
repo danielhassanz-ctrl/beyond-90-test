@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - recovery-v4-19-delivery-gate
-      - product-v4-20-polish
   workflow_dispatch:
 
 permissions:
@@ -94,7 +92,32 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify public HTTPS delivery
+        env:
+          SITE_URL: https://danielhassanz-ctrl.github.io/beyond-90-test/
+        run: |
+          set -euo pipefail
+          case "$SITE_URL" in
+            https://*) ;;
+            *) echo "Public delivery is not HTTPS: $SITE_URL" >&2; exit 1 ;;
+          esac
+
+          curl --fail --show-error --silent --location \
+            --retry 10 --retry-delay 3 --retry-all-errors \
+            --connect-timeout 10 --max-time 30 \
+            "$SITE_URL" -o /tmp/beyond90-root.html
+          test -s /tmp/beyond90-root.html
+          grep -Eqi '<html|<div[^>]+id=["'"']root["'"']|beyond[ -]?90' /tmp/beyond90-root.html
+
+          curl --fail --show-error --silent --location \
+            --retry 5 --retry-delay 2 --retry-all-errors \
+            --connect-timeout 10 --max-time 30 \
+            "${SITE_URL}404.html" -o /tmp/beyond90-404.html
+          test -s /tmp/beyond90-404.html
+          grep -Eqi '<html|<div[^>]+id=["'"']root["'"']|beyond[ -]?90' /tmp/beyond90-404.html
