@@ -39,6 +39,8 @@ jobs:
         run: npm run qa:competition-pacing
       - name: Persistent career cast QA
         run: npm run qa:persistent-cast
+      - name: Partner/social cast independence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/partner-cast-smoke.ts
       - name: Full career smoke QA
         run: npm run qa:career
       - name: Targeted narrative branch QA
