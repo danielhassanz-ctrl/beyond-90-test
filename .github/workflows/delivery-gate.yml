@@ -27,8 +27,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Clean install
-        run: npm install --no-audit --no-fund
+          cache: npm
+      - name: Install dependencies from lockfile
+        run: npm ci --no-audit --no-fund
+      - name: Verify clean dependency graph
+        run: git diff --exit-code -- package-lock.json
       - name: Typecheck
         run: npm run typecheck
       - name: Life and Patrimony chronology QA
