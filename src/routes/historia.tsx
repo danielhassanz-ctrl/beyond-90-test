@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ContextFeed } from "@/components/game/ContextFeed";
 import { GameShell } from "@/components/game/GameShell";
@@ -223,12 +223,12 @@ function CareerEndScene({ state, card }: { state: GameState; card: DynamicCard }
         <Cell label="Goles" value={goals} />
         <Cell label="Pico" value={peak} />
       </div>
-      <a
-        href="./legado"
+      <Link
+        to="/legado"
         className="gold-fill mt-5 block w-full rounded-xl px-5 py-3.5 text-center font-cond text-base font-bold uppercase tracking-[0.18em] active:scale-[0.99]"
       >
         Ver mi legado
-      </a>
+      </Link>
     </Scene>
   );
 }
