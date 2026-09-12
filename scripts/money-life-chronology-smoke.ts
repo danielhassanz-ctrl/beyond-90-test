@@ -21,6 +21,8 @@ const allowedByScale: Record<ReturnType<typeof plausibleMoneyScale>, Set<string>
   superstar: new Set(["piso_alquiler", "coche", "piso_propio", "ayuda_familia", "negocio_amigo", "casa_grande", "mansion", "coche_absurdo", "restaurante", "fondo"]),
 };
 
+const firstTeamOnly = new Set(["negocio_amigo", "casa_grande", "mansion", "coche_absurdo", "restaurante"]);
+
 function richState(age: number, overall: number, fame: number): GameState {
   const s = createGame(player);
   s.age = age;
@@ -72,6 +74,31 @@ try {
     }
   }
 
+  // A reserve player can have unusually high overall/fame or accumulated cash,
+  // but that must not make the game narrate an established first-team lifestyle.
+  const reserve = richState(24, 93, 99);
+  reserve.stage = "reserves";
+  reserve.salary = 450;
+  const reserveFinance = ensureFinance(reserve);
+  reserveFinance.cash = 20_000;
+  reserveFinance.sponsorName = "QA";
+  reserveFinance.lastOfferScene = -99;
+  for (const offer of firstTeamOnly) {
+    if (moneyOfferAllowed(reserve, offer)) {
+      throw new Error(`24yo reserves: first-team-only Life/Patrimony offer incorrectly allowed: ${offer}`);
+    }
+  }
+  for (const roll of rolls) {
+    const state = structuredClone(reserve);
+    Math.random = () => roll;
+    const card = moneyCard(state);
+    if (!card || card.kind !== "money") continue;
+    const offer = String(card.data["offer"] ?? "");
+    if (firstTeamOnly.has(offer)) {
+      throw new Error(`24yo reserves: moneyCard leaked first-team-only offer: ${offer}`);
+    }
+  }
+
   // Sponsorship is part of the same chronology problem: fame alone must never
   // turn a 16-year-old youth player into a commercial star.
   for (const age of [16, 17, 18]) {
@@ -91,4 +118,4 @@ try {
   Math.random = originalRandom;
 }
 
-console.log("Money/Life chronology QA OK: lifestyle, patrimony and sponsorship respect age/status scale.");
+console.log("Money/Life chronology QA OK: lifestyle, patrimony and sponsorship respect age/status/team-level chronology.");

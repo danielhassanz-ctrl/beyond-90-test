@@ -41,16 +41,29 @@ const BY_SCALE: Record<ReturnType<typeof plausibleMoneyScale>, ReadonlySet<Money
   ]),
 };
 
+const FIRST_TEAM_ONLY = new Set<MoneyOfferId>([
+  "negocio_amigo",
+  "casa_grande",
+  "mansion",
+  "coche_absurdo",
+  "restaurante",
+]);
+
 /**
  * Hard chronology gate for Life/Patrimony scenes.
- * Cash is never enough by itself: age and sporting status must justify the
- * lifestyle decision before finance.ts may even consider its price threshold.
+ * Cash is never enough by itself: age, sporting status and current squad level
+ * must justify the lifestyle decision before finance.ts may consider its price.
  */
 export function moneyOfferAllowed(s: GameState, id: string): boolean {
   if (!(id in OFFER_IDS)) return false;
   const offerId = id as MoneyOfferId;
   const scale = plausibleMoneyScale(s);
   if (!BY_SCALE[scale].has(offerId)) return false;
+
+  // Luxury/business beats belong to players who have actually established
+  // themselves in a first team. A high overall/fame value in youth or reserves
+  // must not unlock mansion/supercar/restaurant narratives by itself.
+  if (FIRST_TEAM_ONLY.has(offerId) && s.stage !== "first") return false;
 
   // Explicit real-world age/status rules layered on top of the scale.
   if (s.age < 18) return offerId === "piso_alquiler";
