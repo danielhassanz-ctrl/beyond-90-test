@@ -1,0 +1,40 @@
+name: Apply money-life chronology fix
+
+on:
+  push:
+    branches: [fix-money-life-status-gating]
+    paths:
+      - scripts/apply-money-life-gating.mjs
+      - .github/workflows/apply-money-life-gating.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix-money-life-status-gating
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/apply-money-life-gating.mjs
+      - name: Verify focused regression
+        run: |
+          npm ci
+          npx tsx scripts/money-life-chronology-smoke.ts
+          npm run typecheck
+      - name: Commit generated source fix
+        run: |
+          if git diff --quiet -- src/game/finance.ts; then
+            echo "finance.ts already gated"
+            exit 0
+          fi
+          git config user.name "beyond90-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/game/finance.ts
+          git commit -m "Fix Life and Patrimony age/status chronology"
+          git push origin HEAD:fix-money-life-status-gating
