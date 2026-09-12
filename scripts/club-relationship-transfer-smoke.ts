@@ -22,6 +22,15 @@ state.clubId = "betis";
 state.stage = "first";
 state.sceneCount = 12;
 const sourceCast = ensureCareerCast(state);
+const sourceSnapshot = {
+  adviser: sourceCast.adviser.id,
+  social: sourceCast.social.id,
+  coach: sourceCast.coach.id,
+  captain: sourceCast.captain.id,
+  physio: sourceCast.physio.id,
+  teammate: sourceCast.teammate.id,
+  coachName: sourceCast.coach.name,
+};
 
 const clubFlags = [
   "people_coach_intro",
@@ -48,16 +57,22 @@ state.eventHistory.push(
   { id: "people_adviser_intro", category: "agent", scene: 1 },
 );
 
+// A same-club renewal must not erase relationship history.
+moveToClub(state, state.clubId, 250, 3, false);
+for (const key of clubFlags) {
+  if (!state.flags[key]) throw new Error(`${key} was erased by a same-club renewal`);
+}
+
 const destination = CLUB_POOL.find((club) => club.id !== state.clubId)!;
 moveToClub(state, destination.id, 320, 4, false);
 const destinationCast = ensureCareerCast(state);
 
-if (destinationCast.coach.id === sourceCast.coach.id) throw new Error("coach did not rotate after transfer");
-if (destinationCast.captain.id === sourceCast.captain.id) throw new Error("captain did not rotate after transfer");
-if (destinationCast.physio.id === sourceCast.physio.id) throw new Error("physio did not rotate after transfer");
-if (destinationCast.teammate.id === sourceCast.teammate.id) throw new Error("teammate did not rotate after transfer");
-if (destinationCast.adviser.id !== sourceCast.adviser.id) throw new Error("adviser continuity broke on transfer");
-if (destinationCast.social.id !== sourceCast.social.id) throw new Error("social continuity broke on transfer");
+if (destinationCast.coach.id === sourceSnapshot.coach) throw new Error("coach did not rotate after transfer");
+if (destinationCast.captain.id === sourceSnapshot.captain) throw new Error("captain did not rotate after transfer");
+if (destinationCast.physio.id === sourceSnapshot.physio) throw new Error("physio did not rotate after transfer");
+if (destinationCast.teammate.id === sourceSnapshot.teammate) throw new Error("teammate did not rotate after transfer");
+if (destinationCast.adviser.id !== sourceSnapshot.adviser) throw new Error("adviser continuity broke on transfer");
+if (destinationCast.social.id !== sourceSnapshot.social) throw new Error("social continuity broke on transfer");
 
 for (const key of clubFlags) {
   if (state.flags[key]) throw new Error(`${key} survived transfer and blocks the new club relationship arc`);
@@ -74,4 +89,4 @@ if (!state.seenEvents.includes("people_adviser_intro")) throw new Error("adviser
 const coachIntro = eventById("people_coach_intro")!;
 if (!coachIntro.requires(state)) throw new Error("new club coach introduction did not unlock after transfer");
 
-console.log(`Club relationship transfer QA OK: ${sourceCast.coach.name} -> ${destinationCast.coach.name}; club arcs reset, adviser/social history preserved.`);
+console.log(`Club relationship transfer QA OK: ${sourceSnapshot.coachName} -> ${destinationCast.coach.name}; club arcs reset, adviser/social history preserved.`);
