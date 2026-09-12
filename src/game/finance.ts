@@ -4,6 +4,7 @@
  * El dinero ganado y gastado persiste y se muestra en la retirada.
  */
 import { clubById } from "./data";
+import { moneyOfferAllowed, sponsorshipAllowed } from "./money-gating";
 import { note } from "./mutate";
 import type { DynamicCard, GameState } from "./types";
 import type { DynamicResult, DynamicView } from "./dynamic";
@@ -290,7 +291,7 @@ export function moneyCard(s: GameState): DynamicCard | null {
   if (scene - f.lastOfferScene < 7) return null;
 
   // Patrocinio: cuando hay notoriedad real y aún no hay marca.
-  if (!f.sponsorName && s.fame >= 32 && s.stage !== "youth" && Math.random() < 0.5) {
+  if (!f.sponsorName && s.fame >= 32 && sponsorshipAllowed(s) && Math.random() < 0.5) {
     const brand = SPONSORS[Math.floor(Math.random() * SPONSORS.length)]!;
     f.lastOfferScene = scene;
     return { type: "dynamic", kind: "money", data: { offer: "patrocinio", brand, price: 0 } };
@@ -298,7 +299,12 @@ export function moneyCard(s: GameState): DynamicCard | null {
 
   const candidates = OFFERS.filter((o) => {
     const minimumUpfront = o.financeable ? Math.round(o.price / 2) : o.price;
-    return !f.boughtIds.includes(o.id) && f.cash >= Math.max(o.minCash, minimumUpfront) && (!o.requires || o.requires(s));
+    return (
+      moneyOfferAllowed(s, o.id) &&
+      !f.boughtIds.includes(o.id) &&
+      f.cash >= Math.max(o.minCash, minimumUpfront) &&
+      (!o.requires || o.requires(s))
+    );
   });
   if (candidates.length === 0) return null;
   if (Math.random() < 0.35) return null;
