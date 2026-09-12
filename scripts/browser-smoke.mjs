@@ -186,7 +186,10 @@ try {
   await page.getByText("Carrera terminada", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("link", { name: "Ver mi legado" }).click();
   await page.waitForURL(/\/legado\/?$/, { timeout: 10_000 });
-  await page.getByText("¿Y después del minuto 90?", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+  const legacyState = await saved();
+  if (!legacyState?.retired) throw new Error("legacy route lost retired state");
+  await page.getByText("Después del fútbol", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+  await page.getByRole("button", { name: /Ser entrenador/i }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("button", { name: /Ser entrenador/i }).click();
   await page.getByRole("button", { name: /Empezar desde abajo/i }).click();
   await page.getByText("Entrenador · empieza otra carrera", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
