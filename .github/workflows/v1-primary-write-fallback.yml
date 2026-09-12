@@ -1,0 +1,95 @@
+name: V1 primary write fallback
+
+on:
+  push:
+    branches:
+      - v1-double-corrupt-save-recovery
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v1-double-corrupt-save-recovery
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Patch backup fallback after primary write failure
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/game/store.tsx')
+          text = path.read_text()
+          old = '''  if (primaryWritten) {
+    try {
+      localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
+    } catch {
+      /* Backup is best effort; a failed backup write must never invalidate the newer primary save. */
+    }
+  }
+'''
+          new = '''  // Persist a recovery copy independently from the primary slot. Safari/private
+  // storage can reject one key while still allowing another write; coupling the
+  // backup to `primaryWritten` made a recoverable primary-slot failure lose the
+  // whole session on reload.
+  try {
+    localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
+  } catch {
+    /* Both slots unavailable: keep the current session playable in memory. */
+  }
+'''
+          if old in text:
+              path.write_text(text.replace(old, new))
+          elif new not in text:
+              raise SystemExit('expected save-write block not found')
+          PY
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Core V1 regression gates
+        run: |
+          npm run qa:opening
+          npm run qa:pacing
+          npm run qa:competition-pacing
+          npm run qa:persistent-cast
+          npm run qa:branches
+          npm run qa:career
+      - name: Build
+        run: npm run build
+      - name: Install pinned Playwright WebKit
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+          git diff --exit-code -- package-lock.json
+      - name: Start preview
+        run: |
+          nohup npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/beyond-90-test/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+      - name: iPhone WebKit primary-slot fallback regression
+        env:
+          TEST_BASE_URL: http://127.0.0.1:4173/beyond-90-test/
+        run: npx playwright test scripts/browser-primary-write-fallback.spec.cjs --browser=webkit --reporter=line
+      - name: Commit verified source repair
+        run: |
+          if git diff --quiet -- src/game/store.tsx; then
+            echo 'Source already repaired.'
+            exit 0
+          fi
+          git config user.name 'beyond90-qa-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add src/game/store.tsx
+          git commit -m 'V1: preserve backup when primary save writes fail'
+          git push origin HEAD:v1-double-corrupt-save-recovery
