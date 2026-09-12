@@ -16,9 +16,11 @@ test("iPhone WebKit shares a pre-rendered career card in the original tap task",
         const target = event.target instanceof Element ? event.target.closest("button") : null;
         if (!target || !/Compartir (mi )?carrera/i.test(target.textContent || "")) return;
         shareTapTask = true;
-        queueMicrotask(() => {
+        // Transient user activation survives microtasks and is consumed at the
+        // browser task boundary. Reset on the next task, not in a microtask.
+        setTimeout(() => {
           shareTapTask = false;
-        });
+        }, 0);
       },
       true,
     );
