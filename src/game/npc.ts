@@ -52,6 +52,15 @@ function nameFor(s: GameState, key: string, female = false): string {
   return `${first} ${LAST[Math.floor(h / 7) % LAST.length]!}`;
 }
 
+function distinctFemaleNameFor(s: GameState, key: string, avoid: string): string {
+  const start = hash(careerSeed(s), key) % FEMALE.length;
+  for (let offset = 0; offset < FEMALE.length; offset++) {
+    const candidate = FEMALE[(start + offset) % FEMALE.length]!;
+    if (candidate !== avoid) return candidate;
+  }
+  return `${avoid} II`;
+}
+
 const ROLES: Record<string, { role: string; female?: boolean }> = {
   coach: { role: "Entrenador" },
   assistant: { role: "Segundo entrenador" },
@@ -145,7 +154,9 @@ function isCastComplete(cast: CareerCast | LegacyCareerCast | undefined): cast i
     && isPersonComplete(cast.captain)
     && isPersonComplete(cast.teammate)
     && isPersonComplete(cast.social)
-    && isPersonComplete(cast.partner);
+    && isPersonComplete(cast.partner)
+    && cast.partner.id !== cast.social.id
+    && cast.partner.name !== cast.social.name;
 }
 
 function syncNpc(s: GameState, key: string, person: CastPerson, role = person.role): void {
@@ -180,6 +191,13 @@ export function ensureCast(s: GameState): CareerCast {
       : adviserKind === "friend"
         ? nameFor(s, "career-friend")
         : nameFor(s, "career-adviser");
+    const socialName = typeof stored?.social?.name === "string" && stored.social.name
+      ? stored.social.name
+      : nameFor(s, "career-social", true);
+    const storedPartnerName = typeof stored?.partner?.name === "string" ? stored.partner.name : "";
+    const partnerName = storedPartnerName && storedPartnerName !== socialName
+      ? storedPartnerName
+      : distinctFemaleNameFor(s, "career-partner", socialName);
 
     cast = {
       adviserKind,
@@ -188,9 +206,10 @@ export function ensureCast(s: GameState): CareerCast {
       physio: normalizePerson(s, "physio", stored?.physio, nameFor(s, "career-physio"), "Fisioterapeuta", 50),
       captain: normalizePerson(s, "captain", stored?.captain, nameFor(s, "career-captain"), "Capitán", s.rel.dressing || 45),
       teammate: normalizePerson(s, "teammate", stored?.teammate, nameFor(s, "career-teammate"), "Compañero de confianza", s.rel.dressing || 45),
-      social: normalizePerson(s, "social", stored?.social, nameFor(s, "career-social", true), "Contacto de redes", 50),
-      partner: normalizePerson(s, "partner", stored?.partner, nameFor(s, "career-partner", true), "Pareja", 50),
+      social: normalizePerson(s, "social", stored?.social, socialName, "Contacto de redes", 50),
+      partner: normalizePerson(s, "partner", stored?.partner, partnerName, "Pareja", 50),
     };
+    if (cast.partner.name === cast.social.name) cast.partner.name = distinctFemaleNameFor(s, "career-partner-fallback", cast.social.name);
     memory.careerCast = cast;
   }
 
