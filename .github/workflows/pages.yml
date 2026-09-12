@@ -181,4 +181,4 @@ jobs:
       - name: iPhone WebKit save recovery on live HTTPS
         env:
           TEST_BASE_URL: ${{ needs.deploy.outputs.page_url }}
-        run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line
+        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs --browser=webkit --reporter=line
