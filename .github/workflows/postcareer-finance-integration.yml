@@ -1,0 +1,70 @@
+name: Post-career finance integration
+
+on:
+  push:
+    branches: [v1-postcareer-finance-integration]
+  pull_request:
+    paths:
+      - 'src/game/postcareer.ts'
+      - 'src/game/finance.ts'
+      - 'src/routes/legado.tsx'
+      - 'src/routes/patrimonio.tsx'
+      - 'scripts/postcareer-finance-integration-smoke.ts'
+      - '.github/workflows/postcareer-finance-integration.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Post-career Finance/Patrimony integration regression
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/postcareer-finance-integration-smoke.ts
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Mandatory life-first opening QA
+        run: npm run qa:opening
+      - name: Career pacing QA
+        run: npm run qa:pacing
+      - name: Competition pacing QA
+        run: npm run qa:competition-pacing
+      - name: Persistent cast QA
+        run: npm run qa:persistent-cast
+      - name: Full career QA
+        run: npm run qa:career
+      - name: Branch/narrative QA
+        run: npm run qa:branches
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+      - name: Human-style first-15-decision QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+      - name: First-15 decision quality floor
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
+      - name: Alternative first-15 branch playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+      - name: Build
+        run: npm run build
+      - name: Install WebKit test runtime
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+      - name: iPhone WebKit delivery, persistence and recovery
+        run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line
