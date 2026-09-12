@@ -36,12 +36,10 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Marco dorado
     ctx.strokeStyle = "rgba(212,175,55,0.55)";
     ctx.lineWidth = 6;
     ctx.strokeRect(48, 48, W - 96, H - 96);
 
-    // Avatar / retrato (sustituible en el futuro por imagen generada)
     const img = input.avatar ? await loadImage(input.avatar) : null;
     const cx = W / 2;
     const cy = 620;
@@ -140,10 +138,14 @@ export function shareText(input: CareerCardInput): string {
     .join(" · ")}\n\nMi carrera en BEYOND 90.`;
 }
 
+export interface PreparedCareerCard {
+  blob: Blob | null;
+  text: string;
+}
+
 export type ShareOutcome =
   | { status: "shared" }
   | { status: "cancelled" }
-  /** No hay share nativo con archivos: hay que mostrar la tarjeta al usuario. */
   | { status: "preview"; url: string; text: string; canDownload: boolean }
   | { status: "failed"; text: string };
 
@@ -156,15 +158,19 @@ function wasShareCancelled(err: unknown): boolean {
   return err instanceof DOMException && err.name === "AbortError";
 }
 
+/** Pre-render before the tap so iOS Safari keeps transient user activation for navigator.share(). */
+export async function prepareCareerCard(input: CareerCardInput): Promise<PreparedCareerCard> {
+  const [blob, text] = await Promise.all([renderCareerCard(input), Promise.resolve(shareText(input))]);
+  return { blob, text };
+}
+
 /**
- * Compartir de verdad: primero Web Share API con File (móvil moderno). Si el
- * navegador no admite archivos pero sí share nativo, comparte texto en vez de
- * mandar al usuario a un falso callejón sin salida. Si tampoco hay share nativo,
- * devolvemos la tarjeta para mostrarla en un modal donde se puede guardar/copiar.
+ * Must be called directly from the user's tap. No rendering or image loading is
+ * awaited before navigator.share(), which matters on iPhone/WebKit where share
+ * requires transient user activation.
  */
-export async function shareCareerCard(input: CareerCardInput): Promise<ShareOutcome> {
-  const text = shareText(input);
-  const blob = await renderCareerCard(input);
+export async function sharePreparedCareerCard(prepared: PreparedCareerCard): Promise<ShareOutcome> {
+  const { blob, text } = prepared;
   const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
 
   if (typeof nav.share === "function") {
@@ -177,30 +183,40 @@ export async function shareCareerCard(input: CareerCardInput): Promise<ShareOutc
           return { status: "shared" };
         } catch (err) {
           if (wasShareCancelled(err)) return { status: "cancelled" };
-          // Si falla el share con archivo, probamos el share nativo de texto.
+          // The activation may already be consumed after a failed file share.
+          // Fall through to a visible preview instead of making a second share call.
+        }
+      } else {
+        try {
+          await nav.share({ text, title: "BEYOND 90" });
+          return { status: "shared" };
+        } catch (err) {
+          if (wasShareCancelled(err)) return { status: "cancelled" };
         }
       }
-    }
-
-    try {
-      await nav.share({ text, title: "BEYOND 90" });
-      return { status: "shared" };
-    } catch (err) {
-      if (wasShareCancelled(err)) return { status: "cancelled" };
-      // Un fallo real del share nativo cae al preview/copia, sin fingir éxito.
+    } else {
+      try {
+        await nav.share({ text, title: "BEYOND 90" });
+        return { status: "shared" };
+      } catch (err) {
+        if (wasShareCancelled(err)) return { status: "cancelled" };
+      }
     }
   }
 
   if (blob) {
     const url = URL.createObjectURL(blob);
-    // En iOS la descarga programática no guarda en Fotos: se muestra la tarjeta.
     return { status: "preview", url, text, canDownload: !isIOS() };
   }
 
   return { status: "failed", text };
 }
 
-/** Descarga explícita, solo tras interacción del usuario. */
+/** Backwards-compatible path for callers that do not pre-render yet. */
+export async function shareCareerCard(input: CareerCardInput): Promise<ShareOutcome> {
+  return sharePreparedCareerCard(await prepareCareerCard(input));
+}
+
 export function downloadCard(url: string): void {
   const a = document.createElement("a");
   a.href = url;
