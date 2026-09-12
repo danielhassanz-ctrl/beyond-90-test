@@ -120,20 +120,18 @@ function write(state: GameState | null) {
     return;
   }
 
-  let primaryWritten = false;
   try {
     localStorage.setItem(SAVE_KEY, nextRaw);
-    primaryWritten = true;
   } catch {
-    /* Storage blocked/full: the current session remains playable in memory. */
+    /* Storage can reject one slot while another remains writable. */
   }
 
-  if (primaryWritten) {
-    try {
-      localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
-    } catch {
-      /* Backup is best effort; a failed backup write must never invalidate the newer primary save. */
-    }
+  // Persist recovery independently. On Safari/private storage a key-specific
+  // primary write failure must not make an otherwise writable backup useless.
+  try {
+    localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
+  } catch {
+    /* Both slots unavailable: keep the current session playable in memory. */
   }
 }
 
