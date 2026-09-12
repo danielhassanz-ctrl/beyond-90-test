@@ -2,6 +2,10 @@ import { webkit, devices } from "@playwright/test";
 
 const baseURL = (process.env.BEYOND90_URL || "http://127.0.0.1:4173/").replace(/\/?$/, "/");
 const errors = [];
+const qaPlayerPng = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+  "base64",
+);
 const browser = await webkit.launch();
 const context = await browser.newContext({ ...devices["iPhone 14"] });
 const page = await context.newPage();
@@ -70,11 +74,32 @@ try {
   await page.getByRole("button", { name: /^Pro\b/i }).click();
 
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
+  await page
+    .getByRole("alert")
+    .filter({ hasText: "Sube una foto para empezar tu carrera." })
+    .waitFor({ state: "visible", timeout: 10_000 });
+  if (!/\/onboarding\/?$/.test(page.url())) {
+    throw new Error(`photo requirement did not block navigation: ${page.url()}`);
+  }
+  if (await saved()) throw new Error("photo requirement created a save before a photo was supplied");
+
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "qa-player.png",
+    mimeType: "image/png",
+    buffer: qaPlayerPng,
+  });
+  await page.getByAltText("Vista previa de tu foto").waitFor({ state: "visible", timeout: 10_000 });
+
+  await page.getByRole("button", { name: "Empezar tu historia" }).click();
   await page.waitForURL(/\/historia\/?$/, { timeout: 10_000 });
   await page.getByRole("heading", { name: "Antes del fútbol está tu vida" }).waitFor({ state: "visible", timeout: 10_000 });
   await assertOpeningEvent("opening_home_family", "decision #1 home/family");
 
-  const selectedMode = (await saved())?.careerMode ?? null;
+  const initialState = await saved();
+  if (!initialState?.player?.avatar?.startsWith("data:image/")) {
+    throw new Error("required player photo did not persist into the new career");
+  }
+  const selectedMode = initialState?.careerMode ?? null;
   if (selectedMode !== "pro") throw new Error(`career mode selection did not persist: ${selectedMode}`);
 
   await chooseAndNext("Decir que no darás ningún paso sin hablarlo en casa", "¿Quién va a cuidar tu carrera?");
@@ -114,6 +139,9 @@ try {
   if (completed?.flags?.opening_completed !== 1 || completed?.flags?.opening_phase !== 10) {
     throw new Error(`opening did not complete: phase=${completed?.flags?.opening_phase} done=${completed?.flags?.opening_completed}`);
   }
+  if (!completed?.player?.avatar?.startsWith("data:image/")) {
+    throw new Error("player photo was lost before opening completion");
+  }
   const cast = completed?.memory?.careerCast;
   for (const role of ["adviser", "coach", "captain", "teammate", "physio"]) {
     if (!cast?.[role]?.met || !cast?.[role]?.name) throw new Error(`persistent ${role} was not introduced with a name`);
@@ -130,6 +158,9 @@ try {
   const reloaded = await saved();
   if (reloaded?.careerMode !== "pro" || reloaded?.flags?.opening_completed !== 1) {
     throw new Error("career mode/opening state changed after reload");
+  }
+  if (!reloaded?.player?.avatar?.startsWith("data:image/")) {
+    throw new Error("player photo did not persist after reload");
   }
   await assertNoFatal("saved career reload");
 
@@ -149,6 +180,9 @@ try {
   const recovered = await saved();
   if (recovered?.careerMode !== "pro" || recovered?.flags?.opening_completed !== 1) {
     throw new Error("save recovery lost completed opening or career mode");
+  }
+  if (!recovered?.player?.avatar?.startsWith("data:image/")) {
+    throw new Error("save recovery lost the required player photo");
   }
   await assertNoFatal("corrupted save recovery");
 
@@ -202,7 +236,7 @@ try {
   await page.getByText("Entrenador · empieza otra carrera", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await assertNoFatal("post-career decision");
 
-  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} mode=pro opening=life-first decision2=adviser recovery=ok legacy=ok`);
+  console.log(`BROWSER_SMOKE_OK url=${baseURL} offers=${clubCount} mode=pro photo=required+persistent opening=life-first decision2=adviser recovery=ok legacy=ok`);
 } finally {
   await browser.close();
 }
