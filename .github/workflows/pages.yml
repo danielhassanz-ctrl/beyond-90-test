@@ -36,6 +36,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Life and Patrimony chronology QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
+
       - name: Mandatory life-first opening QA
         run: npm run qa:opening
 
@@ -47,6 +50,9 @@ jobs:
 
       - name: Persistent cast QA
         run: npm run qa:persistent-cast
+
+      - name: Partner/social cast independence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/partner-cast-smoke.ts
 
       - name: Full career QA
         run: npm run qa:career
