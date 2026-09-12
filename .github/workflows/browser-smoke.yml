@@ -130,7 +130,7 @@ jobs:
           BEYOND90_URL: http://127.0.0.1:4173/beyond-90-test/
         run: node scripts/browser-smoke.mjs
 
-      - name: iPhone WebKit save recovery regression suite
+      - name: iPhone WebKit save recovery and sharing regression suite
         env:
           TEST_BASE_URL: http://127.0.0.1:4173/beyond-90-test/
-        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs --browser=webkit --reporter=line
+        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs scripts/browser-share.spec.cjs --browser=webkit --reporter=line
