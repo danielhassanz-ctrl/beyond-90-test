@@ -1,0 +1,22 @@
+name: Family consequence cast chronology
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  family-consequence-cast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - name: Family/partner chronology regression
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/family-consequence-cast-smoke.ts
