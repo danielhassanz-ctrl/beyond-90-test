@@ -31,6 +31,7 @@ function Onboarding() {
   const [nationality, setNationality] = useState("España");
   const [city, setCity] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [traits, setTraits] = useState<TraitId[]>([]);
   const [careerMode, setCareerMode] = useState<CareerMode>(DEFAULT_CAREER_MODE);
   const [error, setError] = useState("");
@@ -43,16 +44,20 @@ function Onboarding() {
 
   const onPhoto = async (file: File | undefined) => {
     if (!file) return;
+    setPhotoBusy(true);
     try {
       setError("");
       setAvatar(await fileToAvatar(file));
     } catch {
       setAvatar(null);
       setError("No pudimos procesar esa foto. Prueba con otra.");
+    } finally {
+      setPhotoBusy(false);
     }
   };
 
   const submit = () => {
+    if (photoBusy) return setError("Espera a que terminemos de procesar la foto.");
     if (name.trim().length < 3) return setError("Escribe tu nombre completo.");
     if (!avatar) return setError("Sube una foto para empezar tu carrera.");
     if (traits.length !== 2) return setError("Elige exactamente 2 rasgos.");
@@ -153,13 +158,14 @@ function Onboarding() {
             <div className="min-w-0">
               <button
                 type="button"
+                disabled={photoBusy}
                 onClick={() => fileRef.current?.click()}
-                className="rounded-lg border border-gold/50 px-4 py-2 font-cond text-sm font-semibold uppercase tracking-[0.14em] text-gold"
+                className="rounded-lg border border-gold/50 px-4 py-2 font-cond text-sm font-semibold uppercase tracking-[0.14em] text-gold disabled:opacity-60"
               >
-                {avatar ? "Cambiar foto" : "Subir foto"}
+                {photoBusy ? "Procesando…" : avatar ? "Cambiar foto" : "Subir foto"}
               </button>
               <p id="player-photo-help" className="mt-2 text-xs text-muted-foreground">
-                Es obligatoria. Se guarda en tu móvil y será tu avatar durante toda la carrera y en los hitos compartibles.
+                Es obligatoria. Se comprime antes de guardarse en tu móvil y será tu avatar durante toda la carrera y en los hitos compartibles.
               </p>
             </div>
           </div>
@@ -169,7 +175,11 @@ function Onboarding() {
             accept="image/*"
             className="hidden"
             aria-label="Foto de ficha obligatoria"
-            onChange={(e) => void onPhoto(e.target.files?.[0])}
+            onChange={(e) => {
+              const file = e.currentTarget.files?.[0];
+              e.currentTarget.value = "";
+              void onPhoto(file);
+            }}
           />
         </section>
 
@@ -236,10 +246,11 @@ function Onboarding() {
 
         <button
           type="button"
+          disabled={photoBusy}
           onClick={submit}
-          className="gold-fill mt-6 w-full rounded-xl px-5 py-4 font-cond text-lg font-bold uppercase tracking-[0.18em] shadow-[var(--shadow-gold)]"
+          className="gold-fill mt-6 w-full rounded-xl px-5 py-4 font-cond text-lg font-bold uppercase tracking-[0.18em] shadow-[var(--shadow-gold)] disabled:opacity-60"
         >
-          Empezar tu historia
+          {photoBusy ? "Procesando foto…" : "Empezar tu historia"}
         </button>
         <div className="h-10" />
       </div>
