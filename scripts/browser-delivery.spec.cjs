@@ -52,9 +52,16 @@ async function reachFirstAgreement(page, name) {
 test("iPhone WebKit recovers a deep link without a save", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.goto(routeUrl("historia"));
+
+  // Establish the origin first, clear storage while navigation is stable, then
+  // enter the deep link as a fresh navigation. Reloading /historia while the app
+  // itself redirects an empty save to / causes WebKit to cancel one of the two
+  // competing navigations with "Navigation canceled by policy check". That is a
+  // test harness race, not a recovery failure.
+  await page.goto(routeUrl());
   await page.evaluate(() => localStorage.clear());
-  await page.reload();
+  await page.goto(routeUrl("historia"));
+
   await expect(page.getByText(/Volviendo a portada|Cargando carrera|Simulador narrativo de carrera/)).toBeVisible();
   await page.waitForURL(routeUrl(), { timeout: 5000 }).catch(() => {});
   if (page.url().endsWith("/historia")) await page.getByRole("button", { name: "Continuar" }).click();
