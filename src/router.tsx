@@ -15,6 +15,7 @@ export const getRouter = () => {
   const router = createRouter({
     routeTree,
     basepath,
+    trailingSlash: "never",
     ...(usePortableHashHistory ? { history: createHashHistory() } : {}),
     context: { queryClient },
     scrollRestoration: true,
