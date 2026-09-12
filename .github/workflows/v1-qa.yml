@@ -25,7 +25,7 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
       - name: Life and Patrimony chronology QA
-        run: npx tsx scripts/money-life-chronology-smoke.ts
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
       - name: Mandatory life-first opening QA
         run: npm run qa:opening
       - name: Career pacing QA
