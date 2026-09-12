@@ -1,0 +1,56 @@
+name: Fix transfer relationship arcs
+
+on:
+  push:
+    branches:
+      - fix/73-transfer-relationship-arcs
+    paths:
+      - scripts/fix-transfer-relationship-arcs.mjs
+      - .github/workflows/fix-transfer-relationship-arcs.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/73-transfer-relationship-arcs
+          fetch-depth: 0
+
+      - name: Apply exact source and QA patch
+        run: node scripts/fix-transfer-relationship-arcs.mjs
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Persistent cast QA
+        run: npm run qa:persistent-cast
+
+      - name: Narrative branch QA
+        run: npm run qa:branches
+
+      - name: Full career QA
+        run: npm run qa:career
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit verified patch
+        run: |
+          if git diff --quiet -- src/game/npc.ts scripts/persistent-cast-smoke.ts; then
+            echo "No source changes required"
+            exit 0
+          fi
+          git config user.name "beyond90-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/game/npc.ts scripts/persistent-cast-smoke.ts
+          git commit -m "V1: reset club relationship arcs after transfers"
+          git push origin HEAD:fix/73-transfer-relationship-arcs
