@@ -82,14 +82,14 @@ export function totalDebt(s: GameState): number {
 }
 
 /** Cierre económico de la temporada. Devuelve el desglose para el resumen. */
-export function seasonFinance(s: GameState): { income: number; spend: number; net: number; text: string } {
+export function seasonFinance(s: GameState, seasonTitleCount = 0): { income: number; spend: number; net: number; text: string } {
   const f = ensureFinance(s);
   const season = s.seasons[s.seasons.length - 1];
   const apps = season?.apps ?? 0;
   const goals = season?.goals ?? 0;
 
   f.annualSalary = Math.max(0, s.salary);
-  const bonuses = Math.round(apps * (2 + s.overall / 40) + goals * 4 + (s.titles?.length ?? 0) * 15);
+  const bonuses = Math.round(apps * (2 + s.overall / 40) + goals * 4 + Math.max(0, seasonTitleCount) * 15);
   f.bonuses = bonuses;
 
   if (f.sponsorName) f.sponsorIncome = Math.round(20 + s.fame * 1.8 + s.overall * 0.6);

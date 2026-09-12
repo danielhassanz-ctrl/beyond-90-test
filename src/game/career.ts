@@ -299,6 +299,9 @@ export function moveToClub(s: GameState, clubId: string, salary: number, years: 
 
 export function shouldRetire(s: GameState): boolean {
   if (s.retired) return false;
+  // "Última temporada" is a promise, not a renewable label. Once that year
+  // closes, the retirement decision must return even if the veteran played well.
+  if ((s.flags["ultima_temporada"] ?? 0) === 1) return true;
   if (s.age >= 40) return true;
   if (s.age < 32) return false;
   const season = currentSeason(s);
