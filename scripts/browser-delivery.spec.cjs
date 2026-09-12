@@ -4,8 +4,18 @@ const BASE_URL = (process.env.TEST_BASE_URL || "http://127.0.0.1:4173/").replace
 const routeUrl = (route = "") => new URL(route.replace(/^\//, ""), BASE_URL).toString();
 const SAVE_KEY = "beyond90:save:v1";
 const BACKUP_KEY = `${SAVE_KEY}:backup`;
+const QA_AVATAR = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 
 test.use({ ...devices["iPhone 13"] });
+
+async function uploadQaAvatar(page) {
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "qa-avatar.png",
+    mimeType: "image/png",
+    buffer: QA_AVATAR,
+  });
+  await expect(page.getByAltText("Vista previa de tu foto")).toBeVisible();
+}
 
 async function clearAndStart(page, name) {
   await page.goto(routeUrl());
@@ -16,8 +26,18 @@ async function clearAndStart(page, name) {
   await page.getByPlaceholder("Álvaro Nieto").fill(name);
   await page.getByRole("button", { name: /Ambicioso/ }).click();
   await page.getByRole("button", { name: /Leal/ }).click();
+
+  // A V1 career must not exist without the player's own photo.
+  await page.getByRole("button", { name: "Empezar tu historia" }).click();
+  await expect(page.getByText("Sube una foto de ficha para empezar tu carrera.")).toBeVisible();
+  await expect(page).toHaveURL(/\/onboarding\/?$/);
+  expect(await page.evaluate((key) => localStorage.getItem(key), SAVE_KEY)).toBeNull();
+
+  await uploadQaAvatar(page);
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
   await expect(page).toHaveURL(/\/historia\/?$/);
+  const started = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
+  expect(started.player.avatar).toMatch(/^data:image\//);
 }
 
 async function reachFirstAgreement(page, name) {
@@ -46,6 +66,7 @@ async function reachFirstAgreement(page, name) {
   state = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
   expect(state.pending.type).toBe("event");
   expect(state.pending.eventId).toBe("opening_first_agreement");
+  expect(state.player.avatar).toMatch(/^data:image\//);
   return academyButtons;
 }
 
@@ -53,11 +74,6 @@ test("iPhone WebKit recovers a deep link without a save", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  // Establish the origin first, clear storage while navigation is stable, then
-  // enter the deep link as a fresh navigation. Reloading /historia while the app
-  // itself redirects an empty save to / causes WebKit to cancel one of the two
-  // competing navigations with "Navigation canceled by policy check". That is a
-  // test harness race, not a recovery failure.
   await page.goto(routeUrl());
   await page.evaluate(() => localStorage.clear());
   await page.goto(routeUrl("historia"));
@@ -69,7 +85,7 @@ test("iPhone WebKit recovers a deep link without a save", async ({ page }) => {
   expect(pageErrors).toEqual([]);
 });
 
-test("iPhone WebKit starts with life/adviser before four academies and persists", async ({ page }) => {
+test("iPhone WebKit starts with required photo, life/adviser before four academies and persists", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await reachFirstAgreement(page, "Jugador QA Mobile");
@@ -81,6 +97,7 @@ test("iPhone WebKit starts with life/adviser before four academies and persists"
   await expect(page).toHaveURL(/\/historia\/?$/);
   await expect(page.getByRole("heading", { name: "No firmas hasta entenderlo" })).toBeVisible();
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
+  expect((await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY)).player.avatar).toMatch(/^data:image\//);
 
   await page.goto(routeUrl());
   await expect(page.getByText("Partida guardada")).toBeVisible();
