@@ -85,18 +85,22 @@ export interface CareerCast {
   captain: CastPerson;
   teammate: CastPerson;
   social: CastPerson;
+  partner: CastPerson;
 }
 
 type LegacyCastPerson = Partial<CastPerson> & { name?: string };
-type LegacyCareerCast = Partial<Omit<CareerCast, "adviser" | "coach" | "physio" | "captain" | "teammate" | "social">> & {
+type LegacyCareerCast = Partial<Omit<CareerCast, "adviser" | "coach" | "physio" | "captain" | "teammate" | "social" | "partner">> & {
   adviser?: LegacyCastPerson;
   coach?: LegacyCastPerson;
   physio?: LegacyCastPerson;
   captain?: LegacyCastPerson;
   teammate?: LegacyCastPerson;
   social?: LegacyCastPerson;
+  partner?: LegacyCastPerson;
 };
 type CastMemory = GameState["memory"] & { careerCast?: CareerCast | LegacyCareerCast };
+
+type CastKey = "adviser" | "coach" | "physio" | "captain" | "teammate" | "social" | "partner";
 
 function adviserRole(kind: AdviserKind | undefined): string {
   if (kind === "father") return "Padre y asesor";
@@ -106,7 +110,7 @@ function adviserRole(kind: AdviserKind | undefined): string {
 
 function normalizePerson(
   s: GameState,
-  key: "adviser" | "coach" | "physio" | "captain" | "teammate" | "social",
+  key: CastKey,
   stored: LegacyCastPerson | undefined,
   fallbackName: string,
   fallbackRole: string,
@@ -140,7 +144,8 @@ function isCastComplete(cast: CareerCast | LegacyCareerCast | undefined): cast i
     && isPersonComplete(cast.physio)
     && isPersonComplete(cast.captain)
     && isPersonComplete(cast.teammate)
-    && isPersonComplete(cast.social);
+    && isPersonComplete(cast.social)
+    && isPersonComplete(cast.partner);
 }
 
 function syncNpc(s: GameState, key: string, person: CastPerson, role = person.role): void {
@@ -184,6 +189,7 @@ export function ensureCast(s: GameState): CareerCast {
       captain: normalizePerson(s, "captain", stored?.captain, nameFor(s, "career-captain"), "Capitán", s.rel.dressing || 45),
       teammate: normalizePerson(s, "teammate", stored?.teammate, nameFor(s, "career-teammate"), "Compañero de confianza", s.rel.dressing || 45),
       social: normalizePerson(s, "social", stored?.social, nameFor(s, "career-social", true), "Contacto de redes", 50),
+      partner: normalizePerson(s, "partner", stored?.partner, nameFor(s, "career-partner", true), "Pareja", 50),
     };
     memory.careerCast = cast;
   }
@@ -194,6 +200,7 @@ export function ensureCast(s: GameState): CareerCast {
   syncNpc(s, "captain", cast.captain);
   syncNpc(s, "friend", cast.teammate);
   syncNpc(s, "social", cast.social);
+  syncNpc(s, "partner", cast.partner);
 
   s.hasAgent = true;
   s.agent.present = true;
@@ -214,7 +221,7 @@ function castPerson(s: GameState, key: string): { name: string; role: string; mo
     captain: cast.captain,
     friend: cast.teammate,
     social: cast.social,
-    partner: cast.social,
+    partner: cast.partner,
     adviser: cast.adviser,
   };
   const p = map[key];
@@ -253,7 +260,7 @@ export function npcMood(s: GameState, key: string, delta: number): void {
     captain: cast.captain,
     friend: cast.teammate,
     social: cast.social,
-    partner: cast.social,
+    partner: cast.partner,
     adviser: cast.adviser,
   };
   const p = map[key];
