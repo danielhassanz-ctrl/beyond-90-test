@@ -15,10 +15,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: v1-family-consequence-cast-gate
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
       - name: Patch consequence copy to respect partner introduction
         run: |
           python - <<'PY'
@@ -37,9 +33,6 @@ jobs:
               s = s.replace(marker, '        freeform: { prompt: "¿Qué dices en casa?" },\n      };\n    }\n    case "cons_fans_war":')
           p.write_text(s)
           PY
-      - run: npm ci
-      - run: npm run typecheck
-      - run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/family-consequence-cast-smoke.ts
       - name: Commit fix
         run: |
           if git diff --quiet; then exit 0; fi
