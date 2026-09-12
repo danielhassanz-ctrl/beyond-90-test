@@ -36,6 +36,12 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Life and Patrimony chronology QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
+
+      - name: Early-career choice consequence divergence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/choice-consequence-divergence-smoke.ts
+
       - name: Mandatory life-first opening QA
         run: npm run qa:opening
 
