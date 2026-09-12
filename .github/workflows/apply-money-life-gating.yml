@@ -27,7 +27,7 @@ jobs:
       - name: Verify focused regression
         run: |
           npm install --no-audit --no-fund
-          npx tsx scripts/money-life-chronology-smoke.ts
+          node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
           npm run typecheck
       - name: Commit generated source fix
         run: |
