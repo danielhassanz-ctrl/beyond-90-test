@@ -1,0 +1,24 @@
+name: Transfer relationship arcs
+
+on:
+  pull_request:
+    paths:
+      - "src/game/**"
+      - "scripts/transfer-relationship-arcs-smoke.ts"
+      - ".github/workflows/transfer-relationship-arcs.yml"
+  workflow_dispatch:
+
+jobs:
+  relationship-arcs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Verify new club relationship arcs unlock after transfer
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/transfer-relationship-arcs-smoke.ts
