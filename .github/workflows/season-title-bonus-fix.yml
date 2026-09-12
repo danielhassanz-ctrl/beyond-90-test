@@ -84,7 +84,7 @@ jobs:
       - name: Commit source fixes
         if: github.event_name == 'push' && github.ref == 'refs/heads/v1-season-title-bonus-fix'
         run: |
-          if git diff --quiet; then
+          if git diff --quiet -- src/game/finance.ts src/game/engine.ts src/game/career.ts src/game/dynamic.ts; then
             echo 'No source patch needed.'
             exit 0
           fi
