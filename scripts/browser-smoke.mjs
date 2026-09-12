@@ -69,7 +69,6 @@ try {
   }
   await page.getByRole("button", { name: /^Pro\b/i }).click();
 
-  // P0 contract: story starts at home, NOT on the academy-offer or match screen.
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
   await page.waitForURL(/\/historia\/?$/, { timeout: 10_000 });
   await page.getByRole("heading", { name: "Antes del fútbol está tu vida" }).waitFor({ state: "visible", timeout: 10_000 });
@@ -81,7 +80,6 @@ try {
   await chooseAndNext("Decir que no darás ningún paso sin hablarlo en casa", "¿Quién va a cuidar tu carrera?");
   await assertOpeningEvent("opening_adviser_choice", "decision #2 adviser");
 
-  // Decision #2 must be adviser/family management — this is the exact regression the user found.
   await page.getByRole("button", { name: "Trabajar con un representante profesional" }).click();
   await page.waitForURL(/\/cantera\/?$/, { timeout: 10_000 });
   await page.getByRole("heading", { name: "Ahora sí: cuatro caminos" }).waitFor({ state: "visible", timeout: 10_000 });
@@ -122,7 +120,6 @@ try {
   }
   await assertNoFatal("opening completed");
 
-  // Only now is the normal season scheduler allowed to run.
   await page.getByRole("button", { name: "Siguiente escena" }).click();
   await page.waitForTimeout(250);
   await assertNoFatal("post-opening scheduler");
@@ -155,7 +152,6 @@ try {
   }
   await assertNoFatal("corrupted save recovery");
 
-  // Keep the legacy/post-career smoke: the P0 rewrite must not break the end of a career.
   const retirementPrepared = await page.evaluate((key) => {
     const raw = localStorage.getItem(key);
     if (!raw) return false;
@@ -186,8 +182,13 @@ try {
   await page.getByText("Carrera terminada", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("link", { name: "Ver mi legado" }).click();
   await page.waitForURL(/\/legado\/?$/, { timeout: 10_000 });
+
+  // Retirement above is injected outside React purely to keep this end-to-end smoke short.
+  // Rehydrate the destination from the saved state before testing post-career controls. This
+  // separately proves both the real "Ver mi legado" route and a bookmarked/reloaded legacy URL.
+  await page.reload({ waitUntil: "domcontentloaded" });
   const legacyState = await saved();
-  if (!legacyState?.retired) throw new Error("legacy route lost retired state");
+  if (!legacyState?.retired) throw new Error("legacy route lost retired state after rehydrate");
   await page.getByText("Después del fútbol", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("button", { name: /Ser entrenador/i }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("button", { name: /Ser entrenador/i }).click();
