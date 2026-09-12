@@ -17,6 +17,7 @@ permissions:
 jobs:
   fix-and-verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,7 +26,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
       - name: Apply accounting fix on working branch
         if: github.event_name == 'push' && github.ref == 'refs/heads/v1-season-title-bonus-fix'
         run: node scripts/apply-season-title-bonus-fix.mjs
@@ -33,20 +35,47 @@ jobs:
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/season-finance-title-bonus-smoke.ts
       - name: Typecheck
         run: npm run typecheck
-      - name: Full career QA
-        run: npm run qa:career
-      - name: Branch QA
-        run: npm run qa:branches
-      - name: Pacing QA
+      - name: Life and Patrimony chronology QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
+      - name: Mandatory life-first opening QA
+        run: npm run qa:opening
+      - name: Career pacing QA
         run: npm run qa:pacing
       - name: Competition pacing QA
         run: npm run qa:competition-pacing
       - name: Persistent cast QA
         run: npm run qa:persistent-cast
-      - name: Opening QA
-        run: npm run qa:opening
+      - name: Full career QA
+        run: npm run qa:career
+      - name: Branch QA
+        run: npm run qa:branches
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+      - name: Human-style first-15-decision QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+      - name: First-15 decision quality floor
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
+      - name: Alternative first-15 branch playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
       - name: Build
         run: npm run build
+      - name: Install WebKit test runtime
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+      - name: iPhone WebKit delivery and persistence
+        run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line
       - name: Commit source fix
         if: github.event_name == 'push' && github.ref == 'refs/heads/v1-season-title-bonus-fix'
         run: |
