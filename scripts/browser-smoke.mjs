@@ -182,6 +182,12 @@ try {
   await page.getByText("Carrera terminada", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("link", { name: "Ver mi legado" }).click();
   await page.waitForURL(/\/legado\/?$/, { timeout: 10_000 });
+  const deployBasePath = new URL(baseURL).pathname.replace(/\/$/, "");
+  const expectedLegacyPath = `${deployBasePath}/legado`.replace(/\/{2,}/g, "/");
+  const actualLegacyPath = new URL(page.url()).pathname.replace(/\/$/, "");
+  if (actualLegacyPath !== expectedLegacyPath) {
+    throw new Error(`legacy route escaped deployment basepath: expected=${expectedLegacyPath} actual=${actualLegacyPath}`);
+  }
 
   // Retirement above is injected outside React purely to keep this end-to-end smoke short.
   // Rehydrate the destination from the saved state before testing post-career controls. This
