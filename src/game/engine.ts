@@ -1135,7 +1135,7 @@ function closeSeason(s: GameState): Outcome {
     milestone(s, "Primera convocatoria con la selección absoluta.");
     note(s, "El seleccionador te llama por primera vez.", "gold");
   }
-  const fin = seasonFinance(s);
+  const fin = seasonFinance(s, honours.titles.length);
   const earned = Math.max(0, fin.net);
 
   const growth = seasonGrowth(s);

@@ -465,12 +465,29 @@ export function resolveDynamic(
     case "market_offer":
       return resolveMarket(s, card, choiceId, interp);
     case "retirement": {
+      // A previous "one more" or an explicit final veteran season cannot be
+      // selected forever. Age 40 is also a hard professional-career cap.
+      const forcedRetirement =
+        s.age >= 40 ||
+        (s.flags["ultima_temporada"] ?? 0) === 1 ||
+        (choiceId === "seguir" && (s.flags["retirement_extension_used"] ?? 0) === 1);
+      if (forcedRetirement && choiceId !== "retirar") {
+        s.retired = true;
+        milestone(s, "El último año se convierte en tu despedida definitiva.");
+        note(s, "Cierras la carrera después de agotar tu última prórroga.", "gold");
+        return {
+          title: "Hasta aquí",
+          text: "Querías estirarlo otra vez, pero ya habías pedido una última temporada. Cierras la carrera dentro del campo, sin convertir el final en una prórroga infinita.",
+          tone: "gold",
+        };
+      }
       if (choiceId === "seguir") {
+        s.flags["retirement_extension_used"] = 1;
         stat(s, "morale", 4);
         stat(s, "fitness", -3);
         return {
           title: "Una más",
-          text: "Aprietas los dientes y firmas un año más con la idea de competir como siempre. Puede salir bonito o puede salir triste.",
+          text: "Aprietas los dientes y firmas un año más con la idea de competir como siempre. Es la única prórroga: la próxima llamada será la despedida.",
           tone: "neutral",
         };
       }

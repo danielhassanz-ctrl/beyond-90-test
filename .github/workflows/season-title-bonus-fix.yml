@@ -1,0 +1,95 @@
+name: Season title bonus accounting
+
+on:
+  push:
+    branches: [v1-season-title-bonus-fix]
+  pull_request:
+    paths:
+      - 'src/game/finance.ts'
+      - 'src/game/engine.ts'
+      - 'src/game/career.ts'
+      - 'src/game/dynamic.ts'
+      - 'scripts/season-finance-title-bonus-smoke.ts'
+      - 'scripts/retirement-hard-cap-smoke.ts'
+      - '.github/workflows/season-title-bonus-fix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Apply V1 defect fixes on working branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/v1-season-title-bonus-fix'
+        run: node scripts/apply-season-title-bonus-fix.mjs
+      - name: Verify focused finance regression
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/season-finance-title-bonus-smoke.ts
+      - name: Verify retirement hard cap
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/retirement-hard-cap-smoke.ts
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Life and Patrimony chronology QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
+      - name: Mandatory life-first opening QA
+        run: npm run qa:opening
+      - name: Career pacing QA
+        run: npm run qa:pacing
+      - name: Competition pacing QA
+        run: npm run qa:competition-pacing
+      - name: Persistent cast QA
+        run: npm run qa:persistent-cast
+      - name: Full career QA
+        run: npm run qa:career
+      - name: Branch QA
+        run: npm run qa:branches
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+      - name: Human-style first-15-decision QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+      - name: First-15 decision quality floor
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
+      - name: Alternative first-15 branch playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+      - name: Build
+        run: npm run build
+      - name: Install WebKit test runtime
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+      - name: iPhone WebKit delivery and persistence
+        run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line
+      - name: Commit source fixes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/v1-season-title-bonus-fix'
+        run: |
+          if git diff --quiet -- src/game/finance.ts src/game/engine.ts src/game/career.ts src/game/dynamic.ts; then
+            echo 'No source patch needed.'
+            exit 0
+          fi
+          git config user.name 'beyond90-qa-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add src/game/finance.ts src/game/engine.ts src/game/career.ts src/game/dynamic.ts
+          git commit -m 'V1: fix title accounting and retirement bounds'
+          git push origin HEAD:v1-season-title-bonus-fix
