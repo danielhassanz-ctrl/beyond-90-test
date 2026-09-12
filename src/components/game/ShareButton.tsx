@@ -1,5 +1,5 @@
 import { Share2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { clubById } from "@/game/data";
 import { seasonLabel, stageLabel } from "@/game/engine";
 import type { GameState, ShareData } from "@/game/types";
@@ -18,6 +18,16 @@ export function ShareButton({
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<{ url: string; text: string; canDownload: boolean } | null>(null);
+  const [previewStatus, setPreviewStatus] = useState<string | null>(null);
+
+  // Cada preview usa un object URL. En iPhone una tarjeta puede quedarse abierta
+  // mientras se navega/cierra la vista; revocamos siempre el URL al reemplazarla
+  // o desmontar el componente para no acumular blobs de 1080x1920 en memoria.
+  useEffect(() => {
+    if (!preview) return;
+    const url = preview.url;
+    return () => URL.revokeObjectURL(url);
+  }, [preview]);
 
   return (
     <div className="mt-4">
@@ -39,6 +49,7 @@ export function ShareButton({
             else if (result.status === "cancelled") setStatus(null);
             else if (result.status === "preview") {
               setStatus(null);
+              setPreviewStatus(null);
               setPreview({ url: result.url, text: result.text, canDownload: result.canDownload });
             } else {
               const ok = await copyShareText(result.text);
@@ -58,7 +69,12 @@ export function ShareButton({
       {status && <p className="mt-2 text-center text-xs text-muted-foreground">{status}</p>}
 
       {preview && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-black/90 p-5">
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-black/90 p-5"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vista previa de la career card"
+        >
           <img
             src={preview.url}
             alt="Career card de Beyond 90"
@@ -79,15 +95,20 @@ export function ShareButton({
             <button
               onClick={async () => {
                 const ok = await copyShareText(preview.text);
-                setStatus(ok ? "Texto copiado al portapapeles." : "No se ha podido copiar.");
+                setPreviewStatus(ok ? "Texto copiado al portapapeles." : "No se ha podido copiar.");
               }}
               className="rounded-xl border border-border px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em]"
             >
               Copiar texto
             </button>
+            {previewStatus && (
+              <p className="text-center text-xs text-muted-foreground" role="status">
+                {previewStatus}
+              </p>
+            )}
             <button
               onClick={() => {
-                URL.revokeObjectURL(preview.url);
+                setPreviewStatus(null);
                 setPreview(null);
               }}
               className="py-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"
