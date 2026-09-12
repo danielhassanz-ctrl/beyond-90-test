@@ -60,7 +60,7 @@ try {
   await assertNoFatal("cold start");
 
   await page.getByRole("button", { name: "Nueva carrera" }).click();
-  await page.waitForURL(/\/onboarding$/, { timeout: 10_000 });
+  await page.waitForURL(/\/onboarding\/?$/, { timeout: 10_000 });
   await page.getByPlaceholder("Álvaro Nieto").fill("Daniel QA");
   await page.getByRole("button", { name: /^Ambicioso/ }).click();
   await page.getByRole("button", { name: /^Leal/ }).click();
@@ -71,7 +71,7 @@ try {
 
   // P0 contract: story starts at home, NOT on the academy-offer or match screen.
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
-  await page.waitForURL(/\/historia$/, { timeout: 10_000 });
+  await page.waitForURL(/\/historia\/?$/, { timeout: 10_000 });
   await page.getByRole("heading", { name: "Antes del fútbol está tu vida" }).waitFor({ state: "visible", timeout: 10_000 });
   await assertOpeningEvent("opening_home_family", "decision #1 home/family");
 
@@ -83,7 +83,7 @@ try {
 
   // Decision #2 must be adviser/family management — this is the exact regression the user found.
   await page.getByRole("button", { name: "Trabajar con un representante profesional" }).click();
-  await page.waitForURL(/\/cantera$/, { timeout: 10_000 });
+  await page.waitForURL(/\/cantera\/?$/, { timeout: 10_000 });
   await page.getByRole("heading", { name: "Ahora sí: cuatro caminos" }).waitFor({ state: "visible", timeout: 10_000 });
   const clubButtons = page.locator("ul > li > button");
   const clubCount = await clubButtons.count();
@@ -93,7 +93,7 @@ try {
 
   await clubButtons.first().click();
   await page.getByRole("button", { name: "Sentarnos a negociar con este club" }).click();
-  await page.waitForURL(/\/historia$/, { timeout: 10_000 });
+  await page.waitForURL(/\/historia\/?$/, { timeout: 10_000 });
   await page.getByRole("heading", { name: "No firmas hasta entenderlo" }).waitFor({ state: "visible", timeout: 10_000 });
   await assertOpeningEvent("opening_first_agreement", "first agreement");
 
@@ -129,7 +129,7 @@ try {
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForTimeout(200);
-  if (!/\/historia$/.test(page.url())) throw new Error(`reload lost route: ${page.url()}`);
+  if (!/\/historia\/?$/.test(page.url())) throw new Error(`reload lost route: ${page.url()}`);
   const reloaded = await saved();
   if (reloaded?.careerMode !== "pro" || reloaded?.flags?.opening_completed !== 1) {
     throw new Error("career mode/opening state changed after reload");
@@ -185,7 +185,7 @@ try {
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.getByText("Carrera terminada", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("link", { name: "Ver mi legado" }).click();
-  await page.waitForURL(/\/legado$/, { timeout: 10_000 });
+  await page.waitForURL(/\/legado\/?$/, { timeout: 10_000 });
   await page.getByText("¿Y después del minuto 90?", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
   await page.getByRole("button", { name: /Ser entrenador/i }).click();
   await page.getByRole("button", { name: /Empezar desde abajo/i }).click();
