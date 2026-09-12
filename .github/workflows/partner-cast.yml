@@ -1,0 +1,25 @@
+name: Partner cast regression
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  partner-cast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - name: Distinct persistent partner/social contact
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/partner-cast-smoke.ts
+      - run: npm run qa:persistent-cast
+      - run: npm run qa:opening
+      - run: npm run qa:career
+      - run: npm run qa:branches
+      - run: npm run build
