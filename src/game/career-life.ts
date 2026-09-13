@@ -12,6 +12,12 @@ export type AdviserKind = NpcAdviserKind;
 export type CareerPerson = CastPerson;
 export type CareerCast = NpcCareerCast;
 
+export interface LegacyRelationshipHighlight {
+  name: string;
+  role: string;
+  value: number;
+}
+
 /**
  * Fachada narrativa del reparto persistente. La creación y migración viven
  * exclusivamente en npc.ts para que todo el juego comparta exactamente las
@@ -19,6 +25,29 @@ export type CareerCast = NpcCareerCast;
  */
 export function ensureCareerCast(s: GameState): CareerCast {
   return ensureCast(s);
+}
+
+/**
+ * Devuelve el vínculo personal más fuerte que debe aparecer en Legado.
+ * La pantalla final no puede volver a nombres genéricos ("Entrenador",
+ * "Agente") después de haber construido personajes persistentes durante toda
+ * la carrera. Solo incluimos a la pareja cuando esa relación existe realmente.
+ */
+export function legacyRelationshipHighlight(s: GameState): LegacyRelationshipHighlight {
+  const cast = ensureCareerCast(s);
+  const candidates: LegacyRelationshipHighlight[] = [
+    { name: cast.adviser.name, role: cast.adviser.role, value: cast.adviser.relation },
+    { name: cast.coach.name, role: cast.coach.role, value: cast.coach.relation },
+    { name: cast.captain.name, role: cast.captain.role, value: cast.captain.relation },
+    { name: cast.physio.name, role: cast.physio.role, value: cast.physio.relation },
+    { name: cast.teammate.name, role: cast.teammate.role, value: cast.teammate.relation },
+  ];
+
+  if (s.flags["partner_active"] === 1) {
+    candidates.push({ name: cast.partner.name, role: cast.partner.role, value: cast.partner.relation });
+  }
+
+  return candidates.sort((a, b) => b.value - a.value)[0]!;
 }
 
 /**

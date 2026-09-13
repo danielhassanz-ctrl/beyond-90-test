@@ -3,6 +3,7 @@ import { BriefcaseBusiness, Landmark, Lock, Trophy, Users } from "lucide-react";
 import { GameShell } from "@/components/game/GameShell";
 import { ShareButton } from "@/components/game/ShareButton";
 import { careerPhase, careerSummary, PHASE_LABEL } from "@/game/career";
+import { legacyRelationshipHighlight } from "@/game/career-life";
 import { achievementList } from "@/game/engine";
 import { ensureFinance, netWorth, totalDebt } from "@/game/finance";
 import { postCareerStatus, type PostCareerPath, type PostCareerStyle } from "@/game/postcareer";
@@ -36,13 +37,7 @@ function Legacy({ state }: { state: GameState }) {
     ...(state.memory.promises ?? []).slice(0, 2),
     ...(state.memory.conflicts ?? []).slice(0, 2),
   ].slice(0, 3);
-  const strongestRelationship = [
-    { label: "Entrenador", value: state.rel.coach },
-    { label: "Vestuario", value: state.rel.dressing },
-    { label: "Afición", value: state.rel.fans },
-    { label: "Familia", value: state.rel.family },
-    { label: "Agente", value: state.rel.agent },
-  ].sort((a, b) => b.value - a.value)[0]!;
+  const strongestRelationship = legacyRelationshipHighlight(state);
   const offFieldLegacy =
     net >= 2500 && debt <= net * 0.25
       ? "Construiste patrimonio sin hipotecar tu libertad."
@@ -148,7 +143,8 @@ function Legacy({ state }: { state: GameState }) {
           </div>
           <div className="rounded-lg border border-border bg-surface-2 p-3">
             <p className="text-kicker">Vínculo más fuerte</p>
-            <p className="mt-1 font-cond text-base font-semibold uppercase tracking-[0.08em]">{strongestRelationship.label}</p>
+            <p className="mt-1 truncate font-display text-base">{strongestRelationship.name}</p>
+            <p className="font-cond text-[0.65rem] uppercase tracking-[0.12em] text-muted-foreground">{strongestRelationship.role}</p>
             <p className="mt-1 font-num text-sm text-gold">{strongestRelationship.value}/100</p>
           </div>
         </div>
