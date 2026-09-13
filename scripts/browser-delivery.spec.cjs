@@ -128,11 +128,16 @@ test("iPhone WebKit restores the last valid backup after primary corruption", as
   await page.reload();
   await expect(page).toHaveURL(/\/historia\/?$/);
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
-  const healed = await page.evaluate((key) => {
+
+  // Recovery and primary-slot self-healing happen in separate browser lifecycle
+  // work. WebKit can render the recovered state before the repair write is
+  // observable in localStorage, especially against real HTTPS. Assert the actual
+  // requirement (the corrupt primary is healed) without racing that write.
+  await expect.poll(async () => page.evaluate((key) => {
     const raw = localStorage.getItem(key);
     try { return Boolean(raw && JSON.parse(raw)); } catch { return false; }
-  }, SAVE_KEY);
-  expect(healed).toBeTruthy();
+  }, SAVE_KEY)).toBeTruthy();
+
   const recovered = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
   expect(recovered.player.avatar).toMatch(/^data:image\//);
   expect(pageErrors).toEqual([]);
