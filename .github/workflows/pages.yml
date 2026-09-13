@@ -92,6 +92,9 @@ jobs:
       - name: Persistent cast QA
         run: npm run qa:persistent-cast
 
+      - name: First-15 cast continuity through save hydration
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-cast-continuity-smoke.ts
+
       - name: Partner/social independence QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/partner-cast-smoke.ts
 
