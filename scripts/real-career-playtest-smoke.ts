@@ -2,6 +2,7 @@ import { ensureCareerCast } from "../src/game/career-life";
 import { advance, chooseClub, createGame, resolveDynamicCard, resolveEvent, resolveMatch } from "../src/game/engine";
 import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
+import { scrubDisallowedNarrative } from "../src/game/narrative-safety";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
 import { setCareerMode, type CareerMode } from "../src/game/pacing";
 import type { DynamicCard, EventCategory, GameState, Player, SceneKey } from "../src/game/types";
@@ -43,7 +44,7 @@ type SeenDecision = {
   injured: boolean;
 };
 
-const onFieldCopy = /(te cambian en|sales? de titular|entras? al campo|debutas?|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|marcas? (?:un )?gol|doble marca|faltas tácticas|tarjeta roja|roja directa|expulsi[oó]n)/i;
+const onFieldCopy = /(calienta(?:s)?\b|entras? t[uú]\b|te cambian en|sales? de titular|entras? al campo|debutas?|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|marcas? (?:un )?gol|gol decisivo|doble marca|faltas t[aá]cticas|tarjeta roja|roja directa|expulsi[oó]n|sustituci[oó]n|duelo t[aá]ctico)/i;
 
 function eventText(s: GameState, id: string): string {
   const e = eventById(id);
@@ -213,6 +214,9 @@ function run(mode: CareerMode, seed: number) {
         continue;
       }
 
+      // GameProvider runs the same final safety scrub before a pending card can
+      // reach the shipped UI. Keep this human-style playthrough on that path.
+      s = scrubDisallowedNarrative(s);
       const d = describe(s);
       if (d) {
         if ((s.flags["opening_completed"] ?? 0) !== 1 && d.kind === "match") {
@@ -257,7 +261,26 @@ function run(mode: CareerMode, seed: number) {
   }
 }
 
+function assertForcedInjurySuppression() {
+  for (const id of ["extra_youth_cup_sub", "st_youth_debut", "st_bench", "am_fans_whistle"]) {
+    const event = eventById(id);
+    assert(event, `forced injury regression event missing: ${id}`);
+    let s = createGame(player(450045));
+    s.careerSeed = 450045;
+    const clubId = s.offers[0]?.clubId;
+    assert(clubId, `forced injury regression has no club offer`);
+    s = chooseClub(s, clubId);
+    s.flags["opening_v1"] = 1;
+    s.flags["opening_completed"] = 1;
+    s.injury = { label: "Sobrecarga muscular QA", severity: "medium", matchesOut: 5, treated: true };
+    s.pending = { type: "event", eventId: id };
+    const scrubbed = scrubDisallowedNarrative(s);
+    assert(!(scrubbed.pending?.type === "event" && scrubbed.pending.eventId === id), `injured player still sees ${id}: ${event.title}`);
+  }
+}
+
+assertForcedInjurySuppression();
 const modes: CareerMode[] = ["express", "standard", "pro"];
 const seeds = [101, 2026, 31337, 90909];
 for (const mode of modes) for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
-console.log("REAL_CAREER_PLAYTEST_OK: 12 deterministic careers x first 15 meaningful decisions with structural per-decision injury/age chronology; passive match screens excluded and no generic match_flash filler.");
+console.log("REAL_CAREER_PLAYTEST_OK: forced injury event suppression plus 12 deterministic careers x first 15 meaningful decisions through the shipped safety path; passive match screens excluded and no generic match_flash filler.");
