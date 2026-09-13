@@ -246,4 +246,4 @@ jobs:
       - name: iPhone WebKit save recovery, first-15, Life/Patrimony/Legacy on live HTTPS
         env:
           TEST_BASE_URL: ${{ needs.deploy.outputs.page_url }}
-        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-first15.spec.cjs scripts/browser-life-patrimony-legacy.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs scripts/browser-freshest-slot-recovery.spec.cjs --browser=webkit --reporter=line
+        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-first15.spec.cjs scripts/browser-life-patrimony-legacy.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs scripts/browser-freshest-slot-recovery.spec.cjs scripts/browser-corrupt-primary-exact-recovery.spec.cjs --browser=webkit --reporter=line
