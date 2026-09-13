@@ -2839,6 +2839,21 @@ const arcCard = (arc: ActiveArc): DynamicCard => ({ type: "dynamic", kind: "arc"
  *  - pretemporada: 1-2 momentos como máximo.
  * Si nada procede devuelve null y el motor avanza semanas de calendario.
  */
+function injuryNarrativeCompatible(
+  s: GameState,
+  family: string,
+  image: SceneKey,
+  category: EventCategory,
+  title: string,
+  text: string,
+): boolean {
+  if (!s.injury) return true;
+  if (category === "medical" || image === "injury") return true;
+  if (image === "match" || image === "training" || category === "training" || family === "partido" || family === "revelacion") return false;
+  const copy = (title + " " + text).toLowerCase();
+  return !/(te cambian en|sales? de titular|entras? al campo|debutas?|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|marcas? (?:un )?gol|doble marca|faltas tácticas)/i.test(copy);
+}
+
 export function directorCard(s: GameState): DynamicCard | null {
   const d = directorState(s);
   const beatNow = s.beat ?? 0;
@@ -2853,7 +2868,11 @@ export function directorCard(s: GameState): DynamicCard | null {
 
     // La pretemporada debe sentirse al menos una vez cuando hay material válido.
     // Antes competía con todos los arcos y podía desaparecer por completo.
-    const preBeats = BEATS.filter((b) => b.family === "pretemporada" && !seen(s, b.id) && b.requires(s));
+    const preBeats = BEATS.filter((b) => {
+      if (b.family !== "pretemporada" || seen(s, b.id) || !b.requires(s)) return false;
+      const built = b.build(s);
+      return injuryNarrativeCompatible(s, b.family, b.image, b.category, built.title, built.text);
+    });
     if (preBeats.length > 0) {
       const beat = preBeats[hash(careerSeed(s), `prebeat${s.seasonIndex}${d.preseasonUsed ?? 0}`) % preBeats.length]!;
       d.lastBeatBeat = beatNow;
@@ -2878,6 +2897,8 @@ export function directorCard(s: GameState): DynamicCard | null {
     if (!arc || a.chapter >= arc.chapters.length) return false;
     const ch = arc.chapters[a.chapter]!;
     if (seen(s, `${a.id}_c${a.chapter}`)) return false;
+    const c = ctxOf(s, a);
+    if (!injuryNarrativeCompatible(s, ch.family, ch.image, ch.category, ch.title(c), ch.text(c))) return false;
     if (a.chapter === 0 && familyBlocked(s, ch.family)) return false;
     // Cooldown entre capítulos: 3-5 beats de motor (semanas/meses de rutina).
     if (a.chapter > 0) {
@@ -2901,6 +2922,15 @@ export function directorCard(s: GameState): DynamicCard | null {
   if (d.active.length === 0 && sinceAny(s, d) >= 3) {
     const opened = openArc(s);
     if (opened) {
+      const arc = arcById(opened.id);
+      const ch = arc?.chapters[opened.chapter];
+      if (arc && ch) {
+        const c = ctxOf(s, opened);
+        if (!injuryNarrativeCompatible(s, ch.family, ch.image, ch.category, ch.title(c), ch.text(c))) {
+          d.active = d.active.filter((a) => a.id !== opened.id);
+          return null;
+        }
+      }
       d.lastArcBeat = beatNow;
       return arcCard(opened);
     }
@@ -2914,6 +2944,8 @@ export function directorCard(s: GameState): DynamicCard | null {
   const earlyCareer = s.age <= 19 && s.seasonIndex <= 2;
   const contextualBeats = BEATS.filter((b) => {
     if (seen(s, b.id) || familyBlocked(s, b.family) || !statusOk(s, b.family) || !b.requires(s)) return false;
+    const built = b.build(s);
+    if (!injuryNarrativeCompatible(s, b.family, b.image, b.category, built.title, built.text)) return false;
     if (!earlyCareer) return true;
     // Durante los primeros años cada carrera recibe un catálogo secundario
     // diferente. Las escenas creadas específicamente para su semilla y su
