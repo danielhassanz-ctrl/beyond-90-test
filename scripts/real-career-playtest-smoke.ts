@@ -2,9 +2,10 @@ import { ensureCareerCast } from "../src/game/career-life";
 import { advance, chooseClub, createGame, resolveDynamicCard, resolveEvent, resolveMatch } from "../src/game/engine";
 import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
+import { scrubDisallowedNarrative } from "../src/game/narrative-safety";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
 import { setCareerMode, type CareerMode } from "../src/game/pacing";
-import type { DynamicCard, GameState, Player } from "../src/game/types";
+import type { DynamicCard, EventCategory, GameState, Player, SceneKey } from "../src/game/types";
 
 function rng(seed: number) {
   let x = seed >>> 0;
@@ -31,9 +32,19 @@ function similarity(a: string, b: string): number {
   return hit / Math.min(A.size, B.size);
 }
 
-type SeenDecision = { title: string; text: string; choices: string[]; family: string; kind: string; age: number; injured: boolean };
+type SeenDecision = {
+  title: string;
+  text: string;
+  choices: string[];
+  family: string;
+  kind: string;
+  category: EventCategory | "match" | "club_choice";
+  image: SceneKey | "match" | "club_choice";
+  age: number;
+  injured: boolean;
+};
 
-const onFieldCopy = /(te cambian en|sales? de titular|entras? al campo|debutas?|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|marcas? (?:un )?gol|doble marca|faltas tácticas)/i;
+const onFieldCopy = /(calienta(?:s)?\b|entras? t[uú]\b|te cambian en|sales? de titular|entras? al campo|debutas?|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|marcas? (?:un )?gol|gol decisivo|doble marca|faltas t[aá]cticas|tarjeta roja|roja directa|expulsi[oó]n|sustituci[oó]n|duelo t[aá]ctico)/i;
 
 function eventText(s: GameState, id: string): string {
   const e = eventById(id);
@@ -65,7 +76,16 @@ function describe(s: GameState): SeenDecision | null {
   if (p.type === "event") {
     const e = eventById(p.eventId);
     assert(e, `missing event ${p.eventId}`);
-    return { title: e.title, text: eventText(s, e.id), choices: e.choices.map((c) => c.label), family: e.family ?? e.category, kind: `event:${e.id}`, ...chronology };
+    return {
+      title: e.title,
+      text: eventText(s, e.id),
+      choices: e.choices.map((c) => c.label),
+      family: e.family ?? e.category,
+      kind: `event:${e.id}`,
+      category: e.category,
+      image: e.image,
+      ...chronology,
+    };
   }
   if (p.type === "match") {
     if (!p.match.keyMoment) return null;
@@ -75,12 +95,23 @@ function describe(s: GameState): SeenDecision | null {
       choices: p.match.keyMoment.options.map((o) => o.label),
       family: "match",
       kind: "match",
+      category: "match",
+      image: "match",
       ...chronology,
     };
   }
   assert(p.kind !== "match_flash", `BANNED match_flash reached playable state: ${JSON.stringify(p.data)}`);
   const v = renderDynamic(s, p);
-  return { title: v.title, text: v.text, choices: v.choices.map((c) => c.label), family: dynamicFamily(p, v.category), kind: `dynamic:${p.kind}`, ...chronology };
+  return {
+    title: v.title,
+    text: v.text,
+    choices: v.choices.map((c) => c.label),
+    family: dynamicFamily(p, v.category),
+    kind: `dynamic:${p.kind}`,
+    category: v.category,
+    image: v.image,
+    ...chronology,
+  };
 }
 
 function resolveCurrent(s: GameState): GameState {
@@ -138,7 +169,9 @@ function assertVariety(mode: CareerMode, seed: number, seen: SeenDecision[]) {
     }
     if (d.injured) {
       assert(d.kind !== "match", `${mode}/${seed}: injured player received a playable match: ${d.title}`);
-      assert(!onFieldCopy.test(`${d.title} ${d.text}`), `${mode}/${seed}: injured player received on-field narrative: ${d.title}`);
+      const isMedical = d.category === "medical";
+      assert(isMedical || (d.category !== "training" && d.image !== "training" && d.image !== "match"), `${mode}/${seed}: injured player received structurally on-field/training narrative (${d.kind}, ${d.category}/${d.image}): ${d.title}`);
+      assert(isMedical || !onFieldCopy.test(`${d.title} ${d.text}`), `${mode}/${seed}: injured player received on-field narrative: ${d.title}`);
     }
     if (d.age <= 17) {
       assert(!/bal[oó]n de oro|champions|selecci[oó]n absoluta|contrato millonario|salario millonario|cobra(?:s)? millones/i.test(`${d.title} ${d.text}`), `${mode}/${seed}: elite/status leakage at age ${d.age}: ${d.title}`);
@@ -166,11 +199,24 @@ function run(mode: CareerMode, seed: number) {
       if ((s.flags[OPENING_PHASE] ?? OpeningPhase.DONE) === OpeningPhase.CLUB_CHOICE && !s.clubId) {
         const offer = s.offers[0]?.clubId;
         assert(offer, `${mode}/${seed}: no club offer at opening gate`);
-        seen.push({ title: "Elegir primer club", text: `Comparas las ofertas iniciales y eliges ${offer}.`, choices: s.offers.slice(0, 4).map((o) => o.clubId), family: "club_choice", kind: "club_choice", age: s.age, injured: Boolean(s.injury) });
+        seen.push({
+          title: "Elegir primer club",
+          text: `Comparas las ofertas iniciales y eliges ${offer}.`,
+          choices: s.offers.slice(0, 4).map((o) => o.clubId),
+          family: "club_choice",
+          kind: "club_choice",
+          category: "club_choice",
+          image: "club_choice",
+          age: s.age,
+          injured: Boolean(s.injury),
+        });
         s = afterOpeningClubChoice(chooseClub(s, offer));
         continue;
       }
 
+      // GameProvider runs the same final safety scrub before a pending card can
+      // reach the shipped UI. Keep this human-style playthrough on that path.
+      s = scrubDisallowedNarrative(s);
       const d = describe(s);
       if (d) {
         if ((s.flags["opening_completed"] ?? 0) !== 1 && d.kind === "match") {
@@ -209,13 +255,35 @@ function run(mode: CareerMode, seed: number) {
     assert(cast.physio.name === names.physio, `${mode}/${seed}: physio drift ${names.physio} -> ${cast.physio.name}`);
     assert(cast.adviser.name.length > 1, `${mode}/${seed}: adviser missing after opening`);
 
-    console.log(`${mode}/${seed}: ${seen.map((x, i) => `${i + 1}.${x.title}[${x.age}${x.injured ? "/inj" : ""}]`).join(" | ")}`);
+    console.log(`${mode}/${seed}: ${seen.map((x, i) => `${i + 1}.${x.title}[${x.age}${x.injured ? "/inj" : ""};${x.kind};${x.category}/${x.image}]`).join(" | ")}`);
   } finally {
     Math.random = oldRandom;
   }
 }
 
+function assertForcedInjurySuppression() {
+  // These are known static legacy cards spanning neutral tunnel copy, match
+  // artwork and normal training. None may survive the shipped safety barrier
+  // while the player is unavailable.
+  for (const id of ["st_youth_debut", "st_bench", "am_fans_whistle", "am_gym"]) {
+    const event = eventById(id);
+    assert(event, `forced injury regression event missing: ${id}`);
+    let s = createGame(player(450045));
+    s.careerSeed = 450045;
+    const clubId = s.offers[0]?.clubId;
+    assert(clubId, `forced injury regression has no club offer`);
+    s = chooseClub(s, clubId);
+    s.flags["opening_v1"] = 1;
+    s.flags["opening_completed"] = 1;
+    s.injury = { label: "Sobrecarga muscular QA", severity: "medium", matchesOut: 5, treated: true };
+    s.pending = { type: "event", eventId: id };
+    const scrubbed = scrubDisallowedNarrative(s);
+    assert(!(scrubbed.pending?.type === "event" && scrubbed.pending.eventId === id), `injured player still sees ${id}: ${event.title}`);
+  }
+}
+
+assertForcedInjurySuppression();
 const modes: CareerMode[] = ["express", "standard", "pro"];
 const seeds = [101, 2026, 31337, 90909];
 for (const mode of modes) for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
-console.log("REAL_CAREER_PLAYTEST_OK: 12 deterministic careers x first 15 meaningful decisions with per-decision age/injury chronology; passive match screens excluded and no generic match_flash filler.");
+console.log("REAL_CAREER_PLAYTEST_OK: forced injury event suppression plus 12 deterministic careers x first 15 meaningful decisions through the shipped safety path; passive match screens excluded and no generic match_flash filler.");

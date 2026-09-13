@@ -50,6 +50,92 @@ function visibleCopy(s: GameState): string {
   return "";
 }
 
+function normalize(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function tokenSimilarity(a: string, b: string): number {
+  const left = new Set(normalize(a).split(" ").filter(Boolean));
+  const right = new Set(normalize(b).split(" ").filter(Boolean));
+  if (left.size < 8 || right.size < 8) return 0;
+  let intersection = 0;
+  for (const token of left) if (right.has(token)) intersection += 1;
+  return intersection / Math.max(left.size, right.size);
+}
+
+interface PlayableSignature {
+  title: string;
+  copy: string;
+  family: string;
+  choiceTriple: string;
+}
+
+function dynamicFamily(kind: string, data: Record<string, string | number | boolean | null>): string {
+  if (kind === "arc" && typeof data["arcId"] === "string") return `arc:${data["arcId"]}`;
+  if (kind === "arc_beat" && typeof data["beatId"] === "string") return `beat:${data["beatId"]}`;
+  if (kind === "arc_callback" && typeof data["cbId"] === "string") return `callback:${data["cbId"]}`;
+  return `dynamic:${kind}`;
+}
+
+function playableSignature(s: GameState): PlayableSignature | null {
+  const p = s.pending;
+  if (!p || p.type === "season") return null;
+  if (p.type === "event") {
+    const e = eventById(p.eventId);
+    if (!e) return null;
+    const text = typeof e.text === "function" ? e.text(s) : e.text;
+    return {
+      title: e.title,
+      copy: `${e.title} ${text}`,
+      family: e.family ?? `event:${e.id}`,
+      choiceTriple: e.choices.map((choice) => normalize(choice.label)).join(" | "),
+    };
+  }
+  if (p.type === "match") {
+    if (!p.match.keyMoment) return null;
+    return {
+      title: p.match.ctx.storyLabel,
+      copy: `${p.match.ctx.storyLabel} ${p.match.ctx.competition} ${p.match.opponent} ${p.match.keyMoment.prompt}`,
+      family: `match:${p.match.ctx.specialTag ?? p.match.ctx.storyLabel}`,
+      choiceTriple: p.match.keyMoment.options.map((choice) => normalize(choice.label)).join(" | "),
+    };
+  }
+  const v = renderDynamic(s, p);
+  return {
+    title: v.title,
+    copy: `${v.title} ${v.text}`,
+    family: dynamicFamily(p.kind, p.data),
+    choiceTriple: v.choices.map((choice) => normalize(choice.label)).join(" | "),
+  };
+}
+
+function assertFirst15Novelty(history: PlayableSignature[], next: PlayableSignature, tag: string) {
+  const title = normalize(next.title);
+  assert(title.length > 0, `${tag}: playable decision has an empty title`);
+  assert(!history.some((entry) => normalize(entry.title) === title), `${tag}: repeated playable title: ${next.title}`);
+
+  if (next.choiceTriple) {
+    assert(!history.some((entry) => entry.choiceTriple && entry.choiceTriple === next.choiceTriple), `${tag}: repeated identical choice triple: ${next.choiceTriple}`);
+  }
+
+  for (const previous of history) {
+    const similarity = tokenSimilarity(previous.copy, next.copy);
+    assert(similarity < 0.86, `${tag}: near-duplicate setup text (${similarity.toFixed(2)}): "${previous.title}" -> "${next.title}"`);
+  }
+
+  if (history.length >= 2) {
+    const previous = history[history.length - 1]!;
+    const beforePrevious = history[history.length - 2]!;
+    assert(!(previous.family === next.family && beforePrevious.family === next.family), `${tag}: more than two consecutive decisions from family ${next.family}`);
+  }
+}
+
 function assertStateCoherence(s: GameState, mode: CareerMode, seed: number, decision: number) {
   const p = s.pending;
   if (!p || p.type === "season") return;
@@ -66,6 +152,21 @@ function assertStateCoherence(s: GameState, mode: CareerMode, seed: number, deci
 
   if (p.type === "dynamic") {
     assert(p.kind !== "match_flash", `${tag}: banned match_flash reached playable state`);
+    if (s.injury) {
+      const view = renderDynamic(s, p);
+      assert(view.category !== "training" && view.image !== "training" && view.image !== "match", `${tag}: ${p.kind} surfaced an on-field/training card while unavailable through ${s.injury.label}: ${view.title}`);
+    }
+  }
+
+  if (p.type === "event" && s.injury) {
+    const event = eventById(p.eventId);
+    if (event) {
+      assert(event.category !== "training" && event.image !== "training" && event.image !== "match", `${tag}: event ${event.id} surfaced an on-field/training card while unavailable through ${s.injury.label}: ${event.title}`);
+    }
+  }
+
+  if (s.injury && /expulsi[oó]n|tarjeta roja|roja directa|marcaste|gol decisivo|entraste al campo|saltas al campo|titular|sustituci[oó]n|duelo t[aá]ctico/i.test(copy)) {
+    assert(false, `${tag}: on-field/disciplinary copy surfaced while unavailable through ${s.injury.label}: ${copy.slice(0, 180)}`);
   }
 
   if (s.age <= 17) {
@@ -114,6 +215,7 @@ function run(mode: CareerMode, seed: number) {
     const expectedTeammate = fixedCast.teammate.name;
     const expectedSocial = fixedCast.social.name;
     const expectedPartner = fixedCast.partner.name;
+    const playableHistory: PlayableSignature[] = [];
 
     let meaningful = 0;
     let guard = 0;
@@ -131,8 +233,13 @@ function run(mode: CareerMode, seed: number) {
         if (isMeaningful) {
           meaningful += 1;
           assertStateCoherence(s, mode, seed, meaningful);
+          const signature = playableSignature(s);
+          if (signature) {
+            assertFirst15Novelty(playableHistory, signature, `${mode}/${seed}/decision-${meaningful}`);
+            playableHistory.push(signature);
+          }
         } else if (s.pending.type === "match") {
-          // Passive fixtures still must obey physical and chronological state.
+          // Passive fixtures still must obey physical and chronological state, but never consume a meaningful-decision slot.
           assertStateCoherence(s, mode, seed, meaningful + 1);
         }
       }
@@ -170,6 +277,7 @@ function run(mode: CareerMode, seed: number) {
     }
 
     assert(meaningful === 15, `${mode}/${seed}: only ${meaningful} meaningful decisions reached`);
+    assert(playableHistory.length >= 14, `${mode}/${seed}: only ${playableHistory.length} rendered playable decisions recorded alongside opening club choice`);
   } finally {
     Math.random = oldRandom;
   }
@@ -178,4 +286,4 @@ function run(mode: CareerMode, seed: number) {
 const modes: CareerMode[] = ["express", "standard", "pro"];
 const seeds = [71, 808, 4096, 65537];
 for (const mode of modes) for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
-console.log("DECISION_STATE_COHERENCE_OK: 12 deterministic careers keep injury, age/status, money, competition and full persistent-cast state coherent for the first 15 meaningful decisions.");
+console.log("DECISION_STATE_COHERENCE_OK: 12 deterministic careers keep injury, age/status, money, competition, full persistent-cast state, titles, setup text, choice triples and decision families coherent for the first 15 meaningful decisions.");
