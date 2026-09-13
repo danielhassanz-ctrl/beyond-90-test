@@ -8,6 +8,7 @@ on:
       - v1-first15-chronology-floor
       - p0-betis-injury-repro-gate
       - v1-p0-gate-self-protection
+      - v1-webkit-first15-ui-gate
   pull_request:
     branches:
       - main
@@ -38,6 +39,7 @@ on:
       - scripts/thread-scheduler-smoke.ts
       - scripts/full-career-smoke.ts
       - scripts/browser-delivery.spec.cjs
+      - scripts/browser-first15.spec.cjs
       - package.json
       - package-lock.json
       - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
@@ -69,8 +71,11 @@ jobs:
       - name: Lock youth agent market chronology
         run: node scripts/agent-market-chronology-smoke.mjs
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install dependencies from lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify clean dependency graph
+        run: git diff --exit-code -- package-lock.json
 
       - name: Typecheck
         run: npm run typecheck
@@ -128,8 +133,11 @@ jobs:
 
       - name: Install WebKit test runtime
         run: |
-          npm install --no-save @playwright/test@1.55.0
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
           npx playwright install --with-deps webkit
+
+      - name: Verify Playwright install did not mutate lockfile
+        run: git diff --exit-code -- package-lock.json
 
       - name: Start production preview
         run: |
@@ -143,3 +151,6 @@ jobs:
 
       - name: iPhone WebKit delivery and persistence
         run: npx playwright test scripts/browser-delivery.spec.cjs --browser=webkit --reporter=line
+
+      - name: iPhone WebKit real first-15 UI playthrough
+        run: npx playwright test scripts/browser-first15.spec.cjs --browser=webkit --reporter=line
