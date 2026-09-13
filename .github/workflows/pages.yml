@@ -53,6 +53,9 @@ jobs:
       - name: Human-style first-15-decision QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
 
+      - name: First-15 money/status/competition chronology
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-chronology-smoke.ts
+
       - name: Per-decision career state coherence
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/decision-state-coherence-smoke.ts
 
