@@ -1,3 +1,4 @@
+import { renderDynamic } from "./dynamic";
 import { advance } from "./engine";
 import { eventById } from "./events";
 import type { GameEvent, GameState } from "./types";
@@ -32,10 +33,29 @@ function isInjuredParticipationEvent(state: GameState): boolean {
   return INJURED_ON_FIELD_COPY.test(eventCopy(event, state));
 }
 
+function isInjuredParticipationDynamic(state: GameState): boolean {
+  if (!state.injury || state.pending?.type !== "dynamic") return false;
+  if (DISALLOWED_DYNAMIC_KINDS.has(state.pending.kind)) return true;
+
+  try {
+    const view = renderDynamic(state, state.pending);
+    if (view.category === "medical" || view.image === "injury") return false;
+    if (view.category === "training" || view.image === "training" || view.image === "match") return true;
+    return INJURED_ON_FIELD_COPY.test(`${view.title} ${view.text}`);
+  } catch {
+    // Rendering failure is handled elsewhere; do not silently delete an
+    // unrelated off-field card merely because its renderer threw.
+    return false;
+  }
+}
+
 function isDisallowedPending(state: GameState): boolean {
   const pending = state.pending;
   if (!pending) return false;
-  if (pending.type === "dynamic") return DISALLOWED_DYNAMIC_KINDS.has(pending.kind);
+  if (pending.type === "dynamic") {
+    if (DISALLOWED_DYNAMIC_KINDS.has(pending.kind)) return true;
+    return isInjuredParticipationDynamic(state);
+  }
   if (state.injury && pending.type === "match") return true;
   return isInjuredParticipationEvent(state);
 }
@@ -44,10 +64,11 @@ function isDisallowedPending(state: GameState): boolean {
  * Final guard for narrative cards that must never reach the playable UI.
  *
  * Besides legacy generic cards, this guard enforces player availability across
- * the older event bank. A diagnosed injury may coexist with medical, rehab,
- * family, agent, contract or other genuinely off-field scenes, but never with
- * a playable match/training/debut/red-card scene. Skipped cards are not
- * answered, so the player receives no hidden relationship or memory effects.
+ * both the authored event bank and Story Director dynamic scenes. A diagnosed
+ * injury may coexist with medical, rehab, family, agent, contract or other
+ * genuinely off-field scenes, but never with a playable match/training/debut/
+ * red-card scene. Skipped cards are not answered, so the player receives no
+ * hidden relationship or memory effects.
  */
 export function scrubDisallowedNarrative(state: GameState): GameState {
   let next = state;
