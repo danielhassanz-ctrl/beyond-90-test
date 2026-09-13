@@ -22,6 +22,12 @@ function player(seed: number): Player {
   };
 }
 
+function hydrate(state: GameState): GameState {
+  // Saves are persisted as JSON in the browser. Use the same serialization boundary
+  // here so continuity cannot pass only because every assertion reads one live object.
+  return JSON.parse(JSON.stringify(state)) as GameState;
+}
+
 type Snapshot = ReturnType<typeof snapshot>;
 function snapshot(s: GameState) {
   const cast = ensureCareerCast(s);
@@ -79,14 +85,14 @@ function run(mode: CareerMode, seed: number) {
   assertClubStable(`${mode}/${seed} first-club bind`, preClub, firstClub);
   assert(firstClub.clubScope === firstClubId, `${mode}/${seed}: first club scope was not bound to ${firstClubId}`);
 
-  // Repeated reads approximate the first-15 decision window: no UI/render or
-  // hydration pass may silently recast any named relationship while clubId is
-  // unchanged.
+  // The first-15 window must survive the browser save/hydration boundary, not just
+  // repeated reads of one in-memory object. Rehydrate after every simulated beat.
   for (let decision = 1; decision <= 15; decision++) {
     s.sceneCount = decision;
+    s = hydrate(s);
     const again = snapshot(s);
-    assertPersonalStable(`${mode}/${seed} decision ${decision}`, firstClub, again);
-    assertClubStable(`${mode}/${seed} decision ${decision}`, firstClub, again);
+    assertPersonalStable(`${mode}/${seed} decision ${decision} hydration`, firstClub, again);
+    assertClubStable(`${mode}/${seed} decision ${decision} hydration`, firstClub, again);
   }
 
   const destination = CLUB_POOL.find((club) => club.id !== firstClubId);
@@ -97,9 +103,11 @@ function run(mode: CareerMode, seed: number) {
   assertClubRotated(`${mode}/${seed} transfer`, firstClub, transferred);
   assert(transferred.clubScope === destination.id, `${mode}/${seed}: transfer scope did not move to ${destination.id}`);
 
+  s = hydrate(s);
   const hydratedAgain = snapshot(s);
-  assertPersonalStable(`${mode}/${seed} post-transfer reread`, transferred, hydratedAgain);
-  assertClubStable(`${mode}/${seed} post-transfer reread`, transferred, hydratedAgain);
+  assertPersonalStable(`${mode}/${seed} post-transfer hydration`, transferred, hydratedAgain);
+  assertClubStable(`${mode}/${seed} post-transfer hydration`, transferred, hydratedAgain);
+  assert(hydratedAgain.clubScope === destination.id, `${mode}/${seed}: hydrated transfer scope drifted from ${destination.id}`);
 }
 
 const modes: CareerMode[] = ["express", "standard", "pro"];
@@ -108,4 +116,4 @@ for (const mode of modes) {
   for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
 }
 
-console.log("FIRST15_CAST_CONTINUITY_OK: 12 deterministic Express/Standard/Pro careers preserve adviser/social/partner and club staff through the first-15 window; club staff rotate only on a real transfer and stay stable afterwards.");
+console.log("FIRST15_CAST_CONTINUITY_OK: 12 deterministic Express/Standard/Pro careers preserve adviser/social/partner and club staff across JSON save hydration through the first-15 window; club staff rotate only on a real transfer and remain stable after post-transfer hydration.");
