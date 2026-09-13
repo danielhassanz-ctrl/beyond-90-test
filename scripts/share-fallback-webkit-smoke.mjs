@@ -44,6 +44,7 @@ try {
   await page.waitForURL(/\/onboarding\/?$/, { timeout: 10_000 });
   await page.getByPlaceholder("Álvaro Nieto").fill("Share QA");
   await page.getByRole("button", { name: /Ambicioso/ }).click();
+  await page.getByRole("button", { name: /Leal/ }).click();
   await page.locator('input[type="file"]').setInputFiles({
     name: "qa-player.png",
     mimeType: "image/png",
