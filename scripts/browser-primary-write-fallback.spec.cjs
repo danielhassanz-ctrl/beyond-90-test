@@ -64,3 +64,72 @@ test("iPhone WebKit preserves a new career through backup when primary writes ar
   expect(recovered?.avatar).toMatch(/^data:image\//);
   expect(pageErrors).toEqual([]);
 });
+
+test("iPhone WebKit never lets a stale primary overwrite a fresher backup", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto(routeUrl());
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.getByRole("button", { name: "Nueva carrera" }).click();
+  await page.getByPlaceholder("Álvaro Nieto").fill("Jugador QA Stale Primary");
+  await page.getByRole("button", { name: /Ambicioso/ }).click();
+  await page.getByRole("button", { name: /Leal/ }).click();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "qa-player.png",
+    mimeType: "image/png",
+    buffer: QA_PLAYER_PNG,
+  });
+  await page.getByRole("button", { name: "Empezar tu historia" }).click();
+  await expect(page.getByRole("heading", { name: "Antes del fútbol está tu vida" })).toBeVisible();
+
+  const initial = await page.evaluate(([primaryKey, backupKey]) => ({
+    primary: localStorage.getItem(primaryKey),
+    backup: localStorage.getItem(backupKey),
+  }), [SAVE_KEY, BACKUP_KEY]);
+  expect(initial.primary).toBeTruthy();
+  expect(initial.backup).toBe(initial.primary);
+
+  await page.evaluate((primaryKey) => {
+    window.__qaOriginalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key === primaryKey) throw new DOMException("Simulated Safari primary-slot failure after a valid save", "QuotaExceededError");
+      return window.__qaOriginalSetItem.call(this, key, value);
+    };
+  }, SAVE_KEY);
+
+  await page.getByRole("button", { name: "Decir que no darás ningún paso sin hablarlo en casa" }).click();
+  await expect.poll(async () => page.evaluate((backupKey) => localStorage.getItem(backupKey), BACKUP_KEY)).not.toBe(initial.backup);
+
+  const afterFallback = await page.evaluate(([primaryKey, backupKey]) => ({
+    primary: localStorage.getItem(primaryKey),
+    backup: localStorage.getItem(backupKey),
+  }), [SAVE_KEY, BACKUP_KEY]);
+  expect(afterFallback.primary).toBeNull();
+  expect(afterFallback.backup).toBeTruthy();
+  expect(afterFallback.backup).not.toBe(initial.backup);
+  const freshBeat = JSON.parse(afterFallback.backup).beat;
+
+  await page.evaluate(() => {
+    if (window.__qaOriginalSetItem) Storage.prototype.setItem = window.__qaOriginalSetItem;
+    delete window.__qaOriginalSetItem;
+  });
+  await page.reload();
+  await expect(page).toHaveURL(/\/historia\/?$/);
+  await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
+
+  const healed = await page.evaluate(([primaryKey, backupKey]) => {
+    const primary = localStorage.getItem(primaryKey);
+    const backup = localStorage.getItem(backupKey);
+    return {
+      primary,
+      backup,
+      beat: primary ? JSON.parse(primary).beat : null,
+    };
+  }, [SAVE_KEY, BACKUP_KEY]);
+  expect(healed.primary).toBeTruthy();
+  expect(healed.primary).toBe(healed.backup);
+  expect(healed.beat).toBe(freshBeat);
+  expect(pageErrors).toEqual([]);
+});
