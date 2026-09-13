@@ -31,7 +31,9 @@ function similarity(a: string, b: string): number {
   return hit / Math.min(A.size, B.size);
 }
 
-type SeenDecision = { title: string; text: string; choices: string[]; family: string; kind: string };
+type SeenDecision = { title: string; text: string; choices: string[]; family: string; kind: string; age: number; injured: boolean };
+
+const onFieldCopy = /(te cambian en|sales? de titular|entras? al campo|debutas?|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|marcas? (?:un )?gol|doble marca|faltas tácticas)/i;
 
 function eventText(s: GameState, id: string): string {
   const e = eventById(id);
@@ -59,15 +61,13 @@ function describe(s: GameState): SeenDecision | null {
   const p = s.pending;
   if (!p) return null;
   if (p.type === "season") return null;
+  const chronology = { age: s.age, injured: Boolean(s.injury) };
   if (p.type === "event") {
     const e = eventById(p.eventId);
     assert(e, `missing event ${p.eventId}`);
-    return { title: e.title, text: eventText(s, e.id), choices: e.choices.map((c) => c.label), family: e.family ?? e.category, kind: `event:${e.id}` };
+    return { title: e.title, text: eventText(s, e.id), choices: e.choices.map((c) => c.label), family: e.family ?? e.category, kind: `event:${e.id}`, ...chronology };
   }
   if (p.type === "match") {
-    // A match without a key moment is gameplay/result presentation, not a
-    // meaningful decision. Counting those inflated mode budgets and made the
-    // human-style gate think three passive fixtures were three narrative choices.
     if (!p.match.keyMoment) return null;
     return {
       title: `${p.match.ctx.storyLabel} · ${p.match.opponent}`,
@@ -75,11 +75,12 @@ function describe(s: GameState): SeenDecision | null {
       choices: p.match.keyMoment.options.map((o) => o.label),
       family: "match",
       kind: "match",
+      ...chronology,
     };
   }
   assert(p.kind !== "match_flash", `BANNED match_flash reached playable state: ${JSON.stringify(p.data)}`);
   const v = renderDynamic(s, p);
-  return { title: v.title, text: v.text, choices: v.choices.map((c) => c.label), family: dynamicFamily(p, v.category), kind: `dynamic:${p.kind}` };
+  return { title: v.title, text: v.text, choices: v.choices.map((c) => c.label), family: dynamicFamily(p, v.category), kind: `dynamic:${p.kind}`, ...chronology };
 }
 
 function resolveCurrent(s: GameState): GameState {
@@ -118,10 +119,6 @@ function assertVariety(mode: CareerMode, seed: number, seen: SeenDecision[]) {
   const choiceSets = new Set<string>();
   for (let i = 0; i < seen.length; i++) {
     const d = seen[i]!;
-    // For authored narrative, a repeated title is repetition. Football itself is
-    // different: home and away meetings against the same rival are legitimate,
-    // so a match is considered duplicated only when purpose, rival and venue all
-    // repeat. The key-moment prompt remains part of the body similarity check.
     const t = d.kind === "match" ? `${norm(d.title)}|${norm(d.text.split(" · ").slice(0, 2).join(" · "))}` : norm(d.title);
     assert(!titles.has(t), `${mode}/${seed}: repeated playable setup in first 15: ${d.title}${d.kind === "match" ? ` (${d.text})` : ""}`);
     titles.add(t);
@@ -138,6 +135,13 @@ function assertVariety(mode: CareerMode, seed: number, seen: SeenDecision[]) {
     }
     if (i >= 2) {
       assert(!(seen[i - 2]!.family === d.family && seen[i - 1]!.family === d.family), `${mode}/${seed}: >2 consecutive decisions from family ${d.family}`);
+    }
+    if (d.injured) {
+      assert(d.kind !== "match", `${mode}/${seed}: injured player received a playable match: ${d.title}`);
+      assert(!onFieldCopy.test(`${d.title} ${d.text}`), `${mode}/${seed}: injured player received on-field narrative: ${d.title}`);
+    }
+    if (d.age <= 17) {
+      assert(!/bal[oó]n de oro|champions|selecci[oó]n absoluta|contrato millonario|salario millonario|cobra(?:s)? millones/i.test(`${d.title} ${d.text}`), `${mode}/${seed}: elite/status leakage at age ${d.age}: ${d.title}`);
     }
   }
   assert(seen.filter((x) => x.kind === "dynamic:match_flash").length === 0, `${mode}/${seed}: match_flash leaked`);
@@ -162,7 +166,7 @@ function run(mode: CareerMode, seed: number) {
       if ((s.flags[OPENING_PHASE] ?? OpeningPhase.DONE) === OpeningPhase.CLUB_CHOICE && !s.clubId) {
         const offer = s.offers[0]?.clubId;
         assert(offer, `${mode}/${seed}: no club offer at opening gate`);
-        seen.push({ title: "Elegir primer club", text: `Comparas las ofertas iniciales y eliges ${offer}.`, choices: s.offers.slice(0, 4).map((o) => o.clubId), family: "club_choice", kind: "club_choice" });
+        seen.push({ title: "Elegir primer club", text: `Comparas las ofertas iniciales y eliges ${offer}.`, choices: s.offers.slice(0, 4).map((o) => o.clubId), family: "club_choice", kind: "club_choice", age: s.age, injured: Boolean(s.injury) });
         s = afterOpeningClubChoice(chooseClub(s, offer));
         continue;
       }
@@ -203,16 +207,9 @@ function run(mode: CareerMode, seed: number) {
     assert(cast.coach.name === names.coach, `${mode}/${seed}: coach drift ${names.coach} -> ${cast.coach.name}`);
     assert(cast.captain.name === names.captain, `${mode}/${seed}: captain drift ${names.captain} -> ${cast.captain.name}`);
     assert(cast.physio.name === names.physio, `${mode}/${seed}: physio drift ${names.physio} -> ${cast.physio.name}`);
-    // Adviser may legitimately become Papá/Álex when the player explicitly chose them.
     assert(cast.adviser.name.length > 1, `${mode}/${seed}: adviser missing after opening`);
 
-    for (const d of seen) {
-      if (s.age <= 17) {
-        assert(!/bal[oó]n de oro|champions|selecci[oó]n absoluta|contrato millonario|salario millonario|cobra(?:s)? millones/i.test(`${d.title} ${d.text}`), `${mode}/${seed}: elite/status leakage in teenage opening: ${d.title}`);
-      }
-    }
-
-    console.log(`${mode}/${seed}: ${seen.map((x, i) => `${i + 1}.${x.title}`).join(" | ")}`);
+    console.log(`${mode}/${seed}: ${seen.map((x, i) => `${i + 1}.${x.title}[${x.age}${x.injured ? "/inj" : ""}]`).join(" | ")}`);
   } finally {
     Math.random = oldRandom;
   }
@@ -221,4 +218,4 @@ function run(mode: CareerMode, seed: number) {
 const modes: CareerMode[] = ["express", "standard", "pro"];
 const seeds = [101, 2026, 31337, 90909];
 for (const mode of modes) for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
-console.log("REAL_CAREER_PLAYTEST_OK: 12 deterministic careers x first 15 meaningful decisions; passive match screens excluded and no generic match_flash filler.");
+console.log("REAL_CAREER_PLAYTEST_OK: 12 deterministic careers x first 15 meaningful decisions with per-decision age/injury chronology; passive match screens excluded and no generic match_flash filler.");
