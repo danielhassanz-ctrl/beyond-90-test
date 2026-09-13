@@ -24,7 +24,9 @@ interface GameContextValue {
   ready: boolean;
   hasSave: boolean;
   error: string | null;
+  persistenceWarning: string | null;
   clearError: () => void;
+  clearPersistenceWarning: () => void;
   start: (player: Player, mode?: CareerMode) => void;
   pickClub: (clubId: string) => void;
   answerEvent: (eventId: string, choiceId: string) => void;
@@ -39,6 +41,7 @@ interface GameContextValue {
 
 const GameContext = createContext<GameContextValue | null>(null);
 const BACKUP_SAVE_KEY = `${SAVE_KEY}:backup`;
+const SAVE_WARNING = "Tu carrera sigue abierta, pero este dispositivo no ha podido guardarla. No cierres ni recargues esta pestaña hasta liberar almacenamiento o salir del modo privado.";
 
 function parseSave(raw: string | null): GameState | null {
   if (!raw) return null;
@@ -49,14 +52,6 @@ function parseSave(raw: string | null): GameState | null {
       setCareerMode(state, decoded.careerMode ?? DEFAULT_CAREER_MODE);
       ensureCareerCast(state);
       applyCareerPacing(state);
-
-      // `migrate()` is deliberately allowed to rebuild an empty/legacy season
-      // queue, and that legacy path clears `pending`. During the mandatory
-      // opening this used to make Safari/WebKit reloads lose the exact scene
-      // the player was reading (notably the first agreement) even though the
-      // persisted opening phase was correct. Reconstruct the deterministic
-      // opening card from the persisted phase, without advancing narrative
-      // time, so a reload resumes the same decision instead of skipping it.
       const beat = state.beat;
       const opening = forceOpeningPending(state);
       if (opening) {
@@ -76,63 +71,38 @@ function read(): GameState | null {
     const primaryRaw = localStorage.getItem(SAVE_KEY);
     const primary = parseSave(primaryRaw);
     if (primary) {
-      // The primary slot is canonical whenever it parses successfully. Keep the
-      // recovery slot byte-for-byte aligned even when an older backup is still
-      // valid, otherwise a later primary corruption can silently roll a player
-      // back to an earlier career state.
       const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
       if (backupRaw !== primaryRaw) {
-        try {
-          localStorage.setItem(BACKUP_SAVE_KEY, primaryRaw as string);
-        } catch {
-          /* Best-effort backup healing for Safari/private storage. */
-        }
+        try { localStorage.setItem(BACKUP_SAVE_KEY, primaryRaw as string); } catch {}
       }
       return primary;
     }
-
     const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
     const backup = parseSave(backupRaw);
     if (!backup) return null;
-
-    try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(backup));
-    } catch {
-      /* Safari/private storage can reject writes; recovered game stays playable in memory. */
-    }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(backup)); } catch {}
     return backup;
   } catch {
     return null;
   }
 }
 
-function write(state: GameState | null) {
+function write(state: GameState | null): boolean {
   if (!state) {
-    try { localStorage.removeItem(SAVE_KEY); } catch {}
-    try { localStorage.removeItem(BACKUP_SAVE_KEY); } catch {}
-    return;
+    let cleared = false;
+    try { localStorage.removeItem(SAVE_KEY); cleared = true; } catch {}
+    try { localStorage.removeItem(BACKUP_SAVE_KEY); cleared = true; } catch {}
+    return cleared;
   }
 
-  let nextRaw: string;
-  try {
-    nextRaw = JSON.stringify(state);
-  } catch {
-    return;
-  }
+  let raw: string;
+  try { raw = JSON.stringify(state); } catch { return false; }
 
-  try {
-    localStorage.setItem(SAVE_KEY, nextRaw);
-  } catch {
-    /* Storage can reject one slot while another remains writable. */
-  }
-
-  // Persist recovery independently. On Safari/private storage a key-specific
-  // primary write failure must not make an otherwise writable backup useless.
-  try {
-    localStorage.setItem(BACKUP_SAVE_KEY, nextRaw);
-  } catch {
-    /* Both slots unavailable: keep the current session playable in memory. */
-  }
+  let primarySaved = false;
+  let backupSaved = false;
+  try { localStorage.setItem(SAVE_KEY, raw); primarySaved = true; } catch {}
+  try { localStorage.setItem(BACKUP_SAVE_KEY, raw); backupSaved = true; } catch {}
+  return primarySaved || backupSaved;
 }
 
 function withRuntime(next: GameState): GameState {
@@ -145,16 +115,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [persistenceWarning, setPersistenceWarning] = useState<string | null>(null);
 
   useEffect(() => {
     setState(read());
     setReady(true);
   }, []);
 
+  const persist = useCallback((next: GameState | null) => {
+    const ok = write(next);
+    setPersistenceWarning(next && !ok ? SAVE_WARNING : null);
+  }, []);
+
   const commit = useCallback((next: GameState | null) => {
     setState(next);
-    write(next);
-  }, []);
+    persist(next);
+  }, [persist]);
 
   const apply = useCallback((fn: (prev: GameState) => GameState) => {
     setState((prev) => {
@@ -167,10 +143,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setError("Esa acción no se pudo aplicar. Pulsa \u00abReintentar escena\u00bb para seguir tu carrera.");
         return prev;
       }
-      write(next);
+      persist(next);
       return next;
     });
-  }, []);
+  }, [persist]);
 
   const start = useCallback((player: Player, mode: CareerMode = DEFAULT_CAREER_MODE) => {
     const game = createGame(player);
@@ -179,72 +155,44 @@ export function GameProvider({ children }: { children: ReactNode }) {
     initializeOpening(game);
     commit(game);
   }, [commit]);
-  const pickClub = useCallback(
-    (clubId: string) => apply((prev) => afterOpeningClubChoice(chooseClub(prev, clubId))),
-    [apply],
-  );
-  const answerEvent = useCallback(
-    (eventId: string, choiceId: string) =>
-      apply((prev) => {
-        const next = resolveEvent(prev, eventId, choiceId);
-        const label = eventById(eventId)?.choices.find((c) => c.id === choiceId)?.label;
-        if (label) rememberBeat(next, label);
-        return next;
-      }),
-    [apply],
-  );
-  const answerFree = useCallback(
-    (eventId: string, text: string) => apply((prev) => resolveEventFree(prev, eventId, text)),
-    [apply],
-  );
-  const answerDynamic = useCallback(
-    (card: DynamicCard, choiceId: string, text?: string) =>
-      apply((prev) => {
-        const next = resolveDynamicCard(prev, card, choiceId, text);
-        rememberBeat(next, text?.trim() || choiceId.replace(/_/g, " "));
-        return next;
-      }),
-    [apply],
-  );
-  const playMatch = useCallback(
-    (match: MatchData, keyChoiceId?: string) =>
-      apply((prev) => (keyChoiceId ? resolveMatch(prev, match, keyChoiceId) : resolveMatch(prev, match))),
-    [apply],
-  );
-  const choosePostCareer = useCallback(
-    (path: PostCareerPath) => apply((prev) => choosePostCareerPath(prev, path)),
-    [apply],
-  );
-  const choosePostCareerStyleAction = useCallback(
-    (style: PostCareerStyle) => apply((prev) => choosePostCareerStyle(prev, style)),
-    [apply],
-  );
-  const next = useCallback(
-    () => apply((prev) => forceOpeningPending(prev) ?? advance(prev)),
-    [apply],
-  );
+  const pickClub = useCallback((clubId: string) => apply((prev) => afterOpeningClubChoice(chooseClub(prev, clubId))), [apply]);
+  const answerEvent = useCallback((eventId: string, choiceId: string) => apply((prev) => {
+    const next = resolveEvent(prev, eventId, choiceId);
+    const label = eventById(eventId)?.choices.find((c) => c.id === choiceId)?.label;
+    if (label) rememberBeat(next, label);
+    return next;
+  }), [apply]);
+  const answerFree = useCallback((eventId: string, text: string) => apply((prev) => resolveEventFree(prev, eventId, text)), [apply]);
+  const answerDynamic = useCallback((card: DynamicCard, choiceId: string, text?: string) => apply((prev) => {
+    const next = resolveDynamicCard(prev, card, choiceId, text);
+    rememberBeat(next, text?.trim() || choiceId.replace(/_/g, " "));
+    return next;
+  }), [apply]);
+  const playMatch = useCallback((match: MatchData, keyChoiceId?: string) => apply((prev) => keyChoiceId ? resolveMatch(prev, match, keyChoiceId) : resolveMatch(prev, match)), [apply]);
+  const choosePostCareer = useCallback((path: PostCareerPath) => apply((prev) => choosePostCareerPath(prev, path)), [apply]);
+  const choosePostCareerStyleAction = useCallback((style: PostCareerStyle) => apply((prev) => choosePostCareerStyle(prev, style)), [apply]);
+  const next = useCallback(() => apply((prev) => forceOpeningPending(prev) ?? advance(prev)), [apply]);
   const reset = useCallback(() => commit(null), [commit]);
 
-  const value = useMemo<GameContextValue>(
-    () => ({
-      state,
-      ready,
-      hasSave: !!state,
-      error,
-      clearError: () => setError(null),
-      start,
-      pickClub,
-      answerEvent,
-      answerFree,
-      answerDynamic,
-      playMatch,
-      choosePostCareer,
-      choosePostCareerStyle: choosePostCareerStyleAction,
-      next,
-      reset,
-    }),
-    [state, ready, error, start, pickClub, answerEvent, answerFree, answerDynamic, playMatch, choosePostCareer, choosePostCareerStyleAction, next, reset],
-  );
+  const value = useMemo<GameContextValue>(() => ({
+    state,
+    ready,
+    hasSave: !!state,
+    error,
+    persistenceWarning,
+    clearError: () => setError(null),
+    clearPersistenceWarning: () => setPersistenceWarning(null),
+    start,
+    pickClub,
+    answerEvent,
+    answerFree,
+    answerDynamic,
+    playMatch,
+    choosePostCareer,
+    choosePostCareerStyle: choosePostCareerStyleAction,
+    next,
+    reset,
+  }), [state, ready, error, persistenceWarning, start, pickClub, answerEvent, answerFree, answerDynamic, playMatch, choosePostCareer, choosePostCareerStyleAction, next, reset]);
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }
