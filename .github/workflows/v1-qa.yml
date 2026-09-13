@@ -3,8 +3,10 @@ name: Beyond 90 V1 QA
 on:
   push:
     branches:
+      - main
       - "product-v4-*"
       - "p0-*"
+      - "v1-*"
   pull_request:
     branches:
       - main
@@ -20,12 +22,16 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install dependencies from lockfile
+        run: npm ci --no-audit --no-fund
+      - name: Verify clean dependency graph
+        run: git diff --exit-code -- package-lock.json
       - name: Typecheck
         run: npm run typecheck
       - name: Life and Patrimony chronology QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
+      - name: Early-career choice consequence divergence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/choice-consequence-divergence-smoke.ts
       - name: Mandatory life-first opening QA
         run: npm run qa:opening
       - name: Career pacing QA
@@ -52,8 +58,10 @@ jobs:
         run: npm run build
       - name: Install WebKit test runtime
         run: |
-          npm install --no-save @playwright/test@1.55.0
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
           npx playwright install --with-deps webkit
+      - name: Verify lockfile stayed unchanged after WebKit install
+        run: git diff --exit-code -- package-lock.json
       - name: Start production preview
         run: |
           npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
