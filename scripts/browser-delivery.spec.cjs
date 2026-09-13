@@ -157,7 +157,11 @@ test("iPhone WebKit heals a valid but stale backup before recovery is needed", a
     const primaryRaw = localStorage.getItem(primaryKey);
     const backupRaw = localStorage.getItem(backupKey);
     if (!primaryRaw || !backupRaw) return false;
-    return JSON.parse(primaryRaw).player.name === JSON.parse(backupRaw).player.name;
+    try {
+      return JSON.parse(primaryRaw).player.name === JSON.parse(backupRaw).player.name;
+    } catch {
+      return false;
+    }
   }, [SAVE_KEY, BACKUP_KEY])).toBeTruthy();
 
   await page.evaluate((key) => localStorage.setItem(key, "{corrupt-save"), SAVE_KEY);
@@ -165,7 +169,8 @@ test("iPhone WebKit heals a valid but stale backup before recovery is needed", a
   await expect(page).toHaveURL(/\/historia\/?$/);
   await expect.poll(async () => page.evaluate((key) => {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw).player.name : null;
+    if (!raw) return null;
+    try { return JSON.parse(raw).player.name; } catch { return null; }
   }, SAVE_KEY)).toBe("Jugador QA Fresh State");
   const recovered = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
   expect(recovered.player.avatar).toMatch(/^data:image\//);
