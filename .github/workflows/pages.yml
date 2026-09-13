@@ -89,6 +89,13 @@ jobs:
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
 
+      - name: Guard Pages recovery links against root escape
+        run: |
+          set -euo pipefail
+          ! grep -F 'href="/"' src/routes/__root.tsx
+          grep -F 'Link to="/"' src/routes/__root.tsx >/dev/null
+          grep -F 'import.meta.env.BASE_URL}favicon.ico' src/routes/__root.tsx >/dev/null
+
       - name: Build static SPA
         env:
           DEPLOY_BASE: /beyond-90-test/
@@ -107,6 +114,8 @@ jobs:
           printf '%s\n' "$GITHUB_SHA" > dist/client/__build_sha.txt
           test -f dist/client/historia/index.html
           test "$(cat dist/client/__build_sha.txt)" = "$GITHUB_SHA"
+          grep -F '/beyond-90-test/favicon.ico' dist/client/index.html >/dev/null
+          ! grep -F 'href="/favicon.ico"' dist/client/index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -188,6 +197,10 @@ jobs:
             curl --fail --silent --show-error --location -H 'Cache-Control: no-cache' "$url" >/tmp/beyond90-live.html
             test -s /tmp/beyond90-live.html
           done
+          curl --fail --silent --show-error --location -H 'Cache-Control: no-cache' "$base/favicon.ico?sha=$GITHUB_SHA" >/tmp/beyond90-favicon.ico
+          test -s /tmp/beyond90-favicon.ico
+          grep -F '/beyond-90-test/favicon.ico' /tmp/beyond90-live.html >/dev/null
+          ! grep -F 'href="/favicon.ico"' /tmp/beyond90-live.html
 
       - name: iPhone WebKit Nueva carrera and persistence on live HTTPS
         env:
