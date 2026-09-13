@@ -98,6 +98,9 @@ jobs:
       - name: Partner/social independence QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/partner-cast-smoke.ts
 
+      - name: Legacy relationship integration QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/legacy-relationship-integration-smoke.ts
+
       - name: Full career QA
         run: npm run qa:career
 
