@@ -262,7 +262,10 @@ function run(mode: CareerMode, seed: number) {
 }
 
 function assertForcedInjurySuppression() {
-  for (const id of ["extra_youth_cup_sub", "st_youth_debut", "st_bench", "am_fans_whistle"]) {
+  // These are known static legacy cards spanning neutral tunnel copy, match
+  // artwork and normal training. None may survive the shipped safety barrier
+  // while the player is unavailable.
+  for (const id of ["st_youth_debut", "st_bench", "am_fans_whistle", "am_gym"]) {
     const event = eventById(id);
     assert(event, `forced injury regression event missing: ${id}`);
     let s = createGame(player(450045));
