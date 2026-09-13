@@ -47,6 +47,9 @@ jobs:
       - name: Mandatory life-first opening QA
         run: npm run qa:opening
 
+      - name: Opening/persistent-cast intro continuity
+        run: node scripts/opening-intro-continuity-smoke.mjs
+
       - name: Human-style first-15-decision QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
 
