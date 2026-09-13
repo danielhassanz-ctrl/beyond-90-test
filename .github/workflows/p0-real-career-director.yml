@@ -12,6 +12,7 @@ on:
       - src/game/**
       - scripts/real-career-playtest-smoke.ts
       - scripts/decision-state-coherence-smoke.ts
+      - scripts/injury-director-chronology-smoke.ts
       - scripts/full-season-boredom-smoke.ts
       - scripts/match-flash-source-ban-smoke.mjs
       - scripts/agent-market-chronology-smoke.mjs
@@ -22,6 +23,7 @@ on:
       - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
       - qa/REAL_CAREER_PLAYTEST_GATE.md
       - .github/workflows/p0-real-career-director.yml
+      - .github/workflows/pages.yml
 
 permissions:
   contents: read
@@ -29,7 +31,7 @@ permissions:
 jobs:
   story-director:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -61,6 +63,9 @@ jobs:
 
       - name: Per-decision career state coherence
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/decision-state-coherence-smoke.ts
+
+      - name: Forced injured-player Story Director chronology
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/injury-director-chronology-smoke.ts
 
       - name: Full-season boredom/coherence playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
