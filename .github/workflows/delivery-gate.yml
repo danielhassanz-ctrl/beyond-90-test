@@ -54,6 +54,8 @@ jobs:
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-cast-continuity-smoke.ts
       - name: Partner/social independence QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/partner-cast-smoke.ts
+      - name: Legacy relationship integration QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/legacy-relationship-integration-smoke.ts
       - name: Full career smoke QA
         run: npm run qa:career
       - name: Targeted narrative branch QA
