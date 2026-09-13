@@ -102,6 +102,16 @@ function write(state: GameState | null): boolean {
   let backupSaved = false;
   try { localStorage.setItem(SAVE_KEY, raw); primarySaved = true; } catch {}
   try { localStorage.setItem(BACKUP_SAVE_KEY, raw); backupSaved = true; } catch {}
+
+  // If Safari rejects only the primary write, leaving the old primary in place is
+  // dangerous: read() intentionally prefers a valid primary and would overwrite
+  // the newer backup with that stale snapshot on the next reload. Remove the stale
+  // primary after a successful backup write so recovery necessarily promotes the
+  // freshest state back into the primary slot.
+  if (!primarySaved && backupSaved) {
+    try { localStorage.removeItem(SAVE_KEY); } catch {}
+  }
+
   return primarySaved || backupSaved;
 }
 
