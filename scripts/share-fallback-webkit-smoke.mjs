@@ -66,8 +66,14 @@ try {
   await page.getByRole("button", { name: "Siguiente escena" }).click();
   await page.getByRole("button", { name: "Trabajar con un representante profesional" }).click();
   await page.waitForURL(/\/cantera\/?$/, { timeout: 10_000 });
+  await page.getByRole("heading", { name: "Ahora sí: cuatro caminos" }).waitFor({ state: "visible", timeout: 10_000 });
 
   const clubs = page.locator("ul > li > button");
+  await page.waitForFunction(
+    () => document.querySelectorAll("ul > li > button").length === 4,
+    null,
+    { timeout: 10_000 },
+  );
   if ((await clubs.count()) !== 4) throw new Error("expected four academy offers before share QA");
   await clubs.first().click();
   await page.getByRole("button", { name: "Sentarnos a negociar con este club" }).click();
