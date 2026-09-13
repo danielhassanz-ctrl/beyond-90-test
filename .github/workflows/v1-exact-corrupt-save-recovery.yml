@@ -1,0 +1,61 @@
+name: V1 exact corrupt save recovery
+
+on:
+  push:
+    branches:
+      - main
+      - v1-exact-corrupt-save-recovery
+  pull_request:
+    branches:
+      - main
+    paths:
+      - scripts/browser-corrupt-primary-exact-recovery.spec.cjs
+      - src/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/v1-exact-corrupt-save-recovery.yml
+
+permissions:
+  contents: read
+
+jobs:
+  exact-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install app dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Install pinned WebKit runtime
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Keep dependency lock immutable
+        run: git diff --exit-code -- package-lock.json
+
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+
+      - name: Exact corrupt-primary recovery on iPhone WebKit
+        run: npx playwright test scripts/browser-corrupt-primary-exact-recovery.spec.cjs --browser=webkit --reporter=line
