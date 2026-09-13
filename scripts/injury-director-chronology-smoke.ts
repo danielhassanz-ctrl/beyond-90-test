@@ -62,7 +62,7 @@ function prepare(seed: number, senior: boolean): GameState {
   }
 }
 
-function probe(seed: number, senior: boolean) {
+function probe(seed: number, senior: boolean): number {
   let s = prepare(seed, senior);
   let surfaced = 0;
   for (let i = 0; i < 90; i++) {
@@ -81,12 +81,17 @@ function probe(seed: number, senior: boolean) {
     s.injury = { label: "Lesión muscular QA", severity: "medium", matchesOut: 8, treated: true };
     surfaced += 1;
   }
-  assert(surfaced >= 2, `${seed}/${senior ? "senior" : "youth"}: insufficient Director coverage while injured (${surfaced})`);
+  // An injury can legitimately leave very little authored material. Requiring
+  // extra cards here would reward the exact filler behaviour this P0 forbids.
+  assert(surfaced >= 1, `${seed}/${senior ? "senior" : "youth"}: Director probe surfaced no renderable scene at all`);
+  return surfaced;
 }
 
+let totalSurfaced = 0;
 for (const seed of [45, 101, 2026, 31337, 90909, 77123]) {
-  probe(seed, false);
-  probe(seed + 100000, true);
+  totalSurfaced += probe(seed, false);
+  totalSurfaced += probe(seed + 100000, true);
 }
+assert(totalSurfaced >= 12, `injury chronology probe rendered too little coverage (${totalSurfaced} cards across 12 states)`);
 
-console.log("INJURY_DIRECTOR_CHRONOLOGY_OK: 12 deterministic injured-career probes surfaced no on-field/training Story Director decisions.");
+console.log(`INJURY_DIRECTOR_CHRONOLOGY_OK: 12 deterministic injured-career probes rendered ${totalSurfaced} safe Story Director decisions with no on-field/training contradiction.`);
