@@ -46,13 +46,17 @@ async function prepareIntegratedState(page) {
     if (!raw) throw new Error("missing persisted career");
     const state = JSON.parse(raw);
     const cast = state.memory?.careerCast;
-    if (!cast?.coach || !cast?.captain || !cast?.physio || !cast?.partner) {
+    if (!cast?.coach || !cast?.captain || !cast?.physio || !cast?.social || !cast?.partner) {
       throw new Error("persistent career cast missing from saved career");
     }
 
     Object.assign(cast.coach, { name: "Tomás Valera", relation: 96, role: "Entrenador", met: true });
     Object.assign(cast.captain, { name: "Iván Moya", relation: 84, role: "Capitán", met: true });
     Object.assign(cast.physio, { name: "Rubén Salas", relation: 79, role: "Fisioterapeuta", met: true });
+    // Keep social and partner identities deliberately distinct. The persistent-cast
+    // normalizer rejects duplicate personal-contact identities, so an ambiguous
+    // fixture here would test fixture repair rather than Life/save persistence.
+    Object.assign(cast.social, { name: "Marta", relation: 76, role: "Contacto de redes", met: true });
     Object.assign(cast.partner, { name: "Lucía", relation: 90, role: "Pareja", met: true });
     state.flags.partner_active = 1;
     state.rel.coach = 96;
@@ -143,6 +147,10 @@ test("iPhone WebKit keeps Life, Patrimony and Legacy connected through save relo
     return {
       primaryCoach: primary.memory.careerCast.coach.name,
       backupCoach: backup.memory.careerCast.coach.name,
+      primarySocial: primary.memory.careerCast.social.name,
+      backupSocial: backup.memory.careerCast.social.name,
+      primaryPartner: primary.memory.careerCast.partner.name,
+      backupPartner: backup.memory.careerCast.partner.name,
       primarySponsor: primary.finance.sponsorName,
       backupSponsor: backup.finance.sponsorName,
     };
@@ -150,6 +158,10 @@ test("iPhone WebKit keeps Life, Patrimony and Legacy connected through save relo
   expect(persisted).toEqual({
     primaryCoach: "Tomás Valera",
     backupCoach: "Tomás Valera",
+    primarySocial: "Marta",
+    backupSocial: "Marta",
+    primaryPartner: "Lucía",
+    backupPartner: "Lucía",
     primarySponsor: "Adidas QA",
     backupSponsor: "Adidas QA",
   });
