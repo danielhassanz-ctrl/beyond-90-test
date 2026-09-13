@@ -4,7 +4,7 @@ import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
 import { setCareerMode, type CareerMode } from "../src/game/pacing";
-import type { DynamicCard, GameState, Player } from "../src/game/types";
+import type { DynamicCard, EventCategory, GameState, Player, SceneKey } from "../src/game/types";
 
 function rng(seed: number) {
   let x = seed >>> 0;
@@ -31,9 +31,19 @@ function similarity(a: string, b: string): number {
   return hit / Math.min(A.size, B.size);
 }
 
-type SeenDecision = { title: string; text: string; choices: string[]; family: string; kind: string; age: number; injured: boolean };
+type SeenDecision = {
+  title: string;
+  text: string;
+  choices: string[];
+  family: string;
+  kind: string;
+  category: EventCategory | "match" | "club_choice";
+  image: SceneKey | "match" | "club_choice";
+  age: number;
+  injured: boolean;
+};
 
-const onFieldCopy = /(te cambian en|sales? de titular|entras? al campo|debutas?|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|marcas? (?:un )?gol|doble marca|faltas tácticas)/i;
+const onFieldCopy = /(te cambian en|sales? de titular|entras? al campo|debutas?|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|marcas? (?:un )?gol|doble marca|faltas tácticas|tarjeta roja|roja directa|expulsi[oó]n)/i;
 
 function eventText(s: GameState, id: string): string {
   const e = eventById(id);
@@ -65,7 +75,16 @@ function describe(s: GameState): SeenDecision | null {
   if (p.type === "event") {
     const e = eventById(p.eventId);
     assert(e, `missing event ${p.eventId}`);
-    return { title: e.title, text: eventText(s, e.id), choices: e.choices.map((c) => c.label), family: e.family ?? e.category, kind: `event:${e.id}`, ...chronology };
+    return {
+      title: e.title,
+      text: eventText(s, e.id),
+      choices: e.choices.map((c) => c.label),
+      family: e.family ?? e.category,
+      kind: `event:${e.id}`,
+      category: e.category,
+      image: e.image,
+      ...chronology,
+    };
   }
   if (p.type === "match") {
     if (!p.match.keyMoment) return null;
@@ -75,12 +94,23 @@ function describe(s: GameState): SeenDecision | null {
       choices: p.match.keyMoment.options.map((o) => o.label),
       family: "match",
       kind: "match",
+      category: "match",
+      image: "match",
       ...chronology,
     };
   }
   assert(p.kind !== "match_flash", `BANNED match_flash reached playable state: ${JSON.stringify(p.data)}`);
   const v = renderDynamic(s, p);
-  return { title: v.title, text: v.text, choices: v.choices.map((c) => c.label), family: dynamicFamily(p, v.category), kind: `dynamic:${p.kind}`, ...chronology };
+  return {
+    title: v.title,
+    text: v.text,
+    choices: v.choices.map((c) => c.label),
+    family: dynamicFamily(p, v.category),
+    kind: `dynamic:${p.kind}`,
+    category: v.category,
+    image: v.image,
+    ...chronology,
+  };
 }
 
 function resolveCurrent(s: GameState): GameState {
@@ -138,7 +168,9 @@ function assertVariety(mode: CareerMode, seed: number, seen: SeenDecision[]) {
     }
     if (d.injured) {
       assert(d.kind !== "match", `${mode}/${seed}: injured player received a playable match: ${d.title}`);
-      assert(!onFieldCopy.test(`${d.title} ${d.text}`), `${mode}/${seed}: injured player received on-field narrative: ${d.title}`);
+      const isMedical = d.category === "medical";
+      assert(isMedical || (d.category !== "training" && d.image !== "training" && d.image !== "match"), `${mode}/${seed}: injured player received structurally on-field/training narrative (${d.kind}, ${d.category}/${d.image}): ${d.title}`);
+      assert(isMedical || !onFieldCopy.test(`${d.title} ${d.text}`), `${mode}/${seed}: injured player received on-field narrative: ${d.title}`);
     }
     if (d.age <= 17) {
       assert(!/bal[oó]n de oro|champions|selecci[oó]n absoluta|contrato millonario|salario millonario|cobra(?:s)? millones/i.test(`${d.title} ${d.text}`), `${mode}/${seed}: elite/status leakage at age ${d.age}: ${d.title}`);
@@ -166,7 +198,17 @@ function run(mode: CareerMode, seed: number) {
       if ((s.flags[OPENING_PHASE] ?? OpeningPhase.DONE) === OpeningPhase.CLUB_CHOICE && !s.clubId) {
         const offer = s.offers[0]?.clubId;
         assert(offer, `${mode}/${seed}: no club offer at opening gate`);
-        seen.push({ title: "Elegir primer club", text: `Comparas las ofertas iniciales y eliges ${offer}.`, choices: s.offers.slice(0, 4).map((o) => o.clubId), family: "club_choice", kind: "club_choice", age: s.age, injured: Boolean(s.injury) });
+        seen.push({
+          title: "Elegir primer club",
+          text: `Comparas las ofertas iniciales y eliges ${offer}.`,
+          choices: s.offers.slice(0, 4).map((o) => o.clubId),
+          family: "club_choice",
+          kind: "club_choice",
+          category: "club_choice",
+          image: "club_choice",
+          age: s.age,
+          injured: Boolean(s.injury),
+        });
         s = afterOpeningClubChoice(chooseClub(s, offer));
         continue;
       }
@@ -209,7 +251,7 @@ function run(mode: CareerMode, seed: number) {
     assert(cast.physio.name === names.physio, `${mode}/${seed}: physio drift ${names.physio} -> ${cast.physio.name}`);
     assert(cast.adviser.name.length > 1, `${mode}/${seed}: adviser missing after opening`);
 
-    console.log(`${mode}/${seed}: ${seen.map((x, i) => `${i + 1}.${x.title}[${x.age}${x.injured ? "/inj" : ""}]`).join(" | ")}`);
+    console.log(`${mode}/${seed}: ${seen.map((x, i) => `${i + 1}.${x.title}[${x.age}${x.injured ? "/inj" : ""};${x.kind};${x.category}/${x.image}]`).join(" | ")}`);
   } finally {
     Math.random = oldRandom;
   }
@@ -218,4 +260,4 @@ function run(mode: CareerMode, seed: number) {
 const modes: CareerMode[] = ["express", "standard", "pro"];
 const seeds = [101, 2026, 31337, 90909];
 for (const mode of modes) for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
-console.log("REAL_CAREER_PLAYTEST_OK: 12 deterministic careers x first 15 meaningful decisions with per-decision age/injury chronology; passive match screens excluded and no generic match_flash filler.");
+console.log("REAL_CAREER_PLAYTEST_OK: 12 deterministic careers x first 15 meaningful decisions with structural per-decision injury/age chronology; passive match screens excluded and no generic match_flash filler.");
