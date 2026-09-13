@@ -7,11 +7,16 @@ on:
       - qa-decision-state-coherence
       - v1-first15-chronology-floor
       - p0-betis-injury-repro-gate
+      - v1-p0-gate-self-protection
   pull_request:
     branches:
       - main
     paths:
       - src/game/**
+      - src/qa/**
+      - scripts/asset-loader.mjs
+      - scripts/seed-ci-random.mjs
+      - scripts/opening-flow-smoke.ts
       - scripts/real-career-playtest-smoke.ts
       - scripts/first15-chronology-smoke.ts
       - scripts/opening-intro-continuity-smoke.mjs
@@ -25,6 +30,16 @@ on:
       - scripts/apply-match-opponent-antirepeat.mjs
       - scripts/apply-playable-match-streak-gate.mjs
       - scripts/apply-minor-injury-card-dedupe.mjs
+      - scripts/pacing-smoke.ts
+      - scripts/competition-pacing-smoke.ts
+      - scripts/persistent-cast-smoke.ts
+      - scripts/branch-coverage-smoke.ts
+      - scripts/narrative-quality-smoke.ts
+      - scripts/thread-scheduler-smoke.ts
+      - scripts/full-career-smoke.ts
+      - scripts/browser-delivery.spec.cjs
+      - package.json
+      - package-lock.json
       - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
       - qa/REAL_CAREER_PLAYTEST_GATE.md
       - .github/workflows/p0-real-career-director.yml
