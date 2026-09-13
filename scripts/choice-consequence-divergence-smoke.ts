@@ -31,23 +31,51 @@ function player(seed: number): Player {
   };
 }
 
+/**
+ * Player-visible fingerprint. Useful for proving two branches do not simply
+ * render the exact same consequence card.
+ */
 function fingerprint(s: GameState): string {
   const cast = ensureCareerCast(s);
   return JSON.stringify({
     outcome: s.lastOutcome ? { title: s.lastOutcome.title, text: s.lastOutcome.text, tone: s.lastOutcome.tone } : null,
+    consequence: consequenceFingerprint(s),
+    adviser: { kind: cast.adviserKind, name: cast.adviser.name },
+  });
+}
+
+/**
+ * Durable consequence fingerprint deliberately excludes lastOutcome copy.
+ * A choice is not meaningful merely because its title/text changes: at least
+ * one persistent football/life/relationship/memory fact must diverge.
+ */
+function consequenceFingerprint(s: GameState): string {
+  const cast = ensureCareerCast(s);
+  return JSON.stringify({
     overall: s.overall,
     form: s.form,
     fitness: s.fitness,
     morale: s.morale,
     discipline: s.discipline,
     fame: s.fame,
+    xp: s.xp,
     rel: s.rel,
     contract: s.contract,
+    contractYears: s.contractYears,
     salary: s.salary,
     stage: s.stage,
     clubId: s.clubId,
-    adviser: { kind: cast.adviserKind, name: cast.adviser.name },
-    flags: Object.fromEntries(Object.entries(s.flags).filter(([k]) => /opening|agente|contrato|quiere|riesgo|conflicto|cedido|negocio/.test(k))),
+    injury: s.injury,
+    adviser: { kind: cast.adviserKind, name: cast.adviser.name, role: cast.adviser.role },
+    promises: [...(s.memory.promises ?? [])].slice(0, 8),
+    conflicts: [...(s.memory.conflicts ?? [])].slice(0, 8),
+    rejectedClubs: [...(s.memory.rejectedClubs ?? [])].slice(0, 8),
+    agentMemories: [...(s.agent.memories ?? [])].slice(0, 8),
+    flags: Object.fromEntries(
+      Object.entries(s.flags).filter(([k]) =>
+        /opening|agente|contrato|quiere|riesgo|conflicto|cedido|negocio|promesa|familia|coach|vestuario|salida|minutos|desarrollo/.test(k),
+      ),
+    ),
   });
 }
 
@@ -85,6 +113,26 @@ function advanceOne(s: GameState, seed: number, decision: number): GameState {
   return next;
 }
 
+function assertAllBranchesDiverge(mode: CareerMode, seed: number, decision: number, branches: { id: string; state: GameState }[]): number {
+  const visibleFingerprints = branches.map((branch) => fingerprint(branch.state));
+  const consequenceFingerprints = branches.map((branch) => consequenceFingerprint(branch.state));
+  let checked = 0;
+  for (let i = 0; i < branches.length; i += 1) {
+    for (let j = i + 1; j < branches.length; j += 1) {
+      checked += 1;
+      assert(
+        visibleFingerprints[i] !== visibleFingerprints[j],
+        `${mode}/${seed}: duplicate branch at decision ${decision}; ${branches[i]!.id} and ${branches[j]!.id} produce the same visible outcome/state`,
+      );
+      assert(
+        consequenceFingerprints[i] !== consequenceFingerprints[j],
+        `${mode}/${seed}: copy-only choice at decision ${decision}; ${branches[i]!.id} and ${branches[j]!.id} change wording but leave the same durable consequence state`,
+      );
+    }
+  }
+  return checked;
+}
+
 function run(mode: CareerMode, seed: number) {
   const old = Math.random;
   Math.random = rng(seed);
@@ -105,9 +153,8 @@ function run(mode: CareerMode, seed: number) {
       if ((s.flags[OPENING_PHASE] ?? OpeningPhase.DONE) === OpeningPhase.CLUB_CHOICE && !s.clubId) {
         const offers = s.offers.slice(0, 4);
         assert(offers.length >= 2, `${mode}/${seed}: fewer than two opening club offers`);
-        const fingerprints = offers.map((offer) => fingerprint(afterOpeningClubChoice(chooseClub(s, offer.clubId))));
-        assert(new Set(fingerprints).size === fingerprints.length, `${mode}/${seed}: at least two opening clubs produced the same consequence state`);
-        branchPairsChecked += (offers.length * (offers.length - 1)) / 2;
+        const branches = offers.map((offer) => ({ id: offer.clubId, state: afterOpeningClubChoice(chooseClub(s, offer.clubId)) }));
+        branchPairsChecked += assertAllBranchesDiverge(mode, seed, decisions + 1, branches);
         multiChoice += 1;
         fullyDivergent += 1;
         decisions += 1;
@@ -135,16 +182,7 @@ function run(mode: CareerMode, seed: number) {
         multiChoice += 1;
         const branchSeed = seed * 10000 + decisions * 97;
         const branches = ids.map((id) => ({ id, state: resolveChoice(s, id, branchSeed) }));
-        const fingerprints = branches.map((branch) => fingerprint(branch.state));
-        for (let i = 0; i < fingerprints.length; i += 1) {
-          for (let j = i + 1; j < fingerprints.length; j += 1) {
-            branchPairsChecked += 1;
-            assert(
-              fingerprints[i] !== fingerprints[j],
-              `${mode}/${seed}: decorative choices at decision ${decisions}; ${branches[i]!.id} and ${branches[j]!.id} produce the same outcome/state`,
-            );
-          }
-        }
+        branchPairsChecked += assertAllBranchesDiverge(mode, seed, decisions, branches);
         fullyDivergent += 1;
       }
 
@@ -155,7 +193,7 @@ function run(mode: CareerMode, seed: number) {
     assert(multiChoice >= 8, `${mode}/${seed}: only ${multiChoice} multi-choice decisions in first 15`);
     assert(fullyDivergent === multiChoice, `${mode}/${seed}: ${fullyDivergent}/${multiChoice} multi-choice decisions have all alternatives divergent`);
     assert(branchPairsChecked >= multiChoice, `${mode}/${seed}: insufficient pairwise branch coverage`);
-    console.log(`${mode}/${seed}: ${fullyDivergent}/${multiChoice} early multi-choice decisions diverge across every alternative (${branchPairsChecked} branch pairs checked)`);
+    console.log(`${mode}/${seed}: ${fullyDivergent}/${multiChoice} early multi-choice decisions have durable divergence across every alternative (${branchPairsChecked} branch pairs checked)`);
   } finally {
     Math.random = old;
   }
@@ -167,4 +205,4 @@ for (const mode of modes) {
   for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
 }
 
-console.log("CHOICE_CONSEQUENCE_DIVERGENCE_OK: 12 deterministic careers verify that every early non-match alternative, not only the first two, produces a distinct consequence state.");
+console.log("CHOICE_CONSEQUENCE_DIVERGENCE_OK: 12 deterministic careers verify that every early non-match alternative changes durable career state, not only consequence copy.");
