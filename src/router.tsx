@@ -15,7 +15,11 @@ export const getRouter = () => {
   const router = createRouter({
     routeTree,
     basepath,
-    trailingSlash: "never",
+    // GitHub Pages serves the generated SPA route fallbacks as directories and
+    // canonicalizes them with a trailing slash. Match that public URL shape so
+    // WebKit never has to arbitrate between Pages' canonical redirect and the
+    // router trying to remove the slash during hydration.
+    trailingSlash: portable ? "never" : "always",
     ...(usePortableHashHistory ? { history: createHashHistory() } : {}),
     context: { queryClient },
     scrollRestoration: true,
