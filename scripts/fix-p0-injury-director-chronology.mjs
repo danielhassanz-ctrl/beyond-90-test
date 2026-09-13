@@ -43,7 +43,7 @@ replaceOnce(
 
 replaceOnce(
   'if (seen(s, `${a.id}_c${a.chapter}`)) return false;\n    if (a.chapter === 0 && familyBlocked(s, ch.family)) return false;',
-  `if (seen(s, \`${a.id}_c${a.chapter}\`)) return false;
+  `if (seen(s, \`\${a.id}_c\${a.chapter}\`)) return false;
     const c = ctxOf(s, a);
     if (!injuryNarrativeCompatible(s, ch.family, ch.image, ch.category, ch.title(c), ch.text(c))) return false;
     if (a.chapter === 0 && familyBlocked(s, ch.family)) return false;`,
