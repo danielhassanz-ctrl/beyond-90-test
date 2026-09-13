@@ -85,6 +85,11 @@ async function expectNoHorizontalOverflow(page) {
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBeTruthy();
 }
 
+async function expectLegacyWealth(page) {
+  await expect(page.getByRole("definition").filter({ hasText: /^1\.734k €$/ })).toBeVisible();
+  await expect(page.locator("p").filter({ hasText: /^1\.734k €$/ })).toBeVisible();
+}
+
 test("iPhone WebKit keeps Life, Patrimony and Legacy connected through save reloads", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -123,14 +128,14 @@ test("iPhone WebKit keeps Life, Patrimony and Legacy connected through save relo
   await expect(page.getByText("Tomás Valera", { exact: true })).toBeVisible();
   await expect(page.locator("p").filter({ hasText: /^Entrenador$/ })).toBeVisible();
   await expect(page.getByText("96/100", { exact: true })).toBeVisible();
-  await expect(page.getByText("1.734k €", { exact: true })).toBeVisible();
+  await expectLegacyWealth(page);
   await expect(page.getByText(/Marca que acompañó tu carrera:/)).toContainText("Adidas QA");
   await expectNoHorizontalOverflow(page);
 
   await page.reload();
   await expect(page).toHaveURL(/\/legado\/?$/);
   await expect(page.getByText("Tomás Valera", { exact: true })).toBeVisible();
-  await expect(page.getByText("1.734k €", { exact: true })).toBeVisible();
+  await expectLegacyWealth(page);
 
   const persisted = await page.evaluate(([primaryKey, backupKey]) => {
     const primary = JSON.parse(localStorage.getItem(primaryKey));
