@@ -136,4 +136,4 @@ jobs:
       - name: iPhone WebKit save recovery, first-15 UI, Life/Patrimony/Legacy, avatar budget and sharing regression suite
         env:
           TEST_BASE_URL: http://127.0.0.1:4173/beyond-90-test/
-        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-first15.spec.cjs scripts/browser-life-patrimony-legacy.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs scripts/browser-freshest-slot-recovery.spec.cjs scripts/browser-dual-save-failure.spec.cjs scripts/browser-avatar-storage.spec.cjs scripts/browser-share.spec.cjs --browser=webkit --reporter=line
+        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-first15.spec.cjs scripts/browser-life-patrimony-legacy.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs scripts/browser-freshest-slot-recovery.spec.cjs scripts/browser-corrupt-primary-exact-recovery.spec.cjs scripts/browser-dual-save-failure.spec.cjs scripts/browser-avatar-storage.spec.cjs scripts/browser-share.spec.cjs --browser=webkit --reporter=line
