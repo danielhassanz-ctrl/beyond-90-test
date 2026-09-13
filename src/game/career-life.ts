@@ -1,5 +1,7 @@
 import {
+  careerSeed,
   ensureCast,
+  hash,
   type AdviserKind as NpcAdviserKind,
   type CareerCast as NpcCareerCast,
   type CastPerson,
@@ -18,13 +20,45 @@ export interface LegacyRelationshipHighlight {
   value: number;
 }
 
+const PROFESSIONAL_ADVISER_NAMES = [
+  "Javier Molina",
+  "Sergio Ferrer",
+  "Pablo Duarte",
+  "Marcos Salas",
+  "Álvaro Nieto",
+  "Rubén Peralta",
+];
+
+function repairProfessionalAdviserIdentity(s: GameState, cast: CareerCast): void {
+  if (cast.adviserKind !== "agent") return;
+  if (cast.adviser.name !== "Papá" && cast.adviser.name !== "Álex Romero") return;
+
+  const repairedName = PROFESSIONAL_ADVISER_NAMES[hash(careerSeed(s), "professional-adviser-repair") % PROFESSIONAL_ADVISER_NAMES.length]!;
+  cast.adviser.name = repairedName;
+  cast.adviser.role = "Representante";
+  s.agent.name = repairedName;
+  s.agentName = repairedName;
+  const adviserMemory = s.memory.npcs?.["adviser"];
+  if (adviserMemory) {
+    adviserMemory.name = repairedName;
+    adviserMemory.role = "Representante";
+  }
+}
+
 /**
  * Fachada narrativa del reparto persistente. La creación y migración viven
  * exclusivamente en npc.ts para que todo el juego comparta exactamente las
  * mismas identidades durante una carrera completa.
  */
 export function ensureCareerCast(s: GameState): CareerCast {
-  return ensureCast(s);
+  const cast = ensureCast(s);
+  // Opening adviser selection can deliberately replace a provisional father or
+  // family-friend adviser with a professional. Old code reused the already
+  // synchronized placeholder name (for example "Papá") and produced a
+  // professional representative literally called "Papá". Repair only those
+  // impossible placeholder identities; established save names remain untouched.
+  repairProfessionalAdviserIdentity(s, cast);
+  return cast;
 }
 
 /**
