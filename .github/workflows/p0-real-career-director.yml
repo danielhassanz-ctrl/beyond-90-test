@@ -13,6 +13,7 @@ on:
       - src/game/**
       - scripts/real-career-playtest-smoke.ts
       - scripts/first15-chronology-smoke.ts
+      - scripts/opening-intro-continuity-smoke.mjs
       - scripts/decision-state-coherence-smoke.ts
       - scripts/injury-director-chronology-smoke.ts
       - scripts/full-season-boredom-smoke.ts
@@ -59,6 +60,9 @@ jobs:
 
       - name: Mandatory life-first opening QA
         run: npm run qa:opening
+
+      - name: Opening/persistent-cast intro continuity
+        run: node scripts/opening-intro-continuity-smoke.mjs
 
       - name: Real-career first-15 human-style playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts

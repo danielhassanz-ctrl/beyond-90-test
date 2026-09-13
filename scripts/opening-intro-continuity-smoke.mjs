@@ -22,20 +22,37 @@ for (const [openingId, peopleFlag] of continuity) {
   if (!block.includes("setPhase(")) failures.push(`${openingId} does not advance the canonical opening phase`);
 }
 
+// The old smoke searched from the first textual occurrence of each OpeningPhase
+// token. Those tokens also exist in EVENT_BY_PHASE, so harmless edits could make
+// the gate fail even while setPhase() correctly consumed every legacy intro.
+// Inspect the canonical phase-transition function itself instead.
+const setPhaseStart = opening.indexOf("function setPhase(");
+const setPhaseEnd = opening.indexOf("\nfunction ", setPhaseStart + 10);
+const setPhaseBlock = setPhaseStart === -1
+  ? ""
+  : opening.slice(setPhaseStart, setPhaseEnd === -1 ? opening.length : setPhaseEnd);
+
+if (!setPhaseBlock) failures.push("missing canonical setPhase function");
+
 const expectedPhaseConsumption = [
-  ["OpeningPhase.CLUB_CHOICE", "people_adviser_intro"],
-  ["OpeningPhase.PRESEASON", "people_coach_intro"],
-  ["OpeningPhase.TEAMMATE", "people_captain_intro"],
-  ["OpeningPhase.PHYSIO", "people_teammate_intro"],
-  ["OpeningPhase.DONE", "people_physio_intro"],
+  ["OpeningPhase.CLUB_CHOICE", "people_adviser_intro", "==="],
+  ["OpeningPhase.PRESEASON", "people_coach_intro", "==="],
+  ["OpeningPhase.TEAMMATE", "people_captain_intro", "==="],
+  ["OpeningPhase.PHYSIO", "people_teammate_intro", "==="],
+  ["OpeningPhase.DONE", "people_physio_intro", ">="],
 ];
 
-for (const [phase, flag] of expectedPhaseConsumption) {
-  const phaseIndex = opening.indexOf(phase);
-  const flagIndex = opening.indexOf(`s.flags["${flag}"]`, phaseIndex);
-  if (phaseIndex === -1 || flagIndex === -1 || flagIndex - phaseIndex > 260) {
-    failures.push(`${flag} is not consumed when the mandatory opening completes ${phase}`);
+for (const [phase, flag, operator] of expectedPhaseConsumption) {
+  const condition = `value ${operator} ${phase}`;
+  const conditionIndex = setPhaseBlock.indexOf(condition);
+  const flagIndex = setPhaseBlock.indexOf(`s.flags["${flag}"]`, conditionIndex);
+  if (conditionIndex === -1 || flagIndex === -1 || flagIndex - conditionIndex > 180) {
+    failures.push(`${flag} is not consumed by canonical setPhase at ${phase}`);
   }
+}
+
+if (!setPhaseBlock.includes('s.flags["opening_completed"] = 1')) {
+  failures.push("opening_completed is not persisted by canonical setPhase");
 }
 
 if (failures.length) {
