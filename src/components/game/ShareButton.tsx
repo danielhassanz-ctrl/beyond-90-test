@@ -25,6 +25,7 @@ export function ShareButton({
   const [busy, setBusy] = useState(false);
   const [prepared, setPrepared] = useState<PreparedCareerCard | null>(null);
   const [preview, setPreview] = useState<{ url: string; text: string; canDownload: boolean } | null>(null);
+  const [previewStatus, setPreviewStatus] = useState<string | null>(null);
 
   const input = useMemo(
     () => ({
@@ -50,9 +51,9 @@ export function ShareButton({
   }, [input]);
 
   useEffect(() => {
-    return () => {
-      if (preview) URL.revokeObjectURL(preview.url);
-    };
+    if (!preview) return;
+    const url = preview.url;
+    return () => URL.revokeObjectURL(url);
   }, [preview]);
 
   return (
@@ -70,10 +71,9 @@ export function ShareButton({
             if (result.status === "shared") setStatus("Compartido.");
             else if (result.status === "cancelled") setStatus(null);
             else if (result.status === "preview") {
-              setPreview((old) => {
-                if (old) URL.revokeObjectURL(old.url);
-                return { url: result.url, text: result.text, canDownload: result.canDownload };
-              });
+              setStatus(null);
+              setPreviewStatus(null);
+              setPreview({ url: result.url, text: result.text, canDownload: result.canDownload });
             } else {
               const ok = await copyShareText(result.text);
               setStatus(ok ? "Texto copiado al portapapeles." : "No se ha podido compartir.");
@@ -92,7 +92,12 @@ export function ShareButton({
       {status && <p className="mt-2 text-center text-xs text-muted-foreground">{status}</p>}
 
       {preview && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-black/90 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-black/90 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vista previa de la career card"
+        >
           <img
             src={preview.url}
             alt="Career card de Beyond 90"
@@ -113,15 +118,20 @@ export function ShareButton({
             <button
               onClick={async () => {
                 const ok = await copyShareText(preview.text);
-                setStatus(ok ? "Texto copiado al portapapeles." : "No se ha podido copiar.");
+                setPreviewStatus(ok ? "Texto copiado al portapapeles." : "No se ha podido copiar.");
               }}
               className="rounded-xl border border-border px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em]"
             >
               Copiar texto
             </button>
+            {previewStatus && (
+              <p className="text-center text-xs text-muted-foreground" role="status">
+                {previewStatus}
+              </p>
+            )}
             <button
               onClick={() => {
-                URL.revokeObjectURL(preview.url);
+                setPreviewStatus(null);
                 setPreview(null);
               }}
               className="py-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"
