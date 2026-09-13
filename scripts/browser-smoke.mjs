@@ -8,18 +8,23 @@ const qaPlayerPng = Buffer.from(
 );
 const browser = await webkit.launch();
 const context = await browser.newContext({ ...devices["iPhone 14"] });
-const page = await context.newPage();
-page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
-page.on("response", (response) => {
-  if (response.status() >= 400) errors.push(`http ${response.status()}: ${response.url()}`);
-});
-page.on("console", (msg) => {
-  if (msg.type() === "error") {
-    const location = msg.location();
-    const source = location?.url ? ` @ ${location.url}${location.lineNumber != null ? `:${location.lineNumber}` : ""}` : "";
-    errors.push(`console: ${msg.text()}${source}`);
-  }
-});
+let page = await context.newPage();
+
+function attachDiagnostics(targetPage) {
+  targetPage.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
+  targetPage.on("response", (response) => {
+    if (response.status() >= 400) errors.push(`http ${response.status()}: ${response.url()}`);
+  });
+  targetPage.on("console", (msg) => {
+    if (msg.type() === "error") {
+      const location = msg.location();
+      const source = location?.url ? ` @ ${location.url}${location.lineNumber != null ? `:${location.lineNumber}` : ""}` : "";
+      errors.push(`console: ${msg.text()}${source}`);
+    }
+  });
+}
+
+attachDiagnostics(page);
 
 const saveKey = "beyond90:save:v1";
 const backupKey = `${saveKey}:backup`;
@@ -224,11 +229,16 @@ try {
   }
 
   // Retirement above is injected outside React purely to keep this end-to-end smoke short.
-  // Open the canonical direct route as a fresh document before testing post-career controls.
-  // Pages canonicalizes SPA directories with a trailing slash, so target that URL directly
-  // instead of creating a redirect race in WebKit after the history transition.
+  // Rehydrate the canonical legacy route in a genuinely fresh document while preserving
+  // the same browser context/storage. Reusing page.goto() on the already-current URL lets
+  // WebKit race the router's canonical navigation against the explicit navigation, which
+  // tests navigation arbitration rather than save rehydration.
   const legacyURL = new URL("legado/", baseURL).href;
+  const previousPage = page;
+  page = await context.newPage();
+  attachDiagnostics(page);
   await page.goto(legacyURL, { waitUntil: "domcontentloaded", timeout: 30_000 });
+  await previousPage.close();
   const legacyState = await saved();
   if (!legacyState?.retired) throw new Error("legacy route lost retired state after rehydrate");
   await page.getByText("Después del fútbol", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
