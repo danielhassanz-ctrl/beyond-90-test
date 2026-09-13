@@ -10,6 +10,7 @@ const context = await browser.newContext({ ...devices["iPhone 13"] });
 
 await context.addInitScript(() => {
   window.__b90ShareCalls = [];
+  window.__b90ClipboardWrites = [];
   Object.defineProperty(navigator, "canShare", {
     configurable: true,
     value: (data) => Boolean(data && Array.isArray(data.files) && data.files.length),
@@ -24,6 +25,14 @@ await context.addInitScript(() => {
       };
       window.__b90ShareCalls.push(snapshot);
       if (snapshot.hasFiles) throw new Error("QA forced file-share failure");
+    },
+  });
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: {
+      writeText: async (text) => {
+        window.__b90ClipboardWrites.push(text);
+      },
     },
   });
 });
@@ -68,17 +77,32 @@ try {
   const shareButton = page.getByRole("button", { name: "Compartir mi carrera" });
   await shareButton.waitFor({ state: "visible", timeout: 10_000 });
   await shareButton.click();
-  await page.getByText("Compartido.", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+
+  const preview = page.getByRole("dialog", { name: "Vista previa de la career card" });
+  await preview.waitFor({ state: "visible", timeout: 10_000 });
+  await preview.getByAltText("Career card de Beyond 90").waitFor({ state: "visible", timeout: 10_000 });
+  if ((await preview.getByRole("button", { name: "Descargar PNG" }).count()) !== 0) {
+    throw new Error("iPhone preview unexpectedly offered direct PNG download");
+  }
 
   const calls = await page.evaluate(() => window.__b90ShareCalls || []);
-  if (calls.length !== 2) throw new Error(`expected file-share attempt plus text fallback, got ${calls.length}`);
-  if (!calls[0]?.hasFiles) throw new Error("first share attempt did not include generated PNG");
-  if (calls[1]?.hasFiles) throw new Error("text fallback unexpectedly included files");
-  if (!/BEYOND 90/i.test(calls[1]?.text || "")) throw new Error("text fallback did not include Beyond 90 share copy");
-  if (calls[1]?.title !== "BEYOND 90") throw new Error(`unexpected share title: ${calls[1]?.title || "<empty>"}`);
+  if (calls.length !== 1) throw new Error(`expected exactly one native share attempt, got ${calls.length}`);
+  if (!calls[0]?.hasFiles) throw new Error("native share attempt did not include generated PNG");
+  if (!/BEYOND 90/i.test(calls[0]?.text || "")) throw new Error("native share attempt did not include Beyond 90 copy");
+  if (calls[0]?.title !== "BEYOND 90") throw new Error(`unexpected share title: ${calls[0]?.title || "<empty>"}`);
+
+  await preview.getByRole("button", { name: "Copiar texto" }).click();
+  await preview.getByText("Texto copiado al portapapeles.", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+  const clipboardWrites = await page.evaluate(() => window.__b90ClipboardWrites || []);
+  if (clipboardWrites.length !== 1 || !/BEYOND 90/i.test(clipboardWrites[0] || "")) {
+    throw new Error("preview copy fallback did not preserve Beyond 90 share copy");
+  }
+
+  await preview.getByRole("button", { name: "Cerrar" }).click();
+  await preview.waitFor({ state: "hidden", timeout: 10_000 });
   if (errors.length) throw new Error(errors.join(" | "));
 
-  console.log("SHARE_FALLBACK_WEBKIT_OK fileAttempt=1 textFallback=1 status=shared avatar=required");
+  console.log("SHARE_FALLBACK_WEBKIT_OK fileAttempt=1 preview=1 copyFallback=1 avatar=required");
 } finally {
   await browser.close();
 }
