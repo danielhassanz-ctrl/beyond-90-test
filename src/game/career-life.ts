@@ -38,9 +38,10 @@ function repairProfessionalAdviserIdentity(s: GameState, cast: CareerCast): void
   cast.adviser.role = "Representante";
   s.agent.name = repairedName;
   s.agentName = repairedName;
-  if (s.memory.npcs?.adviser) {
-    s.memory.npcs.adviser.name = repairedName;
-    s.memory.npcs.adviser.role = "Representante";
+  const adviserMemory = s.memory.npcs?.["adviser"];
+  if (adviserMemory) {
+    adviserMemory.name = repairedName;
+    adviserMemory.role = "Representante";
   }
 }
 
