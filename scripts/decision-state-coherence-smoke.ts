@@ -1,4 +1,4 @@
-import { ensureCareerCast } from "../src/game/career-life";
+import { ensureCareerCast, plausibleMoneyScale } from "../src/game/career-life";
 import { advance, chooseClub, createGame, resolveDynamicCard, resolveEvent, resolveMatch } from "../src/game/engine";
 import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
@@ -54,6 +54,7 @@ function assertStateCoherence(s: GameState, mode: CareerMode, seed: number, deci
   const p = s.pending;
   if (!p || p.type === "season") return;
   const tag = `${mode}/${seed}/decision-${decision}`;
+  const copy = visibleCopy(s);
 
   if (p.type === "match") {
     assert(!s.injury, `${tag}: match surfaced while injured (${s.injury?.label ?? "unknown injury"})`);
@@ -68,9 +69,16 @@ function assertStateCoherence(s: GameState, mode: CareerMode, seed: number, deci
   }
 
   if (s.age <= 17) {
-    const copy = visibleCopy(s);
     assert(!/bal[oó]n de oro|champions|selecci[oó]n absoluta|contrato millonario|salario millonario|cobra(?:s)? millones|arabia/i.test(copy), `${tag}: elite/status copy leaked at age ${s.age}: ${copy.slice(0, 180)}`);
   }
+
+  const moneyScale = plausibleMoneyScale(s);
+  if (moneyScale === "youth" || moneyScale === "pro") {
+    assert(!/contrato millonario|salario millonario|cobra(?:s)? (?:varios )?millones|mansi[oó]n de \d+ millones|patrimonio de \d+ millones/i.test(copy), `${tag}: money/status copy exceeds ${moneyScale} scale: ${copy.slice(0, 180)}`);
+  }
+
+  assert(Number.isFinite(s.salary) && s.salary >= 0, `${tag}: impossible salary ${s.salary}`);
+  if (typeof s.wealth === "number") assert(Number.isFinite(s.wealth) && s.wealth >= 0, `${tag}: impossible wealth ${s.wealth}`);
 }
 
 function resolveCurrent(s: GameState): GameState {
@@ -103,6 +111,9 @@ function run(mode: CareerMode, seed: number) {
     const expectedCoach = fixedCast.coach.name;
     const expectedCaptain = fixedCast.captain.name;
     const expectedPhysio = fixedCast.physio.name;
+    const expectedTeammate = fixedCast.teammate.name;
+    const expectedSocial = fixedCast.social.name;
+    const expectedPartner = fixedCast.partner.name;
 
     let meaningful = 0;
     let guard = 0;
@@ -152,6 +163,10 @@ function run(mode: CareerMode, seed: number) {
       assert(cast.coach.name === expectedCoach, `${mode}/${seed}: coach drift ${expectedCoach} -> ${cast.coach.name}`);
       assert(cast.captain.name === expectedCaptain, `${mode}/${seed}: captain drift ${expectedCaptain} -> ${cast.captain.name}`);
       assert(cast.physio.name === expectedPhysio, `${mode}/${seed}: physio drift ${expectedPhysio} -> ${cast.physio.name}`);
+      assert(cast.teammate.name === expectedTeammate, `${mode}/${seed}: teammate drift ${expectedTeammate} -> ${cast.teammate.name}`);
+      assert(cast.social.name === expectedSocial, `${mode}/${seed}: social-contact drift ${expectedSocial} -> ${cast.social.name}`);
+      assert(cast.partner.name === expectedPartner, `${mode}/${seed}: partner drift ${expectedPartner} -> ${cast.partner.name}`);
+      assert(cast.social.name !== cast.partner.name, `${mode}/${seed}: social contact and partner collapsed to the same identity (${cast.social.name})`);
     }
 
     assert(meaningful === 15, `${mode}/${seed}: only ${meaningful} meaningful decisions reached`);
@@ -163,4 +178,4 @@ function run(mode: CareerMode, seed: number) {
 const modes: CareerMode[] = ["express", "standard", "pro"];
 const seeds = [71, 808, 4096, 65537];
 for (const mode of modes) for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
-console.log("DECISION_STATE_COHERENCE_OK: 12 deterministic careers keep injury, age/status, competition and persistent-cast state coherent for the first 15 meaningful decisions.");
+console.log("DECISION_STATE_COHERENCE_OK: 12 deterministic careers keep injury, age/status, money, competition and full persistent-cast state coherent for the first 15 meaningful decisions.");
