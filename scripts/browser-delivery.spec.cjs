@@ -127,12 +127,15 @@ test("iPhone WebKit restores the last valid backup after primary corruption", as
   await page.evaluate((key) => localStorage.setItem(key, "{corrupt-save"), SAVE_KEY);
   await page.reload();
   await expect(page).toHaveURL(/\/historia\/?$/);
+  // The save is healed by GameProvider.read() in a mount effect. Waiting for the
+  // recovered scene proves hydration has completed before we inspect localStorage;
+  // polling the slot keeps the assertion strict without racing WebKit/React startup.
+  await expect(page.getByRole("heading", { name: "No firmas hasta entenderlo" })).toBeVisible();
   await expect(page.getByText("Cargando carrera…")).toHaveCount(0);
-  const healed = await page.evaluate((key) => {
+  await expect.poll(async () => page.evaluate((key) => {
     const raw = localStorage.getItem(key);
     try { return Boolean(raw && JSON.parse(raw)); } catch { return false; }
-  }, SAVE_KEY);
-  expect(healed).toBeTruthy();
+  }, SAVE_KEY)).toBeTruthy();
   const recovered = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
   expect(recovered.player.avatar).toMatch(/^data:image\//);
   expect(pageErrors).toEqual([]);
