@@ -66,22 +66,39 @@ function parseSave(raw: string | null): GameState | null {
   }
 }
 
+function saveFreshness(state: GameState | null): number {
+  if (!state) return -1;
+  const updatedAt = Number(state.updatedAt);
+  if (Number.isFinite(updatedAt) && updatedAt > 0) return updatedAt;
+  const createdAt = Number(state.createdAt);
+  return Number.isFinite(createdAt) && createdAt > 0 ? createdAt : 0;
+}
+
 function read(): GameState | null {
   try {
     const primaryRaw = localStorage.getItem(SAVE_KEY);
-    const primary = parseSave(primaryRaw);
-    if (primary) {
-      const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
-      if (backupRaw !== primaryRaw) {
-        try { localStorage.setItem(BACKUP_SAVE_KEY, primaryRaw as string); } catch {}
-      }
-      return primary;
-    }
     const backupRaw = localStorage.getItem(BACKUP_SAVE_KEY);
+    const primary = parseSave(primaryRaw);
     const backup = parseSave(backupRaw);
-    if (!backup) return null;
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(backup)); } catch {}
-    return backup;
+
+    if (!primary && !backup) return null;
+
+    // Both slots are independent crash-recovery copies. A valid primary is not
+    // automatically authoritative: Safari or an interrupted older build can leave
+    // a stale primary beside a newer valid backup. Always recover the freshest
+    // timestamped state, then heal the other slot from that same raw snapshot.
+    const useBackup = !!backup && (!primary || saveFreshness(backup) > saveFreshness(primary));
+    const freshest = useBackup ? backup : primary;
+    const freshestRaw = useBackup ? backupRaw : primaryRaw;
+    if (!freshest || !freshestRaw) return freshest;
+
+    if (primaryRaw !== freshestRaw) {
+      try { localStorage.setItem(SAVE_KEY, freshestRaw); } catch {}
+    }
+    if (backupRaw !== freshestRaw) {
+      try { localStorage.setItem(BACKUP_SAVE_KEY, freshestRaw); } catch {}
+    }
+    return freshest;
   } catch {
     return null;
   }
@@ -104,10 +121,9 @@ function write(state: GameState | null): boolean {
   try { localStorage.setItem(BACKUP_SAVE_KEY, raw); backupSaved = true; } catch {}
 
   // If Safari rejects only the primary write, leaving the old primary in place is
-  // dangerous: read() intentionally prefers a valid primary and would overwrite
-  // the newer backup with that stale snapshot on the next reload. Remove the stale
-  // primary after a successful backup write so recovery necessarily promotes the
-  // freshest state back into the primary slot.
+  // dangerous: read() intentionally prefers the freshest valid slot. Remove the
+  // stale primary after a successful backup write so recovery cannot regress even
+  // on legacy saves without trustworthy timestamps.
   if (!primarySaved && backupSaved) {
     try { localStorage.removeItem(SAVE_KEY); } catch {}
   }
