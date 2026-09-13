@@ -1,0 +1,130 @@
+name: Beyond 90 corrupt save recovery gate
+
+on:
+  push:
+    branches:
+      - main
+      - "v1-*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  webkit-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install app dependencies from lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Install pinned Playwright WebKit
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Verify lockfile stayed unchanged
+        run: git diff --exit-code -- package-lock.json
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Full career QA
+        run: npm run qa:career
+
+      - name: Branch narrative QA
+        run: npm run qa:branches
+
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+
+      - name: Build Pages SPA
+        env:
+          DEPLOY_BASE: /beyond-90-test/
+        run: npm run build
+
+      - name: Prepare Pages base-path preview
+        run: |
+          set -euo pipefail
+          test -f dist/client/_shell.html
+          rm -rf dist/client/beyond-90-test
+          mkdir -p dist/client/beyond-90-test
+          cp dist/client/_shell.html dist/client/beyond-90-test/index.html
+          cp dist/client/_shell.html dist/client/beyond-90-test/404.html
+          cp -R dist/client/assets dist/client/beyond-90-test/assets
+
+      - name: Start production preview
+        run: |
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/beyond-90-test/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+
+      - name: Corrupt-primary recovery on iPhone WebKit
+        env:
+          TEST_BASE_URL: http://127.0.0.1:4173/beyond-90-test/
+        run: npx playwright test scripts/browser-corrupt-primary-recovery.spec.cjs --browser=webkit --reporter=line
+
+  live-https-recovery:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: webkit-recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install app dependencies from lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Install pinned Playwright WebKit
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Verify lockfile stayed unchanged
+        run: git diff --exit-code -- package-lock.json
+
+      - name: Wait for exact commit on public HTTPS
+        env:
+          PUBLIC_URL: https://danielhassanz-ctrl.github.io/beyond-90-test/
+        run: |
+          set -euo pipefail
+          base="${PUBLIC_URL%/}"
+          observed=""
+          for i in {1..120}; do
+            observed="$(curl --fail --silent --show-error --location -H 'Cache-Control: no-cache' "$base/__build_sha.txt?sha=$GITHUB_SHA&attempt=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$observed" = "$GITHUB_SHA" ]; then
+              exit 0
+            fi
+            echo "Waiting for Pages commit: expected=$GITHUB_SHA observed=${observed:-missing} attempt=$i"
+            sleep 3
+          done
+          echo "Public HTTPS never served expected commit: expected=$GITHUB_SHA observed=${observed:-missing}"
+          exit 1
+
+      - name: Corrupt-primary recovery on public iPhone WebKit
+        env:
+          TEST_BASE_URL: https://danielhassanz-ctrl.github.io/beyond-90-test/
+        run: npx playwright test scripts/browser-corrupt-primary-recovery.spec.cjs --browser=webkit --reporter=line
