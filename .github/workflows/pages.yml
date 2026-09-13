@@ -68,6 +68,9 @@ jobs:
       - name: Forced injured-player Story Director chronology
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/injury-director-chronology-smoke.ts
 
+      - name: Exact Betis injured match-flash regression
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/betis-injury-match-flash-regression-smoke.ts
+
       - name: Full-season boredom and coherence QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
 
