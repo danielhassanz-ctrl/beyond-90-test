@@ -14,12 +14,21 @@ For 12 deterministic new-career seeds split across Express / Standard / Pro, rec
 - No repeated `match_flash` family within the first 15 decisions.
 - No repeated routine minor-injury diagnosis (for example two independent `Sobrecarga muscular` decisions) in the first 15; a recurrence must be an explicitly authored escalation such as a named relapse with new consequences.
 - No red-card incident while the current state says the player is unavailable through injury.
+- No Story Director match/training/on-field scene while `injury != null`, unless the card is an explicit pre-injury flashback whose chronology is visible to the player.
 - No more than two consecutive decisions from the same narrative family.
 - Passive matches without an interactive key moment do not count as meaningful decisions.
 - Persistent adviser, coach, captain and physio names remain unchanged.
 - At least five distinct decision families appear among the first 15 decisions.
 - At least one personal/family/life decision and one football-development decision appear after the opening.
 - No elite money, sponsorship, Europe or senior-national-team scene without prerequisites.
+
+## Injury availability probe
+
+In addition to ordinary playthroughs, force a treated medium injury across deterministic youth and senior career states and repeatedly query the same Story Director used by the shipped game.
+
+Fail if the rendered scene requires current football participation: match, normal training, substitution, red card, goal, tactical duel, derby incident, full training drill or equivalent on-field activity. Medical/rehab and genuinely off-field scenes remain eligible when their own prerequisites are satisfied.
+
+This probe must cover at least 12 deterministic injured-career states and must render actual Director views; checking only pending match cards is insufficient.
 
 ## Full-season boredom checks
 
@@ -32,7 +41,7 @@ Fail if any of these are observed:
 - a routine minor injury immediately recurs after recovery instead of allowing a recovery/cooldown window;
 - a callback that only repeats the original event instead of changing the situation;
 - a simulated background run produces a decision card even though nothing career-changing happened;
-- an injured player receives an on-field incident that requires him to have played during the injury window.
+- an injured player receives any present-tense football participation scene during the injury window, including a Story Director scene that is not technically a match card.
 
 ## Full-career sampling
 
@@ -48,4 +57,4 @@ Across multiple seeds to retirement, log and reject:
 
 ## Release rule
 
-Passing typecheck/build/WebKit does not mean the narrative build is acceptable. The narrative build is testable only when this gate and the automated anti-repetition suite are both green.
+Passing typecheck/build/WebKit does not mean the narrative build is acceptable. The narrative build is testable only when this gate, the forced injury-availability probe and the automated anti-repetition suite are all green.
