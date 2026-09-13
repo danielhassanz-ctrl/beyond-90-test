@@ -1,0 +1,36 @@
+name: P0 injury Story Director chronology
+
+on:
+  push:
+    branches:
+      - p0-first15-state-chronology
+    paths:
+      - src/game/director.ts
+      - scripts/injury-director-chronology-smoke.ts
+      - .github/workflows/p0-injury-director-chronology.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/game/director.ts
+      - scripts/injury-director-chronology-smoke.ts
+      - .github/workflows/p0-injury-director-chronology.yml
+
+permissions:
+  contents: read
+
+jobs:
+  injury-chronology:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Injured-player Story Director chronology
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/injury-director-chronology-smoke.ts
