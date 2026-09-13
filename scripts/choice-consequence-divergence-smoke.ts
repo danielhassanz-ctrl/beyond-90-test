@@ -31,16 +31,11 @@ function player(seed: number): Player {
   };
 }
 
-/**
- * Player-visible fingerprint. Useful for proving two branches do not simply
- * render the exact same consequence card.
- */
+/** Player-visible fingerprint: copy plus every durable consequence below. */
 function fingerprint(s: GameState): string {
-  const cast = ensureCareerCast(s);
   return JSON.stringify({
     outcome: s.lastOutcome ? { title: s.lastOutcome.title, text: s.lastOutcome.text, tone: s.lastOutcome.tone } : null,
     consequence: consequenceFingerprint(s),
-    adviser: { kind: cast.adviserKind, name: cast.adviser.name },
   });
 }
 
@@ -48,9 +43,22 @@ function fingerprint(s: GameState): string {
  * Durable consequence fingerprint deliberately excludes lastOutcome copy.
  * A choice is not meaningful merely because its title/text changes: at least
  * one persistent football/life/relationship/memory fact must diverge.
+ *
+ * Persistent cast relationships are first-class state. This matters in the
+ * opening: choosing warmth, professional distance or rivalry with a teammate
+ * already changes that named person's relation even when the legacy aggregate
+ * `rel.dressing` does not move.
  */
 function consequenceFingerprint(s: GameState): string {
   const cast = ensureCareerCast(s);
+  const person = (p: typeof cast.coach) => ({
+    id: p.id,
+    name: p.name,
+    role: p.role,
+    relation: p.relation,
+    met: p.met,
+    lastContactScene: p.lastContactScene,
+  });
   return JSON.stringify({
     overall: s.overall,
     form: s.form,
@@ -66,7 +74,17 @@ function consequenceFingerprint(s: GameState): string {
     stage: s.stage,
     clubId: s.clubId,
     injury: s.injury,
-    adviser: { kind: cast.adviserKind, name: cast.adviser.name, role: cast.adviser.role },
+    cast: {
+      adviserKind: cast.adviserKind,
+      adviser: person(cast.adviser),
+      coach: person(cast.coach),
+      physio: person(cast.physio),
+      captain: person(cast.captain),
+      teammate: person(cast.teammate),
+      social: person(cast.social),
+      partner: person(cast.partner),
+      clubScope: cast.clubScope ?? null,
+    },
     promises: [...(s.memory.promises ?? [])].slice(0, 8),
     conflicts: [...(s.memory.conflicts ?? [])].slice(0, 8),
     rejectedClubs: [...(s.memory.rejectedClubs ?? [])].slice(0, 8),
@@ -205,4 +223,4 @@ for (const mode of modes) {
   for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
 }
 
-console.log("CHOICE_CONSEQUENCE_DIVERGENCE_OK: 12 deterministic careers verify that every early non-match alternative changes durable career state, not only consequence copy.");
+console.log("CHOICE_CONSEQUENCE_DIVERGENCE_OK: 12 deterministic careers verify that every early non-match alternative changes durable career state, including persistent named relationships, not only consequence copy.");
