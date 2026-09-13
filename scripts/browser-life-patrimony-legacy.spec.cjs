@@ -121,7 +121,7 @@ test("iPhone WebKit keeps Life, Patrimony and Legacy connected through save relo
   await page.getByRole("link", { name: "Legado", exact: true }).click();
   await expect(page).toHaveURL(/\/legado\/?$/);
   await expect(page.getByText("Tomás Valera", { exact: true })).toBeVisible();
-  await expect(page.getByText("Entrenador", { exact: true })).toBeVisible();
+  await expect(page.locator("p").filter({ hasText: /^Entrenador$/ })).toBeVisible();
   await expect(page.getByText("96/100", { exact: true })).toBeVisible();
   await expect(page.getByText("1.734k €", { exact: true })).toBeVisible();
   await expect(page.getByText(/Marca que acompañó tu carrera:/)).toContainText("Adidas QA");
