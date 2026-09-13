@@ -10,6 +10,7 @@ import { postCareerStatus, type PostCareerPath, type PostCareerStyle } from "@/g
 import { useGame } from "@/game/store";
 import type { GameState } from "@/game/types";
 import { cn } from "@/lib/utils";
+import { formatGroupedInteger } from "@/lib/format";
 
 export const Route = createFileRoute("/legado")({
   head: () => ({
@@ -104,7 +105,7 @@ function Legacy({ state }: { state: GameState }) {
             { k: "Asist.", v: summary.assists },
             { k: "Media máx.", v: summary.peakOverall },
             { k: "Títulos", v: summary.titles.length },
-            { k: "Patrimonio", v: `${summary.wealth}k €` },
+            { k: "Patrimonio", v: `${formatGroupedInteger(summary.wealth)}k €` },
           ].map((x) => (
             <div key={x.k} className="rounded-lg border border-border bg-surface-2 p-2">
               <dd className="font-num text-lg font-bold">{x.v}</dd>
@@ -138,8 +139,8 @@ function Legacy({ state }: { state: GameState }) {
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-lg border border-border bg-surface-2 p-3">
             <p className="text-kicker">Patrimonio neto</p>
-            <p className="mt-1 font-num text-lg font-bold">{Math.round(net).toLocaleString("es-ES")}k €</p>
-            <p className="mt-1 text-xs text-muted-foreground">{debt > 0 ? `Deuda: ${Math.round(debt).toLocaleString("es-ES")}k €` : "Sin deuda pendiente"}</p>
+            <p className="mt-1 font-num text-lg font-bold">{formatGroupedInteger(net)}k €</p>
+            <p className="mt-1 text-xs text-muted-foreground">{debt > 0 ? `Deuda: ${formatGroupedInteger(debt)}k €` : "Sin deuda pendiente"}</p>
           </div>
           <div className="rounded-lg border border-border bg-surface-2 p-3">
             <p className="text-kicker">Vínculo más fuerte</p>

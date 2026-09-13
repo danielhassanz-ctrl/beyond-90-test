@@ -3,6 +3,7 @@ import { GameShell } from "@/components/game/GameShell";
 import { ensureFinance, netWorth, totalDebt } from "@/game/finance";
 import { clubById } from "@/game/data";
 import type { GameState } from "@/game/types";
+import { formatGroupedInteger } from "@/lib/format";
 
 export const Route = createFileRoute("/patrimonio")({
   head: () => ({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/patrimonio")({
   component: () => <GameShell>{({ state }) => <Wealth state={state} />}</GameShell>,
 });
 
-const k = (n: number) => `${Math.round(n).toLocaleString("es-ES")}.000 €`;
+const k = (n: number) => `${formatGroupedInteger(n)}.000 €`;
 
 const DECISION_LABELS: Record<string, string> = {
   piso_alquiler: "Te independizaste",
