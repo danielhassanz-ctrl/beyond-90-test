@@ -110,7 +110,7 @@ Forbidden:
 
 A callback is allowed only if it **advances** the story: new actor response, changed role, delayed consequence, relationship shift, contract effect, family effect, etc.
 
-## 8. Match and simulation policy
+## 8. Match, injury and simulation policy
 
 Key matches are selective. Simulated blocks are background, not filler decisions.
 
@@ -118,7 +118,9 @@ A background simulation should normally produce **no card**. It may surface a ca
 
 `match_flash` is not allowed as a reusable generic decision source. If the engine detects repeated flash families/titles/options, it should suppress them and advance time.
 
-If `injury != null`, the player cannot simultaneously receive a simulated red-card/played-match incident unless the chronology explicitly places that incident before the injury and the UI communicates that order.
+If `injury != null`, the player is unavailable. Until recovery is recorded, neither the match engine nor the Story Director may surface a present-tense scene that requires the player to be on the pitch or in normal training: matches, red cards, goals, substitutions, tactical duels, full training drills, derby incidents or equivalent football participation are ineligible. Medical, rehab, family, agent, contract, dressing-room, media and other genuinely off-field scenes may continue when their own prerequisites are valid.
+
+The only exception is an explicitly authored flashback whose chronology proves that the football incident happened **before** the injury and whose UI makes that ordering unambiguous. A generic card or ambiguous past-tense sentence is not enough.
 
 ## 9. Decision density
 
@@ -174,6 +176,7 @@ For at least 12 deterministic seeds across all three pacing modes:
 - verify no duplicate title/text/choice set
 - verify at least 5 distinct decision families among first 15 decisions
 - verify no impossible status/money/competition scene
+- verify injury availability against the **rendered Story Director scene**, not only against match cards
 
 ### First-season boredom test
 
@@ -183,7 +186,7 @@ For the same careers:
 - no generic flash family appears more than once unless a distinctly authored escalation exists
 - no three-card repetition loop
 - no more than two consecutive decisions from the same narrative family
-- no contradiction between injury availability and match incidents
+- no contradiction between injury availability and any rendered football participation scene
 - at least one personal-life/family/relationship decision and one football-development decision after the opening
 
 ### Full-career sampling
