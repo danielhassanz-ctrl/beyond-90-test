@@ -37,6 +37,29 @@ async function savedState(page) {
   }, SAVE_KEY);
 }
 
+function stateSnapshot(state) {
+  const cast = state.memory?.careerCast;
+  return {
+    age: state.age,
+    stage: state.stage,
+    clubId: state.clubId || "",
+    salary: state.salary,
+    wealth: state.wealth,
+    injury: state.injury?.label || null,
+    cast: cast
+      ? {
+          adviser: cast.adviser?.name || "",
+          coach: cast.coach?.name || "",
+          captain: cast.captain?.name || "",
+          physio: cast.physio?.name || "",
+          teammate: cast.teammate?.name || "",
+          social: cast.social?.name || "",
+          partner: cast.partner?.name || "",
+        }
+      : null,
+  };
+}
+
 async function startDeterministicCareer(page, seed) {
   await page.addInitScript((initialSeed) => {
     let x = initialSeed >>> 0;
@@ -71,7 +94,7 @@ async function captureChoiceScene(page, state, seen) {
   const choices = await article.locator(".space-y-2\\.5 > button").allTextContents();
   const labels = choices.map((choice) => choice.trim()).filter(Boolean);
   expect(labels.length, `no choices rendered for ${state.pending?.type}:${state.pending?.eventId || state.pending?.kind || "unknown"}`).toBeGreaterThan(0);
-  seen.push({ title, text, choices: labels, pending: state.pending });
+  seen.push({ title, text, choices: labels, pending: state.pending, state: stateSnapshot(state) });
   await article.locator(".space-y-2\\.5 > button").first().click();
 }
 
@@ -82,10 +105,17 @@ async function playFirst15(page) {
   while (seen.length < 15 && guard++ < 180) {
     if (/\/cantera\/?$/.test(page.url())) {
       await expect(page.getByRole("heading", { name: "Ahora sí: cuatro caminos" })).toBeVisible();
+      const state = await savedState(page);
       const offers = page.locator("ul > li > button");
       await expect(offers).toHaveCount(4);
       const labels = (await offers.allTextContents()).map((x) => x.trim());
-      seen.push({ title: "Ahora sí: cuatro caminos", text: labels.join(" | "), choices: labels, pending: { type: "club_choice" } });
+      seen.push({
+        title: "Ahora sí: cuatro caminos",
+        text: labels.join(" | "),
+        choices: labels,
+        pending: { type: "club_choice" },
+        state: stateSnapshot(state),
+      });
       await offers.first().click();
       await page.getByRole("button", { name: "Sentarnos a negociar con este club" }).click();
       await expect(page).toHaveURL(/\/historia\/?$/);
@@ -135,6 +165,7 @@ async function playFirst15(page) {
           text: prompt,
           choices,
           pending,
+          state: stateSnapshot(state),
         });
         await article.locator(".space-y-2\\.5 > button").first().click();
       } else {
@@ -153,6 +184,9 @@ async function playFirst15(page) {
 function assertFirst15Quality(seen) {
   const titles = new Set();
   const triples = new Set();
+  let personalCast = null;
+  const clubCast = new Map();
+
   for (let i = 0; i < seen.length; i++) {
     const current = seen[i];
     const titleKey = norm(current.title);
@@ -171,10 +205,57 @@ function assertFirst15Quality(seen) {
         expect(similarity(current.text, previous.text), `near-duplicate UI scene: ${previous.title} -> ${current.title}`).toBeLessThan(0.86);
       }
     }
+
+    const snapshot = current.state;
+    expect(Number.isFinite(snapshot.salary) && snapshot.salary >= 0, `impossible UI salary at decision ${i + 1}: ${snapshot.salary}`).toBeTruthy();
+    if (typeof snapshot.wealth === "number") {
+      expect(Number.isFinite(snapshot.wealth) && snapshot.wealth >= 0, `impossible UI wealth at decision ${i + 1}: ${snapshot.wealth}`).toBeTruthy();
+    }
+
+    if (snapshot.age <= 17) {
+      expect(current.text, `elite/status copy leaked into UI at age ${snapshot.age}: ${current.title}`).not.toMatch(/bal[oó]n de oro|champions|selecci[oó]n absoluta|contrato millonario|salario millonario|cobra(?:s)? millones|arabia/i);
+    }
+    if (snapshot.stage === "youth" || snapshot.age <= 18) {
+      expect(current.text, `money/status copy exceeds youth scale in UI: ${current.title}`).not.toMatch(/contrato millonario|salario millonario|cobra(?:s)? (?:varios )?millones|mansi[oó]n de \d+ millones|patrimonio de \d+ millones/i);
+    }
+
+    expect(snapshot.cast, `persistent cast missing from save at UI decision ${i + 1}`).toBeTruthy();
+    expect(snapshot.cast.social, `social contact missing at UI decision ${i + 1}`).toBeTruthy();
+    expect(snapshot.cast.partner, `partner missing at UI decision ${i + 1}`).toBeTruthy();
+    expect(snapshot.cast.social, `social contact and partner collapsed at UI decision ${i + 1}`).not.toBe(snapshot.cast.partner);
+
+    if (!personalCast) {
+      personalCast = {
+        adviser: snapshot.cast.adviser,
+        social: snapshot.cast.social,
+        partner: snapshot.cast.partner,
+      };
+    } else {
+      expect(snapshot.cast.adviser, `adviser name drift at UI decision ${i + 1}`).toBe(personalCast.adviser);
+      expect(snapshot.cast.social, `social-contact name drift at UI decision ${i + 1}`).toBe(personalCast.social);
+      expect(snapshot.cast.partner, `partner name drift at UI decision ${i + 1}`).toBe(personalCast.partner);
+    }
+
+    if (snapshot.clubId) {
+      const fixed = clubCast.get(snapshot.clubId);
+      const currentClubCast = {
+        coach: snapshot.cast.coach,
+        captain: snapshot.cast.captain,
+        physio: snapshot.cast.physio,
+        teammate: snapshot.cast.teammate,
+      };
+      if (!fixed) clubCast.set(snapshot.clubId, currentClubCast);
+      else {
+        expect(currentClubCast.coach, `coach name drift at UI decision ${i + 1}`).toBe(fixed.coach);
+        expect(currentClubCast.captain, `captain name drift at UI decision ${i + 1}`).toBe(fixed.captain);
+        expect(currentClubCast.physio, `physio name drift at UI decision ${i + 1}`).toBe(fixed.physio);
+        expect(currentClubCast.teammate, `teammate name drift at UI decision ${i + 1}`).toBe(fixed.teammate);
+      }
+    }
   }
 }
 
-test("iPhone WebKit plays the first 15 decisions through the shipped UI without repetition or injury contradictions", async ({ page }) => {
+test("iPhone WebKit plays the first 15 decisions through the shipped UI without repetition, chronology or persistent-cast contradictions", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await startDeterministicCareer(page, 451590);
