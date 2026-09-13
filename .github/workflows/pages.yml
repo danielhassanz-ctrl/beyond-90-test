@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,11 +35,35 @@ jobs:
       - name: Verify clean dependency graph
         run: git diff --exit-code -- package-lock.json
 
+      - name: Ban playable match_flash emission at source
+        run: node scripts/match-flash-source-ban-smoke.mjs
+
+      - name: Lock youth agent market chronology
+        run: node scripts/agent-market-chronology-smoke.mjs
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Mandatory life-first opening QA
         run: npm run qa:opening
+
+      - name: Human-style first-15-decision QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: Per-decision career state coherence
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/decision-state-coherence-smoke.ts
+
+      - name: Forced injured-player Story Director chronology
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/injury-director-chronology-smoke.ts
+
+      - name: Full-season boredom and coherence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
+
+      - name: First-15 decision quality floor
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
+
+      - name: Alternative first-15 branch playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
 
       - name: Career pacing QA
         run: npm run qa:pacing
@@ -59,14 +83,8 @@ jobs:
       - name: Narrative anti-repetition QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
 
-      - name: Human-style first-15-decision QA
-        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
-
-      - name: First-15 decision quality floor
-        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
-
-      - name: Alternative first-15 branch playtest
-        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
+      - name: Thread scheduler anti-starvation QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/thread-scheduler-smoke.ts
 
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
