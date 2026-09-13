@@ -224,10 +224,10 @@ try {
   }
 
   // Retirement above is injected outside React purely to keep this end-to-end smoke short.
-  // Open the exact legacy URL as a fresh document before testing post-career controls. This
-  // proves both the real "Ver mi legado" route and a bookmarked/direct legacy URL while avoiding
-  // WebKit's live-HTTPS same-document reload policy cancellation on an SPA history transition.
-  const legacyURL = page.url();
+  // Open the canonical direct route as a fresh document before testing post-career controls.
+  // Pages canonicalizes SPA directories with a trailing slash, so target that URL directly
+  // instead of creating a redirect race in WebKit after the history transition.
+  const legacyURL = new URL("legado/", baseURL).href;
   await page.goto(legacyURL, { waitUntil: "domcontentloaded", timeout: 30_000 });
   const legacyState = await saved();
   if (!legacyState?.retired) throw new Error("legacy route lost retired state after rehydrate");
