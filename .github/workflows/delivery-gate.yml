@@ -34,6 +34,8 @@ jobs:
         run: git diff --exit-code -- package-lock.json
       - name: Typecheck
         run: npm run typecheck
+      - name: Mobile viewport CSS source QA
+        run: node scripts/mobile-css-source-smoke.mjs
       - name: Life and Patrimony chronology QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
       - name: Decision/state coherence QA

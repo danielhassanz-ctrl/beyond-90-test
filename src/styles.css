@@ -134,7 +134,10 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    min-height: 100%;\n    min-height: 100dvh;\n    overscroll-behavior-y: none;\n    -webkit-text-size-adjust: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
   }
 
   h1,
