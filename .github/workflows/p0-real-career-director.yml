@@ -5,12 +5,14 @@ on:
     branches:
       - p0-real-career-director-repetition
       - qa-decision-state-coherence
+      - v1-first15-chronology-floor
   pull_request:
     branches:
       - main
     paths:
       - src/game/**
       - scripts/real-career-playtest-smoke.ts
+      - scripts/first15-chronology-smoke.ts
       - scripts/decision-state-coherence-smoke.ts
       - scripts/injury-director-chronology-smoke.ts
       - scripts/full-season-boredom-smoke.ts
@@ -60,6 +62,9 @@ jobs:
 
       - name: Real-career first-15 human-style playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: First-15 money/status/competition chronology
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-chronology-smoke.ts
 
       - name: Per-decision career state coherence
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/decision-state-coherence-smoke.ts
