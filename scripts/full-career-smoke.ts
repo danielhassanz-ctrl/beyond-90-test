@@ -1,6 +1,7 @@
 import { advance, chooseClub, createGame, resolveDynamicCard, resolveEvent, resolveMatch } from "../src/game/engine";
 import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
+import { setCareerMode, type CareerMode } from "../src/game/pacing";
 import type { GameState, Player } from "../src/game/types";
 
 // Release gate: this script must stay deterministic and fail on the first reproducible career blocker.
@@ -69,12 +70,13 @@ function resolvePending(s: GameState): GameState {
   return resolveDynamicCard(s, s.pending, choice.id);
 }
 
-function runCareer(seed: number) {
+function runCareer(mode: CareerMode, seed: number) {
   const originalRandom = Math.random;
   Math.random = rng(seed);
   try {
     let s = createGame(player(seed));
-    assert(s.offers.length >= 3, `Seed ${seed}: fewer than 3 club offers`);
+    setCareerMode(s, mode);
+    assert(s.offers.length >= 3, `${mode}/${seed}: fewer than 3 club offers`);
     s = chooseClub(s, s.offers[0]!.clubId);
 
     let steps = 0;
@@ -96,13 +98,14 @@ function runCareer(seed: number) {
       }
     }
 
-    assert(reachedEndCard, `Seed ${seed}: career stalled before career_end after ${steps} actions (age ${s.age})`);
-    assert(s.retired === true, `Seed ${seed}: career_end reached without retired=true`);
-    assert(seasonsObserved >= 12, `Seed ${seed}: career ended too early after ${seasonsObserved} seasons`);
-    assert(s.age >= 30 && s.age <= 42, `Seed ${seed}: implausible retirement age ${s.age}`);
-    assert(s.seasons.length >= 13, `Seed ${seed}: insufficient season history ${s.seasons.length}`);
+    assert(reachedEndCard, `${mode}/${seed}: career stalled before career_end after ${steps} actions (age ${s.age})`);
+    assert(s.retired === true, `${mode}/${seed}: career_end reached without retired=true`);
+    assert(seasonsObserved >= 12, `${mode}/${seed}: career ended too early after ${seasonsObserved} seasons`);
+    assert(s.age >= 30 && s.age <= 42, `${mode}/${seed}: implausible retirement age ${s.age}`);
+    assert(s.seasons.length >= 13, `${mode}/${seed}: insufficient season history ${s.seasons.length}`);
 
     return {
+      mode,
       seed,
       steps,
       age: s.age,
@@ -117,12 +120,21 @@ function runCareer(seed: number) {
   }
 }
 
-const results = Array.from({ length: 12 }, (_, i) => runCareer(1001 + i * 97));
+const modes: CareerMode[] = ["express", "standard", "pro"];
+const seeds = [1001, 1098, 1195, 1292];
+const results = modes.flatMap((mode, modeIndex) =>
+  seeds.map((seed) => runCareer(mode, seed + modeIndex * 100000)),
+);
 const peaks = new Set(results.map((r) => r.peak));
 const retirementAges = new Set(results.map((r) => r.age));
 
+for (const mode of modes) {
+  const sampled = results.filter((r) => r.mode === mode);
+  assert(sampled.length === 4, `${mode}: expected 4 full-career samples, got ${sampled.length}`);
+  assert(sampled.every((r) => r.retired), `${mode}: at least one sampled career did not retire cleanly`);
+}
 assert(peaks.size >= 3, `Careers converge too strongly: only ${peaks.size} distinct peak overalls`);
 assert(retirementAges.size >= 2, `Retirement ages converge completely: ${[...retirementAges].join(", ")}`);
 
 console.table(results);
-console.log(`FULL_CAREER_SMOKE_OK careers=${results.length} distinctPeaks=${peaks.size} retirementAges=${retirementAges.size}`);
+console.log(`FULL_CAREER_SMOKE_OK careers=${results.length} modes=${modes.join(",")} samplesPerMode=4 distinctPeaks=${peaks.size} retirementAges=${retirementAges.size}`);
