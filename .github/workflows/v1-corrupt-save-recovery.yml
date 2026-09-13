@@ -78,7 +78,7 @@ jobs:
       - name: Corrupt-primary recovery on iPhone WebKit
         env:
           TEST_BASE_URL: http://127.0.0.1:4173/beyond-90-test/
-        run: npx playwright test scripts/browser-corrupt-primary-recovery.spec.cjs --browser=webkit --reporter=line
+        run: npx playwright test scripts/browser-corrupt-primary-recovery.spec.cjs scripts/browser-corrupt-primary-exact-recovery.spec.cjs --browser=webkit --reporter=line
 
   live-https-recovery:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -127,4 +127,4 @@ jobs:
       - name: Corrupt-primary recovery on public iPhone WebKit
         env:
           TEST_BASE_URL: https://danielhassanz-ctrl.github.io/beyond-90-test/
-        run: npx playwright test scripts/browser-corrupt-primary-recovery.spec.cjs --browser=webkit --reporter=line
+        run: npx playwright test scripts/browser-corrupt-primary-recovery.spec.cjs scripts/browser-corrupt-primary-exact-recovery.spec.cjs --browser=webkit --reporter=line
