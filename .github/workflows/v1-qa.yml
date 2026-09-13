@@ -40,6 +40,8 @@ jobs:
         run: npm run qa:competition-pacing
       - name: Persistent cast QA
         run: npm run qa:persistent-cast
+      - name: Legacy relationship integration QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/legacy-relationship-integration-smoke.ts
       - name: Full career QA
         run: npm run qa:career
       - name: Branch QA
