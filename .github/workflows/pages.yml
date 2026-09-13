@@ -176,7 +176,7 @@ jobs:
           BEYOND90_URL: ${{ needs.deploy.outputs.page_url }}
         run: node scripts/browser-smoke.mjs
 
-      - name: iPhone WebKit save recovery on live HTTPS
+      - name: iPhone WebKit save recovery and first-15 narrative playthrough on live HTTPS
         env:
           TEST_BASE_URL: ${{ needs.deploy.outputs.page_url }}
-        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs --browser=webkit --reporter=line
+        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-first15.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs --browser=webkit --reporter=line
