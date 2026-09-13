@@ -5,8 +5,23 @@ import { useGame } from "@/game/store";
 import { BottomNav } from "./BottomNav";
 import { GameHeader } from "./GameHeader";
 
+function PersistenceWarning({ message, onDismiss }: { message: string | null; onDismiss: () => void }) {
+  if (!message) return null;
+  return (
+    <div role="status" className="mb-4 rounded-xl border border-amber-500/60 bg-amber-500/10 p-3">
+      <p className="text-sm leading-relaxed text-amber-100">{message}</p>
+      <button
+        onClick={onDismiss}
+        className="mt-2 rounded-lg border border-amber-400/60 px-3 py-2 font-cond text-xs font-bold uppercase tracking-[0.14em] text-amber-100"
+      >
+        Entendido
+      </button>
+    </div>
+  );
+}
+
 export function GameShell({ children }: { children: (args: { state: NonNullable<ReturnType<typeof useGame>["state"]> }) => ReactNode }) {
-  const { state, ready, error, clearError, next } = useGame();
+  const { state, ready, error, persistenceWarning, clearError, clearPersistenceWarning, next } = useGame();
   const navigate = useNavigate();
 
   const opening = !!state && state.flags[OPENING_MARKER] === 1;
@@ -49,6 +64,7 @@ export function GameShell({ children }: { children: (args: { state: NonNullable<
     return (
       <div className="min-h-[100dvh] bg-background">
         <main className="mx-auto max-w-md px-4 pt-6 safe-bottom">
+          <PersistenceWarning message={persistenceWarning} onDismiss={clearPersistenceWarning} />
           {error && (
             <div className="mb-4 rounded-xl border border-destructive/50 bg-surface-2 p-3">
               <p className="text-sm text-destructive">{error}</p>
@@ -86,6 +102,7 @@ export function GameShell({ children }: { children: (args: { state: NonNullable<
     <div className="min-h-[100dvh] bg-background">
       <GameHeader state={state} />
       <main className="mx-auto max-w-md px-4 pt-4 safe-bottom">
+        <PersistenceWarning message={persistenceWarning} onDismiss={clearPersistenceWarning} />
         {error && (
           <div className="mb-4 rounded-xl border border-destructive/50 bg-surface-2 p-3">
             <p className="text-sm text-destructive">{error}</p>
