@@ -224,9 +224,11 @@ try {
   }
 
   // Retirement above is injected outside React purely to keep this end-to-end smoke short.
-  // Rehydrate the destination from the saved state before testing post-career controls. This
-  // separately proves both the real "Ver mi legado" route and a bookmarked/reloaded legacy URL.
-  await page.reload({ waitUntil: "domcontentloaded" });
+  // Open the exact legacy URL as a fresh document before testing post-career controls. This
+  // proves both the real "Ver mi legado" route and a bookmarked/direct legacy URL while avoiding
+  // WebKit's live-HTTPS same-document reload policy cancellation on an SPA history transition.
+  const legacyURL = page.url();
+  await page.goto(legacyURL, { waitUntil: "domcontentloaded", timeout: 30_000 });
   const legacyState = await saved();
   if (!legacyState?.retired) throw new Error("legacy route lost retired state after rehydrate");
   await page.getByText("Después del fútbol", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
