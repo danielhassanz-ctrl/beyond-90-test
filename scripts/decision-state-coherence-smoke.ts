@@ -76,6 +76,13 @@ interface PlayableSignature {
   choiceTriple: string;
 }
 
+function dynamicFamily(kind: string, data: Record<string, string | number | boolean | null>): string {
+  if (kind === "arc" && typeof data["arcId"] === "string") return `arc:${data["arcId"]}`;
+  if (kind === "arc_beat" && typeof data["beatId"] === "string") return `beat:${data["beatId"]}`;
+  if (kind === "arc_callback" && typeof data["cbId"] === "string") return `callback:${data["cbId"]}`;
+  return `dynamic:${kind}`;
+}
+
 function playableSignature(s: GameState): PlayableSignature | null {
   const p = s.pending;
   if (!p || p.type === "season") return null;
@@ -103,7 +110,7 @@ function playableSignature(s: GameState): PlayableSignature | null {
   return {
     title: v.title,
     copy: `${v.title} ${v.text}`,
-    family: `dynamic:${p.kind}`,
+    family: dynamicFamily(p.kind, p.data),
     choiceTriple: v.choices.map((choice) => normalize(choice.label)).join(" | "),
   };
 }
@@ -145,6 +152,17 @@ function assertStateCoherence(s: GameState, mode: CareerMode, seed: number, deci
 
   if (p.type === "dynamic") {
     assert(p.kind !== "match_flash", `${tag}: banned match_flash reached playable state`);
+    if (s.injury) {
+      const view = renderDynamic(s, p);
+      assert(view.category !== "training" && view.image !== "training" && view.image !== "match", `${tag}: ${p.kind} surfaced an on-field/training card while unavailable through ${s.injury.label}: ${view.title}`);
+    }
+  }
+
+  if (p.type === "event" && s.injury) {
+    const event = eventById(p.eventId);
+    if (event) {
+      assert(event.category !== "training" && event.image !== "training" && event.image !== "match", `${tag}: event ${event.id} surfaced an on-field/training card while unavailable through ${s.injury.label}: ${event.title}`);
+    }
   }
 
   if (s.injury && /expulsi[oó]n|tarjeta roja|roja directa|marcaste|gol decisivo|entraste al campo|saltas al campo|titular|sustituci[oó]n|duelo t[aá]ctico/i.test(copy)) {
