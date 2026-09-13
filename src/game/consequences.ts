@@ -141,9 +141,19 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
       };
     case "cons_family_break": {
       const partner = ensureCareerCast(s).partner;
+      const clubCity = clubById(s.clubId).city;
+      const normalizePlace = (value: string) =>
+        value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+      const movedAway = normalizePlace(s.player.city) !== normalizePlace(clubCity);
+      const familyBase =
+        s.age <= 18 && !movedAway
+          ? "Llevas semanas llegando tarde a casa, comiendo con prisas y contestando con monosílabos. Tu familia termina diciéndote claramente que el fútbol no puede justificar desaparecer incluso cuando sigues viviendo con ellos."
+          : s.age <= 18
+            ? `Desde que te mudaste de ${s.player.city} a ${clubCity}, las llamadas a casa duran cada vez menos y empiezas a evitar contar cómo estás de verdad. Tu familia te dice que la distancia no puede convertirse en silencio.`
+            : "Tres meses sin aparecer por casa. Tu madre deja de llamar y tu familia termina diciéndote claramente que el fútbol no puede justificar desaparecer de sus vidas.";
       const familyPressure = partner.met
-        ? `Tres meses sin aparecer por casa. Tu madre deja de llamar y ${partner.name} te dice lo que nadie del club se atreve a decirte.`
-        : "Tres meses sin aparecer por casa. Tu madre deja de llamar y tu familia termina diciéndote claramente que el fútbol no puede justificar desaparecer de sus vidas.";
+        ? `${familyBase} ${partner.name} también te dice lo que nadie del club se atreve a decirte.`
+        : familyBase;
       return {
         kicker: "Consecuencia",
         title: "En casa se ha roto algo",
