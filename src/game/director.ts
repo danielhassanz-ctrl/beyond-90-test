@@ -205,6 +205,11 @@ function thirdWayResult(s: GameState): Res {
   const i = hash(careerSeed(s), key) % variants.length;
   return { ...variants[i]!, tone: "neutral" };
 }
+function deterministicChance(s: GameState, key: string, probability: number): boolean {
+  const roll = (hash(careerSeed(s), `${key}|${s.seasonIndex}|${s.sceneCount ?? 0}|${s.beat ?? 0}`) % 10000) / 10000;
+  return roll < Math.max(0, Math.min(1, probability));
+}
+
 function callback(s: GameState, id: string, text: string, inScenes = 8): void {
   const d = directorState(s);
   if (d.callbacks.some((c) => c.id === id)) return;
@@ -299,7 +304,7 @@ const ARCS: Arc[] = [
             label: "Ir a por él en cada acción",
             hint: "Rendimiento alto, roce alto",
             apply: (c) => {
-              const win = Math.random() < 0.5 + (c.s.overall - 60) / 100;
+              const win = deterministicChance(c.s, `arc_puesto_duelo|${c.rival}`, 0.5 + (c.s.overall - 60) / 100);
               if (win) {
                 stat(c.s, "form", 9);
                 rel(c.s, "coach", 5);
@@ -592,7 +597,7 @@ const ARCS: Arc[] = [
             label: "Intentar la jugada de tu vida",
             hint: "Gloria o ridículo",
             apply: (c) => {
-              const ok = Math.random() < 0.32 + (c.s.overall - 60) / 120;
+              const ok = deterministicChance(c.s, "arc_primera_debut_arriesgar", 0.32 + (c.s.overall - 60) / 120);
               milestone(c.s, "Debut oficial");
               achieve(c.s, "debut");
               if (ok) {
@@ -1210,7 +1215,7 @@ const ARCS: Arc[] = [
             apply: (c) => {
               const good = c.s.rel.coach >= 45;
               if (!good) {
-                const fired = Math.random() < 0.4;
+                const fired = deterministicChance(c.s, "arc_conflicto_desenlace_entrenador", 0.4);
                 if (fired) {
                   npc(c.s, "coach").name = npc(c.s, "coach").name;
                   flag(c.s, "cambio_entrenador", 1);
@@ -1357,7 +1362,7 @@ const ARCS: Arc[] = [
             id: "entrar",
             label: "Entrar sin pensarlo",
             apply: (c) => {
-              const bad = Math.random() < 0.22;
+              const bad = deterministicChance(c.s, "arc_lesion_primer_duelo_recaida", 0.22);
               if (bad) {
                 injure(c.s, 4, "Recaída en la misma zona");
                 return { title: "Otra vez", text: "Crujido y silencio. El fisio no dice nada, solo baja la cabeza.", tone: "bad", end: true };
@@ -1668,7 +1673,7 @@ const ARCS: Arc[] = [
               const amount = Math.min(f.cash, 90);
               f.cash -= amount;
               if (c.s.flags["negocio_amigo"] === 1) {
-                const ok = Math.random() < 0.45;
+                const ok = deterministicChance(c.s, "arc_dinero_negocio_segunda_inyeccion", 0.45);
                 flag(c.s, "negocio_amigo", ok ? 2 : 0);
                 if (ok) f.history.unshift({ season: "", text: "El negocio arranca", amount: 0 });
                 return ok
@@ -2801,7 +2806,7 @@ export function directorNewSeason(s: GameState): void {
   // Perfil oculto: la trayectoria no es igual para todos.
   if (d.profile === "tardio" && s.age <= 20) s.xp = Math.round(s.xp * 0.85);
   if (d.profile === "prodigio" && s.age <= 21) s.xp = Math.round(s.xp * 1.12);
-  if (d.profile === "lesiones" && Math.random() < 0.3) flag(s, "riesgo_recaida", 1);
+  if (d.profile === "lesiones" && deterministicChance(s, `profile_lesiones|${s.seasonIndex}`, 0.3)) flag(s, "riesgo_recaida", 1);
 }
 
 function openArc(s: GameState): ActiveArc | null {
