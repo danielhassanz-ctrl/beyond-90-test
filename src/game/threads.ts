@@ -149,13 +149,7 @@ export function dueThread(s: GameState): Thread | null {
   ])].filter((entry): entry is string => {
     if (typeof entry !== "string" || entry.trim().length < 12) return false;
     const kind = memoryThreadKind(entry);
-    if (!kind) return false;
-    // Every currently rendered memory family except adviser/market owns one
-    // static resolution card/title. Replaying another memory through that same
-    // family would be cosmetic variation, so suppress it until the renderer has
-    // distinct authored follow-ups. Adviser/market deliberately stays keyed per
-    // exact promise because multiple career priorities must be able to return.
-    if (kind !== "club_interest" && kindAlreadyUsed(s, kind)) return false;
+    if (!kind || kindAlreadyUsed(s, kind)) return false;
     return (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0;
   });
   if (entries.length === 0) return null;
@@ -170,8 +164,12 @@ export function dueThread(s: GameState): Thread | null {
     payload: { remembered: remembered.slice(0, 240) },
   };
   s.threads.push(thread);
+  // The renderer currently has one authored resolution title/card per family.
+  // A second memory in the same family is therefore deferred rather than shown
+  // as cosmetic repetition. Once a distinct authored sequel exists, this family
+  // guard can be replaced by sequel-specific eligibility instead of a quota.
   s.memory.threads[memoryRecallKey(remembered)] = 1;
-  if (kind !== "club_interest") s.memory.threads[kind] = 1;
+  s.memory.threads[kind] = 1;
   s.flags["memory_thread_season"] = s.seasonIndex;
   s.flags["ultimo_hilo"] = scene;
   return thread;
