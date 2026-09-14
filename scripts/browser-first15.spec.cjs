@@ -126,7 +126,13 @@ async function playFirst15(page) {
     const state = await savedState(page);
 
     if (state.lastOutcome) {
-      await page.getByRole("button", { name: "Siguiente escena" }).click();
+      const continueMatch = page.getByRole("button", { name: "Seguir el partido" });
+      if (await continueMatch.isVisible()) {
+        await continueMatch.click();
+      }
+      const nextScene = page.getByRole("button", { name: "Siguiente escena" });
+      await expect(nextScene).toBeVisible();
+      await nextScene.click();
       continue;
     }
 
