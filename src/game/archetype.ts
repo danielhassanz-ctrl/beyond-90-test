@@ -67,6 +67,23 @@ const IDS = Object.keys(ARCHETYPES) as ArchetypeId[];
 
 type Stateful = GameState & { archetype?: ArchetypeId };
 
+/**
+ * Un juvenil puede tener potencial mediático como trayectoria oculta, pero
+ * mientras siga siendo un desconocido no debe vivir como una celebridad.
+ * La fama real, no el arquetipo, desbloquea prensa/gossip/mercado público.
+ */
+function isUnknownAcademyPlayer(s: GameState): boolean {
+  return s.stage === "youth" && s.age <= 18 && s.fame < 25;
+}
+
+function academyPublicityMultiplier(s: GameState, category: EventCategory): number {
+  if (!isUnknownAcademyPlayer(s)) return 1;
+  if (category === "gossip") return 0;
+  if (category === "press") return 0.2;
+  if (category === "market") return 0.35;
+  return 1;
+}
+
 /** Arquetipo de la carrera: semilla + rasgos. Se persiste en el estado. */
 export function archetypeOf(s: GameState): ArchetypeId {
   const st = s as Stateful;
@@ -102,14 +119,22 @@ export const archetypeMeta = (s: GameState): Meta => ARCHETYPES[archetypeOf(s)];
 
 /** NPC ancla del arquetipo: da una cara reconocible al conflicto. */
 export function anchorNpc(s: GameState): { name: string; role: string } {
-  const n = npc(s, archetypeMeta(s).anchor);
+  // Una "perla mediática" de 16 años puede convertirse en estrella más tarde,
+  // pero su primer eco debe venir de alguien de su vida futbolística real, no
+  // de una figura de prensa que todavía no tendría por qué conocerle.
+  const anchor = isUnknownAcademyPlayer(s) && archetypeMeta(s).anchor === "press"
+    ? "captain"
+    : archetypeMeta(s).anchor;
+  const n = npc(s, anchor);
   return { name: n.name, role: n.role };
 }
 
 /** Peso de un evento según el arquetipo (sesga el reparto real de escenas). */
 export function archetypeWeight(s: GameState, e: GameEvent): number {
   if ((e.priority ?? 0) >= 100) return 1;
-  return archetypeMeta(s).bias[e.category ?? "life"] ?? 1;
+  const category = e.category ?? "life";
+  const base = archetypeMeta(s).bias[category] ?? 1;
+  return base * academyPublicityMultiplier(s, category);
 }
 
 /**
@@ -118,7 +143,20 @@ export function archetypeWeight(s: GameState, e: GameEvent): number {
  */
 export function archetypeMuted(s: GameState, e: GameEvent): boolean {
   if ((e.priority ?? 0) >= 100) return false;
-  const bias = archetypeMeta(s).bias[e.category ?? "life"] ?? 1;
+  const category = e.category ?? "life";
+
+  // Regla de coherencia: un juvenil desconocido no puede entrar en un bucle
+  // de celebridad solo porque su arquetipo futuro sea mediático. El gossip se
+  // bloquea por completo y prensa/mercado quedan como situaciones raras hasta
+  // que la fama del propio estado de carrera las haya ganado.
+  if (isUnknownAcademyPlayer(s)) {
+    if (category === "gossip") return true;
+    if (category === "press" || category === "market") {
+      return hash(careerSeed(s), `academy-publicity:${e.id}`) % 100 < 85;
+    }
+  }
+
+  const bias = archetypeMeta(s).bias[category] ?? 1;
   const threshold = bias >= 1.5 ? 6 : bias <= 0.7 ? 62 : 36;
   return hash(careerSeed(s), `arq:${archetypeOf(s)}:${e.id}`) % 100 < threshold;
 }
@@ -142,5 +180,10 @@ export function beatEcho(s: GameState): string | null {
   const pick = list[1] ?? list[0];
   if (!pick) return null;
   const a = anchorNpc(s);
-  return `${a.name} (${a.role.toLowerCase()}) no ha olvidado que eligieras: “${pick}”.`;
+  const variants = [
+    `${a.name} (${a.role.toLowerCase()}) vuelve sobre una decisión tuya: “${pick}”.`,
+    `${a.name} (${a.role.toLowerCase()}) recuerda exactamente aquello que decidiste: “${pick}”.`,
+    `${a.name} (${a.role.toLowerCase()}) conecta lo de hoy con una decisión anterior: “${pick}”.`,
+  ];
+  return variants[hash(careerSeed(s), `beat-echo:${pick}:${s.sceneCount}`) % variants.length]!;
 }
