@@ -1,0 +1,66 @@
+name: Career mode UI WebKit gate
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/routes/onboarding.tsx
+      - src/game/pacing.ts
+      - src/game/store.tsx
+      - src/qa/browser-career-mode-ui.spec.cjs
+      - .github/workflows/career-mode-ui-webkit.yml
+  push:
+    branches:
+      - main
+    paths:
+      - src/routes/onboarding.tsx
+      - src/game/pacing.ts
+      - src/game/store.tsx
+      - src/qa/browser-career-mode-ui.spec.cjs
+      - .github/workflows/career-mode-ui-webkit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  career-mode-ui-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies from lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Install WebKit test runtime
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Verify Playwright install did not mutate lockfile
+        run: git diff --exit-code -- package-lock.json
+
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+
+      - name: Select Express Standard Pro through real iPhone UI and verify persistence
+        run: npx playwright test src/qa/browser-career-mode-ui.spec.cjs --browser=webkit --reporter=line
