@@ -65,7 +65,11 @@ export function narrativeTarget(s: GameState): number {
 
 export function narrativeRotationFor(s: GameState): EventCategory[] {
   switch (careerEra(s)) {
-    case "academy": return ["agent", "training", "club", "life", "training", "agent", "gossip", "story", "club"];
+    // A youth prospect is still living a normal life. Do not reserve narrative
+    // quota for celebrity gossip that the selector will later have to suppress;
+    // spend those beats on family/life, development, adviser and dressing-room
+    // context instead. Publicity can enter later when fame/status actually earn it.
+    case "academy": return ["life", "agent", "training", "club", "life", "training", "story", "agent", "club"];
     case "breakthrough": return ["club", "training", "agent", "market", "press", "life", "gossip", "agent", "story"];
     case "established": return ["club", "market", "press", "agent", "life", "training", "gossip", "market", "story"];
     case "prime": return ["market", "press", "club", "agent", "life", "story", "press", "medical", "market"];
