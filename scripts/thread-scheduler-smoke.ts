@@ -1,5 +1,6 @@
+import { ensureCareerCast } from "../src/game/career-life";
 import { createGame } from "../src/game/engine";
-import { maybeSpawnThreads } from "../src/game/threads";
+import { dueThread, maybeSpawnThreads } from "../src/game/threads";
 import type { GameState, Player } from "../src/game/types";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -65,4 +66,24 @@ assert(replay.threads[0]!.teaser === first.threads[0]!.teaser, "deterministic re
 maybeSpawnThreads(first);
 assert(first.threads.length === 1, "thread cooldown did not hold after the successful fallback spawn");
 
-console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok`);
+// Long-term personal memories must return through the person who owns the
+// relationship. A partner decision coming back a season later should be voiced
+// by that established partner, not generically by the representative.
+const personal = createGame(player);
+personal.careerSeed = 4242;
+personal.seasonIndex = 1;
+personal.sceneCount = 20;
+personal.threads = [];
+personal.flags["ultimo_hilo"] = -99;
+personal.flags["partner_active"] = 1;
+personal.memory.threads = {};
+personal.memory.promises = ["Prometiste a tu pareja que la próxima decisión importante se hablaría en casa"];
+personal.memory.conflicts = [];
+const partnerName = ensureCareerCast(personal).partner.name;
+const recalled = dueThread(personal);
+assert(recalled, "personal long-term memory did not surface");
+assert(recalled.kind === "family_worry", `personal memory routed to unexpected kind ${recalled.kind}`);
+assert(recalled.teaser.includes(partnerName), `partner memory callback lost the established partner identity: ${recalled.teaser}`);
+assert(!recalled.teaser.includes(personal.agent.name), "partner memory callback was incorrectly voiced by the representative");
+
+console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok personalMemorySpeaker=${partnerName}`);
