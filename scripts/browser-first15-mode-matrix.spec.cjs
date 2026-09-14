@@ -173,6 +173,9 @@ async function playFirst15(page, mode, seed) {
 function assertQuality(seen, mode, seed) {
   const titles = new Set();
   const triples = new Set();
+  const families = new Set(seen.map((item) => item.family));
+  expect(families.size, `${mode}/${seed}: insufficient UI decision-family diversity (${[...families].join(", ")})`).toBeGreaterThanOrEqual(5);
+
   for (let i = 0; i < seen.length; i++) {
     const current = seen[i];
     const titleKey = norm(current.title);
