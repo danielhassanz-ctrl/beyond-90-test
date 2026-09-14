@@ -64,6 +64,7 @@ function chronologySnapshot(state) {
     overall: Number(state.overall || 0),
     fame: Number(state.fame || 0),
     injured: Boolean(state.injury),
+    openingCompleted: state.flags?.opening_completed === 1,
     cast: castSnapshot(state),
   };
 }
@@ -88,8 +89,6 @@ async function startCareer(page, seed, mode) {
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
   await expect(page).toHaveURL(/\/historia\/?$/);
 
-  // The shipped UI currently starts in Standard. Override only the persisted
-  // career-mode field, then reload through the same production hydration path.
   await page.evaluate(({ key, modeValue }) => {
     const raw = localStorage.getItem(key);
     if (!raw) throw new Error("save missing before mode override");
@@ -227,12 +226,15 @@ function assertChronology(seen, mode, seed) {
     }
 
     if (item.cast) {
-      if (item.cast.adviser) {
+      // The opening deliberately allows the provisional adviser identity to be
+      // replaced when the player chooses father / professional / friend. Only
+      // freeze identities once that life-first opening has actually completed.
+      if (item.openingCompleted && item.cast.adviser) {
         if (adviserName === null) adviserName = item.cast.adviser;
         else expect(item.cast.adviser, `${mode}/${seed}: adviser drift ${adviserName} -> ${item.cast.adviser}`).toBe(adviserName);
       }
 
-      if (item.clubId) {
+      if (item.openingCompleted && item.clubId) {
         const key = item.clubId;
         const stable = {
           coach: item.cast.coach,
