@@ -144,7 +144,12 @@ function kindAlreadyUsed(s: GameState, kind: ThreadKind): boolean {
     delete s.memory.threads[kind];
     return true;
   }
-  return false;
+  // One authored follow-up is enough to prove that a relationship evolves.
+  // A third pass would turn the mechanism back into renewable filler.
+  const careerUses = Object.keys(s.memory.threads ?? {}).filter((usedKey) =>
+    usedKey.startsWith("thread-season:") && usedKey.endsWith(`:${kind}`) && (s.memory.threads[usedKey] ?? 0) > 0
+  ).length;
+  return careerUses >= 2;
 }
 
 function markKindUsed(s: GameState, kind: ThreadKind): void {
