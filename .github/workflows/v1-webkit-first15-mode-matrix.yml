@@ -1,0 +1,121 @@
+name: V1 WebKit first-15 mode matrix
+
+on:
+  push:
+    branches:
+      - main
+      - v1-webkit-first15-mode-matrix
+    paths:
+      - src/game/**
+      - src/qa/**
+      - scripts/browser-first15-mode-matrix.spec.cjs
+      - scripts/real-career-playtest-smoke.ts
+      - scripts/full-season-boredom-smoke.ts
+      - scripts/narrative-quality-smoke.ts
+      - scripts/branch-coverage-smoke.ts
+      - scripts/full-career-smoke.ts
+      - scripts/persistent-cast-smoke.ts
+      - scripts/pacing-smoke.ts
+      - scripts/competition-pacing-smoke.ts
+      - package.json
+      - package-lock.json
+      - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
+      - qa/REAL_CAREER_PLAYTEST_GATE.md
+      - .github/workflows/v1-webkit-first15-mode-matrix.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/game/**
+      - src/qa/**
+      - scripts/browser-first15-mode-matrix.spec.cjs
+      - scripts/real-career-playtest-smoke.ts
+      - scripts/full-season-boredom-smoke.ts
+      - scripts/narrative-quality-smoke.ts
+      - scripts/branch-coverage-smoke.ts
+      - scripts/full-career-smoke.ts
+      - scripts/persistent-cast-smoke.ts
+      - scripts/pacing-smoke.ts
+      - scripts/competition-pacing-smoke.ts
+      - package.json
+      - package-lock.json
+      - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
+      - qa/REAL_CAREER_PLAYTEST_GATE.md
+      - .github/workflows/v1-webkit-first15-mode-matrix.yml
+
+permissions:
+  contents: read
+
+jobs:
+  webkit-first15-mode-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Opening QA
+        run: npm run qa:opening
+
+      - name: Engine first-15 12-seed matrix
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: Pacing budget QA
+        run: npm run qa:pacing
+
+      - name: Competition chronology QA
+        run: npm run qa:competition-pacing
+
+      - name: Persistent relationships QA
+        run: npm run qa:persistent-cast
+
+      - name: Branch/narrative QA
+        run: npm run qa:branches
+
+      - name: Anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+
+      - name: Full-season boredom/coherence QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
+
+      - name: Full-career QA
+        run: npm run qa:career
+
+      - name: Extended gameplay QA
+        run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
+
+      - name: Build
+        run: npm run build
+
+      - name: Install WebKit runtime
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Verify Playwright install did not mutate lockfile
+        run: git diff --exit-code -- package-lock.json
+
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/beyond90-preview.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/beyond90-preview.log
+          exit 1
+
+      - name: iPhone WebKit 12-career first-15 mode matrix
+        run: npx playwright test scripts/browser-first15-mode-matrix.spec.cjs --browser=webkit --workers=1 --reporter=line

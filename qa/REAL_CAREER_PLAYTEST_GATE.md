@@ -6,6 +6,8 @@ This checklist is mandatory before asking the user to test a narrative build.
 
 For 12 deterministic new-career seeds split across Express / Standard / Pro, record the first 15 playable decisions and fail the run if any condition below is violated.
 
+The same 12-career matrix must also be exercised through the shipped production UI in iPhone/WebKit, not only through direct engine calls. The UI run must hydrate from the persisted save, retain the selected career mode after reload and follow the real match transition (`Jugada clave` -> `Seguir el partido` -> `Siguiente escena`). A release cannot use a single Standard-mode browser seed as a substitute for this matrix.
+
 - No match before mandatory opening is complete.
 - No repeated title.
 - No near-duplicate setup text.
@@ -71,4 +73,4 @@ Across multiple seeds to retirement, log and reject:
 
 ## Release rule
 
-Passing typecheck/build/WebKit does not mean the narrative build is acceptable. The narrative build is testable only when this gate, the forced injury-availability probe and the automated anti-repetition suite are all green.
+Passing typecheck/build/WebKit does not mean the narrative build is acceptable. The narrative build is testable only when this gate, the forced injury-availability probe, the 12-career iPhone/WebKit first-15 matrix and the automated anti-repetition suite are all green.
