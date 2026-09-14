@@ -181,22 +181,12 @@ export function applyCareerPacing(s: GameState): void {
 
   const wantedQueuedNarrative = Math.max(0, wantedNarrative - pendingNarrativeDecisions(s));
   s.queue = compressNarrative(s.queue, wantedQueuedNarrative);
-  const existingQueuedNarrative = s.queue.filter(isNarrativeSlot).length;
-  const missing = Math.max(0, wantedQueuedNarrative - existingQueuedNarrative);
-  if (missing > 0) {
-    const rotation = narrativeRotationFor(s);
-    const insertEvery = Math.max(1, Math.floor(Math.max(1, s.queue.length) / missing));
-    const expanded: Slot[] = [];
-    let added = 0;
-    for (let i = 0; i < s.queue.length; i++) {
-      expanded.push(s.queue[i]!);
-      if (added < missing && (i + 1) % insertEvery === 0 && s.queue[i]?.kind !== "match") {
-        expanded.push({ kind: "event", category: rotation[(i + added) % rotation.length]! });
-        added += 1;
-      }
-    }
-    while (added < missing) { expanded.push({ kind: "event", category: rotation[added % rotation.length]! }); added += 1; }
-    s.queue = expanded;
-  }
+
+  // Narrative density is a ceiling, never a quota. The Story Director and
+  // authored queue decide whether there is actually a meaningful scene to
+  // play. If they do not have enough distinct material, do not synthesize
+  // generic `event` slots merely to reach Express/Standard/Pro target counts.
+  // This is deliberately allowed to make a season shorter: fewer decisions are
+  // preferable to a repeated adviser/training/gossip card with no causal value.
   s.flags["career_pacing_season"] = marker;
 }
