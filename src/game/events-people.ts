@@ -153,25 +153,31 @@ export const PEOPLE_EVENTS: GameEvent[] = [
     requires: (s) => s.age <= 21 && s.fitness < 88 && !s.flags["people_physio_intro"],
     text: (s) => { const c=ensureCareerCast(s); return `${c.physio.name}, fisioterapeuta del equipo, te frena antes del gimnasio. "Puedes entrenar hoy y perder tres semanas, o parar veinte minutos y llegar al sábado".`; },
     choices: [
-      { id:"hacer_caso",label:"Hacerle caso y tratarte",outcome:"Sales mejor de lo que entraste y con una persona de confianza nueva.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,7);stat(s,"fitness",7);stat(s,"discipline",2);flag(s,"people_physio_intro",1);} },
-      { id:"seguir",label:"Entrenar igualmente",outcome:"No pasa nada grave hoy, pero el fisio toma nota de cómo eres.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,-5);stat(s,"fitness",-4);stat(s,"form",2);flag(s,"people_physio_intro",1);} },
-      { id:"preguntar",label:"Preguntarle cómo cuidar mejor tu cuerpo",outcome:"Te prepara una rutina corta que acabarás usando durante años.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,9);stat(s,"fitness",4);stat(s,"discipline",4);flag(s,"people_physio_intro",1);note(s,`${p.name} te enseñó una rutina de prevención al principio de tu carrera.`);} },
+      { id:"hacer_caso",label:"Hacerle caso y tratarte",outcome:"Sales mejor de lo que entraste y con una persona de confianza nueva.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,7);stat(s,"fitness",7);stat(s,"discipline",2);flag(s,"people_physio_intro",1);flag(s,"physio_intro_listened",1);note(s,`La primera vez que ${p.name} te pidió parar por una molestia, le hiciste caso.`);} },
+      { id:"seguir",label:"Entrenar igualmente",outcome:"No pasa nada grave hoy, pero el fisio toma nota de cómo eres.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,-5);stat(s,"fitness",-4);stat(s,"form",2);flag(s,"people_physio_intro",1);flag(s,"physio_intro_ignored",1);note(s,`La primera vez que ${p.name} te pidió parar por una molestia, decidiste entrenar igualmente.`);} },
+      { id:"preguntar",label:"Preguntarle cómo cuidar mejor tu cuerpo",outcome:"Te prepara una rutina corta que acabarás usando durante años.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,9);stat(s,"fitness",4);stat(s,"discipline",4);flag(s,"people_physio_intro",1);flag(s,"physio_intro_prevention",1);note(s,`${p.name} te enseñó una rutina de prevención al principio de tu carrera.`);} },
     ],
   },
   {
     id: "people_physio_injury_callback",
     kicker: "Sala médica · Ahora sí es serio",
-    title: "El fisio ya sabe cómo reaccionas al dolor",
+    title: "El fisio recuerda cómo trataste la primera alarma",
     image: "injury",
     priority: 360,
     category: "medical",
     family: "people_physio_callback",
     requires: (s) => !!s.flags["people_physio_intro"] && !!s.injury && !s.flags["people_physio_injury_callback"],
-    text: (s) => { const p=ensureCareerCast(s).physio; return `${p.name} cierra la puerta de la sala médica. Esta vez no es una molestia preventiva: ${s.injury?.label ?? "la lesión"} te obliga a parar. "Ya sé si eres de escuchar o de apretar de más. Lo que hagamos ahora decide cómo vuelves".`; },
+    text: (s) => {
+      const p=ensureCareerCast(s).physio;
+      const injury=s.injury?.label ?? "la lesión";
+      if (s.flags["physio_intro_ignored"]) return `${p.name} cierra la puerta de la sala médica. ${injury} te obliga a parar. "La primera vez te pedí veinte minutos y seguiste entrenando. Hoy ya no estamos hablando de veinte minutos. Si quieres acelerar, necesito que entiendas lo que estás arriesgando".`;
+      if (s.flags["physio_intro_prevention"]) return `${p.name} deja sobre la mesa la rutina que te preparó al principio de tu carrera. ${injury} te obliga a parar. "Esto no significa que cuidarte no sirviera. Significa que ahora toca usar la misma disciplina para volver bien".`;
+      return `${p.name} cierra la puerta de la sala médica. ${injury} te obliga a parar. "La primera vez que te pedí bajar el ritmo, me hiciste caso. Necesito la misma paciencia ahora, aunque esta vez duela mucho más esperar".`;
+    },
     choices: [
-      { id:"protocolo",label:"Seguir el plan sin saltarte etapas",outcome:"Aceptas perder días para no perder meses.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,8);stat(s,"discipline",4);stat(s,"fitness",3);flag(s,"people_physio_injury_callback",1);} },
-      { id:"forzar",label:"Pedir acelerar la vuelta",outcome:"El fisio no está de acuerdo, pero adapta el plan y te hace asumir el riesgo.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,-5);stat(s,"fitness",-3);stat(s,"morale",2);flag(s,"people_physio_injury_callback",1);} },
-      { id:"preguntar",label:"Pedirle una fecha realista y entender cada fase",outcome:"Sales con una hoja concreta y menos ansiedad que al entrar.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,6);stat(s,"morale",3);stat(s,"discipline",2);flag(s,"people_physio_injury_callback",1);} },
+      { id:"protocolo",label:"Seguir el plan sin saltarte etapas",outcome:"Aceptas perder días para no perder meses. El fisio ve coherencia —o un cambio real— respecto a aquella primera molestia.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,8);stat(s,"discipline",4);stat(s,"fitness",3);flag(s,"people_physio_injury_callback",1);flag(s,"injury_rehab_patient",1);note(s,`${p.name} y tú acordaste una recuperación sin saltarte etapas tras ${s.injury?.label ?? "la lesión"}.`);} },
+      { id:"forzar",label:"Pedir acelerar la vuelta",outcome:"El fisio adapta el plan, pero deja claro que esta decisión contradice la prudencia que te pidió desde el principio.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,-5);stat(s,"fitness",-3);stat(s,"morale",2);flag(s,"people_physio_injury_callback",1);flag(s,"injury_rehab_rushed",1);note(s,`Pediste a ${p.name} acelerar la vuelta tras ${s.injury?.label ?? "la lesión"}.`);} },
+      { id:"preguntar",label:"Pedirle una fecha realista y entender cada fase",outcome:"La conversación convierte la lesión en un plan: fechas, riesgos y señales concretas que ambos vais a vigilar.",apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,6);stat(s,"morale",3);stat(s,"discipline",2);flag(s,"people_physio_injury_callback",1);flag(s,"injury_rehab_informed",1);note(s,`${p.name} te explicó fase por fase la recuperación de ${s.injury?.label ?? "la lesión"}.`);} },
     ],
   },
   {
