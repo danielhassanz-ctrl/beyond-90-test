@@ -34,6 +34,8 @@ jobs:
         run: git diff --exit-code -- package-lock.json
       - name: Typecheck
         run: npm run typecheck
+      - name: Story Director deterministic narrative QA
+        run: node scripts/director-determinism-source-smoke.mjs
       - name: Mobile viewport CSS source QA
         run: node scripts/mobile-css-source-smoke.mjs
       - name: Life and Patrimony chronology QA
