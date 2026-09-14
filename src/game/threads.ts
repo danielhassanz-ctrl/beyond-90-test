@@ -71,6 +71,11 @@ function memoryRecallKey(text: string): string {
 function memoryThreadKind(text: string): ThreadKind | null {
   const lower = text.toLowerCase();
   const hasAny = (...terms: string[]) => terms.some((term) => lower.includes(term));
+  // Career-management promises are some of the most consequential decisions in
+  // a footballer's life. They must be eligible to come back through the same
+  // persistent adviser who helped make them, instead of disappearing from the
+  // story once the original transfer/contract card is resolved.
+  if (hasAny("agente", "representante", "asesor", "contrato", "renov", "cesión", "cesion", "fichaje", "oferta", "mercado")) return "club_interest";
   if (hasAny("entrenador", "míster", "mister", "técnico", "tecnico")) return "coach_upset";
   if (hasAny("vestuario", "compañ", "capitán", "capitan", "rival", "jerarquía", "jerarquia")) return "teammate_jealous";
   if (hasAny("familia", "madre", "padre", "casa", "pareja", "hijo", "herman")) return "family_worry";
@@ -82,6 +87,8 @@ function memoryTeaser(s: GameState, kind: ThreadKind, remembered: string): strin
   const cast = ensureCareerCast(s);
   const memory = remembered.replace(/[.]+$/, "");
   switch (kind) {
+    case "club_interest":
+      return `${cast.adviser.name} recupera una conversación que no había olvidado: «${memory}». No te la repite para darte la razón; ahora hay una decisión de mercado encima de la mesa y quiere saber si aquella prioridad sigue mandando o si tu carrera ya ha cambiado.`;
     case "coach_upset":
       return `${cast.coach.name} te espera al terminar la sesión. Saca una conversación que creías cerrada: «${memory}». No quiere recordártela por nostalgia; quiere saber si sigues sosteniendo aquella decisión ahora que tu situación ha cambiado.`;
     case "teammate_jealous":
