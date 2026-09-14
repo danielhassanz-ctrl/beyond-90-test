@@ -89,8 +89,13 @@ function memoryThreadKind(text: string): ThreadKind | null {
   if (hasAny("agente", "representante", "asesor", "contrato", "renov", "cesión", "cesion", "fichaje", "oferta", "mercado")) return "club_interest";
   if (hasAny("entrenador", "míster", "mister", "técnico", "tecnico")) return "coach_upset";
   if (hasAny("vestuario", "compañ", "capitán", "capitan", "rival", "jerarquía", "jerarquia")) return "teammate_jealous";
-  if (hasAny("familia", "madre", "padre", "casa", "pareja", "hijo", "herman")) return "family_worry";
+  if (hasAny("familia", "madre", "padre", "casa", "pareja", "novia", "novio", "hijo", "herman")) return "family_worry";
   return null;
+}
+
+function rememberedPartner(text: string): boolean {
+  const lower = text.toLowerCase();
+  return lower.includes("pareja") || lower.includes("novia") || lower.includes("novio");
 }
 
 /** A remembered decision returns through the person who owns that history. */
@@ -105,6 +110,9 @@ function memoryTeaser(s: GameState, kind: ThreadKind, remembered: string): strin
     case "teammate_jealous":
       return `${cast.captain.name} te aparta del grupo antes de entrar al vestuario. Lo que pasó entonces sigue circulando entre compañeros: «${memory}». Esta vez no basta con dejar pasar los días; ${cast.teammate.name} también está implicado y habrá que tomar posición.`;
     case "family_worry": {
+      if (s.flags["partner_active"] === 1 && rememberedPartner(remembered)) {
+        return `${cast.partner.name} espera a que estéis solos para sacar una conversación que no ha olvidado: «${memory}». No la menciona para ganar una discusión; ahora vuestra vida vuelve a exigir una decisión y quiere saber si aquello sigue siendo verdad o si el fútbol ha cambiado el acuerdo entre los dos.`;
+      }
       const family = familyVoice(s);
       return `${family} te espera despierto cuando llegas a casa. No empieza por el fútbol: vuelve a una decisión que la familia recuerda perfectamente, «${memory}». Ahora esa promesa choca con algo nuevo en casa y quiere saber si vas a sostenerla, renegociarla o admitir que tu vida ha cambiado.`;
     }
