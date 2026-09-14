@@ -21,6 +21,8 @@ on:
       - package-lock.json
       - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
       - qa/REAL_CAREER_PLAYTEST_GATE.md
+      - DELIVERY_CERTIFICATION.md
+      - .github/workflows/pages.yml
       - .github/workflows/v1-webkit-first15-mode-matrix.yml
   pull_request:
     branches:
@@ -41,6 +43,8 @@ on:
       - package-lock.json
       - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
       - qa/REAL_CAREER_PLAYTEST_GATE.md
+      - DELIVERY_CERTIFICATION.md
+      - .github/workflows/pages.yml
       - .github/workflows/v1-webkit-first15-mode-matrix.yml
 
 permissions:
