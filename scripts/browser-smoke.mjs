@@ -1,6 +1,7 @@
 import { webkit, devices } from "@playwright/test";
 
 const baseURL = (process.env.BEYOND90_URL || "http://127.0.0.1:4173/").replace(/\/?$/, "/");
+const expectedSha = process.env.GITHUB_SHA || "local";
 const errors = [];
 const qaPlayerPng = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -44,6 +45,37 @@ async function saved() {
   }, saveKey);
 }
 
+async function waitForLiveLanding() {
+  const attempts = [];
+
+  // GitHub Pages can expose the new HTML marker a few seconds before all hashed
+  // JS/CSS assets have converged at every edge. The delivery gate must not call
+  // that short propagation window a product failure, but it must still fail if
+  // the app cannot become interactive after bounded fresh-document retries.
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    errors.length = 0;
+    const url = new URL(baseURL);
+    url.searchParams.set("qa_sha", expectedSha);
+    url.searchParams.set("qa_boot", String(attempt));
+    url.searchParams.set("qa_nonce", String(Date.now()));
+
+    try {
+      await page.goto(url.href, { waitUntil: "domcontentloaded", timeout: 30_000 });
+      await page.getByRole("button", { name: "Nueva carrera" }).waitFor({ state: "visible", timeout: 6_000 });
+      await assertNoFatal(`cold start attempt ${attempt}`);
+      return;
+    } catch (error) {
+      const body = await page.locator("body").innerText().catch(() => "<body unavailable>");
+      attempts.push(
+        `attempt=${attempt} url=${page.url()} error=${error instanceof Error ? error.message : String(error)} body=${body.slice(0, 350)} diagnostics=${errors.join(" | ") || "none"}`,
+      );
+      if (attempt < 6) await page.waitForTimeout(2_000);
+    }
+  }
+
+  throw new Error(`live landing never became interactive for ${expectedSha}: ${attempts.join(" || ")}`);
+}
+
 async function assertOpeningEvent(eventId, label) {
   const state = await saved();
   if (!state) throw new Error(`${label}: no persisted state`);
@@ -62,11 +94,11 @@ async function chooseAndNext(buttonName, nextHeading) {
 }
 
 try {
+  // First establish the origin and clear any state left by a reused browser
+  // context, then prove a fresh live document can render the real CTA.
   await page.goto(baseURL, { waitUntil: "domcontentloaded", timeout: 30_000 });
   await page.evaluate(() => localStorage.clear());
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "Nueva carrera" }).waitFor({ state: "visible", timeout: 10_000 });
-  await assertNoFatal("cold start");
+  await waitForLiveLanding();
 
   await page.getByRole("button", { name: "Nueva carrera" }).click();
   await page.waitForURL(/\/onboarding\/?$/, { timeout: 10_000 });
