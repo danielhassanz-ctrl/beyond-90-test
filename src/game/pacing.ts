@@ -70,7 +70,13 @@ export function narrativeRotationFor(s: GameState): EventCategory[] {
     // spend those beats on family/life, development, adviser and dressing-room
     // context instead. Publicity can enter later when fame/status actually earn it.
     case "academy": return ["life", "agent", "training", "club", "life", "training", "story", "agent", "club"];
-    case "breakthrough": return ["club", "training", "agent", "market", "press", "life", "gossip", "agent", "story"];
+    case "breakthrough":
+      // Age alone does not make a player newsworthy. A 19–21-year-old reserve
+      // with little public profile should still live a football-development
+      // story; market/press/gossip only become pacing priorities once fame is earned.
+      return s.fame < 25
+        ? ["club", "training", "agent", "life", "training", "club", "story", "agent", "life"]
+        : ["club", "training", "agent", "market", "press", "life", "gossip", "agent", "story"];
     case "established": return ["club", "market", "press", "agent", "life", "training", "gossip", "market", "story"];
     case "prime": return ["market", "press", "club", "agent", "life", "story", "press", "medical", "market"];
     case "veteran": return ["medical", "club", "agent", "life", "press", "market", "story", "medical", "life"];
