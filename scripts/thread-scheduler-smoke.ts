@@ -1,4 +1,5 @@
 import { ensureCareerCast } from "../src/game/career-life";
+import { renderDynamic } from "../src/game/dynamic";
 import { createGame } from "../src/game/engine";
 import { npc } from "../src/game/npc";
 import { dueThread, maybeSpawnThreads, spawnThread } from "../src/game/threads";
@@ -67,10 +68,10 @@ assert(replay.threads[0]!.teaser === first.threads[0]!.teaser, "deterministic re
 maybeSpawnThreads(first);
 assert(first.threads.length === 1, "thread cooldown did not hold after the successful fallback spawn");
 
-// Relationship story families must be allowed to evolve in later seasons. Old
-// saves carried a permanent memory.threads[kind] lock; loading one must block a
-// duplicate in the current season, migrate the lock, then permit a genuinely new
-// chapter next season rather than silencing that relationship forever.
+// Relationship story families may evolve once in a later season, but the
+// return must be an authored second chapter rather than the same card replayed.
+// Old saves carried a permanent memory.threads[kind] lock; loading one blocks
+// the current season, migrates the lock, then permits that second chapter.
 const seasonalArc = createGame(player);
 seasonalArc.careerSeed = 616161;
 seasonalArc.seasonIndex = 2;
@@ -84,8 +85,21 @@ seasonalArc.sceneCount = 66;
 seasonalArc.threads = [];
 const evolvedNextSeason = spawnThread(seasonalArc, "coach_upset", {}, 1);
 assert(evolvedNextSeason, "relationship family stayed permanently exhausted instead of evolving next season");
+const evolvedView = renderDynamic(seasonalArc, {
+  type: "dynamic",
+  kind: "thread",
+  data: { threadId: evolvedNextSeason.id, threadKind: evolvedNextSeason.kind, teaser: evolvedNextSeason.teaser },
+});
+assert(evolvedView.title === "El míster reabre aquel acuerdo", `second coach chapter reused or lost its authored title: ${evolvedView.title}`);
+assert(evolvedView.text.includes("promesa anterior"), "second coach chapter did not advance the prior relationship context");
+assert(evolvedView.choices[0]?.label === "Exigir un rol medible", "second coach chapter reused the first chapter choice shape");
 const duplicateSameSeason = spawnThread(seasonalArc, "coach_upset", {}, 1);
 assert(!duplicateSameSeason, "relationship family duplicated inside the same season");
+seasonalArc.seasonIndex = 4;
+seasonalArc.sceneCount = 88;
+seasonalArc.threads = [];
+const renewableFiller = spawnThread(seasonalArc, "coach_upset", {}, 1);
+assert(!renewableFiller, "relationship family became renewable filler after its authored follow-up chapter");
 
 // Long-term football-career decisions must not vanish after the original card.
 // A contract/market promise from an earlier season should come back through the
@@ -148,4 +162,4 @@ assert(partnerRecalled.teaser.includes("siguiente fichaje"), "partner callback d
 partnerMemory.clubId = partnerMemory.clubId === "betis" ? "villarreal" : "betis";
 assert(ensureCareerCast(partnerMemory).partner.name === partnerName, "partner identity drifted after a club transfer");
 
-console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok seasonalRelationshipEvolution=ok adviserMemoryRecall=ok familyMemoryOwner=ok partnerMemoryOwner=ok`);
+console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok seasonalRelationshipEvolution=authored-two-chapter adviserMemoryRecall=ok familyMemoryOwner=ok partnerMemoryOwner=ok`);
