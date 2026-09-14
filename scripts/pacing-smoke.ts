@@ -137,7 +137,33 @@ function assertSimulationFlashesDoNotConsumeBudget(mode: CareerMode, seed: numbe
   assert.ok(s.queue.some((slot) => slot.kind === "sim"), `${mode}/${seed}: regression fixture lost all background sim slots`);
 }
 
+function assertEmptyNarrativeQueueStaysEmpty(mode: CareerMode, seed: number) {
+  let s = createGame(player);
+  s.careerSeed = seed;
+  setCareerMode(s, mode);
+  const firstOffer = s.offers[0];
+  assert.ok(firstOffer, `${mode}/${seed}: new career must have a club offer`);
+  s = chooseClub(s, firstOffer.clubId);
+  setCareerMode(s, mode);
+
+  // Isolate the original quota-filler failure. If a season has only background
+  // simulation available, pacing must not turn the missing narrative target into
+  // anonymous event/agent/life decisions. Distinct contextual key matches may
+  // still be inserted when eligible, but narrative must remain exactly zero.
+  s.pending = null;
+  s.queue = [{ kind: "sim" }, { kind: "sim" }, { kind: "sim" }];
+  delete s.flags["career_pacing_season"];
+
+  applyCareerPacing(s);
+  assert.equal(
+    s.queue.filter(isNarrativeSlot).length,
+    0,
+    `${mode}/${seed}: empty authored narrative queue was padded with generic decisions`,
+  );
+}
+
 for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertAdviser(seed);
 for (const { id } of CAREER_MODES) for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertMode(id, seed);
 for (const { id } of CAREER_MODES) for (const seed of [45, 4500, 450045]) assertSimulationFlashesDoNotConsumeBudget(id, seed);
-console.log("Career pacing QA passed: era boundaries; pacing targets are ceilings rather than filler quotas; youth/reserve match density contextual; adviser active/persistent; generic simulation flashes excluded from meaningful-decision budgets.");
+for (const { id } of CAREER_MODES) for (const seed of [45, 2026, 450045]) assertEmptyNarrativeQueueStaysEmpty(id, seed);
+console.log("Career pacing QA passed: era boundaries; pacing targets are ceilings rather than filler quotas; empty authored narrative queues stay empty; youth/reserve match density contextual; adviser active/persistent; generic simulation flashes excluded from meaningful-decision budgets.");
