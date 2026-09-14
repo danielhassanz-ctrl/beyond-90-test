@@ -181,22 +181,13 @@ export function applyCareerPacing(s: GameState): void {
 
   const wantedQueuedNarrative = Math.max(0, wantedNarrative - pendingNarrativeDecisions(s));
   s.queue = compressNarrative(s.queue, wantedQueuedNarrative);
-  const existingQueuedNarrative = s.queue.filter(isNarrativeSlot).length;
-  const missing = Math.max(0, wantedQueuedNarrative - existingQueuedNarrative);
-  if (missing > 0) {
-    const rotation = narrativeRotationFor(s);
-    const insertEvery = Math.max(1, Math.floor(Math.max(1, s.queue.length) / missing));
-    const expanded: Slot[] = [];
-    let added = 0;
-    for (let i = 0; i < s.queue.length; i++) {
-      expanded.push(s.queue[i]!);
-      if (added < missing && (i + 1) % insertEvery === 0 && s.queue[i]?.kind !== "match") {
-        expanded.push({ kind: "event", category: rotation[(i + added) % rotation.length]! });
-        added += 1;
-      }
-    }
-    while (added < missing) { expanded.push({ kind: "event", category: rotation[added % rotation.length]! }); added += 1; }
-    s.queue = expanded;
-  }
+
+  // A pacing target is a ceiling/goal, never permission to invent generic
+  // decisions. The Story Director must earn every playable narrative beat from
+  // an authored arc/callback already present in the season plan. If the plan
+  // contains fewer meaningful scenes than the selected mode target, keep the
+  // shorter season instead of padding it with anonymous category-only events.
+  // This is deliberately asymmetric with compression: pacing may remove excess
+  // decisions, but it may not manufacture narrative filler to hit a quota.
   s.flags["career_pacing_season"] = marker;
 }
