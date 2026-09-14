@@ -5,18 +5,32 @@ on:
     branches:
       - main
     paths:
+      - src/routes/index.tsx
       - src/routes/onboarding.tsx
+      - src/routes/historia.tsx
+      - src/game/engine.ts
+      - src/game/opening.ts
+      - src/game/career-life.ts
+      - src/game/narrative-safety.ts
       - src/game/pacing.ts
       - src/game/store.tsx
+      - src/game/types.ts
       - src/qa/browser-career-mode-ui.spec.cjs
       - .github/workflows/career-mode-ui-webkit.yml
   push:
     branches:
       - main
     paths:
+      - src/routes/index.tsx
       - src/routes/onboarding.tsx
+      - src/routes/historia.tsx
+      - src/game/engine.ts
+      - src/game/opening.ts
+      - src/game/career-life.ts
+      - src/game/narrative-safety.ts
       - src/game/pacing.ts
       - src/game/store.tsx
+      - src/game/types.ts
       - src/qa/browser-career-mode-ui.spec.cjs
       - .github/workflows/career-mode-ui-webkit.yml
 
