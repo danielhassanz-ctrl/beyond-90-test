@@ -29,10 +29,6 @@ function choose<T>(s: GameState, key: string, values: readonly T[]): T {
 }
 
 function familyVoice(s: GameState): string {
-  // Family must not become an anonymous narrative device while coaches, agents
-  // and teammates all have persistent identities. This deterministic NPC lives
-  // in narrative memory, survives club changes and gives family callbacks a
-  // recognisable human owner throughout the career.
   return npc(s, "family_voice").name;
 }
 
@@ -90,10 +86,6 @@ function memoryRecallKey(text: string): string {
 function memoryThreadKind(text: string): ThreadKind | null {
   const lower = text.toLowerCase();
   const hasAny = (...terms: string[]) => terms.some((term) => lower.includes(term));
-  // Career-management promises are some of the most consequential decisions in
-  // a footballer's life. They must be eligible to come back through the same
-  // persistent adviser who helped make them, instead of disappearing from the
-  // story once the original transfer/contract card is resolved.
   if (hasAny("agente", "representante", "asesor", "contrato", "renov", "cesión", "cesion", "fichaje", "oferta", "mercado")) return "club_interest";
   if (hasAny("entrenador", "míster", "mister", "técnico", "tecnico")) return "coach_upset";
   if (hasAny("vestuario", "compañ", "capitán", "capitan", "rival", "jerarquía", "jerarquia")) return "teammate_jealous";
@@ -101,7 +93,6 @@ function memoryThreadKind(text: string): ThreadKind | null {
   return null;
 }
 
-/** A remembered decision returns through the person who owns that history. */
 function memoryTeaser(s: GameState, kind: ThreadKind, remembered: string): string {
   const cast = ensureCareerCast(s);
   const memory = remembered.replace(/[.]+$/, "");
@@ -159,13 +150,12 @@ export function dueThread(s: GameState): Thread | null {
     if (typeof entry !== "string" || entry.trim().length < 12) return false;
     const kind = memoryThreadKind(entry);
     if (!kind) return false;
-    // The current thread renderer has one authored family/home resolution title.
-    // Until distinct family/partner callback cards are authored, surfacing more
-    // than one family-owned recall in the same career recreates the exact
-    // repetitive-card failure the Story Director gate is designed to block.
-    // Adviser/coach/dressing memories remain keyed per exact promise and can
-    // return across seasons; family/home chooses depth over duplicate filler.
-    if (kind === "family_worry" && kindAlreadyUsed(s, kind)) return false;
+    // Every currently rendered memory family except adviser/market owns one
+    // static resolution card/title. Replaying another memory through that same
+    // family would be cosmetic variation, so suppress it until the renderer has
+    // distinct authored follow-ups. Adviser/market deliberately stays keyed per
+    // exact promise because multiple career priorities must be able to return.
+    if (kind !== "club_interest" && kindAlreadyUsed(s, kind)) return false;
     return (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0;
   });
   if (entries.length === 0) return null;
@@ -180,13 +170,8 @@ export function dueThread(s: GameState): Thread | null {
     payload: { remembered: remembered.slice(0, 240) },
   };
   s.threads.push(thread);
-  // Organic thread families still retain their one-off protection, but recalled
-  // memories are keyed by the exact promise/conflict. This allows a different
-  // adviser/family/coach promise to return in a later season without replaying
-  // the same memory twice. Family/home additionally consumes its authored
-  // resolution family so it cannot reappear with the same generic card title.
   s.memory.threads[memoryRecallKey(remembered)] = 1;
-  if (kind === "family_worry") s.memory.threads[kind] = 1;
+  if (kind !== "club_interest") s.memory.threads[kind] = 1;
   s.flags["memory_thread_season"] = s.seasonIndex;
   s.flags["ultimo_hilo"] = scene;
   return thread;
