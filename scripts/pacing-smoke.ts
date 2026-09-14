@@ -82,24 +82,28 @@ function assertMode(mode: CareerMode, seed: number) {
   s = chooseClub(s, firstOffer.clubId);
   ensureCareerCast(s);
   setCareerMode(s, mode);
+
+  const before = countPlan(s);
   applyCareerPacing(s);
 
   const cfg = careerModeConfig(mode);
   const actual = countPlan(s);
-  assert.equal(actual.narrative, narrativeTarget(s), `${mode}/${seed}: wrong narrative count`);
-  assert.equal(actual.matches, keyMatchTarget(s), `${mode}/${seed}: wrong key-match count`);
-  assert.equal(actual.decisions, decisionTarget(s), `${mode}/${seed}: wrong decision count`);
-  assert.ok(actual.decisions >= cfg.decisions[0] && actual.decisions <= cfg.decisions[1], `${mode}/${seed}: decisions outside promised range`);
-  assert.ok(actual.narrative >= cfg.narrative[0], `${mode}/${seed}: too few narrative/life decisions`);
+  // Density targets are ceilings. The scheduler may compress excess material,
+  // but it must never manufacture generic narrative slots just to hit a quota.
+  assert.ok(actual.narrative <= narrativeTarget(s), `${mode}/${seed}: narrative exceeded mode ceiling`);
+  assert.ok(actual.narrative <= before.narrative, `${mode}/${seed}: pacing manufactured filler narrative slots`);
+  assert.ok(actual.matches <= keyMatchTarget(s), `${mode}/${seed}: key matches exceeded contextual ceiling`);
+  assert.ok(actual.decisions <= decisionTarget(s), `${mode}/${seed}: decisions exceeded mode ceiling`);
+  assert.ok(actual.decisions <= cfg.decisions[1], `${mode}/${seed}: decisions outside promised maximum`);
   if (s.stage === "first") {
-    assert.ok(actual.matches >= cfg.keyMatches[0] && actual.matches <= cfg.keyMatches[1], `${mode}/${seed}: senior key matches outside cap`);
+    assert.ok(actual.matches <= cfg.keyMatches[1], `${mode}/${seed}: senior key matches outside cap`);
   } else {
-    assert.ok(actual.matches >= 2 && actual.matches <= 4, `${mode}/${seed}: youth/reserve season is being inflated with key matches`);
+    assert.ok(actual.matches <= 4, `${mode}/${seed}: youth/reserve season is being inflated with key matches`);
   }
   assert.equal(s.agent.present, true, `${mode}/${seed}: adviser must survive club selection`);
-  const before = JSON.stringify(s.queue);
+  const queueAfterFirstApply = JSON.stringify(s.queue);
   applyCareerPacing(s);
-  assert.equal(JSON.stringify(s.queue), before, `${mode}/${seed}: pacing must be idempotent`);
+  assert.equal(JSON.stringify(s.queue), queueAfterFirstApply, `${mode}/${seed}: pacing must be idempotent`);
 }
 
 function assertSimulationFlashesDoNotConsumeBudget(mode: CareerMode, seed: number) {
@@ -114,23 +118,52 @@ function assertSimulationFlashesDoNotConsumeBudget(mode: CareerMode, seed: numbe
   // Recreate the exact legacy class that triggered issue #45: a generic
   // match_flash can exist in an old save while ordinary sim slots remain in
   // the season queue. Neither is a meaningful player decision and therefore
-  // neither may reduce Express/Standard/Pro decision budgets.
+  // neither may reduce Express/Standard/Pro ceilings or cause replacement
+  // filler to be synthesized.
   s.pending = {
     kind: "match_flash",
     data: { title: "Tarjeta roja", text: "Flash genérico legado de simulación" },
   } as GameState["pending"];
   s.queue.unshift({ kind: "sim" }, { kind: "sim" });
   delete s.flags["career_pacing_season"];
+  const narrativeBefore = countPlan(s).narrative;
 
   applyCareerPacing(s);
   const actual = countPlan(s);
-  assert.equal(actual.narrative, narrativeTarget(s), `${mode}/${seed}: legacy match_flash consumed narrative budget`);
-  assert.equal(actual.matches, keyMatchTarget(s), `${mode}/${seed}: simulation flash consumed key-match budget`);
-  assert.equal(actual.decisions, decisionTarget(s), `${mode}/${seed}: generic simulation consumed meaningful-decision budget`);
+  assert.ok(actual.narrative <= narrativeTarget(s), `${mode}/${seed}: narrative exceeded ceiling with legacy match_flash`);
+  assert.ok(actual.narrative <= narrativeBefore, `${mode}/${seed}: legacy match_flash caused replacement narrative filler`);
+  assert.ok(actual.matches <= keyMatchTarget(s), `${mode}/${seed}: simulation flash caused key-match inflation`);
+  assert.ok(actual.decisions <= decisionTarget(s), `${mode}/${seed}: generic simulation inflated meaningful-decision budget`);
   assert.ok(s.queue.some((slot) => slot.kind === "sim"), `${mode}/${seed}: regression fixture lost all background sim slots`);
+}
+
+function assertEmptyNarrativeQueueStaysEmpty(mode: CareerMode, seed: number) {
+  let s = createGame(player);
+  s.careerSeed = seed;
+  setCareerMode(s, mode);
+  const firstOffer = s.offers[0];
+  assert.ok(firstOffer, `${mode}/${seed}: new career must have a club offer`);
+  s = chooseClub(s, firstOffer.clubId);
+  setCareerMode(s, mode);
+
+  // Isolate the original quota-filler failure. If a season has only background
+  // simulation available, pacing must not turn the missing narrative target into
+  // anonymous event/agent/life decisions. Distinct contextual key matches may
+  // still be inserted when eligible, but narrative must remain exactly zero.
+  s.pending = null;
+  s.queue = [{ kind: "sim" }, { kind: "sim" }, { kind: "sim" }];
+  delete s.flags["career_pacing_season"];
+
+  applyCareerPacing(s);
+  assert.equal(
+    s.queue.filter(isNarrativeSlot).length,
+    0,
+    `${mode}/${seed}: empty authored narrative queue was padded with generic decisions`,
+  );
 }
 
 for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertAdviser(seed);
 for (const { id } of CAREER_MODES) for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertMode(id, seed);
 for (const { id } of CAREER_MODES) for (const seed of [45, 4500, 450045]) assertSimulationFlashesDoNotConsumeBudget(id, seed);
-console.log("Career pacing QA passed: era boundaries; Express 10-15, Standard 20-25, Pro 30-40; youth/reserve match density contextual; adviser active/persistent; generic simulation flashes excluded from meaningful-decision budgets.");
+for (const { id } of CAREER_MODES) for (const seed of [45, 2026, 450045]) assertEmptyNarrativeQueueStaysEmpty(id, seed);
+console.log("Career pacing QA passed: era boundaries; pacing targets are ceilings rather than filler quotas; empty authored narrative queues stay empty; youth/reserve match density contextual; adviser active/persistent; generic simulation flashes excluded from meaningful-decision budgets.");
