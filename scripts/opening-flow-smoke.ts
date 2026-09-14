@@ -1,10 +1,11 @@
 import { ensureCareerCast } from "../src/game/career-life";
+import { ALL_EVENTS } from "../src/game/events";
 import { PEOPLE_EVENTS } from "../src/game/events-people";
 import { chooseClub, createGame, resolveEvent } from "../src/game/engine";
 import { isDisallowedNarrative, scrubDisallowedNarrative } from "../src/game/narrative-safety";
 import { afterOpeningClubChoice, forceOpeningPending, initializeOpening, OPENING_DONE, OPENING_PHASE, OpeningPhase } from "../src/game/opening";
 import { setCareerMode, type CareerMode } from "../src/game/pacing";
-import type { GameState, Player } from "../src/game/types";
+import type { GameEvent, GameState, Player } from "../src/game/types";
 
 const MODES: CareerMode[] = ["express", "standard", "pro"];
 const SEEDS = [101, 2026, 31337, 90909];
@@ -34,6 +35,24 @@ function eventId(s: GameState): string {
   if (s.pending?.type === "match") throw new Error(`match leaked before opening completed at phase ${s.flags[OPENING_PHASE]}`);
   if (s.pending?.type !== "event") return "";
   return s.pending.eventId;
+}
+
+function eventById(id: string): GameEvent {
+  const event = ALL_EVENTS.find((candidate) => candidate.id === id);
+  if (!event) throw new Error(`missing event ${id}`);
+  return event;
+}
+
+function renderedText(s: GameState, id = eventId(s)): string {
+  const event = eventById(id);
+  return typeof event.text === "function" ? event.text(s) : event.text;
+}
+
+function expectText(s: GameState, fragment: string, label: string): void {
+  const text = renderedText(s);
+  if (!text.toLowerCase().includes(fragment.toLowerCase())) {
+    throw new Error(`${label}: expected later scene to remember "${fragment}", got: ${text}`);
+  }
 }
 
 function answerAndAdvance(s: GameState, choice = "family"): GameState {
@@ -78,11 +97,33 @@ for (const mode of MODES) {
     if (!firstOffer) throw new Error(`${mode}/${seed}: no initial club offers`);
     state = afterOpeningClubChoice(chooseClub(state, firstOffer));
 
-    for (let i = 2; i < expected.length; i++) {
-      const actual = eventId(state);
-      if (actual !== expected[i]) throw new Error(`${mode}/${seed}: expected ${expected[i]}, got ${actual || "nothing"}`);
-      state = answerAndAdvance(state);
-    }
+    // The opening must not merely store flags: the next people in the chain must
+    // actually speak from what the player already chose. These are deliberately
+    // player-visible phrases from the default QA route.
+    if (eventId(state) !== "opening_first_agreement") throw new Error(`${mode}/${seed}: contract scene missing after club choice`);
+    state = answerAndAdvance(state);
+    if (eventId(state) !== "opening_signing_day") throw new Error(`${mode}/${seed}: signing scene missing`);
+    state = answerAndAdvance(state);
+    if (eventId(state) !== "opening_named_coach") throw new Error(`${mode}/${seed}: coach scene missing`);
+    expectText(state, "camino real hacia minutos", `${mode}/${seed}: contract priority became cosmetic`);
+
+    state = answerAndAdvance(state);
+    if (eventId(state) !== "opening_preseason_adaptation") throw new Error(`${mode}/${seed}: preseason scene missing`);
+    expectText(state, "primeros pasos se decidirían en familia", `${mode}/${seed}: family priority became cosmetic`);
+    expectText(state, "dos objetivos concretos", `${mode}/${seed}: coach choice became cosmetic`);
+
+    state = answerAndAdvance(state);
+    if (eventId(state) !== "opening_named_captain") throw new Error(`${mode}/${seed}: captain scene missing`);
+    expectText(state, "veinte minutos extra", `${mode}/${seed}: preseason choice became cosmetic`);
+
+    state = answerAndAdvance(state);
+    if (eventId(state) !== "opening_named_teammate") throw new Error(`${mode}/${seed}: teammate scene missing`);
+    expectText(state, "guardó su número", `${mode}/${seed}: captain choice became cosmetic`);
+
+    state = answerAndAdvance(state);
+    if (eventId(state) !== "opening_named_physio") throw new Error(`${mode}/${seed}: physio scene missing`);
+    expectText(state, "primer aliado", `${mode}/${seed}: teammate choice became cosmetic`);
+    state = answerAndAdvance(state);
 
     if ((state.flags[OPENING_PHASE] ?? -1) !== OPENING_DONE || state.flags["opening_completed"] !== 1) {
       throw new Error(`${mode}/${seed}: opening did not complete`);
@@ -129,4 +170,4 @@ for (const mode of MODES) {
   }
 }
 
-console.log(`Opening flow QA OK: ${MODES.length} modes x ${SEEDS.length} seeds; life-first opening preserved and repetitive agent_check is unplayable.`);
+console.log(`Opening flow QA OK: ${MODES.length} modes x ${SEEDS.length} seeds; life-first opening preserves causal choice continuity and repetitive agent_check is unplayable.`);
