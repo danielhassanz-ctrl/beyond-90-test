@@ -1,5 +1,5 @@
 import { ensureCareerCast } from "./career-life";
-import { careerSeed, hash } from "./npc";
+import { careerSeed, hash, npc } from "./npc";
 import type { GameState, Thread } from "./types";
 
 /* =========================================================================
@@ -26,6 +26,14 @@ function chance(s: GameState, key: string, probability: number): boolean {
 
 function choose<T>(s: GameState, key: string, values: readonly T[]): T {
   return values[seeded(s, key) % values.length]!;
+}
+
+function familyVoice(s: GameState): string {
+  // Family must not become an anonymous narrative device while coaches, agents
+  // and teammates all have persistent identities. This deterministic NPC lives
+  // in narrative memory, survives club changes and gives family callbacks a
+  // recognisable human owner throughout the career.
+  return npc(s, "family_voice").name;
 }
 
 function teaserFor(s: GameState, kind: ThreadKind): string {
@@ -55,10 +63,13 @@ function teaserFor(s: GameState, kind: ThreadKind): string {
       `Un ojeador federativo ha vuelto a verte y el club te avisa de que la próxima lista de tu categoría sale en pocos días.`,
       `${cast.coach.name} te menciona al terminar la sesión que desde la federación han pedido informes tuyos. Te pide que no juegues la convocatoria antes de recibirla.`,
     ]);
-    case "family_worry": return choose(s, kind, [
-      `En casa llevan dos llamadas cortas y demasiados "luego te cuento". Esta noche te piden que no hagas planes al salir de entrenar.`,
-      `Tu familia ha intentado que no te llegue, pero hay un problema que ya está afectando a decisiones de casa. Quieren hablar contigo antes de que te enteres por otra persona.`,
-    ]);
+    case "family_worry": {
+      const family = familyVoice(s);
+      return choose(s, kind, [
+        `${family} te ha llamado dos veces y las dos ha terminado con un "luego te cuento". Esta noche te pide que no hagas planes al salir de entrenar.`,
+        `${family} intentó que el problema no te llegara en plena temporada, pero ya está afectando a decisiones de casa. Quiere contártelo antes de que te enteres por otra persona.`,
+      ]);
+    }
   }
 }
 
@@ -93,8 +104,10 @@ function memoryTeaser(s: GameState, kind: ThreadKind, remembered: string): strin
       return `${cast.coach.name} te espera al terminar la sesión. Saca una conversación que creías cerrada: «${memory}». No quiere recordártela por nostalgia; quiere saber si sigues sosteniendo aquella decisión ahora que tu situación ha cambiado.`;
     case "teammate_jealous":
       return `${cast.captain.name} te aparta del grupo antes de entrar al vestuario. Lo que pasó entonces sigue circulando entre compañeros: «${memory}». Esta vez no basta con dejar pasar los días; ${cast.teammate.name} también está implicado y habrá que tomar posición.`;
-    case "family_worry":
-      return `${cast.adviser.name} te llama antes de que llegues a casa. Tu familia ha vuelto a hablar de una decisión que marcó aquella etapa: «${memory}». Ahora afecta a una elección nueva y quieren saber si el fútbol sigue estando por encima de lo que decidiste entonces.`;
+    case "family_worry": {
+      const family = familyVoice(s);
+      return `${family} te espera despierto cuando llegas a casa. No empieza por el fútbol: vuelve a una decisión que la familia recuerda perfectamente, «${memory}». Ahora esa promesa choca con algo nuevo en casa y quiere saber si vas a sostenerla, renegociarla o admitir que tu vida ha cambiado.`;
+    }
     default:
       return `Una decisión antigua vuelve con consecuencias: «${memory}». Esta vez el contexto ha cambiado y no puedes responder como si fuera la primera vez.`;
   }
