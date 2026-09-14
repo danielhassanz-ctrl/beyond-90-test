@@ -3,7 +3,25 @@ name: V1 WebKit first-15 mode matrix
 on:
   push:
     branches:
+      - main
       - v1-webkit-first15-mode-matrix
+    paths:
+      - src/game/**
+      - src/qa/**
+      - scripts/browser-first15-mode-matrix.spec.cjs
+      - scripts/real-career-playtest-smoke.ts
+      - scripts/full-season-boredom-smoke.ts
+      - scripts/narrative-quality-smoke.ts
+      - scripts/branch-coverage-smoke.ts
+      - scripts/full-career-smoke.ts
+      - scripts/persistent-cast-smoke.ts
+      - scripts/pacing-smoke.ts
+      - scripts/competition-pacing-smoke.ts
+      - package.json
+      - package-lock.json
+      - docs/FOOTBALL_CAREER_STORY_DIRECTOR.md
+      - qa/REAL_CAREER_PLAYTEST_GATE.md
+      - .github/workflows/v1-webkit-first15-mode-matrix.yml
   pull_request:
     branches:
       - main
