@@ -159,6 +159,13 @@ export function dueThread(s: GameState): Thread | null {
     if (typeof entry !== "string" || entry.trim().length < 12) return false;
     const kind = memoryThreadKind(entry);
     if (!kind) return false;
+    // The current thread renderer has one authored family/home resolution title.
+    // Until distinct family/partner callback cards are authored, surfacing more
+    // than one family-owned recall in the same career recreates the exact
+    // repetitive-card failure the Story Director gate is designed to block.
+    // Adviser/coach/dressing memories remain keyed per exact promise and can
+    // return across seasons; family/home chooses depth over duplicate filler.
+    if (kind === "family_worry" && kindAlreadyUsed(s, kind)) return false;
     return (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0;
   });
   if (entries.length === 0) return null;
@@ -176,8 +183,10 @@ export function dueThread(s: GameState): Thread | null {
   // Organic thread families still retain their one-off protection, but recalled
   // memories are keyed by the exact promise/conflict. This allows a different
   // adviser/family/coach promise to return in a later season without replaying
-  // the same memory twice.
+  // the same memory twice. Family/home additionally consumes its authored
+  // resolution family so it cannot reappear with the same generic card title.
   s.memory.threads[memoryRecallKey(remembered)] = 1;
+  if (kind === "family_worry") s.memory.threads[kind] = 1;
   s.flags["memory_thread_season"] = s.seasonIndex;
   s.flags["ultimo_hilo"] = scene;
   return thread;
