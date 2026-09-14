@@ -86,10 +86,13 @@ function memoryRecallKey(text: string): string {
 function memoryThreadKind(text: string): ThreadKind | null {
   const lower = text.toLowerCase();
   const hasAny = (...terms: string[]) => terms.some((term) => lower.includes(term));
+  // Personal-life ownership wins over football-market vocabulary. A promise such
+  // as "our next transfer must work for us as a couple" belongs to the partner,
+  // even though it also contains the word transfer/signing.
+  if (hasAny("familia", "madre", "padre", "casa", "pareja", "novia", "relación", "relacion", "hijo", "herman")) return "family_worry";
   if (hasAny("agente", "representante", "asesor", "contrato", "renov", "cesión", "cesion", "fichaje", "oferta", "mercado")) return "club_interest";
   if (hasAny("entrenador", "míster", "mister", "técnico", "tecnico")) return "coach_upset";
   if (hasAny("vestuario", "compañ", "capitán", "capitan", "rival", "jerarquía", "jerarquia")) return "teammate_jealous";
-  if (hasAny("familia", "madre", "padre", "casa", "pareja", "novia", "relación", "relacion", "hijo", "herman")) return "family_worry";
   return null;
 }
 
