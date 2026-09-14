@@ -29,6 +29,24 @@ const PROFESSIONAL_ADVISER_NAMES = [
   "Rubén Peralta",
 ];
 
+const CLUB_SCOPED_NARRATIVE_FLAGS = [
+  "people_coach_intro",
+  "people_captain_intro",
+  "people_captain_callback",
+  "people_teammate_intro",
+  "people_teammate_callback",
+  "teammate_long_term_ally",
+  "teammate_rivalry",
+  "people_physio_intro",
+  "people_physio_injury_callback",
+  "physio_intro_listened",
+  "physio_intro_ignored",
+  "physio_intro_prevention",
+  "injury_rehab_patient",
+  "injury_rehab_rushed",
+  "injury_rehab_informed",
+] as const;
+
 function repairProfessionalAdviserIdentity(s: GameState, cast: CareerCast): void {
   if (cast.adviserKind !== "agent") return;
   if (cast.adviser.name !== "Papá" && cast.adviser.name !== "Álex Romero") return;
@@ -45,6 +63,24 @@ function repairProfessionalAdviserIdentity(s: GameState, cast: CareerCast): void
   }
 }
 
+function resetClubScopedNarrativeIfNeeded(s: GameState): void {
+  const club = typeof s.clubId === "string" && s.clubId ? s.clubId : "unattached";
+  const marker = hash(careerSeed(s), `club-narrative-scope|${club}`) || 1;
+  const previous = s.flags["club_narrative_scope"];
+
+  // The first observed club establishes scope without replaying existing scenes.
+  // A later change means a real transfer: the new coach/captain/physio/teammate
+  // must not inherit introductions, callbacks or choices from the old club.
+  if (typeof previous !== "number" || previous <= 0) {
+    s.flags["club_narrative_scope"] = marker;
+    return;
+  }
+  if (previous === marker) return;
+
+  for (const key of CLUB_SCOPED_NARRATIVE_FLAGS) delete s.flags[key];
+  s.flags["club_narrative_scope"] = marker;
+}
+
 /**
  * Fachada narrativa del reparto persistente. La creación y migración viven
  * exclusivamente en npc.ts para que todo el juego comparta exactamente las
@@ -52,6 +88,7 @@ function repairProfessionalAdviserIdentity(s: GameState, cast: CareerCast): void
  */
 export function ensureCareerCast(s: GameState): CareerCast {
   const cast = ensureCast(s);
+  resetClubScopedNarrativeIfNeeded(s);
   // Opening adviser selection can deliberately replace a provisional father or
   // family-friend adviser with a professional. Old code reused the already
   // synchronized placeholder name (for example "Papá") and produced a
