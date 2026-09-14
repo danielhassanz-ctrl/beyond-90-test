@@ -1,3 +1,4 @@
+import { ensureCareerCast } from "../src/game/career-life";
 import { createGame } from "../src/game/engine";
 import { npc } from "../src/game/npc";
 import { dueThread, maybeSpawnThreads } from "../src/game/threads";
@@ -105,4 +106,26 @@ assert(familyRecalled.teaser.includes("Prometiste a tu familia"), "family callba
 familyMemory.clubId = familyMemory.clubId === "betis" ? "villarreal" : "betis";
 assert(npc(familyMemory, "family_voice").name === familyName, "family identity drifted after a club transfer");
 
-console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok adviserMemoryRecall=ok familyMemoryOwner=ok`);
+// A partner is not interchangeable with "the family". Once the relationship is
+// established, a promise about that relationship must return through the same
+// persistent partner identity, even if the player changes clubs later.
+const partnerMemory = createGame(player);
+partnerMemory.careerSeed = 515151;
+partnerMemory.seasonIndex = 5;
+partnerMemory.sceneCount = 74;
+partnerMemory.threads = [];
+partnerMemory.flags["ultimo_hilo"] = -99;
+partnerMemory.flags["partner_active"] = 1;
+partnerMemory.memory.threads = {};
+partnerMemory.memory.promises = ["Le prometiste a tu pareja que el siguiente fichaje lo decidiríais pensando también en vuestra vida fuera del fútbol."];
+partnerMemory.memory.conflicts = [];
+const partnerName = ensureCareerCast(partnerMemory).partner.name;
+const partnerRecalled = dueThread(partnerMemory);
+assert(partnerRecalled, "partner promise was not eligible for long-term recall");
+assert(partnerRecalled.kind === "family_worry", `partner promise returned through wrong story family: ${partnerRecalled.kind}`);
+assert(partnerRecalled.teaser.startsWith(partnerName), "partner callback did not open with the persistent partner identity");
+assert(partnerRecalled.teaser.includes("siguiente fichaje"), "partner callback did not quote the remembered shared-life promise");
+partnerMemory.clubId = partnerMemory.clubId === "betis" ? "villarreal" : "betis";
+assert(ensureCareerCast(partnerMemory).partner.name === partnerName, "partner identity drifted after a club transfer");
+
+console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok adviserMemoryRecall=ok familyMemoryOwner=ok partnerMemoryOwner=ok`);
