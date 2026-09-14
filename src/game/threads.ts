@@ -29,11 +29,15 @@ function choose<T>(s: GameState, key: string, values: readonly T[]): T {
 }
 
 function familyVoice(s: GameState): string {
-  // Family must not become an anonymous narrative device while coaches, agents
-  // and teammates all have persistent identities. This deterministic NPC lives
-  // in narrative memory, survives club changes and gives family callbacks a
-  // recognisable human owner throughout the career.
   return npc(s, "family_voice").name;
+}
+
+function rememberedPersonalVoice(s: GameState, remembered: string): { name: string; partner: boolean } {
+  const lower = remembered.toLowerCase();
+  const partnerMemory = s.flags["partner_active"] === 1
+    && ["pareja", "novia", "relación", "relacion"].some((term) => lower.includes(term));
+  if (partnerMemory) return { name: ensureCareerCast(s).partner.name, partner: true };
+  return { name: familyVoice(s), partner: false };
 }
 
 function teaserFor(s: GameState, kind: ThreadKind): string {
@@ -82,18 +86,16 @@ function memoryRecallKey(text: string): string {
 function memoryThreadKind(text: string): ThreadKind | null {
   const lower = text.toLowerCase();
   const hasAny = (...terms: string[]) => terms.some((term) => lower.includes(term));
-  // Career-management promises are some of the most consequential decisions in
-  // a footballer's life. They must be eligible to come back through the same
-  // persistent adviser who helped make them, instead of disappearing from the
-  // story once the original transfer/contract card is resolved.
+  // Personal-life ownership wins over football-market vocabulary. A promise such
+  // as "our next transfer must work for us as a couple" belongs to the partner,
+  // even though it also contains the word transfer/signing.
+  if (hasAny("familia", "madre", "padre", "casa", "pareja", "novia", "relación", "relacion", "hijo", "herman")) return "family_worry";
   if (hasAny("agente", "representante", "asesor", "contrato", "renov", "cesión", "cesion", "fichaje", "oferta", "mercado")) return "club_interest";
   if (hasAny("entrenador", "míster", "mister", "técnico", "tecnico")) return "coach_upset";
   if (hasAny("vestuario", "compañ", "capitán", "capitan", "rival", "jerarquía", "jerarquia")) return "teammate_jealous";
-  if (hasAny("familia", "madre", "padre", "casa", "pareja", "hijo", "herman")) return "family_worry";
   return null;
 }
 
-/** A remembered decision returns through the person who owns that history. */
 function memoryTeaser(s: GameState, kind: ThreadKind, remembered: string): string {
   const cast = ensureCareerCast(s);
   const memory = remembered.replace(/[.]+$/, "");
@@ -105,8 +107,11 @@ function memoryTeaser(s: GameState, kind: ThreadKind, remembered: string): strin
     case "teammate_jealous":
       return `${cast.captain.name} te aparta del grupo antes de entrar al vestuario. Lo que pasó entonces sigue circulando entre compañeros: «${memory}». Esta vez no basta con dejar pasar los días; ${cast.teammate.name} también está implicado y habrá que tomar posición.`;
     case "family_worry": {
-      const family = familyVoice(s);
-      return `${family} te espera despierto cuando llegas a casa. No empieza por el fútbol: vuelve a una decisión que la familia recuerda perfectamente, «${memory}». Ahora esa promesa choca con algo nuevo en casa y quiere saber si vas a sostenerla, renegociarla o admitir que tu vida ha cambiado.`;
+      const owner = rememberedPersonalVoice(s, remembered);
+      if (owner.partner) {
+        return `${owner.name} te espera cuando llegas a casa. Vuelve a una conversación que los dos recordáis perfectamente: «${memory}». No quiere convertir el fútbol en una discusión; quiere saber si aquella promesa sigue teniendo sitio en vuestra vida o si toca renegociarla juntos.`;
+      }
+      return `${owner.name} te espera despierto cuando llegas a casa. No empieza por el fútbol: vuelve a una decisión que la familia recuerda perfectamente, «${memory}». Ahora esa promesa choca con algo nuevo en casa y quiere saber si vas a sostenerla, renegociarla o admitir que tu vida ha cambiado.`;
     }
     default:
       return `Una decisión antigua vuelve con consecuencias: «${memory}». Esta vez el contexto ha cambiado y no puedes responder como si fuera la primera vez.`;
@@ -147,13 +152,13 @@ export function dueThread(s: GameState): Thread | null {
   ])].filter((entry): entry is string => {
     if (typeof entry !== "string" || entry.trim().length < 12) return false;
     const kind = memoryThreadKind(entry);
-    if (!kind) return false;
-    return !kindAlreadyUsed(s, kind) && (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0;
+    if (!kind || kindAlreadyUsed(s, kind)) return false;
+    return (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0;
   });
   if (entries.length === 0) return null;
   const remembered = entries[Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 13 + scene * 5) % entries.length]!;
   const kind = memoryThreadKind(remembered);
-  if (!kind || kindAlreadyUsed(s, kind)) return null;
+  if (!kind || hasThread(s, kind)) return null;
   const thread: Thread = {
     id: `memory-${s.seasonIndex}-${scene}`,
     kind,
@@ -162,8 +167,12 @@ export function dueThread(s: GameState): Thread | null {
     payload: { remembered: remembered.slice(0, 240) },
   };
   s.threads.push(thread);
-  s.memory.threads[kind] = 1;
+  // The renderer currently has one authored resolution title/card per family.
+  // A second memory in the same family is therefore deferred rather than shown
+  // as cosmetic repetition. Once a distinct authored sequel exists, this family
+  // guard can be replaced by sequel-specific eligibility instead of a quota.
   s.memory.threads[memoryRecallKey(remembered)] = 1;
+  s.memory.threads[kind] = 1;
   s.flags["memory_thread_season"] = s.seasonIndex;
   s.flags["ultimo_hilo"] = scene;
   return thread;
