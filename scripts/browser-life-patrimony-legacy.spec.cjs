@@ -106,12 +106,14 @@ test("iPhone WebKit keeps Life, Patrimony and Legacy connected through save relo
   await expect(page.getByText("Tomás Valera", { exact: true })).toBeVisible();
   await expect(page.getByText("Iván Moya", { exact: true })).toBeVisible();
   await expect(page.getByText("Rubén Salas", { exact: true })).toBeVisible();
+  await expect(page.getByText("Marta", { exact: true })).toBeVisible();
   await expect(page.getByText("Lucía", { exact: true })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
   await page.reload();
   await expect(page).toHaveURL(/\/relaciones\/?$/);
   await expect(page.getByText("Tomás Valera", { exact: true })).toBeVisible();
+  await expect(page.getByText("Marta", { exact: true })).toBeVisible();
   await expect(page.getByText("Lucía", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "Dinero", exact: true }).click();
