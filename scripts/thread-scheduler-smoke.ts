@@ -1,6 +1,6 @@
 import { createGame } from "../src/game/engine";
 import { maybeSpawnThreads } from "../src/game/threads";
-import type { Player } from "../src/game/types";
+import type { GameState, Player } from "../src/game/types";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -16,9 +16,7 @@ const player: Player = {
   traits: ["familiar", "profesional"],
 };
 
-const originalRandom = Math.random;
-Math.random = () => 0;
-try {
+function eligibleFallbackState(): GameState {
   const s = createGame(player);
   s.threads = [];
   s.sceneCount = 20;
@@ -32,18 +30,27 @@ try {
   s.agent.present = true;
   s.hasAgent = true;
   s.fame = 50;
-
-  maybeSpawnThreads(s);
-  assert(s.threads.length === 1, "consumed high-priority thread suppressed all later eligible threads");
-  assert(s.threads[0]!.kind === "club_interest", `expected club_interest fallback, got ${s.threads[0]!.kind}`);
-  assert(s.flags["ultimo_hilo"] === 20, "actual spawned fallback did not consume cadence at the correct scene");
-
-  // A second call at the same scene must respect the cooldown created by the
-  // real spawn rather than opening another narrative thread immediately.
-  maybeSpawnThreads(s);
-  assert(s.threads.length === 1, "thread cooldown did not hold after the successful fallback spawn");
-} finally {
-  Math.random = originalRandom;
+  return s;
 }
 
-console.log("THREAD_SCHEDULER_SMOKE_OK exhaustedFallback=ok cooldownOnRealSpawn=ok");
+const first = eligibleFallbackState();
+maybeSpawnThreads(first);
+assert(first.threads.length === 1, "consumed high-priority thread suppressed all later eligible threads");
+const spawnedKind = first.threads[0]!.kind;
+assert(spawnedKind !== "coach_upset", "scheduler reused an exhausted story kind");
+assert(first.flags["ultimo_hilo"] === 20, "actual spawned fallback did not consume cadence at the correct scene");
+
+// The scheduler is career-seeded. A fresh copy of the same career state must
+// choose the same fallback without depending on global Math.random.
+const replay = eligibleFallbackState();
+maybeSpawnThreads(replay);
+assert(replay.threads.length === 1, "deterministic replay failed to spawn a fallback thread");
+assert(replay.threads[0]!.kind === spawnedKind, `scheduler was not deterministic: ${spawnedKind} vs ${replay.threads[0]!.kind}`);
+assert(replay.threads[0]!.teaser === first.threads[0]!.teaser, "deterministic replay changed player-visible teaser copy");
+
+// A second call at the same scene must respect the cooldown created by the
+// real spawn rather than opening another narrative thread immediately.
+maybeSpawnThreads(first);
+assert(first.threads.length === 1, "thread cooldown did not hold after the successful fallback spawn");
+
+console.log(`THREAD_SCHEDULER_SMOKE_OK exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok`);
