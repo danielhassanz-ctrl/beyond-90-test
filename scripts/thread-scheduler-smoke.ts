@@ -1,5 +1,5 @@
 import { createGame } from "../src/game/engine";
-import { maybeSpawnThreads } from "../src/game/threads";
+import { dueThread, maybeSpawnThreads } from "../src/game/threads";
 import type { GameState, Player } from "../src/game/types";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -65,4 +65,22 @@ assert(replay.threads[0]!.teaser === first.threads[0]!.teaser, "deterministic re
 maybeSpawnThreads(first);
 assert(first.threads.length === 1, "thread cooldown did not hold after the successful fallback spawn");
 
-console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok`);
+// Long-term football-career decisions must not vanish after the original card.
+// A contract/market promise from an earlier season should come back through the
+// persistent adviser and quote the exact remembered priority.
+const adviserMemory = createGame(player);
+adviserMemory.careerSeed = 90909;
+adviserMemory.seasonIndex = 2;
+adviserMemory.sceneCount = 40;
+adviserMemory.threads = [];
+adviserMemory.flags["ultimo_hilo"] = -99;
+adviserMemory.memory.threads = {};
+adviserMemory.memory.promises = ["Le dijiste a tu representante que el próximo contrato debía priorizar minutos antes que salario."];
+adviserMemory.memory.conflicts = [];
+const recalled = dueThread(adviserMemory);
+assert(recalled, "contract/adviser promise was not eligible for long-term recall");
+assert(recalled.kind === "club_interest", `contract/adviser promise returned through wrong story owner: ${recalled.kind}`);
+assert(recalled.teaser.includes("próximo contrato debía priorizar minutos antes que salario"), "adviser callback did not quote the remembered career priority");
+assert(recalled.payload.remembered === adviserMemory.memory.promises[0], "adviser callback did not preserve the exact remembered decision in payload");
+
+console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok adviserMemoryRecall=ok`);
