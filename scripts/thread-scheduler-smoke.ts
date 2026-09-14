@@ -84,6 +84,20 @@ assert(recalled.kind === "club_interest", `contract/adviser promise returned thr
 assert(recalled.teaser.includes("próximo contrato debía priorizar minutos antes que salario"), "adviser callback did not quote the remembered career priority");
 assert(recalled.payload.remembered === adviserMemory.memory.promises[0], "adviser callback did not preserve the exact remembered decision in payload");
 
+// Consuming one market/adviser memory must not permanently silence every later
+// promise owned by that same adviser. A distinct promise may return in a later
+// season, while the exact first memory remains protected by its recall key.
+adviserMemory.threads = [];
+adviserMemory.seasonIndex = 3;
+adviserMemory.sceneCount = 62;
+adviserMemory.flags["ultimo_hilo"] = -99;
+adviserMemory.memory.promises.unshift("Acordaste con tu representante que una futura cesión solo tendría sentido con un rol claro y minutos reales.");
+const secondAdviserRecall = dueThread(adviserMemory);
+assert(secondAdviserRecall, "a second distinct adviser promise was incorrectly silenced after the first recall");
+assert(secondAdviserRecall.kind === "club_interest", `second adviser promise returned through wrong story owner: ${secondAdviserRecall.kind}`);
+assert(secondAdviserRecall.teaser.includes("futura cesión solo tendría sentido"), "later-season adviser callback did not quote the new remembered promise");
+assert(secondAdviserRecall.payload.remembered === adviserMemory.memory.promises[0], "later-season adviser callback recalled the wrong promise");
+
 // Family history must return through a recognisable family person, not through
 // the agent just because the agent is the strongest persistent contact. The same
 // deterministic name must survive a club change because home life is career-scoped.
@@ -105,4 +119,24 @@ assert(familyRecalled.teaser.includes("Prometiste a tu familia"), "family callba
 familyMemory.clubId = familyMemory.clubId === "betis" ? "villarreal" : "betis";
 assert(npc(familyMemory, "family_voice").name === familyName, "family identity drifted after a club transfer");
 
-console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok adviserMemoryRecall=ok familyMemoryOwner=ok`);
+// Partner history belongs to the persistent partner, not to the family narrator.
+// This prevents a serious relationship decision from returning years later in
+// the mouth of a parent or an unrelated generic home-life character.
+const partnerMemory = createGame(player);
+partnerMemory.careerSeed = 818181;
+partnerMemory.seasonIndex = 4;
+partnerMemory.sceneCount = 70;
+partnerMemory.threads = [];
+partnerMemory.flags["ultimo_hilo"] = -99;
+partnerMemory.flags["partner_active"] = 1;
+partnerMemory.memory.threads = {};
+partnerMemory.memory.promises = ["Prometiste a tu pareja que el siguiente fichaje también tendría en cuenta vuestra vida fuera del fútbol."];
+partnerMemory.memory.conflicts = [];
+const partnerName = npc(partnerMemory, "partner").name;
+const partnerRecalled = dueThread(partnerMemory);
+assert(partnerRecalled, "partner promise was not eligible for long-term recall");
+assert(partnerRecalled.kind === "family_worry", `partner promise returned through wrong narrative family: ${partnerRecalled.kind}`);
+assert(partnerRecalled.teaser.startsWith(partnerName), "partner callback was misattributed to the family voice");
+assert(partnerRecalled.teaser.includes("siguiente fichaje"), "partner callback did not quote the remembered shared-life promise");
+
+console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok adviserMemoryRecall=ok secondAdviserRecall=ok familyMemoryOwner=ok partnerMemoryOwner=ok`);
