@@ -1,7 +1,7 @@
 import { ensureCareerCast } from "../src/game/career-life";
 import { createGame } from "../src/game/engine";
 import { npc } from "../src/game/npc";
-import { dueThread, maybeSpawnThreads } from "../src/game/threads";
+import { dueThread, maybeSpawnThreads, spawnThread } from "../src/game/threads";
 import type { GameState, Player } from "../src/game/types";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -67,6 +67,26 @@ assert(replay.threads[0]!.teaser === first.threads[0]!.teaser, "deterministic re
 maybeSpawnThreads(first);
 assert(first.threads.length === 1, "thread cooldown did not hold after the successful fallback spawn");
 
+// Relationship story families must be allowed to evolve in later seasons. Old
+// saves carried a permanent memory.threads[kind] lock; loading one must block a
+// duplicate in the current season, migrate the lock, then permit a genuinely new
+// chapter next season rather than silencing that relationship forever.
+const seasonalArc = createGame(player);
+seasonalArc.careerSeed = 616161;
+seasonalArc.seasonIndex = 2;
+seasonalArc.sceneCount = 44;
+seasonalArc.threads = [];
+seasonalArc.memory.threads = { coach_upset: 1 };
+const legacySameSeason = spawnThread(seasonalArc, "coach_upset", {}, 1);
+assert(!legacySameSeason, "legacy permanent lock replayed the same relationship thread immediately after load");
+seasonalArc.seasonIndex = 3;
+seasonalArc.sceneCount = 66;
+seasonalArc.threads = [];
+const evolvedNextSeason = spawnThread(seasonalArc, "coach_upset", {}, 1);
+assert(evolvedNextSeason, "relationship family stayed permanently exhausted instead of evolving next season");
+const duplicateSameSeason = spawnThread(seasonalArc, "coach_upset", {}, 1);
+assert(!duplicateSameSeason, "relationship family duplicated inside the same season");
+
 // Long-term football-career decisions must not vanish after the original card.
 // A contract/market promise from an earlier season should come back through the
 // persistent adviser and quote the exact remembered priority.
@@ -128,4 +148,4 @@ assert(partnerRecalled.teaser.includes("siguiente fichaje"), "partner callback d
 partnerMemory.clubId = partnerMemory.clubId === "betis" ? "villarreal" : "betis";
 assert(ensureCareerCast(partnerMemory).partner.name === partnerName, "partner identity drifted after a club transfer");
 
-console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok adviserMemoryRecall=ok familyMemoryOwner=ok partnerMemoryOwner=ok`);
+console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok seasonalRelationshipEvolution=ok adviserMemoryRecall=ok familyMemoryOwner=ok partnerMemoryOwner=ok`);
