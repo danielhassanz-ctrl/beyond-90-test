@@ -102,6 +102,35 @@ function assertMode(mode: CareerMode, seed: number) {
   assert.equal(JSON.stringify(s.queue), before, `${mode}/${seed}: pacing must be idempotent`);
 }
 
+function assertSimulationFlashesDoNotConsumeBudget(mode: CareerMode, seed: number) {
+  let s = createGame(player);
+  s.careerSeed = seed;
+  setCareerMode(s, mode);
+  const firstOffer = s.offers[0];
+  assert.ok(firstOffer, `${mode}/${seed}: new career must have a club offer`);
+  s = chooseClub(s, firstOffer.clubId);
+  setCareerMode(s, mode);
+
+  // Recreate the exact legacy class that triggered issue #45: a generic
+  // match_flash can exist in an old save while ordinary sim slots remain in
+  // the season queue. Neither is a meaningful player decision and therefore
+  // neither may reduce Express/Standard/Pro decision budgets.
+  s.pending = {
+    kind: "match_flash",
+    data: { title: "Tarjeta roja", text: "Flash genérico legado de simulación" },
+  } as GameState["pending"];
+  s.queue.unshift({ kind: "sim" }, { kind: "sim" });
+  delete s.flags["career_pacing_season"];
+
+  applyCareerPacing(s);
+  const actual = countPlan(s);
+  assert.equal(actual.narrative, narrativeTarget(s), `${mode}/${seed}: legacy match_flash consumed narrative budget`);
+  assert.equal(actual.matches, keyMatchTarget(s), `${mode}/${seed}: simulation flash consumed key-match budget`);
+  assert.equal(actual.decisions, decisionTarget(s), `${mode}/${seed}: generic simulation consumed meaningful-decision budget`);
+  assert.ok(s.queue.some((slot) => slot.kind === "sim"), `${mode}/${seed}: regression fixture lost all background sim slots`);
+}
+
 for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertAdviser(seed);
 for (const { id } of CAREER_MODES) for (const seed of [11, 29, 47, 83, 131, 251, 509, 1021]) assertMode(id, seed);
-console.log("Career pacing QA passed: era boundaries; Express 10-15, Standard 20-25, Pro 30-40; youth/reserve match density contextual; adviser active/persistent.");
+for (const { id } of CAREER_MODES) for (const seed of [45, 4500, 450045]) assertSimulationFlashesDoNotConsumeBudget(id, seed);
+console.log("Career pacing QA passed: era boundaries; Express 10-15, Standard 20-25, Pro 30-40; youth/reserve match density contextual; adviser active/persistent; generic simulation flashes excluded from meaningful-decision budgets.");
