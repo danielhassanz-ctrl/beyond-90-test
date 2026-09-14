@@ -100,16 +100,29 @@ function contextualKeySlots(s: GameState, missing: number): Slot[] {
   const eligible = eligibleKeyMatchKinds(s);
   const euro = europeanCompetition(s);
   const additions: Slot[] = [];
-  const hasTag = (tag: NonNullable<Slot["tag"]>) => s.queue.some((slot) => slot.kind === "match" && slot.tag === tag);
-  const push = (slot: Slot) => { if (additions.length < missing) additions.push(slot); };
+  const queuedTags = new Set(
+    s.queue
+      .filter((slot) => slot.kind === "match" && slot.tag)
+      .map((slot) => slot.tag as NonNullable<Slot["tag"]>),
+  );
+  const pushUnique = (slot: Slot) => {
+    if (additions.length >= missing) return;
+    if (slot.tag && queuedTags.has(slot.tag)) return;
+    additions.push(slot);
+    if (slot.tag) queuedTags.add(slot.tag);
+  };
 
-  if (eligible.includes("europe") && euro && !hasTag("euro")) push({ kind: "match", tag: "euro", tie: true, competition: euro });
-  if (eligible.includes("exclub") && !hasTag("exclub")) push({ kind: "match", tag: "exclub" });
-  if (eligible.includes("derby") && !hasTag("derby")) push({ kind: "match", tag: "derby" });
-  if (eligible.includes("cup")) push({ kind: "match", tag: "cup", tie: true });
-  if (eligible.includes("title_decider")) push({ kind: "match", tag: "decisive" });
-  if (eligible.includes("debut") && !hasTag("debut")) push({ kind: "match", tag: "debut" });
+  if (eligible.includes("europe") && euro) pushUnique({ kind: "match", tag: "euro", tie: true, competition: euro });
+  if (eligible.includes("exclub")) pushUnique({ kind: "match", tag: "exclub" });
+  if (eligible.includes("derby")) pushUnique({ kind: "match", tag: "derby" });
+  if (eligible.includes("cup")) pushUnique({ kind: "match", tag: "cup", tie: true });
+  if (eligible.includes("title_decider")) pushUnique({ kind: "match", tag: "decisive" });
+  if (eligible.includes("debut")) pushUnique({ kind: "match", tag: "debut" });
 
+  // Never manufacture repeated generic key matches merely to hit a pacing
+  // quota. If the real season context cannot justify another distinct match,
+  // the career runs slightly shorter instead of showing another generic
+  // "partido clave", derby, cup or scouts card with the same dramatic purpose.
   const fallback: Slot[] = s.stage === "first"
     ? [
         { kind: "match", tag: "decisive", label: "Partido clave de la temporada" },
@@ -121,8 +134,7 @@ function contextualKeySlots(s: GameState, missing: number): Slot[] {
         { kind: "match", tag: "derby", label: "Derbi de formación" },
         { kind: "match", tag: "debut", label: "Nueva oportunidad para ganarte sitio" },
       ];
-  let i = 0;
-  while (additions.length < missing) additions.push(fallback[i++ % fallback.length]!);
+  for (const slot of fallback) pushUnique(slot);
   return additions;
 }
 
