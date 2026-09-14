@@ -72,6 +72,24 @@ function adviserLabel(s: GameState): string {
   return `${cast.adviser.name}, tu representante`;
 }
 
+function homeThread(s: GameState): string {
+  switch (s.flags["opening_home_priority"]) {
+    case 1: return "En casa prometiste que los primeros pasos se decidirían en familia.";
+    case 2: return "En casa dijiste que querías intentar ser futbolista de verdad, no solo probar suerte.";
+    case 3: return "En casa pediste proteger estudios y rutina mientras el fútbol no obligara a elegir.";
+    default: return "En casa acordasteis no confundir una oportunidad con una carrera hecha.";
+  }
+}
+
+function contractThread(s: GameState): string {
+  switch (s.flags["opening_contract_priority"]) {
+    case 1: return "Tu primera condición fue tener un camino real hacia minutos.";
+    case 2: return "Aceptaste menos protagonismo inmediato a cambio de un plan de desarrollo mejor.";
+    case 3: return "Protegiste una salida sencilla si el proyecto se atascaba.";
+    default: return "El acuerdo dejó claro que tu sitio tendría que ganarse.";
+  }
+}
+
 function selectAdviser(s: GameState, kind: "agent" | "father" | "friend"): void {
   const cast = ensureCareerCast(s);
   cast.adviserKind = kind;
@@ -106,11 +124,11 @@ const OPENING_EVENTS: GameEvent[] = [
     category: "life",
     family: "opening_home",
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.HOME,
-    text: (s) => `Tienes 16 años y mañana hay clase. En la mesa de casa se habla de notas, horarios y de que varios clubes han preguntado por ti. Tu madre insiste en que una llamada no es una carrera; tu padre recuerda que todavía dependes de ellos para casi todo. Por primera vez el fútbol puede cambiar la vida de toda la familia, pero todavía no ha cambiado nada.`,
+    text: () => `Tienes 16 años y mañana hay clase. En la mesa de casa se habla de notas, horarios y de que varios clubes han preguntado por ti. Tu madre insiste en que una llamada no es una carrera; tu padre recuerda que todavía dependes de ellos para casi todo. Por primera vez el fútbol puede cambiar la vida de toda la familia, pero todavía no ha cambiado nada.`,
     choices: [
-      { id: "familia", label: "Decir que no darás ningún paso sin hablarlo en casa", hint: "La familia será una voz fuerte al principio", outcome: "En casa respiran. La oportunidad sigue ahí, pero deja de ser solo tuya.", apply: (s) => { rel(s, "family", 9); stat(s, "discipline", 2); note(s, "Prometiste decidir los primeros pasos junto a tu familia."); setPhase(s, OpeningPhase.ADVISER); } },
-      { id: "ambicion", label: "Decir que quieres intentarlo en serio", hint: "Ambición, todavía sin garantías", outcome: "Tu padre asiente, pero te recuerda que querer ser futbolista y serlo son dos cosas distintas.", apply: (s) => { stat(s, "morale", 5); stat(s, "discipline", 1); note(s, "A los 16 dijiste en casa que querías intentarlo de verdad."); setPhase(s, OpeningPhase.ADVISER); } },
-      { id: "estudios", label: "Pedir mantener estudios y fútbol mientras sea posible", hint: "Una transición más prudente", outcome: "Acordáis no quemar ninguna puerta todavía. Habrá que cuadrar viajes, clases y entrenamientos.", apply: (s) => { rel(s, "family", 6); stat(s, "discipline", 4); note(s, "Decidiste proteger tu vida normal mientras dabas los primeros pasos."); setPhase(s, OpeningPhase.ADVISER); } },
+      { id: "familia", label: "Decir que no darás ningún paso sin hablarlo en casa", hint: "La familia será una voz fuerte al principio", outcome: "En casa respiran. La oportunidad sigue ahí, pero deja de ser solo tuya.", apply: (s) => { s.flags["opening_home_priority"] = 1; rel(s, "family", 9); stat(s, "discipline", 2); note(s, "Prometiste decidir los primeros pasos junto a tu familia."); setPhase(s, OpeningPhase.ADVISER); } },
+      { id: "ambicion", label: "Decir que quieres intentarlo en serio", hint: "Ambición, todavía sin garantías", outcome: "Tu padre asiente, pero te recuerda que querer ser futbolista y serlo son dos cosas distintas.", apply: (s) => { s.flags["opening_home_priority"] = 2; stat(s, "morale", 5); stat(s, "discipline", 1); note(s, "A los 16 dijiste en casa que querías intentarlo de verdad."); setPhase(s, OpeningPhase.ADVISER); } },
+      { id: "estudios", label: "Pedir mantener estudios y fútbol mientras sea posible", hint: "Una transición más prudente", outcome: "Acordáis no quemar ninguna puerta todavía. Habrá que cuadrar viajes, clases y entrenamientos.", apply: (s) => { s.flags["opening_home_priority"] = 3; rel(s, "family", 6); stat(s, "discipline", 4); note(s, "Decidiste proteger tu vida normal mientras dabas los primeros pasos."); setPhase(s, OpeningPhase.ADVISER); } },
     ],
   },
   {
@@ -123,9 +141,9 @@ const OPENING_EVENTS: GameEvent[] = [
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.ADVISER,
     text: (s) => { const c = ensureCareerCast(s); return `${c.adviser.name === "Papá" ? s.agent.name : c.adviser.name} ha preguntado por ti y quiere hablar de los clubes que están llamando. En casa aparece una duda más importante que cualquier escudo: con 16 años, ¿dejas esto en manos de un representante profesional, prefieres que tu padre controle cada paso o eliges a una persona de confianza que crezca contigo?`; },
     choices: [
-      { id: "agent", label: "Trabajar con un representante profesional", hint: "Experiencia en contratos y mercado; cobrará comisión", outcome: "Aceptas ayuda profesional, pero dejas claro que la decisión final seguirá siendo tuya y de tu familia.", apply: (s) => { selectAdviser(s, "agent"); const p=ensureCareerCast(s).adviser; touch(p,s,6); note(s, `${p.name} empezó a llevar tu carrera con 16 años.`); setPhase(s, OpeningPhase.CLUB_CHOICE); } },
-      { id: "father", label: "Que tu padre lleve tus primeros pasos", hint: "Máxima confianza, menos experiencia profesional", outcome: "Tu padre acepta con una condición: si la carrera crece, pedirá ayuda antes de fingir que sabe lo que no sabe.", apply: (s) => { selectAdviser(s, "father"); rel(s,"family",8); note(s, "Tu padre asumió el papel de asesor al comienzo de tu carrera."); setPhase(s, OpeningPhase.CLUB_CHOICE); } },
-      { id: "friend", label: "Confiar en alguien cercano a la familia", hint: "Relación personal; tendrá que demostrar que está preparado", outcome: "Elegís confianza y cercanía. No habrá traje ni gran agencia detrás: tendrá que aprender contigo.", apply: (s) => { selectAdviser(s, "friend"); rel(s,"family",4); note(s, `${ensureCareerCast(s).adviser.name} se convirtió en tu persona de confianza para la carrera.`); setPhase(s, OpeningPhase.CLUB_CHOICE); } },
+      { id: "agent", label: "Trabajar con un representante profesional", hint: "Experiencia en contratos y mercado; cobrará comisión", outcome: "Aceptas ayuda profesional, pero dejas claro que la decisión final seguirá siendo tuya y de tu familia.", apply: (s) => { s.flags["opening_adviser_choice"] = 1; selectAdviser(s, "agent"); const p=ensureCareerCast(s).adviser; touch(p,s,6); note(s, `${p.name} empezó a llevar tu carrera con 16 años.`); setPhase(s, OpeningPhase.CLUB_CHOICE); } },
+      { id: "father", label: "Que tu padre lleve tus primeros pasos", hint: "Máxima confianza, menos experiencia profesional", outcome: "Tu padre acepta con una condición: si la carrera crece, pedirá ayuda antes de fingir que sabe lo que no sabe.", apply: (s) => { s.flags["opening_adviser_choice"] = 2; selectAdviser(s, "father"); rel(s,"family",8); note(s, "Tu padre asumió el papel de asesor al comienzo de tu carrera."); setPhase(s, OpeningPhase.CLUB_CHOICE); } },
+      { id: "friend", label: "Confiar en alguien cercano a la familia", hint: "Relación personal; tendrá que demostrar que está preparado", outcome: "Elegís confianza y cercanía. No habrá traje ni gran agencia detrás: tendrá que aprender contigo.", apply: (s) => { s.flags["opening_adviser_choice"] = 3; selectAdviser(s, "friend"); rel(s,"family",4); note(s, `${ensureCareerCast(s).adviser.name} se convirtió en tu persona de confianza para la carrera.`); setPhase(s, OpeningPhase.CLUB_CHOICE); } },
     ],
   },
   {
@@ -138,9 +156,9 @@ const OPENING_EVENTS: GameEvent[] = [
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.CONTRACT && !!s.clubId,
     text: (s) => `${adviserLabel(s)} se sienta contigo y abre el acuerdo del ${clubDef(s.clubId).name}. No hay millones: formación, residencia o desplazamientos, objetivos académicos, una pequeña ayuda y la promesa de revisar tu situación si progresas. Te señala tres cosas que sí importan ahora: minutos, plan de desarrollo y facilidad para salir cedido si te atascas.`,
     choices: [
-      { id:"minutes", label:"Pedir garantías sobre el plan de minutos", hint:"Prioridad deportiva", outcome:"El club no promete titularidades, pero concreta el camino y las revisiones trimestrales.", apply:(s)=>{s.contract="Acuerdo formativo · prioridad minutos";s.contractYears=2;s.salary=6;rel(s,"agent",5);note(s,"En tu primer acuerdo priorizaste un camino claro hacia minutos.");setPhase(s,OpeningPhase.SIGNING);} },
-      { id:"development", label:"Priorizar entrenadores y desarrollo aunque juegues menos", hint:"Más paciencia a corto plazo", outcome:"Aceptas que el primer año puede ser incómodo si el entorno te hace mejor futbolista.", apply:(s)=>{s.contract="Acuerdo formativo · prioridad desarrollo";s.contractYears=2;s.salary=5;stat(s,"discipline",3);note(s,"En tu primer acuerdo priorizaste desarrollo por encima de protagonismo inmediato.");setPhase(s,OpeningPhase.SIGNING);} },
-      { id:"exit", label:"Pedir una salida sencilla si el proyecto no funciona", hint:"Proteges tu siguiente paso", outcome:"La cláusula queda anotada. Nadie quiere hablar de marcharse el día que llega, pero alguien tiene que hacerlo.", apply:(s)=>{s.contract="Acuerdo formativo · salida flexible";s.contractYears=2;s.salary=5;rel(s,"agent",4);note(s,"Protegiste una salida futura en tu primer acuerdo.");setPhase(s,OpeningPhase.SIGNING);} },
+      { id:"minutes", label:"Pedir garantías sobre el plan de minutos", hint:"Prioridad deportiva", outcome:"El club no promete titularidades, pero concreta el camino y las revisiones trimestrales.", apply:(s)=>{s.flags["opening_contract_priority"]=1;s.contract="Acuerdo formativo · prioridad minutos";s.contractYears=2;s.salary=6;rel(s,"agent",5);note(s,"En tu primer acuerdo priorizaste un camino claro hacia minutos.");setPhase(s,OpeningPhase.SIGNING);} },
+      { id:"development", label:"Priorizar entrenadores y desarrollo aunque juegues menos", hint:"Más paciencia a corto plazo", outcome:"Aceptas que el primer año puede ser incómodo si el entorno te hace mejor futbolista.", apply:(s)=>{s.flags["opening_contract_priority"]=2;s.contract="Acuerdo formativo · prioridad desarrollo";s.contractYears=2;s.salary=5;stat(s,"discipline",3);note(s,"En tu primer acuerdo priorizaste desarrollo por encima de protagonismo inmediato.");setPhase(s,OpeningPhase.SIGNING);} },
+      { id:"exit", label:"Pedir una salida sencilla si el proyecto no funciona", hint:"Proteges tu siguiente paso", outcome:"La cláusula queda anotada. Nadie quiere hablar de marcharse el día que llega, pero alguien tiene que hacerlo.", apply:(s)=>{s.flags["opening_contract_priority"]=3;s.contract="Acuerdo formativo · salida flexible";s.contractYears=2;s.salary=5;rel(s,"agent",4);note(s,"Protegiste una salida futura en tu primer acuerdo.");setPhase(s,OpeningPhase.SIGNING);} },
     ],
   },
   {
@@ -151,7 +169,7 @@ const OPENING_EVENTS: GameEvent[] = [
     category: "life",
     family: "opening_signing",
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.SIGNING && !!s.clubId,
-    text: (s) => `No hay presentación ni estadio lleno. Una sala pequeña, una carpeta con el escudo del ${clubDef(s.clubId).name}, una foto para archivo y ${adviserLabel(s)} sentado a tu lado. Tu familia mira más tu cara que el contrato. Esto no te convierte en profesional: solo te abre una puerta.`,
+    text: (s) => `No hay presentación ni estadio lleno. Una sala pequeña, una carpeta con el escudo del ${clubDef(s.clubId).name}, una foto para archivo y ${adviserLabel(s)} sentado a tu lado. Tu familia mira más tu cara que el contrato. ${homeThread(s)} Esto no te convierte en profesional: solo te abre una puerta.`,
     choices: [
       { id:"family", label:"Pedir una foto solo con tu familia", outcome:"La foto no sale en ningún periódico. En casa acaba enmarcada.", apply:(s)=>{rel(s,"family",8);note(s,"Guardaste la primera firma como un momento familiar, no mediático.");setPhase(s,OpeningPhase.COACH);} },
       { id:"quiet", label:"Firmar y marcharte sin darle más importancia", outcome:"Sales con la carpeta bajo el brazo. Mañana empieza lo difícil.", apply:(s)=>{stat(s,"discipline",3);setPhase(s,OpeningPhase.COACH);} },
@@ -166,7 +184,7 @@ const OPENING_EVENTS: GameEvent[] = [
     category: "club",
     family: "opening_coach",
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.COACH && !!s.clubId,
-    text: (s) => { const c=ensureCareerCast(s); return `${c.coach.name}, entrenador de tu equipo, te espera antes de que pises el césped. "Aquí no me importa quién te representa ni quién te quería. Empiezas detrás de chicos que llevan años en el club. Quiero ver cómo entrenas cuando no eres importante". Por fin tienes una cara y un nombre delante, no una barra de relación.`; },
+    text: (s) => { const c=ensureCareerCast(s); return `Antes de entrar, ${adviserLabel(s)} te recuerda lo que pediste al firmar: ${contractThread(s).toLowerCase()} ${c.coach.name}, entrenador de tu equipo, te espera antes de que pises el césped. "Aquí no me importa quién te representa ni quién te quería. Empiezas detrás de chicos que llevan años en el club. Quiero ver cómo entrenas cuando no eres importante".`; },
     choices: [
       { id:"listen", label:"Preguntarle exactamente qué espera de ti", outcome:"Te marca dos objetivos simples para las primeras semanas y promete revisarlos contigo.", apply:(s)=>{const p=ensureCareerCast(s).coach;touch(p,s,7);rel(s,"coach",6);stat(s,"discipline",3);note(s,`${p.name} te dio tus primeros objetivos dentro del club.`);setPhase(s,OpeningPhase.PRESEASON);} },
       { id:"ambitious", label:"Decirle que vienes a competir por un puesto", outcome:"No te frena. Solo responde: “entonces empieza mañana”.", apply:(s)=>{const p=ensureCareerCast(s).coach;touch(p,s,1);stat(s,"morale",3);note(s,`Le dijiste a ${p.name} que no querías pasar por el club de puntillas.`);setPhase(s,OpeningPhase.PRESEASON);} },
@@ -181,7 +199,7 @@ const OPENING_EVENTS: GameEvent[] = [
     category: "preseason",
     family: "opening_preseason",
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.PRESEASON,
-    text: (s) => `Tu rutina cambia antes que tu estatus: madrugar, material, gimnasio, rondos, comidas rápidas y volver a casa cansado. El ritmo del entrenamiento te sorprende y el cuerpo técnico corrige detalles que antes nadie miraba. Aún no has jugado un partido oficial y eso es exactamente lo normal.`,
+    text: (s) => `Tu rutina cambia antes que tu estatus: madrugar, material, gimnasio, rondos, comidas rápidas y volver a casa cansado. ${homeThread(s)} ${contractThread(s)} El ritmo del entrenamiento te sorprende y el cuerpo técnico corrige detalles que antes nadie miraba. Aún no has jugado un partido oficial y eso es exactamente lo normal.`,
     choices: [
       { id:"extra", label:"Quedarte veinte minutos más a trabajar", outcome:"No te convierte en mejor jugador en una tarde, pero el cuerpo técnico registra el hábito.", apply:(s)=>{stat(s,"discipline",4);stat(s,"fitness",1);rel(s,"coach",3);setPhase(s,OpeningPhase.CAPTAIN);} },
       { id:"observe", label:"Observar a los mayores y preguntar poco", outcome:"Empiezas a entender códigos que nadie explica en una charla.", apply:(s)=>{rel(s,"dressing",3);stat(s,"discipline",2);setPhase(s,OpeningPhase.CAPTAIN);} },
