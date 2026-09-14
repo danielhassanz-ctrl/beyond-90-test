@@ -90,6 +90,45 @@ function contractThread(s: GameState): string {
   }
 }
 
+function coachThread(s: GameState): string {
+  const coach = ensureCareerCast(s).coach.name;
+  switch (s.flags["opening_coach_choice"]) {
+    case 1: return `${coach} te dejó dos objetivos concretos y dijo que volveríais a hablar cuando tuviera semanas reales para juzgarte.`;
+    case 2: return `Le dijiste a ${coach} que venías a competir desde el primer día; ahora cada gesto ambicioso pesa un poco más.`;
+    case 3: return `${coach} escuchó que tendrías paciencia y aprenderías; no espera ruido, pero sí constancia.`;
+    default: return `${coach} ya sabe qué clase de primera impresión quisiste dejar.`;
+  }
+}
+
+function preseasonThread(s: GameState): string {
+  switch (s.flags["opening_preseason_choice"]) {
+    case 1: return "Te quedaste veinte minutos extra y el cuerpo técnico registró el hábito, no una heroicidad.";
+    case 2: return "Pasaste la primera semana observando códigos y jerarquías antes de querer llamar la atención.";
+    case 3: return "Elegiste recuperar en casa en vez de convertir cada tarde en una prueba de ego.";
+    default: return "La primera semana te enseñó que adaptarse también es decidir qué no hacer.";
+  }
+}
+
+function captainThread(s: GameState): string {
+  const captain = ensureCareerCast(s).captain.name;
+  switch (s.flags["opening_captain_choice"]) {
+    case 1: return `${captain} te guardó su número y quedó como tu primera puerta cuando el problema sea de vestuario y no de fútbol.`;
+    case 2: return `Una broma con ${captain} rompió el hielo: varios compañeros empezaron a tratarte como persona antes que como competencia.`;
+    case 3: return `${captain} ya sabe que has venido a ganarte un sitio sin pedir privilegios; recordará el tono cuando lleguen las primeras convocatorias.`;
+    default: return `${captain} ya te ha colocado dentro de la jerarquía del vestuario.`;
+  }
+}
+
+function teammateThread(s: GameState): string {
+  const teammate = ensureCareerCast(s).teammate.name;
+  switch (s.flags["opening_teammate_choice"]) {
+    case 1: return `${teammate} se ha convertido en tu primer aliado, aunque todavía no sabéis qué pasará cuando ambos queráis los mismos minutos.`;
+    case 2: return `Con ${teammate} elegiste cordialidad y distancia: compañero sí, confidente todavía no.`;
+    case 3: return `A ${teammate} le dijiste desde el principio que la amistad no borraría la competencia; la frase sigue ahí.`;
+    default: return `${teammate} es ya una cara conocida dentro de una rutina que todavía estás aprendiendo.`;
+  }
+}
+
 function selectAdviser(s: GameState, kind: "agent" | "father" | "friend"): void {
   const cast = ensureCareerCast(s);
   cast.adviserKind = kind;
@@ -186,9 +225,9 @@ const OPENING_EVENTS: GameEvent[] = [
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.COACH && !!s.clubId,
     text: (s) => { const c=ensureCareerCast(s); return `Antes de entrar, ${adviserLabel(s)} te recuerda lo que pediste al firmar: ${contractThread(s).toLowerCase()} ${c.coach.name}, entrenador de tu equipo, te espera antes de que pises el césped. "Aquí no me importa quién te representa ni quién te quería. Empiezas detrás de chicos que llevan años en el club. Quiero ver cómo entrenas cuando no eres importante".`; },
     choices: [
-      { id:"listen", label:"Preguntarle exactamente qué espera de ti", outcome:"Te marca dos objetivos simples para las primeras semanas y promete revisarlos contigo.", apply:(s)=>{const p=ensureCareerCast(s).coach;touch(p,s,7);rel(s,"coach",6);stat(s,"discipline",3);note(s,`${p.name} te dio tus primeros objetivos dentro del club.`);setPhase(s,OpeningPhase.PRESEASON);} },
-      { id:"ambitious", label:"Decirle que vienes a competir por un puesto", outcome:"No te frena. Solo responde: “entonces empieza mañana”.", apply:(s)=>{const p=ensureCareerCast(s).coach;touch(p,s,1);stat(s,"morale",3);note(s,`Le dijiste a ${p.name} que no querías pasar por el club de puntillas.`);setPhase(s,OpeningPhase.PRESEASON);} },
-      { id:"patient", label:"Decir que tendrás paciencia y aprenderás", outcome:"Valora que no vendas humo. Eso tampoco te garantiza un minuto.", apply:(s)=>{const p=ensureCareerCast(s).coach;touch(p,s,6);rel(s,"coach",5);setPhase(s,OpeningPhase.PRESEASON);} },
+      { id:"listen", label:"Preguntarle exactamente qué espera de ti", outcome:"Te marca dos objetivos simples para las primeras semanas y promete revisarlos contigo.", apply:(s)=>{s.flags["opening_coach_choice"]=1;const p=ensureCareerCast(s).coach;touch(p,s,7);rel(s,"coach",6);stat(s,"discipline",3);note(s,`${p.name} te dio tus primeros objetivos dentro del club.`);setPhase(s,OpeningPhase.PRESEASON);} },
+      { id:"ambitious", label:"Decirle que vienes a competir por un puesto", outcome:"No te frena. Solo responde: “entonces empieza mañana”.", apply:(s)=>{s.flags["opening_coach_choice"]=2;const p=ensureCareerCast(s).coach;touch(p,s,1);stat(s,"morale",3);note(s,`Le dijiste a ${p.name} que no querías pasar por el club de puntillas.`);setPhase(s,OpeningPhase.PRESEASON);} },
+      { id:"patient", label:"Decir que tendrás paciencia y aprenderás", outcome:"Valora que no vendas humo. Eso tampoco te garantiza un minuto.", apply:(s)=>{s.flags["opening_coach_choice"]=3;const p=ensureCareerCast(s).coach;touch(p,s,6);rel(s,"coach",5);note(s,`Prometiste a ${p.name} que aprenderías antes de exigir protagonismo.`);setPhase(s,OpeningPhase.PRESEASON);} },
     ],
   },
   {
@@ -199,11 +238,11 @@ const OPENING_EVENTS: GameEvent[] = [
     category: "preseason",
     family: "opening_preseason",
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.PRESEASON,
-    text: (s) => `Tu rutina cambia antes que tu estatus: madrugar, material, gimnasio, rondos, comidas rápidas y volver a casa cansado. ${homeThread(s)} ${contractThread(s)} El ritmo del entrenamiento te sorprende y el cuerpo técnico corrige detalles que antes nadie miraba. Aún no has jugado un partido oficial y eso es exactamente lo normal.`,
+    text: (s) => `Tu rutina cambia antes que tu estatus: madrugar, material, gimnasio, rondos, comidas rápidas y volver a casa cansado. ${homeThread(s)} ${contractThread(s)} ${coachThread(s)} El ritmo del entrenamiento te sorprende y el cuerpo técnico corrige detalles que antes nadie miraba. Aún no has jugado un partido oficial y eso es exactamente lo normal.`,
     choices: [
-      { id:"extra", label:"Quedarte veinte minutos más a trabajar", outcome:"No te convierte en mejor jugador en una tarde, pero el cuerpo técnico registra el hábito.", apply:(s)=>{stat(s,"discipline",4);stat(s,"fitness",1);rel(s,"coach",3);setPhase(s,OpeningPhase.CAPTAIN);} },
-      { id:"observe", label:"Observar a los mayores y preguntar poco", outcome:"Empiezas a entender códigos que nadie explica en una charla.", apply:(s)=>{rel(s,"dressing",3);stat(s,"discipline",2);setPhase(s,OpeningPhase.CAPTAIN);} },
-      { id:"home", label:"Irte a casa y recuperar: mañana hay otra sesión", outcome:"Descansar también es parte de empezar bien. En casa vuelves a ser el mismo de hace una semana.", apply:(s)=>{stat(s,"fitness",4);rel(s,"family",3);setPhase(s,OpeningPhase.CAPTAIN);} },
+      { id:"extra", label:"Quedarte veinte minutos más a trabajar", outcome:"No te convierte en mejor jugador en una tarde, pero el cuerpo técnico registra el hábito.", apply:(s)=>{s.flags["opening_preseason_choice"]=1;stat(s,"discipline",4);stat(s,"fitness",1);rel(s,"coach",3);note(s,"En tu primera pretemporada empezaste quedándote a trabajar después de la sesión.");setPhase(s,OpeningPhase.CAPTAIN);} },
+      { id:"observe", label:"Observar a los mayores y preguntar poco", outcome:"Empiezas a entender códigos que nadie explica en una charla.", apply:(s)=>{s.flags["opening_preseason_choice"]=2;rel(s,"dressing",3);stat(s,"discipline",2);note(s,"En tu primera pretemporada priorizaste observar cómo funcionaba el vestuario.");setPhase(s,OpeningPhase.CAPTAIN);} },
+      { id:"home", label:"Irte a casa y recuperar: mañana hay otra sesión", outcome:"Descansar también es parte de empezar bien. En casa vuelves a ser el mismo de hace una semana.", apply:(s)=>{s.flags["opening_preseason_choice"]=3;stat(s,"fitness",4);rel(s,"family",3);note(s,"En tu primera pretemporada elegiste recuperación y rutina familiar antes que hacer horas por aparentar.");setPhase(s,OpeningPhase.CAPTAIN);} },
     ],
   },
   {
@@ -214,11 +253,11 @@ const OPENING_EVENTS: GameEvent[] = [
     category: "club",
     family: "opening_captain",
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.CAPTAIN,
-    text: (s) => { const c=ensureCareerCast(s); return `${c.captain.name}, capitán del equipo, mueve tu mochila porque has ocupado el sitio de un veterano. Luego se ríe y se presenta. "Aquí hay bromas, jerarquías y días malos. Si algún día tienes un problema de vestuario, habla antes de montar una película". Ya sabes quién manda cuando el entrenador no está delante.`; },
+    text: (s) => { const c=ensureCareerCast(s); return `${preseasonThread(s)} ${c.captain.name}, capitán del equipo, mueve tu mochila porque has ocupado el sitio de un veterano. Luego se ríe y se presenta. "Aquí hay bromas, jerarquías y días malos. Si algún día tienes un problema de vestuario, habla antes de montar una película". Ya sabes quién manda cuando el entrenador no está delante.`; },
     choices: [
-      { id:"respect", label:"Agradecerle que te lo explique", outcome:"Te guarda su número. No sois amigos todavía, pero ya tienes una puerta dentro del vestuario.", apply:(s)=>{const p=ensureCareerCast(s).captain;touch(p,s,8);rel(s,"dressing",6);note(s,`${p.name} fue el primer veterano que te tendió la mano.`);setPhase(s,OpeningPhase.TEAMMATE);} },
-      { id:"joke", label:"Responder con una broma y quitar tensión", outcome:"Se ríe. Dos compañeros que no sabían tu nombre empiezan a usarlo.", apply:(s)=>{const p=ensureCareerCast(s).captain;touch(p,s,5);rel(s,"dressing",7);stat(s,"morale",2);setPhase(s,OpeningPhase.TEAMMATE);} },
-      { id:"compete", label:"Decir que has venido a ganarte un sitio, no privilegios", outcome:"Te mira un segundo y asiente. El mensaje le gusta; el tono, ya veremos.", apply:(s)=>{const p=ensureCareerCast(s).captain;touch(p,s,1);stat(s,"discipline",2);setPhase(s,OpeningPhase.TEAMMATE);} },
+      { id:"respect", label:"Agradecerle que te lo explique", outcome:"Te guarda su número. No sois amigos todavía, pero ya tienes una puerta dentro del vestuario.", apply:(s)=>{s.flags["opening_captain_choice"]=1;const p=ensureCareerCast(s).captain;touch(p,s,8);rel(s,"dressing",6);note(s,`${p.name} fue el primer veterano que te tendió la mano.`);setPhase(s,OpeningPhase.TEAMMATE);} },
+      { id:"joke", label:"Responder con una broma y quitar tensión", outcome:"Se ríe. Dos compañeros que no sabían tu nombre empiezan a usarlo.", apply:(s)=>{s.flags["opening_captain_choice"]=2;const p=ensureCareerCast(s).captain;touch(p,s,5);rel(s,"dressing",7);stat(s,"morale",2);note(s,`Rompiste el hielo con ${p.name} usando humor en tu primera semana.`);setPhase(s,OpeningPhase.TEAMMATE);} },
+      { id:"compete", label:"Decir que has venido a ganarte un sitio, no privilegios", outcome:"Te mira un segundo y asiente. El mensaje le gusta; el tono, ya veremos.", apply:(s)=>{s.flags["opening_captain_choice"]=3;const p=ensureCareerCast(s).captain;touch(p,s,1);stat(s,"discipline",2);note(s,`Dijiste a ${p.name} que querías un sitio ganado, no concedido.`);setPhase(s,OpeningPhase.TEAMMATE);} },
     ],
   },
   {
@@ -229,11 +268,11 @@ const OPENING_EVENTS: GameEvent[] = [
     category: "life",
     family: "opening_teammate",
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.TEAMMATE,
-    text: (s) => { const c=ensureCareerCast(s); return `${c.teammate.name} se sienta contigo porque también llegó al club sin conocer a casi nadie. Juega cerca de tu zona y algún día puede competir contigo por minutos. Hoy solo te pregunta de dónde eres y si sabes qué autobús vuelve al centro.`; },
+    text: (s) => { const c=ensureCareerCast(s); return `${captainThread(s)} ${c.teammate.name} se sienta contigo porque también llegó al club sin conocer a casi nadie. Juega cerca de tu zona y algún día puede competir contigo por minutos. Hoy solo te pregunta de dónde eres y si sabes qué autobús vuelve al centro.`; },
     choices: [
-      { id:"friend", label:"Hacer piña desde el principio", outcome:"Empieza una relación que podrá sobrevivir —o no— a la competencia por jugar.", apply:(s)=>{const p=ensureCareerCast(s).teammate;touch(p,s,9);rel(s,"dressing",6);note(s,`${p.name} fue tu primer aliado de vestuario.`);setPhase(s,OpeningPhase.PHYSIO);} },
-      { id:"professional", label:"Ser amable pero mantener distancia", outcome:"Coméis juntos y nada más. Todavía no sabes quién será amigo y quién rival.", apply:(s)=>{const p=ensureCareerCast(s).teammate;touch(p,s,2);setPhase(s,OpeningPhase.PHYSIO);} },
-      { id:"compete", label:"Decirle que seguramente acabaréis compitiendo", outcome:"Se ríe, aunque la frase queda guardada para cuando lleguen las convocatorias.", apply:(s)=>{const p=ensureCareerCast(s).teammate;touch(p,s,-1);note(s,`Desde el principio dijiste a ${p.name} que la amistad no eliminaría la competencia.`);setPhase(s,OpeningPhase.PHYSIO);} },
+      { id:"friend", label:"Hacer piña desde el principio", outcome:"Empieza una relación que podrá sobrevivir —o no— a la competencia por jugar.", apply:(s)=>{s.flags["opening_teammate_choice"]=1;const p=ensureCareerCast(s).teammate;touch(p,s,9);rel(s,"dressing",6);note(s,`${p.name} fue tu primer aliado de vestuario.`);setPhase(s,OpeningPhase.PHYSIO);} },
+      { id:"professional", label:"Ser amable pero mantener distancia", outcome:"Coméis juntos y nada más. Todavía no sabes quién será amigo y quién rival.", apply:(s)=>{s.flags["opening_teammate_choice"]=2;const p=ensureCareerCast(s).teammate;touch(p,s,2);note(s,`Con ${p.name} elegiste una relación profesional antes que forzar una amistad.`);setPhase(s,OpeningPhase.PHYSIO);} },
+      { id:"compete", label:"Decirle que seguramente acabaréis compitiendo", outcome:"Se ríe, aunque la frase queda guardada para cuando lleguen las convocatorias.", apply:(s)=>{s.flags["opening_teammate_choice"]=3;const p=ensureCareerCast(s).teammate;touch(p,s,-1);note(s,`Desde el principio dijiste a ${p.name} que la amistad no eliminaría la competencia.`);setPhase(s,OpeningPhase.PHYSIO);} },
     ],
   },
   {
@@ -244,11 +283,11 @@ const OPENING_EVENTS: GameEvent[] = [
     category: "medical",
     family: "opening_physio",
     requires: (s) => s.flags[OPENING_MARKER] === 1 && phase(s) === OpeningPhase.PHYSIO,
-    text: (s) => { const c=ensureCareerCast(s); return `${c.physio.name}, fisioterapeuta del equipo, anota movilidad, molestias antiguas y cómo recuperas después de las cargas. "Nos conoceremos mucho si las cosas van mal; prefiero que nos conozcamos ahora que estás sano". Te explica qué señales no debes ocultar por miedo a perder un entrenamiento.`; },
+    text: (s) => { const c=ensureCareerCast(s); return `${teammateThread(s)} ${c.physio.name}, fisioterapeuta del equipo, anota movilidad, molestias antiguas y cómo recuperas después de las cargas. "Nos conoceremos mucho si las cosas van mal; prefiero que nos conozcamos ahora que estás sano". Te explica qué señales no debes ocultar por miedo a perder un entrenamiento.`; },
     choices: [
-      { id:"trust", label:"Prometer que avisarás cuando algo no vaya bien", outcome:"Empiezas la carrera entendiendo que jugar también depende de saber parar a tiempo.", apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,8);stat(s,"discipline",3);note(s,`${p.name} fijó contigo una rutina de prevención desde la primera pretemporada.`);setPhase(s,OpeningPhase.DONE);} },
-      { id:"tough", label:"Decir que prefieres entrenar siempre que puedas", outcome:"No discute. Solo te responde que valentía y estupidez se parecen mucho desde fuera.", apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,-2);stat(s,"morale",2);setPhase(s,OpeningPhase.DONE);} },
-      { id:"learn", label:"Pedirle una rutina corta de prevención", outcome:"Te da cinco ejercicios aburridos. Serán más importantes que muchas escenas espectaculares.", apply:(s)=>{const p=ensureCareerCast(s).physio;touch(p,s,10);stat(s,"fitness",4);stat(s,"discipline",3);setPhase(s,OpeningPhase.DONE);} },
+      { id:"trust", label:"Prometer que avisarás cuando algo no vaya bien", outcome:"Empiezas la carrera entendiendo que jugar también depende de saber parar a tiempo.", apply:(s)=>{s.flags["opening_physio_choice"]=1;const p=ensureCareerCast(s).physio;touch(p,s,8);stat(s,"discipline",3);note(s,`${p.name} fijó contigo una rutina de prevención desde la primera pretemporada.`);setPhase(s,OpeningPhase.DONE);} },
+      { id:"tough", label:"Decir que prefieres entrenar siempre que puedas", outcome:"No discute. Solo te responde que valentía y estupidez se parecen mucho desde fuera.", apply:(s)=>{s.flags["opening_physio_choice"]=2;const p=ensureCareerCast(s).physio;touch(p,s,-2);stat(s,"morale",2);note(s,`Le dejaste claro a ${p.name} que tenderías a apurar el cuerpo antes de parar.`);setPhase(s,OpeningPhase.DONE);} },
+      { id:"learn", label:"Pedirle una rutina corta de prevención", outcome:"Te da cinco ejercicios aburridos. Serán más importantes que muchas escenas espectaculares.", apply:(s)=>{s.flags["opening_physio_choice"]=3;const p=ensureCareerCast(s).physio;touch(p,s,10);stat(s,"fitness",4);stat(s,"discipline",3);note(s,`Pediste a ${p.name} una rutina preventiva antes de sufrir tu primera lesión.`);setPhase(s,OpeningPhase.DONE);} },
     ],
   },
 ];
