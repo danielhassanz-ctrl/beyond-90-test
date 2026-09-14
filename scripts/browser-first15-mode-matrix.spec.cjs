@@ -192,7 +192,8 @@ function assertQuality(seen, mode, seed) {
     }
 
     if (i >= 2) {
-      expect(!(seen[i - 2].family === current.family && seen[i - 1].family === current.family), `${mode}/${seed}: >2 consecutive ${current.family}`).toBeFalsy();
+      const threeSameFamily = seen[i - 2].family === current.family && seen[i - 1].family === current.family;
+      expect(threeSameFamily, `${mode}/${seed}: >2 consecutive ${current.family}`).toBeFalsy();
     }
   }
 }
