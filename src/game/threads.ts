@@ -77,6 +77,17 @@ function memoryThreadKind(text: string): ThreadKind | null {
   return null;
 }
 
+function familyMemorySpeaker(s: GameState, remembered: string): string {
+  const cast = ensureCareerCast(s);
+  const lower = remembered.toLowerCase();
+  if (lower.includes("pareja") && s.flags["partner_active"] === 1) return cast.partner.name;
+  if (lower.includes("padre")) return cast.adviserKind === "father" ? cast.adviser.name : "Tu padre";
+  if (lower.includes("madre")) return "Tu madre";
+  if (lower.includes("herman")) return "Uno de tus hermanos";
+  if (cast.adviserKind === "father") return cast.adviser.name;
+  return "En casa";
+}
+
 /** A remembered decision returns through the person who owns that history. */
 function memoryTeaser(s: GameState, kind: ThreadKind, remembered: string): string {
   const cast = ensureCareerCast(s);
@@ -86,8 +97,11 @@ function memoryTeaser(s: GameState, kind: ThreadKind, remembered: string): strin
       return `${cast.coach.name} te espera al terminar la sesión. Saca una conversación que creías cerrada: «${memory}». No quiere recordártela por nostalgia; quiere saber si sigues sosteniendo aquella decisión ahora que tu situación ha cambiado.`;
     case "teammate_jealous":
       return `${cast.captain.name} te aparta del grupo antes de entrar al vestuario. Lo que pasó entonces sigue circulando entre compañeros: «${memory}». Esta vez no basta con dejar pasar los días; ${cast.teammate.name} también está implicado y habrá que tomar posición.`;
-    case "family_worry":
-      return `${cast.adviser.name} te llama antes de que llegues a casa. Tu familia ha vuelto a hablar de una decisión que marcó aquella etapa: «${memory}». Ahora afecta a una elección nueva y quieren saber si el fútbol sigue estando por encima de lo que decidiste entonces.`;
+    case "family_worry": {
+      const speaker = familyMemorySpeaker(s, remembered);
+      const verb = speaker === "En casa" ? "vuelven" : "vuelve";
+      return `${speaker} ${verb} sobre una decisión que marcó aquella etapa: «${memory}». Ahora afecta a una elección nueva y ya no sirve responder como si aquello no hubiera pasado.`;
+    }
     default:
       return `Una decisión antigua vuelve con consecuencias: «${memory}». Esta vez el contexto ha cambiado y no puedes responder como si fuera la primera vez.`;
   }
