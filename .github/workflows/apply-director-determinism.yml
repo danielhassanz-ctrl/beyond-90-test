@@ -1,0 +1,77 @@
+name: Beyond 90 Story Director determinism patch
+
+on:
+  push:
+    branches:
+      - v1-narrative-determinism
+    paths:
+      - scripts/apply-director-determinism.mjs
+      - .github/workflows/apply-director-determinism.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: v1-narrative-determinism
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Apply deterministic narrative patch
+        run: node scripts/apply-director-determinism.mjs
+
+      - name: Ban unseeded randomness from Story Director
+        run: |
+          if grep -n 'Math\.random()' src/game/director.ts; then
+            echo 'Unseeded randomness remains in Story Director' >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Life-first opening QA
+        run: npm run qa:opening
+
+      - name: Real-career first-15 QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: Full-season boredom QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
+
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+
+      - name: Branch narrative QA
+        run: npm run qa:branches
+
+      - name: Full-career QA
+        run: npm run qa:career
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit deterministic Director only after QA passes
+        run: |
+          if git diff --quiet -- src/game/director.ts; then
+            echo 'No source changes required'
+            exit 0
+          fi
+          git config user.name 'beyond90-qa-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add src/game/director.ts
+          git commit -m 'Narrative: make Story Director outcomes career-seeded'
+          git push origin HEAD:v1-narrative-determinism
