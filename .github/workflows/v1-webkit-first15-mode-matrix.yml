@@ -7,6 +7,7 @@ on:
       - v1-webkit-first15-mode-matrix
     paths:
       - src/game/**
+      - src/routes/onboarding.tsx
       - src/qa/**
       - scripts/browser-first15-mode-matrix.spec.cjs
       - scripts/real-career-playtest-smoke.ts
@@ -27,6 +28,7 @@ on:
       - main
     paths:
       - src/game/**
+      - src/routes/onboarding.tsx
       - src/qa/**
       - scripts/browser-first15-mode-matrix.spec.cjs
       - scripts/real-career-playtest-smoke.ts
@@ -117,5 +119,5 @@ jobs:
           cat /tmp/beyond90-preview.log
           exit 1
 
-      - name: iPhone WebKit 12-career first-15 mode matrix
+      - name: iPhone WebKit 12-career first-15 mode matrix via onboarding UI
         run: npx playwright test scripts/browser-first15-mode-matrix.spec.cjs --browser=webkit --workers=1 --reporter=line
