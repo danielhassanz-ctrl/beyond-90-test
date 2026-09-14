@@ -148,12 +148,16 @@ export function dueThread(s: GameState): Thread | null {
     if (typeof entry !== "string" || entry.trim().length < 12) return false;
     const kind = memoryThreadKind(entry);
     if (!kind) return false;
-    return !kindAlreadyUsed(s, kind) && (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0;
+    // A generic thread family may be one-shot, but a specific remembered choice
+    // is not. Different promises owned by the same adviser/coach/family member
+    // must be able to return in later seasons, once each, or long careers lose
+    // their memory after the first callback of that family.
+    return (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0;
   });
   if (entries.length === 0) return null;
   const remembered = entries[Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 13 + scene * 5) % entries.length]!;
   const kind = memoryThreadKind(remembered);
-  if (!kind || kindAlreadyUsed(s, kind)) return null;
+  if (!kind) return null;
   const thread: Thread = {
     id: `memory-${s.seasonIndex}-${scene}`,
     kind,
@@ -162,6 +166,8 @@ export function dueThread(s: GameState): Thread | null {
     payload: { remembered: remembered.slice(0, 240) },
   };
   s.threads.push(thread);
+  // Keep the family marker for suppressing generic filler, while recall keys
+  // independently track authored memories that are allowed to return later.
   s.memory.threads[kind] = 1;
   s.memory.threads[memoryRecallKey(remembered)] = 1;
   s.flags["memory_thread_season"] = s.seasonIndex;
