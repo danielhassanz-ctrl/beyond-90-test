@@ -73,10 +73,13 @@ function memoryRecallKey(text: string): string {
 function memoryThreadKind(text: string): ThreadKind | null {
   const lower = text.toLowerCase();
   const hasAny = (...terms: string[]) => terms.some((term) => lower.includes(term));
+  // Career-market memories take precedence over generic family wording. This
+  // matters when the adviser is the player's father: "padre + contrato" is a
+  // career callback, not an unrelated family crisis.
+  if (hasAny("representante", "agente", "contrato", "renov", "cesión", "cesion", "fichaje", "oferta", "rechaz", "club", "salir")) return "club_interest";
   if (hasAny("entrenador", "míster", "mister", "técnico", "tecnico")) return "coach_upset";
   if (hasAny("vestuario", "compañ", "capitán", "capitan", "rival", "jerarquía", "jerarquia")) return "teammate_jealous";
   if (hasAny("familia", "madre", "padre", "casa", "pareja", "hijo", "herman")) return "family_worry";
-  if (hasAny("representante", "agente", "contrato", "renov", "cesión", "cesion", "fichaje", "oferta", "rechaz", "club", "salir")) return "club_interest";
   return null;
 }
 
@@ -132,6 +135,12 @@ export function dueThread(s: GameState): Thread | null {
   const scene = s.sceneCount ?? 0;
   if (scene < 6 || s.seasonIndex < 1 || (s.flags["memory_thread_season"] ?? -1) === s.seasonIndex) return null;
   if (scene - (s.flags["ultimo_hilo"] ?? -99) < 4) return null;
+
+  // Personal memories are intentionally independent from generic thread-kind
+  // history. A generic market rumour at 18 must not prevent a specific choice
+  // from 16 (loan, rejected club, contract promise...) returning at 21. The
+  // exact memory itself remains one-shot through memoryRecallKey, and we never
+  // stack two live threads of the same family.
   const entries = [...new Set([
     ...(Array.isArray(s.memory.promises) ? s.memory.promises : []),
     ...(Array.isArray(s.memory.conflicts) ? s.memory.conflicts : []),
@@ -140,14 +149,14 @@ export function dueThread(s: GameState): Thread | null {
     if (typeof entry !== "string" || entry.trim().length < 12) return false;
     const kind = memoryThreadKind(entry);
     if (!kind) return false;
-    return !kindAlreadyUsed(s, kind) && (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0;
+    return (s.memory.threads[memoryRecallKey(entry)] ?? 0) === 0 && !hasThread(s, kind);
   });
   if (entries.length === 0) return null;
   const remembered = entries[Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 13 + scene * 5) % entries.length]!;
   const kind = memoryThreadKind(remembered);
-  if (!kind || kindAlreadyUsed(s, kind)) return null;
+  if (!kind || hasThread(s, kind)) return null;
   const thread: Thread = {
-    id: `memory-${s.seasonIndex}-${scene}`,
+    id: `memory-${s.seasonIndex}-${scene}-${memoryRecallKey(remembered).slice(7)}`,
     kind,
     teaser: memoryTeaser(s, kind, remembered),
     dueScene: scene,
@@ -159,7 +168,6 @@ export function dueThread(s: GameState): Thread | null {
     },
   };
   s.threads.push(thread);
-  s.memory.threads[kind] = 1;
   s.memory.threads[memoryRecallKey(remembered)] = 1;
   s.flags["memory_thread_season"] = s.seasonIndex;
   s.flags["ultimo_hilo"] = scene;
