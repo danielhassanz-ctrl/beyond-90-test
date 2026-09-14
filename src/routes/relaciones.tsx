@@ -81,12 +81,18 @@ function Relations({ state }: { state: GameState }) {
     },
   ];
 
+  const castMemory = state.memory as GameState["memory"] & {
+    careerCast?: { social?: { met?: boolean } };
+  };
+  const socialIntroduced = castMemory.careerCast?.social?.met === true;
+
   const people = [
     ["coach", "Entrenador"],
     ["captain", "Capitán"],
     ["rival", "Competencia por el puesto"],
     ["physio", "Fisioterapeuta"],
     ["press", "Prensa"],
+    ...(socialIntroduced ? [["social", "Contacto personal"]] : []),
     ...(state.flags["partner_active"] === 1 ? [["partner", "Pareja"]] : []),
   ] as const;
 
