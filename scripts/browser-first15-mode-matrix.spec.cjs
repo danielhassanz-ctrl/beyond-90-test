@@ -38,6 +38,36 @@ async function savedState(page) {
   }, SAVE_KEY);
 }
 
+function castSnapshot(state) {
+  const cast = state.memory?.careerCast;
+  if (!cast) return null;
+  const read = (key) => cast[key]?.name || null;
+  return {
+    adviser: read("adviser"),
+    coach: read("coach"),
+    captain: read("captain"),
+    physio: read("physio"),
+    teammate: read("teammate"),
+    social: read("social"),
+    partner: read("partner"),
+    clubScope: cast.clubScope || state.clubId || "",
+  };
+}
+
+function chronologySnapshot(state) {
+  return {
+    age: Number(state.age),
+    stage: state.stage,
+    clubId: state.clubId || "",
+    salary: Number(state.salary || 0),
+    wealth: Number(state.wealth || 0),
+    overall: Number(state.overall || 0),
+    fame: Number(state.fame || 0),
+    injured: Boolean(state.injury),
+    cast: castSnapshot(state),
+  };
+}
+
 async function startCareer(page, seed, mode) {
   await page.addInitScript((initialSeed) => {
     let x = initialSeed >>> 0;
@@ -103,7 +133,8 @@ async function playFirst15(page, mode, seed) {
       const offers = page.locator("ul > li > button");
       await expect(offers).toHaveCount(4);
       const labels = (await offers.allTextContents()).map((x) => x.trim());
-      seen.push({ title: "Ahora sí: cuatro caminos", text: labels.join(" | "), choices: labels, family: "club_choice" });
+      const state = await savedState(page);
+      seen.push({ title: "Ahora sí: cuatro caminos", text: labels.join(" | "), choices: labels, family: "club_choice", competition: null, ...chronologySnapshot(state) });
       await offers.first().click();
       await page.getByRole("button", { name: "Sentarnos a negociar con este club" }).click();
       await expect(page).toHaveURL(/\/historia\/?$/);
@@ -140,7 +171,7 @@ async function playFirst15(page, mode, seed) {
       const title = (await article.locator("h2").first().innerText()).trim();
       const text = (await article.innerText()).trim();
       const choices = (await article.locator(".space-y-2\\.5 > button").allTextContents()).map((x) => x.trim()).filter(Boolean);
-      seen.push({ title, text, choices, family: familyOf(state), injured: Boolean(state.injury) });
+      seen.push({ title, text, choices, family: familyOf(state), competition: null, ...chronologySnapshot(state) });
       await article.locator(".space-y-2\\.5 > button").first().click();
       continue;
     }
@@ -155,7 +186,7 @@ async function playFirst15(page, mode, seed) {
         const article = page.locator("article");
         const text = (await article.innerText()).trim();
         const choices = (await article.locator(".space-y-2\\.5 > button").allTextContents()).map((x) => x.trim()).filter(Boolean);
-        seen.push({ title: `Jugada clave · ${pending.match.ctx.storyLabel} · ${pending.match.opponent}`, text, choices, family: "match", injured: false });
+        seen.push({ title: `Jugada clave · ${pending.match.ctx.storyLabel} · ${pending.match.opponent}`, text, choices, family: "match", competition: pending.match.ctx.competition || pending.match.competition || null, ...chronologySnapshot(state), injured: false });
         await article.locator(".space-y-2\\.5 > button").first().click();
       } else {
         await play.click();
@@ -168,6 +199,61 @@ async function playFirst15(page, mode, seed) {
 
   expect(seen.length, `${mode}/${seed}: only ${seen.length} UI decisions`).toBe(15);
   return seen;
+}
+
+function assertChronology(seen, mode, seed) {
+  let adviserName = null;
+  const clubCast = new Map();
+  const eliteLeak = /bal[oó]n de oro|champions|selecci[oó]n absoluta|contrato millonario|salario millonario|cobra(?:s)? millones/i;
+  const seniorCompetition = /champions|europa league|conference|copa del rey|supercopa/i;
+
+  for (const item of seen) {
+    expect(Number.isFinite(item.age), `${mode}/${seed}: invalid age`).toBeTruthy();
+    expect(item.age, `${mode}/${seed}: age regressed below career start`).toBeGreaterThanOrEqual(16);
+    expect(Number.isFinite(item.salary), `${mode}/${seed}: invalid salary`).toBeTruthy();
+    expect(item.salary, `${mode}/${seed}: negative salary`).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(item.wealth), `${mode}/${seed}: invalid wealth`).toBeTruthy();
+    expect(item.wealth, `${mode}/${seed}: negative wealth`).toBeGreaterThanOrEqual(0);
+    expect(item.overall, `${mode}/${seed}: impossible overall`).toBeGreaterThanOrEqual(40);
+    expect(item.overall, `${mode}/${seed}: impossible overall`).toBeLessThanOrEqual(99);
+    expect(item.fame, `${mode}/${seed}: impossible fame`).toBeGreaterThanOrEqual(0);
+    expect(item.fame, `${mode}/${seed}: impossible fame`).toBeLessThanOrEqual(100);
+
+    if (item.age <= 17) {
+      expect(eliteLeak.test(`${item.title} ${item.text}`), `${mode}/${seed}: elite/status leakage at ${item.age}: ${item.title}`).toBeFalsy();
+      if (item.stage === "youth" || item.stage === "reserves") {
+        expect(seniorCompetition.test(String(item.competition || "")), `${mode}/${seed}: ${item.stage} player in senior competition ${item.competition}`).toBeFalsy();
+      }
+    }
+
+    if (item.cast) {
+      if (item.cast.adviser) {
+        if (adviserName === null) adviserName = item.cast.adviser;
+        else expect(item.cast.adviser, `${mode}/${seed}: adviser drift ${adviserName} -> ${item.cast.adviser}`).toBe(adviserName);
+      }
+
+      if (item.clubId) {
+        const key = item.clubId;
+        const stable = {
+          coach: item.cast.coach,
+          captain: item.cast.captain,
+          physio: item.cast.physio,
+          teammate: item.cast.teammate,
+        };
+        if (!clubCast.has(key)) clubCast.set(key, stable);
+        else {
+          const prior = clubCast.get(key);
+          for (const role of ["coach", "captain", "physio", "teammate"]) {
+            if (prior[role] && stable[role]) expect(stable[role], `${mode}/${seed}: ${role} drift at ${key}: ${prior[role]} -> ${stable[role]}`).toBe(prior[role]);
+          }
+        }
+      }
+
+      if (item.cast.social && item.cast.partner) {
+        expect(item.cast.social, `${mode}/${seed}: partner/social identity collision`).not.toBe(item.cast.partner);
+      }
+    }
+  }
 }
 
 function assertQuality(seen, mode, seed) {
@@ -199,6 +285,8 @@ function assertQuality(seen, mode, seed) {
       expect(threeSameFamily, `${mode}/${seed}: >2 consecutive ${current.family}`).toBeFalsy();
     }
   }
+
+  assertChronology(seen, mode, seed);
 }
 
 for (const [mode, seed] of CASES) {
