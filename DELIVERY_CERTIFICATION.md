@@ -22,6 +22,8 @@ A production Pages build is allowed to proceed only after the workflow in `.gith
 - extended gameplay QA
 - production static build
 
+Delivery-workflow changes themselves must also trigger the dedicated `V1 WebKit first-15 mode matrix` workflow so the release gate cannot drift away from the iPhone/WebKit matrix without being exercised.
+
 ## Required public HTTPS evidence
 The Pages workflow must deploy the exact `main` commit and then verify the live HTTPS URL, not a local preview.
 
@@ -37,7 +39,8 @@ The post-deploy job must fail unless all of the following are true:
 - the resulting save survives reload;
 - save recovery passes when the primary save is missing or corrupt;
 - fallback persistence passes when the primary write path fails;
-- the legacy/post-career route can rehydrate from persisted state without a WebKit navigation race.
+- the legacy/post-career route can rehydrate from persisted state without a WebKit navigation race;
+- the 12-career first-15 matrix (4 Express, 4 Standard, 4 Pro) passes against the exact public HTTPS build through the shipped iPhone/WebKit UI path.
 
 ## Sharing/mobile regression
 The main branch also carries a dedicated WebKit regression for the iPhone share path. A failed native PNG share must recover inside the preview dialog, retain the generated card and share copy, provide a working copy-text fallback and close cleanly without requiring a second native share call.
