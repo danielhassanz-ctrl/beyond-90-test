@@ -65,7 +65,7 @@ export function narrativeTarget(s: GameState): number {
 
 export function narrativeRotationFor(s: GameState): EventCategory[] {
   switch (careerEra(s)) {
-    case "academy": return ["agent", "training", "club", "life", "training", "agent", "gossip", "story", "club"];
+    case "academy": return ["agent", "training", "club", "life", "training", "agent", "story", "life", "club"];
     case "breakthrough": return ["club", "training", "agent", "market", "press", "life", "gossip", "agent", "story"];
     case "established": return ["club", "market", "press", "agent", "life", "training", "gossip", "market", "story"];
     case "prime": return ["market", "press", "club", "agent", "life", "story", "press", "medical", "market"];
