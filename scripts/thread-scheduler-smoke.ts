@@ -1,4 +1,5 @@
 import { createGame } from "../src/game/engine";
+import { npc } from "../src/game/npc";
 import { dueThread, maybeSpawnThreads } from "../src/game/threads";
 import type { GameState, Player } from "../src/game/types";
 
@@ -83,4 +84,25 @@ assert(recalled.kind === "club_interest", `contract/adviser promise returned thr
 assert(recalled.teaser.includes("próximo contrato debía priorizar minutos antes que salario"), "adviser callback did not quote the remembered career priority");
 assert(recalled.payload.remembered === adviserMemory.memory.promises[0], "adviser callback did not preserve the exact remembered decision in payload");
 
-console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok adviserMemoryRecall=ok`);
+// Family history must return through a recognisable family person, not through
+// the agent just because the agent is the strongest persistent contact. The same
+// deterministic name must survive a club change because home life is career-scoped.
+const familyMemory = createGame(player);
+familyMemory.careerSeed = 424242;
+familyMemory.seasonIndex = 3;
+familyMemory.sceneCount = 52;
+familyMemory.threads = [];
+familyMemory.flags["ultimo_hilo"] = -99;
+familyMemory.memory.threads = {};
+familyMemory.memory.promises = ["Prometiste a tu familia que volverías a casa siempre que el calendario lo permitiera."];
+familyMemory.memory.conflicts = [];
+const familyName = npc(familyMemory, "family_voice").name;
+const familyRecalled = dueThread(familyMemory);
+assert(familyRecalled, "family promise was not eligible for long-term recall");
+assert(familyRecalled.kind === "family_worry", `family promise returned through wrong story owner: ${familyRecalled.kind}`);
+assert(familyRecalled.teaser.startsWith(familyName), "family callback did not open with the persistent family voice");
+assert(familyRecalled.teaser.includes("Prometiste a tu familia"), "family callback did not quote the remembered family promise");
+familyMemory.clubId = familyMemory.clubId === "betis" ? "villarreal" : "betis";
+assert(npc(familyMemory, "family_voice").name === familyName, "family identity drifted after a club transfer");
+
+console.log(`THREAD_SCHEDULER_SMOKE_OK seed=${chosenSeed} exhaustedFallback=${spawnedKind} deterministicReplay=ok cooldownOnRealSpawn=ok adviserMemoryRecall=ok familyMemoryOwner=ok`);
