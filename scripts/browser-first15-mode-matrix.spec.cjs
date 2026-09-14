@@ -82,23 +82,27 @@ async function startCareer(page, seed, mode) {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.getByRole("button", { name: "Nueva carrera" }).click();
+  await expect(page).toHaveURL(/\/onboarding\/?$/);
   await page.getByPlaceholder("Álvaro Nieto").fill(`QA ${mode} ${seed}`);
   await page.getByRole("button", { name: /Ambicioso/ }).click();
   await page.getByRole("button", { name: /Leal/ }).click();
   await page.locator('input[type="file"]').setInputFiles({ name: "qa-player.png", mimeType: "image/png", buffer: QA_PLAYER_PNG });
+
+  const modeLabel = { express: "Express", standard: "Standard", pro: "Pro" }[mode];
+  const modeButton = page.getByRole("button", { name: new RegExp(`^${modeLabel}\\b`, "i") });
+  await expect(modeButton).toBeVisible();
+  await modeButton.click();
+
   await page.getByRole("button", { name: "Empezar tu historia" }).click();
   await expect(page).toHaveURL(/\/historia\/?$/);
 
-  await page.evaluate(({ key, modeValue }) => {
-    const raw = localStorage.getItem(key);
-    if (!raw) throw new Error("save missing before mode override");
-    const state = JSON.parse(raw);
-    state.careerMode = modeValue;
-    localStorage.setItem(key, JSON.stringify(state));
-  }, { key: SAVE_KEY, modeValue: mode });
+  const initial = await savedState(page);
+  expect(initial.careerMode, `${mode}/${seed}: onboarding UI did not persist selected mode`).toBe(mode);
+  expect(initial.player.avatar, `${mode}/${seed}: avatar lost at career start`).toMatch(/^data:image\//);
+
   await page.reload();
   await expect(page).toHaveURL(/\/historia\/?$/);
-  expect((await savedState(page)).careerMode).toBe(mode);
+  expect((await savedState(page)).careerMode, `${mode}/${seed}: selected mode changed after reload`).toBe(mode);
 }
 
 function familyOf(state) {
@@ -226,9 +230,6 @@ function assertChronology(seen, mode, seed) {
     }
 
     if (item.cast) {
-      // The opening deliberately allows the provisional adviser identity to be
-      // replaced when the player chooses father / professional / friend. Only
-      // freeze identities once that life-first opening has actually completed.
       if (item.openingCompleted && item.cast.adviser) {
         if (adviserName === null) adviserName = item.cast.adviser;
         else expect(item.cast.adviser, `${mode}/${seed}: adviser drift ${adviserName} -> ${item.cast.adviser}`).toBe(adviserName);
@@ -301,6 +302,7 @@ for (const [mode, seed] of CASES) {
     const state = await savedState(page);
     expect(state.player.avatar).toMatch(/^data:image\//);
     expect(state.flags.opening_completed).toBe(1);
+    expect(state.careerMode, `${mode}/${seed}: selected mode drifted by decision 15`).toBe(mode);
     expect(pageErrors).toEqual([]);
   });
 }
