@@ -126,7 +126,33 @@ function memoryTeaser(s: GameState, kind: ThreadKind, remembered: string): strin
   }
 }
 
-function kindAlreadyUsed(s: GameState, kind: ThreadKind): boolean { return (s.memory.threads?.[kind] ?? 0) > 0; }
+function seasonKindKey(kind: ThreadKind, season: number): string {
+  return `thread-season:${season}:${kind}`;
+}
+
+/**
+ * Story families are reusable across a career, but never as duplicate filler in
+ * the same season. Older saves used memory.threads[kind] as a permanent lock;
+ * migrate that lock into the current season so relationships can evolve again
+ * next year without replaying immediately after load.
+ */
+function kindAlreadyUsed(s: GameState, kind: ThreadKind): boolean {
+  const key = seasonKindKey(kind, s.seasonIndex);
+  if ((s.memory.threads?.[key] ?? 0) > 0) return true;
+  if ((s.memory.threads?.[kind] ?? 0) > 0) {
+    s.memory.threads[key] = 1;
+    delete s.memory.threads[kind];
+    return true;
+  }
+  return false;
+}
+
+function markKindUsed(s: GameState, kind: ThreadKind): void {
+  s.memory.threads[seasonKindKey(kind, s.seasonIndex)] = 1;
+  // Remove the legacy permanent lock if an old save still carries it.
+  if (Object.prototype.hasOwnProperty.call(s.memory.threads, kind)) delete s.memory.threads[kind];
+}
+
 export function hasThread(s: GameState, kind: ThreadKind): boolean { return (s.threads ?? []).some((t) => t.kind === kind); }
 
 export function spawnThread(s: GameState, kind: ThreadKind, payload: Record<string, string | number> = {}, delay?: number): Thread | null {
@@ -143,7 +169,7 @@ export function spawnThread(s: GameState, kind: ThreadKind, payload: Record<stri
     payload,
   };
   s.threads.push(thread);
-  s.memory.threads[kind] = 1;
+  markKindUsed(s, kind);
   return thread;
 }
 
@@ -175,7 +201,7 @@ export function dueThread(s: GameState): Thread | null {
     payload: { remembered: remembered.slice(0, 240) },
   };
   s.threads.push(thread);
-  s.memory.threads[kind] = 1;
+  markKindUsed(s, kind);
   s.memory.threads[memoryRecallKey(remembered)] = 1;
   s.flags["memory_thread_season"] = s.seasonIndex;
   s.flags["ultimo_hilo"] = scene;
