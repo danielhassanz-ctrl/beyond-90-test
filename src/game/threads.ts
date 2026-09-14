@@ -79,9 +79,19 @@ function memoryRecallKey(text: string): string {
   return `recall:${(h >>> 0).toString(36)}`;
 }
 
+function rememberedPartner(text: string): boolean {
+  const lower = text.toLowerCase();
+  return lower.includes("pareja") || lower.includes("novia") || lower.includes("novio");
+}
+
 function memoryThreadKind(text: string): ThreadKind | null {
   const lower = text.toLowerCase();
   const hasAny = (...terms: string[]) => terms.some((term) => lower.includes(term));
+  // Relationship ownership outranks subject-matter keywords. A promise made to
+  // a partner about a transfer is still a relationship memory and must return
+  // through that persistent partner, not be hijacked by the adviser because it
+  // happens to contain words such as "fichaje" or "mercado".
+  if (rememberedPartner(text)) return "family_worry";
   // Career-management promises are some of the most consequential decisions in
   // a footballer's life. They must be eligible to come back through the same
   // persistent adviser who helped make them, instead of disappearing from the
@@ -89,13 +99,8 @@ function memoryThreadKind(text: string): ThreadKind | null {
   if (hasAny("agente", "representante", "asesor", "contrato", "renov", "cesión", "cesion", "fichaje", "oferta", "mercado")) return "club_interest";
   if (hasAny("entrenador", "míster", "mister", "técnico", "tecnico")) return "coach_upset";
   if (hasAny("vestuario", "compañ", "capitán", "capitan", "rival", "jerarquía", "jerarquia")) return "teammate_jealous";
-  if (hasAny("familia", "madre", "padre", "casa", "pareja", "novia", "novio", "hijo", "herman")) return "family_worry";
+  if (hasAny("familia", "madre", "padre", "casa", "hijo", "herman")) return "family_worry";
   return null;
-}
-
-function rememberedPartner(text: string): boolean {
-  const lower = text.toLowerCase();
-  return lower.includes("pareja") || lower.includes("novia") || lower.includes("novio");
 }
 
 /** A remembered decision returns through the person who owns that history. */
