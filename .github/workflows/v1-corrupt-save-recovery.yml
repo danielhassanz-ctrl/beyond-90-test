@@ -118,10 +118,21 @@ jobs:
             if [ "$observed" = "$GITHUB_SHA" ]; then
               exit 0
             fi
+
+            # Rapid narrative iterations can supersede this push before Pages has
+            # a chance to publish it. That is not a delivery failure: the newer
+            # main push owns the public-HTTPS certification. Stop this stale run
+            # instead of reporting a false red while the newer deployment queues.
+            latest_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+            if [ -n "$latest_main" ] && [ "$latest_main" != "$GITHUB_SHA" ]; then
+              echo "Skipping stale public HTTPS check: run=$GITHUB_SHA latest_main=$latest_main"
+              exit 0
+            fi
+
             echo "Waiting for Pages commit: expected=$GITHUB_SHA observed=${observed:-missing} attempt=$i"
             sleep 3
           done
-          echo "Public HTTPS never served expected commit: expected=$GITHUB_SHA observed=${observed:-missing}"
+          echo "Public HTTPS never served current main commit: expected=$GITHUB_SHA observed=${observed:-missing}"
           exit 1
 
       - name: Corrupt-primary recovery on public iPhone WebKit
