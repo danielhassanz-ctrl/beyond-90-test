@@ -1,6 +1,7 @@
 import { canReceiveSocialDm, careerStatus, ensureCareerCast } from "../src/game/career-life";
 import { PEOPLE_EVENTS } from "../src/game/events-people";
-import { createGame, npcMood, who } from "../src/game/engine";
+import { createGame } from "../src/game/engine";
+import { npcMood, who } from "../src/game/npc";
 import type { Player } from "../src/game/types";
 
 const player: Player = { name: "Daniel", position: "MCO", nationality: "España", archetype: "talentoso", personality: "competitivo" } as Player;
