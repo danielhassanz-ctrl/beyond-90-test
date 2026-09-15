@@ -4,7 +4,15 @@ import { createGame } from "../src/game/engine";
 import { npcMood, who } from "../src/game/npc";
 import type { Player } from "../src/game/types";
 
-const player: Player = { name: "Daniel", position: "MCO", nationality: "España", archetype: "talentoso", personality: "competitivo" } as Player;
+const player: Player = {
+  name: "Daniel",
+  nickname: "",
+  position: "MCO",
+  nationality: "España",
+  city: "Sevilla",
+  avatar: null,
+  traits: ["ambicioso"],
+};
 const state = createGame(player);
 const cast = ensureCareerCast(state);
 
