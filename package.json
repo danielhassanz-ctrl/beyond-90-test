@@ -16,6 +16,10 @@
     "qa:competition-pacing": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/competition-pacing-smoke.ts",
     "qa:persistent-cast": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/persistent-cast-smoke.ts",
     "qa:opening": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/opening-flow-smoke.ts",
+    "qa:real-career": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts",
+    "qa:boredom": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts",
+    "qa:narrative": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts",
+    "qa:release-core": "npm run typecheck && npm run qa:opening && npm run qa:real-career && npm run qa:boredom && npm run qa:narrative && npm run qa:branches && npm run qa:career && npm run build",
     "format": "prettier --write ."
   },
   "dependencies": {
