@@ -1,3 +1,4 @@
+import { careerStatus, plausibleMoneyScale } from "../src/game/career-life";
 import { advance, chooseClub, createGame, resolveDynamicCard, resolveEvent, resolveMatch } from "../src/game/engine";
 import { renderDynamic } from "../src/game/dynamic";
 import { eventById } from "../src/game/events";
@@ -22,6 +23,16 @@ function finiteState(s: GameState) {
   assert(nums.every(Number.isFinite), `Non-finite state detected at age ${s.age}`);
   assert(s.age >= 16 && s.age <= 45, `Impossible age ${s.age}`);
   assert(s.overall >= 0 && s.overall <= 100, `Invalid overall ${s.overall}`);
+
+  // Narrative status is a hard chronology gate, not cosmetic metadata. A new
+  // 16-year-old career must remain grounded even if a seeded prospect starts
+  // unusually strong; otherwise star-only press, money and lifestyle scenes can
+  // leak into the life-first opening.
+  if (s.age === 16) {
+    const status = careerStatus(s);
+    assert(status !== "star" && status !== "elite" && status !== "legend", `Age-16 career escaped grounded status: ${status}`);
+    assert(plausibleMoneyScale(s) === "youth", `Age-16 career escaped youth money scale: ${plausibleMoneyScale(s)}`);
+  }
 }
 
 function player(seed: number): Player {
