@@ -11,6 +11,10 @@ on:
       - src/game/engine.ts
       - src/game/opening.ts
       - src/game/career-life.ts
+      - src/game/director.ts
+      - src/game/dynamic.ts
+      - src/game/npc.ts
+      - src/game/threads.ts
       - src/game/narrative-safety.ts
       - src/game/pacing.ts
       - src/game/store.tsx
@@ -27,6 +31,10 @@ on:
       - src/game/engine.ts
       - src/game/opening.ts
       - src/game/career-life.ts
+      - src/game/director.ts
+      - src/game/dynamic.ts
+      - src/game/npc.ts
+      - src/game/threads.ts
       - src/game/narrative-safety.ts
       - src/game/pacing.ts
       - src/game/store.tsx
