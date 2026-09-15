@@ -1,4 +1,4 @@
-import { ensureCareerCast } from "./career-life";
+import { careerStatus, ensureCareerCast } from "./career-life";
 import { careerSeed, hash, npc } from "./npc";
 import type { GameState, Thread } from "./types";
 
@@ -229,8 +229,15 @@ export function maybeSpawnThreads(s: GameState): void {
     return true;
   };
   if (s.rel.coach <= 34 && chance(s, "coach_upset", 0.55) && attempt("coach_upset")) return;
-  if (s.agent.present && s.fame >= 28 && chance(s, "club_interest", 0.4) && attempt("club_interest")) return;
-  if (s.fame >= 34 && chance(s, "public_attention", 0.3)) {
+
+  // Fame alone must never fast-forward a sixteen-year-old into transfer-market,
+  // press or sponsorship life. Those threads are earned only after the life-first
+  // year has established football status. A strong prospect can attract clubs at
+  // 17, while commercial/public attention waits for a genuine starter profile.
+  const status = careerStatus(s);
+  const establishedStarter = status === "starter" || status === "star" || status === "elite" || status === "legend";
+  if (s.age >= 17 && s.agent.present && s.fame >= 28 && chance(s, "club_interest", 0.4) && attempt("club_interest")) return;
+  if (s.age >= 18 && establishedStarter && s.fame >= 34 && chance(s, "public_attention", 0.3)) {
     const first: ThreadKind = chance(s, "public_attention_order", 0.5) ? "press_digging" : "sponsor_call";
     const second: ThreadKind = first === "press_digging" ? "sponsor_call" : "press_digging";
     if (attempt(first) || attempt(second)) return;
