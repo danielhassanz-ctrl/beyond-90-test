@@ -3,6 +3,7 @@ import { renderMoney, resolveMoney } from "./finance";
 import { renderDirector, resolveDirector } from "./director";
 import { renderConsequence, resolveConsequence } from "./consequences";
 import { clubById } from "./data";
+import { ensureCareerCast } from "./career-life";
 import { interpretFree } from "./interpret";
 import { achieve, clamp, milestone, note, rel, stat } from "./mutate";
 import type { DynamicCard, EventCategory, GameState, Interpretation, SceneKey, ShareData } from "./types";
@@ -244,6 +245,25 @@ function threadViewFor(s: GameState, kind: string): ThreadView | undefined {
   return uses >= 2 ? (THREAD_FOLLOWUPS[kind] ?? THREAD_VIEWS[kind]) : THREAD_VIEWS[kind];
 }
 
+function threadResolutionText(s: GameState, kind: string, teaser: string, body: string, remembered: string): string {
+  const cast = ensureCareerCast(s);
+  const recall = remembered.trim() ? ` La conversación que vuelve es concreta: «${remembered.replace(/[.]+$/, "")}».` : "";
+  const owner = (() => {
+    switch (kind) {
+      case "club_interest": return `${cast.adviser.name} no te lo plantea como un rumor: se sienta contigo para decidir el siguiente paso.`;
+      case "coach_upset": return `${cast.coach.name} cierra la puerta del despacho y deja claro que esta conversación tendrá consecuencias en tu rol.`;
+      case "teammate_jealous": return `${cast.captain.name} os sienta a ti y a ${cast.teammate.name}; ya no es una tensión anónima del vestuario.`;
+      case "family_worry": return s.flags["partner_active"] === 1
+        ? `${cast.partner.name} quiere decidirlo contigo porque también afecta a vuestra vida fuera del fútbol.`
+        : `Tu entorno no quiere que el fútbol convierta este problema en otra cosa que se deja para después.`;
+      case "sponsor_call": return `${cast.adviser.name} ha leído la letra pequeña antes de llamarte y te obliga a elegir qué parte de tu vida estás dispuesto a vender.`;
+      case "national_call": return `${cast.coach.name} te pide que valores la llamada por lo que significa para tu momento actual, no por el titular.`;
+      default: return "";
+    }
+  })();
+  return [teaser, owner, body, recall].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+}
+
 export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
   const dir = renderDirector(s, card);
   if (dir) return dir;
@@ -455,7 +475,7 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         title: view?.title ?? "Aquello de lo que se hablaba",
         image: view?.image ?? "locker",
         category: view?.category ?? "story",
-        text: `${str(d, "teaser", "Se hablaba de algo.")} ${view?.text ?? "Hoy tiene nombre y apellidos."}`,
+        text: threadResolutionText(s, kind, str(d, "teaser", "Se hablaba de algo."), view?.text ?? "Hoy tiene nombre y apellidos.", str(d, "remembered")),
         choices: view?.choices ?? [
           { id: "afrontar", label: "Afrontarlo de frente" },
           { id: "evitar", label: "Dejarlo pasar" },
