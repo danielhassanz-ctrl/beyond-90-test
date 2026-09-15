@@ -140,9 +140,18 @@ export function careerStatus(s: GameState): CareerStatus {
   const titles = s.titles?.length ?? 0;
   const awards = s.awards?.length ?? 0;
 
-  // Age is a hard narrative prerequisite, not just another stat. An exceptional
-  // academy player may already be a star, but must not unlock established-elite
-  // or legend scenes before the career has actually reached those eras.
+  // Sixteen is still the life-first threshold: even a generational prospect is
+  // not narratively treated as an established star before the career has earned
+  // public proof. This keeps the opening about family, adaptation and hierarchy
+  // and prevents star-only press/lifestyle beats from leaking into the first year.
+  if (s.age <= 16) {
+    if (s.overall >= 78 || s.fame >= 55) return "starter";
+    if (s.overall >= 70 || s.fame >= 25) return "squad";
+    return "prospect";
+  }
+
+  // At 17-18 an exceptional academy player can genuinely become a star, but the
+  // threshold is earned through football/fame rather than granted on day one.
   if (s.age <= 18) {
     if (s.overall >= 83 || s.fame >= 75 || awards >= 1) return "star";
     if (s.overall >= 76 || s.fame >= 45) return "starter";
