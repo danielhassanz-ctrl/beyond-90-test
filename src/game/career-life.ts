@@ -153,15 +153,26 @@ export function careerStatus(s: GameState): CareerStatus {
   // At 17-18 an exceptional academy player can genuinely become a star, but the
   // threshold is earned through football/fame rather than granted on day one.
   if (s.age <= 18) {
-    if (s.overall >= 83 || s.fame >= 75 || awards >= 1) return "star";
+    if (s.overall >= 83 || s.fame >= 75 || (awards >= 1 && s.overall >= 78)) return "star";
     if (s.overall >= 76 || s.fame >= 45) return "starter";
     if (s.overall >= 70) return "squad";
     return "prospect";
   }
 
+  // Breakthrough years are where a career proves whether youth hype survives
+  // senior football. A single youth/individual award must never jump a 19-year-old
+  // straight to elite lifestyle, sponsor or press arcs. Elite status is locked
+  // until the established era and then still requires football proof.
+  if (s.age <= 21) {
+    if (s.overall >= 86 || s.fame >= 85 || (awards >= 1 && s.overall >= 82)) return "star";
+    if (s.overall >= 78 || s.fame >= 55) return "starter";
+    if (s.overall >= 71) return "squad";
+    return "prospect";
+  }
+
   if (s.age >= 27 && s.overall >= 89 && (titles >= 4 || awards >= 2)) return "legend";
-  if (s.overall >= 88 || awards >= 1) return "elite";
-  if (s.overall >= 83 || s.fame >= 75) return "star";
+  if (s.overall >= 88 || (awards >= 1 && s.overall >= 84) || (titles >= 3 && s.overall >= 83)) return "elite";
+  if (s.overall >= 83 || s.fame >= 75 || (awards >= 1 && s.overall >= 80)) return "star";
   if (s.overall >= 76 || s.fame >= 45) return "starter";
   if (s.overall >= 70) return "squad";
   return "prospect";
