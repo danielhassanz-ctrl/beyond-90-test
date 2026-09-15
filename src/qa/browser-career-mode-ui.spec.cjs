@@ -23,6 +23,8 @@ const CASES = [
   ["pro", "Pro", 290909],
 ];
 
+const FIRST_DECISIONS = 15;
+
 test.use({ ...devices["iPhone 13"] });
 test.describe.configure({ mode: "serial" });
 
@@ -75,22 +77,38 @@ async function startCareerViaUi(page, mode, label, seed) {
   expect(reloaded.careerMode, `${mode}/${seed}: selected mode changed after reload`).toBe(mode);
   expect(reloaded.player.name).toBe(`QA mode UI ${mode} ${seed}`);
 
-  const article = page.locator("article");
-  await expect(article).toBeVisible();
-  const firstChoice = article.locator(".space-y-2\\.5 > button").first();
-  await expect(firstChoice).toBeVisible();
-  await firstChoice.click();
+  for (let decision = 1; decision <= FIRST_DECISIONS; decision += 1) {
+    const article = page.locator("article");
+    await expect(article, `${mode}/${seed}: narrative card missing at decision ${decision}`).toBeVisible();
+    const firstChoice = article.locator(".space-y-2\\.5 > button").first();
+    await expect(firstChoice, `${mode}/${seed}: no playable choice at decision ${decision}`).toBeVisible();
 
-  const afterDecision = await savedState(page);
-  expect(afterDecision.careerMode, `${mode}/${seed}: selected mode changed after first narrative write`).toBe(mode);
+    const before = await savedState(page);
+    await firstChoice.click();
+    await expect.poll(async () => {
+      const after = await savedState(page);
+      return after.sceneCount ?? 0;
+    }, { message: `${mode}/${seed}: decision ${decision} did not advance persisted sceneCount` }).toBeGreaterThan(before.sceneCount ?? 0);
 
-  await page.reload();
-  const afterDecisionReload = await savedState(page);
-  expect(afterDecisionReload.careerMode, `${mode}/${seed}: selected mode changed after decision reload`).toBe(mode);
+    const afterDecision = await savedState(page);
+    expect(afterDecision.careerMode, `${mode}/${seed}: selected mode changed after decision ${decision}`).toBe(mode);
+    expect(afterDecision.player.avatar, `${mode}/${seed}: avatar lost after decision ${decision}`).toMatch(/^data:image\//);
+
+    // Exercise the same reload/recovery path a real iPhone user hits during a session,
+    // without multiplying runtime by reloading after every single card.
+    if (decision % 5 === 0) {
+      await page.reload();
+      await expect(page).toHaveURL(/\/historia\/?$/);
+      const recovered = await savedState(page);
+      expect(recovered.careerMode, `${mode}/${seed}: selected mode changed after reload at decision ${decision}`).toBe(mode);
+      expect(recovered.player.name).toBe(`QA mode UI ${mode} ${seed}`);
+      expect(recovered.player.avatar, `${mode}/${seed}: avatar lost after reload at decision ${decision}`).toMatch(/^data:image\//);
+    }
+  }
 }
 
 for (const [mode, label, seed] of CASES) {
-  test(`iPhone WebKit selects and persists ${mode}/${seed} through onboarding UI`, async ({ page }) => {
+  test(`iPhone WebKit plays and persists first 15 decisions for ${mode}/${seed}`, async ({ page }) => {
     const pageErrors = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
     await startCareerViaUi(page, mode, label, seed);
