@@ -68,9 +68,6 @@ function resetClubScopedNarrativeIfNeeded(s: GameState): void {
   const marker = hash(careerSeed(s), `club-narrative-scope|${club}`) || 1;
   const previous = s.flags["club_narrative_scope"];
 
-  // The first observed club establishes scope without replaying existing scenes.
-  // A later change means a real transfer: the new coach/captain/physio/teammate
-  // must not inherit introductions, callbacks or choices from the old club.
   if (typeof previous !== "number" || previous <= 0) {
     s.flags["club_narrative_scope"] = marker;
     return;
@@ -81,29 +78,13 @@ function resetClubScopedNarrativeIfNeeded(s: GameState): void {
   s.flags["club_narrative_scope"] = marker;
 }
 
-/**
- * Fachada narrativa del reparto persistente. La creación y migración viven
- * exclusivamente en npc.ts para que todo el juego comparta exactamente las
- * mismas identidades durante una carrera completa.
- */
 export function ensureCareerCast(s: GameState): CareerCast {
   const cast = ensureCast(s);
   resetClubScopedNarrativeIfNeeded(s);
-  // Opening adviser selection can deliberately replace a provisional father or
-  // family-friend adviser with a professional. Old code reused the already
-  // synchronized placeholder name (for example "Papá") and produced a
-  // professional representative literally called "Papá". Repair only those
-  // impossible placeholder identities; established save names remain untouched.
   repairProfessionalAdviserIdentity(s, cast);
   return cast;
 }
 
-/**
- * Devuelve el vínculo personal más fuerte que debe aparecer en Legado.
- * La pantalla final no puede volver a nombres genéricos ("Entrenador",
- * "Agente") después de haber construido personajes persistentes durante toda
- * la carrera. Solo incluimos a la pareja cuando esa relación existe realmente.
- */
 export function legacyRelationshipHighlight(s: GameState): LegacyRelationshipHighlight {
   const cast = ensureCareerCast(s);
   const candidates: LegacyRelationshipHighlight[] = [
@@ -121,12 +102,6 @@ export function legacyRelationshipHighlight(s: GameState): LegacyRelationshipHig
   return candidates.sort((a, b) => b.value - a.value)[0]!;
 }
 
-/**
- * Etapas cronológicas del Football Career Story Director.
- * 16-18 promesa · 19-21 irrupción · 22-25 consolidación · 26-30 plenitud ·
- * 31-34 veterano · 35+ legado. Mantener estos límites en un único lugar evita
- * que escenas de estrella consolidada aparezcan un año antes de tiempo.
- */
 export function careerEra(s: GameState): CareerEra {
   if (s.age <= 18) return "academy";
   if (s.age <= 21) return "breakthrough";
@@ -140,29 +115,27 @@ export function careerStatus(s: GameState): CareerStatus {
   const titles = s.titles?.length ?? 0;
   const awards = s.awards?.length ?? 0;
 
-  // Sixteen is still the life-first threshold: even a generational prospect is
-  // not narratively treated as an established star before the career has earned
-  // public proof. This keeps the opening about family, adaptation and hierarchy
-  // and prevents star-only press/lifestyle beats from leaking into the first year.
+  // Public attention can amplify what happens on the pitch, but it cannot
+  // manufacture football status on its own. This is deliberately stricter than
+  // the old fame-only shortcuts: a viral youngster with a low overall remains a
+  // prospect/squad player until his football supplies evidence too.
   if (s.age <= 16) {
-    if (s.overall >= 78 || s.fame >= 55) return "starter";
-    if (s.overall >= 70 || s.fame >= 25) return "squad";
+    if (s.overall >= 78 || (s.overall >= 74 && s.fame >= 55)) return "starter";
+    if (s.overall >= 70 || (s.overall >= 67 && s.fame >= 25)) return "squad";
     return "prospect";
   }
 
-  // At 17-18 an exceptional academy player can genuinely become a star, but the
-  // threshold is earned through football/fame rather than granted on day one.
   if (s.age <= 18) {
-    if (s.overall >= 83 || s.fame >= 75 || awards >= 1) return "star";
-    if (s.overall >= 76 || s.fame >= 45) return "starter";
+    if (s.overall >= 83 || (s.overall >= 80 && s.fame >= 75) || (awards >= 1 && s.overall >= 79)) return "star";
+    if (s.overall >= 76 || (s.overall >= 73 && s.fame >= 45)) return "starter";
     if (s.overall >= 70) return "squad";
     return "prospect";
   }
 
   if (s.age >= 27 && s.overall >= 89 && (titles >= 4 || awards >= 2)) return "legend";
-  if (s.overall >= 88 || awards >= 1) return "elite";
-  if (s.overall >= 83 || s.fame >= 75) return "star";
-  if (s.overall >= 76 || s.fame >= 45) return "starter";
+  if (s.overall >= 88 || (awards >= 1 && s.overall >= 84)) return "elite";
+  if (s.overall >= 83 || (s.overall >= 80 && s.fame >= 75)) return "star";
+  if (s.overall >= 76 || (s.overall >= 73 && s.fame >= 45)) return "starter";
   if (s.overall >= 70) return "squad";
   return "prospect";
 }
@@ -176,9 +149,6 @@ export function plausibleMoneyScale(s: GameState): "youth" | "pro" | "star" | "s
 }
 
 export function canReceiveSocialDm(s: GameState): boolean {
-  // This is explicitly an early-career "first attention" beat. Without the
-  // upper age gate it could surface years later for a veteran whose fame rose
-  // slowly, producing dialogue about "one of your first matches" at 30+.
   return s.age >= 17 && s.age <= 24 && s.fame >= 18 && !s.flags["social_dm_intro"];
 }
 
