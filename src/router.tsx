@@ -1,8 +1,14 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createHashHistory, createRouter } from "@tanstack/react-router";
+import { installCareerArcEvents } from "./game/events-career-arcs";
 import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
+  // Register authored long-form career arcs in the same live event bank used by
+  // the shipped UI. Registration is idempotent and happens after module init,
+  // avoiding the circular-initialization trap that legacy event banks had.
+  installCareerArcEvents();
+
   const queryClient = new QueryClient();
   const portable = import.meta.env["VITE_PORTABLE_SINGLE_FILE"] === "1";
   const usePortableHashHistory = portable && !import.meta.env.SSR;
