@@ -38,10 +38,6 @@ function seededRange(s: GameState, key: string, range: readonly [number, number]
 
 function contextualKeyMatchRange(s: GameState): readonly [number, number] {
   const base = careerModeConfig(careerModeOf(s)).keyMatches;
-  // The published key-match figures describe a senior season. In youth and
-  // reserves the career still keeps the same total decision density, but the
-  // missing football beats are reassigned to meaningful narrative choices
-  // rather than inventing senior Cup/title matches.
   if (s.stage === "youth") return [Math.min(base[0], 2), Math.min(base[1], 3)];
   if (s.stage === "reserves") return [Math.min(base[0], 3), Math.min(base[1], 4)];
   return base;
@@ -54,8 +50,6 @@ export function decisionTarget(s: GameState): number {
 export function keyMatchTarget(s: GameState): number {
   const cfg = careerModeConfig(careerModeOf(s));
   const target = seededRange(s, "key-match-target", contextualKeyMatchRange(s));
-  // Preserve enough non-match decisions for the career to feel like a life
-  // story rather than a fixture list, especially at the low end of each mode.
   return Math.min(target, Math.max(0, decisionTarget(s) - cfg.narrative[0]));
 }
 
@@ -119,22 +113,9 @@ function contextualKeySlots(s: GameState, missing: number): Slot[] {
   if (eligible.includes("title_decider")) pushUnique({ kind: "match", tag: "decisive" });
   if (eligible.includes("debut")) pushUnique({ kind: "match", tag: "debut" });
 
-  // Never manufacture repeated generic key matches merely to hit a pacing
-  // quota. If the real season context cannot justify another distinct match,
-  // the career runs slightly shorter instead of showing another generic
-  // "partido clave", derby, cup or scouts card with the same dramatic purpose.
-  const fallback: Slot[] = s.stage === "first"
-    ? [
-        { kind: "match", tag: "decisive", label: "Partido clave de la temporada" },
-        { kind: "match", tag: "cup", tie: true },
-        { kind: "match", tag: "scouts" },
-      ]
-    : [
-        { kind: "match", tag: "scouts", label: "Partido bajo la mirada del primer equipo" },
-        { kind: "match", tag: "derby", label: "Derbi de formación" },
-        { kind: "match", tag: "debut", label: "Nueva oportunidad para ganarte sitio" },
-      ];
-  for (const slot of fallback) pushUnique(slot);
+  // Match density is a ceiling, never a quota. If the actual career state
+  // cannot justify another distinct key match, do not invent a generic scouts,
+  // derby, cup or decisive card merely to reach the mode target.
   return additions;
 }
 
