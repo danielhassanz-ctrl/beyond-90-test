@@ -31,7 +31,14 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   if (/debut|primer partido|estreno/.test(haystack)) {
     return { kind: "debut", label: "Debut", scene: "pitch" };
   }
-  if (/fich|traspas|firma|nuevo club|presentacion|contrato/.test(haystack)) {
+
+  // A new-club presentation is a special visual milestone. A renewal, sponsor
+  // agreement or generic contract is not: classifying those as a signing would
+  // show a fake new-shirt presentation for a player who has not changed club.
+  const excludedSigningContext = /renov|patrocin|sponsor|marca|adidas|nike|puma/.test(haystack);
+  const explicitClubMove = /fich|traspas|nuevo club|presentacion|cambio de club/.test(haystack);
+  const signedForClub = /firma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext;
+  if (explicitClubMove || signedForClub) {
     return { kind: "signing", label: "Nuevo capítulo", scene: "presentation" };
   }
   return { kind: "career", label: "Mi carrera", scene: "portrait" };
