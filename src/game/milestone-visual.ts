@@ -1,11 +1,46 @@
 import type { ShareData } from "./types";
 
 export type MilestoneVisualKind = "signing" | "debut" | "trophy" | "retirement" | "career";
+export type PlayerVisualAgeStage = "academy" | "young-pro" | "prime" | "veteran" | "legacy";
 
 export interface MilestoneVisualSpec {
   kind: MilestoneVisualKind;
   label: string;
   scene: "presentation" | "pitch" | "celebration" | "farewell" | "portrait";
+}
+
+export interface PlayerVisualProfile {
+  age: number;
+  stage: PlayerVisualAgeStage;
+  /**
+   * Prompt-safe direction for a future image-generation backend. This metadata
+   * never pretends that the local fallback card has altered the player's face.
+   * Identity must remain anchored to the persisted uploaded player photo.
+   */
+  ageDirection: string;
+}
+
+/**
+ * Stable visual-age bands keep future generated milestones recognisably the
+ * same person while allowing natural ageing across a 20+ year career.
+ * Hair/beard/style changes belong to the image backend and must preserve
+ * identity; the deterministic local fallback continues to use the source photo.
+ */
+export function playerVisualProfile(age: number): PlayerVisualProfile {
+  const safeAge = Number.isFinite(age) ? Math.max(16, Math.min(50, Math.round(age))) : 16;
+  if (safeAge <= 18) {
+    return { age: safeAge, stage: "academy", ageDirection: "teenage academy player; youthful face; clean, understated football look" };
+  }
+  if (safeAge <= 23) {
+    return { age: safeAge, stage: "young-pro", ageDirection: "young professional footballer; subtle maturation; contemporary but restrained look" };
+  }
+  if (safeAge <= 30) {
+    return { age: safeAge, stage: "prime", ageDirection: "prime-age footballer; mature facial structure; natural hairstyle or light facial-hair variation" };
+  }
+  if (safeAge <= 35) {
+    return { age: safeAge, stage: "veteran", ageDirection: "veteran footballer; visibly mature but athletic; plausible hair and beard evolution" };
+  }
+  return { age: safeAge, stage: "legacy", ageDirection: "late-career footballer; natural ageing; experienced appearance; preserve recognisable identity" };
 }
 
 /**
