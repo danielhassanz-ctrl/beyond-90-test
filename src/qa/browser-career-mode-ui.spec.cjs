@@ -36,6 +36,25 @@ async function savedState(page) {
   }, SAVE_KEY);
 }
 
+async function reachPlayableChoice(page, mode, seed, decision) {
+  for (let transition = 0; transition < 8; transition += 1) {
+    const article = page.locator("article");
+    await expect(article, `${mode}/${seed}: narrative card missing before decision ${decision}`).toBeVisible();
+    const choice = article.locator(".space-y-2\\.5 > button").first();
+    if (await choice.isVisible().catch(() => false)) return { article, choice };
+
+    const advance = article.getByRole("button", {
+      name: /^(Continuar|Avanzar|Nueva temporada|Seguir el partido|Salir al campo|Ver el partido)$/i,
+    }).first();
+    await expect(
+      advance,
+      `${mode}/${seed}: story stalled on a non-decision beat before decision ${decision}`,
+    ).toBeVisible();
+    await advance.click();
+  }
+  throw new Error(`${mode}/${seed}: exceeded transition budget before decision ${decision}`);
+}
+
 async function startCareerViaUi(page, mode, label, seed) {
   await page.addInitScript((initialSeed) => {
     let x = initialSeed >>> 0;
@@ -80,14 +99,11 @@ async function startCareerViaUi(page, mode, label, seed) {
   const seenNarrative = new Set();
 
   for (let decision = 1; decision <= FIRST_DECISIONS; decision += 1) {
-    const article = page.locator("article");
-    await expect(article, `${mode}/${seed}: narrative card missing at decision ${decision}`).toBeVisible();
-    const firstChoice = article.locator(".space-y-2\\.5 > button").first();
-    await expect(firstChoice, `${mode}/${seed}: no playable choice at decision ${decision}`).toBeVisible();
+    const { article, choice: firstChoice } = await reachPlayableChoice(page, mode, seed, decision);
 
     // Player-visible regression gate: the opening run must not literally replay the
-    // same authored card. This catches the exact failure mode where a supposedly
-    // evolving career shows the same decision two or three times in a few turns.
+    // same authored decision. Transitional outcome/match/season screens are traversed
+    // above but are deliberately not counted as player decisions.
     const narrative = (await article.innerText()).replace(/\s+/g, " ").trim();
     expect(narrative.length, `${mode}/${seed}: empty narrative at decision ${decision}`).toBeGreaterThan(40);
     expect(seenNarrative.has(narrative), `${mode}/${seed}: repeated narrative card at decision ${decision}: ${narrative.slice(0, 140)}`).toBe(false);
