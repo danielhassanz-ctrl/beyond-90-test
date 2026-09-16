@@ -1,0 +1,38 @@
+name: Visual milestone ageing gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/game/milestone-visual.ts'
+      - 'src/game/share.ts'
+      - 'scripts/player-visual-age-smoke.ts'
+      - '.github/workflows/visual-milestone-age.yml'
+  pull_request:
+    paths:
+      - 'src/game/milestone-visual.ts'
+      - 'src/game/share.ts'
+      - 'scripts/player-visual-age-smoke.ts'
+      - '.github/workflows/visual-milestone-age.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-age:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Verify deterministic player visual-age continuity
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/player-visual-age-smoke.ts
+      - name: Production build
+        run: npm run build
