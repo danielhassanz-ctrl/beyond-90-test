@@ -20,9 +20,6 @@ const LAST = [
 const FEMALE = ["Lucía", "Carla", "Marta", "Irene", "Nerea", "Paula", "Alba", "Sara", "Elena", "Noa"];
 
 export function careerSeed(s: GameState): number {
-  // Install after the ESM graph has initialized; event selection calls careerSeed
-  // before hashing narrative candidates, so persistent-people scenes enter the
-  // same live registry as the rest of the career bank.
   installPeopleEvents();
   const anyS = s as GameState & { careerSeed?: number };
   if (typeof anyS.careerSeed !== "number" || !Number.isFinite(anyS.careerSeed)) {
@@ -95,7 +92,6 @@ export interface CareerCast {
   teammate: CastPerson;
   social: CastPerson;
   partner: CastPerson;
-  /** Club whose staff/teammate identities are currently represented. */
   clubScope?: string;
 }
 
@@ -118,14 +114,7 @@ function adviserRole(kind: AdviserKind | undefined): string {
   return "Representante";
 }
 
-function normalizePerson(
-  s: GameState,
-  key: CastKey,
-  stored: LegacyCastPerson | undefined,
-  fallbackName: string,
-  fallbackRole: string,
-  fallbackRelation: number,
-): CastPerson {
+function normalizePerson(s: GameState, key: CastKey, stored: LegacyCastPerson | undefined, fallbackName: string, fallbackRole: string, fallbackRelation: number): CastPerson {
   return {
     id: typeof stored?.id === "string" && stored.id ? stored.id : `${key}-${hash(careerSeed(s), `cast-${key}`)}`,
     name: typeof stored?.name === "string" && stored.name ? stored.name : fallbackName,
@@ -136,13 +125,7 @@ function normalizePerson(
   };
 }
 
-function scopedPerson(
-  s: GameState,
-  key: "coach" | "physio" | "captain" | "teammate",
-  clubId: string,
-  role: string,
-  relation: number,
-): CastPerson {
+function scopedPerson(s: GameState, key: "coach" | "physio" | "captain" | "teammate", clubId: string, role: string, relation: number): CastPerson {
   const scope = clubId || "unattached";
   return {
     id: `${key}-${hash(careerSeed(s), `cast-${key}|${scope}`)}`,
@@ -155,57 +138,38 @@ function scopedPerson(
 }
 
 function isPersonComplete(p: LegacyCastPerson | undefined): p is CastPerson {
-  return !!p
-    && typeof p.id === "string" && p.id.length > 0
-    && typeof p.name === "string" && p.name.length > 0
-    && typeof p.relation === "number" && Number.isFinite(p.relation)
-    && typeof p.role === "string" && p.role.length > 0
-    && typeof p.met === "boolean"
-    && typeof p.lastContactScene === "number" && Number.isFinite(p.lastContactScene);
+  return !!p && typeof p.id === "string" && p.id.length > 0 && typeof p.name === "string" && p.name.length > 0 && typeof p.relation === "number" && Number.isFinite(p.relation) && typeof p.role === "string" && p.role.length > 0 && typeof p.met === "boolean" && typeof p.lastContactScene === "number" && Number.isFinite(p.lastContactScene);
 }
 
 function isCastComplete(cast: CareerCast | LegacyCareerCast | undefined): cast is CareerCast {
-  return !!cast
-    && (cast.adviserKind === "agent" || cast.adviserKind === "father" || cast.adviserKind === "friend")
-    && isPersonComplete(cast.adviser)
-    && isPersonComplete(cast.coach)
-    && isPersonComplete(cast.physio)
-    && isPersonComplete(cast.captain)
-    && isPersonComplete(cast.teammate)
-    && isPersonComplete(cast.social)
-    && isPersonComplete(cast.partner)
-    && cast.partner.id !== cast.social.id
-    && cast.partner.name !== cast.social.name;
+  return !!cast && (cast.adviserKind === "agent" || cast.adviserKind === "father" || cast.adviserKind === "friend") && isPersonComplete(cast.adviser) && isPersonComplete(cast.coach) && isPersonComplete(cast.physio) && isPersonComplete(cast.captain) && isPersonComplete(cast.teammate) && isPersonComplete(cast.social) && isPersonComplete(cast.partner) && cast.partner.id !== cast.social.id && cast.partner.name !== cast.social.name;
 }
 
 function syncNpc(s: GameState, key: string, person: CastPerson, role = person.role): void {
   if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
   const existing = s.memory.npcs[key];
+  // Mood belongs to a person, not to a role slot. When a transfer rotates the
+  // club-bound cast, carrying the previous coach/captain/physio/teammate mood
+  // into the replacement made a stranger inherit a relationship they never had.
+  // Preserve mood only while the exact same named person remains in the slot.
+  const samePerson = existing?.name === person.name;
   s.memory.npcs[key] = {
     name: person.name,
     role,
-    mood: typeof existing?.mood === "number" ? existing.mood : person.relation,
+    mood: samePerson && typeof existing?.mood === "number" ? existing.mood : person.relation,
   };
 }
 
 function rotateClubScopeIfNeeded(s: GameState, cast: CareerCast): void {
   const currentClub = typeof s.clubId === "string" ? s.clubId : "";
-
-  // Migration rule: old saves did not persist a scope marker. Adopt whatever
-  // club they are already in without changing a single name. Only a future
-  // actual club change is allowed to rotate the club-bound cast.
   if (typeof cast.clubScope !== "string") {
     cast.clubScope = currentClub;
     return;
   }
-
-  // During the life-first opening the cast may exist before a club is chosen.
-  // Binding that same initial cast to the first club is not a transfer.
   if (!cast.clubScope && currentClub) {
     cast.clubScope = currentClub;
     return;
   }
-
   if (!currentClub || cast.clubScope === currentClub) return;
 
   cast.coach = scopedPerson(s, "coach", currentClub, "Entrenador", s.rel.coach || 48);
@@ -213,20 +177,11 @@ function rotateClubScopeIfNeeded(s: GameState, cast: CareerCast): void {
   cast.captain = scopedPerson(s, "captain", currentClub, "Capitán", s.rel.dressing || 46);
   cast.teammate = scopedPerson(s, "teammate", currentClub, "Compañero de confianza", s.rel.dressing || 46);
   cast.clubScope = currentClub;
-
-  // Club-specific unresolved threads belong to the old dressing room. Personal
-  // adviser/family/social threads survive the move and continue normally.
   if (Array.isArray(s.threads)) {
     s.threads = s.threads.filter((thread) => thread.kind !== "coach_upset" && thread.kind !== "teammate_jealous");
   }
 }
 
-/**
- * ÚNICA fuente de verdad del reparto persistente de una carrera. El asesor y
- * los contactos personales acompañan al jugador. Entrenador, capitán, fisio y
- * compañero permanecen estables dentro de un club y se regeneran solo tras un
- * cambio real de `clubId`.
- */
 export function ensureCast(s: GameState): CareerCast {
   const memory = s.memory as CastMemory;
   const stored = memory.careerCast;
@@ -237,18 +192,10 @@ export function ensureCast(s: GameState): CareerCast {
   } else {
     const seed = careerSeed(s);
     const adviserKind: AdviserKind = stored?.adviserKind ?? (["agent", "father", "friend"] as const)[hash(seed, "adviser-kind") % 3]!;
-    const adviserName = adviserKind === "father"
-      ? "Papá"
-      : adviserKind === "friend"
-        ? nameFor(s, "career-friend")
-        : nameFor(s, "career-adviser");
-    const socialName = typeof stored?.social?.name === "string" && stored.social.name
-      ? stored.social.name
-      : nameFor(s, "career-social", true);
+    const adviserName = adviserKind === "father" ? "Papá" : adviserKind === "friend" ? nameFor(s, "career-friend") : nameFor(s, "career-adviser");
+    const socialName = typeof stored?.social?.name === "string" && stored.social.name ? stored.social.name : nameFor(s, "career-social", true);
     const storedPartnerName = typeof stored?.partner?.name === "string" ? stored.partner.name : "";
-    const partnerName = storedPartnerName && storedPartnerName !== socialName
-      ? storedPartnerName
-      : distinctFemaleNameFor(s, "career-partner", socialName);
+    const partnerName = storedPartnerName && storedPartnerName !== socialName ? storedPartnerName : distinctFemaleNameFor(s, "career-partner", socialName);
 
     cast = {
       adviserKind,
@@ -266,7 +213,6 @@ export function ensureCast(s: GameState): CareerCast {
   }
 
   rotateClubScopeIfNeeded(s, cast);
-
   syncNpc(s, "adviser", cast.adviser, adviserRole(cast.adviserKind));
   syncNpc(s, "coach", cast.coach);
   syncNpc(s, "physio", cast.physio);
@@ -282,28 +228,18 @@ export function ensureCast(s: GameState): CareerCast {
   if (s.rel.agent <= 0) s.rel.agent = cast.adviser.relation;
   const marker = `adviser:${cast.adviserKind}`;
   if (!s.agent.memories.includes(marker)) s.agent.memories.unshift(marker);
-
   return cast;
 }
 
 function castPerson(s: GameState, key: string): { name: string; role: string; mood: number } | null {
   const cast = ensureCast(s);
-  const map: Record<string, CastPerson | undefined> = {
-    coach: cast.coach,
-    physio: cast.physio,
-    captain: cast.captain,
-    friend: cast.teammate,
-    social: cast.social,
-    partner: cast.partner,
-    adviser: cast.adviser,
-  };
+  const map: Record<string, CastPerson | undefined> = { coach: cast.coach, physio: cast.physio, captain: cast.captain, friend: cast.teammate, social: cast.social, partner: cast.partner, adviser: cast.adviser };
   const p = map[key];
   if (!p?.name) return null;
   const role = key === "adviser" ? adviserRole(cast.adviserKind) : (ROLES[key]?.role ?? p.role ?? "Conocido");
   return { name: p.name, role, mood: p.relation };
 }
 
-/** Devuelve (creando si hace falta) el NPC persistente de un rol. */
 export function npc(s: GameState, key: keyof typeof ROLES | string): { name: string; role: string; mood: number } {
   if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
   const cast = castPerson(s, key);
@@ -322,25 +258,15 @@ export function npc(s: GameState, key: keyof typeof ROLES | string): { name: str
 
 export const npcName = (s: GameState, key: string): string => npc(s, key).name;
 
-/** Ajusta el humor de un NPC: condiciona interacciones posteriores. */
 export function npcMood(s: GameState, key: string, delta: number): void {
   const n = npc(s, key);
   n.mood = Math.max(0, Math.min(100, Math.round(n.mood + delta)));
   const cast = ensureCast(s);
-  const map: Record<string, CastPerson | undefined> = {
-    coach: cast.coach,
-    physio: cast.physio,
-    captain: cast.captain,
-    friend: cast.teammate,
-    social: cast.social,
-    partner: cast.partner,
-    adviser: cast.adviser,
-  };
+  const map: Record<string, CastPerson | undefined> = { coach: cast.coach, physio: cast.physio, captain: cast.captain, friend: cast.teammate, social: cast.social, partner: cast.partner, adviser: cast.adviser };
   const p = map[key];
   if (p) p.relation = n.mood;
 }
 
-/** "Nombre, rol" para que el jugador nunca tenga que adivinar quién habla. */
 export function who(s: GameState, key: string): string {
   const n = npc(s, key);
   return `${n.name}, ${n.role.toLowerCase()}`;
