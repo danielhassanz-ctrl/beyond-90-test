@@ -1,0 +1,54 @@
+name: Beyond 90 visual milestone V1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/game/club-identity.ts'
+      - 'src/lib/share.ts'
+      - 'src/components/game/ShareButton.tsx'
+      - 'scripts/visual-milestone-source-gate.mjs'
+      - '.github/workflows/visual-milestone-v1.yml'
+  pull_request:
+    paths:
+      - 'src/game/club-identity.ts'
+      - 'src/lib/share.ts'
+      - 'src/components/game/ShareButton.tsx'
+      - 'scripts/visual-milestone-source-gate.mjs'
+      - '.github/workflows/visual-milestone-v1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-milestone-v1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install from lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify clean dependency graph
+        run: git diff --exit-code -- package-lock.json
+
+      - name: Player photo + club identity milestone source gate
+        run: node scripts/visual-milestone-source-gate.mjs
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build production SPA
+        env:
+          DEPLOY_BASE: /beyond-90-test/
+        run: npm run build
