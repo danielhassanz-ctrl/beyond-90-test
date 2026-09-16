@@ -2,7 +2,7 @@ import { Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { clubById } from "@/game/data";
 import { clubVisualIdentity } from "@/game/club-identity";
-import { milestoneVisualSpec } from "@/game/milestone-visual";
+import { milestoneVisualSpec, playerVisualProfile } from "@/game/milestone-visual";
 import { seasonLabel, stageLabel } from "@/game/engine";
 import type { GameState, ShareData } from "@/game/types";
 import { copyShareText, downloadCard, prepareCareerCard, sharePreparedCareerCard, type PreparedCareerCard } from "@/lib/share";
@@ -27,8 +27,9 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
       avatar: state.player.avatar,
       clubColors: { primary: identity.primary, secondary: identity.secondary, text: identity.text },
       milestone,
+      playerVisual: playerVisualProfile(state.age),
     };
-  }, [share, state.seasonIndex, state.stage, state.player.nickname, state.player.name, state.player.avatar, state.clubId]);
+  }, [share, state.seasonIndex, state.stage, state.age, state.player.nickname, state.player.name, state.player.avatar, state.clubId]);
 
   useEffect(() => {
     let active = true;
