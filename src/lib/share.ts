@@ -1,3 +1,5 @@
+import type { MilestoneVisualSpec } from "@/game/milestone-visual";
+
 export interface CareerCardInput {
   headline: string;
   kicker: string;
@@ -6,6 +8,7 @@ export interface CareerCardInput {
   lines: { label: string; value: string }[];
   avatar: string | null;
   clubColors?: { primary: string; secondary: string; text: string };
+  milestone?: MilestoneVisualSpec;
 }
 
 const W = 1080;
@@ -21,7 +24,36 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-/** Dibuja la Career Card vertical de Beyond 90 y devuelve un blob PNG. */
+function drawMilestoneBackdrop(ctx: CanvasRenderingContext2D, scene: MilestoneVisualSpec["scene"], primary: string, secondary: string) {
+  ctx.save();
+  ctx.globalAlpha = 0.2;
+  ctx.fillStyle = secondary;
+  ctx.strokeStyle = secondary;
+  ctx.lineWidth = 10;
+
+  if (scene === "pitch") {
+    ctx.strokeRect(90, 300, W - 180, 650);
+    ctx.beginPath(); ctx.moveTo(90, 625); ctx.lineTo(W - 90, 625); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, 625, 115, 0, Math.PI * 2); ctx.stroke();
+  } else if (scene === "presentation") {
+    ctx.fillStyle = primary;
+    ctx.fillRect(90, 300, W - 180, 650);
+    ctx.fillStyle = secondary;
+    for (let x = 90; x < W - 90; x += 120) ctx.fillRect(x, 300, 48, 650);
+  } else if (scene === "celebration") {
+    for (let i = 0; i < 18; i += 1) {
+      const x = 80 + ((i * 137) % 920);
+      const y = 270 + ((i * 211) % 650);
+      ctx.fillRect(x, y, 16 + (i % 3) * 8, 60 + (i % 4) * 20);
+    }
+  } else if (scene === "farewell") {
+    ctx.beginPath(); ctx.moveTo(120, 870); ctx.quadraticCurveTo(W / 2, 250, W - 120, 870); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(170, 900); ctx.quadraticCurveTo(W / 2, 380, W - 170, 900); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** Dibuja una tarjeta vertical determinista. No simula generación fotográfica IA. */
 export async function renderCareerCard(input: CareerCardInput): Promise<Blob | null> {
   try {
     const canvas = document.createElement("canvas");
@@ -33,12 +65,14 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     const primary = input.clubColors?.primary ?? "#121316";
     const secondary = input.clubColors?.secondary ?? "#d4af37";
     const accentText = input.clubColors?.text ?? "#f5f5f4";
+    const milestone = input.milestone ?? { kind: "career", label: "Mi carrera", scene: "portrait" as const };
     const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#08090b");
     bg.addColorStop(0.55, primary);
     bg.addColorStop(1, "#08090b");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
+    drawMilestoneBackdrop(ctx, milestone.scene, primary, secondary);
 
     // Rights-safe club treatment: colour + club name only. Official crests,
     // shirt artwork and sponsors stay out until commercial rights are cleared.
@@ -52,7 +86,7 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     const img = input.avatar ? await loadImage(input.avatar) : null;
     const cx = W / 2;
     const cy = 620;
-    const r = 260;
+    const r = milestone.scene === "portrait" ? 260 : 285;
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -81,7 +115,9 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     ctx.textAlign = "center";
     ctx.fillStyle = secondary;
     ctx.font = "600 40px Helvetica, Arial, sans-serif";
-    ctx.fillText("BEYOND 90", cx, 180);
+    ctx.fillText("BEYOND 90", cx, 160);
+    ctx.font = "700 30px Helvetica, Arial, sans-serif";
+    ctx.fillText(milestone.label.toUpperCase(), cx, 215);
 
     ctx.fillStyle = accentText;
     ctx.font = "bold 78px Helvetica, Arial, sans-serif";
