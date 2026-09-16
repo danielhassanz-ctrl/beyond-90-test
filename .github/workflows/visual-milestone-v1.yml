@@ -9,6 +9,7 @@ on:
       - 'src/lib/share.ts'
       - 'src/components/game/ShareButton.tsx'
       - 'scripts/visual-milestone-source-gate.mjs'
+      - 'scripts/share-fallback-webkit-smoke.mjs'
       - '.github/workflows/visual-milestone-v1.yml'
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - 'src/lib/share.ts'
       - 'src/components/game/ShareButton.tsx'
       - 'scripts/visual-milestone-source-gate.mjs'
+      - 'scripts/share-fallback-webkit-smoke.mjs'
       - '.github/workflows/visual-milestone-v1.yml'
   workflow_dispatch:
 
@@ -25,7 +27,7 @@ permissions:
 jobs:
   visual-milestone-v1:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,3 +54,21 @@ jobs:
         env:
           DEPLOY_BASE: /beyond-90-test/
         run: npm run build
+
+      - name: Install WebKit runtime
+        run: npx playwright install --with-deps webkit
+
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/b90-visual-preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/beyond-90-test/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/b90-visual-preview.log
+          exit 1
+
+      - name: iPhone WebKit share fallback with persisted player photo
+        env:
+          BEYOND90_URL: http://127.0.0.1:4173/beyond-90-test/
+        run: node scripts/share-fallback-webkit-smoke.mjs
