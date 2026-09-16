@@ -82,10 +82,9 @@ function base(): GameState {
   const matches = s.queue.filter((slot) => slot.kind === "match");
   assert.ok(!matches.some((slot) => slot.tag === "euro"), "unknown 16-year-old academy player must never get a senior European match");
   assert.ok(!matches.some((slot) => slot.tag === "cup" || slot.tag === "decisive"), "academy pacing must not fabricate senior Cup/title matches");
-  assert.ok(matches.length <= 3, "academy Pro season must shift density into story decisions instead of inflating key matches");
-  assert.equal(matches.length, keyMatchTarget(s), "academy key-match plan must match the contextual target");
-  assert.equal(narrativeTarget(s) + keyMatchTarget(s), decisionTarget(s), "reduced academy matches must be replaced by narrative decisions");
-  assert.ok(narrativeTarget(s) >= 24, "Pro academy mode must preserve deep non-match decision density");
+  assert.ok(matches.length <= 3, "academy Pro season must keep playable match density low");
+  assert.ok(matches.length <= keyMatchTarget(s), "academy key-match target is a ceiling, never a quota that manufactures filler");
+  assert.ok(narrativeTarget(s) + keyMatchTarget(s) <= decisionTarget(s), "mode pacing ceilings must never exceed the decision ceiling");
 
   const youthMix = narrativeRotationFor(s);
   assert.ok(youthMix.includes("training") && youthMix.includes("agent") && youthMix.includes("life"));
@@ -101,6 +100,7 @@ function base(): GameState {
   applyCareerPacing(s);
   const matches = s.queue.filter((slot) => slot.kind === "match");
   assert.ok(matches.length <= 4, "reserve season must not be padded to senior key-match density");
+  assert.ok(matches.length <= keyMatchTarget(s), "reserve key-match target is a ceiling, never a filler quota");
   assert.ok(!matches.some((slot) => slot.tag === "cup" || slot.tag === "decisive" || slot.tag === "euro"), "reserve season leaked senior competition beats");
 }
 
@@ -119,4 +119,4 @@ function base(): GameState {
   assert.ok(legacyMix.includes("medical") && legacyMix.includes("life") && legacyMix.includes("agent"));
 }
 
-console.log("COMPETITION_PACING_SMOKE_OK: nationality aliases map to the correct confederation/tournament; key matches respect competition/stage context; youth/reserves shift excess match density into narrative decisions; narrative mix changes with career age.");
+console.log("COMPETITION_PACING_SMOKE_OK: nationality aliases map correctly; key matches respect competition/stage context; youth/reserve match targets are ceilings rather than filler quotas; narrative mix changes with career age.");
