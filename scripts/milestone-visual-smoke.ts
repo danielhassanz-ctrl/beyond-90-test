@@ -21,16 +21,17 @@ expectKind(share("Tu último partido", "Despedida"), "retirement");
 expectKind(share("Temporada completada", "Mi carrera"), "career");
 
 // Event semantics must beat incidental competition or contract wording.
-// A Champions/World Cup debut is a pitch debut, never a trophy celebration.
 expectKind(share("Debut en Champions", "Tu primera noche europea"), "debut");
 expectKind(share("Debut en el Mundial", "España confía en ti"), "debut");
 expectKind(share("Estreno en Copa", "Primer partido con el club"), "debut");
 expectKind(share("Último partido", "Campeón que se despide"), "retirement");
 expectKind(share("Debut oficial", "Tu contrato ya está firmado"), "debut");
+expectKind(share("Debutas tras fichar por el Villarreal", "Presentación completada"), "debut");
+expectKind(share("Tu despedida", "Último partido tras ganar la Liga"), "retirement");
 
 // A renewal or commercial deal must never manufacture a new-club presentation.
 expectKind(share("Renuevas tu contrato hasta 2032", "Acuerdo cerrado"), "career");
 expectKind(share("Firmas con Adidas", "Nuevo patrocinador"), "career");
 expectKind(share("Nuevo contrato", "Mejora salarial"), "career");
 
-console.log("milestone visual smoke: milestone classification and debut priority OK; renewal/sponsor false positives rejected");
+console.log("milestone visual smoke: milestone priority edge cases locked; renewal/sponsor false signings rejected");
