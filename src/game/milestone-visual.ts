@@ -25,11 +25,14 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   if (/retir|despedida|ultimo partido|fin de carrera/.test(haystack)) {
     return { kind: "retirement", label: "Despedida", scene: "farewell" };
   }
-  if (/balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa/.test(haystack)) {
-    return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
-  }
+
+  // Event semantics beat competition names. "Debut en Champions" is a debut,
+  // not a trophy celebration merely because the competition is mentioned.
   if (/debut|primer partido|estreno/.test(haystack)) {
     return { kind: "debut", label: "Debut", scene: "pitch" };
+  }
+  if (/balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa/.test(haystack)) {
+    return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
   }
 
   // A new-club presentation is a special visual milestone. A renewal, sponsor
