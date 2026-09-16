@@ -5,6 +5,7 @@ export interface CareerCardInput {
   club: string;
   lines: { label: string; value: string }[];
   avatar: string | null;
+  clubColors?: { primary: string; secondary: string; text: string };
 }
 
 const W = 1080;
@@ -29,14 +30,22 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
+    const primary = input.clubColors?.primary ?? "#121316";
+    const secondary = input.clubColors?.secondary ?? "#d4af37";
+    const accentText = input.clubColors?.text ?? "#f5f5f4";
     const bg = ctx.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, "#0a0a0b");
-    bg.addColorStop(0.55, "#121316");
-    bg.addColorStop(1, "#07120c");
+    bg.addColorStop(0, "#08090b");
+    bg.addColorStop(0.55, primary);
+    bg.addColorStop(1, "#08090b");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.strokeStyle = "rgba(212,175,55,0.55)";
+    // Rights-safe club treatment: colour + club name only. Official crests,
+    // shirt artwork and sponsors stay out until commercial rights are cleared.
+    ctx.fillStyle = secondary;
+    ctx.fillRect(0, 0, 24, H);
+    ctx.fillRect(W - 24, 0, 24, H);
+    ctx.strokeStyle = secondary;
     ctx.lineWidth = 6;
     ctx.strokeRect(48, 48, W - 96, H - 96);
 
@@ -57,57 +66,65 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     } else {
       ctx.fillStyle = "#1c1d21";
       ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-      ctx.fillStyle = "rgba(212,175,55,0.8)";
+      ctx.fillStyle = secondary;
       ctx.font = "bold 180px Georgia, serif";
       ctx.textAlign = "center";
       ctx.fillText(input.name.slice(0, 1).toUpperCase(), cx, cy + 60);
     }
     ctx.restore();
-    ctx.strokeStyle = "rgba(212,175,55,0.85)";
+    ctx.strokeStyle = secondary;
     ctx.lineWidth = 8;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(212,175,55,0.9)";
+    ctx.fillStyle = secondary;
     ctx.font = "600 40px Helvetica, Arial, sans-serif";
     ctx.fillText("BEYOND 90", cx, 180);
 
-    ctx.fillStyle = "#f5f5f4";
+    ctx.fillStyle = accentText;
     ctx.font = "bold 78px Helvetica, Arial, sans-serif";
     wrap(ctx, input.headline.toUpperCase(), cx, 1010, W - 220, 88);
 
-    ctx.fillStyle = "rgba(245,245,244,0.7)";
+    ctx.fillStyle = accentText;
+    ctx.globalAlpha = 0.78;
     ctx.font = "500 42px Helvetica, Arial, sans-serif";
     ctx.fillText(input.name, cx, 1170);
-    ctx.fillStyle = "rgba(212,175,55,0.85)";
-    ctx.font = "500 36px Helvetica, Arial, sans-serif";
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = secondary;
+    ctx.font = "600 36px Helvetica, Arial, sans-serif";
     ctx.fillText(`${input.club} · ${input.kicker}`, cx, 1230);
 
     let y = 1360;
     for (const line of input.lines.slice(0, 5)) {
       ctx.textAlign = "left";
-      ctx.fillStyle = "rgba(245,245,244,0.55)";
+      ctx.fillStyle = accentText;
+      ctx.globalAlpha = 0.58;
       ctx.font = "500 34px Helvetica, Arial, sans-serif";
       ctx.fillText(line.label.toUpperCase(), 150, y);
       ctx.textAlign = "right";
-      ctx.fillStyle = "#f5f5f4";
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = accentText;
       ctx.font = "bold 44px Helvetica, Arial, sans-serif";
       ctx.fillText(line.value, W - 150, y);
-      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.strokeStyle = secondary;
+      ctx.globalAlpha = 0.22;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(150, y + 24);
       ctx.lineTo(W - 150, y + 24);
       ctx.stroke();
+      ctx.globalAlpha = 1;
       y += 100;
     }
 
     ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(245,245,244,0.35)";
+    ctx.fillStyle = accentText;
+    ctx.globalAlpha = 0.38;
     ctx.font = "500 32px Helvetica, Arial, sans-serif";
     ctx.fillText("Simulador narrativo de carrera · beyond90", cx, H - 120);
+    ctx.globalAlpha = 1;
 
     return await new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
   } catch {
@@ -125,111 +142,33 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
       ctx.fillText(line, x, cursor);
       line = word;
       cursor += lh;
-    } else {
-      line = test;
-    }
+    } else line = test;
   }
   if (line) ctx.fillText(line, x, cursor);
 }
 
 export function shareText(input: CareerCardInput): string {
-  return `${input.headline} — ${input.name} (${input.club}, ${input.kicker})\n${input.lines
-    .map((l) => `${l.label}: ${l.value}`)
-    .join(" · ")}\n\nMi carrera en BEYOND 90.`;
+  return `${input.headline} — ${input.name} (${input.club}, ${input.kicker})\n${input.lines.map((l) => `${l.label}: ${l.value}`).join(" · ")}\n\nMi carrera en BEYOND 90.`;
 }
 
-export interface PreparedCareerCard {
-  blob: Blob | null;
-  text: string;
-}
-
-export type ShareOutcome =
-  | { status: "shared" }
-  | { status: "cancelled" }
-  | { status: "preview"; url: string; text: string; canDownload: boolean }
-  | { status: "failed"; text: string };
-
-function isIOS(): boolean {
-  const ua = navigator.userAgent || "";
-  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document);
-}
-
-function wasShareCancelled(err: unknown): boolean {
-  return err instanceof DOMException && err.name === "AbortError";
-}
-
-/** Pre-render before the tap so iOS Safari keeps transient user activation for navigator.share(). */
-export async function prepareCareerCard(input: CareerCardInput): Promise<PreparedCareerCard> {
-  const [blob, text] = await Promise.all([renderCareerCard(input), Promise.resolve(shareText(input))]);
-  return { blob, text };
-}
-
-/**
- * Must be called directly from the user's tap. No rendering or image loading is
- * awaited before navigator.share(), which matters on iPhone/WebKit where share
- * requires transient user activation.
- */
+export interface PreparedCareerCard { blob: Blob | null; text: string; }
+export type ShareOutcome = { status: "shared" } | { status: "cancelled" } | { status: "preview"; url: string; text: string; canDownload: boolean } | { status: "failed"; text: string };
+function isIOS(): boolean { const ua = navigator.userAgent || ""; return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document); }
+function wasShareCancelled(err: unknown): boolean { return err instanceof DOMException && err.name === "AbortError"; }
+export async function prepareCareerCard(input: CareerCardInput): Promise<PreparedCareerCard> { const [blob, text] = await Promise.all([renderCareerCard(input), Promise.resolve(shareText(input))]); return { blob, text }; }
 export async function sharePreparedCareerCard(prepared: PreparedCareerCard): Promise<ShareOutcome> {
-  const { blob, text } = prepared;
-  const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
-
+  const { blob, text } = prepared; const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
   if (typeof nav.share === "function") {
     if (blob) {
       const file = new File([blob], "beyond90.png", { type: "image/png" });
       const canShareFiles = typeof nav.canShare === "function" && nav.canShare({ files: [file] });
-      if (canShareFiles) {
-        try {
-          await nav.share({ files: [file], text, title: "BEYOND 90" });
-          return { status: "shared" };
-        } catch (err) {
-          if (wasShareCancelled(err)) return { status: "cancelled" };
-          // The activation may already be consumed after a failed file share.
-          // Fall through to a visible preview instead of making a second share call.
-        }
-      } else {
-        try {
-          await nav.share({ text, title: "BEYOND 90" });
-          return { status: "shared" };
-        } catch (err) {
-          if (wasShareCancelled(err)) return { status: "cancelled" };
-        }
-      }
-    } else {
-      try {
-        await nav.share({ text, title: "BEYOND 90" });
-        return { status: "shared" };
-      } catch (err) {
-        if (wasShareCancelled(err)) return { status: "cancelled" };
-      }
-    }
+      if (canShareFiles) { try { await nav.share({ files: [file], text, title: "BEYOND 90" }); return { status: "shared" }; } catch (err) { if (wasShareCancelled(err)) return { status: "cancelled" }; } }
+      else { try { await nav.share({ text, title: "BEYOND 90" }); return { status: "shared" }; } catch (err) { if (wasShareCancelled(err)) return { status: "cancelled" }; } }
+    } else { try { await nav.share({ text, title: "BEYOND 90" }); return { status: "shared" }; } catch (err) { if (wasShareCancelled(err)) return { status: "cancelled" }; } }
   }
-
-  if (blob) {
-    const url = URL.createObjectURL(blob);
-    return { status: "preview", url, text, canDownload: !isIOS() };
-  }
-
+  if (blob) { const url = URL.createObjectURL(blob); return { status: "preview", url, text, canDownload: !isIOS() }; }
   return { status: "failed", text };
 }
-
-/** Backwards-compatible path for callers that do not pre-render yet. */
-export async function shareCareerCard(input: CareerCardInput): Promise<ShareOutcome> {
-  return sharePreparedCareerCard(await prepareCareerCard(input));
-}
-
-export function downloadCard(url: string): void {
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "beyond90-career-card.png";
-  a.rel = "noopener";
-  a.click();
-}
-
-export async function copyShareText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return false;
-  }
-}
+export async function shareCareerCard(input: CareerCardInput): Promise<ShareOutcome> { return sharePreparedCareerCard(await prepareCareerCard(input)); }
+export function downloadCard(url: string): void { const a = document.createElement("a"); a.href = url; a.download = "beyond90-career-card.png"; a.rel = "noopener"; a.click(); }
+export async function copyShareText(text: string): Promise<boolean> { try { await navigator.clipboard.writeText(text); return true; } catch { return false; } }
