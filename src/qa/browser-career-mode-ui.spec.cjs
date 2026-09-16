@@ -77,11 +77,21 @@ async function startCareerViaUi(page, mode, label, seed) {
   expect(reloaded.careerMode, `${mode}/${seed}: selected mode changed after reload`).toBe(mode);
   expect(reloaded.player.name).toBe(`QA mode UI ${mode} ${seed}`);
 
+  const seenNarrative = new Set();
+
   for (let decision = 1; decision <= FIRST_DECISIONS; decision += 1) {
     const article = page.locator("article");
     await expect(article, `${mode}/${seed}: narrative card missing at decision ${decision}`).toBeVisible();
     const firstChoice = article.locator(".space-y-2\\.5 > button").first();
     await expect(firstChoice, `${mode}/${seed}: no playable choice at decision ${decision}`).toBeVisible();
+
+    // Player-visible regression gate: the opening run must not literally replay the
+    // same authored card. This catches the exact failure mode where a supposedly
+    // evolving career shows the same decision two or three times in a few turns.
+    const narrative = (await article.innerText()).replace(/\s+/g, " ").trim();
+    expect(narrative.length, `${mode}/${seed}: empty narrative at decision ${decision}`).toBeGreaterThan(40);
+    expect(seenNarrative.has(narrative), `${mode}/${seed}: repeated narrative card at decision ${decision}: ${narrative.slice(0, 140)}`).toBe(false);
+    seenNarrative.add(narrative);
 
     const before = await savedState(page);
     await firstChoice.click();
@@ -94,8 +104,6 @@ async function startCareerViaUi(page, mode, label, seed) {
     expect(afterDecision.careerMode, `${mode}/${seed}: selected mode changed after decision ${decision}`).toBe(mode);
     expect(afterDecision.player.avatar, `${mode}/${seed}: avatar lost after decision ${decision}`).toMatch(/^data:image\//);
 
-    // Exercise the same reload/recovery path a real iPhone user hits during a session,
-    // without multiplying runtime by reloading after every single card.
     if (decision % 5 === 0) {
       await page.reload();
       await expect(page).toHaveURL(/\/historia\/?$/);
