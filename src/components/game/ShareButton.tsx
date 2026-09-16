@@ -2,6 +2,7 @@ import { Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { clubById } from "@/game/data";
 import { clubVisualIdentity } from "@/game/club-identity";
+import { milestoneVisualSpec } from "@/game/milestone-visual";
 import { seasonLabel, stageLabel } from "@/game/engine";
 import type { GameState, ShareData } from "@/game/types";
 import { copyShareText, downloadCard, prepareCareerCard, sharePreparedCareerCard, type PreparedCareerCard } from "@/lib/share";
@@ -16,6 +17,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
 
   const input = useMemo(() => {
     const identity = clubVisualIdentity(state.clubId);
+    const milestone = milestoneVisualSpec(share);
     return {
       headline: share.headline,
       kicker: share.kicker || `${seasonLabel(state.seasonIndex)} · ${stageLabel(state.stage)}`,
@@ -24,6 +26,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
       lines: share.lines,
       avatar: state.player.avatar,
       clubColors: { primary: identity.primary, secondary: identity.secondary, text: identity.text },
+      milestone,
     };
   }, [share, state.seasonIndex, state.stage, state.player.nickname, state.player.name, state.player.avatar, state.clubId]);
 
