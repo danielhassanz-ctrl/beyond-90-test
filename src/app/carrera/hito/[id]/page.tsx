@@ -85,7 +85,15 @@ export default async function HitoPage({
       ? `${milestone.title} — ${displayName(player)} (${player.second_club ?? player.club}). ${tagline}`
       : `${milestone.title} — ${displayName(player)}, ${age} años (${player.club}). ${tagline}`,
   );
-  const photoUrl = player.current_photo_url ?? player.photo_url;
+  // OJO: NO usar current_photo_url aquí. Ese campo es la foto de referencia
+  // para la SIGUIENTE generación de IA (se sobrescribe cada vez que
+  // CUALQUIER hito, de cualquier fecha, genera una foto nueva) — no "la
+  // foto de este hito". Usarlo como fallback hacía que todo hito sin foto
+  // propia mostrara, con el tiempo, la última foto generada en cualquier
+  // parte de la carrera, cambiando retroactivamente hitos ya vistos.
+  // photo_url (la foto original subida al crear el jugador) es estable y
+  // no cambia nunca, así que es el único fallback seguro por hito.
+  const photoUrl = player.photo_url;
 
   // Mapeo de tipos de hito a etiquetas y emoji
   const milestoneMetadata: Record<string, { label: string; emoji: string }> = {
