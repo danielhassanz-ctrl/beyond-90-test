@@ -2,7 +2,7 @@ import { Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { clubById } from "@/game/data";
 import { clubVisualIdentity } from "@/game/club-identity";
-import { milestoneVisualSpec, playerVisualProfile } from "@/game/milestone-visual";
+import { milestoneGenerationBrief, milestoneVisualSpec, playerVisualProfile } from "@/game/milestone-visual";
 import { seasonLabel, stageLabel } from "@/game/engine";
 import type { GameState, ShareData } from "@/game/types";
 import { copyShareText, downloadCard, prepareCareerCard, sharePreparedCareerCard, type PreparedCareerCard } from "@/lib/share";
@@ -19,17 +19,20 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     const identity = clubVisualIdentity(state.clubId);
     const milestone = milestoneVisualSpec(share);
     const visualAge = playerVisualProfile(state.age);
+    const club = clubById(state.clubId).name;
+    const generationBrief = milestoneGenerationBrief(milestone, visualAge, club, identity);
     const baseKicker = share.kicker || `${seasonLabel(state.seasonIndex)} · ${stageLabel(state.stage)}`;
     return {
       headline: share.headline,
       kicker: `${baseKicker} · ${visualAge.age} años`,
       name: state.player.nickname || state.player.name,
-      club: clubById(state.clubId).name,
+      club,
       lines: share.lines,
       avatar: state.player.avatar,
       clubColors: { primary: identity.primary, secondary: identity.secondary, text: identity.text },
       milestone,
       playerVisual: visualAge,
+      generationBrief,
     };
   }, [share, state.seasonIndex, state.stage, state.age, state.player.nickname, state.player.name, state.player.avatar, state.clubId]);
 
