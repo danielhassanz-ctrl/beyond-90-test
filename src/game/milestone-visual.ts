@@ -75,7 +75,7 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
 
   if (/retir|despedida|ultimo partido|fin de carrera/.test(haystack)) return { kind: "retirement", label: "Despedida", scene: "farewell" };
   if (/debut|primer partido|estreno/.test(haystack)) return { kind: "debut", label: "Debut", scene: "pitch" };
-  if (/balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa/.test(haystack)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
+  if (/balon de oro|the best|golden boy|bota de oro|jugador del ano|mvp|mejor jugador|premio individual|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa/.test(haystack)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /renov|patrocin|sponsor|marca|adidas|nike|puma/.test(haystack);
   const explicitClubMove = /fich|traspas|nuevo club|presentacion|cambio de club/.test(haystack);
