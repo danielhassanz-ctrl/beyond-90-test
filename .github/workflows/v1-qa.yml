@@ -54,6 +54,8 @@ jobs:
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
       - name: Alternative first-15 branch playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
+      - name: Visual milestone ageing continuity QA
+        run: npm run qa:visual-age
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
       - name: Build
