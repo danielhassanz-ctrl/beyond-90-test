@@ -26,6 +26,17 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
+function visualStageLabel(stage: PlayerVisualProfile["stage"]): string {
+  const labels: Record<PlayerVisualProfile["stage"], string> = {
+    academy: "PROMESA",
+    "young-pro": "IRRUPCIÓN",
+    prime: "PRIME",
+    veteran: "VETERANO",
+    legacy: "LEGADO",
+  };
+  return labels[stage];
+}
+
 function drawMilestoneBackdrop(ctx: CanvasRenderingContext2D, scene: MilestoneVisualSpec["scene"], primary: string, secondary: string) {
   ctx.save(); ctx.globalAlpha = 0.2; ctx.fillStyle = secondary; ctx.strokeStyle = secondary; ctx.lineWidth = 10;
   if (scene === "pitch") { ctx.strokeRect(90, 300, W - 180, 650); ctx.beginPath(); ctx.moveTo(90, 625); ctx.lineTo(W - 90, 625); ctx.stroke(); ctx.beginPath(); ctx.arc(W / 2, 625, 115, 0, Math.PI * 2); ctx.stroke(); }
@@ -50,7 +61,16 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     else { ctx.fillStyle = "#1c1d21"; ctx.fillRect(cx - r, cy - r, r * 2, r * 2); ctx.fillStyle = secondary; ctx.font = "bold 180px Georgia, serif"; ctx.textAlign = "center"; ctx.fillText(input.name.slice(0, 1).toUpperCase(), cx, cy + 60); }
     ctx.restore(); ctx.strokeStyle = secondary; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
     ctx.textAlign = "center"; ctx.fillStyle = secondary; ctx.font = "600 40px Helvetica, Arial, sans-serif"; ctx.fillText("BEYOND 90", cx, 160); ctx.font = "700 30px Helvetica, Arial, sans-serif"; ctx.fillText(milestone.label.toUpperCase(), cx, 215);
-    ctx.fillStyle = accentText; ctx.font = "bold 78px Helvetica, Arial, sans-serif"; wrap(ctx, input.headline.toUpperCase(), cx, 1010, W - 220, 88);
+    if (input.playerVisual) {
+      const badge = `${input.playerVisual.age} AÑOS · ${visualStageLabel(input.playerVisual.stage)}`;
+      ctx.font = "700 27px Helvetica, Arial, sans-serif";
+      const badgeWidth = ctx.measureText(badge).width + 54;
+      ctx.fillStyle = "rgba(8,9,11,0.78)";
+      ctx.fillRect(cx - badgeWidth / 2, 922, badgeWidth, 52);
+      ctx.strokeStyle = secondary; ctx.lineWidth = 2; ctx.strokeRect(cx - badgeWidth / 2, 922, badgeWidth, 52);
+      ctx.fillStyle = secondary; ctx.fillText(badge, cx, 958);
+    }
+    ctx.fillStyle = accentText; ctx.font = "bold 78px Helvetica, Arial, sans-serif"; wrap(ctx, input.headline.toUpperCase(), cx, 1030, W - 220, 88);
     ctx.fillStyle = accentText; ctx.globalAlpha = 0.78; ctx.font = "500 42px Helvetica, Arial, sans-serif"; ctx.fillText(input.name, cx, 1170); ctx.globalAlpha = 1; ctx.fillStyle = secondary; ctx.font = "600 36px Helvetica, Arial, sans-serif"; ctx.fillText(`${input.club} · ${input.kicker}`, cx, 1230);
     let y = 1360; for (const line of input.lines.slice(0, 5)) { ctx.textAlign = "left"; ctx.fillStyle = accentText; ctx.globalAlpha = 0.58; ctx.font = "500 34px Helvetica, Arial, sans-serif"; ctx.fillText(line.label.toUpperCase(), 150, y); ctx.textAlign = "right"; ctx.globalAlpha = 1; ctx.fillStyle = accentText; ctx.font = "bold 44px Helvetica, Arial, sans-serif"; ctx.fillText(line.value, W - 150, y); ctx.strokeStyle = secondary; ctx.globalAlpha = 0.22; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(150, y + 24); ctx.lineTo(W - 150, y + 24); ctx.stroke(); ctx.globalAlpha = 1; y += 100; }
     ctx.textAlign = "center"; ctx.fillStyle = accentText; ctx.globalAlpha = 0.38; ctx.font = "500 32px Helvetica, Arial, sans-serif"; ctx.fillText("Simulador narrativo de carrera · beyond90", cx, H - 120); ctx.globalAlpha = 1;
