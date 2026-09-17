@@ -73,8 +73,11 @@ export function naturalFormaDegradation(player: Player): number {
     formaChange = 2; // Recuperación por buen desempeño
   }
 
-  // Forma no puede ser negativa
-  return Math.max(10, formaBefore + formaChange);
+  // Forma se mueve en escala 10-100, igual que el resto de barras del
+  // juego — sin el techo, la rama de "recuperación" (+2 con media alta)
+  // podía dejarla en 101+ una vez la media rondaba el máximo (visto en
+  // vivo jugando: Forma 101).
+  return Math.max(10, Math.min(100, formaBefore + formaChange));
 }
 
 /**
@@ -157,32 +160,32 @@ export function shouldTriggerDeclineReflection(player: Player): boolean {
 }
 
 /**
- * Lesiones que duran: una lesión grave reduce forma por múltiples semanas.
- * Se almacena en flags como "injury_duration_remaining".
+ * Cuenta atrás real de una lesión larga: cada turno resuelto después de
+ * que empieza (ver INJURY_LONG_DURATION_WEEKS en engine.ts, que crea el
+ * flag "injury_duration_*" cuando se dispara la adversidad injury_long)
+ * descuenta una semana y resta forma, con penalización más fuerte al
+ * principio que se suaviza según se acerca la vuelta. Antes de esto, el
+ * flag existía en el tipo pero ningún camino activo lo creaba ni lo leía
+ * de forma persistente: toda lesión era un golpe de un solo turno, nunca
+ * una baja real de varias semanas.
  */
-export function handleOngoingInjury(player: Player): Player {
-  if (!player.flags) return player;
+export function tickInjury(
+  flags: Record<string, string | boolean> | null | undefined,
+): { flagKey: string; newValue: string | null; formaDelta: number } | null {
+  if (!flags) return null;
 
-  const injuryKey = Object.keys(player.flags).find((k) => k.startsWith("injury_duration_"));
-  if (!injuryKey) return player;
+  const injuryKey = Object.keys(flags).find((k) => k.startsWith("injury_duration_"));
+  if (!injuryKey) return null;
 
-  const remaining = parseInt((player.flags[injuryKey] as string) || "0", 10);
-  if (remaining <= 0) {
-    // Lesión curada
-    delete player.flags[injuryKey];
-    return { ...player, flags: player.flags };
+  const remaining = parseInt(String(flags[injuryKey]), 10) || 0;
+
+  if (remaining <= 1) {
+    // Última semana de baja: se cura, sin penalización adicional.
+    return { flagKey: injuryKey, newValue: null, formaDelta: 0 };
   }
 
-  // Lesión aún activa: forma sigue degradada
-  const formaPenalty = Math.max(-30, -(10 + (10 - remaining)));
-  return {
-    ...player,
-    forma: Math.max(10, (player.forma || 50) + formaPenalty),
-    flags: {
-      ...player.flags,
-      [injuryKey]: String(remaining - 1),
-    },
-  };
+  const formaDelta = -Math.max(2, Math.round(remaining * 1.3));
+  return { flagKey: injuryKey, newValue: String(remaining - 1), formaDelta };
 }
 
 /**
@@ -204,11 +207,19 @@ export function ageBasedMediaDecline(player: Player): number {
   const age = playerAge(player.week);
   const media = player.media || 50;
 
-  if (age < 32) return 0; // Sin declive por edad
+  // Sin declive por edad: devuelve la media TAL CUAL, no 0 — un 0 aquí se
+  // interpretaba en el caller como "la media después del declive es 0" y
+  // machacaba la media real de cualquier jugador menor de 32 años. Este
+  // bug llevaba dormido desde siempre porque nada guardaba el resultado
+  // de esta función hasta esta misma sesión (ver applyCareerDynamics en
+  // engine.ts) — al conectar la persistencia, el bug se volvió real y
+  // visible: media a 0 en un jugador de 16 años, visto en vivo jugando.
+  if (age < 32) return media;
 
-  // 1-2 puntos por año después de 32
+  // 1-2 puntos por año después de 32, con el mismo suelo de 40 que usa
+  // el resto del juego para la media (ver clampMedia en engine.ts).
   const yearsAfter32 = age - 32;
   const decline = yearsAfter32 * 1.5;
 
-  return Math.max(0, media - decline);
+  return Math.max(40, media - decline);
 }

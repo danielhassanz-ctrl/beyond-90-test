@@ -62,6 +62,15 @@ export interface EventOption {
   subtitle: string;
   /** Foto de la opción (p.ej. la vivienda concreta) — solo en decisiones tipo catálogo */
   imageUrl?: string;
+  /** Nivel del club/proyecto, 1-5, para las ofertas de club (ver STARTING_CLUB_OFFERS) */
+  level?: number;
+  /**
+   * Desglose estructurado de una oferta (desarrollo/competencia/minutos/
+   * riesgo), inspirado en las tarjetas de club de un prototipo de
+   * referencia — más informativo que una sola frase de "subtitle" al
+   * elegir algo tan importante como el primer club.
+   */
+  details?: { icon: string; label: string; text: string }[];
   /** Efecto directo, para opciones sin incertidumbre */
   consequences: Consequences;
   /**
@@ -189,7 +198,7 @@ export const MODE_LABELS: Record<CareerMode, string> = {
 };
 
 const SEASON_START_YEAR = 2026;
-const WEEKS_PER_SEASON = 10;
+export const WEEKS_PER_SEASON = 10;
 const AGE_START = 16;
 
 /** Traduce la semana interna en una etiqueta de temporada, ej. "2026/27" */

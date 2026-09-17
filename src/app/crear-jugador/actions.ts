@@ -16,6 +16,7 @@ export async function createPlayer(formData: FormData) {
   }
 
   const lastName = formData.get("last_name") as string;
+  const nickname = ((formData.get("nickname") as string) || "").trim() || null;
   const number = Number(formData.get("number"));
   const foot = formData.get("foot") as string;
   const nation = formData.get("nation") as string;
@@ -65,6 +66,7 @@ export async function createPlayer(formData: FormData) {
   const { error: insertError } = await supabase.from("players").insert({
     user_id: user.id,
     last_name: lastName,
+    nickname,
     number,
     foot,
     nation,

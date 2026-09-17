@@ -18,10 +18,10 @@ export function buildReservaIntroduccionEvent(): GameEvent {
     title: "Bienvenida al equipo B",
     description:
       "Tu primer día con el equipo B. El preparador físico te explica el plan de trabajo: durante las próximas 2-3 semanas jugarás con el filial para ganar ritmo y confianza. 'Es normal empezar aquí', te dice. 'Todos pasan por esto. Luego ya veremos cómo evolucionas.'",
-    isMilestone: true,
+    // Empezar en el filial es un paso normal de la progresión, no un
+    // hito — el debut real (rookie-debut-oficial) es el único momento de
+    // esta cadena que merece tarjeta compartible.
     milestoneType: "filial",
-    imageScene:
-      "Photorealistic Getty Images photo of a young footballer in a reserve team training session, receiving instructions from coaching staff, modern training facility, focused determined expression",
     options: [
       {
         id: "aceptar",
@@ -47,10 +47,8 @@ export function buildReservaPartidoEvent(): GameEvent {
     description:
       "Juegas tu primer partido oficial con el equipo B contra otro filial. Eres titular, 90 minutos. Nota: 6.5/10. Goles: 0. Asistencias: 0. Marcador: 2-2. No fue malo, pero tampoco espectacular. Normal para alguien que recién empieza a ritmo competitivo.",
     rivalClub: "Filial rival",
-    isMilestone: true,
+    // Nota discreta (6.5) en un partido de filial: no es el debut real.
     milestoneType: "filial",
-    imageScene:
-      "Photorealistic Getty Images photo of a young footballer playing during a reserve team match, in action on the field, wearing reserve team colors, stadium or training ground background",
     options: [
       {
         id: "positivo",
@@ -68,17 +66,15 @@ export function buildReservaPartidoEvent(): GameEvent {
   };
 }
 
-export function buildTacticaMisterEvent(): GameEvent {
+export function buildTacticaMisterEvent(position: string): GameEvent {
   return {
     id: "rookie-tactica-mister",
     category: "representante",
     title: "Primera charla táctica con el míster",
     description:
-      "Te llama el entrenador del primer equipo a su despacho después del entrenamiento. 'He visto el vídeo del filial', te dice. 'Tienes cualidades. Aquí en el primer equipo es diferente: ritmo más alto, táctico más exigente. Jugas de [tu posición]. Tienes competencia, pero con trabajo puedes ganarte minutos. De aquí a dos semanas quiero verte listo para entrenar con nosotros como titular.'",
-    isMilestone: true,
+      `Te llama el entrenador del primer equipo a su despacho después del entrenamiento. 'He visto el vídeo del filial', te dice. 'Tienes cualidades. Aquí en el primer equipo es diferente: ritmo más alto, táctico más exigente. Juegas de ${position.toLowerCase()}. Tienes competencia, pero con trabajo puedes ganarte minutos. De aquí a dos semanas quiero verte listo para entrenar con nosotros como titular.'`,
+    // Una charla táctica de rutina, no un hito.
     milestoneType: "tactica",
-    imageScene:
-      "Photorealistic Getty Images photo of a young footballer sitting across from the coach in the coach's office, serious tactical discussion, modern football club setting, focused attention",
     options: [
       {
         id: "motivado",
@@ -103,10 +99,9 @@ export function buildDebutAnuncioEvent(): GameEvent {
     title: "Se acerca tu debut oficial",
     description:
       "Dos semanas de entrenamientos intensos con el primer equipo. El míster te convoca para el próximo partido: 'Vas en la lista, probablemente entre en el segundo tiempo si todo va bien. Prepárate.' Es oficial: dentro de 4 días debutas con el primer equipo.",
-    isMilestone: true,
+    // El anuncio no es el hito — el debut en sí (rookie-debut-oficial,
+    // justo después) es lo que de verdad merece tarjeta compartible.
     milestoneType: "debut",
-    imageScene:
-      "Photorealistic Getty Images photo of the footballer receiving the squad list for the upcoming match, excited focused expression, modern football club announcement, official club setting",
     options: [
       {
         id: "nervioso",

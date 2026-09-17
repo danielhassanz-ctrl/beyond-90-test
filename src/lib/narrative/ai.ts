@@ -2,14 +2,17 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Consequences, EventCategory, GameEvent, SecondCareerRole } from "@/types/career";
 import type { Player } from "@/types/player";
 import { SECOND_CAREER_LABELS, playerAge } from "@/types/career";
-import { STARTING_AGENTS, pickStartingClubOffers } from "@/lib/constants";
+import { STARTING_AGENTS, pickStartingClubOffers, type ClubOffer } from "@/lib/constants";
 import { getSeasonContext, formatTournamentContext } from "@/lib/calendar/season";
+import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
 import { getCareerContext, shouldHaveClubOpportunity, shouldSuggestLifeEvent } from "@/lib/narrative/career-arc";
 import {
   getSecondaryCharacters,
   pickCharacterToReappear,
   describeCharacterReappearance,
   updateCharacterLastSeen,
+  trackSecondaryCharacter,
+  generateSecondaryCharacterName,
 } from "@/lib/narrative/secondary-characters";
 import { NarrativeContent } from "@/lib/narrative/narrative-content";
 
@@ -27,7 +30,11 @@ function generateNarrativeHints(player: Player): string {
   if (age < 20) {
     hints.push("Juventud, debut, ansiedad de pertenecer");
     const youthMoments = NarrativeContent.emotions.gol_decisivo;
-    if (youthMoments) hints.push(`Inspiración: ${youthMoments[0]}`);
+    // Antes siempre cogía youthMoments[0] — todo jugador menor de 20 años
+    // recibía exactamente la misma "inspiración" cada vez que se activaba
+    // esta rama, en cualquier partida. Va justo en contra del "ninguna
+    // partida igual".
+    if (youthMoments) hints.push(`Inspiración: ${youthMoments[Math.floor(Math.random() * youthMoments.length)]}`);
   } else if (age < 25) {
     hints.push("Consolidación, rivalidad, primeros éxitos");
     hints.push(`Idea: conflicto con entrenador o momento de reconocimiento`);
@@ -61,6 +68,23 @@ function generateNarrativeHints(player: Player): string {
     hints.push("Tipo: cambio de vida (familia, dinero, relaciones)");
   } else {
     hints.push("Tipo: presión, escándalo, o momento de reconocimiento");
+  }
+
+  // Resto del banco de narrative-content.ts (variaciones de percepción
+  // pública/presión mediática y chispas de redes sociales) — llevaba
+  // escrito sin que nada lo usara nunca, salvo la única línea de
+  // youthMoments de arriba. No siempre se incluye (si no, cada prompt
+  // saturaría de pistas contradictorias entre sí).
+  if (Math.random() < 0.35) {
+    const perceptionPool = [
+      ...NarrativeContent.variations.public_perception,
+      ...NarrativeContent.variations.club_relationship,
+    ];
+    hints.push(`Contexto de percepción: ${perceptionPool[Math.floor(Math.random() * perceptionPool.length)]}`);
+  }
+  if (Math.random() < 0.2) {
+    const socialPool = [...NarrativeContent.social.viral_posts, ...NarrativeContent.social.controversia_digital];
+    hints.push(`Posible chispa de redes sociales: ${socialPool[Math.floor(Math.random() * socialPool.length)]}`);
   }
 
   return hints.join("\n");
@@ -162,6 +186,26 @@ export interface HistoryItem {
   chosen: string;
   /** Lo que el jugador escribió con sus propias palabras en la opción libre, si la usó. */
   freeText?: string | null;
+}
+
+/**
+ * El texto libre ya viajaba dentro de la lista genérica de "últimos
+ * eventos" (ver historyText), pero ahí compite con 5-10 líneas más y la
+ * IA lo trataba como un dato de fondo cualquiera, no como algo que el
+ * jugador escribió de su puño y letra y espera que se note. Destacarlo
+ * aparte, como lo ÚLTIMO que se lee antes de generar la escena, sube
+ * mucho las probabilidades de que la próxima escena lo recoja de verdad
+ * — un personaje que le devuelve la pregunta, una consecuencia de lo que
+ * prometió, una referencia directa a sus palabras.
+ */
+function buildLastFreeTextNote(history: HistoryItem[]): string {
+  for (let i = history.length - 1; i >= 0; i--) {
+    const freeText = history[i].freeText;
+    if (freeText && freeText.trim()) {
+      return `\n📝 LO ÚLTIMO QUE EL JUGADOR ESCRIBIÓ CON SUS PROPIAS PALABRAS (en "${history[i].title}"): "${freeText.trim()}"\nSi encaja de forma natural con la escena que vas a generar, haz que algo o alguien reaccione a esto concreto — una respuesta, una consecuencia, un personaje que se lo recuerda. No lo fuerces si no pega, pero cuando el jugador se molesta en escribir algo, tiene que notarse que alguien lo escuchó, no desaparecer sin más.`;
+    }
+  }
+  return "";
 }
 
 function pickCategory(): EventCategory {
@@ -309,9 +353,17 @@ export async function callEventTool(
       options?: Array<{ label?: string; subtitle?: string; consequences?: Consequences }>;
     };
 
-    if (!data.title || !data.description || !data.options || data.options.length < 2) {
+    // Comprobar Array.isArray explícitamente, no solo la longitud: si el
+    // modelo devuelve "options" como algo truthy pero que no es un array
+    // (visto en vivo: un objeto malformado), ".length" da undefined,
+    // "undefined < 2" es false, la comprobación de abajo no lo detecta,
+    // y el ".filter()" de más adelante revienta con una excepción sin
+    // control — toda la generación de ese turno fallaba en seco y el
+    // jugador se quedaba con el evento de emergencia genérico
+    // ("Momento de reflexión") en vez de reintentar con gracia.
+    if (!data.title || !data.description || !Array.isArray(data.options) || data.options.length < 2) {
       console.error(
-        `[callEventTool:${idPrefix}] FAIL: incomplete tool input. title=${!!data.title}, description=${!!data.description}, options.length=${data.options?.length ?? 0}`
+        `[callEventTool:${idPrefix}] FAIL: incomplete tool input. title=${!!data.title}, description=${!!data.description}, options=${Array.isArray(data.options) ? `array(${data.options.length})` : typeof data.options}`
       );
       return null;
     }
@@ -444,6 +496,17 @@ export async function generateNextEventDynamic(
 
   const narrativeHints = generateNarrativeHints(player);
 
+  // Sin este dato, la IA general asumía que cualquier jugador en su
+  // etapa "Pico" jugaba Champions League, sin importar el club real —
+  // un evento de vestuario del Villarreal (que en este juego juega
+  // Europa League, no Champions) llegó a mencionar "fase de grupos ante
+  // el Bayer Leverkusen" en Champions, algo que ese club no juega. Visto
+  // en vivo jugando.
+  const europeanCompetition = getEuropeanCompetitionFor(player.club);
+  const europeanCompetitionNote = europeanCompetition
+    ? `- Competición europea real de tu club: ${europeanCompetition.label.split(" - ")[0]}. Si mencionas fútbol europeo, es ESTA y ninguna otra.`
+    : `- Tu club NO juega ninguna competición europea esta temporada (no es de ese nivel todavía) — no menciones Champions League ni Europa League como algo que juegas ahora mismo.`;
+
   const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista.
 Genera el PRÓXIMO evento ÚNICO para este jugador. **NUNCA repitas la premisa de los últimos eventos.**
 
@@ -460,12 +523,14 @@ JUGADOR:
 - Representante: ${player.agent_name ?? "sin definir"}
 - Forma: ${player.forma}/100, Moral: ${player.moral}/100, Fama: ${player.fama}/100, Media: ${player.media}/99
 - Patrimonio: ${player.patrimonio} €
+${europeanCompetitionNote}
 
 SU VIDA PERSONAL (ya existe — úsala):
 ${describePersonalLife(player.flags)}
 
 ÚLTIMOS EVENTOS (no repitas estos temas):
 ${historyText}
+${buildLastFreeTextNote(history)}
 
 CONTEXTO DE CARRERA:
 - Tipo: ${careerContext.stage.toUpperCase()}
@@ -484,10 +549,10 @@ ${positionContext}
 RESTRICCIONES POR ESTADO DEL JUGADOR:
 ${
   player.fama < 25
-    ? "⚠️ FAMA MUY BAJA (${player.fama}/100) — NO generes eventos donde celebridades/influencers lo mencionan. Solo eventos sobre su vida personal y carrera local. Las celebridades NUNCA saben quién es."
+    ? `⚠️ FAMA MUY BAJA (${player.fama}/100) — NO generes eventos donde celebridades/influencers lo mencionan. Solo eventos sobre su vida personal y carrera local. Las celebridades NUNCA saben quién es.`
     : player.fama < 50
-      ? "Fama media (${player.fama}/100) — Puede haber algo en prensa local/regional, pero NO celebridades internacionales ni influencers aún."
-      : "Fama alta (${player.fama}/100) — Puede haber celebridades, influencers, redes sociales. Genera eventos donde otros lo reconocen."
+      ? `Fama media (${player.fama}/100) — Puede haber algo en prensa local/regional, pero NO celebridades internacionales ni influencers aún.`
+      : `Fama alta (${player.fama}/100) — Puede haber celebridades, influencers, redes sociales. Genera eventos donde otros lo reconocen.`
 }
 
 CONTEXTO DE EDAD/ETAPA (${stage}):
@@ -497,7 +562,7 @@ ${
     : stage === "Ascenso"
       ? "Ganando experiencia. Pretemporada: entrenamientos de verdad, rivales nuevos, competencia por titularidad. Primeros goles/éxitos, lesiones leves, selección sub-21, presión aumenta, pareja importante, transferencia a club mayor."
       : stage === "Pico"
-        ? "Eres una estrella. Pretemporada: presión de ser figura, rivalidades en el equipo, preparación para Champions. Champions, fichaje a club gigante, boda, hijo, portadas, oferta Arabia, presión mediática, lesiones serias."
+        ? "Eres una estrella. Pretemporada: presión de ser figura, rivalidades en el equipo, preparación para la competición europea real de tu club (ver nota arriba, si tiene). Fichaje a club gigante, boda, hijo, portadas, oferta Arabia, presión mediática, lesiones serias."
         : "Veterano. Pretemporada: compitiendo con jóvenes por minutos, últimas oportunidades. Últimas oportunidades, mentoring joven, lesiones cuestionan futuro, divorcio posible, hijo adulto, retiro cerca, nostalgia."
 }
 
@@ -803,8 +868,10 @@ ${COMMON_RULES}
   };
 }
 
-export async function generateClubOffersEvent(agentName: string): Promise<GameEvent | null> {
-  const clubs = pickStartingClubOffers();
+export async function generateClubOffersEvent(
+  agentName: string,
+  clubs: ClubOffer[] = pickStartingClubOffers(),
+): Promise<GameEvent | null> {
   const hasGiant = clubs.some((c) => c.club === "Real Madrid" || c.club === "FC Barcelona");
 
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
@@ -832,10 +899,15 @@ ${COMMON_RULES}
   return {
     ...event,
     id: "inicio-fichaje-agente",
-    isMilestone: true,
-    // "contrato", no "debut": aquí solo eliges quién te ficha, todavía no
-    // has jugado ni un minuto — la imagen debe ser de fichaje/presentación,
-    // no de acción en el campo.
+    // Elegir oferta todavía no es el momento fotografiable — la firma
+    // real llega justo después (generateContractEvent, sí milestone).
+    // Marcar los dos duplicaba la misma noticia en dos tarjetas seguidas.
+    // El comentario ya lo decía, pero faltaba el override real: nada le
+    // impedía a la IA devolver is_milestone true por su cuenta (elegir
+    // club "se siente" a hito), así que a veces SÍ se marcaba aquí — visto
+    // en vivo jugando, saltaba directo a la tarjeta de hito al elegir
+    // club, dejando la firma de después como un evento normal sin foto.
+    isMilestone: false,
     milestoneType: "contrato",
     options: event.options.slice(0, 3).map((option, i) => ({
       ...option,
@@ -965,26 +1037,30 @@ export async function generatePreseasoneEvent(
     : "";
 
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
-Genera una escena de PRETEMPORADA para esta temporada (verano de ${2026 + season}). La escena es: ${theme}.
+Esta escena marca el CIERRE de la temporada anterior y el ARRANQUE de la nueva (verano de ${2026 + season}). Es el único momento del año donde se nota el paso del tiempo — antes de esto el jugador no tenía ninguna señal de que la temporada había terminado, solo notaba de golpe que tenía un año más. Este evento tiene que dejar claro que un año se cierra.
 
 JUGADOR:
 - Apellido: ${player.last_name}
-- Edad: ${playerAge(player.week)} años
+- Edad NUEVA esta temporada: ${playerAge(player.week)} años (ha cumplido años en la pretemporada)
 - Club: ${player.club}
 - Posición: ${player.position}
 - Personalidad: ${player.personality}
 - Media: ${player.media}/99, Moral: ${player.moral}/100
+- Números totales de su carrera hasta ahora: ${player.stats_matches_played ?? 0} partidos, ${player.stats_goals ?? 0} goles, ${player.stats_assists ?? 0} asistencias, ${player.stats_titles ?? 0} títulos.
+
+ESCENA DE PRETEMPORADA UNA VEZ CERRADO EL AÑO ANTERIOR: ${theme}.
 
 ÚLTIMOS EVENTOS:
 ${historyText}
+${buildLastFreeTextNote(history)}
 
 CONTEXTO TEMPORAL:
 - Período de temporada: ${seasonContext.period.toUpperCase()} (${seasonContext.monthApprox})
 - ${seasonContext.description}${tournamentNote}
 
 INSTRUCCIONES:
-- Escena de PRETEMPORADA: entrenamientos, amistosos, adaptación a nuevos compañeros, presión del verano.
-- Debe ser un momento visual/memorable (es decir, marca is_milestone en true).
+- La descripción tiene que EMPEZAR reconociendo que la temporada anterior ha terminado — una frase o dos de balance real (cómo le fue, en qué quedó el equipo, qué cambió en él) usando los números de carrera de arriba como referencia, antes de meterse en la escena de pretemporada en sí (${theme}).
+- No marques is_milestone: es una escena rutinaria de arranque de temporada, no un hito — con 15-20 temporadas en una carrera larga, marcarla siempre saturaría de "momentos destacados" cosas que no lo son.
 - 2 opciones sobre cómo afrontar este momento de pretemporada.
 - Escribe image_scene en inglés describiendo la escena (estadio, vestuario, o área de entrenamientos).
 - allow_free_text: true con una pregunta corta.
@@ -995,10 +1071,170 @@ INSTRUCCIONES:
     ? {
         ...event,
         id: `preseason-${season}`,
-        isMilestone: true,
         milestoneType: "pretemporada",
       }
     : null;
+}
+
+const AGENT_GUIDANCE_TOPICS = [
+  "un club (invéntate uno creíble, nunca un gigante si el jugador todavía no destaca) ha preguntado discretamente por él a través de ojeadores",
+  "una marca deportiva o local (invéntate una, nunca una marca real) quiere que sea imagen de un producto pequeño — botas, bebida energética, gimnasio del barrio",
+  "un conocido del representante le ofrece una pequeña oportunidad de inversión (invéntate una empresa o negocio local) para colocar parte de sus primeros ahorros",
+  "otro representante ha intentado ficharlo a él como cliente, hablando mal del trabajo del agente actual",
+  "hay rumores de que un ojeador de la selección sub-17/sub-19 ha preguntado por sus vídeos",
+  "el club quiere renegociar una cláusula menor del contrato y el agente quiere avisarle antes de que se entere por otro lado",
+];
+
+/**
+ * Al principio de la carrera, el jugador no sabe nada del negocio del
+ * fútbol — es exactamente cuando más necesita que su representante le
+ * vaya guiando de forma proactiva (interés de otro club, una marca, una
+ * inversión), no solo aparecer cuando hay que firmar un contrato grande.
+ * Antes esto no existía: el representante solo hablaba en los momentos
+ * mecánicos (fichaje, renovación), nunca llamaba solo para contarte algo.
+ */
+export async function generateAgentGuidanceCall(
+  player: Player,
+  history: HistoryItem[],
+): Promise<GameEvent | null> {
+  const topic = pickOne(AGENT_GUIDANCE_TOPICS);
+  const agentName = player.agent_name ?? "tu representante";
+  const historyText = history.length
+    ? history
+        .slice(-5)
+        .map((h) => `- "${h.title}" → eligió: "${h.chosen}"`)
+        .join("\n")
+    : "(todavía no vivió ningún evento)";
+
+  const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
+
+Genera una llamada de teléfono (o mensaje) de ${agentName}, el representante real de este jugador — usa ese nombre EXACTO, nunca "tu representante" ni un nombre inventado distinto. El jugador es joven y no entiende todavía del negocio del fútbol fuera del campo, así que el representante le va guiando paso a paso, explicándole las cosas con paciencia.
+
+NOVEDAD QUE TRAE LA LLAMADA: ${topic}.
+
+JUGADOR:
+- Apellido: ${player.last_name}
+- Edad: ${playerAge(player.week)} años
+- Club: ${player.club}
+- Media: ${player.media}/99, Fama: ${player.fama}/100
+- Patrimonio: ${player.patrimonio} €
+
+ÚLTIMOS EVENTOS:
+${historyText}
+
+REGLAS:
+${COMMON_RULES}
+- category debe reflejar que es una conversación con el representante.
+- 2-3 opciones sobre cómo reacciona el jugador ante la novedad (aceptar, pedir tiempo para pensarlo, rechazarlo, pedirle más detalles a ${agentName}).
+- No marques is_milestone: es una llamada de gestión normal, no un hito.
+- allow_free_text: true con una pregunta corta sobre qué le responde a su agente.
+- Si la novedad implica dinero (inversión, marca), que al menos una opción mueva patrimonio de forma realista para un jugador que empieza (nunca cifras de estrella consolidada).`;
+
+  const event = await callEventTool(prompt, "representante", `agent-call-${Date.now()}`);
+  return event ? { ...event, id: `agent-call-${Date.now()}` } : null;
+}
+
+// Momentos de vida que sí merecen su propia tarjeta de hito — el resto
+// (una discusión, un escándalo pasajero, una traición) pesa en la
+// historia pero no necesita foto para sentirse real.
+const MILESTONE_LIFE_CATEGORIES = new Set([
+  "romance_proposal",
+  "hijo_nacimiento",
+  "muerte_familiar",
+  "muerte_shock",
+  "premio_individual",
+  "reconocimiento_club",
+]);
+
+/**
+ * Desarrolla en un evento completo una de las escenas de vida detalladas
+ * (boda, nacimiento, muerte de un familiar, traición, escándalo, premio…)
+ * de src/lib/narrative/life-events-detailed.ts. Ese banco de contenido
+ * llevaba escrito desde hace tiempo pero ningún camino activo del juego
+ * lo recorría — la IA improvisaba "vida" desde cero cada vez, sin ver
+ * nunca estas escenas concretas, así que el juego nunca llegaba a contar
+ * la muerte de un padre, una boda o una traición de un amigo con este
+ * nivel de detalle. La escena se usa como PUNTO DE PARTIDA, no como
+ * guion literal — la IA le pone nombres, contexto y voz propios.
+ */
+// Categorías que introducen a una persona concreta digna de recordar —
+// mapeadas al tipo de personaje secundario que ya sabe hacer reaparecer
+// engine.ts (ver secondary-characters.ts). Antes NINGÚN camino activo
+// del juego llamaba nunca a trackSecondaryCharacter: por mucho que se
+// arreglara la caché de personajes que reaparecen, el sistema entero
+// estaba vacío desde el origen porque nadie creaba un personaje jamás.
+const CHARACTER_INTRODUCING_CATEGORIES: Record<string, { type: "expareja" | "amigo_infancia"; relationship: "resentido" }> = {
+  romance_breakup: { type: "expareja", relationship: "resentido" },
+  traicion_amigo: { type: "amigo_infancia", relationship: "resentido" },
+};
+
+export async function generateDetailedLifeEvent(
+  player: Player,
+  category: string,
+  scenario: string,
+  history: HistoryItem[],
+): Promise<GameEvent | null> {
+  const age = playerAge(player.week);
+  const historyText = history.length
+    ? history
+        .slice(-5)
+        .map((h) => `- "${h.title}" → eligió: "${h.chosen}"`)
+        .join("\n")
+    : "(todavía no vivió ningún evento)";
+
+  const isMilestoneWorthy = MILESTONE_LIFE_CATEGORIES.has(category);
+
+  // Si esta categoría introduce a alguien memorable (una ex, un amigo que
+  // traiciona), se le pone nombre AHORA y se le pide a la IA que use ese
+  // nombre exacto — así, semanas o años después, ese mismo nombre puede
+  // reaparecer en la vida del jugador (ver pickCharacterToReappear).
+  const introducedCharacter = CHARACTER_INTRODUCING_CATEGORIES[category];
+  const characterName = introducedCharacter ? generateSecondaryCharacterName(introducedCharacter.type) : null;
+  const characterNote = characterName
+    ? `\nPERSONAJE NUEVO A INTRODUCIR: se llama exactamente "${characterName}" — usa ese nombre tal cual, no inventes otro.`
+    : "";
+
+  const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
+
+Este es un evento de VIDA PERSONAL, fuera del campo — dale el mismo peso emocional que tendría de verdad, no lo trates como un trámite.
+
+MOMENTO DE VIDA A DESARROLLAR (úsalo como punto de partida — ponle tu propio detalle, nombres y contexto, no lo copies literal): "${scenario}"${characterNote}
+
+JUGADOR:
+- Apellido: ${player.last_name}
+- Edad: ${age} años
+- Club: ${player.club}
+- Fama: ${player.fama}/100, Moral: ${player.moral}/100
+- Patrimonio: ${player.patrimonio} €
+
+SU VIDA PERSONAL HASTA AHORA:
+${describePersonalLife(player.flags)}
+
+ÚLTIMOS EVENTOS DE SU CARRERA:
+${historyText}
+
+REGLAS:
+${COMMON_RULES}
+- 2-3 opciones sobre cómo afronta o reacciona ante este momento — no sobre fútbol, sobre su vida.
+- allow_free_text: true, con una pregunta personal sobre cómo se siente.
+- ${
+    isMilestoneWorthy
+      ? "Marca is_milestone en true: es un momento que de verdad define una vida. Escribe image_scene específico de esa escena concreta."
+      : "No marques is_milestone: es un momento con peso propio pero no un hito fotografiable."
+  }`;
+
+  const event = await callEventTool(prompt, "vida", `vida-detallada-${category}-${Date.now()}`);
+  if (!event) return null;
+
+  if (introducedCharacter && characterName) {
+    trackSecondaryCharacter(player, introducedCharacter.type, characterName, introducedCharacter.relationship);
+  }
+
+  return {
+    ...event,
+    id: `vida-detallada-${category}-${Date.now()}`,
+    isMilestone: isMilestoneWorthy ? true : (event.isMilestone ?? false),
+  };
 }
 
 const SECOND_LIFE_CONTEXT: Record<SecondCareerRole, string> = {

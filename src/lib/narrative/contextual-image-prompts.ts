@@ -1,7 +1,37 @@
+import { describeKit } from "@/lib/clubColors";
+import { describeLook } from "@/lib/playerLook";
+
 /**
  * Prompts contextuales para generación de imágenes según el tipo de evento.
  * Cada tipo de evento genera una imagen acorde a la narrativa, no solo la cara del jugador.
  */
+
+/**
+ * Poses de celebración de gol real — arquetipos genéricos de la cultura
+ * futbolística (rodillas al césped, mano en la oreja al público, beso al
+ * escudo...), no la marca personal de ningún jugador identificable en
+ * concreto. Antes había una única frase fija ("arms raised, fist pump")
+ * para CUALQUIER gol de cualquier carrera — el primer gol de un chaval
+ * de 16 años se veía exactamente igual que el gol 200 de una leyenda.
+ * Pedido explícito: que la gente pueda compartir una celebración que se
+ * sienta tan icónica como la de sus ídolos, no siempre la misma pose.
+ */
+const GOAL_CELEBRATION_POSES = [
+  "sliding on his knees across the grass with both arms out wide, mouth open in a roar of pure joy",
+  "cupping a hand to his ear, looking up at the crowd as if daring them to get louder",
+  "kissing the crest on his jersey with his eyes closed, one hand pressed over his heart",
+  "sprinting toward the corner flag with his shirt pulled up over his face in disbelief, teammates chasing him",
+  "pointing both index fingers to the sky in dedication, head tilted back, tears of emotion visible",
+  "being mobbed and lifted by a pile of teammates, his face barely visible under the celebration",
+  "doing a trademark leaping fist pump mid-air, body fully extended, stadium lights flaring behind him",
+  "running along the touchline with arms spread like wings, sprinting past the advertising boards",
+  "on his knees with both fists driven into the turf, head down, releasing weeks of pressure in one moment",
+  "spinning around with his arms out, disbelief turning into a wide grin as teammates close in",
+];
+
+function pickCelebrationPose(): string {
+  return GOAL_CELEBRATION_POSES[Math.floor(Math.random() * GOAL_CELEBRATION_POSES.length)];
+}
 
 export const CONTEXTUAL_IMAGE_PROMPTS: Record<string, (playerName: string, contextValue: string | number) => string> = {
   // REPRESENTANTE - Primera firma
@@ -9,12 +39,19 @@ export const CONTEXTUAL_IMAGE_PROMPTS: Record<string, (playerName: string, conte
     `Professional photograph: young footballer ${playerName} and agent ${String(agentName)} shaking hands and signing contract, modern office with desk, warm lighting, formal business setting, Getty Images quality, high resolution`,
 
   // TRANSFERENCIA - Fichaje por nuevo equipo
+  //
+  // El club llega aquí en texto plano ("Málaga CF") sin más — con un club
+  // real pero poco representado en los datos de entrenamiento del modelo,
+  // este alucinaba el kit "genérico" más visto (en pruebas reales, un
+  // patrón azulgrana calcado al del Barça para el Málaga). describeKit ya
+  // resuelve esto en los prompts escritos a mano con el marcador
+  // [CLUB_KIT]; aquí hacía falta el mismo forzado de color explícito.
   transferencia_fichaje: (playerName: string, clubName: string | number) =>
-    `Official team photo: young footballer ${playerName} posing with ${String(clubName)} jersey over shoulders, smiling confidently, stadium background, team colors dominant, professional club photography style, Getty Images quality`,
+    `Official team photo: young footballer ${playerName} posing with ${String(clubName)} jersey over shoulders (${describeKit(String(clubName))}), smiling confidently, stadium background, professional club photography style, Getty Images quality`,
 
-  // GOL - Celebración
+  // GOL - Celebración (pose distinta cada vez, ver GOAL_CELEBRATION_POSES)
   gol_celebracion: (playerName: string, clubName: string | number) =>
-    `Action photograph: footballer ${playerName} mid-celebration after goal, arms raised, fist pump, intensity and joy, night match stadium lights, packed stadium in background, Getty Images sports photography style`,
+    `Action photograph: footballer ${playerName} in ${describeKit(String(clubName))} mid-celebration right after scoring, ${pickCelebrationPose()}, teammates visible closing in, night match stadium lights, packed roaring stadium in background, motion and raw emotion frozen mid-action, Getty Images sports photography style`,
 
   // LESIÓN - Momento dramático
   lesion_grave: (playerName: string) =>
@@ -26,7 +63,7 @@ export const CONTEXTUAL_IMAGE_PROMPTS: Record<string, (playerName: string, conte
 
   // DEBUT - Primer partido
   debut_primer_partido: (playerName: string, clubName: string | number) =>
-    `Professional action shot: young footballer ${playerName} in ${String(clubName)} kit during match, focused concentration, running with ball, match action, professional sports photography`,
+    `Professional action shot: young footballer ${playerName} in ${String(clubName)} kit (${describeKit(String(clubName))}) during match, focused concentration, running with ball, match action, professional sports photography`,
 
   // CAPITÁN - Armband ceremony
   capitan_brazalete: (playerName: string, clubName: string | number) =>
@@ -130,17 +167,24 @@ export function getContextualImagePrompt(
   const key = eventType.toLowerCase();
   const promptFn = CONTEXTUAL_IMAGE_PROMPTS[key as keyof typeof CONTEXTUAL_IMAGE_PROMPTS];
 
+  // El look (barba, peinado) evoluciona con la edad del jugador — casi
+  // todas estas plantillas dicen "young footballer" tal cual, sin mirar
+  // la edad real, así que sin esto un veterano de 36 años seguía saliendo
+  // descrito como joven en la propia foto. Se añade como cláusula aparte
+  // en vez de tocar cada plantilla una por una.
+  const lookClause = `${playerAge} year old footballer, ${describeLook(playerAge, playerName)}`;
+
   if (!promptFn) {
-    return CONTEXTUAL_IMAGE_PROMPTS.default(playerName, playerAge);
+    return `${CONTEXTUAL_IMAGE_PROMPTS.default(playerName, playerAge)}, ${lookClause}`;
   }
 
   if (!extraContext) {
-    return promptFn(playerName, "");
+    return `${promptFn(playerName, "")}, ${lookClause}`;
   }
 
   const values = buildExtraContextDefaults(extraContext);
   const wantedKey = EVENT_TYPE_CONTEXT_KEY[key];
   const contextValue = wantedKey ? values[wantedKey] : "";
 
-  return promptFn(playerName, contextValue || playerName);
+  return `${promptFn(playerName, contextValue || playerName)}, ${lookClause}`;
 }

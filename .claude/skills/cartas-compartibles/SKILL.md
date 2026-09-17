@@ -36,6 +36,10 @@ Photorealistic photo of [AGE] [FACE] holding up a [CLUB_KIT] football jersey wit
 Photorealistic sports photography of [FACE] on a professional football pitch celebrating a goal, holding up three fingers proudly, teammates in background, stadium lights and crowd, dramatic moment, photojournalism style
 ```
 
+### Gol individual (primer_gol, gol_decisivo, hat, primer_hat_trick — vía `gol_celebracion` en `contextual-image-prompts.ts`)
+
+No es un prompt fijo: `GOAL_CELEBRATION_POSES` en ese archivo sortea una de ~10 poses de celebración real (rodillas al césped, mano en la oreja, beso al escudo, corriendo hacia el banderín con la camiseta tapando la cara, dedos señalando al cielo, piña de compañeros, salto con puño al aire...) cada vez que se genera la imagen. Así el primer gol de la carrera no se ve idéntico al gol 50 — cada celebración compartible puede sentirse tan icónica y distinta como la de un ídolo real, sin fijarse siempre en la misma pose. Al añadir un nuevo tipo de gol/celebración, considera si debe usar este pool en vez de escribir un prompt fijo nuevo.
+
 ### Trofeo Liga (fork-titulo-liga)
 ```
 Photorealistic sports photography of [FACE] lifting a large league trophy above his head on the pitch after winning, confetti falling around him, teammates and crowd in the background, stadium floodlights, triumphant moment, professional sports photography

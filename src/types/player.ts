@@ -4,6 +4,7 @@ export interface Player {
   id: string;
   user_id: string;
   last_name: string;
+  nickname: string | null;
   number: number;
   foot: string;
   nation: string;
@@ -43,4 +44,14 @@ export interface Player {
   stats_yellow_cards?: number; // Tarjetas amarillas
   stats_titles?: number; // Títulos ganados (Liga, Copa, Champions)
   stats_clean_sheets?: number; // Solo porterías (para porteros)
+}
+
+/**
+ * El apodo, cuando existe, es el nombre "de cara al público" — como pasa
+ * con futbolistas reales (Kun, Pelusa...). El apellido real sigue siendo
+ * el que usa la narrativa formal (contratos, prensa seria), pero
+ * cabeceras y tarjetas usan esto.
+ */
+export function displayName(player: Pick<Player, "last_name" | "nickname">): string {
+  return player.nickname?.trim() || player.last_name;
 }

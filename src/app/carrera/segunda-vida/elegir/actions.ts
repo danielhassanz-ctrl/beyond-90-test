@@ -5,6 +5,15 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { PRESIDENT_CLUB_OPTIONS, COACH_CLUB_OPTIONS, AGENT_SPECIALTY_OPTIONS } from "@/lib/constants";
 import type { SecondCareerRole } from "@/types/career";
 
+// entrenador/agente/presidente necesitan un paso extra (elegir banquillo,
+// especialidad o club) antes de poder jugar, así que solo guardan el rol
+// y vuelven a esta misma pantalla para mostrar ese siguiente paso. Las
+// otras cuatro (comentarista, empresario, embajador, privado) no
+// necesitan nada más — antes también se quedaban aquí sin más, pero como
+// ningún branch de la pantalla las reconocía, el jugador volvía a ver el
+// mismo selector de roles para siempre, sin poder avanzar nunca.
+const ROLES_WITH_EXTRA_STEP = new Set<SecondCareerRole>(["entrenador", "agente", "presidente"]);
+
 export async function chooseSecondCareer(formData: FormData) {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
 
@@ -14,8 +23,24 @@ export async function chooseSecondCareer(formData: FormData) {
 
   const role = formData.get("role") as SecondCareerRole;
 
-  await supabase.from("players").update({ second_career: role }).eq("id", player.id);
-  redirect("/carrera/segunda-vida/elegir");
+  if (ROLES_WITH_EXTRA_STEP.has(role)) {
+    await supabase.from("players").update({ second_career: role }).eq("id", player.id);
+    redirect("/carrera/segunda-vida/elegir");
+  }
+
+  await supabase
+    .from("players")
+    .update({
+      second_career: role,
+      // El embajador representa a tu ÚLTIMO club de jugador — no elige
+      // uno nuevo, su legado está atado al que ya tenía.
+      second_club: role === "embajador" ? player.club : null,
+      second_week: 1,
+      status: "second_life",
+    })
+    .eq("id", player.id);
+
+  redirect("/carrera/segunda-vida");
 }
 
 export async function choosePresidentClub(formData: FormData) {

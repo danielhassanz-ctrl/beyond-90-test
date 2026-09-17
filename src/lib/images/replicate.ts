@@ -4,6 +4,86 @@ interface ReplicatePrediction {
   status: string;
   output: string | string[] | null;
   error: string | null;
+  urls?: { get: string };
+}
+
+/**
+ * Ninguno de los fetch de este archivo tenía timeout — verificado en vivo:
+ * una generación real se quedó "pendiente" más de 9 minutos sin éxito NI
+ * fallo, sin ningún error en los logs. Causa: si la llamada de red se
+ * queda colgada (Replicate con carga, o simplemente una petición que
+ * nunca resuelve), el límite de 180s en pollUntilDone no sirve de nada —
+ * ese límite solo se comprueba ENTRE llamadas a fetch, nunca corta una
+ * llamada que ya está en curso. Con esto, ninguna llamada de red puede
+ * bloquear la generación más allá de su propio timeout explícito.
+ */
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * `Prefer: wait` sin más espera hasta 60s a que Replicate resuelva la
+ * predicción SÍNCRONAMENTE y punto — si Kontext Pro no ha terminado en
+ * ese margen (algo habitual: 9-173s medidos en pruebas reales, hasta ~3
+ * min en frío), la respuesta llega con status "processing"/"starting",
+ * output null y logs vacíos. El código anterior trataba eso como un
+ * fallo definitivo y se rendía ahí mismo, sin comprobar nunca si la
+ * predicción SÍ terminaba bien un poco después — esto descartaba como
+ * "fallidas" generaciones que en realidad solo iban lentas, y era la
+ * causa real de por qué casi ninguna foto de jugador llegaba a
+ * completarse. swapFaceIntoTemplate (faceswap.ts) y
+ * getOrCreatePropertyPhoto (property-photos.ts) ya hacían este mismo
+ * sondeo correctamente; a este módulo, el más usado de los tres, nunca
+ * se le aplicó el mismo arreglo.
+ */
+async function pollUntilDone(getUrl: string, token: string, maxWaitMs = 180_000): Promise<ReplicatePrediction | null> {
+  const start = Date.now();
+  while (Date.now() - start < maxWaitMs) {
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(getUrl, { headers: { Authorization: `Bearer ${token}` } }, 15_000);
+    } catch (err) {
+      console.error("[pollUntilDone] fetch timed out or failed, retrying:", err instanceof Error ? err.message : err);
+      await new Promise((r) => setTimeout(r, 2500));
+      continue;
+    }
+    if (!res.ok) return null;
+    const data = (await res.json()) as ReplicatePrediction;
+    if (data.status === "succeeded" || data.status === "failed" || data.status === "canceled") {
+      return data;
+    }
+    await new Promise((r) => setTimeout(r, 2500));
+  }
+  return null;
+}
+
+/**
+ * Kontext Pro es un modelo de EDICIÓN (parte de una foto real), pero
+ * cuando el prompt describe una escena entera con otras personas (p.ej.
+ * "dos directivos se dan la mano con la camiseta en medio"), el modelo
+ * tiene libertad para alejarse del sujeto original y generar una escena
+ * genérica donde la cara del jugador ya ni aparece — visto en pruebas
+ * reales: la foto salía perfecta de colores pero sin el jugador. Esta
+ * envoltura fuerza en cada llamada que la persona de la foto de entrada
+ * sea la protagonista intocable, sin importar qué describa el resto del
+ * prompt.
+ */
+/**
+ * "Misma identidad" se refería a no sustituir a la persona por otra —
+ * pero un modelo de edición puede leer "same face" de forma demasiado
+ * literal y resistirse a cambios de pelo/barba que el propio prompt pide
+ * explícitamente (el look evoluciona con la edad, ver playerLook.ts). La
+ * aclaración de la última frase evita que esta protección anule esos
+ * cambios de estilo.
+ */
+function withIdentityPreserved(prompt: string): string {
+  return `Edit this exact photo, keeping the same real person from the input image as the clear, recognizable main subject in the foreground — same facial identity and bone structure, do not replace them with a different person, a stock model, or a generic scene without them. Apply only these changes: ${prompt} The photographed person must remain fully recognizable as the same individual, even if hairstyle or facial hair changes as instructed above.`;
 }
 
 async function runFluxKontext(inputImageUrl: string, prompt: string): Promise<string | null> {
@@ -13,21 +93,25 @@ async function runFluxKontext(inputImageUrl: string, prompt: string): Promise<st
   }
 
   try {
-    const res = await fetch(`https://api.replicate.com/v1/models/${MODEL}/predictions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
-        "Content-Type": "application/json",
-        Prefer: "wait",
-      },
-      body: JSON.stringify({
-        input: {
-          prompt,
-          input_image: inputImageUrl,
-          output_format: "png",
+    const res = await fetchWithTimeout(
+      `https://api.replicate.com/v1/models/${MODEL}/predictions`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
+          "Content-Type": "application/json",
+          Prefer: "wait",
         },
-      }),
-    });
+        body: JSON.stringify({
+          input: {
+            prompt: withIdentityPreserved(prompt),
+            input_image: inputImageUrl,
+            output_format: "png",
+          },
+        }),
+      },
+      70_000,
+    );
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
@@ -35,7 +119,12 @@ async function runFluxKontext(inputImageUrl: string, prompt: string): Promise<st
       return null;
     }
 
-    const data = (await res.json()) as ReplicatePrediction;
+    let data = (await res.json()) as ReplicatePrediction;
+    if (data.status !== "succeeded" && data.urls?.get) {
+      const polled = await pollUntilDone(data.urls.get, process.env.REPLICATE_API_TOKEN);
+      if (polled) data = polled;
+    }
+
     if (data.status !== "succeeded" || !data.output) {
       console.error("[runFluxKontext] prediction did not succeed", JSON.stringify(data).slice(0, 500));
       return null;
@@ -61,7 +150,7 @@ export async function generatePlayerImage(
   if (!outputUrl) return null;
 
   try {
-    const imageRes = await fetch(outputUrl);
+    const imageRes = await fetchWithTimeout(outputUrl, {}, 30_000);
     if (!imageRes.ok) {
       console.error(`[generatePlayerImage] fetching output failed: HTTP ${imageRes.status}`);
       return null;

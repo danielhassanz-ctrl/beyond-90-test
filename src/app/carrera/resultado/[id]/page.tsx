@@ -3,18 +3,11 @@ import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { withShareLink } from "@/lib/constants";
 import { ShareButton } from "@/components/ShareButton";
-import { CONSEQUENCE_LABELS } from "@/types/career";
-
-const CATEGORY_EMOJI: Record<string, string> = {
-  entrenamiento: "💪",
-  partido: "⚽",
-  vestuario: "👥",
-  representante: "💼",
-  prensa: "📰",
-  vida: "🏠",
-  especial: "✨",
-  segunda_vida: "🎬",
-};
+import { ShareableCard } from "@/components/ShareableCard";
+import { SeasonRecapCard } from "@/components/SeasonRecapCard";
+import { CONSEQUENCE_LABELS, WEEKS_PER_SEASON, seasonLabel, playerAge } from "@/types/career";
+import { displayName } from "@/types/player";
+import { EventScene } from "@/components/EventScene";
 
 export default async function ResultadoPage({
   params,
@@ -41,132 +34,101 @@ export default async function ResultadoPage({
 
   const continueHref = player.status === "second_life" ? "/carrera/segunda-vida" : "/carrera";
   const shareText = withShareLink(
-    `${careerEvent.title}. "${careerEvent.outcome_text}" — ${player.last_name} (${player.club}), en Beyond 90.`,
+    `${careerEvent.title}. "${careerEvent.outcome_text}" — ${displayName(player)} (${player.club}), en Beyond 90.`,
   );
 
   // Parsear consecuencias para mostrar visualmente
   const consequences = careerEvent.consequences || {};
   const consequencesList = Object.entries(consequences)
-    .filter(([_, value]) => typeof value === "number" && value !== 0)
+    .filter(([, value]) => typeof value === "number" && value !== 0)
     .sort((a, b) => Math.abs(b[1] as number) - Math.abs(a[1] as number))
-    .slice(0, 4);
+    .slice(0, 4) as [string, number][];
 
-  const categoryEmoji = CATEGORY_EMOJI[careerEvent.category] || "🎮";
+  // El cierre de temporada (ver generatePreseasoneEvent en ai.ts) es el
+  // único momento del año donde de verdad "pasa" algo con el paso del
+  // tiempo — merece su propia tarjeta compartible, no solo texto, igual
+  // que un hito. Deliberadamente NO se guarda como milestone (ver el "No
+  // marques is_milestone" en el prompt): con 15-20 temporadas en una
+  // carrera larga, cada cierre de año en Legado saturaría de "momentos
+  // destacados" cosas que no lo son. Esta tarjeta se genera al vuelo,
+  // sin gastar en Replicate.
+  const isSeasonRecap = careerEvent.event_id?.startsWith("preseason-") ?? false;
+  const closedSeasonWeek = Math.max(1, careerEvent.week - WEEKS_PER_SEASON);
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-neutral-950 p-4">
-      <div className="w-full max-w-2xl space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-3">
-          <p className="text-4xl">{categoryEmoji}</p>
-          <p className="text-xs font-bold uppercase tracking-widest text-amber-400">
-            {careerEvent.category === "entrenamiento"
-              ? "Entrenamiento"
-              : careerEvent.category === "partido"
-                ? "Partido"
-                : careerEvent.category === "vestuario"
-                  ? "Vestuario"
-                  : careerEvent.category === "representante"
-                    ? "Representante"
-                    : careerEvent.category === "prensa"
-                      ? "Prensa"
-                      : careerEvent.category === "vida"
-                        ? "Vida Personal"
-                        : "Momento Especial"}
-          </p>
-          <h1 className="text-2xl md:text-3xl font-black text-white">
-            {careerEvent.title}
-          </h1>
-        </div>
+    <main className="flex flex-1 items-center justify-center bg-background p-4">
+      <div className="w-full max-w-2xl space-y-4">
+        <div className="overflow-hidden rounded-2xl border border-panel-border bg-surface">
+          <EventScene club={player.club} category={careerEvent.category} />
 
-        {/* Contenedor visual principal */}
-        <div className="rounded-2xl overflow-hidden border border-amber-500/20 shadow-2xl bg-gradient-to-br from-neutral-900 to-neutral-950 p-6 md:p-8">
-          {/* Descripción del evento */}
-          <div className="space-y-4">
-            <p className="text-sm text-neutral-400 leading-relaxed">
-              {careerEvent.description}
-            </p>
+          <div className="space-y-4 p-6">
+            <p className="text-kicker">Consecuencias</p>
+            <h1 className="font-display text-2xl text-foreground leading-tight">{careerEvent.title}</h1>
 
-            {/* Resultado/Outcome */}
+            <p className="text-sm text-muted-foreground leading-relaxed">{careerEvent.description}</p>
+
             {careerEvent.outcome_text && (
-              <div className="rounded-lg bg-neutral-950/60 border border-amber-500/10 p-4">
-                <p className="text-lg font-bold text-amber-100 leading-relaxed italic">
-                  "{careerEvent.outcome_text}"
-                </p>
-              </div>
+              <p className="font-cond text-base italic text-foreground/90 leading-relaxed">
+                {careerEvent.outcome_text}
+              </p>
             )}
 
-            {/* Opción elegida */}
             {careerEvent.chosen_option_label && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Tu decisión
-                </p>
-                <div className="rounded-lg border border-neutral-700 bg-neutral-950/40 px-4 py-2">
-                  <p className="text-sm font-medium text-neutral-200">
-                    {careerEvent.chosen_option_label}
-                  </p>
-                </div>
+              <div className="space-y-1">
+                <p className="text-kicker">Tu decisión</p>
+                <p className="text-sm font-medium text-foreground/90">{careerEvent.chosen_option_label}</p>
               </div>
             )}
 
-            {/* Respuesta libre si la hay */}
             {careerEvent.free_text_response && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Tu respuesta
-                </p>
-                <div className="rounded-lg border border-neutral-700 bg-neutral-950/40 px-4 py-2">
-                  <p className="text-sm text-neutral-300 italic">
-                    "{careerEvent.free_text_response}"
-                  </p>
-                </div>
+              <div className="space-y-1">
+                <p className="text-kicker">Tu respuesta</p>
+                <p className="text-sm italic text-muted-foreground">&ldquo;{careerEvent.free_text_response}&rdquo;</p>
               </div>
             )}
+
+            {consequencesList.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {consequencesList.map(([key, value]) => {
+                  const isPositive = (value as number) > 0;
+                  return (
+                    <span
+                      key={key}
+                      className={`font-cond rounded-full border px-3 py-1 text-xs font-semibold ${
+                        isPositive
+                          ? "border-pitch/50 bg-pitch/10 text-pitch"
+                          : "border-destructive/50 bg-destructive/10 text-destructive"
+                      }`}
+                    >
+                      {CONSEQUENCE_LABELS[key as keyof typeof CONSEQUENCE_LABELS] || key} {isPositive ? "+" : ""}
+                      {value as number}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            <Link
+              href={continueHref}
+              className="gold-fill block w-full rounded-full px-6 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
+            >
+              Siguiente escena
+            </Link>
           </div>
         </div>
 
-        {/* Consecuencias visuales */}
-        {consequencesList.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-              Consecuencias
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {consequencesList.map(([key, value]) => {
-                const isPositive = (value as number) > 0;
-                return (
-                  <div
-                    key={key}
-                    className={`rounded-lg px-3 py-2 text-center border ${
-                      isPositive
-                        ? "bg-green-500/10 border-green-500/30 text-green-300"
-                        : "bg-red-500/10 border-red-500/30 text-red-300"
-                    }`}
-                  >
-                    <p className="text-2xl font-black">
-                      {isPositive ? "+" : ""}{value as number}
-                    </p>
-                    <p className="text-[10px] uppercase tracking-wide font-semibold mt-1">
-                      {CONSEQUENCE_LABELS[key as keyof typeof CONSEQUENCE_LABELS] || key}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Botones de acción */}
-        <div className="space-y-3">
+        {isSeasonRecap ? (
+          <ShareableCard title="Beyond 90" text={shareText}>
+            <SeasonRecapCard
+              player={player}
+              seasonLabel={seasonLabel(closedSeasonWeek)}
+              age={playerAge(careerEvent.week)}
+              consequences={consequencesList}
+            />
+          </ShareableCard>
+        ) : (
           <ShareButton title="Beyond 90" text={shareText} />
-          <Link
-            href={continueHref}
-            className="block w-full rounded-lg bg-neutral-800 px-6 py-3 text-center font-semibold text-amber-400 hover:bg-neutral-700 transition-colors text-sm uppercase tracking-wide border border-neutral-700 hover:border-amber-500/50"
-          >
-            Continuar
-          </Link>
-        </div>
+        )}
       </div>
     </main>
   );

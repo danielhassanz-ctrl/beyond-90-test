@@ -1,14 +1,5 @@
 import type { Player } from "@/types/player";
 
-const WEEKS_PER_SEASON = 10;
-
-const POSITION_RATES: Record<string, { goals: number; assists: number }> = {
-  Delantero: { goals: 0.5, assists: 0.15 },
-  Centrocampista: { goals: 0.15, assists: 0.25 },
-  Defensa: { goals: 0.04, assists: 0.08 },
-  Portero: { goals: 0.001, assists: 0.01 },
-};
-
 export interface CareerStats {
   ovr: number;
   valueM: number;
@@ -19,27 +10,34 @@ export interface CareerStats {
 }
 
 /**
- * El juego no simula partido a partido (solo narra momentos sueltos), así
- * que para la tarjeta de resumen de carrera se estiman partidos/goles/
- * asistencias a partir de las temporadas jugadas y la calidad del
- * jugador — igual que un resumen de carrera real, no un contador literal
- * de las pocas escenas de partido que se llegaron a narrar.
+ * Antes esto ESTIMABA partidos/goles/asistencias con una fórmula (temporadas
+ * jugadas × calidad del jugador) porque el juego no llevaba la cuenta real.
+ * Eso dejó de ser cierto: update-stats.ts sí extrae y acumula las cifras
+ * reales de cada partido narrado (stats_matches_played/goals/assists). Usar
+ * la fórmula en vez de esas cifras significaba que la tarjeta que de verdad
+ * se comparte mostraba números inventados, no los del jugador — justo lo
+ * contrario de lo que alguien espera ver en su propia tarjeta de stats.
  */
 export function computeCareerStats(player: Player): CareerStats {
-  const seasons = Math.max(0, Math.floor((player.week - 1) / WEEKS_PER_SEASON));
-  const starterFactor = 0.5 + (player.forma / 100) * 0.5;
-  const gamesPerSeason = Math.round(20 + starterFactor * 30);
-  const games = seasons * gamesPerSeason;
-
-  const rate = POSITION_RATES[player.position] ?? POSITION_RATES.Centrocampista;
-  const quality = 0.5 + (player.fama / 100) * 0.9;
-  const goals = Math.round(games * rate.goals * quality);
-  const assists = Math.round(games * rate.assists * quality);
+  const games = player.stats_matches_played ?? 0;
+  const goals = player.stats_goals ?? 0;
+  const assists = player.stats_assists ?? 0;
 
   const ovr = player.media;
 
-  const valueM =
-    Math.round(Math.max(0.5, player.patrimonio / 2000 + player.fama * 1.8) * 10) / 10;
+  // El valor de mercado de un futbolista lo marca su nivel deportivo
+  // (media/OVR), no sus ahorros — la fórmula anterior ignoraba `media`
+  // por completo (valor = solo patrimonio + fama), así que un canterano
+  // de 16 años sin debutar (media 50, 0€ ahorrados) podía salir con
+  // "Valor €9M" solo por tener algo de fama, y un veterano forrado con
+  // media mediocre valía más que un crack joven sin ahorros todavía —
+  // justo al revés que en el mercado real. Aquí el nivel manda, con una
+  // curva creciente (de mediocre a crack el valor no sube en línea
+  // recta, como en Transfermarkt) y la fama solo aporta un extra por
+  // marca personal. El patrimonio (ahorros del jugador) no entra: es una
+  // cifra personal, no lo que pagaría un club por su ficha.
+  const qualityValue = Math.max(0, player.media - 40) ** 2.2 / 90;
+  const valueM = Math.round(Math.max(0.3, qualityValue + player.fama * 0.15) * 10) / 10;
 
   const titles: string[] = [];
   if (player.flags?.title_liga) titles.push("Liga");

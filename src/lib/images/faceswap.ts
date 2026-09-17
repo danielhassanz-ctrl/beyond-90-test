@@ -18,10 +18,34 @@ interface ReplicatePrediction {
   urls?: { get: string };
 }
 
+/**
+ * Ninguna llamada de red aquí tenía timeout — el mismo bug encontrado y
+ * arreglado en replicate.ts (una generación real se quedó "pendiente"
+ * más de 9 minutos sin éxito NI fallo, porque el límite de maxWaitMs solo
+ * se comprueba ENTRE llamadas a fetch, nunca corta una que ya está en
+ * curso). Mismo arreglo aquí.
+ */
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function pollUntilDone(getUrl: string, token: string, maxWaitMs = 120_000): Promise<ReplicatePrediction | null> {
   const start = Date.now();
   while (Date.now() - start < maxWaitMs) {
-    const res = await fetch(getUrl, { headers: { Authorization: `Bearer ${token}` } });
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(getUrl, { headers: { Authorization: `Bearer ${token}` } }, 15_000);
+    } catch (err) {
+      console.error("[pollUntilDone] fetch timed out or failed, retrying:", err instanceof Error ? err.message : err);
+      await new Promise((r) => setTimeout(r, 2000));
+      continue;
+    }
     if (!res.ok) return null;
     const data = (await res.json()) as ReplicatePrediction;
     if (data.status === "succeeded" || data.status === "failed" || data.status === "canceled") {
@@ -47,18 +71,22 @@ export async function swapFaceIntoTemplate(
   }
 
   try {
-    const res = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
-        "Content-Type": "application/json",
-        Prefer: "wait",
+    const res = await fetchWithTimeout(
+      "https://api.replicate.com/v1/predictions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
+          "Content-Type": "application/json",
+          Prefer: "wait",
+        },
+        body: JSON.stringify({
+          version: MODEL_VERSION,
+          input: { input_image: targetSceneUrl, swap_image: newFaceUrl },
+        }),
       },
-      body: JSON.stringify({
-        version: MODEL_VERSION,
-        input: { input_image: targetSceneUrl, swap_image: newFaceUrl },
-      }),
-    });
+      70_000,
+    );
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
@@ -78,7 +106,7 @@ export async function swapFaceIntoTemplate(
     }
 
     const outputUrl = Array.isArray(data.output) ? data.output[0] : data.output;
-    const imageRes = await fetch(outputUrl);
+    const imageRes = await fetchWithTimeout(outputUrl, {}, 30_000);
     if (!imageRes.ok) return null;
     return Buffer.from(await imageRes.arrayBuffer());
   } catch (err) {

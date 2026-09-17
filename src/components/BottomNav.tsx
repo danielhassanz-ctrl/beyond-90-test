@@ -24,6 +24,32 @@ const ITEMS = [
     ),
   },
   {
+    href: "/mi-jugador/vida",
+    label: "Vida",
+    emoji: "❤️",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+        <path
+          d="M12 20.5s-7-4.35-9.5-8.9C.9 8.4 2.3 5 5.6 5c1.9 0 3.3 1 4.4 2.4C11.1 6 12.5 5 14.4 5c3.3 0 4.7 3.4 3.1 6.6C15 16.15 12 20.5 12 20.5z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    href: "/mi-jugador/legado",
+    label: "Legado",
+    emoji: "🏆",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+        <path d="M7 4h10v4a5 5 0 01-10 0V4z" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 5H4v2a3 3 0 003 3M17 5h3v2a3 3 0 01-3 3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 13v4M9 21h6M10 17h4v4h-4z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/mi-jugador",
     label: "Mi jugador",
     emoji: "👤",
@@ -40,7 +66,7 @@ const ITEMS = [
  * Navegación inferior con indicador de página activa.
  * Mejorado con: mejor visual, emojis, efecto activo mejorado, transiciones suaves.
  */
-export function BottomNav({ active }: { active: "carrera" | "patrimonio" | "jugador" }) {
+export function BottomNav({ active }: { active: "carrera" | "patrimonio" | "vida" | "legado" | "jugador" }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-amber-500/20 bg-gradient-to-t from-neutral-950 via-neutral-950/95 to-neutral-950/80 backdrop-blur-sm">
       {/* Línea de brillo superior */}
@@ -51,6 +77,8 @@ export function BottomNav({ active }: { active: "carrera" | "patrimonio" | "juga
           const isActive =
             (active === "carrera" && item.href === "/carrera") ||
             (active === "patrimonio" && item.href === "/mi-jugador/patrimonio") ||
+            (active === "vida" && item.href === "/mi-jugador/vida") ||
+            (active === "legado" && item.href === "/mi-jugador/legado") ||
             (active === "jugador" && item.href === "/mi-jugador");
 
           return (

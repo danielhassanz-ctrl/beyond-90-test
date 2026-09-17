@@ -62,7 +62,12 @@ export function buildGolChilenaEvent(club: string): GameEvent {
     id: GOL_CHILENA_EVENT_ID,
     category: "partido",
     title: "Una chilena para la historia",
-    description: `Balón que llega alto por la izquierda. Das la espalda a la portería, saltas, y conectas una chilena perfecta que se cuela por la escuadra. El estadio entero se levanta de golpe. Ni tú mismo te lo crees todavía cuando tus compañeros te sepultan en la celebración. Al día siguiente, tu cara está en la portada de todos los periódicos deportivos.`,
+    // "Metes un gol" (no solo "se cuela por la escuadra") a propósito:
+    // extractStatsFromEvent (update-stats.ts) busca esa frase exacta para
+    // sumar el gol a tus estadísticas de carrera — sin ella, tu categoría
+    // es "partido" (cuenta como partido jugado) pero el gol en sí, uno de
+    // los más vistosos posibles, no llegaba nunca a stats_goals.
+    description: `Balón que llega alto por la izquierda. Das la espalda a la portería, saltas, y conectas una chilena perfecta: metes un gol que se cuela por la escuadra. El estadio entero se levanta de golpe. Ni tú mismo te lo crees todavía cuando tus compañeros te sepultan en la celebración. Al día siguiente, tu cara está en la portada de todos los periódicos deportivos.`,
     isMilestone: true,
     milestoneType: "gol_chilena",
     imageScene: `Dynamic action photograph: footballer executing a perfect bicycle kick (overhead kick), body fully horizontal in mid-air, back arched, both legs scissoring above his head with one leg striking the ball at the peak of the motion, back to the goal, falling backward, ${club} kit, stadium lights, frozen dramatic mid-air moment, professional sports photography, Getty Images quality`,

@@ -5,8 +5,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * Dos capas independientes:
  * - Por usuario: generoso a propósito, solo frena el abuso (borrar jugador
  *   y volver a crear en bucle para generar gratis sin jugar de verdad).
- *   Una carrera real usa 15-20 imágenes; 40/mes cubre 2 carreras completas
- *   sin que nadie lo note.
+ *   Una carrera real usa 25-30 imágenes (tras conectar el pool de
+ *   famosos/virales, que añade hasta 13 hitos más de un solo uso cada
+ *   uno); 40/mes cubre una carrera completa de sobra sin que nadie lo note.
  * - Global: techo absoluto de gasto mensual de todo el juego junto. Es la
  *   red de seguridad real: si el juego se viraliza, esto es lo único que
  *   impide una factura sin fin. Al llegar al techo, el juego sigue

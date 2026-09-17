@@ -17,36 +17,30 @@ export interface AdversityTracker {
   adversitiesCount: number;
 }
 
-// Cache para rastreadores de adversidad (optimización)
-const adversityTrackerCache = new Map<string, AdversityTracker>();
-
 /**
  * Obtiene el rastreador de adversidades del jugador.
- * OPTIMIZACIÓN: caching para evitar parse JSON repetido
+ *
+ * Antes esto se cacheaba en un Map en memoria del proceso, indexado por
+ * player.id, para ahorrarse el JSON.parse. Pero en un entorno serverless
+ * un mismo proceso puede atender varias peticiones seguidas, y la caché
+ * nunca se invalidaba si `player.flags.adversity_tracker` cambiaba por
+ * cualquier vía que no fuera `updateAdversityTracker` (p.ej. una petición
+ * concurrente) — el rastreador servido podía quedar desincronizado del
+ * valor real ya guardado. El JSON.parse de un objeto tan pequeño no
+ * compensa ese riesgo: mejor leer siempre el valor fresco.
  */
 export function getAdversityTracker(player: Player): AdversityTracker {
   if (!player.flags) player.flags = {};
 
-  // Check cache first
-  const cached = adversityTrackerCache.get(player.id);
-  if (cached) {
-    return cached;
-  }
-
   const stored = player.flags.adversity_tracker;
-  let tracker: AdversityTracker = { lastAdversityWeek: 0, adversitiesCount: 0 };
-
   if (typeof stored === "string") {
     try {
-      tracker = JSON.parse(stored);
+      return JSON.parse(stored);
     } catch {
-      tracker = { lastAdversityWeek: 0, adversitiesCount: 0 };
+      // cae al valor por defecto de abajo
     }
   }
-
-  // Cache it
-  adversityTrackerCache.set(player.id, tracker);
-  return tracker;
+  return { lastAdversityWeek: 0, adversitiesCount: 0 };
 }
 
 /**
@@ -57,9 +51,6 @@ export function updateAdversityTracker(player: Player, tracker: AdversityTracker
   tracker.lastAdversityWeek = player.week;
   tracker.adversitiesCount++;
   player.flags.adversity_tracker = JSON.stringify(tracker);
-  // Invalidate cache
-  adversityTrackerCache.delete(player.id);
-  adversityTrackerCache.set(player.id, tracker);
   return player;
 }
 

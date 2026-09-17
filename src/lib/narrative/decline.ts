@@ -85,7 +85,12 @@ export function detectDeclineSignals(player: Player): DeclineSignal[] {
  */
 export function buildDeclinePrompt(player: Player, signals: DeclineSignal[]): string {
   const age = playerAge(player.week);
-  const career_years = Math.floor(player.week / 52);
+  // El juego usa 10 semanas por temporada/año (ver playerAge en
+  // types/career.ts), no 52 — con /52 un veterano de 35 años en la
+  // semana 200 salía diciendo que llevaba "3 años" de carrera en vez de
+  // los ~19 reales, una contradicción flagrante en un evento pensado
+  // para pesar precisamente por los años acumulados.
+  const career_years = Math.floor((player.week - 1) / 10);
   const signalDescriptions = signals.map((s) => `- ${s.description}`).join("\n");
 
   const emotionalTone = signals.reduce((sum, s) => sum + s.emotionalWeight, 0) / signals.length;
@@ -125,7 +130,7 @@ REGLAS:
  */
 export function describeDeclineContext(player: Player): string {
   const age = playerAge(player.week);
-  const yearsPlayed = Math.floor(player.week / 52);
+  const yearsPlayed = Math.floor((player.week - 1) / 10);
 
   if (age < 30) {
     return "Aún eres joven pero empiezas a notar que el paso imparable del fútbol no espera.";

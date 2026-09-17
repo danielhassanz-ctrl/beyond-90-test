@@ -25,12 +25,31 @@ export function extractStatsFromEvent(event: GameEvent): StatUpdate {
 
   const text = `${event.title} ${event.description}`.toLowerCase();
 
-  // Detectar si fue un partido
+  // Detectar si fue un partido REAL resuelto — nunca por texto suelto:
+  // casi cualquier escena de fútbol (vestuario, prensa, la víspera de un
+  // partido) menciona la palabra "partido" o "jornada" sin que se haya
+  // jugado nada. Con ese criterio, CUALQUIER evento de sabor contaba
+  // como partido jugado de verdad, inflando partidos/goles y hasta la
+  // media (recalculateMedia suma +0.5 solo por matches_played). Visto en
+  // vivo jugando: una carrera con un puñado de partidos reales terminó
+  // con "100 partidos, 62 goles" en la ficha de retiro. category
+  // "partido" es suficiente por sí solo: todo evento de partido real
+  // (guionado o generado por IA) ya lo trae.
+  // "match-decision-*" también es categoría "partido" (para que se vea
+  // el marcador con el rival durante la jugada) pero es solo UN momento
+  // dentro del partido que resuelve matchday-* justo después — contarlo
+  // aparte duplicaría partidos jugados y, si tocó gol, también el gol.
+  // Un amistoso de pretemporada (pretemp-amistoso) tiene categoría
+  // "partido" y hasta su propio "Nota: X/10. Goles: 0." en el texto, pero
+  // un amistoso NUNCA cuenta como partido oficial en el fútbol real —
+  // sin esta exclusión, stats_matches_played empezaba en 1 antes incluso
+  // del debut de verdad, inflando el PJ de la tarjeta compartible y
+  // adelantando un turno los hitos de partidos redondos (ver
+  // career-milestones.ts).
   const isMatch =
-    event.category === "partido" ||
-    event.id?.startsWith("matchday-") ||
-    text.includes("partido") ||
-    text.includes("jornada");
+    (event.category === "partido" || event.id?.startsWith("matchday-")) &&
+    !event.id?.startsWith("match-decision-") &&
+    event.id !== "pretemp-amistoso";
   if (isMatch) {
     update.matches_played = 1;
   }
@@ -43,40 +62,47 @@ export function extractStatsFromEvent(event: GameEvent): StatUpdate {
   // registraba igualmente como gol anotado, disparando la Media sin que
   // el jugador hubiera marcado nunca (visto en una partida real: Media 99
   // a los 17 años tras varios partidos con "Goles: 0").
-  const goalsMatch = text.match(/goles?:\s*(\d+)/);
-  const assistsMatch = text.match(/asistencias?:\s*(\d+)/);
-  const minutesMatch = text.match(/(\d+)\s*minutos/);
+  // Goles, asistencias, minutos y tarjetas solo pueden salir de un
+  // partido REAL (isMatch) — una escena de vestuario o la víspera de un
+  // partido puede mencionar "gol" o "asistencia" hablando en general
+  // ("necesitamos que metas goles") sin que eso sea un gol anotado de
+  // verdad. Antes esto se comprobaba sin mirar isMatch en absoluto.
+  if (isMatch) {
+    const goalsMatch = text.match(/goles?:\s*(\d+)/);
+    const assistsMatch = text.match(/asistencias?:\s*(\d+)/);
+    const minutesMatch = text.match(/(\d+)\s*minutos/);
 
-  if (goalsMatch) {
-    const n = parseInt(goalsMatch[1], 10);
-    if (n > 0) update.goals = n;
-  } else if (/\bhat[\s-]*trick\b|\btriplete\b/.test(text)) {
-    update.goals = 3;
-  } else if (text.includes("doblete") || text.includes("dos goles")) {
-    update.goals = 2;
-  } else if (/\bmarc[oó] (un |el )?gol\b|\banot[oó] (un |el )?gol\b|\bmete(s)? (un )?gol\b/.test(text)) {
-    update.goals = 1;
-  }
+    if (goalsMatch) {
+      const n = parseInt(goalsMatch[1], 10);
+      if (n > 0) update.goals = n;
+    } else if (/\bhat[\s-]*trick\b|\btriplete\b/.test(text)) {
+      update.goals = 3;
+    } else if (text.includes("doblete") || text.includes("dos goles")) {
+      update.goals = 2;
+    } else if (/\bmarc[oó] (un |el )?gol\b|\banot[oó] (un |el )?gol\b|\bmete(s)? (un )?gol\b/.test(text)) {
+      update.goals = 1;
+    }
 
-  if (assistsMatch) {
-    const n = parseInt(assistsMatch[1], 10);
-    if (n > 0) update.assists = n;
-  } else if (/\bdas? una asistencia\b|\bpase de gol\b/.test(text)) {
-    update.assists = 1;
-  }
+    if (assistsMatch) {
+      const n = parseInt(assistsMatch[1], 10);
+      if (n > 0) update.assists = n;
+    } else if (/\bdas? una asistencia\b|\bpase de gol\b/.test(text)) {
+      update.assists = 1;
+    }
 
-  if (minutesMatch) {
-    update.minutes_played = parseInt(minutesMatch[1], 10);
-  } else if (text.includes("partido completo") || text.includes("los 90 minutos")) {
-    update.minutes_played = 90;
-  }
+    if (minutesMatch) {
+      update.minutes_played = parseInt(minutesMatch[1], 10);
+    } else if (text.includes("partido completo") || text.includes("los 90 minutos")) {
+      update.minutes_played = 90;
+    }
 
-  // Tarjetas: frases concretas, no la palabra suelta (evita falsos
-  // positivos con "amarilla"/"roja" usadas fuera de contexto de tarjeta)
-  if (/tarjeta roja|expulsad[oa]/.test(text)) {
-    update.red_cards = 1;
-  } else if (/tarjeta amarilla/.test(text)) {
-    update.yellow_cards = 1;
+    // Tarjetas: frases concretas, no la palabra suelta (evita falsos
+    // positivos con "amarilla"/"roja" usadas fuera de contexto de tarjeta)
+    if (/tarjeta roja|expulsad[oa]/.test(text)) {
+      update.red_cards = 1;
+    } else if (/tarjeta amarilla/.test(text)) {
+      update.yellow_cards = 1;
+    }
   }
 
   // Títulos: exige lenguaje explícito de VICTORIA, no solo mencionar el

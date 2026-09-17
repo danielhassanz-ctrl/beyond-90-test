@@ -1,4 +1,5 @@
 import type { Player } from "@/types/player";
+import { displayName } from "@/types/player";
 import { computeCareerStats } from "@/lib/careerStats";
 
 const POSITION_ABBR: Record<string, string> = {
@@ -109,7 +110,7 @@ export function CareerStatCard({ player }: { player: Player }) {
 
       <div className="mt-5 flex items-center justify-between border-t border-amber-500/20 pt-3 text-[10px] text-neutral-500">
         <span>Beyond 90</span>
-        <span className="font-semibold uppercase text-amber-300">{player.last_name}</span>
+        <span className="font-semibold uppercase text-amber-300">{displayName(player)}</span>
       </div>
     </div>
   );

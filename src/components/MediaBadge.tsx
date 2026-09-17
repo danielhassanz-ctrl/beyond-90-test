@@ -4,24 +4,28 @@ function mediaColor(value: number) {
     border: "border-emerald-400/80",
     bg: "from-emerald-500/10 to-emerald-600/10",
     glow: "shadow-lg shadow-emerald-500/40",
+    ring: "#34d399",
   };
   if (value >= 60) return {
     text: "text-gold",
     border: "border-gold/80",
     bg: "from-amber-500/10 to-amber-600/10",
     glow: "shadow-lg shadow-amber-500/40",
+    ring: "#d4af37",
   };
   if (value >= 45) return {
     text: "text-amber-300",
     border: "border-amber-400/80",
     bg: "from-amber-500/5 to-orange-600/5",
     glow: "shadow-lg shadow-amber-500/30",
+    ring: "#fbbf24",
   };
   return {
     text: "text-red-300",
     border: "border-red-400/80",
     bg: "from-red-500/5 to-red-600/5",
     glow: "shadow-lg shadow-red-500/20",
+    ring: "#f87171",
   };
 }
 
@@ -37,7 +41,11 @@ export function MediaBadge({ value }: { value: number }) {
     <div
       className={`relative flex h-16 w-16 flex-col items-center justify-center rounded-full border-2 leading-none transition-all duration-300 ${colors.border} ${colors.glow}`}
       style={{
-        background: `conic-gradient(${colors.border.replace("border-", "").replace("/80", "")} ${rating}%, transparent 0)`,
+        // Antes se intentaba sacar el color directamente del nombre de la
+        // clase de Tailwind ("border-emerald-400/80" → "emerald-400"),
+        // pero eso no es un color CSS válido — el degradado nunca llegó a
+        // pintarse, el anillo de progreso estaba roto desde siempre.
+        background: `conic-gradient(${colors.ring} ${rating}%, transparent 0)`,
       }}
       title={`Media futbolística: ${value}/100`}
     >

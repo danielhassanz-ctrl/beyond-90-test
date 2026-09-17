@@ -11,12 +11,35 @@ export interface SecondaryCharacter {
   club?: string; // donde está ahora o estaba
 }
 
+// Ampliado desde el pool de 6-8 nombres original con el banco más grande
+// que ya existía en narrative-content.ts (24 por categoría) pero que
+// nunca se conectó aquí — con solo 6-8 nombres, cualquier carrera larga
+// empezaba a repetir "Javi" o "Laura" para gente completamente distinta.
 const SECONDARY_CHARACTER_NAMES: Record<string, string[]> = {
-  amigo_infancia: ["Javi", "Carlos", "Miguel", "Sergio", "David", "Pablo", "Álvaro", "Dani"],
-  rival_cantera: ["Rafa", "Iñigo", "Adrián", "Jon", "Joselu", "Saúl", "Lucas", "Iker"],
-  entrenador_viejo: ["Don Luis", "Pepe Murcia", "Rafael López", "Miguel Ángel", "Manolo", "Carlos Díaz"],
-  expareja: ["Laura", "María", "Andrea", "Elena", "Sofía", "Carolina"],
-  compañero_primeros_años: ["Borja", "Juanma", "Fernando", "Diego", "Tomás", "Héctor"],
+  amigo_infancia: [
+    "Javi", "Carlos", "Miguel", "Sergio", "David", "Pablo", "Álvaro", "Dani",
+    "Javier", "Rubén", "Iñaki", "Xabi", "Aitor", "Jon", "Mikel", "Gorka",
+    "Edu", "Fran", "Nacho", "Luismi", "Roberto", "Jesús", "Antonio", "Vicente",
+  ],
+  rival_cantera: [
+    "Rafa", "Iñigo", "Adrián", "Jon", "Joselu", "Saúl", "Lucas", "Iker",
+    "Borja", "Diego", "Héctor", "Tomás", "Fernando", "Juanma", "Mateo",
+    "Raúl", "Enrique", "Óscar", "Marcos",
+  ],
+  entrenador_viejo: [
+    "Don Luis", "Pepe Murcia", "Rafael López", "Miguel Ángel", "Manolo", "Carlos Díaz",
+    "Paco González", "Vicente Moreno", "Juan Carlos", "Ernesto", "Jesús Gil", "Paco Jémez",
+  ],
+  expareja: [
+    "Laura", "María", "Andrea", "Elena", "Sofía", "Carolina", "Isabel", "Teresa",
+    "Cristina", "Beatriz", "Alejandra", "Natalia", "Victoria", "Patricia", "Lucía", "Marta",
+    "Rosa", "Ana", "Esther", "Lorena", "Verónica", "Paloma", "Rocío", "Silvia",
+  ],
+  compañero_primeros_años: [
+    "Borja", "Juanma", "Fernando", "Diego", "Tomás", "Héctor", "Raúl", "Óscar",
+    "Mateo", "Enrique", "Roberto", "Javier", "Dani", "Fran", "Nacho", "Pepe",
+    "Quique", "Edu", "José", "Vicente", "Rubén",
+  ],
 };
 
 /**
@@ -26,9 +49,9 @@ const SECONDARY_CHARACTER_NAMES: Record<string, string[]> = {
  */
 export function trackSecondaryCharacter(
   player: Player,
-  characterType: string,
+  characterType: SecondaryCharacter["type"],
   characterName: string,
-  relationship: string,
+  relationship: SecondaryCharacter["relationship"],
   club?: string,
 ): Player {
   if (!player.flags) player.flags = {};
@@ -37,10 +60,10 @@ export function trackSecondaryCharacter(
   const char: SecondaryCharacter = {
     id: charKey,
     name: characterName,
-    type: characterType as any,
+    type: characterType,
     introducedWeek: player.week,
     lastSeenWeek: player.week,
-    relationship: relationship as any,
+    relationship,
     club,
   };
 
@@ -50,18 +73,20 @@ export function trackSecondaryCharacter(
 
 /**
  * Lee todos los personajes secundarios del jugador del historial.
- * OPTIMIZACIÓN: caching para no parsear JSON cada vez
+ *
+ * Antes esto se cacheaba en un Map en memoria del proceso, indexado por
+ * player.id (mismo patrón, y mismo bug, que tenía getAdversityTracker en
+ * adversity.ts). En un entorno serverless un mismo proceso puede atender
+ * varias peticiones seguidas, y encima nada invalidaba la caché al
+ * introducir un personaje nuevo (trackSecondaryCharacter nunca la
+ * tocaba) — un personaje recién guardado en player.flags podía quedar
+ * invisible para pickCharacterToReappear durante el resto de vida de esa
+ * instancia caliente, porque getSecondaryCharacters seguía devolviendo
+ * la lista vieja cacheada. El JSON.parse de un puñado de flags pequeños
+ * no compensa ese riesgo: mejor leer siempre el valor fresco.
  */
-const characterCache = new Map<string, SecondaryCharacter[]>();
-
 export function getSecondaryCharacters(player: Player): SecondaryCharacter[] {
   if (!player.flags) return [];
-
-  // Cache check por player ID
-  const cacheKey = player.id;
-  if (characterCache.has(cacheKey)) {
-    return characterCache.get(cacheKey)!;
-  }
 
   const characters: SecondaryCharacter[] = [];
   for (const [key, value] of Object.entries(player.flags)) {
@@ -74,16 +99,7 @@ export function getSecondaryCharacters(player: Player): SecondaryCharacter[] {
     }
   }
 
-  // Cache for this player
-  characterCache.set(cacheKey, characters);
   return characters;
-}
-
-/**
- * Invalida cache cuando se actualiza un personaje (rara operación)
- */
-function invalidateCache(playerId: string): void {
-  characterCache.delete(playerId);
 }
 
 /**
@@ -126,7 +142,10 @@ export function describeCharacterReappearance(
 ): string {
   const age = playerAge(player.week);
   const weeksSinceLastSeen = player.week - character.lastSeenWeek;
-  const yearsSince = Math.floor(weeksSinceLastSeen / 52);
+  // 10 semanas = 1 año en la escala del juego (ver playerAge en
+  // types/career.ts), no 52 — con /52 alguien ausente 100 semanas (10
+  // años de verdad en esta escala) salía diciendo "ha pasado 1 año".
+  const yearsSince = Math.floor(weeksSinceLastSeen / 10);
 
   const typeDescriptions: Record<string, string> = {
     amigo_infancia:
@@ -160,7 +179,6 @@ export function updateCharacterLastSeen(
         if (char.id === characterId) {
           char.lastSeenWeek = player.week;
           player.flags[key] = JSON.stringify(char);
-          invalidateCache(player.id);
           break;
         }
       } catch {

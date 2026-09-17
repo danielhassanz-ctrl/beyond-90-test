@@ -1,4 +1,5 @@
 import type { GameEvent, SecondCareerRole } from "@/types/career";
+import { SECOND_CAREER_LABELS } from "@/types/career";
 
 function buildEntrenadorPrimerDia(club: string | null): GameEvent {
   return {
@@ -119,6 +120,8 @@ const ENTRENADOR_EVENTS: GameEvent[] = [
     description: "Tras una buena racha, un club de mayor nivel se interesa en tu perfil como entrenador.",
     isMilestone: true,
     milestoneType: "ascenso_entrenador",
+    imageScene:
+      "Photorealistic photo of the photographed man in a formal coaching tracksuit, being approached by a club director in a suit outside a modern stadium, respectful and promising atmosphere",
     options: [
       {
         id: "a",
@@ -239,6 +242,14 @@ const ENTRENADOR_EVENTS: GameEvent[] = [
       "La federación te sondea de forma discreta para hacerte cargo del banquillo de la selección absoluta tras el próximo torneo. Es la oferta más grande de tu carrera como entrenador.",
     isMilestone: true,
     milestoneType: "seleccion",
+    // "seleccion" como milestoneType, sin imageScene propia, caía en el
+    // mapa genérico pensado para el JUGADOR activo (debut_internacional:
+    // "footballer con la camiseta de la selección") — pero aquí quien
+    // habla es el entrenador, no un jugador debutando. Sin esta escena
+    // propia, la foto generada no tenía nada que ver con lo que pasa en
+    // el evento.
+    imageScene:
+      "Photorealistic photo of the photographed man in a formal coaching tracksuit, sitting across a table from national federation officials in a serious meeting room, national federation crest visible on the wall, discreet and important atmosphere",
     options: [
       {
         id: "a",
@@ -323,6 +334,12 @@ const AGENTE_EVENTS: GameEvent[] = [
     description: "Tienes la chance de cerrar el traspaso de tu mejor cliente a un club grande.",
     isMilestone: true,
     milestoneType: "fichaje_agente",
+    // Sin imageScene propia, esto caía en el mapa genérico pensado para
+    // el JUGADOR activo firmando SU PROPIO contrato — pero aquí el
+    // fotografiado es el AGENTE (tú, retirado) cerrando el traspaso de
+    // OTRO jugador. La dirección de la escena estaba invertida.
+    imageScene:
+      "Photorealistic photo of the photographed man in a sharp suit finalizing a transfer deal in a club boardroom, club officials and paperwork on the table, confident closing-the-deal atmosphere",
     options: [
       {
         id: "a",
@@ -424,6 +441,8 @@ const AGENTE_EVENTS: GameEvent[] = [
       "Dos de los clubes más grandes de Europa quieren a tu mejor jugador a la vez. Cada uno te ofrece condiciones distintas, y tú decides cómo jugar la negociación.",
     isMilestone: true,
     milestoneType: "puja_agente",
+    imageScene:
+      "Photorealistic photo of the photographed man in a sharp suit on the phone in a busy modern office, multiple screens with football club logos and figures in the background, high-stakes negotiation energy",
     options: [
       {
         id: "a",
@@ -692,6 +711,8 @@ const PRESIDENTE_EVENTS: GameEvent[] = [
     description: "Te ofrecen una cifra enorme por una parte mayoritaria del club que ayudaste a construir.",
     isMilestone: true,
     milestoneType: "oferta_fondo",
+    imageScene:
+      "Photorealistic photo of the photographed man in a suit in a boardroom meeting, investment fund representatives across the table with documents and a laptop, tense negotiation atmosphere",
     options: [
       {
         id: "a",
@@ -848,6 +869,8 @@ const PRESIDENTE_EVENTS: GameEvent[] = [
       "Un empresario con una fortuna descomunal te propone algo distinto a vender: inyectar dinero ilimitado en fichajes durante años, a cambio de tener la última palabra en cada operación importante.",
     isMilestone: true,
     milestoneType: "inversor",
+    imageScene:
+      "Photorealistic photo of the photographed man in a suit shaking hands with a wealthy businessman in an elegant office, city skyline through the windows, a sense of a life-changing deal being made",
     options: [
       {
         id: "a",
@@ -907,6 +930,12 @@ const PRESIDENTE_EVENTS: GameEvent[] = [
     description: "Construyes una cantera de élite europea, buscando formar talentos desde los 8 años en lugar de comprarlos a los 25.",
     isMilestone: true,
     milestoneType: "cantera_propia",
+    // Sin imageScene propia, "cantera_propia" caía en el mapa genérico
+    // que lo traduce a "trofeo_levantando" (un footballer levantando una
+    // copa) — nada que ver con presidir la inauguración de una academia
+    // de cantera. Bug encontrado por inspección del mapa de tipos.
+    imageScene:
+      "Photorealistic photo of the photographed man in a suit inaugurating a modern youth football academy, cutting a ribbon or shaking hands with young academy players, training pitches visible in the background, proud atmosphere",
     options: [
       {
         id: "a",
@@ -1082,8 +1111,65 @@ const EXTRA_PRESIDENTE_EVENTS: GameEvent[] = [
   },
 ];
 
+// Red de seguridad para cuando la IA falla (generateSecondLifeEvent en
+// ai.ts es el camino normal para estos cuatro roles, que sí tienen
+// contexto propio en SECOND_LIFE_CONTEXT). Antes, cualquier rol que no
+// fuera entrenador/agente caía en el pool de PRESIDENTE por defecto — un
+// comentarista o alguien en vida privada podía recibir "asumes la
+// presidencia del club" como fallback, y sin este cambio, elegir
+// comentarista/empresario/embajador/privado ni siquiera era posible
+// (ver segunda-vida/elegir/actions.ts).
+function buildGenericSecondLifeFallback(role: SecondCareerRole, club: string | null): GameEvent[] {
+  const roleLabel = SECOND_CAREER_LABELS[role];
+  return [
+    {
+      id: `sv-${role}-primer-dia`,
+      category: "segunda_vida",
+      title: `Tu primer día como ${roleLabel.toLowerCase()}`,
+      description: `Dejaste el fútbol como jugador, pero no del todo: ahora empiezas esta nueva etapa${club ? ` ligado al ${club}` : ""}. Todo el mundo tiene una opinión sobre si vas a estar a la altura.`,
+      options: [
+        {
+          id: "a",
+          label: "Apoyarte en lo que ya construiste como jugador",
+          subtitle: "Tu nombre abre puertas",
+          consequences: { reputacion: 5 },
+        },
+        {
+          id: "b",
+          label: "Demostrar que vales por ti mismo, no por tu pasado",
+          subtitle: "Más lento, más genuino",
+          consequences: { reputacion: 2, moral: 3 },
+        },
+      ],
+      allowFreeText: true,
+      freeTextPrompt: "¿Qué sientes al empezar de cero, en un terreno que no es el campo?",
+    },
+    {
+      id: `sv-${role}-balance`,
+      category: "segunda_vida",
+      title: "Un momento de balance",
+      description: `Llevas un tiempo en esto. Todavía te preguntan por tu carrera como jugador más que por lo que haces ahora — ${roleLabel.toLowerCase()}. Tienes que decidir cómo llevarlo.`,
+      options: [
+        {
+          id: "a",
+          label: "Aceptarlo: siempre serás, primero, el futbolista que fuiste",
+          subtitle: "Paz con el pasado",
+          consequences: { moral: 6 },
+        },
+        {
+          id: "b",
+          label: "Trabajar el doble para que te valoren por esto, no por aquello",
+          subtitle: "Ambición renovada",
+          consequences: { reputacion: 4, moral: -1 },
+        },
+      ],
+    },
+  ];
+}
+
 export function getSecondLifeEvents(role: SecondCareerRole, club: string | null): GameEvent[] {
   if (role === "entrenador") return [buildEntrenadorPrimerDia(club), ...ENTRENADOR_EVENTS, ...EXTRA_ENTRENADOR_EVENTS];
   if (role === "agente") return [...AGENTE_EVENTS, ...EXTRA_AGENTE_EVENTS];
-  return [buildPresidenteAsumir(club), ...PRESIDENTE_EVENTS, ...EXTRA_PRESIDENTE_EVENTS];
+  if (role === "presidente") return [buildPresidenteAsumir(club), ...PRESIDENTE_EVENTS, ...EXTRA_PRESIDENTE_EVENTS];
+  return buildGenericSecondLifeFallback(role, club);
 }

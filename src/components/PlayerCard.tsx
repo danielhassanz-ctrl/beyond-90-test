@@ -6,9 +6,12 @@ import { ClubCrest } from "./ClubCrest";
  * Tarjeta de jugador estilo "carta de cromo" (FIFA/FUT): foto a sangre,
  * dorsal grande, nombre en placa inferior. Se usa como visual por defecto
  * para los hitos que no tienen una imagen generada por IA propia — así
- * siempre hay algo bonito que compartir, con o sin foto. Se tiñe con los
- * colores reales del club y lleva su escudo, para que no se sienta como
- * "tu cara sola" sino como parte del equipo del momento.
+ * siempre hay algo bonito que compartir, con o sin foto. El color del
+ * club se queda en el borde, la cinta y el escudo — la foto real del
+ * jugador se ve tal cual, sin teñirla. Antes llevaba un degradado de los
+ * colores del club de fondo MÁS mix-blend-luminosity sobre la foto (para
+ * que combinaran), pero el resultado era una foto irreconocible bajo un
+ * lavado de color — pedido explícito de quitarlo.
  */
 export function PlayerCard({
   photoUrl,
@@ -31,21 +34,17 @@ export function PlayerCard({
 
   return (
     <div
-      className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border-2 shadow-[0_0_50px_-10px_rgba(245,183,64,0.35)]"
+      className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border-2 bg-neutral-900 shadow-[0_0_50px_-10px_rgba(245,183,64,0.35)]"
       style={{ borderColor: `${colors.primary}CC` }}
     >
-      <div
-        className="absolute inset-0"
-        style={{ background: `linear-gradient(160deg, ${colors.primary}, ${colors.secondary})` }}
-      />
       {photoUrl ? (
-        <Image src={photoUrl} alt={name} fill className="object-cover object-top mix-blend-luminosity" />
-      ) : null}
-      <div
-        className="absolute inset-0"
-        style={{ background: `linear-gradient(160deg, ${colors.primary}55, ${colors.secondary}77)` }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/10" />
+        <Image src={photoUrl} alt={name} fill className="object-cover object-top" />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center opacity-30">
+          <ClubCrest club={club} size={140} />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
 
       <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 px-3 pt-3">
         <span className="whitespace-nowrap rounded-full border border-amber-400/60 bg-black/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-amber-300 backdrop-blur">

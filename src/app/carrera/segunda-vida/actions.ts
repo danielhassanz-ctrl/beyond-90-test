@@ -1,9 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { applyConsequences, nextWeekGap, resolveOption } from "@/lib/narrative/engine";
 import { SECOND_LIFE_TARGET_WEEKS } from "@/types/career";
 import { getCurrentUserAndPlayer } from "@/lib/player";
+import { generatePlayerImage } from "@/lib/images/replicate";
+import { uploadGeneratedImage } from "@/lib/images/upload";
+import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
 
 export async function resolveSecondLifeEvent(formData: FormData) {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
@@ -55,7 +59,17 @@ export async function resolveSecondLifeEvent(formData: FormData) {
     .select("id")
     .single();
 
+  // La segunda vida (entrenador/agente/presidente) tiene una docena de
+  // hitos con su propia imageScene ya escrita (fichaje galáctico, título
+  // como presidente, Salón de la Fama...) pero nunca se generaba ninguna
+  // foto para ellos — solo la carrera principal tenía el pipeline de
+  // imagen conectado. Se cablea aquí el mismo mecanismo (cuota, foto en
+  // segundo plano con after(), estado pending/ready/failed).
   let milestoneId: string | null = null;
+  const willAttemptImage = milestoneAchieved && Boolean(player.photo_url) && Boolean(event.imageScene);
+  const quota = willAttemptImage ? await checkImageGenerationQuota(supabase, user.id) : null;
+  const willGenerate = willAttemptImage && quota?.allowed === true;
+
   if (milestoneAchieved) {
     const { data: milestone } = await supabase
       .from("milestones")
@@ -65,10 +79,53 @@ export async function resolveSecondLifeEvent(formData: FormData) {
         type: event.milestoneType ?? "hito",
         title: event.title,
         subtitle: outcomeText ?? option.subtitle,
+        image_url: null,
+        image_status: willGenerate ? "pending" : "none",
       })
       .select("id")
       .single();
     milestoneId = milestone?.id ?? null;
+
+    if (milestoneId && willGenerate) {
+      const finalMilestoneId = milestoneId;
+      const finalPrompt = event.imageScene as string;
+      const finalPhotoUrl = player.photo_url as string;
+      const finalUserId = user.id;
+      const finalPlayerId = player.id;
+
+      after(async () => {
+        try {
+          const buffer = await generatePlayerImage(finalPhotoUrl, finalPrompt);
+          if (!buffer) {
+            await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
+            return;
+          }
+
+          await logImageGeneration(supabase, finalUserId);
+
+          const [evolvedUrl, milestoneImageUrl] = await Promise.all([
+            uploadGeneratedImage(supabase, finalUserId, buffer, "look"),
+            uploadGeneratedImage(supabase, finalUserId, buffer, "milestone"),
+          ]);
+
+          if (evolvedUrl) {
+            await supabase.from("players").update({ current_photo_url: evolvedUrl }).eq("id", finalPlayerId);
+          }
+
+          if (milestoneImageUrl) {
+            await supabase
+              .from("milestones")
+              .update({ image_url: milestoneImageUrl, image_status: "ready" })
+              .eq("id", finalMilestoneId);
+          } else {
+            await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
+          }
+        } catch (err) {
+          console.error(`[resolveSecondLifeEvent:after] Exception generating image for milestone ${finalMilestoneId}:`, err);
+          await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
+        }
+      });
+    }
   }
 
   await supabase

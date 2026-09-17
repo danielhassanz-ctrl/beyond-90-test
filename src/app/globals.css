@@ -1,27 +1,119 @@
 @import "tailwindcss";
 
+/*
+ * Sistema de diseño calcado del prototipo de referencia (colores exactos
+ * en oklch, radios, tipografías) — no una aproximación con nuestra
+ * paleta anterior. Los nombres antiguos (--panel, --panel-border) se
+ * mantienen apuntando a los nuevos valores para no romper componentes
+ * que todavía no se han migrado.
+ */
 :root {
-  --background: #0a0a0f;
-  --foreground: #f5f2ea;
-  --gold: #d4af37;
-  --gold-soft: #e8c766;
-  --panel: #14141b;
-  --panel-border: #2a2a35;
+  --radius: 0.9rem;
+  --background: oklch(14% 0.008 260);
+  --foreground: oklch(96% 0.006 90);
+  --surface: oklch(19% 0.01 260);
+  --surface-2: oklch(24% 0.012 260);
+  --card: oklch(19% 0.01 260);
+  --card-foreground: oklch(96% 0.006 90);
+  --gold: oklch(81% 0.14 86);
+  --gold-soft: oklch(66% 0.11 80);
+  --pitch: oklch(72% 0.17 152);
+  --pitch-soft: oklch(55% 0.12 155);
+  --primary: oklch(81% 0.14 86);
+  --primary-foreground: oklch(16% 0.01 90);
+  --accent: oklch(72% 0.17 152);
+  --accent-foreground: oklch(16% 0.01 150);
+  --muted: oklch(24% 0.01 260);
+  --muted-foreground: oklch(70% 0.012 260);
+  --destructive: oklch(62% 0.2 25);
+  --destructive-foreground: oklch(97% 0.01 90);
+  --border: oklch(98% 0 0 / 0.1);
+  --input: oklch(98% 0 0 / 0.14);
+  --ring: oklch(81% 0.14 86 / 0.6);
+  --gradient-gold: linear-gradient(135deg, var(--gold), var(--gold-soft));
+  --gradient-pitch: linear-gradient(135deg, var(--pitch), var(--pitch-soft));
+  --gradient-night: linear-gradient(180deg, oklch(19% 0.01 260), oklch(13% 0.008 260));
+  --shadow-cinema: 0 24px 60px -24px oklch(0% 0 0 / 0.8);
+  --shadow-gold: 0 12px 40px -14px oklch(81% 0.14 86 / 0.35);
+
+  /* Nombres antiguos, para componentes aún sin migrar */
+  --panel: var(--surface);
+  --panel-border: var(--border);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
+  --color-pitch: var(--pitch);
+  --color-pitch-soft: var(--pitch-soft);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-panel: var(--panel);
   --color-panel-border: var(--panel-border);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --radius-lg: var(--radius);
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-archivo-black);
+  --font-cond: var(--font-barlow-condensed);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), system-ui, sans-serif;
+}
+
+/* Utilidades calcadas del prototipo de referencia */
+.font-display {
+  font-family: var(--font-archivo-black), "Arial Black", sans-serif;
+}
+
+.font-cond {
+  font-family: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  font-weight: 700;
+}
+
+.font-num {
+  font-family: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.text-kicker {
+  font-family: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.gold-text {
+  font-family: var(--font-archivo-black), "Arial Black", sans-serif;
+  background-image: var(--gradient-gold);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.gold-fill {
+  background-image: var(--gradient-gold);
+}
+
+.pitch-fill {
+  background-image: var(--gradient-pitch);
 }

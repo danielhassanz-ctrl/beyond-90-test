@@ -25,7 +25,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "confiar",
         label: "Confiar en su instinto: firmar con él",
         subtitle: "Alguien cree en ti cuando nadie más lo hace",
-        consequences: { agent_name: "Cazatalentos desconocido", moral: 5, rel_representante: 4 },
+        consequences: { agent_name: "Iñaki Zubiaurre", moral: 5, rel_representante: 4 },
       },
       {
         id: "dudar",
@@ -49,7 +49,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "apostar",
         label: "Apostar juntos en el riesgo",
         subtitle: "Dos desconocidos haciendo historia",
-        consequences: { agent_name: "Agente joven", moral: 7, rel_representante: 5, fama: 1 },
+        consequences: { agent_name: "Diego Marín", moral: 7, rel_representante: 5, fama: 1 },
       },
       {
         id: "seguridad",
@@ -71,7 +71,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "confianza",
         label: "Firmar con el exjugador que conoce tu padre",
         subtitle: "Alguien que falló pero aprendió",
-        consequences: { agent_name: "Exjugador experimentado", moral: 6, rel_representante: 4, rel_entrenador: 1 },
+        consequences: { agent_name: "Ramón Elizalde", moral: 6, rel_representante: 4, rel_entrenador: 1 },
       },
       {
         id: "independencia",
@@ -93,7 +93,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "ambicioso",
         label: "Firmar y soñar en grande: ir al extranjero",
         subtitle: "Internacionalidad desde el día uno",
-        consequences: { agent_name: "Agente internacional", moral: 8, fama: 2, rel_representante: 3 },
+        consequences: { agent_name: "Sergio Falcón", moral: 8, fama: 2, rel_representante: 3 },
       },
       {
         id: "cauto",
@@ -185,19 +185,19 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "agresivo",
         label: "El agresivo: garantiza oportunidades rápido",
         subtitle: "Puede ser efectivo o quemarte",
-        consequences: { agent_name: "Agente agresivo", moral: 4, fama: 3, rel_representante: 2 },
+        consequences: { agent_name: "Bruno Cabrera", moral: 4, fama: 3, rel_representante: 2 },
       },
       {
         id: "suave",
         label: "El suave: paciencia, relaciones a largo plazo",
         subtitle: "Lento pero sólido",
-        consequences: { agent_name: "Agente paciente", moral: 5, rel_representante: 4 },
+        consequences: { agent_name: "Teodoro Vidal", moral: 5, rel_representante: 4 },
       },
       {
         id: "profesional",
         label: "El profesional: claridad absoluta en contratos",
         subtitle: "Sin sorpresas, sin emociones",
-        consequences: { agent_name: "Agente profesional", moral: 3, patrimonio: 5000, rel_representante: 3 },
+        consequences: { agent_name: "Marta Ochoa", moral: 3, patrimonio: 5000, rel_representante: 3 },
       },
     ],
   },
@@ -211,15 +211,15 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
     options: [
       {
         id: "hermano1",
-        label: "Hermano A: Reputación de cobrador de deudas",
+        label: "Gonzalo Prieto: reputación de cobrador de deudas",
         subtitle: "Agresivo pero efectivo",
-        consequences: { agent_name: "Hermano A", moral: -2, fama: 2, patrimonio: 2000 },
+        consequences: { agent_name: "Gonzalo Prieto", moral: -2, fama: 2, patrimonio: 2000 },
       },
       {
         id: "hermano2",
-        label: "Hermano B: Reputación de traidor",
+        label: "Adrián Prieto: reputación de traidor",
         subtitle: "Flexible pero impredecible",
-        consequences: { agent_name: "Hermano B", moral: 0, rel_representante: 2 },
+        consequences: { agent_name: "Adrián Prieto", moral: 0, rel_representante: 2 },
       },
     ],
   },
@@ -236,7 +236,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "aceptar",
         label: "Aceptar sus métodos oscuros por resultados",
         subtitle: "Éxito rápido, moralidad gris",
-        consequences: { agent_name: "Agente lobista", moral: -5, fama: 2, patrimonio: 5000, rel_representante: -1 },
+        consequences: { agent_name: "Fabio Reyes", moral: -5, fama: 2, patrimonio: 5000, rel_representante: -1 },
       },
       {
         id: "rechazar",
@@ -258,7 +258,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "ayudar",
         label: "Darle una oportunidad: ambos se levantan juntos",
         subtitle: "Empatía sobre lógica",
-        consequences: { agent_name: "Agente fracasado", moral: 7, rel_representante: 3, forma: -1 },
+        consequences: { agent_name: "Julián Contreras", moral: 7, rel_representante: 3, forma: -1 },
       },
       {
         id: "evitar",
@@ -303,7 +303,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "celebrity",
         label: "Abrazar la celebridad: marca personal + fútbol",
         subtitle: "Dinero rápido, foco dividido",
-        consequences: { agent_name: "Agente de marca", moral: -1, fama: 8, patrimonio: 10000 },
+        consequences: { agent_name: "Valeria Sáenz", moral: -1, fama: 8, patrimonio: 10000 },
       },
       {
         id: "jugador",
@@ -325,7 +325,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "aceptar",
         label: "Aceptar: confianza en la institución",
         subtitle: "Camino seguro y trazado",
-        consequences: { agent_name: "Agente del club", moral: 4, rel_entrenador: 5, rel_representante: 2 },
+        consequences: { agent_name: "Pablo Mendive", moral: 4, rel_entrenador: 5, rel_representante: 2 },
       },
       {
         id: "independencia",
@@ -347,7 +347,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "global",
         label: "Apuntar global: Bundesliga a los 16",
         subtitle: "Ambición máxima",
-        consequences: { agent_name: "Agente alemán", moral: 6, fama: 3, forma: 1 },
+        consequences: { agent_name: "Klaus Brandt", moral: 6, fama: 3, forma: 1 },
       },
       {
         id: "local",
@@ -369,7 +369,7 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
         id: "minimalista",
         label: "Firmar con él: atención total, sin distracciones",
         subtitle: "Menos conexiones, más dedicación",
-        consequences: { agent_name: "Agente minimalista", moral: 7, rel_representante: 6 },
+        consequences: { agent_name: "Rubén Castell", moral: 7, rel_representante: 6 },
       },
       {
         id: "visible",
@@ -383,7 +383,10 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
 
 export function getRandomFirstSigningVariant(): GameEvent {
   const variant = FIRST_SIGNING_VARIANTS[Math.floor(Math.random() * FIRST_SIGNING_VARIANTS.length)];
-  // Es la carta de presentación del juego: siempre genera tarjeta compartible
-  // (foto contextual junto al representante), sea cual sea la decisión.
-  return { ...variant, isMilestone: true, milestoneType: "representante" };
+  // Elegir representante no es un momento extraordinario en sí — el
+  // primer hito compartible de verdad llega con la firma real del
+  // contrato (generateContractEvent), no aquí. Antes esto generaba
+  // tarjeta compartible siempre, el primer paso de la carrera, lo que
+  // saturaba de "momentos destacados" desde el primer minuto.
+  return { ...variant, milestoneType: "representante" };
 }

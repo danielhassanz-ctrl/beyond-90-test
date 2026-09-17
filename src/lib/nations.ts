@@ -68,11 +68,24 @@ function normalize(value: string): string {
     .toLowerCase();
 }
 
+// Las listas de arriba tienen alguna entrada escrita con tilde/eñe
+// ("españa") que nunca coincidía contra el texto YA normalizado del
+// jugador ("espana") — comparar "espana" contra "españa" tal cual es
+// simplemente falso, letra por letra. Con esto, CUALQUIER jugador con
+// nacionalidad "España" (la más común con diferencia, siendo un juego en
+// castellano) quedaba excluido para siempre de la Eurocopa y su
+// clasificación — el bug más grave posible en este archivo, justo en el
+// caso más frecuente. Normalizando también las listas de una vez, este
+// tipo de error no puede volver a colarse aunque alguien añada otra
+// entrada con acentos en el futuro.
+const UEFA_NATIONS_NORMALIZED = UEFA_NATIONS.map(normalize);
+const CONMEBOL_NATIONS_NORMALIZED = CONMEBOL_NATIONS.map(normalize);
+
 export type Confederation = "UEFA" | "CONMEBOL";
 
 export function getConfederation(nation: string): Confederation | null {
   const normalized = normalize(nation);
-  if (UEFA_NATIONS.includes(normalized)) return "UEFA";
-  if (CONMEBOL_NATIONS.includes(normalized)) return "CONMEBOL";
+  if (UEFA_NATIONS_NORMALIZED.includes(normalized)) return "UEFA";
+  if (CONMEBOL_NATIONS_NORMALIZED.includes(normalized)) return "CONMEBOL";
   return null;
 }

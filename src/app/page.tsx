@@ -65,21 +65,8 @@ export default async function Home() {
   }
 
   return (
-    <main className="relative flex flex-1 flex-col overflow-hidden bg-neutral-950">
-      <div className="absolute inset-0">
-        <Image
-          src="/hero-tunnel.jpg"
-          alt="Futbolista de espaldas con la camiseta de Beyond 90 en el túnel de vestuarios"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-top"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/20 via-transparent to-neutral-950/60" />
-        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-neutral-950 to-transparent" />
-      </div>
-
-      <div className="relative z-10 flex flex-1 flex-col items-center px-6 py-12 text-center sm:py-16">
+    <main className="flex flex-1 flex-col overflow-hidden bg-neutral-950">
+      <div className="flex flex-1 flex-col items-center px-6 py-12 text-center sm:py-16">
         {/* Logo y tagline */}
         <div className="space-y-2">
           <p className="text-5xl sm:text-6xl">⚽</p>
@@ -100,8 +87,46 @@ export default async function Home() {
           <span className="font-semibold">Cada decisión importa.</span>
         </p>
 
+        {/* Foto del jugador PRIMERO — vende la fantasía visual antes de
+            pedir la acción, patrón habitual de portada de videojuego.
+            Bloque normal de la página (no fondo a pantalla completa) con
+            su proporción real (768×1344), para que nunca se recorte la
+            figura entera — en ventanas anchas y bajas "object-cover" a
+            pantalla completa dejaba fuera al jugador por completo. */}
+        <div className="relative mt-6 w-full max-w-sm aspect-[768/1344] overflow-hidden rounded-2xl border border-amber-500/20">
+          <Image
+            src="/hero-tunnel.jpg"
+            alt="Futbolista de espaldas con la camiseta de Beyond 90 en el túnel de vestuarios"
+            fill
+            priority
+            sizes="(max-width: 640px) 100vw, 384px"
+            className="object-cover object-top"
+          />
+          <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-neutral-950/40 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-neutral-950 to-transparent" />
+        </div>
+
+        {/* CTA principal, justo debajo de la foto */}
+        <div className="mt-6 w-full max-w-sm space-y-3">
+          <Link
+            href="/crear-jugador"
+            className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-gold to-amber-500 px-6 py-3 text-sm font-bold uppercase tracking-wide text-neutral-950 hover:from-amber-400 hover:to-amber-600 transition-all shadow-lg hover:shadow-amber-500/50"
+          >
+            <span className="text-lg">⭐</span>
+            Nueva carrera
+          </Link>
+
+          <Link
+            href="/login"
+            className="flex items-center justify-center gap-2 rounded-lg border-2 border-gold bg-neutral-950/50 px-6 py-3 text-sm font-bold uppercase tracking-wide text-gold hover:bg-gold/10 hover:border-amber-400 transition-all"
+          >
+            <span className="text-lg">👤</span>
+            Iniciar sesión
+          </Link>
+        </div>
+
         {/* Features grid mejorado */}
-        <div className="mt-10 w-full max-w-sm space-y-4">
+        <div className="mt-8 w-full max-w-sm space-y-4">
           <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
             Lo que incluye
           </p>
@@ -123,34 +148,13 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* CTA Section */}
-        <div className="mt-auto w-full max-w-sm space-y-4 pb-8">
-          <div className="space-y-2 text-center">
-            <p className="text-[11px] uppercase tracking-widest text-neutral-500">
-              🚀 Beyond 90 · Beta
-            </p>
-            <p className="text-[10px] text-neutral-600">Tu progreso se guarda automáticamente en la nube</p>
-          </div>
-
-          <Link
-            href="/crear-jugador"
-            className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-gold to-amber-500 px-6 py-3 text-sm font-bold uppercase tracking-wide text-neutral-950 hover:from-amber-400 hover:to-amber-600 transition-all shadow-lg hover:shadow-amber-500/50"
-          >
-            <span className="text-lg">⭐</span>
-            Nueva carrera
-          </Link>
-
-          <Link
-            href="/login"
-            className="flex items-center justify-center gap-2 rounded-lg border-2 border-gold bg-neutral-950/50 px-6 py-3 text-sm font-bold uppercase tracking-wide text-gold hover:bg-gold/10 hover:border-amber-400 transition-all"
-          >
-            <span className="text-lg">👤</span>
-            Iniciar sesión
-          </Link>
-
-          <p className="text-[10px] text-neutral-600 text-center">
-            ¿Primera vez? Crea una cuenta al empezar
+        {/* Footer */}
+        <div className="mt-auto w-full max-w-sm space-y-2 pb-8 pt-8 text-center">
+          <p className="text-[11px] uppercase tracking-widest text-neutral-500">
+            🚀 Beyond 90 · Beta
           </p>
+          <p className="text-[10px] text-neutral-600">Tu progreso se guarda automáticamente en la nube</p>
+          <p className="text-[10px] text-neutral-600">¿Primera vez? Crea una cuenta al empezar</p>
         </div>
       </div>
     </main>

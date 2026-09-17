@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GameEvent } from "@/types/career";
 import { PRO_RETIREMENT_MIN_WEEK } from "@/types/career";
 import type { Player } from "@/types/player";
-import { STARTING_AGENTS, pickStartingClubOffers } from "@/lib/constants";
+import { STARTING_AGENTS, pickStartingClubOffers, type ClubOffer } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
 import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
@@ -60,8 +60,44 @@ export function buildFallbackContractEvent(
   };
 }
 
-export function buildInicioFichajeEvent(agentName: string): GameEvent {
-  const offers = pickStartingClubOffers();
+/**
+ * Convierte el desglose desarrollo/competencia/minutos/riesgo de una
+ * oferta de club en las "details" que sabe pintar la pantalla de
+ * decisión. Se usa tanto para el evento escrito a mano como para
+ * enriquecer el evento generado por la IA (ver attachClubOfferDetails) —
+ * las categorías siempre están disponibles, escriba quien escriba el
+ * resto del texto.
+ */
+function clubOfferDetails(offer: ClubOffer): { icon: string; label: string; text: string }[] {
+  return [
+    { icon: "📈", label: "Desarrollo", text: offer.desarrollo },
+    { icon: "👥", label: "Competencia", text: offer.competencia },
+    { icon: "⏱️", label: "Minutos", text: offer.minutos },
+    { icon: "⚠️", label: "Riesgo", text: offer.riesgo },
+  ];
+}
+
+/**
+ * La IA escribe su propia versión de "Las primeras ofertas" (para que
+ * cada carrera arranque con un texto distinto), pero eso significaba que
+ * las tarjetas ricas de club (nivel, desarrollo, competencia, minutos,
+ * riesgo) solo se veían en la rara ocasión en que la IA fallaba y se
+ * usaba el evento de reserva. Esto adjunta esas categorías siempre,
+ * emparejando por posición — la IA respeta el orden de `offers` porque
+ * así se le pide explícitamente en el prompt.
+ */
+export function attachClubOfferDetails(event: GameEvent, offers: ClubOffer[]): GameEvent {
+  return {
+    ...event,
+    options: event.options.map((option, i) => {
+      const offer = offers[i];
+      if (!offer) return option;
+      return { ...option, level: offer.nivel, details: clubOfferDetails(offer) };
+    }),
+  };
+}
+
+export function buildInicioFichajeEvent(agentName: string, offers: ClubOffer[] = pickStartingClubOffers()): GameEvent {
   const hasGiant = offers.some((o) => o.club === "Real Madrid" || o.club === "FC Barcelona");
 
   return {
@@ -71,12 +107,18 @@ export function buildInicioFichajeEvent(agentName: string): GameEvent {
     description: hasGiant
       ? `${agentName} se reúne contigo con una noticia enorme: uno de los clubes interesados en ti es un auténtico gigante. Los otros dos son puertas de entrada más modestas, pero esta vez hay una oportunidad que casi nunca llega.`
       : `${agentName} se reúne contigo con dos o tres clubes modestos interesados en darte tu primer contrato profesional. Ninguno es un gigante, pero todos son una puerta de entrada.`,
-    isMilestone: true,
+    // Elegir entre ofertas todavía no es el momento fotografiable — la
+    // firma real (con camiseta, presidente y flashes) llega justo
+    // después vía generateContractEvent, que sí es milestone. Marcar los
+    // dos como hito duplicaba la misma "noticia de fichaje" en dos
+    // tarjetas compartibles seguidas.
     milestoneType: "contrato",
     options: offers.map((offer) => ({
       id: offer.club,
-      label: `Firmar por el ${offer.club}`,
+      label: offer.club,
       subtitle: offer.pitch,
+      level: offer.nivel,
+      details: clubOfferDetails(offer),
       consequences: { club: offer.club, moral: 5 },
     })),
   };
@@ -87,8 +129,40 @@ function randomPrice(min: number, max: number, roundTo: number): number {
   return Math.round(raw / roundTo) * roundTo;
 }
 
-function pickThree<T>(items: T[]): T[] {
-  return [...items].sort(() => Math.random() - 0.5).slice(0, 3);
+function pickRandom<T>(items: T[], n: number): T[] {
+  return [...items].sort(() => Math.random() - 0.5).slice(0, n);
+}
+
+/**
+ * Clubes cuya ciudad es claramente de interior: ofrecer una villa "junto
+ * al mar" o un yate a alguien que juega ahí no tiene ninguna coherencia
+ * geográfica (visto en vivo con un jugador del Real Madrid al que le
+ * salía una villa frente al mar). El resto de clubes por defecto se
+ * consideran compatibles con listados de costa — la mayoría de ciudades
+ * españolas y europeas del juego están cerca del mar o son ambiguas, y
+ * el caso que de verdad rompía la inmersión era el de las grandes
+ * capitales de interior.
+ */
+const INLAND_CLUBS = new Set([
+  "Real Madrid",
+  "Atlético de Madrid",
+  "Rayo Vallecano",
+  "Getafe CF",
+  "Real Valladolid",
+  "Real Zaragoza",
+  "Bayern de Múnich",
+  "Bayern Múnich",
+  "Bayern Munich",
+  "Juventus",
+  "PSG",
+  "Al Hilal",
+  "Al-Nassr FC",
+  "Manchester City",
+  "Manchester United",
+]);
+
+export function isInlandClub(club: string): boolean {
+  return INLAND_CLUBS.has(club);
 }
 
 const HOME_LISTINGS = [
@@ -122,7 +196,163 @@ const HOME_LISTINGS = [
     max: 135000,
     prompt: "Real estate photography, renovated modern apartment building exterior near a football stadium, daylight, professional listing photo, photorealistic, no people",
   },
+  {
+    name: "Piso luminoso en un edificio clásico del centro histórico",
+    min: 105000,
+    max: 145000,
+    prompt: "Real estate photography, bright apartment in a classic historic building facade, ornate balconies, old town street, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Casa adosada con jardín pequeño en las afueras",
+    min: 115000,
+    max: 155000,
+    prompt: "Real estate photography, townhouse with small private garden, quiet suburban street, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Loft industrial reformado cerca del puerto",
+    min: 100000,
+    max: 140000,
+    prompt: "Real estate photography, converted industrial loft building exterior near a harbor, exposed brick and large windows, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Apartamento con vistas al río en un edificio nuevo",
+    min: 120000,
+    max: 165000,
+    prompt: "Real estate photography, brand new riverside apartment building with large windows, river view, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso de tres habitaciones en un barrio familiar tranquilo",
+    min: 100000,
+    max: 145000,
+    prompt: "Real estate photography, three-bedroom apartment building in a quiet family neighborhood, tree-lined street, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso con balcón cerca del campus universitario",
+    min: 85000,
+    max: 120000,
+    prompt: "Real estate photography, apartment building with balconies near a university campus, modern facade, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Ático con jacuzzi privado en la terraza",
+    min: 155000,
+    max: 200000,
+    prompt: "Real estate photography, penthouse rooftop terrace with private jacuzzi, city view, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso reformado en un edificio de ladrillo visto",
+    min: 100000,
+    max: 140000,
+    prompt: "Real estate photography, renovated apartment building with exposed brick facade, urban street, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Loft tipo estudio en una antigua fábrica reconvertida",
+    min: 95000,
+    max: 135000,
+    prompt: "Real estate photography, converted factory building turned into loft apartments, industrial windows, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso con parking incluido en una urbanización cerrada",
+    min: 110000,
+    max: 150000,
+    prompt: "Real estate photography, apartment building in a gated residential complex with parking, landscaped gardens, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Ático dúplex con vistas a un parque urbano",
+    min: 160000,
+    max: 210000,
+    prompt: "Real estate photography, duplex penthouse building overlooking a city park, large terrace, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso soleado en un edificio con piscina comunitaria",
+    min: 105000,
+    max: 145000,
+    prompt: "Real estate photography, sunny apartment building with a communal swimming pool, modern facade, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Ático reformado con techos altos y grandes ventanales",
+    min: 150000,
+    max: 195000,
+    prompt: "Real estate photography, renovated penthouse with high ceilings and large windows, elegant facade, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso tranquilo en una zona residencial con parques cercanos",
+    min: 95000,
+    max: 135000,
+    prompt: "Real estate photography, apartment building in a quiet residential area surrounded by green parks, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Dúplex interior con patio privado",
+    min: 115000,
+    max: 155000,
+    prompt: "Real estate photography, duplex house with a private interior courtyard, quiet street, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso funcional cerca de la estación de tren",
+    min: 88000,
+    max: 125000,
+    prompt: "Real estate photography, functional apartment building near a train station, urban street, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Ático nuevo con placas solares y domótica",
+    min: 165000,
+    max: 215000,
+    prompt: "Real estate photography, brand new penthouse building with solar panels and smart home features, modern architecture, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso amplio en un edificio clásico con portero",
+    min: 130000,
+    max: 175000,
+    prompt: "Real estate photography, spacious apartment in a classic elegant building with a doorman entrance, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Casa pequeña de una planta con patio trasero",
+    min: 92000,
+    max: 130000,
+    prompt: "Real estate photography, small single-story house with a backyard patio, quiet suburban street, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso con vistas al mar en un edificio de primera línea",
+    min: 140000,
+    max: 190000,
+    prompt: "Real estate photography, beachfront apartment building with sea view, modern facade, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Ático con terraza panorámica y zona de barbacoa",
+    min: 155000,
+    max: 205000,
+    prompt: "Real estate photography, penthouse terrace with panoramic view and outdoor barbecue area, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso clásico con suelos originales en un edificio señorial",
+    min: 120000,
+    max: 165000,
+    prompt: "Real estate photography, classic apartment in a stately old building with ornate facade, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Apartamento moderno con gimnasio en el edificio",
+    min: 125000,
+    max: 170000,
+    prompt: "Real estate photography, modern apartment building with an in-house gym facility, clean architecture, daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Piso en un edificio nuevo cerca de un parque natural",
+    min: 108000,
+    max: 148000,
+    prompt: "Real estate photography, new apartment building near a natural park, green surroundings, bright daylight, professional listing photo, photorealistic, no people",
+  },
 ];
+
+// El umbral de patrimonio que activa buildCasaEvent/buildMansionEvent
+// (en carrera/page.tsx) tiene que cubrir de verdad la entrada de la
+// vivienda MÁS BARATA del catálogo — si no, un jugador puede llegar a ver
+// tres opciones de casa sin poder pagar la entrada de ninguna. Ya pasó
+// una vez (el umbral se fijó a mano y el catálogo creció después sin
+// volver a comprobarlo); calculándolo aquí a partir de los datos reales
+// no puede volver a desincronizarse.
+export function getMinHomeDownPayment(): number {
+  const cheapest = Math.min(...HOME_LISTINGS.map((l) => l.min));
+  return Math.round((cheapest * 0.2) / 500) * 500;
+}
 
 const MANSION_LISTINGS = [
   {
@@ -130,32 +360,281 @@ const MANSION_LISTINGS = [
     min: 1800000,
     max: 2600000,
     prompt: "Real estate photography, luxury mansion with large swimming pool, exclusive gated community, palm trees, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
   },
   {
     name: "Ático de lujo con vistas a toda la ciudad",
     min: 1200000,
     max: 1900000,
     prompt: "Real estate photography, luxury penthouse terrace with panoramic city skyline view, modern glass architecture, golden hour, professional listing photo, photorealistic, no people",
+    coastal: false,
   },
   {
     name: "Finca con terreno propio y zona de entrenamiento personal",
     min: 2200000,
     max: 3400000,
     prompt: "Real estate photography, large private estate with green land and a personal outdoor sports training area, countryside, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
   },
   {
     name: "Villa moderna junto al mar",
     min: 1600000,
     max: 2400000,
     prompt: "Real estate photography, modern minimalist villa right by the sea, infinity pool facing the ocean, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: true,
   },
   {
     name: "Casa histórica reformada en el barrio más exclusivo",
     min: 1900000,
     max: 2800000,
     prompt: "Real estate photography, beautifully renovated historic mansion in an exclusive upscale neighborhood, elegant facade, daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa con vistas al golfo y muelle privado",
+    min: 2100000,
+    max: 3200000,
+    prompt: "Real estate photography, luxury waterfront villa with panoramic gulf view and private boat dock, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: true,
+  },
+  {
+    name: "Casa de diseño minimalista con piscina infinita en la montaña",
+    min: 2000000,
+    max: 2900000,
+    prompt: "Real estate photography, minimalist architect-designed house with infinity pool overlooking mountains, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Mansión de estilo clásico con biblioteca y bodega propia",
+    min: 1700000,
+    max: 2500000,
+    prompt: "Real estate photography, classic-style mansion exterior with manicured gardens, elegant estate, daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Chalet de lujo junto al club de golf",
+    min: 1500000,
+    max: 2200000,
+    prompt: "Real estate photography, luxury villa bordering a golf course, manicured green fairways visible, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Casa acristalada con vistas al mar Mediterráneo",
+    min: 2300000,
+    max: 3300000,
+    prompt: "Real estate photography, glass-walled modern house with panoramic Mediterranean sea view, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: true,
+  },
+  {
+    name: "Villa toscana con viñedo propio",
+    min: 1900000,
+    max: 2700000,
+    prompt: "Real estate photography, Tuscan-style villa surrounded by its own vineyard, warm daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Palacete urbano restaurado con patio interior",
+    min: 2000000,
+    max: 2900000,
+    prompt: "Real estate photography, restored urban palace mansion with an elegant interior courtyard, daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Casa de cristal y madera en un bosque privado",
+    min: 1700000,
+    max: 2400000,
+    prompt: "Real estate photography, glass and wood house surrounded by a private forest, natural light, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Mansión de estilo colonial con columnas y jardín central",
+    min: 1900000,
+    max: 2800000,
+    prompt: "Real estate photography, colonial-style mansion with grand columns and a central garden, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa balinesa con piscina de piedra natural",
+    min: 2100000,
+    max: 3000000,
+    prompt: "Real estate photography, Balinese-style villa with a natural stone swimming pool, tropical garden, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: true,
+  },
+  {
+    name: "Casa flotante de lujo en un lago privado",
+    min: 1800000,
+    max: 2600000,
+    prompt: "Real estate photography, luxury floating house on a private lake, calm water, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Cortijo andaluz reformado con caballerizas",
+    min: 1600000,
+    max: 2300000,
+    prompt: "Real estate photography, renovated Andalusian countryside estate with horse stables, warm daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa contemporánea con muro de cristal frente al mar",
+    min: 2400000,
+    max: 3400000,
+    prompt: "Real estate photography, contemporary villa with a glass wall facing the sea, infinity pool, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: true,
+  },
+  {
+    name: "Casa de un solo nivel estilo californiano con jardín tropical",
+    min: 1700000,
+    max: 2500000,
+    prompt: "Real estate photography, single-story California-style house with a tropical garden, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Mansión gótica restaurada con torre y jardines",
+    min: 2000000,
+    max: 2900000,
+    prompt: "Real estate photography, restored gothic-style mansion with a tower and manicured gardens, daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa mediterránea de estilo ibicenco con vistas al atardecer",
+    min: 2200000,
+    max: 3100000,
+    prompt: "Real estate photography, Ibiza-style Mediterranean villa with sunset ocean view, whitewashed walls, professional listing photo, photorealistic, no people",
+    coastal: true,
+  },
+  {
+    name: "Casa ecológica autosuficiente con huerto propio",
+    min: 1500000,
+    max: 2200000,
+    prompt: "Real estate photography, self-sufficient eco house with solar panels and a private vegetable garden, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Palacio urbano dividido en plantas privadas",
+    min: 2100000,
+    max: 3000000,
+    prompt: "Real estate photography, urban palace mansion with elegant private floors, ornate facade, daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Chalet de esquí con acceso directo a las pistas",
+    min: 1900000,
+    max: 2800000,
+    prompt: "Real estate photography, luxury ski chalet with direct slope access, snowy mountains, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Casa de playa minimalista con terraza infinita",
+    min: 2000000,
+    max: 2900000,
+    prompt: "Real estate photography, minimalist beach house with an endless terrace facing the ocean, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: true,
+  },
+  {
+    name: "Mansión con pista de tenis privada y piscina climatizada",
+    min: 2300000,
+    max: 3300000,
+    prompt: "Real estate photography, luxury mansion with a private tennis court and heated swimming pool, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa con bodega subterránea y sala de catas",
+    min: 1800000,
+    max: 2600000,
+    prompt: "Real estate photography, luxury villa exterior with an underground wine cellar entrance, elegant estate, daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Casa de campo restaurada con terreno propio",
+    min: 1600000,
+    max: 2400000,
+    prompt: "Real estate photography, restored countryside manor with its own land, rustic elegance, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa contemporánea con patio zen y muro verde",
+    min: 1900000,
+    max: 2700000,
+    prompt: "Real estate photography, contemporary villa with a zen courtyard and a living green wall, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Casa señorial con fachada de piedra",
+    min: 1800000,
+    max: 2600000,
+    prompt: "Real estate photography, stately manor house with a stone facade, elegant gardens, daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Mansión frente al lago con embarcadero privado",
+    min: 2000000,
+    max: 2900000,
+    prompt: "Real estate photography, lakeside mansion with a private boat dock, calm water, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa de lujo con spa privado y gimnasio integrado",
+    min: 2200000,
+    max: 3100000,
+    prompt: "Real estate photography, luxury villa with a private spa and integrated home gym, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Casa moderna en acantilado con vistas panorámicas al mar",
+    min: 2600000,
+    max: 3600000,
+    prompt: "Real estate photography, modern clifftop house with panoramic sea views, dramatic coastline, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: true,
+  },
+  {
+    name: "Palacete afrancesado con jardines geométricos",
+    min: 2100000,
+    max: 3000000,
+    prompt: "Real estate photography, French-style mansion with geometric formal gardens, elegant facade, daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa tropical con piscina infinita y cabaña de invitados",
+    min: 2300000,
+    max: 3200000,
+    prompt: "Real estate photography, tropical villa with an infinity pool and a separate guest cottage, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: true,
+  },
+  {
+    name: "Mansión brutalista de hormigón y cristal",
+    min: 1900000,
+    max: 2800000,
+    prompt: "Real estate photography, brutalist-style mansion made of concrete and glass, striking modern architecture, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Casa de troncos de lujo en plena naturaleza",
+    min: 1600000,
+    max: 2300000,
+    prompt: "Real estate photography, luxury log cabin house surrounded by nature, warm daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa andaluza con patio de naranjos y fuente central",
+    min: 1800000,
+    max: 2600000,
+    prompt: "Real estate photography, Andalusian-style villa with an orange tree courtyard and central fountain, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: false,
+  },
+  {
+    name: "Villa de diseño con fachada ondulada frente al mar",
+    min: 2500000,
+    max: 3500000,
+    prompt: "Real estate photography, architect-designed villa with a curved wave-like facade facing the sea, bright daylight, professional listing photo, photorealistic, no people",
+    coastal: true,
   },
 ];
+
+/** Mismo razonamiento que getMinHomeDownPayment, para la segunda vivienda de lujo. */
+export function getMinMansionDownPayment(): number {
+  const cheapest = Math.min(...MANSION_LISTINGS.map((l) => l.min));
+  return Math.round((cheapest * 0.3) / 10000) * 10000;
+}
 
 /**
  * Caprichos de "crack": solo tienen sentido cuando el jugador ya es una
@@ -182,6 +661,24 @@ const YACHT_LISTINGS = [
     max: 120000,
     prompt: "Real estate photography, small elegant weekend motorboat docked in a marina, bright daylight, professional listing photo, photorealistic, no people",
   },
+  {
+    name: "Catamarán de lujo para toda la familia",
+    min: 550000,
+    max: 850000,
+    prompt: "Real estate photography, luxury catamaran yacht docked in a marina, spacious deck, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Yate clásico de madera restaurado",
+    min: 300000,
+    max: 500000,
+    prompt: "Real estate photography, classic restored wooden yacht docked in a marina, vintage elegant design, bright daylight, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Superyate con helipuerto",
+    min: 3000000,
+    max: 5000000,
+    prompt: "Real estate photography, massive superyacht with helicopter landing pad docked in an exclusive marina, bright daylight, professional listing photo, photorealistic, no people",
+  },
 ];
 
 const JET_LISTINGS = [
@@ -197,6 +694,65 @@ const JET_LISTINGS = [
     max: 9000000,
     prompt: "Real estate photography, long-range private jet parked on an airport tarmac, bright daylight, professional listing photo, photorealistic, no people",
   },
+  {
+    name: "Jet privado de gama media con cabina VIP",
+    min: 4000000,
+    max: 6000000,
+    prompt: "Real estate photography, midsize private jet with VIP cabin parked on a sunny airport tarmac, professional listing photo, photorealistic, no people",
+  },
+  {
+    name: "Multipropiedad de un jet privado ejecutivo",
+    min: 800000,
+    max: 1500000,
+    prompt: "Real estate photography, executive private jet parked on a private airfield tarmac, bright daylight, professional listing photo, photorealistic, no people",
+  },
+];
+
+/**
+ * Coches deportivos: el primer capricho de verdad, mucho antes que un
+ * yate o un jet — llega con el primer contrato serio, no con la carrera
+ * consolidada. Los nombres describen el tipo de coche (compacto,
+ * descapotable, superdeportivo...) sin marcas reales, igual que con los
+ * escudos de club: el modelo de imagen no reproduce bien logos exactos
+ * de marcas de coches y usarlos tal cual es terreno legal delicado.
+ */
+const CAR_LISTINGS = [
+  {
+    name: "Deportivo compacto de segunda mano",
+    min: 35000,
+    max: 60000,
+    prompt: "Automotive photography, sporty compact two-door coupe parked in an empty urban street, dynamic angle, daylight, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Coupé deportivo alemán",
+    min: 70000,
+    max: 100000,
+    prompt: "Automotive photography, sleek German-style sports coupe parked in a modern parking garage, dynamic angle, daylight, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Descapotable italiano de edición limitada",
+    min: 150000,
+    max: 230000,
+    prompt: "Automotive photography, limited-edition Italian-style convertible sports car parked on a scenic coastal road, bright daylight, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Superdeportivo de fibra de carbono",
+    min: 280000,
+    max: 420000,
+    prompt: "Automotive photography, extreme carbon-fiber supercar parked in a private garage with dramatic lighting, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Deportivo eléctrico de última generación",
+    min: 110000,
+    max: 170000,
+    prompt: "Automotive photography, futuristic all-electric sports car parked in a modern showroom, sleek design, bright lighting, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Clásico deportivo restaurado de coleccionista",
+    min: 120000,
+    max: 200000,
+    prompt: "Automotive photography, beautifully restored vintage classic sports car parked in a private collector's garage, warm lighting, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
 ];
 
 /**
@@ -207,7 +763,21 @@ const JET_LISTINGS = [
  * real (generada una vez por listado y cacheada — ver property-photos.ts).
  */
 export async function buildCasaEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
-  const listings = pickThree(HOME_LISTINGS).map((l) => ({
+  // El umbral de patrimonio que dispara este evento solo garantiza que
+  // la vivienda MÁS BARATA de todo el catálogo sea pagable — pero los 3
+  // listados que se enseñan salen sorteados del catálogo entero, así que
+  // sin este filtro podían tocarle 3 opciones caras igualmente, aunque el
+  // jugador cumpliera el umbral general. Se prioriza mostrar las que de
+  // verdad puede pagar; solo si no hay 3 así, se completa con las más
+  // baratas del resto (nunca al azar entre las caras).
+  const affordable = HOME_LISTINGS.filter(
+    (l) => Math.round((l.min * 0.2) / 500) * 500 <= player.patrimonio,
+  );
+  const pool =
+    affordable.length >= 3
+      ? affordable
+      : [...HOME_LISTINGS].sort((a, b) => a.min - b.min);
+  const listings = pickRandom(pool, 3).map((l) => ({
     ...l,
     price: randomPrice(l.min, l.max, 5000),
   }));
@@ -256,7 +826,19 @@ export async function buildCasaEvent(player: Player, supabase: SupabaseClient): 
  * buildCasaEvent pero con un catálogo de lujo y foto por listado.
  */
 export async function buildMansionEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
-  const listings = pickThree(MANSION_LISTINGS).map((l) => ({
+  const eligibleListings = isInlandClub(player.club)
+    ? MANSION_LISTINGS.filter((l) => !l.coastal)
+    : MANSION_LISTINGS;
+  // Mismo filtro de asequibilidad que buildCasaEvent, sobre lo que ya
+  // haya quedado tras el filtro de costa/interior.
+  const affordable = eligibleListings.filter(
+    (l) => Math.round((l.min * 0.3) / 10000) * 10000 <= player.patrimonio,
+  );
+  const pool =
+    affordable.length >= 3
+      ? affordable
+      : [...eligibleListings].sort((a, b) => a.min - b.min);
+  const listings = pickRandom(pool, 3).map((l) => ({
     ...l,
     price: randomPrice(l.min, l.max, 50000),
   }));
@@ -303,7 +885,7 @@ export async function buildMansionEvent(player: Player, supabase: SupabaseClient
  * salga solo porque ha pasado el tiempo, como si acabara de debutar.
  */
 export async function buildYachtEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
-  const listings = YACHT_LISTINGS.map((l) => ({ ...l, price: randomPrice(l.min, l.max, 10000) }));
+  const listings = pickRandom(YACHT_LISTINGS, 3).map((l) => ({ ...l, price: randomPrice(l.min, l.max, 10000) }));
   const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
 
   return {
@@ -337,7 +919,7 @@ export async function buildYachtEvent(player: Player, supabase: SupabaseClient):
 }
 
 export async function buildJetEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
-  const listings = JET_LISTINGS.map((l) => ({ ...l, price: randomPrice(l.min, l.max, 100000) }));
+  const listings = pickRandom(JET_LISTINGS, 2).map((l) => ({ ...l, price: randomPrice(l.min, l.max, 100000) }));
   const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
 
   return {
@@ -367,6 +949,46 @@ export async function buildJetEvent(player: Player, supabase: SupabaseClient): P
       },
     ],
     minWeek: 80,
+  };
+}
+
+/**
+ * El coche deportivo: el primer capricho de verdad, mucho antes que la
+ * mansión o el yate — con el primer contrato serio ya hay para un
+ * deportivo de segunda mano, y con la carrera consolidada para un
+ * superdeportivo de coleccionista.
+ */
+export async function buildCarEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
+  const listings = pickRandom(CAR_LISTINGS, 3).map((l) => ({ ...l, price: randomPrice(l.min, l.max, 5000) }));
+  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+
+  return {
+    id: "vid-coche-deportivo",
+    category: "vida",
+    title: "Tu primer coche de verdad",
+    description:
+      "Con el sueldo ya entrando de verdad, un compañero de vestuario te comenta que se acaba de comprar un coche que 'no necesita, pero se lo merece'. Tu representante te manda un par de opciones, por si te apetece darte el capricho.",
+    options: [
+      ...listings.map((l, i) => ({
+        id: `coche-${i}`,
+        label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+        subtitle: "Capricho sobre ruedas",
+        imageUrl: photos[i] ?? undefined,
+        consequences: {
+          patrimonio: -l.price,
+          moral: 6,
+          fama: 1,
+          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price }) },
+        },
+      })),
+      {
+        id: "pasar",
+        label: "Pasar, el coche que tienes te vale",
+        subtitle: "Sin prisa",
+        consequences: { moral: 2 },
+      },
+    ],
+    minWeek: 12,
   };
 }
 
@@ -1398,6 +2020,10 @@ export const EVENTS: GameEvent[] = [
     category: "especial",
     title: "Te retan a un desafío viral",
     description: "Un jugador de otro club te reta públicamente a un duelo de gambeta grabado para redes.",
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic action photo of the photographed man dribbling a football at full speed past a rival player on an empty training pitch at dusk, several phones visible filming from behind a fence, dynamic mid-motion pose, dramatic side lighting, viral social-media video style",
     options: [
       {
         id: "a",
@@ -1419,6 +2045,10 @@ export const EVENTS: GameEvent[] = [
     category: "especial",
     title: "La mascota del club te elige como su favorito",
     description: "En la previa de un partido, la mascota del club se cuelga literalmente de tu espalda frente a las cámaras y no te suelta.",
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic candid photo of the photographed man laughing on the pitch before a match with the club's costumed mascot clinging onto his back, stadium crowd and photographers blurred in the background, warm pre-match lighting",
     options: [
       {
         id: "a",
@@ -1482,6 +2112,10 @@ export const EVENTS: GameEvent[] = [
     title: "La paloma que no se va",
     description:
       "Una paloma se instala en mitad del círculo central durante el calentamiento y se niega a moverse ni con balones cerca. El cuerpo técnico, muy serio, decide reorganizar el rondo alrededor de ella.",
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic candid photo of the photographed man and teammates standing in a circle on the training pitch around a single pigeon in the middle of the grass, everyone looking down at it with amused, serious expressions, training cones and footballs visible, natural daylight",
     options: [
       {
         id: "a",
@@ -1828,6 +2462,7 @@ export const EVENTS: GameEvent[] = [
     title: "Un reality show quiere ficharte",
     description:
       "La productora de un programa de telerrealidad muy popular te ofrece una cantidad importante por participar como concursante durante el parón de pretemporada.",
+    minMedia: 45,
     options: [
       {
         id: "a",
@@ -1874,6 +2509,11 @@ export const EVENTS: GameEvent[] = [
     title: "Una marca de relojes de lujo te quiere de imagen",
     description:
       "Un fabricante de relojes suizo de gama muy alta ofrece un contrato de varios años a cambio de llevar sus piezas en cada aparición pública.",
+    minMedia: 60,
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic close-up photo of the photographed man in a tailored suit adjusting his cuff to show off an exquisite luxury wristwatch, elegant minimalist studio backdrop, dramatic side lighting, high-end watch campaign photography style",
     options: [
       {
         id: "a",
@@ -1988,6 +2628,11 @@ export const EVENTS: GameEvent[] = [
     title: "Un videojuego de fútbol quiere tu cara",
     description:
       "Los desarrolladores de un popular videojuego de fútbol te piden licencia para incluir tu imagen y tus estadísticas reales en la próxima edición.",
+    minMedia: 55,
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic dynamic photo of the photographed man in his club kit posing in an explosive action stance against a dramatic studio backdrop with light streaks and particle effects, video game cover shoot style, intense confident expression",
     options: [
       {
         id: "a",
@@ -2022,6 +2667,11 @@ export const EVENTS: GameEvent[] = [
     title: "Una marca urbana te propone una colección cápsula",
     description:
       "Una marca de ropa urbana en auge te ofrece diseñar junto a ellos una pequeña colección con tu nombre.",
+    minMedia: 50,
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic editorial photo of the photographed man wearing urban streetwear from his own capsule clothing collection, standing against a graffiti-covered wall, confident relaxed pose, natural street-style lighting, fashion campaign photography",
     options: [
       {
         id: "a",
@@ -2162,6 +2812,9 @@ export const EVENTS: GameEvent[] = [
     title: "Una plataforma quiere hacer un documental sobre ti",
     description:
       "Una plataforma de streaming te propone un documental de varios capítulos contando tu historia, desde la cantera hasta ahora. Acceso total a tu vida durante meses.",
+    minMedia: 65,
+    isMilestone: true,
+    milestoneType: "fama",
     imageScene:
       "Photorealistic photo of the photographed man being filmed by a documentary crew, cameras and boom microphone visible, candid behind-the-scenes atmosphere",
     options: [
@@ -2228,6 +2881,10 @@ export const EVENTS: GameEvent[] = [
     title: "Te piden cantar el himno antes de un partido especial",
     description:
       "Antes de un partido conmemorativo, el club te pide que seas tú quien entone el himno del equipo frente a todo el estadio, micrófono en mano.",
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic photo of the photographed man standing at the center circle holding a microphone, singing with eyes closed and one hand on his chest, the packed stadium and crowd blurred behind him, dramatic stadium lighting, emotional pre-match ceremony atmosphere",
     options: [
       {
         id: "a",
@@ -2348,6 +3005,11 @@ export const EVENTS: GameEvent[] = [
     title: "Una marca de perfumes te ofrece tu propia fragancia",
     description:
       "Una casa de perfumes reconocida propone lanzar un perfume con tu nombre y tu cara en el frasco.",
+    minMedia: 62,
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic close-up campaign photo of the photographed man holding an elegant perfume bottle with his own name on the label up towards the camera, dramatic black studio backdrop, moody cinematic lighting, luxury fragrance advertisement style",
     options: [
       {
         id: "a",
@@ -2424,6 +3086,11 @@ export const EVENTS: GameEvent[] = [
     title: "Una marca de coches te regala un modelo de lujo",
     description:
       "A cambio de que lo enseñes de vez en cuando en tus redes, una marca de coches de alta gama te cede un modelo exclusivo durante toda la temporada.",
+    minMedia: 55,
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic photo of the photographed man leaning against a gleaming luxury sports car parked in front of a modern building, one hand on the open car door, confident smile, golden hour lighting, automotive campaign photography style",
     options: [
       {
         id: "a",
@@ -2572,6 +3239,10 @@ export const EVENTS: GameEvent[] = [
     title: "El streamer más visto del país te invita a un directo",
     description:
       'Ibán Gómez, el streamer con más audiencia del país, te invita a su plató para un directo con casi un millón de personas conectadas a la vez. Antes de empezar te avisa: "Aquí hacemos retos, ¿eh? Nada de venir solo a hablar bien de ti mismo."',
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic photo of the photographed man sitting at a colorful gaming streaming desk full of monitors and RGB lighting, headset around his neck, laughing mid-conversation, a young streamer visible beside him, energetic studio lighting",
     options: [
       {
         id: "a",
@@ -2698,6 +3369,10 @@ export const EVENTS: GameEvent[] = [
     title: "El reto viral: marcar a portería vacía con los ojos vendados",
     description:
       'Una cuenta con millones de seguidores te propone participar en su reto de moda: marcar tres veces con los ojos vendados y solo guiado por la voz de tus compañeros. Han montado cámaras por todo el campo de entrenamiento.',
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic photo of the photographed man on a training pitch wearing a blindfold, mid-shot in front of an empty goal, several cameras and tripods set up around the pitch filming, teammates visible shouting directions from the sideline, dramatic action lighting",
     options: [
       {
         id: "a",
@@ -2894,6 +3569,10 @@ export const EVENTS: GameEvent[] = [
     title: "La fiesta en la piscina de un famoso se descontrola",
     description:
       "Te invitan a la fiesta de cumpleaños de Ibán Gómez, junto a una piscina rodeada de gente que no para de sacar el móvil. A medianoche, alguien decide que es buena idea tirar al agua a todo el que se acerque al borde, empezando por ti.",
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic candid nighttime photo of the photographed man caught mid-air being thrown into a lit swimming pool at a party, laughing, string lights and guests with phones out visible around the pool, festive nightlife atmosphere",
     options: [
       {
         id: "a",
@@ -3006,6 +3685,10 @@ export const EVENTS: GameEvent[] = [
     title: "La leyenda te pide que lleves su número",
     description:
       'Coincides de nuevo con Emiliano Rosso, esta vez en una cena de homenaje. Te suelta, medio en broma medio en serio: "Deberías llevar mi número algún día, a ver si le sacas más partido del que le saqué yo." La prensa que hay alrededor lo apunta todo.',
+    isMilestone: true,
+    milestoneType: "fama",
+    imageScene:
+      "Photorealistic photo of the photographed man in a suit at an elegant tribute dinner, standing face to face with a veteran footballer legend also in formal wear, both smiling warmly mid-conversation, press photographers with cameras visible nearby, warm banquet hall lighting",
     options: [
       {
         id: "a",

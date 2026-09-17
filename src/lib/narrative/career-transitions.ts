@@ -13,7 +13,7 @@ export type TransitionType = "entering_peak" | "exiting_peak" | "entering_declin
 /**
  * Detecta transiciones de carrera.
  */
-export function detectCareerTransition(player: Player, previousArc?: any): TransitionType | null {
+export function detectCareerTransition(player: Player): TransitionType | null {
   const arc = calculateCareerArc(player);
   const age = playerAge(player.week);
 
@@ -72,15 +72,19 @@ export function buildEnteringPeakEvent(): GameEvent {
 /**
  * Evento: "Saliendo del PICO"
  */
-export function buildExitingPeakEvent(): GameEvent {
+export function buildExitingPeakEvent(age: number): GameEvent {
   return {
     id: "transition-exiting-peak",
     category: "especial",
     title: "Notaste un cambio: ya no eres tan rápido",
-    description: `Es sutil al principio. Un paso menos de velocidad. Una recuperación que tarda un día más. La realidad: acabas de salir de tu pico. A los 31 años, empiezas el lento descenso. No es fin del mundo — tienes 2-3 años buenos todavía. Pero tienes que ser más inteligente, no más rápido. Adaptar tu juego. O terminarás en la banca.`,
+    // La condición que dispara esto vale para 31 O 32 años (ver
+    // detectCareerTransition), pero el texto decía "31 años" fijo — a
+    // los 32 salía una edad incorrecta. Se recibe la edad real en vez de
+    // asumirla.
+    description: `Es sutil al principio. Un paso menos de velocidad. Una recuperación que tarda un día más. La realidad: acabas de salir de tu pico. A los ${age} años, empiezas el lento descenso. No es fin del mundo — tienes 2-3 años buenos todavía. Pero tienes que ser más inteligente, no más rápido. Adaptar tu juego. O terminarás en la banca.`,
     isMilestone: true,
     milestoneType: "carrera",
-    imageScene: `Photorealistic Getty Images photo of a 31-year-old footballer looking slightly tired after match, breathing heavily, more mature experienced expression, stadium evening light, showing signs of age but still professional, introspection moment`,
+    imageScene: `Photorealistic Getty Images photo of a ${age}-year-old footballer looking slightly tired after match, breathing heavily, more mature experienced expression, stadium evening light, showing signs of age but still professional, introspection moment`,
     options: [
       {
         id: "adaptarse",

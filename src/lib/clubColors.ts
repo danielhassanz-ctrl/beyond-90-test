@@ -79,10 +79,27 @@ const KIT_DESCRIPTIONS: Record<string, string> = {
   "Manchester City": "sky blue",
 };
 
+/**
+ * El modelo de edición de imagen (Flux Kontext Pro) no sigue los colores
+ * al pie de la letra si solo se le dan como adjetivo suelto ("blue and
+ * white football jersey") — en pruebas reales, con un club real pero
+ * poco conocido (Málaga CF) generó un jersey oscuro con un patrón que se
+ * parecía al del Barcelona en vez de azul y blanco, probablemente porque
+ * el modelo rellena con el kit "de fútbol genérico" más representado en
+ * sus datos de entrenamiento cuando la instrucción de color es débil.
+ * Esta cláusula extra fuerza el color explícitamente y prohíbe que
+ * alucine el escudo o patrón de otro club real.
+ */
+function kitAccuracyClause(colorPhrase: string): string {
+  return `${colorPhrase} (the jersey's actual base color MUST be ${colorPhrase}, not any other color — plain simple design, no crest, badge or pattern copied from any other real famous football club)`;
+}
+
 export function describeKit(club: string): string {
-  if (KIT_DESCRIPTIONS[club]) return KIT_DESCRIPTIONS[club];
-  const colors = getClubColors(club);
-  return `custom kit colored ${colors.primary} and ${colors.secondary}`;
+  const colorPhrase = KIT_DESCRIPTIONS[club] ?? (() => {
+    const colors = getClubColors(club);
+    return `custom kit colored ${colors.primary} and ${colors.secondary}`;
+  })();
+  return kitAccuracyClause(colorPhrase);
 }
 
 export function clubInitials(club: string): string {

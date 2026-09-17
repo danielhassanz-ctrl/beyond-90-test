@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
+import { displayName } from "@/types/player";
 import { deletePlayer } from "./actions";
 
 export default async function BorrarJugadorPage() {
@@ -18,7 +19,7 @@ export default async function BorrarJugadorPage() {
     <main className="flex flex-1 items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6 text-center">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-gold">¿Borrar a {player.last_name}?</h1>
+          <h1 className="text-2xl font-bold text-gold">¿Borrar a {displayName(player)}?</h1>
           <p className="text-sm text-neutral-400">
             Se va a borrar toda su carrera: eventos vividos, hitos y estadísticas. Esta acción no
             se puede deshacer.

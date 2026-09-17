@@ -11,17 +11,18 @@ import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
 import { buildMatchContext } from "@/lib/constants";
 import { playerAge } from "@/types/career";
-import { getSeasonContext } from "@/lib/calendar/season";
-import { shouldGenerateAdversity, pickAdversityType, describeAdversity, buildAdversityPrompt, updateAdversityTracker } from "@/lib/narrative/adversity";
-import { detectDeclineSignals, buildDeclinePrompt, describeDeclineContext } from "@/lib/narrative/decline";
+import { shouldGenerateAdversity, pickAdversityType, describeAdversity, buildAdversityPrompt, updateAdversityTracker, getAdversityTracker } from "@/lib/narrative/adversity";
+import { detectDeclineSignals, buildDeclinePrompt } from "@/lib/narrative/decline";
 import { pickCharacterToReappear, describeCharacterReappearance, updateCharacterLastSeen } from "@/lib/narrative/secondary-characters";
-import { shouldBeeFunnyMoment, pickRandomFunnyMoment } from "@/lib/narrative/funny-surreal";
+import { shouldBeeFunnyMoment, pickRandomFunnyMoment, isSurrealMoment } from "@/lib/narrative/funny-surreal";
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
-import { shouldExcludeEvent, weirdEventByRarity, suggestNextEventType, type EventHistory } from "@/lib/narrative/event-tracking";
-import { getNextMatch, isMatchWeekNext, getMatchThisWeek } from "@/lib/calendar/match-calendar";
-import { calculateCareerArc, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, handleOngoingInjury, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
+import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
+import { getNextMatch, isMatchWeekNext, getMatchThisWeek, type MatchWeek } from "@/lib/calendar/match-calendar";
+import { naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
+import { EVENTS } from "@/lib/narrative/events";
+import { pickDetailedLifeScenario, markDetailedLifeUsed } from "@/lib/narrative/life-events-detailed";
 
 const PERCENT_FIELDS = [
   "forma",
@@ -33,6 +34,193 @@ const PERCENT_FIELDS = [
   "rel_representante",
   "reputacion",
 ] as const;
+
+/**
+ * La saga de pareja/hijos y los eventos de prensa con consecuencias fijas
+ * vivían escritos en events.ts pero en un array (EVENTS) que ningún
+ * camino activo del juego llegaba a recorrer — pickNextEventDynamic es lo
+ * único que se llama de verdad desde /carrera, y no lo importaba. Aquí se
+ * recupera solo ese subconjunto (no las ~40 categorías completas de
+ * EVENTS, que la IA ya cubre mejor) para que sí aparezcan en partida real.
+ */
+const FAMILY_AND_PRESS_EVENT_IDS = new Set([
+  "vid-lucia-conoce",
+  "vid-lucia-formalizar",
+  "vid-embarazo",
+  "vid-boda",
+  // No es prensa ni pareja, pero es el mismo caso de contenido guionado con
+  // consecuencias fijas que vivía en el EVENTS muerto: un arco de crisis
+  // (espiral de alcohol en un bache de la carrera) que merece aparecer sin
+  // depender de que la IA decida escribir algo parecido por su cuenta.
+  "esp-espiral-alcohol",
+]);
+const SCRIPTED_LIFE_EVENTS: GameEvent[] = EVENTS.filter(
+  (event) => FAMILY_AND_PRESS_EVENT_IDS.has(event.id) || event.category === "prensa",
+);
+
+/**
+ * El resto del pool "esp-*"/"fama-*" de events.ts: cameos de famosos
+ * (cantantes, influencers, actores), momentos virales (retos, memes,
+ * mascotas que se hacen virales) y algún surrealista (anuncio de colonia
+ * de gladiador, doble corporal). Solo la porción con category "prensa" se
+ * recuperaba antes (ver SCRIPTED_LIFE_EVENTS); estos ~40 con category
+ * "especial"/"vida"/"vestuario"/"representante"/"entrenamiento" seguían en
+ * el mismo EVENTS muerto — con el pool de famosos completo pero invisible
+ * en partida real, pese a que hay contenido de sobra escrito para ello.
+ */
+const FAME_EVENT_IDS = new Set([
+  "esp-leyenda-tunel",
+  "esp-cantante",
+  "esp-influencer",
+  "esp-desafio-viral",
+  "esp-mascota",
+  "esp-doble",
+  "esp-anuncio",
+  "esp-paloma",
+  "esp-nino-sincero",
+  "esp-meme",
+  "esp-patrocinio-chorizo",
+  "esp-broma-vestuario",
+  "esp-excompanero-negocio",
+  "fama-gala-benefica",
+  "fama-reality-show",
+  "fama-videoclip",
+  "fama-relojes-lujo",
+  "fama-fan-club",
+  "fama-videojuego",
+  "fama-coleccion-ropa",
+  "fama-desfile-moda",
+  "fama-cancelacion-injusta",
+  "fama-documental",
+  "fama-cantar-himno",
+  "fama-fiesta-exclusiva",
+  "fama-camiseta-nino",
+  "fama-fragancia-propia",
+  "fama-actor-foto",
+  "fama-coche-lujo",
+  "fama-parodia-humor",
+  "fama-borrar-publicacion",
+  "fama-cena-empresarios",
+  "fama-streamer-directo",
+  "fama-leyenda-vestuario",
+  "fama-reto-viral-vendado",
+  "fama-anuncio-surreal",
+  "fama-mascota-viral",
+  "fama-reality-cocina",
+  "fama-fiesta-piscina",
+  "fama-leyenda-dorsal",
+]);
+const FAME_EVENTS: GameEvent[] = EVENTS.filter((event) => FAME_EVENT_IDS.has(event.id));
+
+/**
+ * Igual que pickScriptedLifeEvent, para el pool de famosos/virales/surreal.
+ */
+function pickFameEvent(player: Player, usedEventIds: string[]): GameEvent | null {
+  const eligible = FAME_EVENTS.filter(
+    (event) =>
+      (event.minWeek ?? 1) <= player.week &&
+      (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (event.minMedia === undefined || player.media >= event.minMedia) &&
+      (event.maxMedia === undefined || player.media <= event.maxMedia) &&
+      !usedEventIds.includes(event.id),
+  );
+  if (eligible.length === 0) return null;
+  return eligible[Math.floor(Math.random() * eligible.length)];
+}
+
+/**
+ * Elige un evento del pool guionado de pareja/prensa si hay alguno
+ * elegible ahora mismo (mismo criterio de minWeek/requiresFlag/media que
+ * el resto del motor). Devuelve null si no hay ninguno o si el sorteo no
+ * toca, para dejar sitio a la narrativa generada por IA la mayoría de
+ * turnos — esto es sabor recurrente, no el grueso de la carrera.
+ */
+function pickScriptedLifeEvent(player: Player, usedEventIds: string[]): GameEvent | null {
+  const eligible = SCRIPTED_LIFE_EVENTS.filter(
+    (event) =>
+      (event.minWeek ?? 1) <= player.week &&
+      (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (event.minMedia === undefined || player.media >= event.minMedia) &&
+      (event.maxMedia === undefined || player.media <= event.maxMedia) &&
+      !usedEventIds.includes(event.id),
+  );
+  if (eligible.length === 0) return null;
+  return eligible[Math.floor(Math.random() * eligible.length)];
+}
+
+/**
+ * Los grandes momentos de una carrera de leyenda de verdad — primera
+ * convocatoria a la selección, capitanía, Mundial, Eurocopa/Copa
+ * América, Balón de Oro, títulos de Liga y Champions — estaban escritos
+ * con el mismo nivel que la carrera de referencia que inspiró Beyond 90
+ * (ver el documento "Beyond 90 Carrera Ejemplo Completa"), pero vivían
+ * en el mismo EVENTS muerto que la saga de pareja. Sin ellos, ninguna
+ * carrera podía llegar a sentirse como esa referencia: nunca había
+ * convocatoria, nunca Mundial, nunca Balón de Oro, nunca título — solo
+ * partidos sueltos generados por IA sin ningún techo narrativo.
+ */
+const GRAND_MOMENT_EVENT_IDS = new Set([
+  "sel-primera-convocatoria",
+  "sel-capitania",
+  "sel-mundial",
+  "sel-clasificacion-mundial",
+  "sel-clasificacion-eurocopa",
+  "sel-clasificacion-copa-america",
+  "sel-eurocopa",
+  "sel-copa-america",
+  "premio-balon-oro",
+  "premio-pichichi",
+  "premio-mvp-torneo",
+  "fork-titulo-liga",
+  "fork-champions",
+  "especial-lesion-grave",
+]);
+const GRAND_MOMENT_EVENTS: GameEvent[] = EVENTS.filter((event) => GRAND_MOMENT_EVENT_IDS.has(event.id));
+
+/**
+ * Igual que pickScriptedLifeEvent pero para los grandes hitos, que
+ * además pueden exigir confederación (Eurocopa solo tiene sentido para
+ * una selección UEFA, Copa América para una CONMEBOL).
+ */
+function pickGrandMomentEvent(player: Player, usedEventIds: string[]): GameEvent | null {
+  const playerConfederation = getConfederation(player.nation);
+  const eligible = GRAND_MOMENT_EVENTS.filter(
+    (event) =>
+      (event.minWeek ?? 1) <= player.week &&
+      (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (event.minMedia === undefined || player.media >= event.minMedia) &&
+      (event.maxMedia === undefined || player.media <= event.maxMedia) &&
+      (!event.requiresConfederation ||
+        (playerConfederation !== null && event.requiresConfederation.includes(playerConfederation))) &&
+      !usedEventIds.includes(event.id),
+  );
+  if (eligible.length === 0) return null;
+  return eligible[Math.floor(Math.random() * eligible.length)];
+}
+
+/** Semanas que dura una lesión larga real (ver tickInjury en career-dynamics.ts). */
+const INJURY_LONG_DURATION_WEEKS = 8;
+
+/**
+ * La IA nunca escribe flags en sus consecuencias (sanitizeConsequences
+ * las descarta, ver ai.ts) — así que el inicio de una lesión larga no
+ * puede depender de que la IA lo marque, hay que forzarlo aquí. Cualquier
+ * opción que elija el jugador para reaccionar arranca la misma cuenta
+ * atrás: la lesión ya pasó, lo único que se decide es cómo se lleva.
+ */
+function attachInjuryStart(event: GameEvent): GameEvent {
+  const injuryFlagKey = `injury_duration_${Date.now()}`;
+  return {
+    ...event,
+    options: event.options.map((option) => ({
+      ...option,
+      consequences: {
+        ...option.consequences,
+        flags: { ...option.consequences.flags, [injuryFlagKey]: String(INJURY_LONG_DURATION_WEEKS) },
+      },
+    })),
+  };
+}
 
 export function pickNextEvent(
   events: GameEvent[],
@@ -178,17 +366,22 @@ export function maybeAddFreeText(event: GameEvent): GameEvent {
  * misma cantidad de decisiones por temporada que otra.
  */
 export function nextWeekGap(media = 50, mode: "express" | "standard" | "pro" = "standard") {
-  // Los tres modos viven temporadas con densidad narrativa parecida
-  // (aprox. 13-20 situaciones/temporada, depende de las decisiones): lo
-  // que los diferencia de verdad es cuántas temporadas dura la carrera
-  // (MODE_TARGET_WEEKS), no cuántos eventos caben en cada una.
-  // Express avanza el calendario un poco más rápido (menos "relleno" por
-  // semana, encaja con una carrera corta); Pro se recrea un poco más en
-  // cada semana (más textura, encaja con una carrera larga).
+  // Los multiplicadores de abajo estaban calibrados a ojo, sin hacer la
+  // cuenta real: con baseChance × multiplier como probabilidad de avanzar
+  // una semana, el número ESPERADO de eventos por temporada de 10 semanas
+  // es 10 / chanceOfAdvance — y con los valores antiguos (0.85/1.0/1.2)
+  // esa cuenta daba ~24-39 eventos/temporada en Pro, no los "13-20" que
+  // decía este mismo comentario. Sobre las 20 temporadas de Pro
+  // (MODE_TARGET_WEEKS), eso son 480-780 eventos en una carrera
+  // completa — una carrera Pro real hasta los 34-36 años (no se acorta:
+  // retirarse antes de los 34 no es lo normal) se sentía interminable en
+  // vez de "adictiva". Recalibrado para que Pro ronde 18-25
+  // eventos/temporada (~360-500 en total), Estándar 14-19, Express
+  // 10-14 — igual de diferenciados entre sí, pero jugables de verdad.
   const modeMultipliers: Record<string, number> = {
-    express: 1.2,
-    standard: 1.0,
-    pro: 0.85,
+    express: 2.2,
+    standard: 1.65,
+    pro: 1.35,
   };
   const multiplier = modeMultipliers[mode] ?? 1.0;
   const baseChance = Math.max(0.28, 0.5 - (media - 50) * 0.005);
@@ -295,10 +488,20 @@ export function resolveOption(option: EventOption, state: CareerState): Resoluti
  */
 async function generatePreMatchEvent(
   player: Player,
-  match: any, // MatchWeek type
+  match: MatchWeek,
   history: HistoryItem[]
 ): Promise<GameEvent | null> {
   const age = playerAge(player.week);
+
+  // El parámetro history se recibía pero nunca se usaba en el prompt — a
+  // diferencia de casi cualquier otra generación de ai.ts (que sí incluye
+  // "ÚLTIMOS EVENTOS"), esta escena se generaba a ciegas, sin ver qué
+  // acababa de pasarle al jugador. La propia lista de ejemplos de arriba
+  // sugiere "recuerdo de un partido anterior contra este rival" como
+  // escena válida, algo imposible de escribir de verdad sin historial.
+  const historyText = history.length
+    ? history.map((h) => `- "${h.title}" → eligió: "${h.chosen}"`).join("\n")
+    : "(todavía no vivió ningún evento)";
 
   // Contexto específico del rival
   const rivalContext: Record<string, string> = {
@@ -338,6 +541,9 @@ TU SITUACIÓN ACTUAL:
 - Moral/ánimo: ${player.moral}/100
 - Relación entrenador: ${player.rel_entrenador}/100
 
+ÚLTIMOS EVENTOS (no repitas tema ni premisa; si encaja, dale continuidad):
+${historyText}
+
 EVENTO NARRATIVO:
 Genera un evento PRE-PARTIDO (días o horas antes del encuentro).
 Es sobre PREPARACIÓN MENTAL/EMOCIONAL, no el partido en sí.
@@ -366,6 +572,125 @@ REGLAS CRÍTICAS:
   return callEventTool(prompt, "entrenamiento", `prematch-${match.week}`);
 }
 
+const MATCH_DECISION_SITUATIONS = [
+  "Recibes un balón filtrado y te plantas solo ante el portero.",
+  "Un rechace te cae a los pies dentro del área, con la portería a tiro.",
+  "Roban el balón: contragolpe, dos contra uno, la pelota es tuya.",
+  "Te llega un centro raso al segundo palo, sin marca encima.",
+  "Recibes de espaldas a la portería, con un defensa pegado a ti.",
+  "Ganas la posición en el área pequeña tras un córner en el último minuto.",
+];
+
+/**
+ * El momento decisivo dentro del partido: antes esto no existía en
+ * absoluto — el partido se resolvía entero de golpe y el jugador solo
+ * podía reaccionar DESPUÉS (rueda de prensa, redes), nunca decidir algo
+ * mientras el balón todavía estaba en juego. No hace falta IA aquí: son
+ * siempre las mismas tres decisiones futbolísticas de verdad (rematar,
+ * pasar, intentar una jugada de calidad), con su propio riesgo/recompensa
+ * vía el mecanismo `resolve` que ya usa el resto del juego. El resultado
+ * se guarda en un flag y generateMatchDayEvent lo lee justo después para
+ * que la crónica del partido sea coherente con lo que de verdad pasó en
+ * esa jugada, no algo inventado aparte.
+ */
+export function buildMatchDecisionMoment(player: Player, match: { week: number; rivalClub: string }): GameEvent {
+  const situation = MATCH_DECISION_SITUATIONS[Math.floor(Math.random() * MATCH_DECISION_SITUATIONS.length)];
+  const decisionFlagKey = `match_decision_${match.week}`;
+
+  return {
+    id: `match-decision-${match.week}-${Date.now()}`,
+    category: "partido",
+    rivalClub: match.rivalClub,
+    title: "El momento decisivo",
+    description: `Partido en marcha ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
+    options: [
+      {
+        id: "disparo",
+        label: "Disparar a puerta",
+        subtitle: "Vas a por el gol directo",
+        consequences: {},
+        resolve: {
+          baseChance: 0.42,
+          statModifier: "media",
+          success: {
+            text: "El balón entra pegado al palo. ¡Gol!",
+            consequences: { flags: { [decisionFlagKey]: JSON.stringify({ outcome: "goal", style: "disparo" }) } },
+          },
+          fail: {
+            text: "El portero saca una mano providencial. No hay gol.",
+            consequences: { flags: { [decisionFlagKey]: JSON.stringify({ outcome: "miss", style: "disparo" }) } },
+          },
+        },
+      },
+      {
+        id: "pase",
+        label: "Pasar a un compañero mejor colocado",
+        subtitle: "Menos gloria, más seguro",
+        consequences: {},
+        resolve: {
+          baseChance: 0.55,
+          statModifier: "media",
+          success: {
+            text: "El pase es perfecto: tu compañero no perdona.",
+            consequences: { flags: { [decisionFlagKey]: JSON.stringify({ outcome: "assist", style: "pase" }) } },
+          },
+          fail: {
+            text: "El pase se queda corto y el rival despeja el peligro.",
+            consequences: { flags: { [decisionFlagKey]: JSON.stringify({ outcome: "miss", style: "pase" }) } },
+          },
+        },
+      },
+      {
+        id: "floritura",
+        label: "Intentar una jugada de calidad (regate, túnel, sombrero...)",
+        subtitle: "Todo o nada, para la galería",
+        consequences: {},
+        resolve: {
+          baseChance: 0.28,
+          statModifier: "media",
+          success: {
+            text: "Sale perfecta. El estadio entero se levanta de sus asientos.",
+            consequences: { fama: 3, flags: { [decisionFlagKey]: JSON.stringify({ outcome: "wondergoal", style: "floritura" }) } },
+          },
+          fail: {
+            text: "No sale — pierdes el balón y el rival sale a la contra.",
+            consequences: { forma: -2, flags: { [decisionFlagKey]: JSON.stringify({ outcome: "miss_bad", style: "floritura" }) } },
+          },
+        },
+      },
+    ],
+  };
+}
+
+/**
+ * Traduce el resultado ya fijado del momento decisivo (ver
+ * buildMatchDecisionMoment) a una instrucción concreta para la crónica
+ * del partido, para que el marcador/goles/asistencias que escriba la IA
+ * sean coherentes con la jugada que el jugador ya vivió y decidió — no
+ * algo inventado aparte que podría contradecirla.
+ */
+function buildDecisionInstruction(decisionRaw?: string): string {
+  if (!decisionRaw) return "";
+  let decision: { outcome: string; style: string };
+  try {
+    decision = JSON.parse(decisionRaw);
+  } catch {
+    return "";
+  }
+  const byOutcome: Record<string, string> = {
+    goal: `Antes tuvo una ocasión clarísima y LA METIÓ de disparo directo — ESE es uno de sus goles en este partido (Goles debe ser 1 o más, nunca 0).`,
+    assist: `Antes tuvo una ocasión y decidió dar el pase a un compañero, que SÍ marcó — ESA es una de sus asistencias en este partido (Asistencias debe ser 1 o más). Esa jugada concreta NO cuenta como gol propio.`,
+    wondergoal: `Antes intentó una jugada de mucha calidad (regate/túnel/sombrero) en un momento decisivo y LE SALIÓ — fue un gol o jugada de mérito especial que la prensa recuerda; cuenta como uno de sus goles (Goles debe ser 1 o más).`,
+    miss: `Antes tuvo una ocasión clara y la FALLÓ — esa jugada concreta no es gol ni asistencia (puede seguir sin marcar el resto del partido, o anotar en otra jugada distinta si encaja con el relato).`,
+    miss_bad: `Antes intentó una jugada arriesgada en un momento decisivo y la PERDIÓ, dejando a su equipo con menos gente atrás en la jugada siguiente — un momento negativo puntual que puede haber costado un gol en contra.`,
+  };
+  const line = byOutcome[decision.outcome];
+  if (!line) return "";
+  return `- MOMENTO DECISIVO YA VIVIDO Y FIJO, NO LO CONTRADIGAS: ${line}`;
+}
+
 /**
  * Genera el partido en sí, con marcador y rendimiento personal — a
  * diferencia de generatePreMatchEvent (la víspera), esto es el resultado
@@ -376,10 +701,11 @@ REGLAS CRÍTICAS:
  * tras jornada sin que el partido llegara a jugarse nunca — encontrado
  * jugando una carrera real de principio a fin.
  */
-async function generateMatchDayEvent(
+export async function generateMatchDayEvent(
   player: Player,
-  match: any, // MatchWeek type
-  history: HistoryItem[]
+  match: MatchWeek,
+  history: HistoryItem[],
+  decisionRaw?: string,
 ): Promise<GameEvent | null> {
   const age = playerAge(player.week);
 
@@ -397,6 +723,7 @@ async function generateMatchDayEvent(
 EL PARTIDO YA SE HA JUGADO. Genera su ficha con resultado real.
 
 PARTIDO (semana ${match.week}) — ESTOS DATOS SON FIJOS, NO SE INVENTAN:
+- Tu club: ${player.club}
 - Rival: ${match.rivalClub}
 - Competición: ${compLabel[match.competition as keyof typeof compLabel] ?? "Partido importante"}
 - Jornada: ${match.description}
@@ -405,14 +732,23 @@ PARTIDO (semana ${match.week}) — ESTOS DATOS SON FIJOS, NO SE INVENTAN:
 TU SITUACIÓN:
 - Jugador: ${player.last_name}, ${age} años, ${player.position}
 - Media: ${player.media}/99, Forma: ${player.forma}/100, Moral: ${player.moral}/100
+- Partidos jugados como profesional hasta ahora (SIN contar este): ${player.stats_matches_played ?? 0}
+${buildDecisionInstruction(decisionRaw)}
 
 REGLAS CRÍTICAS:
 ${COMMON_RULES}
 - PROHIBIDO ABSOLUTO: mencionar cualquier rival o competición que NO sea "${match.rivalClub}" en "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}". No inventes otro equipo, otra jornada ni otro torneo — es EL PARTIDO PROGRAMADO, no uno libre. rival_club debe ser exactamente "${match.rivalClub}".
-- OBLIGATORIO en la descripción, en este orden: (1) "${match.rivalClub}" y "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}" tal cual, (2) marcador EXACTO (ej "2-1"), (3) minutos jugados, (4) tu nota (0-10, decimal), (5) GOLES exactos (0, 1, 2+), (6) asistencias. Crónica corta (3-5 frases) — que quede clarísimo si metiste gol o no, es el dato más importante de todo el evento.
-- FORMATO RECOMENDADO: "Ante ${match.rivalClub} en ${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}, jugaste [X] minutos. Nota: [X.X]/10. Goles: [0/1/2+]. Asistencias: [X]. Marcador: [X-X]."
+- En el título y la descripción, tu equipo se llama SIEMPRE "${player.club}" tal cual — NUNCA un nombre genérico o inventado como "Real Club", "tu equipo" o similar.
+- El marcador se escribe SIEMPRE en el orden "${player.club} - ${match.rivalClub}" (tu equipo primero, sin importar si juegas en casa o fuera), y el relato (quién ganó/perdió/empató) tiene que cuadrar aritméticamente con ese marcador — un marcador donde tu primer número es mayor es VICTORIA tuya, no derrota, y viceversa. Revísalo antes de escribir el texto final.
+- OBLIGATORIO en la descripción, en este orden: (1) "${match.rivalClub}" y "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}" tal cual, (2) marcador EXACTO en el orden indicado arriba (ej "2-1"), (3) minutos jugados, (4) tu nota (0-10, decimal), (5) GOLES exactos (0, 1, 2+), (6) asistencias. Crónica corta (3-5 frases) — que quede clarísimo si metiste gol o no, y si tu equipo ganó, perdió o empató, es el dato más importante de todo el evento.
+- FORMATO RECOMENDADO: "Ante ${match.rivalClub} en ${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}, jugaste [X] minutos. Nota: [X.X]/10. Goles: [0/1/2+]. Asistencias: [X]. Marcador: [X-X] (${player.club}-${match.rivalClub})."
+- ${
+    (player.stats_matches_played ?? 0) > 0
+      ? `PROHIBIDO llamar a esto "debut" o "primer partido" de ninguna forma — ya lleva ${player.stats_matches_played} partido(s) jugados como profesional. Trátalo como un partido más de una carrera en marcha, con el peso narrativo que corresponda a ese momento (racha, presión, rutina, rivalidad concreta), nunca como una primera vez.`
+      : `Este SÍ es su primer partido como profesional — aquí sí cabe la palabra "debut".`
+  }
 - El resultado y rendimiento deben ser coherentes con forma ${player.forma}/100 y media ${player.media}/99 — a veces se pierde, a veces juegas mal o no sales, variación realista. No siempre eres el héroe.
-- Las opciones son sobre cómo reaccionas DESPUÉS (prensa, vestuario, redes, autocrítica), no sobre cómo jugar — el partido ya pasó.
+- Las opciones son sobre cómo reaccionas DESPUÉS (prensa, vestuario, redes, autocrítica), no sobre cómo jugar — el partido ya pasó. NO reutilices siempre el mismo cuarteto de reacciones (rueda de prensa / redes / entrenador / entrenar solo) — varía el tipo de reacción según lo que pasó en ESTE partido concreto (un compañero, la familia, un rival directo, la afición local, algo que dijiste tú mismo en el campo...).
 - OBLIGATORIO: cada opción lleva el MISMO cambio de media en consequences (el partido ya ocurrió, no depende de la opción elegida). Nota 8+/gol decisivo → +2 a +5. Nota <6 → -1 a -3. Discreto → 0 a +1.
 - is_milestone true SOLO si fue excepcional (hat-trick, gol decisivo en el descuento, debut soñado, lesión grave) — no en partidos normales. Si true, escribe image_scene específico de esa acción.`;
 
@@ -430,35 +766,54 @@ ${COMMON_RULES}
  * Reemplaza el pool de 40 eventos fijos con generación dinámica contextualizada.
  */
 /**
- * Aplica cambios automáticos de carrera (forma degrada, relaciones sufren, presión mediática).
- * Se llama al principio de cada turno.
+ * Aplica cambios automáticos de carrera (forma degrada, relaciones sufren,
+ * presión mediática, declive por edad). Antes esta función devolvía una
+ * COPIA del jugador que nadie guardaba nunca — page.tsx solo persiste
+ * pending_event y flags tras llamar a pickNextEventDynamic, así que todo
+ * este cálculo se tiraba a la basura en cada turno y la forma jamás
+ * degradaba de verdad por inactividad. Ahora muta el propio objeto
+ * `player` (mismo patrón ya usado por el cooldown del gol de chilena o el
+ * tracker de adversidad) para que page.tsx lo persista junto al resto.
+ *
+ * Se aplica como mucho una vez por número de semana real (no una vez por
+ * turno/evento, que puede haber varios en la misma semana): sin este
+ * guardado en flags, una carrera con muchos eventos por semana degradaría
+ * la forma varias veces seguidas y la dejaría siempre pegada al suelo.
  */
 function applyCareerDynamics(player: Player): Player {
-  let updated = { ...player };
+  const lastDynamicsWeek = parseInt(String(player.flags?.dynamics_last_week ?? "0"), 10) || 0;
+  if (player.week <= lastDynamicsWeek) {
+    return player;
+  }
+  if (!player.flags) player.flags = {};
+  player.flags.dynamics_last_week = String(player.week);
 
   // Aplicar degradación de forma si no ha jugado
-  updated.forma = naturalFormaDegradation(updated);
+  player.forma = naturalFormaDegradation(player);
 
   // Aplicar declive por edad (si >32 años)
-  const mediaAfterAge = ageBasedMediaDecline(updated);
-  if (mediaAfterAge < updated.media) {
-    updated.media = mediaAfterAge;
+  const mediaAfterAge = ageBasedMediaDecline(player);
+  if (mediaAfterAge < player.media) {
+    player.media = mediaAfterAge;
   }
-
-  // Manejar lesiones en curso
-  updated = handleOngoingInjury(updated);
+  // Autocorrección: un bug ya corregido en ageBasedMediaDecline dejó
+  // partidas reales con media en 0 (por debajo del suelo de 40 que rige
+  // en todo el resto del juego). Este clamp repara ese valor corrupto en
+  // cuanto la carrera vuelve a pasar por aquí, sin necesitar tocar la
+  // base de datos a mano.
+  player.media = Math.max(40, Math.min(99, player.media));
 
   // Aplicar deterioro de relaciones
-  const relChanges = deteriorateRelationships(updated);
-  Object.assign(updated, relChanges);
+  const relChanges = deteriorateRelationships(player);
+  Object.assign(player, relChanges);
 
   // Presión mediática afecta moral
-  const { mortalAfect } = calculateMediaPressure(updated);
+  const { mortalAfect } = calculateMediaPressure(player);
   if (mortalAfect < 0) {
-    updated.moral = Math.max(0, (updated.moral || 50) + mortalAfect);
+    player.moral = Math.max(0, (player.moral || 50) + mortalAfect);
   }
 
-  return updated;
+  return player;
 }
 
 export async function pickNextEventDynamic(
@@ -486,7 +841,17 @@ export async function pickNextEventDynamic(
 
   // Verificar TRANSICIONES DE CARRERA AUTOMÁTICAS (pico, decline, retiro)
   const careerTransition = detectCareerTransition(playerWithDynamics);
-  if (careerTransition) {
+  // "ready_to_retire" se activa con una condición amplia (edad > 34, o
+  // 32+ con media baja) que sigue siendo cierta turno tras turno si el
+  // jugador elige "continuar" — sin un enfriamiento, "¿Hasta cuándo vas
+  // a jugar?" se repetía EN CADA TURNO sin parar nunca, potencialmente
+  // durante cientos de turnos seguidos. Se recuerda como mucho una vez
+  // cada 15 semanas, no cada vez que se genera un evento nuevo.
+  const retireReminderCooldownOk =
+    careerTransition !== "ready_to_retire" ||
+    player.week - parseInt(String(player.flags?.retire_reminder_last_week ?? "-999"), 10) >= 15;
+
+  if (careerTransition && retireReminderCooldownOk) {
     console.log(`[pickNextEventDynamic] Career transition detected: ${careerTransition}`);
     let transitionEvent: GameEvent | null = null;
 
@@ -495,13 +860,15 @@ export async function pickNextEventDynamic(
         transitionEvent = buildEnteringPeakEvent();
         break;
       case "exiting_peak":
-        transitionEvent = buildExitingPeakEvent();
+        transitionEvent = buildExitingPeakEvent(playerAge(player.week));
         break;
       case "entering_decline":
         transitionEvent = buildEnteringDeclineEvent();
         break;
       case "ready_to_retire":
         transitionEvent = buildReadyToRetireEvent();
+        if (!player.flags) player.flags = {};
+        player.flags.retire_reminder_last_week = String(player.week);
         break;
     }
 
@@ -510,36 +877,14 @@ export async function pickNextEventDynamic(
     }
   }
 
-  // Verificar si el partido programado es ESTA semana — tiene que
-  // comprobarse ANTES que "la próxima semana", o el partido nunca llega
-  // a jugarse (el motor solo generaba la víspera una y otra vez).
-  const matchThisWeek = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club);
-  if (matchThisWeek) {
-    console.log(
-      `[pickNextEventDynamic] This week IS match week (${matchThisWeek.competition}): ${matchThisWeek.description}. Resolving the match.`
-    );
-    const matchDayEvent = await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history);
-    if (matchDayEvent) {
-      return maybeAddFreeText(addMatchContext(matchDayEvent, playerWithDynamics));
-    }
-  }
-
-  // Verificar si hay un partido importante próximo (la próxima semana)
-  // Si es así, generar un evento pre-partido narrativo
-  if (isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club)) {
-    const nextMatch = getNextMatch(playerWithDynamics.week, playerWithDynamics.club);
-    if (nextMatch) {
-      console.log(
-        `[pickNextEventDynamic] Next week is match week (${nextMatch.competition}): ${nextMatch.description}. Generating pre-match narrative.`
-      );
-      // Generar evento pre-partido contextualizado
-      const preMatchEvent = await generatePreMatchEvent(playerWithDynamics, nextMatch, history);
-      if (preMatchEvent) {
-        return maybeAddFreeText(preMatchEvent);
-      }
-    }
-  }
-
+  // El cierre de una temporada y el arranque de la siguiente (edad+1,
+  // stats del año que se cierra) tiene que tener su propio momento
+  // narrativo — comprobarlo ANTES que "hay partido esta semana", porque
+  // la primera semana de cada temporada nueva SIEMPRE tiene un amistoso
+  // programado (ver match-calendar.ts) y ese check ganaba siempre,
+  // dejando la temporada pasar sin que se notara nunca el cambio de año
+  // (el jugador solo se daba cuenta porque de golpe tenía un año más).
+  // Visto en vivo jugando.
   const isPreseasson = weekInSeason === 1 && season > 0 && age >= 17;
 
   if (isPreseasson) {
@@ -552,9 +897,69 @@ export async function pickNextEventDynamic(
     }
   }
 
+  // Verificar si el partido programado es ESTA semana — tiene que
+  // comprobarse ANTES que "la próxima semana", o el partido nunca llega
+  // a jugarse (el motor solo generaba la víspera una y otra vez).
+  const matchThisWeek = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club);
+  if (matchThisWeek) {
+    // Antes el partido se resolvía entero de golpe (marcador ya decidido)
+    // y el jugador solo podía reaccionar DESPUÉS — nunca decidir nada
+    // mientras el balón seguía en juego. Ahora primero se vive el momento
+    // decisivo (rematar/pasar/floritura) y solo cuando ya está resuelto
+    // se genera la crónica del partido, coherente con esa jugada.
+    const decisionFlagKey = `match_decision_${matchThisWeek.week}`;
+    const decisionOutcome = playerWithDynamics.flags?.[decisionFlagKey] as string | undefined;
+
+    if (!decisionOutcome) {
+      console.log(
+        `[pickNextEventDynamic] This week IS match week (${matchThisWeek.competition}) — momento decisivo primero.`
+      );
+      return maybeAddFreeText(buildMatchDecisionMoment(playerWithDynamics, matchThisWeek));
+    }
+
+    console.log(
+      `[pickNextEventDynamic] This week IS match week (${matchThisWeek.competition}): ${matchThisWeek.description}. Resolving the match.`
+    );
+    const matchDayEvent = await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history, decisionOutcome);
+    if (matchDayEvent) {
+      return maybeAddFreeText(addMatchContext(matchDayEvent, playerWithDynamics));
+    }
+  }
+
+  // Verificar si hay un partido importante próximo (la próxima semana)
+  // Si es así, generar un evento pre-partido narrativo — pero solo UNA
+  // vez por partido: nextWeekGap puede tocar "no avanzar semana" varias
+  // veces seguidas mientras sigue siendo cierto que "el partido es la
+  // semana que viene", y sin este freno, la víspera del mismo partido se
+  // repetía turno tras turno (visto en vivo: 5 veces seguidas "La noche
+  // antes del Getafe", cada una con texto distinto pero la misma premisa
+  // — no tiene sentido narrativo vivir varias vísperas del mismo partido).
+  if (isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club)) {
+    const nextMatch = getNextMatch(playerWithDynamics.week, playerWithDynamics.club);
+    const prematchFlagKey = `prematch_shown_${nextMatch?.week}`;
+    if (nextMatch && !player.flags?.[prematchFlagKey]) {
+      console.log(
+        `[pickNextEventDynamic] Next week is match week (${nextMatch.competition}): ${nextMatch.description}. Generating pre-match narrative.`
+      );
+      // Generar evento pre-partido contextualizado
+      const preMatchEvent = await generatePreMatchEvent(playerWithDynamics, nextMatch, history);
+      if (preMatchEvent) {
+        if (!player.flags) player.flags = {};
+        player.flags[prematchFlagKey] = true;
+        return maybeAddFreeText(preMatchEvent);
+      }
+    }
+  }
+
   // Declive emocional: reflexión sobre fin de carrera (edad 30+)
-  // Momento profundo sobre transición, legado, segunda vida (raro: ~8% después week 150)
-  if (playerAge(player.week) >= 30 && player.week > 150 && Math.random() < 0.08) {
+  // Momento profundo sobre transición, legado, segunda vida. Antes el gate
+  // era un proxy tosco ("semana > 150"), que ni miraba el estado real del
+  // jugador — shouldTriggerDeclineReflection() estaba escrita (fase de
+  // decline sostenida, media cayendo con 34+, o crisis de forma+moral) pero
+  // nunca se llamaba desde aquí, así que ese criterio más fiel nunca se
+  // aplicaba de verdad. Con esto, la reflexión llega cuando el jugador de
+  // verdad está en declive, no solo cuando el reloj lo dice.
+  if (playerAge(player.week) >= 30 && shouldTriggerDeclineReflection(player) && Math.random() < 0.08) {
     const declineSignals = detectDeclineSignals(player);
     if (declineSignals.length >= 2) {
       console.log(
@@ -597,14 +1002,93 @@ export async function pickNextEventDynamic(
     const adversityEvent = await callEventTool(adversityPrompt, "especial", `adversity-${adversityType}`);
 
     if (adversityEvent) {
-      const tracker = { lastAdversityWeek: player.week, adversitiesCount: 0 };
+      // Antes se creaba siempre un tracker nuevo con adversitiesCount: 0
+      // en vez de partir del guardado — updateAdversityTracker lo subía
+      // a 1 y ahí se quedaba para siempre, por muchas adversidades que
+      // viviera el jugador en el resto de la carrera.
+      const tracker = getAdversityTracker(player);
       updateAdversityTracker(player, tracker);
-      return maybeAddFreeText({
+      const finalAdversityEvent: GameEvent = {
         ...adversityEvent,
         id: `adversity-${adversityType}-${Date.now()}`,
         category: "especial",
         isMilestone: Math.random() < 0.3, // 30% de las adversidades son hitos
-      });
+      };
+      // La lesión larga necesita su propia cuenta atrás persistente (ver
+      // tickInjury, aplicado turno a turno en resolveEvent) — sin esto,
+      // "injury_long" es solo un golpe puntual como cualquier otra
+      // adversidad, y una rotura grave no debería curarse en un turno.
+      return maybeAddFreeText(
+        adversityType === "injury_long" ? attachInjuryStart(finalAdversityEvent) : finalAdversityEvent,
+      );
+    }
+  }
+
+  // Grandes momentos de leyenda (selección, Mundial, Balón de Oro,
+  // títulos): más probabilidad que el sabor normal en cuanto el jugador
+  // cumple los requisitos, porque son los hitos que de verdad dan forma
+  // a una carrera memorable — no deberían quedar a la misma suerte que
+  // una escena de vestuario cualquiera.
+  if (Math.random() < 0.35) {
+    const grandMomentEvent = pickGrandMomentEvent(player, usedEventIds);
+    if (grandMomentEvent) {
+      console.log(`[pickNextEventDynamic] Grand moment event: "${grandMomentEvent.title}"`);
+      return maybeAddFreeText(
+        grandMomentEvent.id === "especial-lesion-grave" ? attachInjuryStart(grandMomentEvent) : grandMomentEvent,
+      );
+    }
+  }
+
+  // Saga de pareja/hijos y eventos de prensa con consecuencias fijas: un
+  // hueco pequeño (como el de sponsorships/momentos raros de más abajo),
+  // no la fuente principal de narrativa.
+  if (Math.random() < 0.12) {
+    const scriptedEvent = pickScriptedLifeEvent(player, usedEventIds);
+    if (scriptedEvent) {
+      console.log(`[pickNextEventDynamic] Scripted life/press event: "${scriptedEvent.title}"`);
+      return maybeAddFreeText(scriptedEvent);
+    }
+  }
+
+  // Cameos de famosos, momentos virales y algún surrealista (ver
+  // FAME_EVENT_IDS más arriba) — contenido ya escrito que llevaba muerto.
+  // 16% para que aparezca con cierta frecuencia sin comerse el resto del
+  // sabor normal generado por IA.
+  if (Math.random() < 0.16) {
+    const fameEvent = pickFameEvent(player, usedEventIds);
+    if (fameEvent) {
+      console.log(`[pickNextEventDynamic] Fame/viral/surreal event: "${fameEvent.title}"`);
+      return maybeAddFreeText(fameEvent);
+    }
+  }
+
+  // Banco de vida detallada (boda, nacimiento, muerte de un familiar,
+  // traición, escándalo, premio individual, instituto, familia,
+  // contraportada de prensa...) — ver life-events-detailed.ts. Llevaba
+  // escrito sin que nadie lo recorriera; aquí se elige una escena
+  // concreta según edad/estadísticas y se le pide a la IA que la
+  // desarrolle con su propio detalle. Subido de 15% a 22%: con el banco
+  // de instituto/familia recién añadido, un jugador joven tiene ahora
+  // muchas más categorías elegibles a la vez — a un 16 años recién
+  // empezado, antes de que haya club/fichajes/hitos de sobra, esto era
+  // justo lo que hacía sentir vacías las primeras semanas de carrera.
+  if (Math.random() < 0.22) {
+    const detailedScenario = pickDetailedLifeScenario(player);
+    if (detailedScenario) {
+      const { generateDetailedLifeEvent } = await import("./ai");
+      const detailedEvent = await generateDetailedLifeEvent(
+        player,
+        detailedScenario.category,
+        detailedScenario.scenario,
+        history,
+      );
+      if (detailedEvent) {
+        console.log(
+          `[pickNextEventDynamic] Detailed life event (${detailedScenario.category}) for ${player.last_name}: "${detailedEvent.title}"`
+        );
+        markDetailedLifeUsed(player, detailedScenario.category);
+        return maybeAddFreeText(detailedEvent);
+      }
     }
   }
 
@@ -644,6 +1128,21 @@ REGLAS:
           category: "vida",
         });
       }
+    }
+  }
+
+  // Al principio de la carrera el jugador no sabe nada del negocio del
+  // fútbol — es cuando más necesita que su representante le llame con
+  // novedades (interés de otro club, una marca, una inversión) en vez de
+  // aparecer solo en los momentos mecánicos de fichaje. Sin gate de fama
+  // alta a propósito: es justo lo contrario del patrocinio de abajo,
+  // pensado para una estrella ya consolidada.
+  if (playerAge(player.week) < 20 && Math.random() < 0.18) {
+    const { generateAgentGuidanceCall } = await import("./ai");
+    const guidanceEvent = await generateAgentGuidanceCall(player, history);
+    if (guidanceEvent) {
+      console.log(`[pickNextEventDynamic] Agent guidance call for ${player.last_name}: "${guidanceEvent.title}"`);
+      return maybeAddFreeText(guidanceEvent);
     }
   }
 
@@ -690,11 +1189,18 @@ REGLAS:
 
     const funnyEvent = await callEventTool(funnyPrompt, "especial", `funny-${Date.now()}`);
     if (funnyEvent) {
+      // Los momentos "surreal" rompen la física a propósito (gravedad
+      // invertida, un balón con una ciudad dentro...) — precisamente lo
+      // que un modelo de edición de imagen fotorrealista no puede
+      // representar de forma coherente sobre una foto real. Sin esta
+      // exclusión, un 4% de todos los eventos del juego podían intentar
+      // generar una imagen imposible de renderizar bien.
+      const canHaveImage = !isSurrealMoment(funnyMoment);
       return maybeAddFreeText({
         ...funnyEvent,
         id: `funny-${Date.now()}`,
         category: "especial",
-        isMilestone: Math.random() < 0.4,
+        isMilestone: canHaveImage && Math.random() < 0.4,
       });
     }
   }

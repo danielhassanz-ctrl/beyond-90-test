@@ -13,9 +13,9 @@ export function buildPreseasonBienvenidaEvent(club: string): GameEvent {
     category: "entrenamiento",
     title: "Bienvenido al club",
     description: `Tu primer día en las instalaciones del ${club}. El director deportivo te recibe personalmente. 'Bienvenido', te dice. 'Sabemos que vienes de un buen proceso. Aquí queremos que continúes creciendo. La pretemporada es para adaptarte al ritmo, al grupo y a nuestras ideas. Trabaja duro, aprende rápido, y las oportunidades llegarán.'`,
-    isMilestone: true,
+    // No es un hito en sí (la firma ya generó su propia tarjeta justo
+    // antes) — es el primer día de trabajo, no un momento extraordinario.
     milestoneType: "pretemp",
-    imageScene: `Photorealistic photo of a young footballer arriving at a professional football club, modern training facility entrance, club crest visible, welcoming atmosphere, nervous excitement`,
     options: [
       {
         id: "humilde",
@@ -67,7 +67,7 @@ export function buildPreseasonCompetenciaEvent(): GameEvent {
     options: [
       {
         id: "respeto",
-        label: "Respetarlos: 'Tengo mucho que aprender de ustedes'",
+        label: "Respetarlos: 'Tengo mucho que aprender de vosotros'",
         subtitle: "Construir relación",
         consequences: { moral: 2, rel_vestuario: 3, forma: 1 },
       },
@@ -112,7 +112,7 @@ export function buildPreseasonCapitan(): GameEvent {
     title: "El capitán te toma bajo su ala",
     description:
       "Después del entrenamientos, el capitán (30 años, veterano absoluto) se te acerca. 'Oye, conozco la tensión que sientes. Yo estuve donde estás hace años. Mi consejo: no intentes demostrar todo el primer mes. Aprende el sistema, entiende a tus compañeros, gana su respeto. El fútbol es un equipo.' Te invita a comer con algunos jugadores. Es un gesto.",
-    isMilestone: true,
+    // Un gesto bonito de vestuario, no un hito fotografiable.
     milestoneType: "pretemp",
     options: [
       {
@@ -141,7 +141,7 @@ export function buildPreseasonPasado(): GameEvent {
     options: [
       {
         id: "nostalgico",
-        label: "Extrañar un poco pero sentir que estás en el lugar correcto",
+        label: "Echar un poco de menos pero sentir que estás en el lugar correcto",
         subtitle: "Emoción controlada",
         consequences: { moral: 3, forma: 0 },
       },
@@ -163,9 +163,9 @@ export function buildPreseasonAmistoso(): GameEvent {
     description:
       "Juega un equipo de tercera división. Tú entras en el minuto 45. Nota: 6.2/10. Goles: 0. Asistencias: 0. Marcador final: 3-1 a favor. No fue brillante pero tampoco malo. Es tu primer toque real de competición con estos compañeros. El técnico después: 'Bien, eso es lo que necesitaba ver. Sigue así.'",
     rivalClub: "Equipo de pretemporada",
-    isMilestone: true,
+    // Un amistoso de pretemporada con nota discreta (6.2) no es el
+    // debut real — ese es rookie-debut-oficial, que sí es milestone.
     milestoneType: "pretemp",
-    imageScene: `Photorealistic photo of a young footballer playing in a friendly preseason match, focused on the ball, teammates and opponents around, stadium or training ground backdrop, professional match action`,
     options: [
       {
         id: "satisfecho",

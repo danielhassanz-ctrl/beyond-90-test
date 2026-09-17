@@ -2,151 +2,24 @@
 
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { applyConsequences, nextWeekGap, resolveOption } from "@/lib/narrative/engine";
+import { applyConsequences, nextWeekGap, resolveOption, maybeAddFreeText } from "@/lib/narrative/engine";
+import { tickInjury } from "@/lib/narrative/career-dynamics";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
 import { generateFromTemplate, saveAsTemplateIfMissing } from "@/lib/images/templates";
 import { composeWarcaCover } from "@/lib/images/newspaper";
 import { GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
+import { buildMatchContext } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
-import { getContextualImagePrompt } from "@/lib/narrative/contextual-image-prompts";
+import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, playerAge } from "@/types/career";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/player/update-stats";
-import { buildSecondCareerChoiceEvent } from "@/lib/narrative/second-career-events";
-
-/** Prompts contextuales para tarjetas compartibles — cinematografía deportiva de máximo impacto */
-const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
-  "contrato-debut": "Epic cinematic photograph: [AGE] footballer in pristine [CLUB_KIT] football jersey, holding the jersey up with both hands in the center frame, absolutely beaming with pride and emotion. Club president shaking hands in sharp focus beside him. Background: blurred modern club office with floor-to-ceiling windows showing daylight, executive portraits on walls. Professional studio lighting casting perfect key light on face and jersey. Vibrant emerald-green field colors, crisp white jersey accents, golden morning light. Shot composition: dynamic diagonal lines, trophy visible on table behind, newspaper with headline visible on desk. Photojournalism award-winning sports photography, editorial fashion, emotional triumph captured in single frame, cinematic color grading, 8K detail",
-
-  "contrato-fallback": "Golden hour cinematic sports photography: [AGE] footballer clutching his [CLUB_KIT] jersey like a trophy, eyes locked forward with determination and joy, contract papers and pen visible on mahogany table. Director in suit presenting official papers. Office background: expensive wooden panels, large club crest on wall, natural daylight flooding through windows. Warm golden hour light kissing his face, creating dramatic shadows that emphasize emotion. Color palette: deep burgundy, gold accents, crisp white papers. Ultra-sharp focus on expression and jersey details, shallow depth of field background. Professional sports portrait, Getty Images quality, raw emotion of beginning a dream career, cinematic lighting, premium photography",
-
-  "par-hat-trick": "Explosive action photograph at night: [AGE] footballer mid-celebration with three fingers held high in the air, screaming with pure joy and ecstasy. Center frame dominance. Teammates rushing toward him in celebratory pile. Stadium background: dazzling LED lights creating vibrant color palette, massive crowd (thousands visible) creating bokeh of phone flashlights. Soccer ball visible in lower corner. Perfect lighting on face showing sweat, pure adrenaline, and triumph. Motion blur in background emphasizing the intensity. Ultra-vivid colors: neon green field markings, bright stadium whites, electric crowd energy. Sports moment that defines legacy, ESPN highlight reel quality, raw athletic ecstasy, 4K broadcast standards",
-
-  "fork-titulo-liga": "Iconic trophy lift moment in golden stadium light: [AGE] footballer at apex of celebration, massive league trophy held high above head with both hands, pure joy radiating from face. Confetti explosion filling entire frame (photorealistic thick confetti clouds). Teammates surrounding, crowd visible going absolutely insane behind. Stadium floodlights creating perfect dramatic backlighting, golden hour glow, lens flare effects. Ground perspective: packed stadium seats, sea of supporters. Vibrant trophy gold reflections, field green, clear blue sky above stadium rim. This is the moment that wins sports photography awards — pure triumph, legacy-defining, family heirloom quality image. Cinematic sports moment, Getty Images iconic, museum-quality composition",
-
-  "fork-champions": "Cinematic European grandeur: [AGE] footballer holding the enormous European club trophy (Champions League style) with both arms raised high, face glowing with historic achievement. MASSIVE fireworks exploding in sky behind him (real fireworks, not subtle). Confetti cannons firing in foreground. Packed stadium at night with thousands of phone lights creating magical bokeh. International crowd visible going insane. Perfect dramatic lighting: stadium floodlights + fireworks + golden trophy glow. Color palette: deep night blue sky, golden trophy reflections, white fireworks, vibrant crowd energy. This image is ICONIC — the kind that gets printed on sports posters, merchandise, coffee table books. Worldwide legacy moment. Cinematic masterpiece, Academy Awards level sports photography",
-
-  "vid-boda": "Romantic wedding moment with athletic elegance: [AGE] footballer in crisp black tuxedo with white dress shirt, smiling warmly and genuinely. Standing with bride (or partner) by his side in wedding attire. Teammates visible in soft-focus background in formal wear, suggesting brotherhood witness. Elegant wedding venue: cathedral-style architecture, warm candlelight + natural golden hour sunlight streaming through tall windows. Floral arrangements in muted tones. Perfectly balanced lighting that emphasizes the couple's joy. Warm color palette: golden hour amber, champagne tones, white accents, deep blacks. Moment that transcends sport — human connection, love, legacy beyond football. High-fashion wedding photography standards, premium quality, emotional and genuine, sophisticated and timeless",
-
-  "par-mvp-partido-clave": "Triumphant award moment under stadium lights: [AGE] footballer holding the man-of-the-match trophy at chest level, beaming with pride, facing camera directly. On-field setting: grass visible, stadium lights creating dramatic key lighting on face. Teammates applauding in background (some with hands up), coach nodding approvingly. Camera flashes visible (bokeh) creating energy. Pristine [CLUB_KIT] jersey with sweat and effort visible but immaculate. Color palette: emerald field, vibrant stadium lighting, golden trophy accents, white crowd areas. This is the moment every athlete dreams of — individual recognition in team sport. Perfect composition, dynamic diagonal lines, award-winning sports photography, emotional authenticity",
-
-  "rep-renovacion-contrato": "Power moment of commitment: [AGE] footballer in [CLUB_KIT] jersey holding it up with absolute conviction, signing a major contract. Club president or director shaking hand while nodding approvingly. Modern executive office: glass walls, minimalist design, large windows with city skyline visible behind. Dramatic side-lighting emphasizing resolve and determination on face. Mahogany contract on table with visible signatures. Color palette: crisp whites, deep blacks, jewel tones, city lights bokeh through windows. This represents dedication and loyalty — not just money, but legacy commitment. Premium sports business photography, editorial quality, aspirational imagery",
-
-  "fork-ascenso-division": "Celebratory pitch invasion moment: [AGE] footballer with arms raised in pure joy, teammates surrounding in celebratory embrace. Field is packed with celebrating players. Crowd visible going absolutely wild in background. Stadium atmosphere electric. Evening/dusk lighting creating dramatic shadows and warm tones. Grass fresh and vibrant green, white pitch lines sharp. Multiple celebrations happening simultaneously creating kinetic energy. Color palette: natural field greens, blue sky, warm sunset tones, crowd colors. This is about collective triumph — the entire team rising together. Epic cinematic sports moment, documentary photography quality, pure team joy",
-
-  "premio-balon-oro": "Red carpet royalty moment: [AGE] footballer in impeccable black tuxedo with white bow tie, holding the iconic Balón de Oro trophy at waist level, confident and composed smile. Red carpet stretches behind. Professional event photographers visible (bokeh flashes in background). Elegant awards ceremony backdrop with luxury branding. Theatrical stage lighting creating perfect skin tones and highlighting the trophy's gleaming surfaces. Formal audience members in background in evening wear. Color palette: deep blacks and golds, rich burgundy carpet, white dress shirts, golden trophy reflection. This represents the pinnacle of individual achievement — the world's best footballer. Premium fashion and sports photography combined, museum-quality, aspirational and iconic",
-
-  "sel-primera-convocatoria": "Pride and patriotism: [AGE] footballer in pristine national team kit (perfectly clean and tailored), standing tall with hand on heart or fist raised. National flag visible prominently in background (not blurred, clearly visible). Modern national team stadium as backdrop. Patriotic lighting — dramatic and respectful. Fellow players visible in formation behind. Color palette: national colors prominent and vibrant, field green, clear sky. This is about representing your nation — honor, duty, pride. Cinematic national anthem quality, official team photography, emotional and respectful composition",
-
-  "sel-capitania": "Leadership embodied: [AGE] footballer wearing captain's armband prominently (armband large and perfectly visible in frame), holding it proudly with one hand, looking forward with absolute confidence and maturity. National team kit impeccable. Teammates visible behind in formation, showing respect. Stadium background, focused intensity. Dramatic professional lighting emphasizing maturity and responsibility. Color palette: national colors, armband color prominent, field backdrop. This represents the peak of leadership in international football. Premium editorial sports photography, iconic leadership imagery, dignified and inspiring",
-
-  "sel-mundial": "World Cup triumph moment: [AGE] footballer in national team kit jumping with ecstatic celebration, arms spread wide, absolutely screaming with joy. World Cup stadium (iconic) in background. MASSIVE crowd visible going insane, confetti in air. Multiple teammates joining celebration in frame. Incredible stadium lighting creating cinematic atmosphere. Ball visible in frame or goal posts. Color palette: national colors vivid and dominant, stadium greens, crowd colors, night lighting creating dramatic contrast. This is the moment of ultimate international achievement. World-class sports photography, Getty Images iconic, FIFA quality imagery, life-defining moment",
-
-  "sel-eurocopa": "Continental triumph: [AGE] footballer celebrating with intensity on European championship pitch, arms raised, teammates joining. Iconic European stadium architecture visible. European crowd (diverse, colorful). Evening/night lighting creating dramatic European stadium atmosphere. Flag of nation visible. Color palette: national colors vibrant, European stadium architecture tones, diverse crowd colors. This represents continental-level achievement. Premier League/UEFA quality photography, prestigious international moment, emotional and triumphant",
-
-  "sel-copa-america": "Passion and celebration: [AGE] footballer celebrating on South American championship pitch with raw emotion and passion, teammates embracing. Tropical stadium atmosphere (palm trees, warm colors visible). South American crowd energy visible. Warm lighting creating golden tones. Field vibrant green, sky warm. National colors dominant. Color palette: tropical warmth, national pride colors, green field, golden hour tones. This represents continental South American achievement. Dynamic action photography, celebratory intensity, colorful and vibrant composition",
-
-  "premio-pichichi": "Golden scorer's moment: [AGE] footballer holding the Pichichi trophy high with victorious smile, golden trophy gleaming. Stadium background, field visible. Golden hour lighting or theatrical stage lighting creating trophy reflection. Soccer ball visible in composition. Teammates or crowd in soft focus background. Color palette: golden trophy dominant, emerald field, warm lighting, white crowd areas. This represents the pinnacle of individual scoring achievement — the top goal-scorer of the league. Premium sports photography, golden hour cinematography, achievement imagery",
-
-  "premio-mvp-torneo": "Tournament MVP crowning moment: [AGE] footballer on stage holding massive MVP trophy, standing between club officials or ceremony presenters. Stage background with tournament branding visible. Professional event lighting creating perfect visibility of trophy and expression. Audience visible (blurred), creating atmosphere. Formal presentation moment captured. Color palette: stage lighting tones, trophy gold, formal blacks and whites, crowd bokeh. This represents tournament-level individual dominance. Premium award ceremony photography, official tournament imagery, prestige and achievement captured",
-};
-
-/**
- * Traduce los milestoneType usados en el motor narrativo a los tipos de
- * escena que sabe dibujar contextual-image-prompts.ts. Cualquier tipo que
- * no aparezca aquí cae al event.imageScene (que la IA ya genera contextual
- * por evento) en vez de forzar un genérico.
- */
-const MILESTONE_TYPE_TO_CONTEXT_TYPE: Record<string, string> = {
-  representante: "representante_primera_firma",
-  fichaje_agente: "representante_primera_firma",
-  puja_agente: "representante_primera_firma",
-  agencia: "representante_primera_firma",
-  contrato: "transferencia_fichaje",
-  fichaje_galactico: "transferencia_fichaje",
-  oferta_fondo: "transferencia_fichaje",
-  cantera: "transferencia_fichaje",
-  cantera_propia: "transferencia_fichaje",
-  canterano: "transferencia_fichaje",
-  filial: "transferencia_fichaje",
-  debut: "debut_primer_partido",
-  lesion_debut: "debut_primer_partido",
-  gol: "gol_celebracion",
-  gol_decisivo: "gol_celebracion",
-  hat: "gol_celebracion",
-  primer_gol: "gol_celebracion",
-  primer_hat_trick: "gol_celebracion",
-  primer_titulo: "trofeo_levantando",
-  titulo: "trofeo_levantando",
-  titulo_presidente: "trofeo_levantando",
-  final_champions: "trofeo_levantando",
-  copa_america: "trofeo_levantando",
-  eurocopa: "trofeo_levantando",
-  mundial: "trofeo_levantando",
-  capitania: "capitan_brazalete",
-  premio: "recordista_marca",
-  balon_oro_cliente: "recordista_marca",
-  hall_fama: "recordista_marca",
-  prensa: "entrevista_prensa",
-  fondo_deportivo: "beneficencia_caridad",
-  mvp: "victoria_epica",
-  tactica: "entrenamiento_intenso",
-  pretemp: "entrenamiento_intenso",
-  pretemporada: "entrenamiento_intenso",
-  seleccion: "debut_internacional",
-  presidente_federacion: "debut_internacional",
-};
-
-function getMilestoneImagePrompt(
-  eventId: string,
-  age: number,
-  club?: string,
-  playerName?: string,
-  milestoneType?: string,
-  agentName?: string,
-): string | null {
-  const safePlayerName = playerName || "jugador";
-
-  // 1) Prompts cinematográficos hechos a mano para IDs de evento conocidos
-  //    (los más elaborados: fichaje, hat-trick, título, boda, Balón de Oro...)
-  const basePrompt = MILESTONE_IMAGE_PROMPTS[eventId];
-  if (basePrompt) {
-    let prompt = basePrompt;
-    const ageContext =
-      age < 18
-        ? "young 16-17 year old footballer"
-        : age < 23
-          ? "young 20-23 year old footballer"
-          : age < 28
-            ? "experienced 25-28 year old footballer"
-            : age < 32
-              ? "veteran 30-32 year old footballer"
-              : "35+ year old experienced veteran footballer";
-    prompt = prompt.replace("[AGE]", ageContext);
-    if (club && prompt.includes("[CLUB_KIT]")) {
-      prompt = prompt.replace("[CLUB_KIT]", describeKit(club));
-    }
-    return prompt;
-  }
-
-  // 2) Sin ID exacto: mapea el milestoneType a un tipo de escena contextual
-  //    real (agente, camiseta, gol, trofeo...), nunca al eventId crudo.
-  const mappedType = milestoneType ? MILESTONE_TYPE_TO_CONTEXT_TYPE[milestoneType] : undefined;
-  if (mappedType) {
-    return getContextualImagePrompt(mappedType, safePlayerName, age, {
-      clubName: club || "",
-      agentName: agentName || "su representante",
-    });
-  }
-
-  // 3) Sin match conocido: deja que el caller use event.imageScene, que la
-  //    IA ya genera específico para ese evento — mejor que un genérico.
-  return null;
-}
+import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career-milestones";
+import { displayName } from "@/types/player";
 
 export async function resolveEvent(formData: FormData) {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
@@ -230,7 +103,12 @@ export async function resolveEvent(formData: FormData) {
   const isCalendarLocked =
     CALENDAR_LOCKED_EVENT_IDS.has(event.id) ||
     event.id.startsWith("first-signing-") ||
-    event.id.startsWith("contrato-debut");
+    event.id.startsWith("contrato-debut") ||
+    // El momento decisivo (rematar/pasar/floritura) es parte del MISMO
+    // partido que se resuelve justo después — no puede avanzar la
+    // semana él solo, o el partido en sí saltaría a la jornada
+    // siguiente sin haberse jugado nunca.
+    event.id.startsWith("match-decision-");
   // Un partido resuelto (matchday-*) TIENE que avanzar la semana siempre:
   // si se deja al avance probabilístico normal, cuando sale 0 el jugador
   // vuelve a caer en la misma jornada y el partido se narra dos veces con
@@ -269,10 +147,45 @@ export async function resolveEvent(formData: FormData) {
   // si alguna columna stats_* no existe todavía en la tabla, Supabase
   // rechaza la query entera — no debe poder tumbar el avance de semana,
   // el cambio de club o la foto, que son el update crítico del turno.
+  // Hito de número redondo (10/25/50/100 goles, 50/100/200 partidos,
+  // 10/25 asistencias) que este turno pueda haber cruzado — ver
+  // career-milestones.ts. Se calcula aquí (con las stats de antes y
+  // después de este turno) pero solo se encola más abajo, después de la
+  // secuencia de rookie/fichaje, para que nunca le quite el sitio a algo
+  // más importante que ya estuviera en camino.
+  let roundNumberMilestone: ReturnType<typeof buildMilestoneEvent> = null;
+
   let statsPatch: Record<string, unknown> | null = null;
   if (Object.keys(statUpdate).length > 0) {
     const updatedPlayer = applyStatUpdate(player, statUpdate);
-    playerUpdate.media = recalculateMedia(updatedPlayer, statUpdate); // esto sí es crítico
+    const [crossedMilestone] = detectNewMilestones(
+      {
+        goals: player.stats_goals ?? 0,
+        matches: player.stats_matches_played ?? 0,
+        assists: player.stats_assists ?? 0,
+      },
+      {
+        goals: updatedPlayer.stats_goals ?? 0,
+        matches: updatedPlayer.stats_matches_played ?? 0,
+        assists: updatedPlayer.stats_assists ?? 0,
+      },
+    );
+    if (crossedMilestone) {
+      roundNumberMilestone = buildMilestoneEvent(crossedMilestone, updatedPlayer);
+    }
+    // Los eventos de partido (generateMatchDayEvent) ya traen su propio
+    // cambio de media en consequences.media, calibrado con la nota real
+    // del partido (nota 8+ → +2 a +5, nota <6 → -1 a -3...) — mucho más
+    // fino que este heurístico, que solo mira goles/asistencias/tarjeta
+    // roja sin saber si jugaste bien o mal. Antes esta línea lo pisaba
+    // SIEMPRE que hubiera stats que actualizar (o sea, en todo partido
+    // real), tirando a la basura ese ajuste por nota y dejando el mismo
+    // empujón de media a un partidazo sin gol que a una actuación gris:
+    // recalculateMedia ahora solo entra como red de seguridad cuando el
+    // propio evento no trae ya un cambio de media explícito.
+    if (playerUpdate.media === undefined) {
+      playerUpdate.media = recalculateMedia(updatedPlayer, statUpdate);
+    }
 
     statsPatch = {
       stats_matches_played: updatedPlayer.stats_matches_played,
@@ -291,6 +204,27 @@ export async function resolveEvent(formData: FormData) {
       ...consequences.flags,
       ...(event.memorableThread ? { [`hilo_${Date.now()}`]: event.memorableThread } : {}),
     };
+  }
+
+  // Cuenta atrás de una lesión larga en curso (si la hay): se lee de
+  // player.flags de ANTES de este turno, así que el flag que este mismo
+  // evento acabe de crear (si es el que dispara la lesión) no se
+  // descuenta hasta el turno siguiente. Se aplica encima de lo que ya
+  // haya en playerUpdate.flags para no perder lo que puso el bloque de
+  // arriba. Ver tickInjury en career-dynamics.ts.
+  const injuryTick = tickInjury(player.flags);
+  if (injuryTick) {
+    const flagsBase = {
+      ...((playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {}),
+    };
+    if (injuryTick.newValue === null) {
+      delete flagsBase[injuryTick.flagKey];
+    } else {
+      flagsBase[injuryTick.flagKey] = injuryTick.newValue;
+    }
+    playerUpdate.flags = flagsBase;
+    const formaBase = (patch.forma as number | undefined) ?? player.forma;
+    playerUpdate.forma = Math.max(0, Math.min(100, Math.round(formaBase + injuryTick.formaDelta)));
   }
 
   if (consequences.agent_name) {
@@ -318,7 +252,7 @@ export async function resolveEvent(formData: FormData) {
           imageScene: `Photorealistic photo of the photographed man holding up a ${describeKit(newClub)} football jersey with both hands at an official club unveiling event, a club president in a suit next to him extending a handshake, camera flashes, stadium or press room backdrop, official club photo style`,
         }
       : buildFallbackContractEvent(newClub, agentName, isFirstSigning);
-    playerUpdate.pending_event = contractEvent;
+    playerUpdate.pending_event = maybeAddFreeText(contractEvent);
   }
 
   // SECUENCIA COMPLETA DE CARRERA ROOKIE (semanas 4-11)
@@ -329,66 +263,78 @@ export async function resolveEvent(formData: FormData) {
       const { buildPreseasonBienvenidaEvent } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = buildPreseasonBienvenidaEvent(player.club);
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonBienvenidaEvent(player.club));
     } else if (event.id === "pretemp-bienvenida") {
       const { buildPreseasonFisicoEvent } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = buildPreseasonFisicoEvent();
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonFisicoEvent());
     } else if (event.id === "pretemp-fisico") {
       const { buildPreseasonCompetenciaEvent } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = buildPreseasonCompetenciaEvent();
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonCompetenciaEvent());
     } else if (event.id === "pretemp-competencia") {
       const { buildPreseasonTacticaEvent } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = buildPreseasonTacticaEvent();
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonTacticaEvent());
     } else if (event.id === "pretemp-tactica") {
       const { buildPreseasonCapitan } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = buildPreseasonCapitan();
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonCapitan());
     } else if (event.id === "pretemp-capitan") {
       const { buildPreseasonPasado } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = buildPreseasonPasado();
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonPasado());
     } else if (event.id === "pretemp-pasado") {
       const { buildPreseasonAmistoso } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = buildPreseasonAmistoso();
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonAmistoso());
     }
     // Cadena de rookie: filial → tactica → debut oficial (semanas 11-15)
     else if (event.id === "pretemp-amistoso") {
       const { buildReservaIntroduccionEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
-      playerUpdate.pending_event = buildReservaIntroduccionEvent();
+      playerUpdate.pending_event = maybeAddFreeText(buildReservaIntroduccionEvent());
     } else if (event.id === "rookie-reserva-introduccion") {
       const { buildReservaPartidoEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
-      playerUpdate.pending_event = buildReservaPartidoEvent();
+      playerUpdate.pending_event = maybeAddFreeText(buildReservaPartidoEvent());
     } else if (event.id === "rookie-reserva-partido") {
       const { buildTacticaMisterEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
-      playerUpdate.pending_event = buildTacticaMisterEvent();
+      playerUpdate.pending_event = maybeAddFreeText(buildTacticaMisterEvent(player.position));
     } else if (event.id === "rookie-tactica-mister") {
       const { buildDebutAnuncioEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
-      playerUpdate.pending_event = buildDebutAnuncioEvent();
+      playerUpdate.pending_event = maybeAddFreeText(buildDebutAnuncioEvent());
     } else if (event.id === "rookie-debut-anuncio") {
       const { buildDebutOficialEvent } = await import(
         "@/lib/narrative/rookie-progression"
       );
-      playerUpdate.pending_event = buildDebutOficialEvent(player.club);
+      // Sin el rival real, esto se quedaba en el valor por defecto de la
+      // función ("rival local"), un nombre de relleno que salía tal cual
+      // en la ficha del partido — con escudo genérico y todo, en el
+      // debut más importante de la carrera. Visto en vivo jugando.
+      const { rival } = buildMatchContext(player.club, player.media);
+      playerUpdate.pending_event = maybeAddFreeText(buildDebutOficialEvent(player.club, rival));
     }
     // Después de rookie-debut-oficial, cae en el pool normal pero YA HA DEBUTADO
+  }
+
+  // Si nada más importante reclamó ya el siguiente turno (fichaje, secuencia
+  // de rookie...), y este turno cruzó un número redondo de verdad, esa es
+  // la siguiente pantalla que ve el jugador.
+  if (roundNumberMilestone && !playerUpdate.pending_event && !willRetire) {
+    playerUpdate.pending_event = maybeAddFreeText(roundNumberMilestone);
   }
 
   const { data: insertedEvent, error: careerEventError } = await supabase
@@ -454,6 +400,17 @@ export async function resolveEvent(formData: FormData) {
     // una plantilla reutilizable + face-swap en vez de generar la escena
     // de cero cada vez: mismo club, misma composición — solo cambia la
     // cara del jugador. Ver src/lib/images/templates.ts.
+    //
+    // Con una única plantilla por club, TODOS los jugadores del juego que
+    // fichasen por el mismo club acababan compartiendo literalmente la
+    // misma foto (mismo encuadre, misma pose) con solo la cara distinta —
+    // justo lo contrario de "cada partida es única" en el momento que más
+    // se comparte. TEMPLATE_VARIANTS_PER_KEY hace que cada combinación
+    // club+hito tenga varias composiciones posibles en vez de una sola: se
+    // sigue ahorrando (el face-swap barato sigue haciendo la mayoría del
+    // trabajo), pero un jugador nuevo tiene varias fotos distintas con las
+    // que puede tocarle en vez de una fija para siempre.
+    const TEMPLATE_VARIANTS_PER_KEY = 4;
     let templateKey: string | null = null;
     if (event.id.startsWith("contrato-debut")) {
       templateKey = `primera-firma:${newClub}`;
@@ -467,6 +424,10 @@ export async function resolveEvent(formData: FormData) {
       templateKey = `primer-titulo:${newClub}`;
     } else if (event.id === GOL_CHILENA_EVENT_ID) {
       templateKey = `gol-chilena:${newClub}`;
+    }
+    if (templateKey) {
+      const variant = Math.floor(Math.random() * TEMPLATE_VARIANTS_PER_KEY);
+      templateKey = `${templateKey}:v${variant}`;
     }
 
     // Antes de gastar en Replicate, comprueba el freno de gasto (por
@@ -516,7 +477,10 @@ export async function resolveEvent(formData: FormData) {
       const finalPlayerId = player.id;
       const finalIsGolChilena = event.id === GOL_CHILENA_EVENT_ID;
       const finalClub = newClub;
-      const finalPlayerName = player.last_name;
+      // La portada del periódico imprime esto tal cual como titular — un
+      // apodo real de futbolista suena más auténtico ahí que el apellido
+      // formal ("La Pulga firma una obra de arte" en vez de "Messi").
+      const finalPlayerName = displayName(player);
 
       after(async () => {
         try {

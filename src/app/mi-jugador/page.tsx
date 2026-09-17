@@ -1,16 +1,16 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Player } from "@/types/player";
-import { playerAge } from "@/types/career";
-import { StatBar } from "@/components/StatBar";
+import { displayName } from "@/types/player";
+import { playerAge, seasonLabel } from "@/types/career";
 import { LifeThreads } from "@/components/LifeThreads";
 import { BottomNav } from "@/components/BottomNav";
 import { CareerStatCard } from "@/components/CareerStatCard";
 import { ShareableCard } from "@/components/ShareableCard";
-import { MediaBadge } from "@/components/MediaBadge";
-import { withShareLink } from "@/lib/constants";
+import { PlayerHeaderCard } from "@/components/PlayerHeaderCard";
+import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
+import { withShareLink, NO_CLUB_YET } from "@/lib/constants";
 import { logout } from "./actions";
 
 export default async function MiJugadorPage() {
@@ -34,9 +34,9 @@ export default async function MiJugadorPage() {
 
   return (
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">
-      <div className="flex w-full max-w-sm justify-end">
+      <div className="flex w-full max-w-md justify-end">
         <form action={logout}>
-          <button type="submit" className="text-sm text-neutral-500 hover:text-gold">
+          <button type="submit" className="font-cond text-xs uppercase tracking-wide text-muted-foreground hover:text-gold">
             Cerrar sesión
           </button>
         </form>
@@ -44,100 +44,83 @@ export default async function MiJugadorPage() {
 
       {!player ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <p className="text-neutral-400">Todavía no creaste tu jugador.</p>
+          <p className="text-muted-foreground">Todavía no creaste tu jugador.</p>
           <Link
             href="/crear-jugador"
-            className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
+            className="gold-fill rounded-full px-6 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
           >
             Crear jugador
           </Link>
         </div>
       ) : (
-        <div className="w-full max-w-sm space-y-4">
-          <div className="overflow-hidden rounded-xl border border-panel-border bg-panel shadow-sm">
-            <div className="relative flex flex-col items-center justify-center gap-3 bg-neutral-900 py-6">
-              {player.current_photo_url || player.photo_url ? (
-                <div className="relative h-48 w-40 overflow-hidden rounded-lg">
-                  <Image
-                    src={player.current_photo_url ?? player.photo_url ?? ""}
-                    alt={player.last_name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="flex h-48 w-40 items-center justify-center rounded-lg border border-neutral-700 bg-black/30 text-neutral-500">
-                  Sin foto
-                </div>
-              )}
-              <div className="absolute right-3 top-3 rounded-full bg-gold px-3 py-1 text-lg font-bold text-neutral-950">
-                #{player.number}
-              </div>
-              <div className="absolute left-3 top-3">
-                <MediaBadge value={player.media} />
-              </div>
-            </div>
-            <div className="space-y-2 p-4">
-              <h1 className="text-xl font-bold text-gold">{player.last_name}</h1>
-              <p className="text-sm text-neutral-400">
-                {player.club} · {playerAge(player.week)} años
-              </p>
-              <dl className="grid grid-cols-2 gap-y-1 pt-2 text-sm">
-                <dt className="text-neutral-500">Posición</dt>
-                <dd className="text-right text-neutral-200">{player.position}</dd>
-                <dt className="text-neutral-500">Representante</dt>
-                <dd className="text-right text-neutral-200">{player.agent_name ?? "Sin definir"}</dd>
-                <dt className="text-neutral-500">Pie hábil</dt>
-                <dd className="text-right text-neutral-200">{player.foot}</dd>
-                <dt className="text-neutral-500">Nacionalidad</dt>
-                <dd className="text-right text-neutral-200">{player.nation}</dd>
-                <dt className="text-neutral-500">Personalidad</dt>
-                <dd className="text-right text-neutral-200">{player.personality}</dd>
-              </dl>
-            </div>
+        <div className="w-full max-w-md space-y-4">
+          <div className="rounded-2xl border border-panel-border bg-surface p-4">
+            <PlayerHeaderCard
+              photoUrl={player.current_photo_url ?? player.photo_url}
+              name={displayName(player)}
+              age={playerAge(player.week)}
+              club={player.club}
+              categoryLabel={seasonLabel(player.week)}
+              statusLine={player.position}
+              media={player.media}
+              forma={player.forma}
+              relEntrenador={player.club !== NO_CLUB_YET ? player.rel_entrenador : null}
+              relAficion={player.club !== NO_CLUB_YET ? player.rel_aficion : null}
+              relVestuario={player.club !== NO_CLUB_YET ? player.rel_vestuario : null}
+              relRepresentante={player.agent_name ? player.rel_representante : null}
+            />
+          </div>
+
+          <div className="space-y-3 rounded-2xl border border-panel-border bg-surface p-4">
+            <p className="text-kicker">Prensa</p>
+            <p className="text-sm italic leading-relaxed text-foreground/90">{getPressQuote(player)}</p>
+            {player.club !== NO_CLUB_YET && (
+              <>
+                <div className="h-px bg-panel-border" />
+                <p className="text-kicker">Opinión del entrenador</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">{getCoachOpinion(player)}</p>
+              </>
+            )}
           </div>
 
           <ShareableCard
             title="Beyond 90"
             text={withShareLink(
-              `Así va mi carrera en Beyond 90: ${player.last_name} (${player.club}). ¿Cómo sería la tuya?`,
+              `Así va mi carrera en Beyond 90: ${displayName(player)} (${player.club}). ¿Cómo sería la tuya?`,
             )}
           >
             <CareerStatCard player={player} />
           </ShareableCard>
 
-          <div className="grid grid-cols-3 gap-3 rounded-lg border border-panel-border bg-panel p-4">
-            <StatBar label="Forma" value={player.forma} />
-            <StatBar label="Moral" value={player.moral} />
-            <StatBar label="Fama" value={player.fama} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 rounded-lg border border-panel-border bg-panel p-4">
-            <StatBar label="Entrenador" value={player.rel_entrenador} />
-            <StatBar label="Afición" value={player.rel_aficion} />
-            <StatBar label="Vestuario" value={player.rel_vestuario} />
-            <StatBar label="Representante" value={player.rel_representante} />
-          </div>
-
           <Link
             href="/mi-jugador/patrimonio"
-            className="flex items-center justify-between rounded-lg border border-panel-border bg-panel px-4 py-3 hover:border-gold/50"
+            className="flex items-center justify-between rounded-2xl border border-panel-border bg-surface px-4 py-3 hover:border-gold/50"
           >
-            <span className="text-xs uppercase tracking-wide text-neutral-400">Patrimonio</span>
-            <span className="flex items-center gap-1 text-lg font-bold text-gold">
+            <span className="text-kicker">Patrimonio</span>
+            <span className="font-num flex items-center gap-1 text-lg font-bold text-gold">
               {player.patrimonio.toLocaleString("es")} €
-              <span className="text-neutral-500">›</span>
+              <span className="text-muted-foreground">›</span>
             </span>
           </Link>
 
           <Link
-            href="/mi-jugador/momentos"
-            className="flex items-center justify-between rounded-lg border border-panel-border bg-panel px-4 py-3 hover:border-gold/50"
+            href="/mi-jugador/legado"
+            className="flex items-center justify-between rounded-2xl border border-panel-border bg-surface px-4 py-3 hover:border-gold/50"
           >
-            <span className="text-xs uppercase tracking-wide text-neutral-400">Mis momentos</span>
-            <span className="flex items-center gap-1 text-sm font-semibold text-gold">
-              Ver galería
-              <span className="text-neutral-500">›</span>
+            <span className="text-kicker">Legado</span>
+            <span className="flex items-center gap-1 font-cond text-sm font-semibold uppercase tracking-wide text-gold">
+              Ver legado
+              <span className="text-muted-foreground">›</span>
+            </span>
+          </Link>
+          <Link
+            href="/mi-jugador/vida"
+            className="flex items-center justify-between rounded-2xl border border-panel-border bg-surface px-4 py-3 hover:border-gold/50"
+          >
+            <span className="text-kicker">Vida</span>
+            <span className="flex items-center gap-1 font-cond text-sm font-semibold uppercase tracking-wide text-gold">
+              Ver vida
+              <span className="text-muted-foreground">›</span>
             </span>
           </Link>
 
@@ -146,7 +129,7 @@ export default async function MiJugadorPage() {
           {player.status === "retired" && (
             <Link
               href="/carrera/retiro"
-              className="block w-full rounded-md border border-panel-border px-4 py-2 text-center text-sm font-medium text-neutral-200 hover:bg-panel"
+              className="block w-full rounded-full border border-panel-border px-4 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-foreground hover:border-gold/50"
             >
               Ver resumen de carrera
             </Link>
@@ -154,7 +137,7 @@ export default async function MiJugadorPage() {
           {player.status === "active" && (
             <Link
               href="/carrera"
-              className="block w-full rounded-md bg-gold px-4 py-2 text-center text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
+              className="gold-fill block w-full rounded-full px-4 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
             >
               Continuar carrera
             </Link>
@@ -162,7 +145,7 @@ export default async function MiJugadorPage() {
           {player.status === "awaiting_second_life" && (
             <Link
               href="/carrera/segunda-vida/elegir"
-              className="block w-full rounded-md bg-gold px-4 py-2 text-center text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
+              className="gold-fill block w-full rounded-full px-4 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
             >
               Elegir tu segunda vida
             </Link>
@@ -170,7 +153,7 @@ export default async function MiJugadorPage() {
           {player.status === "second_life" && (
             <Link
               href="/carrera/segunda-vida"
-              className="block w-full rounded-md bg-gold px-4 py-2 text-center text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
+              className="gold-fill block w-full rounded-full px-4 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
             >
               Continuar como {player.second_career}
             </Link>
@@ -178,7 +161,7 @@ export default async function MiJugadorPage() {
 
           <Link
             href="/mi-jugador/borrar"
-            className="block w-full text-center text-xs text-neutral-600 hover:text-red-400"
+            className="block w-full text-center font-cond text-xs uppercase tracking-wide text-muted-foreground hover:text-destructive"
           >
             Borrar jugador y empezar de nuevo
           </Link>

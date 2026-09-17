@@ -1,4 +1,5 @@
 import { playerAge } from "@/types/career";
+import { getConfederation } from "@/lib/nations";
 
 export type SeasonPeriod =
   | "pretemporada"
@@ -83,20 +84,14 @@ function hasMajorTournament(
     return { has: true, type: "eurocopa" };
   }
 
-  // Copa América: casi cada año (años impares), pero solo para sudamericanos
-  const sudamericanNations = [
-    "Argentina",
-    "Brasil",
-    "Chile",
-    "Colombia",
-    "Ecuador",
-    "Paraguay",
-    "Perú",
-    "Uruguay",
-    "Venezuela",
-    "Bolivia",
-  ];
-  if (sudamericanNations.includes(playerNation) && startYear % 2 === 1) {
+  // Copa América: casi cada año (años impares), pero solo para
+  // sudamericanos. Antes esto mantenía su PROPIA lista de países sin
+  // normalizar, comparada tal cual contra el texto libre que escribe el
+  // jugador — "Perú" sin tilde o "argentina" en minúsculas (ambas formas
+  // muy probables de escribir) no coincidían nunca. Reutiliza
+  // getConfederation (ya normaliza acentos/mayúsculas) en vez de
+  // duplicar la lista con su propio bug aparte.
+  if (getConfederation(playerNation) === "CONMEBOL" && startYear % 2 === 1) {
     return { has: true, type: "copa_america" };
   }
 

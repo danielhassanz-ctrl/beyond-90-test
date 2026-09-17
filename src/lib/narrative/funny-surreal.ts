@@ -111,6 +111,20 @@ export function pickRandomFunnyMoment(): string {
   return allFunny[Math.floor(Math.random() * allFunny.length)];
 }
 
+/**
+ * La categoría "surreal" (gravedad invertida, un balón con una ciudad en
+ * miniatura dentro, un cuerpo invisible...) rompe la física a propósito
+ * por humor — pero eso es precisamente lo que un modelo de edición de
+ * imagen fotorrealista (Kontext Pro) no puede representar de forma
+ * coherente a partir de una foto real. El resto de categorías son
+ * exageradas pero fotografiables (caerse, un animal en el campo, un
+ * nombre mal escrito). Se usa para no disparar generación de imagen en
+ * un momento que solo puede salir roto o feo.
+ */
+export function isSurrealMoment(moment: string): boolean {
+  return FUNNY_MOMENTS.surreal.includes(moment);
+}
+
 export function getFunnySurreal() {
   return {
     FUNNY_MOMENTS,

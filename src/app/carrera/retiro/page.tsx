@@ -2,11 +2,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
-import { SECOND_CAREER_LABELS, seasonLabel, playerAge } from "@/types/career";
+import { SECOND_CAREER_LABELS, seasonLabel, playerAge, WEEKS_PER_SEASON } from "@/types/career";
+import { displayName } from "@/types/player";
 import { withShareLink } from "@/lib/constants";
 import { CareerStatCard } from "@/components/CareerStatCard";
 import { ShareableCard } from "@/components/ShareableCard";
 import { beginSecondLife } from "./actions";
+
+/**
+ * Mismos tipos de segunda vida que en carrera/hito/[id]/page.tsx — su
+ * "week" es en realidad second_week (empieza en 1), no la semana de la
+ * carrera como jugador.
+ */
+const SECOND_LIFE_MILESTONE_TYPES = new Set([
+  "ascenso_entrenador", "canterano", "seleccion", "final_champions",
+  "fichaje_agente", "puja_agente", "agencia", "cantera", "oferta_fondo",
+  "fichaje_galactico", "titulo_presidente", "inversor", "cantera_propia",
+  "autobiografia", "hall_fama", "balon_oro_cliente", "fondo_deportivo",
+  "presidente_federacion",
+]);
 
 export default async function RetiroPage() {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
@@ -19,41 +33,51 @@ export default async function RetiroPage() {
     await supabase.from("players").update({ status: "retired" }).eq("id", player.id);
   }
 
+  // Ordenar por "week" mezclaba mal los hitos de segunda vida: esa
+  // columna vale second_week para ellos (empieza en 1 de nuevo), así que
+  // un hito de años después de retirarse podía colarse en medio de la
+  // carrera como jugador. created_at es un timestamp real, siempre en
+  // orden cronológico de verdad pase lo que pase con los contadores.
   const { data: milestones } = await supabase
     .from("milestones")
     .select("*")
     .eq("player_id", player.id)
-    .order("week", { ascending: true });
+    .order("created_at", { ascending: true });
 
   const heroImage = [...(milestones ?? [])].reverse().find((m) => m.image_url)?.image_url as
     | string
     | undefined;
 
   const totalWeeks = player.week;
-  const seasons = Math.ceil(totalWeeks / 38);
+  // Antes dividía por 38 (las jornadas de una Liga real de 20 equipos),
+  // pero este juego no funciona así: una temporada aquí son 10 semanas
+  // (ver WEEKS_PER_SEASON) — con 38 el número de temporadas mostrado en
+  // la tarjeta de retiro salía muy por debajo del real (una carrera Pro
+  // de 200 semanas mostraba "6 temporadas" en vez de las 20 reales).
+  const seasons = Math.ceil(totalWeeks / WEEKS_PER_SEASON);
   const shareText = withShareLink(
-    `${player.last_name} colgó las botas. Carrera de ${seasons} temporadas, ${milestones?.length ?? 0} momentos épicos, ${player.fama} de fama. ¿La tuya será mayor? Juega en Beyond 90.`,
+    `${displayName(player)} colgó las botas. Carrera de ${seasons} temporadas, ${milestones?.length ?? 0} momentos épicos, ${player.fama} de fama. ¿La tuya será mayor? Juega en Beyond 90.`,
   );
 
   return (
-    <main className="flex flex-1 justify-center bg-gradient-to-b from-neutral-950 via-neutral-950 to-neutral-900 p-4 sm:p-6">
-      <div className="w-full max-w-2xl space-y-8 pb-12">
+    <main className="flex flex-1 justify-center bg-gradient-to-b from-background via-background to-surface p-4 sm:p-6">
+      <div className="w-full max-w-2xl space-y-6 pb-12">
         {/* Header épico */}
         <div className="space-y-4 text-center">
           <p className="text-6xl">👑</p>
-          <h1 className="text-4xl sm:text-5xl font-black text-white">
-            Leyenda <span className="text-gold">{player.last_name}</span>
+          <h1 className="font-display text-4xl sm:text-5xl text-foreground">
+            Leyenda <span className="gold-text">{displayName(player)}</span>
           </h1>
-          <p className="text-sm text-neutral-400 max-w-lg mx-auto">
+          <p className="mx-auto max-w-lg text-sm text-muted-foreground">
             Tu carrera ha terminado. Ahora eres parte de la historia del fútbol.
           </p>
         </div>
 
         {/* Imagen héroe */}
         {heroImage && (
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-amber-500/30 shadow-2xl shadow-amber-500/10">
-            <Image src={heroImage} alt={player.last_name} fill className="object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent" />
+          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-panel-border shadow-2xl">
+            <Image src={heroImage} alt={displayName(player)} fill className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
           </div>
         )}
 
@@ -63,45 +87,45 @@ export default async function RetiroPage() {
         </ShareableCard>
 
         {/* Stats principales */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-4 text-center">
-            <p className="text-2xl font-black text-gold">{seasons}</p>
-            <p className="text-xs text-neutral-400 mt-1">Temporadas</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-2xl border border-panel-border bg-surface p-4 text-center">
+            <p className="gold-text font-display text-2xl">{seasons}</p>
+            <p className="text-kicker mt-1">Temporadas</p>
           </div>
-          <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-4 text-center">
-            <p className="text-2xl font-black text-gold">{player.fama}</p>
-            <p className="text-xs text-neutral-400 mt-1">Fama</p>
+          <div className="rounded-2xl border border-panel-border bg-surface p-4 text-center">
+            <p className="gold-text font-display text-2xl">{player.fama}</p>
+            <p className="text-kicker mt-1">Fama</p>
           </div>
-          <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-4 text-center">
-            <p className="text-2xl font-black text-gold">{player.patrimonio.toLocaleString("es", { maximumFractionDigits: 0 })}</p>
-            <p className="text-xs text-neutral-400 mt-1">€ Patrimonio</p>
+          <div className="rounded-2xl border border-panel-border bg-surface p-4 text-center">
+            <p className="gold-text font-display text-2xl">{player.patrimonio.toLocaleString("es", { maximumFractionDigits: 0 })}</p>
+            <p className="text-kicker mt-1">€ Patrimonio</p>
           </div>
-          <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-4 text-center">
-            <p className="text-2xl font-black text-gold">{milestones?.length ?? 0}</p>
-            <p className="text-xs text-neutral-400 mt-1">Momentos épicos</p>
+          <div className="rounded-2xl border border-panel-border bg-surface p-4 text-center">
+            <p className="gold-text font-display text-2xl">{milestones?.length ?? 0}</p>
+            <p className="text-kicker mt-1">Momentos épicos</p>
           </div>
         </div>
 
         {/* Info carrera */}
-        <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-6 space-y-4">
+        <div className="space-y-4 rounded-2xl border border-panel-border bg-surface p-6">
           <div className="flex items-center justify-between">
-            <span className="text-neutral-300">Club actual</span>
-            <span className="font-bold text-gold">{player.club}</span>
+            <span className="text-sm text-muted-foreground">Club actual</span>
+            <span className="font-cond text-sm font-bold text-gold">{player.club}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-neutral-300">Edad al retiro</span>
-            <span className="font-bold text-gold">{playerAge(player.week)} años</span>
+            <span className="text-sm text-muted-foreground">Edad al retiro</span>
+            <span className="font-cond text-sm font-bold text-gold">{playerAge(player.week)} años</span>
           </div>
           {player.second_career && (
-            <div className="flex items-center justify-between pt-4 border-t border-amber-500/20">
-              <span className="text-neutral-300">Tu nueva vida</span>
-              <span className="font-bold text-emerald-400">{SECOND_CAREER_LABELS[player.second_career]}</span>
+            <div className="flex items-center justify-between border-t border-panel-border pt-4">
+              <span className="text-sm text-muted-foreground">Tu nueva vida</span>
+              <span className="font-cond text-sm font-bold text-pitch">{SECOND_CAREER_LABELS[player.second_career]}</span>
             </div>
           )}
           {player.second_career && (
             <div className="flex items-center justify-between">
-              <span className="text-neutral-300">Reputación</span>
-              <span className="font-bold text-gold">{player.reputacion}</span>
+              <span className="text-sm text-muted-foreground">Reputación</span>
+              <span className="font-cond text-sm font-bold text-gold">{player.reputacion}</span>
             </div>
           )}
         </div>
@@ -111,21 +135,23 @@ export default async function RetiroPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <span className="text-2xl">📅</span>
-              <h2 className="text-xl font-bold text-white">Tu historia en {seasons} actos</h2>
+              <h2 className="font-display text-xl text-foreground">Tu historia en {seasons} actos</h2>
             </div>
             <div className="space-y-3">
               {milestones.map((m, idx) => (
                 <div
                   key={m.id}
-                  className="rounded-lg border border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-transparent p-4 flex gap-4"
+                  className="flex gap-4 rounded-2xl border border-panel-border bg-surface p-4"
                 >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full border border-gold bg-black flex items-center justify-center font-bold text-gold text-sm">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-gold bg-background font-cond text-sm font-bold text-gold">
                     {idx + 1}
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-white">{m.title}</p>
-                    <p className="text-xs text-neutral-400 mt-1">
-                      📆 Temporada {seasonLabel(m.week)}
+                    <p className="font-semibold text-foreground">{m.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {SECOND_LIFE_MILESTONE_TYPES.has(m.type)
+                        ? `📆 Semana ${m.week} de tu segunda vida`
+                        : `📆 Temporada ${seasonLabel(m.week)}`}
                       {m.subtitle ? ` · ${m.subtitle}` : ""}
                     </p>
                   </div>
@@ -136,10 +162,12 @@ export default async function RetiroPage() {
         )}
 
         {/* Cierre */}
-        <div className="space-y-4 text-center py-6">
+        <div className="space-y-4 py-6 text-center">
           <div className="space-y-2">
-            <p className="text-2xl font-black text-gold">Fin de la carrera</p>
-            <p className="text-sm text-neutral-400">
+            <p className="font-display text-2xl">
+              <span className="gold-text">Fin de la carrera</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
               Tu legado vivirá para siempre en Beyond 90
             </p>
           </div>
@@ -151,7 +179,7 @@ export default async function RetiroPage() {
             <form action={beginSecondLife}>
               <button
                 type="submit"
-                className="inline-block mt-4 px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg hover:shadow-emerald-500/50"
+                className="pitch-fill mt-4 inline-block rounded-full px-6 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
               >
                 🚀 Comienza tu segunda vida
               </button>
@@ -161,7 +189,7 @@ export default async function RetiroPage() {
           {player.second_career && (
             <Link
               href="/carrera"
-              className="inline-block mt-4 px-6 py-3 rounded-lg bg-gradient-to-r from-amber-500 to-gold text-neutral-950 font-bold hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg hover:shadow-amber-500/50"
+              className="gold-fill mt-4 inline-block rounded-full px-6 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
             >
               📚 Ver mi legado en carrera
             </Link>

@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+// Igual que en carrera/page.tsx: sin esto, la generación de imagen en
+// segundo plano (after() en resolveSecondLifeEvent) queda sujeta al
+// límite de duración por defecto de la ruta en un despliegue real — se
+// cortaría a medias, siempre, sin excepción. Se puso en /carrera cuando
+// se creó ese pipeline, pero nunca se replicó aquí al cablear el mismo
+// mecanismo para la segunda vida.
+export const maxDuration = 300;
 import { getCurrentUserAndPlayer } from "@/lib/player";
-import { pickNextEvent, maybeAddFreeText } from "@/lib/narrative/engine";
+import { pickNextEvent, maybeAddFreeText, whatIsAtStake } from "@/lib/narrative/engine";
 import { getSecondLifeEvents } from "@/lib/narrative/segundaVida";
 import { generateSecondLifeEvent } from "@/lib/narrative/ai";
-import { SECOND_CAREER_LABELS } from "@/types/career";
-import { StatBar } from "@/components/StatBar";
+import { SECOND_CAREER_LABELS, CONSEQUENCE_LABELS } from "@/types/career";
+import { displayName } from "@/types/player";
 import { EventScene } from "@/components/EventScene";
 import { resolveSecondLifeEvent } from "./actions";
 
@@ -67,81 +75,110 @@ export default async function SegundaVidaPage() {
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
 
   return (
-    <main className="flex flex-1 justify-center p-6">
-      <div className="w-full max-w-lg space-y-6 pb-12">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-gold">
+    <main className="flex flex-1 justify-center p-4 pb-24">
+      <div className="w-full max-w-lg space-y-4 pb-8">
+        <div className="flex items-center justify-between rounded-2xl border border-panel-border bg-surface p-4">
+          <div className="min-w-0">
+            <p className="text-kicker">
               {SECOND_CAREER_LABELS[player.second_career]}
               {player.second_club ? ` · ${player.second_club}` : ""}
             </p>
-            <h1 className="text-xl font-bold text-neutral-100">{player.last_name}</h1>
+            <h1 className="truncate font-display text-xl text-foreground">{displayName(player)}</h1>
           </div>
-          <Link href="/mi-jugador" className="text-sm text-neutral-400 hover:text-gold">
+          <Link href="/mi-jugador" className="shrink-0 font-cond text-xs uppercase tracking-wide text-muted-foreground hover:text-gold">
             Mi jugador
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 rounded-lg border border-panel-border bg-panel p-4">
-          <StatBar label="Reputación" value={player.reputacion} />
-          <div className="space-y-1">
-            <div className="text-xs uppercase tracking-wide text-neutral-400">Patrimonio</div>
-            <div className="text-lg font-bold text-gold">
-              {player.patrimonio.toLocaleString("es")} €
+        <div className="grid grid-cols-2 gap-4 rounded-2xl border border-panel-border bg-surface p-4">
+          <div>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-kicker">Reputación</span>
+              <span className="font-num text-sm font-semibold text-foreground/90">{player.reputacion}</span>
             </div>
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+              <div
+                className="gold-fill h-full rounded-full transition-all duration-700"
+                style={{ width: `${Math.max(0, Math.min(100, player.reputacion))}%` }}
+              />
+            </div>
+          </div>
+          <div>
+            <p className="text-kicker">Patrimonio</p>
+            <p className="font-num text-lg font-bold text-gold">
+              {player.patrimonio.toLocaleString("es")} €
+            </p>
           </div>
         </div>
 
-        <div className="space-y-3 rounded-xl border border-panel-border bg-panel p-5 shadow-sm">
+        <div className="space-y-3 overflow-hidden rounded-2xl border border-panel-border bg-surface">
           <EventScene club={player.second_club ?? player.club} category={event.category} titles={clubTitleCount} />
-          <h2 className="text-lg font-bold text-neutral-100">{event.title}</h2>
-          <p className="text-sm text-neutral-400">{event.description}</p>
+          <div className="space-y-3 px-4 pb-4">
+            <h2 className="font-display text-xl text-foreground leading-tight">{event.title}</h2>
+            <p className="text-sm text-muted-foreground">{event.description}</p>
 
-          <form action={resolveSecondLifeEvent} className="space-y-3 pt-2">
-            <input type="hidden" name="event_id" value={event.id} />
-
-            <div className="space-y-2">
-              {event.options.map((option, i) => (
-                <label
-                  key={option.id}
-                  className="flex cursor-pointer items-start gap-3 rounded-md border border-panel-border px-3 py-2 text-sm has-[:checked]:border-gold has-[:checked]:bg-gold/10"
-                >
-                  <input
-                    type="radio"
-                    name="option_id"
-                    value={option.id}
-                    required
-                    defaultChecked={i === 0}
-                    className="mt-1"
-                  />
-                  <span>
-                    <span className="block font-medium text-neutral-100">{option.label}</span>
-                    <span className="block text-xs text-neutral-500">{option.subtitle}</span>
+            {whatIsAtStake(event).length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span className="text-xs text-muted-foreground">En juego:</span>
+                {whatIsAtStake(event).map((key) => (
+                  <span
+                    key={key}
+                    className="font-cond rounded-full border border-input px-2.5 py-0.5 text-xs text-foreground/80"
+                  >
+                    {CONSEQUENCE_LABELS[key] ?? key}
                   </span>
-                </label>
-              ))}
-            </div>
-
-            {event.allowFreeText && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-neutral-300">
-                  {event.freeTextPrompt ?? "Respuesta libre (opcional)"}
-                </label>
-                <textarea
-                  name="free_text"
-                  rows={2}
-                  className="w-full rounded-md border border-panel-border bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-gold"
-                />
+                ))}
               </div>
             )}
 
-            <button
-              type="submit"
-              className="w-full rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
-            >
-              Confirmar decisión
-            </button>
-          </form>
+            <form action={resolveSecondLifeEvent} className="space-y-2 pt-1">
+              <input type="hidden" name="event_id" value={event.id} />
+
+              <div className="space-y-2">
+                {event.options.map((option, i) => (
+                  <label
+                    key={option.id}
+                    className="flex cursor-pointer flex-col gap-2 rounded-2xl border border-input bg-surface-2 px-4 py-3 has-[:checked]:border-gold has-[:checked]:bg-gold/10"
+                  >
+                    <span className="flex items-start gap-3">
+                      <input
+                        type="radio"
+                        name="option_id"
+                        value={option.id}
+                        required
+                        defaultChecked={i === 0}
+                        className="mt-1 shrink-0"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="font-display text-sm text-foreground">{option.label}</span>
+                        <span className="mt-0.5 block text-xs italic text-muted-foreground">{option.subtitle}</span>
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              {event.allowFreeText && (
+                <div className="space-y-2">
+                  <label className="text-kicker">
+                    {event.freeTextPrompt ?? "Respuesta libre (opcional)"}
+                  </label>
+                  <textarea
+                    name="free_text"
+                    rows={2}
+                    className="w-full rounded-2xl border border-input bg-surface-2 px-4 py-3 text-sm text-foreground outline-none focus:border-gold focus:ring-1 focus:ring-gold/50 transition-all"
+                  />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="gold-fill w-full rounded-full px-4 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
+              >
+                Confirmar decisión
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </main>

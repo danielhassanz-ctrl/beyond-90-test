@@ -75,6 +75,8 @@ export function buildCoachEvents(player: Player, week: number): GameEvent | null
       description: `Te ofrecen un equipo de división inferior. Tienes que demostrar que sabes entrenar, no solo jugar. Tu primer entreno: los jugadores te miran con respeto pero también con curiosidad. '¿Qué nos va a enseñar este?' se preguntan. Tienés que ganarte su respeto.`,
       isMilestone: true,
       milestoneType: "segunda_vida",
+      imageScene:
+        "Photorealistic photo of the photographed man in a coaching tracksuit standing in front of a lower-division training pitch, a group of young players watching him attentively in a half-circle, first-day-as-coach atmosphere, natural daylight",
       options: [
         {
           id: "duro",
@@ -101,6 +103,8 @@ export function buildCoachEvents(player: Player, week: number): GameEvent | null
       description: `Tu equipo ha ganado más de lo esperado. Un club de Liga hace oferta. Quieren que lleves al equipo a la élite. Es tu oportunidad de demostrare como entrenador, no solo como ex-jugador. ¿Aceptas el desafío?`,
       isMilestone: true,
       milestoneType: "segunda_vida",
+      imageScene:
+        "Photorealistic photo of the photographed man in a sharp coaching outfit shaking hands with a club director inside a modern top-tier stadium, presentation banners with the club crest visible behind, official unveiling atmosphere",
       options: [
         {
           id: "si",
@@ -134,6 +138,8 @@ export function buildCommentatorEvents(player: Player, week: number): GameEvent 
     description: `Estás frente a una cámara por primera vez sin jugar. Los nervios son raros: no hay balón, no hay rival, solo palabras. Tienes que explicar el juego, analizar decisiones, entretener. Tu experiencia vale, pero ¿sabrás comunicarla?`,
     isMilestone: true,
     milestoneType: "segunda_vida",
+    imageScene:
+      "Photorealistic photo of the photographed man in a suit sitting at a TV sports-analysis desk with match highlights on large screens behind him, microphone and studio lighting, professional broadcast set atmosphere",
     options: [
       {
         id: "tecnico",
@@ -164,6 +170,8 @@ export function buildEntrepreneurEvents(player: Player, week: number): GameEvent
     description: `Tuviste una idea: una academia de fútbol con metodología innovadora, o un app de entrenamiento, o una línea de ropa deportiva. Necesitas invertir tu dinero. Es riesgoso, pero si funciona, podrías cambiar la industria.`,
     isMilestone: true,
     milestoneType: "segunda_vida",
+    imageScene:
+      "Photorealistic photo of the photographed man in smart casual attire presenting in front of a whiteboard covered in sketches and charts in a modern startup office, a small team looking on, entrepreneurial launch-day atmosphere",
     options: [
       {
         id: "invertir",
@@ -194,6 +202,8 @@ export function buildAmbassadorEvents(player: Player, week: number): GameEvent |
     description: `Te piden participar en un evento benéfico. Tu nombre atrae gente. Puedes ayudar a causas sociales. Es gratificante, pero también expone tu vida privada. ¿Cuánto de ti quieres compartir?`,
     isMilestone: true,
     milestoneType: "segunda_vida",
+    imageScene:
+      "Photorealistic photo of the photographed man in smart casual clothing surrounded by children at a charity football clinic, warm genuine smiles, sports equipment donated boxes visible, heartwarming daylight atmosphere",
     options: [
       {
         id: "activo",
@@ -224,6 +234,8 @@ export function buildPrivateLifeEvents(player: Player, week: number): GameEvent 
     description: `Lejos de los reflectores. Tienes tiempo para la familia, para viajes, para cosas que postergaste durante ${(player.week / 10).toFixed(0)} temporadas. Tu pareja está feliz. Tus hijos crecen sin presión mediática. ¿Es esto la felicidad verdadera?`,
     isMilestone: true,
     milestoneType: "segunda_vida",
+    imageScene:
+      "Photorealistic candid photo of the photographed man in casual clothes laughing with family at a sunlit home garden table, relaxed unguarded moment, no cameras or spotlight, warm natural lighting, quiet everyday happiness",
     options: [
       {
         id: "feliz",

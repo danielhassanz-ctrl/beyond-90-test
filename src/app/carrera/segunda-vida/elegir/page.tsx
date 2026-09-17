@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
+import { displayName } from "@/types/player";
 import { PRESIDENT_CLUB_OPTIONS, COACH_CLUB_OPTIONS, AGENT_SPECIALTY_OPTIONS } from "@/lib/constants";
 import {
   chooseSecondCareer,
@@ -9,6 +10,12 @@ import {
   chooseAgentSpecialty,
 } from "./actions";
 
+// entrenador/agente/presidente tienen un paso extra (elegir banquillo,
+// especialidad o club) — el resto arranca directo. Antes solo existían
+// estos tres: el tipo SecondCareerRole y la IA (ver SECOND_LIFE_CONTEXT
+// en ai.ts) ya soportaban las otras cuatro desde hace tiempo, pero esta
+// pantalla nunca las ofrecía — más de la mitad de las segundas vidas que
+// el juego sabe contar eran imposibles de elegir.
 const ROLES = [
   {
     value: "entrenador",
@@ -24,6 +31,26 @@ const ROLES = [
     value: "presidente",
     label: "Presidente",
     description: "Gestiona un club entero: fichajes, presupuesto y la presión de los socios.",
+  },
+  {
+    value: "comentarista",
+    label: "Comentarista",
+    description: "Analiza el fútbol desde el plató: comentarios en directo, análisis técnico, opinión pública.",
+  },
+  {
+    value: "empresario",
+    label: "Empresario",
+    description: "Construyes un imperio fuera del campo: negocios, inversiones, startups deportivas.",
+  },
+  {
+    value: "embajador",
+    label: "Embajador del club",
+    description: "Eres la cara visible de tu último club: eventos, caridad, relaciones públicas, legado vivo.",
+  },
+  {
+    value: "privado",
+    label: "Vida privada",
+    description: "Te alejas del foco por completo: familia, tranquilidad, anonimato relativo.",
   },
 ] as const;
 
@@ -106,6 +133,15 @@ export default async function ElegirSegundaVidaPage({
   }
 
   if (player.second_career === "presidente") {
+    // Los clubes fijos (Oviedo, Deportivo, Lecce) también pueden ser el
+    // club real en el que jugó o se retiró — si coinciden, el jugador
+    // vería el MISMO club ofrecido dos veces como si fueran opciones
+    // distintas ("tu club de siempre" gratis, y "rescatar un club
+    // histórico" de pago, siendo literalmente el mismo club). "propio" ya
+    // cubre ese caso, así que se descarta el fijo que coincida.
+    const presidentOptions = PRESIDENT_CLUB_OPTIONS.filter(
+      (option) => !("club" in option) || option.club !== player.club,
+    );
     return (
       <ChoiceShell
         title="¿Qué club coges?"
@@ -113,7 +149,7 @@ export default async function ElegirSegundaVidaPage({
         error={params.error}
       >
         <form action={choosePresidentClub} className="space-y-3">
-          {PRESIDENT_CLUB_OPTIONS.map((option) => (
+          {presidentOptions.map((option) => (
             <OptionCard
               key={option.value}
               name="club_option"
@@ -135,6 +171,13 @@ export default async function ElegirSegundaVidaPage({
   }
 
   if (player.second_career === "entrenador") {
+    // Mismo problema que con los clubes de presidente: "filial" ya
+    // referencia el último club del jugador, así que si ese club
+    // coincide con uno de los fijos (Villarreal, Betis, Sevilla,
+    // Atlético), se descarta el fijo duplicado.
+    const coachOptions = COACH_CLUB_OPTIONS.filter(
+      (option) => !("club" in option) || option.club !== player.club,
+    );
     return (
       <ChoiceShell
         title="¿Qué banquillo coges?"
@@ -142,7 +185,7 @@ export default async function ElegirSegundaVidaPage({
         error={params.error}
       >
         <form action={chooseCoachClub} className="space-y-3">
-          {COACH_CLUB_OPTIONS.map((option) => (
+          {coachOptions.map((option) => (
             <OptionCard
               key={option.value}
               name="club_option"
@@ -193,7 +236,7 @@ export default async function ElegirSegundaVidaPage({
   return (
     <ChoiceShell
       title="¿Qué quieres ser ahora?"
-      subtitle={`${player.last_name} colgó las botas. Tu historia en el fútbol no termina aquí.`}
+      subtitle={`${displayName(player)} colgó las botas. Tu historia en el fútbol no termina aquí.`}
     >
       <form action={chooseSecondCareer} className="space-y-3">
         {ROLES.map((role) => (
