@@ -1,16 +1,21 @@
-import { Share2 } from "lucide-react";
+import { ImageSparkles, Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { clubById } from "@/game/data";
 import { clubVisualIdentity } from "@/game/club-identity";
+import { HttpMilestoneImageProvider, MilestoneImageUnavailableError } from "@/game/milestone-image-provider";
 import { milestoneGenerationBrief, milestoneVisualSpec, playerVisualProfile } from "@/game/milestone-visual";
 import { seasonLabel, stageLabel } from "@/game/engine";
 import type { GameState, ShareData } from "@/game/types";
 import { copyShareText, downloadCard, prepareCareerCard, sharePreparedCareerCard, type PreparedCareerCard } from "@/lib/share";
 
+const milestoneImageProvider = new HttpMilestoneImageProvider();
+
 /** Botón único de compartir hitos y career card final. */
 export function ShareButton({ state, share, label = "Compartir career card" }: { state: GameState; share: ShareData; label?: string }) {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null);
   const [prepared, setPrepared] = useState<PreparedCareerCard | null>(null);
   const [preview, setPreview] = useState<{ url: string; text: string; canDownload: boolean } | null>(null);
   const [previewStatus, setPreviewStatus] = useState<string | null>(null);
@@ -20,8 +25,6 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     const milestone = milestoneVisualSpec(share);
     const visualAge = playerVisualProfile(state.age);
     const club = clubById(state.clubId).name;
-    // A future image backend must never invent the protagonist. Only expose a
-    // generation brief when the career actually has the persisted source photo.
     const generationBrief = state.player.avatar
       ? milestoneGenerationBrief(milestone, visualAge, club, identity)
       : undefined;
@@ -32,13 +35,17 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
       name: state.player.nickname || state.player.name,
       club,
       lines: share.lines,
-      avatar: state.player.avatar,
+      avatar: generatedAvatar || state.player.avatar,
       clubColors: { primary: identity.primary, secondary: identity.secondary, text: identity.text },
       milestone,
       playerVisual: visualAge,
       ...(generationBrief ? { generationBrief } : {}),
     };
-  }, [share, state.seasonIndex, state.stage, state.age, state.player.nickname, state.player.name, state.player.avatar, state.clubId]);
+  }, [share, state.seasonIndex, state.stage, state.age, state.player.nickname, state.player.name, state.player.avatar, state.clubId, generatedAvatar]);
+
+  useEffect(() => {
+    setGeneratedAvatar(null);
+  }, [share, state.age, state.clubId, state.player.avatar]);
 
   useEffect(() => {
     let active = true;
@@ -53,7 +60,31 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     return () => URL.revokeObjectURL(url);
   }, [preview]);
 
+  const canGenerate = Boolean(state.player.avatar && input.generationBrief && input.milestone.kind !== "career");
+
   return <div className="mt-4">
+    {canGenerate && <button disabled={imageBusy} onClick={async () => {
+      if (!state.player.avatar || !input.generationBrief) return;
+      setImageBusy(true); setStatus(null);
+      try {
+        const result = await milestoneImageProvider.generate({
+          playerPhoto: state.player.avatar,
+          brief: input.generationBrief,
+          output: { width: 1024, height: 1536 },
+        });
+        setGeneratedAvatar(result.imageUrl);
+        setStatus("Imagen personalizada preparada.");
+      } catch (error) {
+        setStatus(error instanceof MilestoneImageUnavailableError
+          ? "La imagen personalizada no está disponible ahora. La tarjeta segura sigue lista para compartir."
+          : "No se ha podido generar la imagen personalizada. La tarjeta segura sigue disponible.");
+      } finally {
+        setImageBusy(false);
+      }
+    }} className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em] text-black active:scale-[0.99] disabled:opacity-60">
+      <ImageSparkles className="h-4 w-4" aria-hidden />
+      {imageBusy ? "Creando imagen…" : generatedAvatar ? "Regenerar imagen" : "Crear imagen del hito"}
+    </button>}
     <button disabled={busy || !prepared} onClick={async () => {
       if (!prepared) return;
       setBusy(true); setStatus(null);
@@ -69,7 +100,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
       <Share2 className="h-4 w-4" aria-hidden />
       {!prepared ? "Preparando…" : busy ? "Compartiendo…" : label}
     </button>
-    {status && <p className="mt-2 text-center text-xs text-muted-foreground">{status}</p>}
+    {status && <p className="mt-2 text-center text-xs text-muted-foreground" role="status">{status}</p>}
     {preview && <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-black/90 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]" role="dialog" aria-modal="true" aria-label="Vista previa de la career card">
       <img src={preview.url} alt="Career card de Beyond 90" className="max-h-[58vh] w-auto rounded-xl border border-gold/40" />
       <p className="text-center text-xs text-muted-foreground">Mantén pulsada la imagen para guardarla en tu galería.</p>
