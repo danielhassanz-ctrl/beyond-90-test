@@ -26,6 +26,12 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
+function visualStageLabel(profile?: PlayerVisualProfile): string | null {
+  if (!profile) return null;
+  const labels: Record<PlayerVisualProfile["stage"], string> = { academy: "PROMESA", "young-pro": "JOVEN PRO", prime: "PRIME", veteran: "VETERANO", legacy: "LEGADO" };
+  return `${profile.age} AÑOS · ${labels[profile.stage]}`;
+}
+
 function drawMilestoneBackdrop(ctx: CanvasRenderingContext2D, scene: MilestoneVisualSpec["scene"], primary: string, secondary: string) {
   ctx.save(); ctx.globalAlpha = 0.2; ctx.fillStyle = secondary; ctx.strokeStyle = secondary; ctx.lineWidth = 10;
   if (scene === "pitch") { ctx.strokeRect(90, 300, W - 180, 650); ctx.beginPath(); ctx.moveTo(90, 625); ctx.lineTo(W - 90, 625); ctx.stroke(); ctx.beginPath(); ctx.arc(W / 2, 625, 115, 0, Math.PI * 2); ctx.stroke(); }
@@ -49,6 +55,8 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     if (img) { const scale = Math.max((r * 2) / img.width, (r * 2) / img.height); const w = img.width * scale; const h = img.height * scale; ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h); }
     else { ctx.fillStyle = "#1c1d21"; ctx.fillRect(cx - r, cy - r, r * 2, r * 2); ctx.fillStyle = secondary; ctx.font = "bold 180px Georgia, serif"; ctx.textAlign = "center"; ctx.fillText(input.name.slice(0, 1).toUpperCase(), cx, cy + 60); }
     ctx.restore(); ctx.strokeStyle = secondary; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    const ageStage = visualStageLabel(input.playerVisual);
+    if (ageStage) { ctx.textAlign = "center"; ctx.font = "700 28px Helvetica, Arial, sans-serif"; const badgeWidth = Math.max(260, ctx.measureText(ageStage).width + 70); ctx.fillStyle = "rgba(8,9,11,0.88)"; ctx.fillRect(cx - badgeWidth / 2, cy + r - 18, badgeWidth, 58); ctx.strokeStyle = secondary; ctx.lineWidth = 3; ctx.strokeRect(cx - badgeWidth / 2, cy + r - 18, badgeWidth, 58); ctx.fillStyle = secondary; ctx.fillText(ageStage, cx, cy + r + 20); }
     ctx.textAlign = "center"; ctx.fillStyle = secondary; ctx.font = "600 40px Helvetica, Arial, sans-serif"; ctx.fillText("BEYOND 90", cx, 160); ctx.font = "700 30px Helvetica, Arial, sans-serif"; ctx.fillText(milestone.label.toUpperCase(), cx, 215);
     ctx.fillStyle = accentText; ctx.font = "bold 78px Helvetica, Arial, sans-serif"; wrap(ctx, input.headline.toUpperCase(), cx, 1010, W - 220, 88);
     ctx.fillStyle = accentText; ctx.globalAlpha = 0.78; ctx.font = "500 42px Helvetica, Arial, sans-serif"; ctx.fillText(input.name, cx, 1170); ctx.globalAlpha = 1; ctx.fillStyle = secondary; ctx.font = "600 36px Helvetica, Arial, sans-serif"; ctx.fillText(`${input.club} · ${input.kicker}`, cx, 1230);
