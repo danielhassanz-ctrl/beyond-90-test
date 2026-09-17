@@ -10,7 +10,7 @@ import { CareerStatCard } from "@/components/CareerStatCard";
 import { ShareableCard } from "@/components/ShareableCard";
 import { PlayerHeaderCard } from "@/components/PlayerHeaderCard";
 import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
-import { withShareLink, NO_CLUB_YET } from "@/lib/constants";
+import { withShareLink, getAppUrlLine, NO_CLUB_YET } from "@/lib/constants";
 import { logout } from "./actions";
 
 export default async function MiJugadorPage() {
@@ -89,7 +89,7 @@ export default async function MiJugadorPage() {
               `Así va mi carrera en Beyond 90: ${displayName(player)} (${player.club}). ¿Cómo sería la tuya?`,
             )}
           >
-            <CareerStatCard player={player} />
+            <CareerStatCard player={player} tagline="¿Cómo sería la tuya?" linkLine={getAppUrlLine()} />
           </ShareableCard>
 
           <Link

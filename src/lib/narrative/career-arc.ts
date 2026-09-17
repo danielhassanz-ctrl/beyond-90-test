@@ -141,9 +141,6 @@ export function getCareerContext(player: Player): CareerArc {
  * en buenos equipos medianos, sin llegar a gigantes.
  */
 export function shouldHaveClubOpportunity(player: Player): { club?: string; reason?: string } {
-  const stage = getCareerStage(player);
-  const context = CAREER_STAGES[stage];
-
   // Oportunidades basadas en media, no en edad
   if (player.media >= 75 && player.media < 85 && Math.random() < 0.15) {
     // Chance pequeña de pasar a buena carrera incluso con media OK
@@ -195,7 +192,6 @@ export function shouldSuggestLifeEvent(
   const hasPartner = Boolean(player.flags?.pareja);
   const hasChild = Boolean(player.flags?.hijo_1);
   const hasChild2 = Boolean(player.flags?.hijo_2);
-  const age = playerAge(player.week);
 
   // Si ya tiene pareja, chance de primer hijo (pero respetando su edad preferida)
   if (hasPartner && !hasChild) {

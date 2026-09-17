@@ -191,12 +191,6 @@ export const SECOND_CAREER_LABELS: Record<SecondCareerRole, string> = {
   privado: "Vida Privada",
 };
 
-export const MODE_LABELS: Record<CareerMode, string> = {
-  express: "Carrera corta (~15 eventos)",
-  standard: "Carrera media (~25 eventos)",
-  pro: "Carrera larga (~35 eventos)",
-};
-
 const SEASON_START_YEAR = 2026;
 export const WEEKS_PER_SEASON = 10;
 const AGE_START = 16;

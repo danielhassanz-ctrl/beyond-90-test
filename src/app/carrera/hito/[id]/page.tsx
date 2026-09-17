@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { seasonLabel, playerAge, SECOND_CAREER_LABELS } from "@/types/career";
 import { displayName } from "@/types/player";
-import { withShareLink } from "@/lib/constants";
+import { withShareLink, getAppUrlLine } from "@/lib/constants";
+import { getShareTagline } from "@/lib/shareTaglines";
 
 /**
  * Tipos de milestoneType que solo se generan en la segunda vida (ver
@@ -77,10 +78,12 @@ export default async function HitoPage({
   const timeLabel = isSecondLifeMilestone
     ? `Semana ${milestone.week} de tu vida como ${player.second_career ? SECOND_CAREER_LABELS[player.second_career] : "profesional"}`
     : `Semana ${milestone.week} • Temporada ${seasonLabel(milestone.week)} • ${age} años`;
+  const tagline = getShareTagline(milestone.type);
+  const linkLine = getAppUrlLine();
   const shareText = withShareLink(
     isSecondLifeMilestone
-      ? `${milestone.title} — ${displayName(player)} (${player.second_club ?? player.club}). Juégalo en Beyond 90.`
-      : `${milestone.title} — ${displayName(player)}, ${age} años (${player.club}). Juégalo en Beyond 90.`,
+      ? `${milestone.title} — ${displayName(player)} (${player.second_club ?? player.club}). ${tagline}`
+      : `${milestone.title} — ${displayName(player)}, ${age} años (${player.club}). ${tagline}`,
   );
   const photoUrl = player.current_photo_url ?? player.photo_url;
 
@@ -175,6 +178,8 @@ export default async function HitoPage({
                   club={isSecondLifeMilestone ? (player.second_club ?? player.club) : player.club}
                   ribbon={meta.label}
                   seasonLabel={timeLabel}
+                  tagline={tagline}
+                  linkLine={linkLine}
                 />
               </ShareableCard>
             </div>

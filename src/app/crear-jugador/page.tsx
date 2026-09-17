@@ -62,7 +62,7 @@ export default async function CrearJugadorPage({
             <Field label="Apodo (opcional)" emoji="✨">
               <input name="nickname" placeholder="Ej: El Chino" className={inputClass} />
               <p className="text-xs text-muted-foreground">
-                Si lo pones, será tu nombre "de cara al público" en toda la carrera — igual que los apodos de futbolistas de verdad.
+                Si lo pones, será tu nombre &ldquo;de cara al público&rdquo; en toda la carrera — igual que los apodos de futbolistas de verdad.
               </p>
             </Field>
 

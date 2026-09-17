@@ -1,4 +1,3 @@
-import { playerAge } from "@/types/career";
 import type { Player } from "@/types/player";
 
 export interface SecondaryCharacter {
@@ -140,7 +139,6 @@ export function describeCharacterReappearance(
   character: SecondaryCharacter,
   player: Player,
 ): string {
-  const age = playerAge(player.week);
   const weeksSinceLastSeen = player.week - character.lastSeenWeek;
   // 10 semanas = 1 año en la escala del juego (ver playerAge en
   // types/career.ts), no 52 — con /52 alguien ausente 100 semanas (10

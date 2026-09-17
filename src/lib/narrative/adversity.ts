@@ -1,6 +1,5 @@
 import { playerAge } from "@/types/career";
 import type { Player } from "@/types/player";
-import type { GameEvent } from "@/types/career";
 
 export type AdversityType = "injury_long" | "failure_crucial" | "relegation" | "scandal" | "loss_form" | "conflict";
 
@@ -110,9 +109,7 @@ export function pickAdversityType(player: Player): AdversityType {
 /**
  * Describe una adversidad en contexto narrativo.
  */
-export function describeAdversity(player: Player, type: AdversityType): string {
-  const age = playerAge(player.week);
-
+export function describeAdversity(type: AdversityType): string {
   const descriptions: Record<AdversityType, string> = {
     injury_long: `Una lesión grave — ligamento roto, fractura, rotura de menisco — te deja fuera de circulación durante meses. No es una molestia de pretemporada. Es un golpe real que frena la carrera justo cuando iba bien.`,
 

@@ -67,7 +67,7 @@ export const CONTEXTUAL_IMAGE_PROMPTS: Record<string, (playerName: string, conte
 
   // CAPITÁN - Armband ceremony
   capitan_brazalete: (playerName: string, clubName: string | number) =>
-    `Ceremonial photograph: footballer ${playerName} receiving captain's armband, coach or captain emeritus placing it, emotional moment, teammates watching, stadium background, professional photography`,
+    `Ceremonial photograph: footballer ${playerName} in ${describeKit(String(clubName))} receiving captain's armband, coach or captain emeritus placing it, emotional moment, teammates watching, stadium background, professional photography`,
 
   // ESCÁNDALO - Confrontación
   escandalo_confrontacion: (playerName: string) =>

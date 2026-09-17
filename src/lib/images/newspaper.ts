@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { getAppUrlLine } from "@/lib/constants";
 
 /**
  * Compone la portada "WARCA" (parodia ficticia de un diario deportivo,
@@ -61,6 +62,11 @@ export async function composeWarcaCover(
   const today = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
   const headline = "¡GOLAZO DE CHILENA!";
   const byline = `${playerName.toUpperCase()} FIRMA UNA OBRA DE ARTE CON EL ${club.toUpperCase()}`;
+  // Antes solo decía "Beyond 90" sin ningún sitio al que ir a jugar — la
+  // portada podía llegar a compartirse sin acompañar ningún texto (ver
+  // shareBranding.ts) y quien la recibía no tenía forma de encontrar el juego.
+  const linkLine = getAppUrlLine();
+  const brandLine = linkLine ? `Beyond 90 · ${linkLine}` : "Beyond 90";
 
   const overlaySvg = `
 <svg width="${WIDTH}" height="${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
@@ -89,7 +95,7 @@ export async function composeWarcaCover(
   <!-- Fecha -->
   <rect x="0" y="${HEIGHT - 46}" width="${WIDTH}" height="46" fill="#111111" />
   <text x="40" y="${HEIGHT - 15}" font-family="Arial, sans-serif" font-weight="600" font-size="24" fill="#FFFFFF">${escapeXml(today)}</text>
-  <text x="${WIDTH - 40}" y="${HEIGHT - 15}" font-family="Arial, sans-serif" font-weight="600" font-size="24" fill="#FFFFFF" text-anchor="end">Beyond 90</text>
+  <text x="${WIDTH - 40}" y="${HEIGHT - 15}" font-family="Arial, sans-serif" font-weight="600" font-size="24" fill="#FFFFFF" text-anchor="end">${escapeXml(brandLine)}</text>
 </svg>`;
 
   return sharp({

@@ -7,10 +7,6 @@ import { getSeasonContext, formatTournamentContext } from "@/lib/calendar/season
 import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
 import { getCareerContext, shouldHaveClubOpportunity, shouldSuggestLifeEvent } from "@/lib/narrative/career-arc";
 import {
-  getSecondaryCharacters,
-  pickCharacterToReappear,
-  describeCharacterReappearance,
-  updateCharacterLastSeen,
   trackSecondaryCharacter,
   generateSecondaryCharacterName,
 } from "@/lib/narrative/secondary-characters";
@@ -22,50 +18,68 @@ const MODEL = "claude-sonnet-5";
  * Genera ideas narrativas para inyectar en prompts según contexto del jugador.
  * Asegura variedad y riqueza emocional.
  */
+/** Elige una línea al azar de uno o varios bancos de narrative-content.ts. */
+function pickInspiration(...pools: string[][]): string {
+  const all = pools.flat();
+  return all[Math.floor(Math.random() * all.length)];
+}
+
 function generateNarrativeHints(player: Player): string {
   const hints: string[] = [];
   const age = playerAge(player.week);
+  const { emotions, life, matches, variations } = NarrativeContent;
 
-  // Sugerir momentos emocionales según etapa
+  // Sugerir momentos emocionales según etapa. Cada rama solo daba una
+  // frase fija ("Idea: conflicto con entrenador o momento de
+  // reconocimiento") igual en cada partida — el resto de bancos de
+  // narrative-content.ts (fallo_crucial, paternidad, nominacion_balon,
+  // lesion_grave, oferta_arabia, retiro, conflicto_entrenador, propuesta)
+  // llevaban escritos sin que nada los usara nunca. Ahora cada rama añade
+  // un ejemplo concreto y distinto en cada tirada, como ya se hacía solo
+  // para menores de 20.
   if (age < 20) {
     hints.push("Juventud, debut, ansiedad de pertenecer");
-    const youthMoments = NarrativeContent.emotions.gol_decisivo;
-    // Antes siempre cogía youthMoments[0] — todo jugador menor de 20 años
-    // recibía exactamente la misma "inspiración" cada vez que se activaba
-    // esta rama, en cualquier partida. Va justo en contra del "ninguna
-    // partida igual".
-    if (youthMoments) hints.push(`Inspiración: ${youthMoments[Math.floor(Math.random() * youthMoments.length)]}`);
+    hints.push(`Inspiración: ${pickInspiration(emotions.gol_decisivo)}`);
   } else if (age < 25) {
     hints.push("Consolidación, rivalidad, primeros éxitos");
-    hints.push(`Idea: conflicto con entrenador o momento de reconocimiento`);
+    hints.push(`Inspiración: ${pickInspiration(life.conflicto_entrenador, emotions.nominacion_balon)}`);
   } else if (age < 30) {
     hints.push("Pico de carrera, presión máxima, dilemas personales");
-    hints.push(`Idea: propuesta personal (matrimonio, hijo) o gran oferta`);
+    hints.push(`Inspiración: ${pickInspiration(life.propuesta, emotions.paternidad, emotions.oferta_arabia)}`);
   } else if (age < 35) {
     hints.push("Veteranía, legado, últimas oportunidades");
-    hints.push(`Idea: homenaje, oferta exótica o reflexión sobre retiro`);
+    hints.push(`Inspiración: ${pickInspiration(emotions.oferta_arabia, emotions.retiro)}`);
   } else {
     hints.push("Declive, cierre, preparación para segunda vida");
-    hints.push(`Idea: últimos partidos, reconocimiento, transición`);
+    hints.push(`Inspiración: ${pickInspiration(emotions.retiro)}`);
   }
 
   // Sugerir tipos de momento según stats
   if (player.moral < 40) {
     hints.push("Momento crítico: conflicto, lesión, fracaso público");
+    hints.push(
+      `Inspiración: ${pickInspiration(life.conflicto_entrenador, life.muerte_familiar, emotions.lesion_grave, emotions.fallo_crucial, matches.fracasos)}`,
+    );
   } else if (player.fama > 80) {
     hints.push("Moment de spotlight: presión mediática, escándalo, o gloria");
+    hints.push(`Inspiración: ${pickInspiration(variations.media_pressure, emotions.nominacion_balon)}`);
   } else if (player.media > 85) {
     hints.push("Elite mundial: ofertas de gigantes, presión, momentos históricos");
+    hints.push(`Inspiración: ${pickInspiration(emotions.nominacion_balon, emotions.oferta_arabia)}`);
   }
 
   // Sugerir variación de tipo de evento
   const roll = Math.random();
   if (roll < 0.3) {
     hints.push("Tipo: momento de gol o asistencia memorable");
+    hints.push(`Inspiración: ${pickInspiration(matches.goles, matches.asistencias, matches.defensa)}`);
   } else if (roll < 0.5) {
     hints.push("Tipo: conflicto o dilema personal/profesional");
   } else if (roll < 0.7) {
     hints.push("Tipo: cambio de vida (familia, dinero, relaciones)");
+    hints.push(
+      `Inspiración: ${pickInspiration(life.propuesta, life.inversion_exitosa, life["inversión_fracaso"], emotions.paternidad)}`,
+    );
   } else {
     hints.push("Tipo: presión, escándalo, o momento de reconocimiento");
   }

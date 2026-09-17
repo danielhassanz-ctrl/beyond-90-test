@@ -21,6 +21,8 @@ export function PlayerCard({
   club,
   ribbon,
   seasonLabel,
+  tagline,
+  linkLine,
 }: {
   photoUrl?: string | null;
   name: string;
@@ -29,6 +31,10 @@ export function PlayerCard({
   club: string;
   ribbon: string;
   seasonLabel: string;
+  /** Frase gancho tipo "esta es mi carrera, ¿cuál es la tuya?" — ver lib/shareTaglines.ts. */
+  tagline?: string;
+  /** URL del juego sin protocolo (ver lib/constants.ts getAppUrl), para que quien reciba la imagen sepa dónde jugar aunque el destino de compartir descarte el texto que la acompaña. */
+  linkLine?: string | null;
 }) {
   const colors = getClubColors(club);
 
@@ -68,6 +74,13 @@ export function PlayerCard({
         <p className="text-2xl font-black uppercase tracking-wide text-white drop-shadow-lg">{name}</p>
         <p className="text-xs font-semibold uppercase tracking-widest text-amber-200/90">{club}</p>
         <p className="text-[11px] text-neutral-400">{seasonLabel}</p>
+        {(tagline || linkLine) && (
+          <div className="mt-2 border-t border-white/10 pt-2">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-300">Beyond 90</p>
+            {tagline && <p className="text-[10px] text-neutral-300">{tagline}</p>}
+            {linkLine && <p className="text-[10px] font-semibold text-amber-200/90">{linkLine}</p>}
+          </div>
+        )}
       </div>
     </div>
   );

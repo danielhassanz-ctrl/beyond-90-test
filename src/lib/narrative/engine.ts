@@ -996,7 +996,7 @@ export async function pickNextEventDynamic(
       `[pickNextEventDynamic] Generating adversity event for ${player.last_name}`
     );
     const adversityType = pickAdversityType(player);
-    const adversityDesc = describeAdversity(player, adversityType);
+    const adversityDesc = describeAdversity(adversityType);
     const adversityPrompt = buildAdversityPrompt(player, adversityType, adversityDesc);
 
     const adversityEvent = await callEventTool(adversityPrompt, "especial", `adversity-${adversityType}`);

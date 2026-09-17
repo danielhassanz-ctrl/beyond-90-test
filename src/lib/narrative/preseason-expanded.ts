@@ -1,5 +1,4 @@
 import type { GameEvent } from "@/types/career";
-import { describeKit } from "@/lib/clubColors";
 
 /**
  * Secuencia expandida de pretemporada (semanas 4-6 actuales)

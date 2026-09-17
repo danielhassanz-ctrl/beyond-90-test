@@ -39,7 +39,17 @@ function groupTitles(titles: string[]): { name: string; count: number }[] {
 }
 
 /** Tarjeta-resumen de carrera al estilo "carta de stats" (OVR, valor, PJ/GLS/AST, títulos) para compartir de un vistazo. */
-export function CareerStatCard({ player }: { player: Player }) {
+export function CareerStatCard({
+  player,
+  tagline,
+  linkLine,
+}: {
+  player: Player;
+  /** Frase gancho tipo "esta es mi carrera, ¿cuál es la tuya?" — ver lib/shareTaglines.ts. */
+  tagline?: string;
+  /** URL del juego sin protocolo (ver lib/constants.ts getAppUrl). */
+  linkLine?: string | null;
+}) {
   const stats = computeCareerStats(player);
   const grouped = groupTitles(stats.titles);
 
@@ -112,6 +122,12 @@ export function CareerStatCard({ player }: { player: Player }) {
         <span>Beyond 90</span>
         <span className="font-semibold uppercase text-amber-300">{displayName(player)}</span>
       </div>
+      {(tagline || linkLine) && (
+        <div className="mt-2 text-center">
+          {tagline && <p className="text-[10px] text-neutral-300">{tagline}</p>}
+          {linkLine && <p className="text-[10px] font-semibold text-amber-200/90">{linkLine}</p>}
+        </div>
+      )}
     </div>
   );
 }

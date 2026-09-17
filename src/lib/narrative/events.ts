@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GameEvent } from "@/types/career";
 import { PRO_RETIREMENT_MIN_WEEK } from "@/types/career";
 import type { Player } from "@/types/player";
-import { STARTING_AGENTS, pickStartingClubOffers, type ClubOffer } from "@/lib/constants";
+import { pickStartingClubOffers, type ClubOffer } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
 import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";

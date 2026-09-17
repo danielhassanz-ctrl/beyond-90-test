@@ -131,7 +131,7 @@ export default async function Home() {
             Lo que incluye
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {FEATURES.map((f, i) => (
+            {FEATURES.map((f) => (
               <div
                 key={f.title}
                 className="group rounded-lg border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent p-3 backdrop-blur-sm hover:border-amber-500/40 transition-all duration-300"

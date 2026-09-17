@@ -8,6 +8,8 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
+import { addShareBranding } from "@/lib/images/shareBranding";
+import { getShareTagline } from "@/lib/shareTaglines";
 
 export async function resolveSecondLifeEvent(formData: FormData) {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
@@ -92,6 +94,7 @@ export async function resolveSecondLifeEvent(formData: FormData) {
       const finalPhotoUrl = player.photo_url as string;
       const finalUserId = user.id;
       const finalPlayerId = player.id;
+      const finalMilestoneType = event.milestoneType ?? "hito";
 
       after(async () => {
         try {
@@ -103,9 +106,20 @@ export async function resolveSecondLifeEvent(formData: FormData) {
 
           await logImageGeneration(supabase, finalUserId);
 
+          // Igual que en la carrera principal (ver carrera/actions.ts): sin
+          // marca ni enlace impresos en la propia imagen, la mayoría de
+          // destinos de compartir (Instagram Stories entre ellos) pierden
+          // el texto que la acompaña y solo llega el archivo desnudo.
+          let milestoneBuffer = buffer;
+          try {
+            milestoneBuffer = await addShareBranding(buffer, getShareTagline(finalMilestoneType));
+          } catch (err) {
+            console.error("[resolveSecondLifeEvent:after] share branding compositing failed, using plain photo:", err);
+          }
+
           const [evolvedUrl, milestoneImageUrl] = await Promise.all([
             uploadGeneratedImage(supabase, finalUserId, buffer, "look"),
-            uploadGeneratedImage(supabase, finalUserId, buffer, "milestone"),
+            uploadGeneratedImage(supabase, finalUserId, milestoneBuffer, "milestone"),
           ]);
 
           if (evolvedUrl) {

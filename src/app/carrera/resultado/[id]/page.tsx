@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
-import { withShareLink } from "@/lib/constants";
+import { withShareLink, getAppUrlLine } from "@/lib/constants";
 import { ShareButton } from "@/components/ShareButton";
 import { ShareableCard } from "@/components/ShareableCard";
 import { SeasonRecapCard } from "@/components/SeasonRecapCard";
@@ -124,6 +124,8 @@ export default async function ResultadoPage({
               seasonLabel={seasonLabel(closedSeasonWeek)}
               age={playerAge(careerEvent.week)}
               consequences={consequencesList}
+              tagline="Así cerré la temporada. ¿Cómo vas tú?"
+              linkLine={getAppUrlLine()}
             />
           </ShareableCard>
         ) : (

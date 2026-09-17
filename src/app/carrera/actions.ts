@@ -9,6 +9,8 @@ import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
 import { generateFromTemplate, saveAsTemplateIfMissing } from "@/lib/images/templates";
 import { composeWarcaCover } from "@/lib/images/newspaper";
+import { addShareBranding } from "@/lib/images/shareBranding";
+import { getShareTagline } from "@/lib/shareTaglines";
 import { GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
 import { buildMatchContext } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
@@ -442,12 +444,13 @@ export async function resolveEvent(formData: FormData) {
     // Crea el milestone al instante, sin esperar a ninguna imagen — el
     // turno del jugador no debe bloquearse por una llamada a Replicate
     // que puede tardar minutos. image_status dice si hay foto en camino.
+    const milestoneType = isRetirementDecision ? "retiro_jugador" : (overrideMilestoneType ?? event.milestoneType ?? "hito");
     const { data: milestone, error: milestoneError } = await supabase
       .from("milestones")
       .insert({
         player_id: player.id,
         week: player.week,
-        type: isRetirementDecision ? "retiro_jugador" : (overrideMilestoneType ?? event.milestoneType ?? "hito"),
+        type: milestoneType,
         title: isRetirementDecision ? "Cuelga las botas" : (overrideTitle ?? event.title),
         subtitle: isRetirementDecision
           ? `Después de ${player.week} semanas como profesional`
@@ -477,6 +480,7 @@ export async function resolveEvent(formData: FormData) {
       const finalPlayerId = player.id;
       const finalIsGolChilena = event.id === GOL_CHILENA_EVENT_ID;
       const finalClub = newClub;
+      const finalMilestoneType = milestoneType;
       // La portada del periódico imprime esto tal cual como titular — un
       // apodo real de futbolista suena más auténtico ahí que el apellido
       // formal ("La Pulga firma una obra de arte" en vez de "Messi").
@@ -515,6 +519,17 @@ export async function resolveEvent(formData: FormData) {
               milestoneBuffer = await composeWarcaCover(buffer, finalPlayerName, finalClub);
             } catch (err) {
               console.error("[resolveEvent:after] WARCA cover compositing failed, using plain photo:", err);
+            }
+          } else {
+            // La portada WARCA ya lleva su propia marca ("Beyond 90" en el
+            // pie); el resto de fotos de hito salían sin ninguna marca del
+            // juego ni enlace para jugar — la mitad de destinos de compartir
+            // (Instagram Stories entre ellos) descartan el texto que
+            // acompaña a la imagen y solo llega el archivo desnudo.
+            try {
+              milestoneBuffer = await addShareBranding(buffer, getShareTagline(finalMilestoneType));
+            } catch (err) {
+              console.error("[resolveEvent:after] share branding compositing failed, using plain photo:", err);
             }
           }
 

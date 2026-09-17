@@ -1,11 +1,33 @@
 /**
+ * URL pública del juego, para que cualquier tarjeta compartida lleve un
+ * sitio real al que ir a jugar. NEXT_PUBLIC_APP_URL requiere configurarlo
+ * a mano tras desplegar — algo fácil de olvidar, y sin ello ANTES se
+ * omitía el enlace por completo. Vercel ya inyecta automáticamente, sin
+ * configuración ninguna, el dominio de producción del proyecto
+ * (VERCEL_PROJECT_PRODUCTION_URL) y el de este despliegue concreto
+ * (VERCEL_URL) — se usan como red de seguridad antes de rendirse y no
+ * mandar enlace. Ninguna de las dos trae el prefijo "https://".
+ */
+export function getAppUrl(): string | null {
+  const explicit = process.env.NEXT_PUBLIC_APP_URL;
+  if (explicit) return explicit;
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  return vercelHost ? `https://${vercelHost}` : null;
+}
+
+/** Igual que getAppUrl(), pero sin protocolo ni barra final — para imprimir en un pie de foto o una tarjeta, donde una URL completa con "https://" queda raro. */
+export function getAppUrlLine(): string | null {
+  const url = getAppUrl();
+  return url ? url.replace(/^https?:\/\//, "").replace(/\/$/, "") : null;
+}
+
+/**
  * Añade el enlace de vuelta al juego al final de un texto de compartir.
- * Sin esto, la persona que recibe la carta no tiene dónde ir a jugar — sin
- * NEXT_PUBLIC_APP_URL configurado (todavía no hay despliegue público) se
+ * Sin URL disponible (ni configurada ni inyectada por la plataforma), se
  * omite el enlace en vez de mandar uno roto.
  */
 export function withShareLink(text: string): string {
-  const url = process.env.NEXT_PUBLIC_APP_URL;
+  const url = getAppUrl();
   return url ? `${text}\n${url}` : text;
 }
 

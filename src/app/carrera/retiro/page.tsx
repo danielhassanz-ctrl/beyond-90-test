@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { SECOND_CAREER_LABELS, seasonLabel, playerAge, WEEKS_PER_SEASON } from "@/types/career";
 import { displayName } from "@/types/player";
-import { withShareLink } from "@/lib/constants";
+import { withShareLink, getAppUrlLine } from "@/lib/constants";
 import { CareerStatCard } from "@/components/CareerStatCard";
 import { ShareableCard } from "@/components/ShareableCard";
 import { beginSecondLife } from "./actions";
@@ -83,7 +83,7 @@ export default async function RetiroPage() {
 
         {/* Shareable card */}
         <ShareableCard title="Beyond 90" text={shareText}>
-          <CareerStatCard player={player} />
+          <CareerStatCard player={player} tagline="¿La tuya será mayor?" linkLine={getAppUrlLine()} />
         </ShareableCard>
 
         {/* Stats principales */}

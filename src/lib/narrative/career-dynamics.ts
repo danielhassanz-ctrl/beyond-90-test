@@ -20,7 +20,6 @@ export interface CareerArc {
 
 export function calculateCareerArc(player: Player): CareerArc {
   const age = playerAge(player.week);
-  const matches = player.stats_matches_played || 1;
   const media = player.media || 40;
 
   // Ascenso: 16-25 años, media creciendo

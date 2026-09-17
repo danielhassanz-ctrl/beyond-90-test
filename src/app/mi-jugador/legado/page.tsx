@@ -43,7 +43,15 @@ function buildAchievements(
     {
       title: "Internacional",
       description: "Ser convocado por tu selección.",
-      done: milestoneTypes.has("seleccion") || milestoneTypes.has("presidente_federacion") === false && milestoneTypes.has("debut_internacional"),
+      // Antes comprobaba también "debut_internacional", un valor que
+      // nunca se guarda como milestoneType real (solo existe como clave
+      // interna de imagen en MILESTONE_TYPE_TO_CONTEXT_TYPE) — y de paso,
+      // por precedencia de operadores (&& liga más fuerte que ||), la
+      // condición dependía de NO tener "presidente_federacion" (un logro
+      // de segunda vida sin relación con haber sido internacional). El
+      // logro real es "seleccion", el único milestoneType que de verdad
+      // se guarda para la primera convocatoria.
+      done: milestoneTypes.has("seleccion"),
     },
     { title: "Capitán", description: "Llevar el brazalete de tu equipo.", done: milestoneTypes.has("capitania") },
     {

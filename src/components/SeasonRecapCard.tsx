@@ -14,11 +14,17 @@ export function SeasonRecapCard({
   seasonLabel,
   age,
   consequences,
+  tagline,
+  linkLine,
 }: {
   player: Player;
   seasonLabel: string;
   age: number;
   consequences: [string, number][];
+  /** Frase gancho tipo "esta es mi carrera, ¿cuál es la tuya?" — ver lib/shareTaglines.ts. */
+  tagline?: string;
+  /** URL del juego sin protocolo (ver lib/constants.ts getAppUrl). */
+  linkLine?: string | null;
 }) {
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border-2 border-amber-400/80 bg-gradient-to-b from-amber-900/20 via-neutral-900 to-black p-5 shadow-[0_0_50px_-10px_rgba(245,183,64,0.35)]">
@@ -73,6 +79,12 @@ export function SeasonRecapCard({
         <span>Beyond 90</span>
         <span className="font-semibold uppercase text-amber-300">Nueva temporada</span>
       </div>
+      {(tagline || linkLine) && (
+        <div className="mt-2 text-center">
+          {tagline && <p className="text-[10px] text-neutral-300">{tagline}</p>}
+          {linkLine && <p className="text-[10px] font-semibold text-amber-200/90">{linkLine}</p>}
+        </div>
+      )}
     </div>
   );
 }
