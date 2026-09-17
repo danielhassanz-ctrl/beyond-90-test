@@ -66,11 +66,11 @@ export default async function Home() {
 
   return (
     <main className="flex flex-1 flex-col overflow-hidden bg-neutral-950">
-      <div className="flex flex-1 flex-col items-center px-6 py-12 text-center sm:py-16">
+      <div className="flex flex-1 flex-col items-center px-6 py-6 text-center sm:py-16">
         {/* Logo y tagline */}
         <div className="space-y-2">
-          <p className="text-5xl sm:text-6xl">⚽</p>
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+          <p className="text-4xl sm:text-6xl">⚽</p>
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
             Beyond <span className="text-gold">90</span>
           </h1>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-300">
@@ -79,7 +79,7 @@ export default async function Home() {
         </div>
 
         {/* Descripción */}
-        <p className="mt-6 max-w-sm text-sm leading-relaxed text-neutral-300">
+        <p className="mt-3 max-w-sm text-sm leading-relaxed text-neutral-300">
           Vive la vida de un futbolista profesional.
           <br />
           <span className="text-amber-200">Dentro y fuera del campo.</span>
@@ -88,12 +88,17 @@ export default async function Home() {
         </p>
 
         {/* Foto del jugador PRIMERO — vende la fantasía visual antes de
-            pedir la acción, patrón habitual de portada de videojuego.
-            Bloque normal de la página (no fondo a pantalla completa) con
-            su proporción real (768×1344), para que nunca se recorte la
-            figura entera — en ventanas anchas y bajas "object-cover" a
-            pantalla completa dejaba fuera al jugador por completo. */}
-        <div className="relative mt-6 w-full max-w-sm aspect-[768/1344] overflow-hidden rounded-2xl border border-amber-500/20">
+            pedir la acción, patrón habitual de portada de videojuego. En
+            móvil la altura se limita a un % del alto de pantalla (en vez
+            de a su proporción real 768×1344) para que nunca empuje los
+            botones de "Nueva carrera"/"Iniciar sesión" fuera de la vista
+            sin hacer scroll — visto en vivo: con la proporción real a
+            pantalla completa, la foto sola ocupaba más de la mitad del
+            alto disponible en un iPhone normal. Desde el breakpoint `sm`
+            (pantallas ya lo bastante altas de sobra) vuelve a su
+            proporción real completa, para no recortar de más la camiseta
+            con el "10" que se ve hacia el final de la figura. */}
+        <div className="relative mt-2 h-[30vh] max-h-72 min-h-48 w-full max-w-sm overflow-hidden rounded-2xl border border-amber-500/20 sm:aspect-[768/1344] sm:h-auto sm:max-h-none">
           <Image
             src="/hero-tunnel.jpg"
             alt="Futbolista de espaldas con la camiseta de Beyond 90 en el túnel de vestuarios"
@@ -107,7 +112,7 @@ export default async function Home() {
         </div>
 
         {/* CTA principal, justo debajo de la foto */}
-        <div className="mt-6 w-full max-w-sm space-y-3">
+        <div className="mt-3 w-full max-w-sm space-y-3">
           <Link
             href="/crear-jugador"
             className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-gold to-amber-500 px-6 py-3 text-sm font-bold uppercase tracking-wide text-neutral-950 hover:from-amber-400 hover:to-amber-600 transition-all shadow-lg hover:shadow-amber-500/50"
