@@ -1,4 +1,5 @@
 import type { ShareData } from "./types";
+import type { ClubVisualIdentity } from "./club-identity";
 
 export type MilestoneVisualKind = "signing" | "debut" | "trophy" | "retirement" | "career";
 export type PlayerVisualAgeStage = "academy" | "young-pro" | "prime" | "veteran" | "legacy";
@@ -38,8 +39,18 @@ export function playerVisualProfile(age: number): PlayerVisualProfile {
  * Backend-ready brief for future generated milestone photography. It is data,
  * not a claim that generation happened. The uploaded photo remains the sole
  * identity reference and age changes must never replace the player's identity.
+ * A configured club palette may be supplied so a future backend can reproduce
+ * the game's rights-safe visual identity without inventing protected artwork.
  */
-export function milestoneGenerationBrief(milestone: MilestoneVisualSpec, visual: PlayerVisualProfile, clubName: string): MilestoneGenerationBrief {
+export function milestoneGenerationBrief(
+  milestone: MilestoneVisualSpec,
+  visual: PlayerVisualProfile,
+  clubName: string,
+  clubIdentity?: Pick<ClubVisualIdentity, "primary" | "secondary">,
+): MilestoneGenerationBrief {
+  const palette = clubIdentity
+    ? ` Use the configured palette primary ${clubIdentity.primary} and secondary ${clubIdentity.secondary}.`
+    : "";
   const compositions: Record<MilestoneVisualSpec["scene"], string> = {
     presentation: `professional football signing presentation for ${clubName}; player posing naturally with a rights-safe club-colour shirt; press-room/stadium presentation atmosphere`,
     pitch: `football debut for ${clubName}; player on the pitch with the ball in a rights-safe club-colour kit; match-night stadium atmosphere`,
@@ -51,7 +62,7 @@ export function milestoneGenerationBrief(milestone: MilestoneVisualSpec, visual:
     scene: milestone.scene,
     identityRule: "Preserve the exact recognisable identity, ethnicity and core facial features of the persisted uploaded player photo; do not substitute another person.",
     ageRule: `Render the same person at career age ${visual.age}. ${visual.ageDirection}. Changes in hair or facial hair must be plausible, gradual and identity-preserving.`,
-    clubRule: `Use ${clubName} name and configured club colours only. Do not invent or reproduce an official crest, sponsor mark or protected shirt artwork unless separately rights-cleared.`,
+    clubRule: `Use ${clubName} name and configured club colours only.${palette} Do not invent or reproduce an official crest, sponsor mark or protected shirt artwork unless separately rights-cleared.`,
     composition: compositions[milestone.scene],
     prohibited: ["identity drift", "different person", "official crest without cleared rights", "sponsor logo without cleared rights", "wrong career age", "unearned trophy or award"],
   };
