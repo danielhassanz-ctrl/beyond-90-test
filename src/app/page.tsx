@@ -89,16 +89,15 @@ export default async function Home() {
 
         {/* Foto del jugador PRIMERO — vende la fantasía visual antes de
             pedir la acción, patrón habitual de portada de videojuego. En
-            móvil la altura se limita a un % del alto de pantalla (en vez
-            de a su proporción real 768×1344) para que nunca empuje los
-            botones de "Nueva carrera"/"Iniciar sesión" fuera de la vista
-            sin hacer scroll — visto en vivo: con la proporción real a
-            pantalla completa, la foto sola ocupaba más de la mitad del
-            alto disponible en un iPhone normal. Desde el breakpoint `sm`
-            (pantallas ya lo bastante altas de sobra) vuelve a su
-            proporción real completa, para no recortar de más la camiseta
-            con el "10" que se ve hacia el final de la figura. */}
-        <div className="relative mt-2 h-[30vh] max-h-72 min-h-48 w-full max-w-sm overflow-hidden rounded-2xl border border-amber-500/20 sm:aspect-[768/1344] sm:h-auto sm:max-h-none">
+            móvil se recorta a la altura de la cadera del jugador (donde
+            termina de verse el "10" del dorsal) en vez de a su proporción
+            real 768×1344 completa — la figura entera empujaba los botones
+            de "Nueva carrera"/"Iniciar sesión" fuera de la vista sin hacer
+            scroll en un iPhone normal, pero recortar demasiado alto (a un
+            % fijo del alto de pantalla) dejaba el "10" cortado a medias.
+            Desde el breakpoint `sm` (pantallas ya lo bastante altas)
+            vuelve a su proporción real completa. */}
+        <div className="relative mt-2 aspect-[3/4] w-full max-w-sm overflow-hidden rounded-2xl border border-amber-500/20 sm:aspect-[768/1344]">
           <Image
             src="/hero-tunnel.jpg"
             alt="Futbolista de espaldas con la camiseta de Beyond 90 en el túnel de vestuarios"
