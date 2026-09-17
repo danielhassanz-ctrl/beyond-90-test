@@ -168,6 +168,21 @@ export default async function LegadoPage() {
                     fill
                     className="object-cover transition group-hover:scale-105"
                   />
+                ) : player.photo_url ? (
+                  // Sin foto de IA propia para este hito: mejor tu foto real
+                  // de fondo que un cuadro casi vacío con solo un escudo
+                  // pequeño en negro — antes era lo único que se veía aquí.
+                  <>
+                    <Image
+                      src={player.photo_url}
+                      alt={m.title}
+                      fill
+                      className="object-cover object-top transition group-hover:scale-105"
+                    />
+                    <div className="absolute right-1.5 top-1.5 drop-shadow-md">
+                      <ClubCrest club={SECOND_LIFE_MILESTONE_TYPES.has(m.type) ? (player.second_club ?? player.club) : player.club} size={24} />
+                    </div>
+                  </>
                 ) : (
                   <div className="flex h-full items-center justify-center">
                     <ClubCrest club={SECOND_LIFE_MILESTONE_TYPES.has(m.type) ? (player.second_club ?? player.club) : player.club} size={40} />
