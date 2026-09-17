@@ -1,4 +1,4 @@
-import type { MilestoneVisualSpec, PlayerVisualProfile } from "@/game/milestone-visual";
+import type { MilestoneGenerationBrief, MilestoneVisualSpec, PlayerVisualProfile } from "@/game/milestone-visual";
 
 export interface CareerCardInput {
   headline: string;
@@ -11,6 +11,8 @@ export interface CareerCardInput {
   milestone?: MilestoneVisualSpec;
   /** Metadata for a future identity-preserving image backend. The local card does not fake facial ageing. */
   playerVisual?: PlayerVisualProfile;
+  /** Complete rights-safe generation request carried with the milestone until a real backend is configured. */
+  generationBrief?: MilestoneGenerationBrief;
 }
 
 const W = 1080;
@@ -60,11 +62,11 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lh: number) { const words = text.split(" "); let line = ""; let cursor = y; for (const word of words) { const test = line ? `${line} ${word}` : word; if (ctx.measureText(test).width > maxWidth && line) { ctx.fillText(line, x, cursor); line = word; cursor += lh; } else line = test; } if (line) ctx.fillText(line, x, cursor); }
 export function shareText(input: CareerCardInput): string { return `${input.headline} — ${input.name} (${input.club}, ${input.kicker})\n${input.lines.map((l) => `${l.label}: ${l.value}`).join(" · ")}\n\nMi carrera en BEYOND 90.`; }
-export interface PreparedCareerCard { blob: Blob | null; text: string; }
+export interface PreparedCareerCard { blob: Blob | null; text: string; generationBrief?: MilestoneGenerationBrief; }
 export type ShareOutcome = { status: "shared" } | { status: "cancelled" } | { status: "preview"; url: string; text: string; canDownload: boolean } | { status: "failed"; text: string };
 function isIOS(): boolean { const ua = navigator.userAgent || ""; return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document); }
 function wasShareCancelled(err: unknown): boolean { return err instanceof DOMException && err.name === "AbortError"; }
-export async function prepareCareerCard(input: CareerCardInput): Promise<PreparedCareerCard> { const [blob, text] = await Promise.all([renderCareerCard(input), Promise.resolve(shareText(input))]); return { blob, text }; }
+export async function prepareCareerCard(input: CareerCardInput): Promise<PreparedCareerCard> { const [blob, text] = await Promise.all([renderCareerCard(input), Promise.resolve(shareText(input))]); return { blob, text, generationBrief: input.generationBrief }; }
 export async function sharePreparedCareerCard(prepared: PreparedCareerCard): Promise<ShareOutcome> { const { blob, text } = prepared; const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean }; if (typeof nav.share === "function") { if (blob) { const file = new File([blob], "beyond90.png", { type: "image/png" }); const canShareFiles = typeof nav.canShare === "function" && nav.canShare({ files: [file] }); if (canShareFiles) { try { await nav.share({ files: [file], text, title: "BEYOND 90" }); return { status: "shared" }; } catch (err) { if (wasShareCancelled(err)) return { status: "cancelled" }; } } else { try { await nav.share({ text, title: "BEYOND 90" }); return { status: "shared" }; } catch (err) { if (wasShareCancelled(err)) return { status: "cancelled" }; } } } else { try { await nav.share({ text, title: "BEYOND 90" }); return { status: "shared" }; } catch (err) { if (wasShareCancelled(err)) return { status: "cancelled" }; } } } if (blob) { const url = URL.createObjectURL(blob); return { status: "preview", url, text, canDownload: !isIOS() }; } return { status: "failed", text }; }
 export async function shareCareerCard(input: CareerCardInput): Promise<ShareOutcome> { return sharePreparedCareerCard(await prepareCareerCard(input)); }
 export function downloadCard(url: string): void { const a = document.createElement("a"); a.href = url; a.download = "beyond90-career-card.png"; a.rel = "noopener"; a.click(); }
