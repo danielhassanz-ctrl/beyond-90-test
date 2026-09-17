@@ -41,7 +41,7 @@ export function MatchScene({
             </div>
           </div>
           <div className="min-w-0">
-            <span className="block max-w-[7rem] truncate text-xs font-bold uppercase tracking-widest text-white drop-shadow-sm">
+            <span className="block max-w-[7rem] text-xs font-bold uppercase leading-tight tracking-widest text-white drop-shadow-sm">
               {club}
             </span>
             {titles > 0 && (
@@ -73,7 +73,7 @@ export function MatchScene({
             </div>
           </div>
           <div className="min-w-0">
-            <span className="block max-w-[7rem] truncate text-xs font-bold uppercase tracking-widest text-white drop-shadow-sm">
+            <span className="block max-w-[7rem] text-xs font-bold uppercase leading-tight tracking-widest text-white drop-shadow-sm">
               {rivalClub}
             </span>
             <span className="text-[10px] text-neutral-400 font-semibold">Rival</span>

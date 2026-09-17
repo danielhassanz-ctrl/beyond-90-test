@@ -75,11 +75,11 @@ export function PlayerHeaderCard({
     <div className="mx-auto w-full max-w-md">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-gold/40 bg-surface-2">
+          <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-2xl border border-gold/40 bg-surface-2">
             {photoUrl ? (
-              <Image src={photoUrl} alt={name} width={64} height={64} className="h-full w-full object-cover" />
+              <Image src={photoUrl} alt={name} width={96} height={96} className="h-full w-full object-cover" />
             ) : (
-              <span className="font-cond text-xl font-bold text-gold">{initialsOf(name)}</span>
+              <span className="font-cond text-2xl font-bold text-gold">{initialsOf(name)}</span>
             )}
           </div>
           <div className="min-w-0">

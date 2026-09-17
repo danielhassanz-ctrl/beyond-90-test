@@ -39,14 +39,29 @@ export function buildReservaIntroduccionEvent(): GameEvent {
   };
 }
 
+/**
+ * Rivales de filial reales (Segunda RFEF) para no mostrar el genérico
+ * "Filial rival" en el marcador — con nombre y escudo de verdad se lee
+ * como un partido real, no como un texto de relleno sin terminar.
+ */
+const RESERVE_TEAM_RIVALS = [
+  "Recreativo Granada B",
+  "Cádiz CF Mirandilla",
+  "Real Valladolid Promesas",
+  "Sporting de Gijón B",
+  "Levante UD B",
+  "UD Almería B",
+  "Real Oviedo Vetusta",
+];
+
 export function buildReservaPartidoEvent(): GameEvent {
+  const rival = RESERVE_TEAM_RIVALS[Math.floor(Math.random() * RESERVE_TEAM_RIVALS.length)];
   return {
     id: "rookie-reserva-partido",
     category: "partido",
     title: "Tu primer partido en el filial",
-    description:
-      "Juegas tu primer partido oficial con el equipo B contra otro filial. Eres titular, 90 minutos. Nota: 6.5/10. Goles: 0. Asistencias: 0. Marcador: 2-2. No fue malo, pero tampoco espectacular. Normal para alguien que recién empieza a ritmo competitivo.",
-    rivalClub: "Filial rival",
+    description: `Juegas tu primer partido oficial con el equipo B contra el ${rival}. Eres titular, 90 minutos. Nota: 6.5/10. Goles: 0. Asistencias: 0. Marcador: 2-2. No fue malo, pero tampoco espectacular. Normal para alguien que recién empieza a ritmo competitivo.`,
+    rivalClub: rival,
     // Nota discreta (6.5) en un partido de filial: no es el debut real.
     milestoneType: "filial",
     options: [
