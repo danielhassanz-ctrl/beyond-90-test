@@ -44,7 +44,6 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     const primary = input.clubColors?.primary ?? "#121316"; const secondary = input.clubColors?.secondary ?? "#d4af37"; const accentText = input.clubColors?.text ?? "#f5f5f4";
     const milestone = input.milestone ?? { kind: "career", label: "Mi carrera", scene: "portrait" as const };
     const bg = ctx.createLinearGradient(0, 0, W, H); bg.addColorStop(0, "#08090b"); bg.addColorStop(0.55, primary); bg.addColorStop(1, "#08090b"); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); drawMilestoneBackdrop(ctx, milestone.scene, primary, secondary);
-    // Rights-safe club treatment: colour + club name only. Official crests, shirt artwork and sponsors stay out until commercial rights are cleared.
     ctx.fillStyle = secondary; ctx.fillRect(0, 0, 24, H); ctx.fillRect(W - 24, 0, 24, H); ctx.strokeStyle = secondary; ctx.lineWidth = 6; ctx.strokeRect(48, 48, W - 96, H - 96);
     const img = input.avatar ? await loadImage(input.avatar) : null; const cx = W / 2; const cy = 620; const r = milestone.scene === "portrait" ? 260 : 285;
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
@@ -66,7 +65,10 @@ export interface PreparedCareerCard { blob: Blob | null; text: string; generatio
 export type ShareOutcome = { status: "shared" } | { status: "cancelled" } | { status: "preview"; url: string; text: string; canDownload: boolean } | { status: "failed"; text: string };
 function isIOS(): boolean { const ua = navigator.userAgent || ""; return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document); }
 function wasShareCancelled(err: unknown): boolean { return err instanceof DOMException && err.name === "AbortError"; }
-export async function prepareCareerCard(input: CareerCardInput): Promise<PreparedCareerCard> { const [blob, text] = await Promise.all([renderCareerCard(input), Promise.resolve(shareText(input))]); return { blob, text, generationBrief: input.generationBrief }; }
+export async function prepareCareerCard(input: CareerCardInput): Promise<PreparedCareerCard> {
+  const [blob, text] = await Promise.all([renderCareerCard(input), Promise.resolve(shareText(input))]);
+  return input.generationBrief ? { blob, text, generationBrief: input.generationBrief } : { blob, text };
+}
 export async function sharePreparedCareerCard(prepared: PreparedCareerCard): Promise<ShareOutcome> { const { blob, text } = prepared; const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean }; if (typeof nav.share === "function") { if (blob) { const file = new File([blob], "beyond90.png", { type: "image/png" }); const canShareFiles = typeof nav.canShare === "function" && nav.canShare({ files: [file] }); if (canShareFiles) { try { await nav.share({ files: [file], text, title: "BEYOND 90" }); return { status: "shared" }; } catch (err) { if (wasShareCancelled(err)) return { status: "cancelled" }; } } else { try { await nav.share({ text, title: "BEYOND 90" }); return { status: "shared" }; } catch (err) { if (wasShareCancelled(err)) return { status: "cancelled" }; } } } else { try { await nav.share({ text, title: "BEYOND 90" }); return { status: "shared" }; } catch (err) { if (wasShareCancelled(err)) return { status: "cancelled" }; } } } if (blob) { const url = URL.createObjectURL(blob); return { status: "preview", url, text, canDownload: !isIOS() }; } return { status: "failed", text }; }
 export async function shareCareerCard(input: CareerCardInput): Promise<ShareOutcome> { return sharePreparedCareerCard(await prepareCareerCard(input)); }
 export function downloadCard(url: string): void { const a = document.createElement("a"); a.href = url; a.download = "beyond90-career-card.png"; a.rel = "noopener"; a.click(); }
