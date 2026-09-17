@@ -18,6 +18,7 @@
     "qa:opening": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/opening-flow-smoke.ts",
     "qa:visual-age": "node --import tsx scripts/visual-age-share-smoke.ts",
     "qa:milestone-brief": "node --import tsx scripts/milestone-generation-brief-smoke.ts",
+    "qa:milestone-image-provider": "node --import tsx scripts/milestone-image-provider-smoke.ts",
     "format": "prettier --write ."
   },
   "dependencies": {
