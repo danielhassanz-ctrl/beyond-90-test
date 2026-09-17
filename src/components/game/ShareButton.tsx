@@ -18,16 +18,18 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   const input = useMemo(() => {
     const identity = clubVisualIdentity(state.clubId);
     const milestone = milestoneVisualSpec(share);
+    const visualAge = playerVisualProfile(state.age);
+    const baseKicker = share.kicker || `${seasonLabel(state.seasonIndex)} · ${stageLabel(state.stage)}`;
     return {
       headline: share.headline,
-      kicker: share.kicker || `${seasonLabel(state.seasonIndex)} · ${stageLabel(state.stage)}`,
+      kicker: `${baseKicker} · ${visualAge.age} años`,
       name: state.player.nickname || state.player.name,
       club: clubById(state.clubId).name,
       lines: share.lines,
       avatar: state.player.avatar,
       clubColors: { primary: identity.primary, secondary: identity.secondary, text: identity.text },
       milestone,
-      playerVisual: playerVisualProfile(state.age),
+      playerVisual: visualAge,
     };
   }, [share, state.seasonIndex, state.stage, state.age, state.player.nickname, state.player.name, state.player.avatar, state.clubId]);
 
