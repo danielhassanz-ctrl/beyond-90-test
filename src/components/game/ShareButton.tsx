@@ -20,7 +20,11 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     const milestone = milestoneVisualSpec(share);
     const visualAge = playerVisualProfile(state.age);
     const club = clubById(state.clubId).name;
-    const generationBrief = milestoneGenerationBrief(milestone, visualAge, club, identity);
+    // A future image backend must never invent the protagonist. Only expose a
+    // generation brief when the career actually has the persisted source photo.
+    const generationBrief = state.player.avatar
+      ? milestoneGenerationBrief(milestone, visualAge, club, identity)
+      : undefined;
     const baseKicker = share.kicker || `${seasonLabel(state.seasonIndex)} · ${stageLabel(state.stage)}`;
     return {
       headline: share.headline,
@@ -32,7 +36,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
       clubColors: { primary: identity.primary, secondary: identity.secondary, text: identity.text },
       milestone,
       playerVisual: visualAge,
-      generationBrief,
+      ...(generationBrief ? { generationBrief } : {}),
     };
   }, [share, state.seasonIndex, state.stage, state.age, state.player.nickname, state.player.name, state.player.avatar, state.clubId]);
 
