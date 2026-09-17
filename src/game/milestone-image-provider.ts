@@ -30,10 +30,18 @@ export class MilestoneImageUnavailableError extends Error {
   }
 }
 
+function isSafeGeneratedImageUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  // The current server contract returns a PNG data URL. Allow HTTPS as well so
+  // a future object-storage/CDN implementation can replace large data URLs
+  // without weakening the client to javascript:, blob: or other schemes.
+  return value.startsWith("data:image/png;base64,") || value.startsWith("https://");
+}
+
 /**
- * Browser client for a future same-origin server endpoint. This deliberately
- * sends only the persisted player photo plus the rights-safe generation brief;
- * no secret is stored in the Vite client.
+ * Browser client for the same-origin server endpoint. This deliberately sends
+ * only the persisted player photo plus the rights-safe generation brief; no
+ * provider secret is stored in the Vite client.
  */
 export class HttpMilestoneImageProvider implements MilestoneImageProvider {
   constructor(private readonly endpoint = "/api/milestone-image") {}
@@ -52,7 +60,7 @@ export class HttpMilestoneImageProvider implements MilestoneImageProvider {
     }
 
     const data = (await response.json()) as Partial<MilestoneImageResult>;
-    if (!data.imageUrl || data.generated !== true || !data.provider) {
+    if (!isSafeGeneratedImageUrl(data.imageUrl) || data.generated !== true || typeof data.provider !== "string" || !data.provider.trim()) {
       throw new MilestoneImageUnavailableError("Milestone image backend returned an invalid payload");
     }
 
