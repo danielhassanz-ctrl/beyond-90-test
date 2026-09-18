@@ -19,6 +19,10 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   // a fast double tap on iPhone cannot start two provider calls before disabled
   // reaches the DOM.
   const imageRequestInFlight = useRef(false);
+  // A paid edit can outlive the milestone that launched it (for example if the
+  // player advances the story on a slow mobile connection). Only the request
+  // belonging to the current milestone is allowed to replace the player image.
+  const generationEpoch = useRef(0);
   const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null);
   const [prepared, setPrepared] = useState<PreparedCareerCard | null>(null);
   const [preview, setPreview] = useState<{ url: string; text: string; canDownload: boolean } | null>(null);
@@ -48,6 +52,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   }, [share, state.seasonIndex, state.stage, state.age, state.player.nickname, state.player.name, state.player.avatar, state.clubId, generatedAvatar]);
 
   useEffect(() => {
+    generationEpoch.current += 1;
     setGeneratedAvatar(null);
   }, [share, state.age, state.clubId, state.player.avatar]);
 
@@ -72,6 +77,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     {canGenerate && <button disabled={imageBusy} onClick={async () => {
       if (!state.player.avatar || !input.generationBrief || imageRequestInFlight.current) return;
       imageRequestInFlight.current = true;
+      const requestEpoch = generationEpoch.current;
       setImageBusy(true); setStatus(null);
       try {
         const result = await milestoneImageProvider.generate({
@@ -79,9 +85,11 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
           brief: input.generationBrief,
           output: { width: 1024, height: 1536 },
         });
+        if (requestEpoch !== generationEpoch.current) return;
         setGeneratedAvatar(result.imageUrl);
         setStatus("Imagen personalizada preparada.");
       } catch (error) {
+        if (requestEpoch !== generationEpoch.current) return;
         setStatus(error instanceof MilestoneImageUnavailableError
           ? "La imagen personalizada no está disponible ahora. La tarjeta segura sigue lista para compartir."
           : "No se ha podido generar la imagen personalizada. La tarjeta segura sigue disponible.");
