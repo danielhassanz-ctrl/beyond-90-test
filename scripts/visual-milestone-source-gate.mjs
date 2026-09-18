@@ -8,7 +8,15 @@ function requireSource(ok, message) {
   if (!ok) throw new Error(`Visual milestone gate: ${message}`);
 }
 
-requireSource(button.includes("avatar: state.player.avatar"), "share milestone must use the persisted player avatar");
+requireSource(
+  button.includes("avatar: generatedAvatar || state.player.avatar"),
+  "share milestone must use the generated milestone image when available and otherwise the persisted player avatar",
+);
+requireSource(
+  button.includes("const generationBrief = state.player.avatar") &&
+    button.includes("milestoneGenerationBrief(milestone, visualAge, club, identity)"),
+  "paid generation must remain anchored to the persisted player avatar and current career context",
+);
 requireSource(button.includes("clubVisualIdentity(state.clubId)"), "share milestone must resolve the current club identity");
 requireSource(button.includes("clubColors:"), "share milestone must pass club colours to the renderer");
 requireSource(share.includes("input.avatar ? await loadImage(input.avatar) : null"), "renderer must attempt to render the player photo");
@@ -17,4 +25,4 @@ requireSource(identity.includes("crestAsset: null"), "official crest assets must
 requireSource(identity.includes("does NOT bundle official club crests"), "rights-safe crest policy must remain explicit in source");
 requireSource(!identity.match(/crestAsset:\s*["'`][^"'`]+/), "official or unverified crest asset path was introduced");
 
-console.log("Visual milestone source gate OK: persisted player photo + club palette are wired; unlicensed crest assets remain blocked.");
+console.log("Visual milestone source gate OK: persisted player photo anchors generation and fallback; club palette is wired; unlicensed crest assets remain blocked.");
