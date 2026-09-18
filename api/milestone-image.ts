@@ -27,10 +27,10 @@ const MAX_PHOTO_CHARS = 8_000_000;
 const MAX_DECODED_PHOTO_BYTES = 6_000_000;
 const MAX_BRIEF_FIELD_CHARS = 1_500;
 const IMAGE_TIMEOUT_MS = 55_000;
-// Pin the documented GPT-Image-2 snapshot so the same persisted player photo
-// is edited against a stable image model across a career instead of silently
-// changing when the rolling alias advances.
-const IMAGE_MODEL = "gpt-image-2-2026-04-21";
+// Pin the documented precision-edit snapshot so the same persisted player photo
+// is edited against a stable model across a career instead of silently changing
+// when the rolling alias advances.
+const IMAGE_MODEL = "gpt-image-2.5-sunburst-2026-09-08";
 const RESPONSES_MODEL = "gpt-5.6-luna";
 const ALLOWED_SCENES = new Set(["presentation", "pitch", "celebration", "farewell", "portrait"]);
 const ALLOWED_PHOTO_PREFIXES = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,"];
