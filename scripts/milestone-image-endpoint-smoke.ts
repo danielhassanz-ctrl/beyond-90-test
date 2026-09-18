@@ -59,14 +59,14 @@ async function main() {
     assert.equal(ok.status, 200);
     assert.deepEqual(ok.body, {
       imageUrl: "data:image/png;base64,ZmFrZS1wbmc=",
-      provider: "openai:gpt-image-2",
+      provider: "openai:gpt-image-2.5-sunburst-2026-09-08",
       generated: true,
     });
     assert.ok(upstreamInit?.body);
     const upstream = JSON.parse(String(upstreamInit?.body));
     assert.equal(upstream.model, "gpt-5.6-luna");
     assert.equal(upstream.tools?.[0]?.type, "image_generation");
-    assert.equal(upstream.tools?.[0]?.model, "gpt-image-2");
+    assert.equal(upstream.tools?.[0]?.model, "gpt-image-2.5-sunburst-2026-09-08");
     assert.equal(upstream.tools?.[0]?.action, "edit");
     assert.equal(upstream.tools?.[0]?.input_fidelity, "high");
     assert.equal(upstream.tools?.[0]?.size, "1024x1536");
