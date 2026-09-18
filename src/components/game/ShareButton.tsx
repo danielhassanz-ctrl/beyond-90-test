@@ -60,7 +60,9 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     return () => URL.revokeObjectURL(url);
   }, [preview]);
 
-  const canGenerate = Boolean(state.player.avatar && input.generationBrief && input.milestone.kind !== "career");
+  // A generated milestone can carry a real provider cost. Generate at most once
+  // for the current milestone view; moving to another earned milestone resets it.
+  const canGenerate = Boolean(state.player.avatar && input.generationBrief && input.milestone.kind !== "career" && !generatedAvatar);
 
   return <div className="mt-4">
     {canGenerate && <button disabled={imageBusy} onClick={async () => {
@@ -83,7 +85,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
       }
     }} className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em] text-black active:scale-[0.99] disabled:opacity-60">
       <ImagePlus className="h-4 w-4" aria-hidden />
-      {imageBusy ? "Creando imagen…" : generatedAvatar ? "Regenerar imagen" : "Crear imagen del hito"}
+      {imageBusy ? "Creando imagen…" : "Crear imagen del hito"}
     </button>}
     <button disabled={busy || !prepared} onClick={async () => {
       if (!prepared) return;
