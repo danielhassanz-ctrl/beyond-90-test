@@ -19,6 +19,7 @@
     "qa:visual-age": "node --import tsx scripts/visual-age-share-smoke.ts",
     "qa:milestone-brief": "node --import tsx scripts/milestone-generation-brief-smoke.ts",
     "qa:milestone-image-provider": "node --import tsx scripts/milestone-image-provider-smoke.ts",
+    "qa:milestone-image-endpoint": "node --import tsx scripts/milestone-image-endpoint-smoke.ts",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -68,7 +69,7 @@
     "react-resizable-panels": "^4.6.5",
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^3.5.0",
+    "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.2.1",
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",
@@ -84,7 +85,7 @@
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
-    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "prettier": "^3.7.3",
