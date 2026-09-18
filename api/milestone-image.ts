@@ -24,17 +24,33 @@ type RequestBody = {
 };
 
 const MAX_PHOTO_CHARS = 8_000_000;
+const MAX_BRIEF_FIELD_CHARS = 1_500;
+const ALLOWED_SCENES = new Set(["presentation", "pitch", "celebration", "farewell", "portrait"]);
+const ALLOWED_PHOTO_PREFIXES = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,"];
+
+function boundedText(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0 && value.length <= MAX_BRIEF_FIELD_CHARS;
+}
 
 function validBrief(value: unknown): value is GenerationBrief {
   if (!value || typeof value !== "object") return false;
   const brief = value as Partial<GenerationBrief>;
-  return typeof brief.scene === "string"
-    && typeof brief.identityRule === "string"
-    && typeof brief.ageRule === "string"
-    && typeof brief.clubRule === "string"
-    && typeof brief.composition === "string"
+  return boundedText(brief.scene)
+    && ALLOWED_SCENES.has(brief.scene)
+    && boundedText(brief.identityRule)
+    && boundedText(brief.ageRule)
+    && boundedText(brief.clubRule)
+    && boundedText(brief.composition)
     && Array.isArray(brief.prohibited)
-    && brief.prohibited.every((item) => typeof item === "string");
+    && brief.prohibited.length > 0
+    && brief.prohibited.length <= 20
+    && brief.prohibited.every((item) => boundedText(item));
+}
+
+function validPlayerPhoto(value: unknown): value is string {
+  return typeof value === "string"
+    && value.length <= MAX_PHOTO_CHARS
+    && ALLOWED_PHOTO_PREFIXES.some((prefix) => value.startsWith(prefix));
 }
 
 function promptFor(brief: GenerationBrief): string {
@@ -67,7 +83,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 
   const body = (req.body ?? {}) as RequestBody;
-  if (typeof body.playerPhoto !== "string" || !body.playerPhoto.startsWith("data:image/") || body.playerPhoto.length > MAX_PHOTO_CHARS || !validBrief(body.brief)) {
+  if (!validPlayerPhoto(body.playerPhoto) || !validBrief(body.brief)) {
     res.status(400).json({ error: "invalid_milestone_image_request" });
     return;
   }
