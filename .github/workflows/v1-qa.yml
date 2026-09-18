@@ -56,6 +56,10 @@ jobs:
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
       - name: Visual milestone ageing continuity QA
         run: npm run qa:visual-age
+      - name: Milestone image browser provider QA
+        run: npm run qa:milestone-image-provider
+      - name: Milestone image server endpoint QA
+        run: node --import tsx scripts/milestone-image-endpoint-smoke.ts
       - name: Extended gameplay QA
         run: node --import ./scripts/seed-ci-random.mjs --experimental-loader ./scripts/asset-loader.mjs --import tsx src/qa/run.ts
       - name: Build
