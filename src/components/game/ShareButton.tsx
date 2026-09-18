@@ -1,5 +1,5 @@
 import { ImagePlus, Share2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { clubById } from "@/game/data";
 import { clubVisualIdentity } from "@/game/club-identity";
 import { HttpMilestoneImageProvider, MilestoneImageUnavailableError } from "@/game/milestone-image-provider";
@@ -15,6 +15,10 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
+  // React state is not synchronous. This ref is the actual paid-request mutex so
+  // a fast double tap on iPhone cannot start two provider calls before disabled
+  // reaches the DOM.
+  const imageRequestInFlight = useRef(false);
   const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null);
   const [prepared, setPrepared] = useState<PreparedCareerCard | null>(null);
   const [preview, setPreview] = useState<{ url: string; text: string; canDownload: boolean } | null>(null);
@@ -66,7 +70,8 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
 
   return <div className="mt-4">
     {canGenerate && <button disabled={imageBusy} onClick={async () => {
-      if (!state.player.avatar || !input.generationBrief) return;
+      if (!state.player.avatar || !input.generationBrief || imageRequestInFlight.current) return;
+      imageRequestInFlight.current = true;
       setImageBusy(true); setStatus(null);
       try {
         const result = await milestoneImageProvider.generate({
@@ -81,6 +86,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
           ? "La imagen personalizada no está disponible ahora. La tarjeta segura sigue lista para compartir."
           : "No se ha podido generar la imagen personalizada. La tarjeta segura sigue disponible.");
       } finally {
+        imageRequestInFlight.current = false;
         setImageBusy(false);
       }
     }} className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em] text-black active:scale-[0.99] disabled:opacity-60">
