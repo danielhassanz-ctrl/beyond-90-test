@@ -27,11 +27,10 @@ const MAX_PHOTO_CHARS = 8_000_000;
 const MAX_DECODED_PHOTO_BYTES = 6_000_000;
 const MAX_BRIEF_FIELD_CHARS = 1_500;
 const IMAGE_TIMEOUT_MS = 55_000;
-const IMAGE_MODEL = "gpt-image-2.5-sunburst-2026-09-08";
-// Keep the orchestration model on a Responses API model explicitly documented
-// as supporting the image_generation tool. Product-only ChatGPT model names are
-// not valid substitutes for API model IDs.
-const RESPONSES_MODEL = "gpt-5.5";
+// Use only documented public API model IDs. Keep these aliases unpinned until
+// OpenAI publishes a supported image snapshot ID for this integration.
+const IMAGE_MODEL = "gpt-image-2";
+const RESPONSES_MODEL = "gpt-5.6-luna";
 const ALLOWED_SCENES = new Set(["presentation", "pitch", "celebration", "farewell", "portrait"]);
 const ALLOWED_PHOTO_PREFIXES = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,"];
 const REQUIRED_PROHIBITIONS = [
