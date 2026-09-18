@@ -1,4 +1,4 @@
-import { ImageSparkles, Share2 } from "lucide-react";
+import { ImagePlus, Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { clubById } from "@/game/data";
 import { clubVisualIdentity } from "@/game/club-identity";
@@ -82,7 +82,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
         setImageBusy(false);
       }
     }} className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em] text-black active:scale-[0.99] disabled:opacity-60">
-      <ImageSparkles className="h-4 w-4" aria-hidden />
+      <ImagePlus className="h-4 w-4" aria-hidden />
       {imageBusy ? "Creando imagen…" : generatedAvatar ? "Regenerar imagen" : "Crear imagen del hito"}
     </button>}
     <button disabled={busy || !prepared} onClick={async () => {
