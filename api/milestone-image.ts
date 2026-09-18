@@ -26,6 +26,7 @@ type RequestBody = {
 const MAX_PHOTO_CHARS = 8_000_000;
 const MAX_BRIEF_FIELD_CHARS = 1_500;
 const IMAGE_TIMEOUT_MS = 55_000;
+const IMAGE_MODEL = "gpt-image-2.5-sunburst-2026-09-08";
 const ALLOWED_SCENES = new Set(["presentation", "pitch", "celebration", "farewell", "portrait"]);
 const ALLOWED_PHOTO_PREFIXES = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,"];
 const REQUIRED_PROHIBITIONS = [
@@ -122,9 +123,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         }],
         tools: [{
           type: "image_generation",
-          // Precision-first editing is intentional: milestone images must preserve
-          // the uploaded player's identity while ageing/changing the scene.
-          model: "gpt-image-2.5-sunburst",
+          // Pin the precision model snapshot so a long career does not silently
+          // change visual behaviour when the provider advances its floating alias.
+          model: IMAGE_MODEL,
           action: "edit",
           input_fidelity: "high",
           quality: "medium",
@@ -151,7 +152,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
     res.status(200).json({
       imageUrl: `data:image/png;base64,${image}`,
-      provider: "openai:gpt-image-2.5-sunburst",
+      provider: `openai:${IMAGE_MODEL}`,
       generated: true,
     });
   } catch (error) {
