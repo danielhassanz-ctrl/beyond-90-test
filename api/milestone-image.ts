@@ -122,7 +122,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         }],
         tools: [{
           type: "image_generation",
-          model: "gpt-image-2",
+          // Precision-first editing is intentional: milestone images must preserve
+          // the uploaded player's identity while ageing/changing the scene.
+          model: "gpt-image-2.5-sunburst",
           action: "edit",
           input_fidelity: "high",
           quality: "medium",
@@ -149,7 +151,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
     res.status(200).json({
       imageUrl: `data:image/png;base64,${image}`,
-      provider: "openai:gpt-image-2",
+      provider: "openai:gpt-image-2.5-sunburst",
       generated: true,
     });
   } catch (error) {
