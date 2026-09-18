@@ -38,6 +38,8 @@ function isSafeGeneratedImageUrl(value: unknown): value is string {
   return value.startsWith("data:image/png;base64,") || value.startsWith("https://");
 }
 
+const CLIENT_TIMEOUT_MS = 60_000;
+
 /**
  * Browser client for the same-origin server endpoint. This deliberately sends
  * only the persisted player photo plus the rights-safe generation brief; no
@@ -49,17 +51,33 @@ export class HttpMilestoneImageProvider implements MilestoneImageProvider {
   async generate(request: MilestoneImageRequest): Promise<MilestoneImageResult> {
     if (!request.playerPhoto) throw new MilestoneImageUnavailableError("Player photo is required for identity-preserving generation");
 
-    const response = await fetch(this.endpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
+    let response: Response;
+    try {
+      response = await fetch(this.endpoint, {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(request),
+      });
+    } catch (error) {
+      const reason = error instanceof Error && error.name === "AbortError" ? "timed out" : "is unreachable";
+      throw new MilestoneImageUnavailableError(`Milestone image backend ${reason}`);
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       throw new MilestoneImageUnavailableError(`Milestone image backend returned ${response.status}`);
     }
 
-    const data = (await response.json()) as Partial<MilestoneImageResult>;
+    let data: Partial<MilestoneImageResult>;
+    try {
+      data = (await response.json()) as Partial<MilestoneImageResult>;
+    } catch {
+      throw new MilestoneImageUnavailableError("Milestone image backend returned invalid JSON");
+    }
     if (!isSafeGeneratedImageUrl(data.imageUrl) || data.generated !== true || typeof data.provider !== "string" || !data.provider.trim()) {
       throw new MilestoneImageUnavailableError("Milestone image backend returned an invalid payload");
     }
