@@ -9,7 +9,7 @@ import type {
 import { generateAiEvent, generateMatchResult, generateNextEventDynamic, callEventTool, COMMON_RULES, type HistoryItem } from "./ai";
 import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
-import { buildMatchContext } from "@/lib/constants";
+import { buildMatchContext, NO_CLUB_YET } from "@/lib/constants";
 import { playerAge } from "@/types/career";
 import { shouldGenerateAdversity, pickAdversityType, describeAdversity, buildAdversityPrompt, updateAdversityTracker, getAdversityTracker } from "@/lib/narrative/adversity";
 import { detectDeclineSignals, buildDeclinePrompt } from "@/lib/narrative/decline";
@@ -572,7 +572,7 @@ REGLAS CRÍTICAS:
   return callEventTool(prompt, "entrenamiento", `prematch-${match.week}`);
 }
 
-const MATCH_DECISION_SITUATIONS = [
+const ATTACKER_DECISION_SITUATIONS = [
   "Recibes un balón filtrado y te plantas solo ante el portero.",
   "Un rechace te cae a los pies dentro del área, con la portería a tiro.",
   "Roban el balón: contragolpe, dos contra uno, la pelota es tuya.",
@@ -581,22 +581,262 @@ const MATCH_DECISION_SITUATIONS = [
   "Ganas la posición en el área pequeña tras un córner en el último minuto.",
 ];
 
+const MIDFIELDER_DECISION_SITUATIONS = [
+  "Recibes entre líneas con el área rival a un pase de distancia.",
+  "Ves un hueco para filtrar el balón a tu delantero, si el pase sale bien.",
+  "Robas el balón en el centro del campo con espacio para lanzar la contra.",
+  "El rival te presiona en salida de balón, pegado a tu área.",
+  "Te llega un balón dividido justo en la frontal del área.",
+];
+
+const DEFENDER_DECISION_SITUATIONS = [
+  "El extremo rival te encara en velocidad, uno contra uno, cerca de tu área.",
+  "Un balón dividido cae entre tú y el delantero rival dentro del área.",
+  "El equipo rival sale a la contra y solo tú puedes evitarlo.",
+  "Ganan un balón por alto en el área y el rechace te queda a ti, con un rival encima.",
+  "Es el último minuto: un centro peligroso cruza tu área con dos rivales al acecho.",
+];
+
+const GOALKEEPER_DECISION_SITUATIONS = [
+  "Un delantero rival se planta solo ante ti tras un error de tu defensa.",
+  "Un disparo lejano viene ajustado a la escuadra, casi sin tiempo de reacción.",
+  "Pitan un penalti a favor del rival en un momento clave del partido.",
+  "Un centro raso cruza tu área pequeña con dos rivales al acecho.",
+  "Sale un balón dividido fuera del área y un rival llega primero a por él.",
+];
+
 /**
  * El momento decisivo dentro del partido: antes esto no existía en
  * absoluto — el partido se resolvía entero de golpe y el jugador solo
  * podía reaccionar DESPUÉS (rueda de prensa, redes), nunca decidir algo
  * mientras el balón todavía estaba en juego. No hace falta IA aquí: son
- * siempre las mismas tres decisiones futbolísticas de verdad (rematar,
- * pasar, intentar una jugada de calidad), con su propio riesgo/recompensa
- * vía el mecanismo `resolve` que ya usa el resto del juego. El resultado
- * se guarda en un flag y generateMatchDayEvent lo lee justo después para
- * que la crónica del partido sea coherente con lo que de verdad pasó en
- * esa jugada, no algo inventado aparte.
+ * siempre decisiones futbolísticas de verdad, con su propio riesgo/
+ * recompensa vía el mecanismo `resolve` que ya usa el resto del juego.
+ * El resultado se guarda en un flag y generateMatchDayEvent lo lee justo
+ * después para que la crónica del partido sea coherente con lo que de
+ * verdad pasó en esa jugada, no algo inventado aparte.
+ *
+ * Antes esto era SIEMPRE la misma terna (disparar/pasar/floritura),
+ * fuera cual fuera la posición del jugador — un central o un portero
+ * recibían literalmente "te plantas solo ante el portero" como si
+ * fueran delanteros, partido tras partido. Visto en vivo jugando: con
+ * varios partidos por temporada, esto se sentía como "el mismo evento
+ * una y otra vez" mucho antes de lo que debería. Ahora la escena y las
+ * tres opciones dependen de la posición real.
  */
 export function buildMatchDecisionMoment(player: Player, match: { week: number; rivalClub: string }): GameEvent {
-  const situation = MATCH_DECISION_SITUATIONS[Math.floor(Math.random() * MATCH_DECISION_SITUATIONS.length)];
   const decisionFlagKey = `match_decision_${match.week}`;
+  const flags = (outcome: string, style: string) => ({ [decisionFlagKey]: JSON.stringify({ outcome, style }) });
 
+  if (player.position === "Portero") {
+    const situation = GOALKEEPER_DECISION_SITUATIONS[Math.floor(Math.random() * GOALKEEPER_DECISION_SITUATIONS.length)];
+    return {
+      id: `match-decision-${match.week}-${Date.now()}`,
+      category: "partido",
+      rivalClub: match.rivalClub,
+      title: "El momento decisivo",
+      description: `Partido en marcha ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+      allowFreeText: true,
+      freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
+      options: [
+        {
+          id: "salir",
+          label: "Salir a cerrar el ángulo",
+          subtitle: "Agresivo: o paras el gol o dejas la portería vacía",
+          consequences: {},
+          resolve: {
+            baseChance: 0.4,
+            statModifier: "media",
+            success: {
+              text: "Achicas el ángulo a la perfección — el rival no tiene hueco. ¡Paradón!",
+              consequences: { fama: 2, flags: flags("save", "salida") },
+            },
+            fail: {
+              text: "Sales, pero te la pica por encima. Gol rival.",
+              consequences: { flags: flags("concede", "salida") },
+            },
+          },
+        },
+        {
+          id: "linea",
+          label: "Quedarte en la línea y cubrir el palo corto",
+          subtitle: "Más seguro, menos espectacular",
+          consequences: {},
+          resolve: {
+            baseChance: 0.55,
+            statModifier: "media",
+            success: {
+              text: "Te mantienes firme y sacas el disparo con una buena estirada.",
+              consequences: { flags: flags("save", "linea") },
+            },
+            fail: {
+              text: "El disparo pasa ajustado a tu palo. No llegas.",
+              consequences: { flags: flags("concede", "linea") },
+            },
+          },
+        },
+        {
+          id: "puños",
+          label: "Anticipar y despejar con los puños",
+          subtitle: "Todo o nada en el choque aéreo",
+          consequences: {},
+          resolve: {
+            baseChance: 0.32,
+            statModifier: "media",
+            success: {
+              text: "Sales a por todas y despejas el peligro con autoridad total.",
+              consequences: { fama: 2, flags: flags("save", "puños") },
+            },
+            fail: {
+              text: "Falla el cálculo: derribas al rival. El árbitro señala el punto de penalti.",
+              consequences: { forma: -2, flags: flags("penalty_conceded", "puños") },
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  if (player.position === "Defensa") {
+    const situation = DEFENDER_DECISION_SITUATIONS[Math.floor(Math.random() * DEFENDER_DECISION_SITUATIONS.length)];
+    return {
+      id: `match-decision-${match.week}-${Date.now()}`,
+      category: "partido",
+      rivalClub: match.rivalClub,
+      title: "El momento decisivo",
+      description: `Partido en marcha ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+      allowFreeText: true,
+      freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
+      options: [
+        {
+          id: "entrada",
+          label: "Entrar fuerte al balón",
+          subtitle: "Alto riesgo de falta, pero robo limpio si sale bien",
+          consequences: {},
+          resolve: {
+            baseChance: 0.42,
+            statModifier: "media",
+            success: {
+              text: "Entrada perfecta: te llevas el balón limpio y cortas el peligro de raíz.",
+              consequences: { fama: 1, flags: flags("clean_tackle", "entrada") },
+            },
+            fail: {
+              text: "Llegas tarde. El árbitro no duda: falta y tarjeta.",
+              consequences: { forma: -2, flags: flags("foul_committed", "entrada") },
+            },
+          },
+        },
+        {
+          id: "contener",
+          label: "Contener sin arriesgar, llevarlo hacia fuera",
+          subtitle: "Menos vistoso, pero mucho más seguro",
+          consequences: {},
+          resolve: {
+            baseChance: 0.58,
+            statModifier: "media",
+            success: {
+              text: "Le quitas los espacios con paciencia hasta que pierde el balón por su cuenta.",
+              consequences: { flags: flags("contained", "contener") },
+            },
+            fail: {
+              text: "Te desborda igualmente. El peligro sigue vivo.",
+              consequences: { flags: flags("beaten", "contener") },
+            },
+          },
+        },
+        {
+          id: "anticipar",
+          label: "Anticipar con lectura de juego",
+          subtitle: "Todo o nada: adelantarte al pase antes de que llegue",
+          consequences: {},
+          resolve: {
+            baseChance: 0.3,
+            statModifier: "media",
+            success: {
+              text: "Lees la jugada a la perfección y te llevas el balón antes de que nadie lo espere.",
+              consequences: { fama: 2, flags: flags("clean_tackle", "anticipar") },
+            },
+            fail: {
+              text: "Fallas el cálculo y te quedas completamente fuera de la jugada.",
+              consequences: { forma: -2, flags: flags("beaten", "anticipar") },
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  if (player.position === "Centrocampista") {
+    const situation = MIDFIELDER_DECISION_SITUATIONS[Math.floor(Math.random() * MIDFIELDER_DECISION_SITUATIONS.length)];
+    return {
+      id: `match-decision-${match.week}-${Date.now()}`,
+      category: "partido",
+      rivalClub: match.rivalClub,
+      title: "El momento decisivo",
+      description: `Partido en marcha ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+      allowFreeText: true,
+      freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
+      options: [
+        {
+          id: "disparo",
+          label: "Probar el disparo lejano",
+          subtitle: "Vas a por el gol directo desde fuera del área",
+          consequences: {},
+          resolve: {
+            baseChance: 0.32,
+            statModifier: "media",
+            success: {
+              text: "El balón se cuela pegado a la escuadra. ¡Golazo desde fuera del área!",
+              consequences: { fama: 2, flags: flags("goal", "disparo") },
+            },
+            fail: {
+              text: "El disparo se marcha alto, por encima del larguero.",
+              consequences: { flags: flags("miss", "disparo") },
+            },
+          },
+        },
+        {
+          id: "pase",
+          label: "Filtrar el pase al delantero",
+          subtitle: "Menos gloria, más seguro",
+          consequences: {},
+          resolve: {
+            baseChance: 0.55,
+            statModifier: "media",
+            success: {
+              text: "El pase es perfecto: tu compañero no perdona.",
+              consequences: { flags: flags("assist", "pase") },
+            },
+            fail: {
+              text: "El pase se queda corto y el rival despeja el peligro.",
+              consequences: { flags: flags("miss", "pase") },
+            },
+          },
+        },
+        {
+          id: "proteger",
+          label: "Proteger el balón y reiniciar la jugada",
+          subtitle: "Sin riesgo: mantener la posesión del equipo",
+          consequences: {},
+          resolve: {
+            baseChance: 0.7,
+            statModifier: "media",
+            success: {
+              text: "Proteges el balón con inteligencia y das tiempo a que el equipo suba.",
+              consequences: { flags: flags("contained", "proteger") },
+            },
+            fail: {
+              text: "Te presionan entre dos rivales y pierdes el balón en una zona comprometida.",
+              consequences: { forma: -1, flags: flags("beaten", "proteger") },
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  // Delantero (y cualquier posición no reconocida, como red de seguridad).
+  const situation = ATTACKER_DECISION_SITUATIONS[Math.floor(Math.random() * ATTACKER_DECISION_SITUATIONS.length)];
   return {
     id: `match-decision-${match.week}-${Date.now()}`,
     category: "partido",
@@ -616,11 +856,11 @@ export function buildMatchDecisionMoment(player: Player, match: { week: number; 
           statModifier: "media",
           success: {
             text: "El balón entra pegado al palo. ¡Gol!",
-            consequences: { flags: { [decisionFlagKey]: JSON.stringify({ outcome: "goal", style: "disparo" }) } },
+            consequences: { flags: flags("goal", "disparo") },
           },
           fail: {
             text: "El portero saca una mano providencial. No hay gol.",
-            consequences: { flags: { [decisionFlagKey]: JSON.stringify({ outcome: "miss", style: "disparo" }) } },
+            consequences: { flags: flags("miss", "disparo") },
           },
         },
       },
@@ -634,11 +874,11 @@ export function buildMatchDecisionMoment(player: Player, match: { week: number; 
           statModifier: "media",
           success: {
             text: "El pase es perfecto: tu compañero no perdona.",
-            consequences: { flags: { [decisionFlagKey]: JSON.stringify({ outcome: "assist", style: "pase" }) } },
+            consequences: { flags: flags("assist", "pase") },
           },
           fail: {
             text: "El pase se queda corto y el rival despeja el peligro.",
-            consequences: { flags: { [decisionFlagKey]: JSON.stringify({ outcome: "miss", style: "pase" }) } },
+            consequences: { flags: flags("miss", "pase") },
           },
         },
       },
@@ -652,11 +892,11 @@ export function buildMatchDecisionMoment(player: Player, match: { week: number; 
           statModifier: "media",
           success: {
             text: "Sale perfecta. El estadio entero se levanta de sus asientos.",
-            consequences: { fama: 3, flags: { [decisionFlagKey]: JSON.stringify({ outcome: "wondergoal", style: "floritura" }) } },
+            consequences: { fama: 3, flags: flags("wondergoal", "floritura") },
           },
           fail: {
             text: "No sale — pierdes el balón y el rival sale a la contra.",
-            consequences: { forma: -2, flags: { [decisionFlagKey]: JSON.stringify({ outcome: "miss_bad", style: "floritura" }) } },
+            consequences: { forma: -2, flags: flags("miss_bad", "floritura") },
           },
         },
       },
@@ -685,6 +925,17 @@ function buildDecisionInstruction(decisionRaw?: string): string {
     wondergoal: `Antes intentó una jugada de mucha calidad (regate/túnel/sombrero) en un momento decisivo y LE SALIÓ — fue un gol o jugada de mérito especial que la prensa recuerda; cuenta como uno de sus goles (Goles debe ser 1 o más).`,
     miss: `Antes tuvo una ocasión clara y la FALLÓ — esa jugada concreta no es gol ni asistencia (puede seguir sin marcar el resto del partido, o anotar en otra jugada distinta si encaja con el relato).`,
     miss_bad: `Antes intentó una jugada arriesgada en un momento decisivo y la PERDIÓ, dejando a su equipo con menos gente atrás en la jugada siguiente — un momento negativo puntual que puede haber costado un gol en contra.`,
+    // Portero: no fuerces "Goles"/"Asistencias" para estos, son acciones
+    // defensivas — el marcador y el resto del partido son libres de
+    // escribir con normalidad alrededor de este momento.
+    save: `Antes tuvo una intervención decisiva bajo palos (parada, salida o despeje) y LA RESOLVIÓ BIEN — evitó un gol rival prácticamente cantado. No es un gol ni una asistencia propia.`,
+    concede: `Antes tuvo una intervención decisiva bajo palos y NO llegó a tiempo — ese gol rival concreto entra en el marcador final a favor del rival, aunque el resto del partido sea libre de escribir.`,
+    penalty_conceded: `Antes, en una salida arriesgada, derribó a un rival dentro del área — el árbitro señaló penalti en contra. Asume que ese penalti se transforma en gol rival salvo que quieras narrar una parada del propio penalti como giro dramático adicional.`,
+    // Defensa: acciones defensivas, tampoco fuerces goles/asistencias propias.
+    clean_tackle: `Antes tuvo una acción defensiva decisiva (entrada o anticipación) y la resolvió LIMPIA — cortó una ocasión clara del rival sin sufrir consecuencias. No es un gol ni una asistencia propia.`,
+    foul_committed: `Antes tuvo una acción defensiva decisiva pero llegó tarde — cometió una falta clara (tarjeta amarilla lógica en esa jugada) que puede haber dado pie a un peligro añadido para su equipo.`,
+    contained: `Antes tuvo una acción defensiva o de posesión y la resolvió con solvencia, sin sobresaltos — no genera gol ni asistencia propia, simplemente mantiene el orden del equipo.`,
+    beaten: `Antes tuvo una acción defensiva o de posesión decisiva y fue superado por el rival — ese momento concreto puede haber derivado en una ocasión o gol en contra, aunque el resto del partido es libre de escribir.`,
   };
   const line = byOutcome[decision.outcome];
   if (!line) return "";
@@ -780,6 +1031,23 @@ ${COMMON_RULES}
  * guardado en flags, una carrera con muchos eventos por semana degradaría
  * la forma varias veces seguidas y la dejaría siempre pegada al suelo.
  */
+/**
+ * Sueldo semanal derivado de la media futbolística — sin un campo de
+ * salario propio en el jugador, esta es la única fuente de verdad. Antes
+ * el "sueldo" solo existía como cifra suelta en el texto de la firma del
+ * contrato (ver randomSalaryFigure en ai.ts) y nunca se aplicaba de
+ * verdad al patrimonio: un profesional podía llevar temporadas jugando
+ * en un club de Primera y seguir con 0€ salvo que le tocara algún evento
+ * puntual de dinero — justo lo contrario de cómo funciona el fútbol real,
+ * donde el sueldo es la fuente de ingresos constante, no algo ocasional.
+ * Misma curva que usa careerStats.ts para el valor de mercado (exponente
+ * sobre media-40), escalada para que una carrera Pro completa (~200
+ * semanas) acumule un patrimonio alto pero no absurdo.
+ */
+function weeklySalary(media: number): number {
+  return Math.round(Math.max(150, Math.max(0, media - 40) ** 2 * 8) / 10) * 10;
+}
+
 function applyCareerDynamics(player: Player): Player {
   const lastDynamicsWeek = parseInt(String(player.flags?.dynamics_last_week ?? "0"), 10) || 0;
   if (player.week <= lastDynamicsWeek) {
@@ -787,6 +1055,13 @@ function applyCareerDynamics(player: Player): Player {
   }
   if (!player.flags) player.flags = {};
   player.flags.dynamics_last_week = String(player.week);
+
+  // El sueldo solo corre si hay club real (un agente libre no cobra de
+  // nadie) — se aplica ANTES del resto de dinámicas para usar la media
+  // de esta semana, igual que el resto de esta función.
+  if (player.club !== NO_CLUB_YET) {
+    player.patrimonio = (player.patrimonio ?? 0) + weeklySalary(player.media);
+  }
 
   // Aplicar degradación de forma si no ha jugado
   player.forma = naturalFormaDegradation(player);
