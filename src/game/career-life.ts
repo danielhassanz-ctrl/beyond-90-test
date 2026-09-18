@@ -68,9 +68,6 @@ function resetClubScopedNarrativeIfNeeded(s: GameState): void {
   const marker = hash(careerSeed(s), `club-narrative-scope|${club}`) || 1;
   const previous = s.flags["club_narrative_scope"];
 
-  // The first observed club establishes scope without replaying existing scenes.
-  // A later change means a real transfer: the new coach/captain/physio/teammate
-  // must not inherit introductions, callbacks or choices from the old club.
   if (typeof previous !== "number" || previous <= 0) {
     s.flags["club_narrative_scope"] = marker;
     return;
@@ -81,29 +78,13 @@ function resetClubScopedNarrativeIfNeeded(s: GameState): void {
   s.flags["club_narrative_scope"] = marker;
 }
 
-/**
- * Fachada narrativa del reparto persistente. La creación y migración viven
- * exclusivamente en npc.ts para que todo el juego comparta exactamente las
- * mismas identidades durante una carrera completa.
- */
 export function ensureCareerCast(s: GameState): CareerCast {
   const cast = ensureCast(s);
   resetClubScopedNarrativeIfNeeded(s);
-  // Opening adviser selection can deliberately replace a provisional father or
-  // family-friend adviser with a professional. Old code reused the already
-  // synchronized placeholder name (for example "Papá") and produced a
-  // professional representative literally called "Papá". Repair only those
-  // impossible placeholder identities; established save names remain untouched.
   repairProfessionalAdviserIdentity(s, cast);
   return cast;
 }
 
-/**
- * Devuelve el vínculo personal más fuerte que debe aparecer en Legado.
- * La pantalla final no puede volver a nombres genéricos ("Entrenador",
- * "Agente") después de haber construido personajes persistentes durante toda
- * la carrera. Solo incluimos a la pareja cuando esa relación existe realmente.
- */
 export function legacyRelationshipHighlight(s: GameState): LegacyRelationshipHighlight {
   const cast = ensureCareerCast(s);
   const candidates: LegacyRelationshipHighlight[] = [
@@ -121,12 +102,6 @@ export function legacyRelationshipHighlight(s: GameState): LegacyRelationshipHig
   return candidates.sort((a, b) => b.value - a.value)[0]!;
 }
 
-/**
- * Etapas cronológicas del Football Career Story Director.
- * 16-18 promesa · 19-21 irrupción · 22-25 consolidación · 26-30 plenitud ·
- * 31-34 veterano · 35+ legado. Mantener estos límites en un único lugar evita
- * que escenas de estrella consolidada aparezcan un año antes de tiempo.
- */
 export function careerEra(s: GameState): CareerEra {
   if (s.age <= 18) return "academy";
   if (s.age <= 21) return "breakthrough";
@@ -140,18 +115,12 @@ export function careerStatus(s: GameState): CareerStatus {
   const titles = s.titles?.length ?? 0;
   const awards = s.awards?.length ?? 0;
 
-  // Sixteen is still the life-first threshold: even a generational prospect is
-  // not narratively treated as an established star before the career has earned
-  // public proof. This keeps the opening about family, adaptation and hierarchy
-  // and prevents star-only press/lifestyle beats from leaking into the first year.
   if (s.age <= 16) {
     if (s.overall >= 78 || s.fame >= 55) return "starter";
     if (s.overall >= 70 || s.fame >= 25) return "squad";
     return "prospect";
   }
 
-  // At 17-18 an exceptional academy player can genuinely become a star, but the
-  // threshold is earned through football/fame rather than granted on day one.
   if (s.age <= 18) {
     if (s.overall >= 83 || s.fame >= 75 || (awards >= 1 && s.overall >= 78)) return "star";
     if (s.overall >= 76 || s.fame >= 45) return "starter";
@@ -159,10 +128,6 @@ export function careerStatus(s: GameState): CareerStatus {
     return "prospect";
   }
 
-  // Breakthrough years are where a career proves whether youth hype survives
-  // senior football. A single youth/individual award must never jump a 19-year-old
-  // straight to elite lifestyle, sponsor or press arcs. Elite status is locked
-  // until the established era and then still requires football proof.
   if (s.age <= 21) {
     if (s.overall >= 86 || s.fame >= 85 || (awards >= 1 && s.overall >= 82)) return "star";
     if (s.overall >= 78 || s.fame >= 55) return "starter";
@@ -183,13 +148,18 @@ export function plausibleMoneyScale(s: GameState): "youth" | "pro" | "star" | "s
   if (s.age <= 18 || status === "prospect") return "youth";
   if (status === "squad" || status === "starter") return "pro";
   if (status === "star") return "star";
+
+  // Elite/legend labels describe football stature, not an automatic luxury-life
+  // shortcut. The breakthrough years must still show first serious contracts,
+  // family help and a first car/home before superstar wealth becomes narratively
+  // eligible. This prevents a fast-rising 19-21-year-old from skipping an entire
+  // life chapter merely because reputation or an award spiked early.
+  if (s.age <= 21) return "star";
+  if (s.age <= 25 && s.fame < 85 && (s.titles?.length ?? 0) < 2 && (s.awards?.length ?? 0) < 1) return "star";
   return "superstar";
 }
 
 export function canReceiveSocialDm(s: GameState): boolean {
-  // This is explicitly an early-career "first attention" beat. Without the
-  // upper age gate it could surface years later for a veteran whose fame rose
-  // slowly, producing dialogue about "one of your first matches" at 30+.
   return s.age >= 17 && s.age <= 24 && s.fame >= 18 && !s.flags["social_dm_intro"];
 }
 
