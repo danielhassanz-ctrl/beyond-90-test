@@ -27,9 +27,9 @@ const MAX_PHOTO_CHARS = 8_000_000;
 const MAX_DECODED_PHOTO_BYTES = 6_000_000;
 const MAX_BRIEF_FIELD_CHARS = 1_500;
 const IMAGE_TIMEOUT_MS = 55_000;
-// GPT-Image-2 is the currently documented OpenAI image generation/editing model.
-// Keep this identifier conservative: do not deploy guessed or undocumented model names.
-const IMAGE_MODEL = "gpt-image-2";
+// Sunburst is OpenAI's documented precision-edit model. Beyond 90 prioritizes
+// identity continuity from the persisted player photo over raw generation speed.
+const IMAGE_MODEL = "gpt-image-2.5-sunburst";
 const RESPONSES_MODEL = "gpt-5.6-luna";
 const ALLOWED_SCENES = new Set(["presentation", "pitch", "celebration", "farewell", "portrait"]);
 const ALLOWED_PHOTO_PREFIXES = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,"];
