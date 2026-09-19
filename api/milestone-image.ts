@@ -6,6 +6,7 @@ type ApiRequest = {
 type ApiResponse = {
   status(code: number): ApiResponse;
   json(body: unknown): void;
+  setHeader(name: string, value: string): void;
 };
 
 type GenerationBrief = {
@@ -122,6 +123,12 @@ function promptFor(brief: GenerationBrief): string {
  * the deployment environment; it is never sent to the browser.
  */
 export default async function handler(req: ApiRequest, res: ApiResponse) {
+  // Requests and responses contain the player's persisted face photo. Never let
+  // a CDN, browser intermediary or shared cache retain these personalized assets.
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+
   if (req.method !== "POST") {
     res.status(405).json({ error: "method_not_allowed" });
     return;
