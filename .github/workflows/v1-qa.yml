@@ -58,6 +58,8 @@ jobs:
         run: npm run qa:visual-age
       - name: Milestone image browser provider QA
         run: npm run qa:milestone-image-provider
+      - name: Milestone image cancellation QA
+        run: node --import tsx scripts/milestone-image-cancellation-smoke.ts
       - name: Milestone image server endpoint QA
         run: node --import tsx scripts/milestone-image-endpoint-smoke.ts
       - name: Extended gameplay QA
