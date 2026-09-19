@@ -11,7 +11,9 @@ function response(captured: Captured) {
 }
 
 const validBody = {
-  playerPhoto: "data:image/jpeg;base64,cGxheWVy",
+  // Minimal JPEG-signature payload is sufficient for endpoint-contract QA; the
+  // upstream image service is mocked below and never receives a real photo.
+  playerPhoto: "data:image/jpeg;base64,/9j/AAAA",
   brief: {
     scene: "presentation",
     identityRule: "Preserve the exact recognisable identity, ethnicity and core facial features of the persisted uploaded player photo; do not substitute another person.",
@@ -44,6 +46,10 @@ async function main() {
     const invalid: Captured = {};
     await handler({ method: "POST", body: { ...validBody, playerPhoto: "https://example.com/player.jpg" } }, response(invalid));
     assert.equal(invalid.status, 400, "remote player-photo URLs must not enter the generation endpoint");
+
+    const mislabeled: Captured = {};
+    await handler({ method: "POST", body: { ...validBody, playerPhoto: "data:image/jpeg;base64,cGxheWVy" } }, response(mislabeled));
+    assert.equal(mislabeled.status, 400, "mislabeled base64 must be rejected before a paid generation call");
 
     let upstreamInit: RequestInit | undefined;
     globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
