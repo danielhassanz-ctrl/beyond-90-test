@@ -15,14 +15,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
-  // React state is not synchronous. This ref is the actual paid-request mutex so
-  // a fast double tap on iPhone cannot start two provider calls before disabled
-  // reaches the DOM. The token prevents an obsolete request from unlocking a
-  // newer paid request after the player advances to another milestone.
   const imageRequestInFlight = useRef<symbol | null>(null);
-  // A paid edit can outlive the milestone that launched it (for example if the
-  // player advances the story on a slow mobile connection). Only the request
-  // belonging to the current milestone is allowed to replace the player image.
   const generationEpoch = useRef(0);
   const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null);
   const [prepared, setPrepared] = useState<PreparedCareerCard | null>(null);
@@ -53,7 +46,13 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   }, [share, state.seasonIndex, state.stage, state.age, state.player.nickname, state.player.name, state.player.avatar, state.clubId, generatedAvatar]);
 
   useEffect(() => {
+    // Advancing the story invalidates the previous paid request immediately.
+    // We cannot necessarily abort the provider after it has started, but we can
+    // prevent its late result from mutating the new milestone and release the UI
+    // lock so the new earned milestone can start its own request.
     generationEpoch.current += 1;
+    imageRequestInFlight.current = null;
+    setImageBusy(false);
     setGeneratedAvatar(null);
   }, [share, state.age, state.clubId, state.player.avatar]);
 
@@ -70,8 +69,6 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     return () => URL.revokeObjectURL(url);
   }, [preview]);
 
-  // A generated milestone can carry a real provider cost. Generate at most once
-  // for the current milestone view; moving to another earned milestone resets it.
   const canGenerate = Boolean(state.player.avatar && input.generationBrief && input.milestone.kind !== "career" && !generatedAvatar);
 
   return <div className="mt-4">
@@ -96,8 +93,6 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
           ? "La imagen personalizada no está disponible ahora. La tarjeta segura sigue lista para compartir."
           : "No se ha podido generar la imagen personalizada. La tarjeta segura sigue disponible.");
       } finally {
-        // A stale request must never clear the mutex/busy state of a newer paid
-        // request. This matters on slow Safari connections during story advance.
         if (imageRequestInFlight.current === requestToken) {
           imageRequestInFlight.current = null;
           setImageBusy(false);
