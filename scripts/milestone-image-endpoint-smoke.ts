@@ -1,13 +1,21 @@
 import assert from "node:assert/strict";
 import handler from "../api/milestone-image";
 
-type Captured = { status?: number; body?: unknown };
+type Captured = { status?: number; body?: unknown; headers?: Record<string, string> };
 
 function response(captured: Captured) {
+  captured.headers = {};
   return {
     status(code: number) { captured.status = code; return this; },
     json(body: unknown) { captured.body = body; },
+    setHeader(name: string, value: string) { captured.headers![name.toLowerCase()] = value; },
   };
+}
+
+function assertPrivatePhotoHeaders(captured: Captured) {
+  assert.equal(captured.headers?.["cache-control"], "private, no-store, max-age=0", "personalized player photos must never be cacheable");
+  assert.equal(captured.headers?.pragma, "no-cache");
+  assert.equal(captured.headers?.["x-content-type-options"], "nosniff");
 }
 
 const validBody = {
@@ -41,15 +49,18 @@ async function main() {
     await handler({ method: "POST", body: validBody }, response(missingKey));
     assert.equal(missingKey.status, 503);
     assert.deepEqual(missingKey.body, { error: "image_backend_not_configured" });
+    assertPrivatePhotoHeaders(missingKey);
 
     process.env.OPENAI_API_KEY = "test-key";
     const invalid: Captured = {};
     await handler({ method: "POST", body: { ...validBody, playerPhoto: "https://example.com/player.jpg" } }, response(invalid));
     assert.equal(invalid.status, 400, "remote player-photo URLs must not enter the generation endpoint");
+    assertPrivatePhotoHeaders(invalid);
 
     const mislabeled: Captured = {};
     await handler({ method: "POST", body: { ...validBody, playerPhoto: "data:image/jpeg;base64,cGxheWVy" } }, response(mislabeled));
     assert.equal(mislabeled.status, 400, "mislabeled base64 must be rejected before a paid generation call");
+    assertPrivatePhotoHeaders(mislabeled);
 
     let upstreamInit: RequestInit | undefined;
     globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
@@ -68,6 +79,7 @@ async function main() {
       provider: "openai:gpt-image-2.5-sunburst-2026-09-08",
       generated: true,
     });
+    assertPrivatePhotoHeaders(ok);
     assert.ok(upstreamInit?.body);
     const upstream = JSON.parse(String(upstreamInit?.body));
     assert.equal(upstream.model, "gpt-5.6-luna");
@@ -86,10 +98,12 @@ async function main() {
     const png: Captured = {};
     await handler({ method: "POST", body: { ...validBody, playerPhoto: "data:image/png;base64,iVBORw0KGgoAAA==" } }, response(png));
     assert.equal(png.status, 200, "PNG player photos with a real PNG signature must remain supported");
+    assertPrivatePhotoHeaders(png);
 
     const webp: Captured = {};
     await handler({ method: "POST", body: { ...validBody, playerPhoto: "data:image/webp;base64,UklGRgAAAABXRUJQ" } }, response(webp));
     assert.equal(webp.status, 200, "WebP player photos with RIFF/WEBP signature must remain supported");
+    assertPrivatePhotoHeaders(webp);
 
     console.log("milestone image endpoint smoke: OK");
   } finally {
