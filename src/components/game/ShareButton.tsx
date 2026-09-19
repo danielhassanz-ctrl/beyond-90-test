@@ -16,6 +16,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   const [busy, setBusy] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
   const imageRequestInFlight = useRef<symbol | null>(null);
+  const imageRequestAbort = useRef<AbortController | null>(null);
   const generationEpoch = useRef(0);
   const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null);
   const [prepared, setPrepared] = useState<PreparedCareerCard | null>(null);
@@ -27,9 +28,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     const milestone = milestoneVisualSpec(share);
     const visualAge = playerVisualProfile(state.age);
     const club = clubById(state.clubId).name;
-    const generationBrief = state.player.avatar
-      ? milestoneGenerationBrief(milestone, visualAge, club, identity)
-      : undefined;
+    const generationBrief = state.player.avatar ? milestoneGenerationBrief(milestone, visualAge, club, identity) : undefined;
     const baseKicker = share.kicker || `${seasonLabel(state.seasonIndex)} · ${stageLabel(state.stage)}`;
     return {
       headline: share.headline,
@@ -46,15 +45,15 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   }, [share, state.seasonIndex, state.stage, state.age, state.player.nickname, state.player.name, state.player.avatar, state.clubId, generatedAvatar]);
 
   useEffect(() => {
-    // Advancing the story invalidates the previous paid request immediately.
-    // We cannot necessarily abort the provider after it has started, but we can
-    // prevent its late result from mutating the new milestone and release the UI
-    // lock so the new earned milestone can start its own request.
     generationEpoch.current += 1;
+    imageRequestAbort.current?.abort();
+    imageRequestAbort.current = null;
     imageRequestInFlight.current = null;
     setImageBusy(false);
     setGeneratedAvatar(null);
   }, [share, state.age, state.clubId, state.player.avatar]);
+
+  useEffect(() => () => imageRequestAbort.current?.abort(), []);
 
   useEffect(() => {
     let active = true;
@@ -75,7 +74,9 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     {canGenerate && <button disabled={imageBusy} onClick={async () => {
       if (!state.player.avatar || !input.generationBrief || imageRequestInFlight.current) return;
       const requestToken = Symbol("milestone-image-request");
+      const abortController = new AbortController();
       imageRequestInFlight.current = requestToken;
+      imageRequestAbort.current = abortController;
       const requestEpoch = generationEpoch.current;
       setImageBusy(true); setStatus(null);
       try {
@@ -83,18 +84,19 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
           playerPhoto: state.player.avatar,
           brief: input.generationBrief,
           output: { width: 1024, height: 1536 },
-        });
+        }, { signal: abortController.signal });
         if (requestEpoch !== generationEpoch.current) return;
         setGeneratedAvatar(result.imageUrl);
         setStatus("Imagen personalizada preparada.");
       } catch (error) {
-        if (requestEpoch !== generationEpoch.current) return;
+        if (requestEpoch !== generationEpoch.current || abortController.signal.aborted) return;
         setStatus(error instanceof MilestoneImageUnavailableError
           ? "La imagen personalizada no está disponible ahora. La tarjeta segura sigue lista para compartir."
           : "No se ha podido generar la imagen personalizada. La tarjeta segura sigue disponible.");
       } finally {
         if (imageRequestInFlight.current === requestToken) {
           imageRequestInFlight.current = null;
+          imageRequestAbort.current = null;
           setImageBusy(false);
         }
       }
