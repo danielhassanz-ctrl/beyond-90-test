@@ -20,6 +20,7 @@
     "qa:milestone-brief": "node --import tsx scripts/milestone-generation-brief-smoke.ts",
     "qa:milestone-image-provider": "node --import tsx scripts/milestone-image-provider-smoke.ts",
     "qa:milestone-image-cancellation": "node --import tsx scripts/milestone-image-cancellation-smoke.ts",
+    "qa:milestone-image-dedupe": "node --import tsx scripts/milestone-image-dedupe-smoke.ts",
     "qa:milestone-image-endpoint": "node --import tsx scripts/milestone-image-endpoint-smoke.ts",
     "format": "prettier --write ."
   },
@@ -86,7 +87,7 @@
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
-    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "prettier": "^3.7.3",
