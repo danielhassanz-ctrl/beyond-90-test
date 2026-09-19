@@ -136,7 +136,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
           model: IMAGE_MODEL,
           action: "edit",
           input_fidelity: "high",
-          quality: "medium",
+          // Milestone images are scarce, shareable career artifacts. Prefer
+          // fidelity over throughput so face/age continuity survives the edit.
+          quality: "high",
           size,
           background: "opaque",
         }],
