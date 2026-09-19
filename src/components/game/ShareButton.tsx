@@ -17,8 +17,9 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   const [imageBusy, setImageBusy] = useState(false);
   // React state is not synchronous. This ref is the actual paid-request mutex so
   // a fast double tap on iPhone cannot start two provider calls before disabled
-  // reaches the DOM.
-  const imageRequestInFlight = useRef(false);
+  // reaches the DOM. The token prevents an obsolete request from unlocking a
+  // newer paid request after the player advances to another milestone.
+  const imageRequestInFlight = useRef<symbol | null>(null);
   // A paid edit can outlive the milestone that launched it (for example if the
   // player advances the story on a slow mobile connection). Only the request
   // belonging to the current milestone is allowed to replace the player image.
@@ -76,7 +77,8 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
   return <div className="mt-4">
     {canGenerate && <button disabled={imageBusy} onClick={async () => {
       if (!state.player.avatar || !input.generationBrief || imageRequestInFlight.current) return;
-      imageRequestInFlight.current = true;
+      const requestToken = Symbol("milestone-image-request");
+      imageRequestInFlight.current = requestToken;
       const requestEpoch = generationEpoch.current;
       setImageBusy(true); setStatus(null);
       try {
@@ -94,8 +96,12 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
           ? "La imagen personalizada no está disponible ahora. La tarjeta segura sigue lista para compartir."
           : "No se ha podido generar la imagen personalizada. La tarjeta segura sigue disponible.");
       } finally {
-        imageRequestInFlight.current = false;
-        setImageBusy(false);
+        // A stale request must never clear the mutex/busy state of a newer paid
+        // request. This matters on slow Safari connections during story advance.
+        if (imageRequestInFlight.current === requestToken) {
+          imageRequestInFlight.current = null;
+          setImageBusy(false);
+        }
       }
     }} className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 font-cond text-sm font-bold uppercase tracking-[0.16em] text-black active:scale-[0.99] disabled:opacity-60">
       <ImagePlus className="h-4 w-4" aria-hidden />
