@@ -69,6 +69,7 @@ async function main() {
     assert.equal(upstream.tools?.[0]?.model, "gpt-image-2.5-sunburst-2026-09-08");
     assert.equal(upstream.tools?.[0]?.action, "edit");
     assert.equal(upstream.tools?.[0]?.input_fidelity, "high");
+    assert.equal(upstream.tools?.[0]?.quality, "high");
     assert.equal(upstream.tools?.[0]?.size, "1024x1536");
     const serialized = JSON.stringify(upstream);
     assert.ok(serialized.includes(validBody.playerPhoto));
