@@ -1,12 +1,6 @@
 import type { MilestoneGenerationBrief } from "./milestone-visual";
 
-/**
- * Provider-neutral contract for real milestone image generation/editing.
- *
- * IMPORTANT: provider credentials must live server-side. The browser must never
- * receive an OpenAI/provider API key. Until a server endpoint is configured the
- * game must keep using the deterministic local milestone/share-card fallback.
- */
+/** Provider-neutral request for a real identity-preserving milestone edit. */
 export interface MilestoneImageRequest {
   playerPhoto: string;
   brief: MilestoneGenerationBrief;
@@ -19,8 +13,13 @@ export interface MilestoneImageResult {
   generated: true;
 }
 
+export interface MilestoneImageGenerateOptions {
+  /** Cancels the browser request when the milestone is no longer current. */
+  signal?: AbortSignal;
+}
+
 export interface MilestoneImageProvider {
-  generate(request: MilestoneImageRequest): Promise<MilestoneImageResult>;
+  generate(request: MilestoneImageRequest, options?: MilestoneImageGenerateOptions): Promise<MilestoneImageResult>;
 }
 
 export class MilestoneImageUnavailableError extends Error {
@@ -32,26 +31,22 @@ export class MilestoneImageUnavailableError extends Error {
 
 function isSafeGeneratedImageUrl(value: unknown): value is string {
   if (typeof value !== "string") return false;
-  // The current server contract returns a PNG data URL. Allow HTTPS as well so
-  // a future object-storage/CDN implementation can replace large data URLs
-  // without weakening the client to javascript:, blob: or other schemes.
   return value.startsWith("data:image/png;base64,") || value.startsWith("https://");
 }
 
 const CLIENT_TIMEOUT_MS = 60_000;
 
-/**
- * Browser client for the same-origin server endpoint. This deliberately sends
- * only the persisted player photo plus the rights-safe generation brief; no
- * provider secret is stored in the Vite client.
- */
+/** Browser client. Provider credentials remain exclusively server-side. */
 export class HttpMilestoneImageProvider implements MilestoneImageProvider {
   constructor(private readonly endpoint = "/api/milestone-image") {}
 
-  async generate(request: MilestoneImageRequest): Promise<MilestoneImageResult> {
+  async generate(request: MilestoneImageRequest, options: MilestoneImageGenerateOptions = {}): Promise<MilestoneImageResult> {
     if (!request.playerPhoto) throw new MilestoneImageUnavailableError("Player photo is required for identity-preserving generation");
+    if (options.signal?.aborted) throw new MilestoneImageUnavailableError("Milestone image request was cancelled");
 
     const controller = new AbortController();
+    const abortFromCaller = () => controller.abort();
+    options.signal?.addEventListener("abort", abortFromCaller, { once: true });
     const timeout = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
     let response: Response;
     try {
@@ -62,15 +57,15 @@ export class HttpMilestoneImageProvider implements MilestoneImageProvider {
         body: JSON.stringify(request),
       });
     } catch (error) {
-      const reason = error instanceof Error && error.name === "AbortError" ? "timed out" : "is unreachable";
+      const cancelled = options.signal?.aborted;
+      const reason = cancelled ? "was cancelled" : error instanceof Error && error.name === "AbortError" ? "timed out" : "is unreachable";
       throw new MilestoneImageUnavailableError(`Milestone image backend ${reason}`);
     } finally {
       clearTimeout(timeout);
+      options.signal?.removeEventListener("abort", abortFromCaller);
     }
 
-    if (!response.ok) {
-      throw new MilestoneImageUnavailableError(`Milestone image backend returned ${response.status}`);
-    }
+    if (!response.ok) throw new MilestoneImageUnavailableError(`Milestone image backend returned ${response.status}`);
 
     let data: Partial<MilestoneImageResult>;
     try {
