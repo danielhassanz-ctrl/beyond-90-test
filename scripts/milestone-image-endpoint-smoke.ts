@@ -81,6 +81,16 @@ async function main() {
     assert.ok(serialized.includes(validBody.playerPhoto));
     assert.ok(serialized.includes("Do not add text, watermarks, sponsor marks or unofficial/official crests"));
 
+    // Browser uploads can legitimately arrive as PNG or WebP. Keep these
+    // accepted while still rejecting mislabeled payloads before paid calls.
+    const png: Captured = {};
+    await handler({ method: "POST", body: { ...validBody, playerPhoto: "data:image/png;base64,iVBORw0KGgoAAA==" } }, response(png));
+    assert.equal(png.status, 200, "PNG player photos with a real PNG signature must remain supported");
+
+    const webp: Captured = {};
+    await handler({ method: "POST", body: { ...validBody, playerPhoto: "data:image/webp;base64,UklGRgAAAABXRUJQ" } }, response(webp));
+    assert.equal(webp.status, 200, "WebP player photos with RIFF/WEBP signature must remain supported");
+
     console.log("milestone image endpoint smoke: OK");
   } finally {
     globalThis.fetch = originalFetch;
