@@ -62,6 +62,24 @@ function validBrief(value: unknown): value is GenerationBrief {
     && REQUIRED_PROHIBITIONS.every((required) => brief.prohibited?.includes(required));
 }
 
+function validPhotoSignature(prefix: string, encoded: string): boolean {
+  // Validate the actual file signature before spending an image-generation call.
+  // This rejects arbitrary/mislabeled base64 while keeping validation cheap.
+  if (prefix.includes("jpeg")) return encoded.startsWith("/9j/");
+  if (prefix.includes("png")) return encoded.startsWith("iVBORw0KGgo");
+  if (prefix.includes("webp")) {
+    try {
+      const header = Buffer.from(encoded.slice(0, 24), "base64");
+      return header.length >= 12
+        && header.toString("ascii", 0, 4) === "RIFF"
+        && header.toString("ascii", 8, 12) === "WEBP";
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 function validPlayerPhoto(value: unknown): value is string {
   if (typeof value !== "string" || value.length > MAX_PHOTO_CHARS) return false;
   const prefix = ALLOWED_PHOTO_PREFIXES.find((candidate) => value.startsWith(candidate));
@@ -71,7 +89,9 @@ function validPlayerPhoto(value: unknown): value is string {
   if (!encoded || encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return false;
   const padding = encoded.endsWith("==") ? 2 : encoded.endsWith("=") ? 1 : 0;
   const decodedBytes = (encoded.length / 4) * 3 - padding;
-  return decodedBytes > 0 && decodedBytes <= MAX_DECODED_PHOTO_BYTES;
+  return decodedBytes > 0
+    && decodedBytes <= MAX_DECODED_PHOTO_BYTES
+    && validPhotoSignature(prefix, encoded);
 }
 
 function promptFor(brief: GenerationBrief): string {
