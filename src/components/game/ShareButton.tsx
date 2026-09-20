@@ -37,6 +37,7 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
       club,
       lines: share.lines,
       avatar: generatedAvatar || state.player.avatar,
+      generatedScene: Boolean(generatedAvatar),
       clubColors: { primary: identity.primary, secondary: identity.secondary, text: identity.text },
       milestone,
       playerVisual: visualAge,
