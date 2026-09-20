@@ -38,7 +38,7 @@ const CLIENT_TIMEOUT_MS = 60_000;
 const PERSISTENT_CACHE_NAME = "beyond90-milestone-images-v2";
 const LEGACY_CACHE_NAME = "beyond90-milestone-images-v1";
 
-/** Fast page-lifetime cache. Persistent browser cache below survives reloads. */
+/** Fast page-lifetime cache. Keys are compact fingerprints, never raw player photos. */
 const successfulRequestCache = new Map<string, MilestoneImageResult>();
 const inFlightRequestCache = new Map<string, Promise<MilestoneImageResult>>();
 
@@ -46,7 +46,7 @@ function requestCacheKey(request: MilestoneImageRequest): string {
   return JSON.stringify(request);
 }
 
-/** 128-bit deterministic cache id; request/photo contents never enter the URL. */
+/** 128-bit deterministic cache id; request/photo contents never enter the URL or Map keys. */
 function compactCacheKey(value: string): string {
   let a = 0x811c9dc5;
   let b = 0x9e3779b9;
@@ -125,10 +125,11 @@ export class HttpMilestoneImageProvider implements MilestoneImageProvider {
   /** Restore an already-paid generated scene without ever contacting the backend. */
   async cached(request: MilestoneImageRequest): Promise<MilestoneImageResult | null> {
     const cacheKey = requestCacheKey(request);
-    const memory = successfulRequestCache.get(cacheKey);
+    const memoryKey = compactCacheKey(cacheKey);
+    const memory = successfulRequestCache.get(memoryKey);
     if (memory) return memory;
     const persisted = await readPersistentResult(cacheKey);
-    if (persisted) successfulRequestCache.set(cacheKey, persisted);
+    if (persisted) successfulRequestCache.set(memoryKey, persisted);
     return persisted;
   }
 
@@ -137,11 +138,12 @@ export class HttpMilestoneImageProvider implements MilestoneImageProvider {
     if (options.signal?.aborted) throw new MilestoneImageUnavailableError("Milestone image request was cancelled");
 
     const cacheKey = requestCacheKey(request);
+    const memoryKey = compactCacheKey(cacheKey);
     const cached = await this.cached(request);
     if (cached) return cached;
 
     if (!options.signal) {
-      const inFlight = inFlightRequestCache.get(cacheKey);
+      const inFlight = inFlightRequestCache.get(memoryKey);
       if (inFlight) return inFlight;
     }
 
@@ -180,17 +182,17 @@ export class HttpMilestoneImageProvider implements MilestoneImageProvider {
       }
 
       const result: MilestoneImageResult = { imageUrl: data.imageUrl, provider: data.provider, generated: true };
-      successfulRequestCache.set(cacheKey, result);
+      successfulRequestCache.set(memoryKey, result);
       await writePersistentResult(cacheKey, result);
       return result;
     };
 
     const pending = performRequest();
-    if (!options.signal) inFlightRequestCache.set(cacheKey, pending);
+    if (!options.signal) inFlightRequestCache.set(memoryKey, pending);
     try {
       return await pending;
     } finally {
-      if (!options.signal && inFlightRequestCache.get(cacheKey) === pending) inFlightRequestCache.delete(cacheKey);
+      if (!options.signal && inFlightRequestCache.get(memoryKey) === pending) inFlightRequestCache.delete(memoryKey);
     }
   }
 }
