@@ -92,7 +92,7 @@ async function main() {
     assert.equal(upstream.tools?.[0]?.type, "image_generation");
     assert.equal(upstream.tools?.[0]?.model, "gpt-image-2");
     assert.equal(upstream.tools?.[0]?.action, "edit");
-    assert.equal(upstream.tools?.[0]?.input_fidelity, "high");
+    assert.equal("input_fidelity" in upstream.tools?.[0], false, "GPT-Image-2 always uses high-fidelity image inputs and must not receive the unsupported input_fidelity option");
     assert.equal(upstream.tools?.[0]?.quality, "high");
     assert.equal(upstream.tools?.[0]?.size, "1024x1536");
     const serialized = JSON.stringify(upstream);
