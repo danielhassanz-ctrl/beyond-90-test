@@ -31,8 +31,6 @@ const validBody = {
   output: { width: 1024, height: 1536 },
 };
 
-// Small contract-only PNG-shaped payload. Endpoint validation intentionally checks
-// the PNG signature; image decoding/rendering belongs to the provider/browser layer.
 const validGeneratedPng = "iVBORw0KGgoAAA==";
 
 async function main() {
@@ -47,6 +45,18 @@ async function main() {
     assertPrivatePhotoHeaders(missingKey);
 
     process.env.OPENAI_API_KEY = "test-key";
+
+    const crossSite: Captured = {};
+    await handler({ method: "POST", body: validBody, headers: { "sec-fetch-site": "cross-site", origin: "https://attacker.example", host: "beyond90.example" } }, response(crossSite));
+    assert.equal(crossSite.status, 403, "cross-site browsers must not be able to spend milestone image credits");
+    assert.deepEqual(crossSite.body, { error: "cross_site_generation_forbidden" });
+    assertPrivatePhotoHeaders(crossSite);
+
+    const mismatchedOrigin: Captured = {};
+    await handler({ method: "POST", body: validBody, headers: { origin: "https://attacker.example", host: "beyond90.example", "x-forwarded-proto": "https" } }, response(mismatchedOrigin));
+    assert.equal(mismatchedOrigin.status, 403, "origin mismatch must be rejected even when Sec-Fetch-Site is absent");
+    assertPrivatePhotoHeaders(mismatchedOrigin);
+
     const invalid: Captured = {};
     await handler({ method: "POST", body: { ...validBody, playerPhoto: "https://example.com/player.jpg" } }, response(invalid));
     assert.equal(invalid.status, 400, "remote player-photo URLs must not enter the generation endpoint");
@@ -68,8 +78,8 @@ async function main() {
     }) as typeof fetch;
 
     const ok: Captured = {};
-    await handler({ method: "POST", body: validBody }, response(ok));
-    assert.equal(ok.status, 200);
+    await handler({ method: "POST", body: validBody, headers: { origin: "https://beyond90.example", host: "beyond90.example", "x-forwarded-proto": "https", "sec-fetch-site": "same-origin" } }, response(ok));
+    assert.equal(ok.status, 200, "same-origin milestone generation must remain playable");
     assert.deepEqual(ok.body, {
       imageUrl: `data:image/png;base64,${validGeneratedPng}`,
       provider: "openai:gpt-image-2.5-sunburst-2026-09-08",
