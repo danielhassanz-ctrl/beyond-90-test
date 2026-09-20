@@ -180,7 +180,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
           type: "image_generation",
           model: IMAGE_MODEL,
           action: "edit",
-          input_fidelity: "high",
           quality: "high",
           size,
           background: "opaque",
