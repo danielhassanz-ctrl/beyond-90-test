@@ -54,6 +54,20 @@ export function ShareButton({ state, share, label = "Compartir career card" }: {
     setGeneratedAvatar(null);
   }, [share, state.age, state.clubId, state.player.avatar]);
 
+  useEffect(() => {
+    if (!state.player.avatar || !input.generationBrief || input.milestone.kind === "career" || generatedAvatar) return;
+    let active = true;
+    const request = {
+      playerPhoto: state.player.avatar,
+      brief: input.generationBrief,
+      output: { width: 1024, height: 1536 },
+    };
+    void milestoneImageProvider.cached(request).then((cached) => {
+      if (active && cached) setGeneratedAvatar(cached.imageUrl);
+    });
+    return () => { active = false; };
+  }, [state.player.avatar, input.generationBrief, input.milestone.kind, generatedAvatar]);
+
   useEffect(() => () => imageRequestAbort.current?.abort(), []);
 
   useEffect(() => {
