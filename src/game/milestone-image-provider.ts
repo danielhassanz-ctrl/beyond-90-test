@@ -29,11 +29,24 @@ export class MilestoneImageUnavailableError extends Error {
   }
 }
 
-const MAX_GENERATED_IMAGE_URL_CHARS = 12_000_000;
+const MAX_GENERATED_DATA_URL_CHARS = 12_000_000;
+const MAX_GENERATED_REMOTE_URL_CHARS = 4_096;
+const PNG_DATA_URL_PREFIX = "data:image/png;base64,";
 
 function isSafeGeneratedImageUrl(value: unknown): value is string {
-  if (typeof value !== "string" || value.length > MAX_GENERATED_IMAGE_URL_CHARS) return false;
-  return value.startsWith("data:image/png;base64,") || value.startsWith("https://");
+  if (typeof value !== "string") return false;
+  if (value.startsWith(PNG_DATA_URL_PREFIX)) {
+    if (value.length > MAX_GENERATED_DATA_URL_CHARS) return false;
+    const payload = value.slice(PNG_DATA_URL_PREFIX.length);
+    return payload.length > 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(payload) && payload.length % 4 === 0;
+  }
+  if (value.length > MAX_GENERATED_REMOTE_URL_CHARS) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password;
+  } catch {
+    return false;
+  }
 }
 
 const CLIENT_TIMEOUT_MS = 60_000;
