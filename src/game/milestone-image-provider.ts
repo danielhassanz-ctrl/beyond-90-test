@@ -29,8 +29,10 @@ export class MilestoneImageUnavailableError extends Error {
   }
 }
 
+const MAX_GENERATED_IMAGE_URL_CHARS = 12_000_000;
+
 function isSafeGeneratedImageUrl(value: unknown): value is string {
-  if (typeof value !== "string") return false;
+  if (typeof value !== "string" || value.length > MAX_GENERATED_IMAGE_URL_CHARS) return false;
   return value.startsWith("data:image/png;base64,") || value.startsWith("https://");
 }
 
