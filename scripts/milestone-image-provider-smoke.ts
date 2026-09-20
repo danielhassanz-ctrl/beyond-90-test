@@ -41,9 +41,30 @@ async function main() {
     globalThis.fetch = (async () => new Response(JSON.stringify({ provider: "broken", generated: true }), { status: 200 })) as typeof fetch;
     await assert.rejects(provider.generate({ playerPhoto: "photo", brief }), MilestoneImageUnavailableError);
 
+    // Generated image transports are an explicit trust boundary: reject active/non-HTTPS
+    // schemes, credential-bearing URLs and malformed PNG data before rendering/caching them.
+    for (const imageUrl of [
+      "javascript:alert(1)",
+      "http://example.invalid/generated.png",
+      "https://user:secret@example.invalid/generated.png",
+      "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",
+      "data:image/png;base64,not-valid-***",
+    ]) {
+      globalThis.fetch = (async () => new Response(JSON.stringify({ imageUrl, provider: "unsafe-provider", generated: true }), { status: 200 })) as typeof fetch;
+      await assert.rejects(
+        provider.generate({ playerPhoto: `unsafe-photo-${imageUrl}`, brief }),
+        (error: unknown) => error instanceof MilestoneImageUnavailableError && /invalid payload/.test(error.message),
+      );
+    }
+
+    const tinyPngDataUrl = "data:image/png;base64,iVBORw0KGgo=";
+    globalThis.fetch = (async () => new Response(JSON.stringify({ imageUrl: tinyPngDataUrl, provider: "safe-data-provider", generated: true }), { status: 200 })) as typeof fetch;
+    const dataResult = await provider.generate({ playerPhoto: "safe-data-photo", brief });
+    assert.equal(dataResult.imageUrl, tinyPngDataUrl, "well-formed PNG data transport should remain supported");
+
     globalThis.fetch = (async () => new Response("unavailable", { status: 503 })) as typeof fetch;
     await assert.rejects(
-      provider.generate({ playerPhoto: "photo", brief }),
+      provider.generate({ playerPhoto: "photo-503", brief }),
       (error: unknown) => error instanceof MilestoneImageUnavailableError && /503/.test(error.message),
     );
 
