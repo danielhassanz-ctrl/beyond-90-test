@@ -7,11 +7,13 @@ export interface CareerCardInput {
   club: string;
   lines: { label: string; value: string }[];
   avatar: string | null;
+  /** True only when avatar is a real backend-generated milestone scene, not the uploaded identity photo. */
+  generatedScene?: boolean;
   clubColors?: { primary: string; secondary: string; text: string };
   milestone?: MilestoneVisualSpec;
-  /** Metadata for a future identity-preserving image backend. The local card does not fake facial ageing. */
+  /** Metadata for an identity-preserving image backend. The local fallback never fakes facial ageing. */
   playerVisual?: PlayerVisualProfile;
-  /** Complete rights-safe generation request carried with the milestone until a real backend is configured. */
+  /** Complete rights-safe generation request carried with the milestone. */
   generationBrief?: MilestoneGenerationBrief;
 }
 
@@ -37,6 +39,13 @@ function drawMilestoneBackdrop(ctx: CanvasRenderingContext2D, scene: MilestoneVi
   ctx.restore();
 }
 
+function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, width: number, height: number) {
+  const scale = Math.max(width / img.width, height / img.height);
+  const w = img.width * scale;
+  const h = img.height * scale;
+  ctx.drawImage(img, x + (width - w) / 2, y + (height - h) / 2, w, h);
+}
+
 /** Dibuja una tarjeta vertical determinista. No simula generación fotográfica IA. */
 export async function renderCareerCard(input: CareerCardInput): Promise<Blob | null> {
   try {
@@ -45,11 +54,19 @@ export async function renderCareerCard(input: CareerCardInput): Promise<Blob | n
     const milestone = input.milestone ?? { kind: "career", label: "Mi carrera", scene: "portrait" as const };
     const bg = ctx.createLinearGradient(0, 0, W, H); bg.addColorStop(0, "#08090b"); bg.addColorStop(0.55, primary); bg.addColorStop(1, "#08090b"); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); drawMilestoneBackdrop(ctx, milestone.scene, primary, secondary);
     ctx.fillStyle = secondary; ctx.fillRect(0, 0, 24, H); ctx.fillRect(W - 24, 0, 24, H); ctx.strokeStyle = secondary; ctx.lineWidth = 6; ctx.strokeRect(48, 48, W - 96, H - 96);
-    const img = input.avatar ? await loadImage(input.avatar) : null; const cx = W / 2; const cy = 620; const r = milestone.scene === "portrait" ? 260 : 285;
-    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
-    if (img) { const scale = Math.max((r * 2) / img.width, (r * 2) / img.height); const w = img.width * scale; const h = img.height * scale; ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h); }
-    else { ctx.fillStyle = "#1c1d21"; ctx.fillRect(cx - r, cy - r, r * 2, r * 2); ctx.fillStyle = secondary; ctx.font = "bold 180px Georgia, serif"; ctx.textAlign = "center"; ctx.fillText(input.name.slice(0, 1).toUpperCase(), cx, cy + 60); }
-    ctx.restore(); ctx.strokeStyle = secondary; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    const img = input.avatar ? await loadImage(input.avatar) : null; const cx = W / 2; const cy = 620;
+    if (img && input.generatedScene) {
+      const x = 90; const y = 285; const width = W - 180; const height = 670;
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, width, height); ctx.clip(); drawCover(ctx, img, x, y, width, height); ctx.restore();
+      const shade = ctx.createLinearGradient(0, y, 0, y + height); shade.addColorStop(0, "rgba(0,0,0,0.02)"); shade.addColorStop(0.72, "rgba(0,0,0,0.08)"); shade.addColorStop(1, "rgba(0,0,0,0.58)"); ctx.fillStyle = shade; ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = secondary; ctx.lineWidth = 8; ctx.strokeRect(x, y, width, height);
+    } else {
+      const r = milestone.scene === "portrait" ? 260 : 285;
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      if (img) { drawCover(ctx, img, cx - r, cy - r, r * 2, r * 2); }
+      else { ctx.fillStyle = "#1c1d21"; ctx.fillRect(cx - r, cy - r, r * 2, r * 2); ctx.fillStyle = secondary; ctx.font = "bold 180px Georgia, serif"; ctx.textAlign = "center"; ctx.fillText(input.name.slice(0, 1).toUpperCase(), cx, cy + 60); }
+      ctx.restore(); ctx.strokeStyle = secondary; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    }
     ctx.textAlign = "center"; ctx.fillStyle = secondary; ctx.font = "600 40px Helvetica, Arial, sans-serif"; ctx.fillText("BEYOND 90", cx, 160); ctx.font = "700 30px Helvetica, Arial, sans-serif"; ctx.fillText(milestone.label.toUpperCase(), cx, 215);
     ctx.fillStyle = accentText; ctx.font = "bold 78px Helvetica, Arial, sans-serif"; wrap(ctx, input.headline.toUpperCase(), cx, 1010, W - 220, 88);
     ctx.fillStyle = accentText; ctx.globalAlpha = 0.78; ctx.font = "500 42px Helvetica, Arial, sans-serif"; ctx.fillText(input.name, cx, 1170); ctx.globalAlpha = 1; ctx.fillStyle = secondary; ctx.font = "600 36px Helvetica, Arial, sans-serif"; ctx.fillText(`${input.club} · ${input.kicker}`, cx, 1230);
