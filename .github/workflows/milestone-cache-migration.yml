@@ -1,0 +1,26 @@
+name: Milestone paid-scene cache migration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/game/milestone-image-provider.ts"
+      - "scripts/milestone-cache-migration-smoke.mjs"
+      - ".github/workflows/milestone-cache-migration.yml"
+  pull_request:
+    paths:
+      - "src/game/milestone-image-provider.ts"
+      - "scripts/milestone-cache-migration-smoke.mjs"
+      - ".github/workflows/milestone-cache-migration.yml"
+
+jobs:
+  migration-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify paid-scene cache migration contract
+        run: node scripts/milestone-cache-migration-smoke.mjs
