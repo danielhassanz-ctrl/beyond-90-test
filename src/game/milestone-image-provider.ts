@@ -36,6 +36,7 @@ function isSafeGeneratedImageUrl(value: unknown): value is string {
 
 const CLIENT_TIMEOUT_MS = 60_000;
 const PERSISTENT_CACHE_NAME = "beyond90-milestone-images-v2";
+const LEGACY_CACHE_NAME = "beyond90-milestone-images-v1";
 
 /** Fast page-lifetime cache. Persistent browser cache below survives reloads. */
 const successfulRequestCache = new Map<string, MilestoneImageResult>();
@@ -45,12 +46,7 @@ function requestCacheKey(request: MilestoneImageRequest): string {
   return JSON.stringify(request);
 }
 
-/**
- * Compact 128-bit deterministic cache id. The original request and uploaded
- * photo never enter the synthetic Cache API URL. Four independent lanes make
- * accidental cross-player/cross-milestone restores materially less likely
- * than the previous 64-bit key while remaining synchronous on WebKit.
- */
+/** 128-bit deterministic cache id; request/photo contents never enter the URL. */
 function compactCacheKey(value: string): string {
   let a = 0x811c9dc5;
   let b = 0x9e3779b9;
@@ -58,32 +54,52 @@ function compactCacheKey(value: string): string {
   let d = 0xc2b2ae35;
   for (let i = 0; i < value.length; i += 1) {
     const code = value.charCodeAt(i);
-    a ^= code;
-    a = Math.imul(a, 0x01000193) >>> 0;
-    b ^= code + i;
-    b = Math.imul(b, 0x85ebca6b) >>> 0;
-    c ^= code + (i << 1);
-    c = Math.imul(c, 0xc2b2ae35) >>> 0;
-    d ^= code + (i << 2);
-    d = Math.imul(d, 0x27d4eb2f) >>> 0;
+    a ^= code; a = Math.imul(a, 0x01000193) >>> 0;
+    b ^= code + i; b = Math.imul(b, 0x85ebca6b) >>> 0;
+    c ^= code + (i << 1); c = Math.imul(c, 0xc2b2ae35) >>> 0;
+    d ^= code + (i << 2); d = Math.imul(d, 0x27d4eb2f) >>> 0;
   }
   return [a, b, c, d].map((lane) => lane.toString(16).padStart(8, "0")).join("");
 }
 
-function persistentRequestUrl(cacheKey: string): string {
+/** Exact legacy key retained only to migrate already-paid v1 scenes. */
+function legacyCompactCacheKey(value: string): string {
+  let a = 0x811c9dc5;
+  let b = 0x9e3779b9;
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i);
+    a ^= code; a = Math.imul(a, 0x01000193) >>> 0;
+    b ^= code + i; b = Math.imul(b, 0x85ebca6b) >>> 0;
+  }
+  return `${a.toString(16).padStart(8, "0")}${b.toString(16).padStart(8, "0")}`;
+}
+
+function persistentRequestUrl(cacheKey: string, legacy = false): string {
   const origin = typeof location !== "undefined" ? location.origin : "https://beyond90.local";
-  return `${origin}/__b90_milestone_cache__/${compactCacheKey(cacheKey)}`;
+  const compact = legacy ? legacyCompactCacheKey(cacheKey) : compactCacheKey(cacheKey);
+  return `${origin}/__b90_milestone_cache__/${compact}`;
+}
+
+function parsePersistentResult(data: Partial<MilestoneImageResult>): MilestoneImageResult | null {
+  if (!isSafeGeneratedImageUrl(data.imageUrl) || data.generated !== true || typeof data.provider !== "string" || !data.provider.trim()) return null;
+  return { imageUrl: data.imageUrl, provider: data.provider, generated: true };
 }
 
 async function readPersistentResult(cacheKey: string): Promise<MilestoneImageResult | null> {
   if (typeof caches === "undefined") return null;
   try {
-    const cache = await caches.open(PERSISTENT_CACHE_NAME);
-    const response = await cache.match(persistentRequestUrl(cacheKey));
-    if (!response) return null;
-    const data = (await response.json()) as Partial<MilestoneImageResult>;
-    if (!isSafeGeneratedImageUrl(data.imageUrl) || data.generated !== true || typeof data.provider !== "string" || !data.provider.trim()) return null;
-    return { imageUrl: data.imageUrl, provider: data.provider, generated: true };
+    const current = await caches.open(PERSISTENT_CACHE_NAME);
+    const response = await current.match(persistentRequestUrl(cacheKey));
+    if (response) return parsePersistentResult((await response.json()) as Partial<MilestoneImageResult>);
+
+    // A paid scene generated before the stronger cache key shipped must be
+    // restored, not regenerated and charged again. Migrate it lazily to v2.
+    const legacy = await caches.open(LEGACY_CACHE_NAME);
+    const legacyResponse = await legacy.match(persistentRequestUrl(cacheKey, true));
+    if (!legacyResponse) return null;
+    const migrated = parsePersistentResult((await legacyResponse.json()) as Partial<MilestoneImageResult>);
+    if (migrated) await writePersistentResult(cacheKey, migrated);
+    return migrated;
   } catch {
     return null;
   }
@@ -124,8 +140,6 @@ export class HttpMilestoneImageProvider implements MilestoneImageProvider {
     const cached = await this.cached(request);
     if (cached) return cached;
 
-    // Do not share a cancellable in-flight request with a caller that supplied a
-    // signal: one story transition must never abort another caller's valid edit.
     if (!options.signal) {
       const inFlight = inFlightRequestCache.get(cacheKey);
       if (inFlight) return inFlight;
