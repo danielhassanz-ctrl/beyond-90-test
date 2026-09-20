@@ -27,6 +27,7 @@ type RequestBody = {
 const MAX_PHOTO_CHARS = 8_000_000;
 const MAX_DECODED_PHOTO_BYTES = 6_000_000;
 const MAX_GENERATED_IMAGE_CHARS = 20_000_000;
+const MAX_GENERATED_IMAGE_BYTES = 15_000_000;
 const MAX_BRIEF_FIELD_CHARS = 1_500;
 const IMAGE_TIMEOUT_MS = 55_000;
 // Pin the documented Sunburst snapshot so identity-edit behaviour cannot drift
@@ -99,6 +100,9 @@ function validPlayerPhoto(value: unknown): value is string {
 function validGeneratedPng(value: unknown): value is string {
   if (typeof value !== "string" || value.length === 0 || value.length > MAX_GENERATED_IMAGE_CHARS) return false;
   if (value.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) return false;
+  const padding = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;
+  const decodedBytes = (value.length / 4) * 3 - padding;
+  if (decodedBytes <= 0 || decodedBytes > MAX_GENERATED_IMAGE_BYTES) return false;
   // The endpoint promises a PNG data URL. Do not forward a malformed provider
   // payload into a persisted career/share card if the upstream response changes.
   return value.startsWith("iVBORw0KGgo");
@@ -196,7 +200,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       return;
     }
     if (!validGeneratedPng(image)) {
-      console.error("milestone image generation returned malformed PNG payload");
+      console.error("milestone image generation returned malformed or oversized PNG payload");
       res.status(502).json({ error: "image_generation_invalid_result" });
       return;
     }
