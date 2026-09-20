@@ -35,18 +35,60 @@ function isSafeGeneratedImageUrl(value: unknown): value is string {
 }
 
 const CLIENT_TIMEOUT_MS = 60_000;
+const PERSISTENT_CACHE_NAME = "beyond90-milestone-images-v1";
 
-/**
- * Successful edits are cached for the lifetime of the page. This is deliberately
- * memory-only: generated data URLs can be several MB and must not silently fill
- * localStorage. It also prevents a remount/re-render of the same earned milestone
- * from causing another paid provider request.
- */
+/** Fast page-lifetime cache. Persistent browser cache below survives reloads. */
 const successfulRequestCache = new Map<string, MilestoneImageResult>();
 const inFlightRequestCache = new Map<string, Promise<MilestoneImageResult>>();
 
 function requestCacheKey(request: MilestoneImageRequest): string {
   return JSON.stringify(request);
+}
+
+/** Deterministic non-cryptographic key; request/photo contents never enter the cache URL. */
+function compactCacheKey(value: string): string {
+  let a = 0x811c9dc5;
+  let b = 0x9e3779b9;
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i);
+    a ^= code;
+    a = Math.imul(a, 0x01000193) >>> 0;
+    b ^= code + i;
+    b = Math.imul(b, 0x85ebca6b) >>> 0;
+  }
+  return `${a.toString(16).padStart(8, "0")}${b.toString(16).padStart(8, "0")}`;
+}
+
+function persistentRequestUrl(cacheKey: string): string {
+  const origin = typeof location !== "undefined" ? location.origin : "https://beyond90.local";
+  return `${origin}/__b90_milestone_cache__/${compactCacheKey(cacheKey)}`;
+}
+
+async function readPersistentResult(cacheKey: string): Promise<MilestoneImageResult | null> {
+  if (typeof caches === "undefined") return null;
+  try {
+    const cache = await caches.open(PERSISTENT_CACHE_NAME);
+    const response = await cache.match(persistentRequestUrl(cacheKey));
+    if (!response) return null;
+    const data = (await response.json()) as Partial<MilestoneImageResult>;
+    if (!isSafeGeneratedImageUrl(data.imageUrl) || data.generated !== true || typeof data.provider !== "string" || !data.provider.trim()) return null;
+    return { imageUrl: data.imageUrl, provider: data.provider, generated: true };
+  } catch {
+    return null;
+  }
+}
+
+async function writePersistentResult(cacheKey: string, result: MilestoneImageResult): Promise<void> {
+  if (typeof caches === "undefined") return;
+  try {
+    const cache = await caches.open(PERSISTENT_CACHE_NAME);
+    await cache.put(
+      persistentRequestUrl(cacheKey),
+      new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } }),
+    );
+  } catch {
+    // Storage pressure/private browsing must never break the playable fallback.
+  }
 }
 
 /** Browser client. Provider credentials remain exclusively server-side. */
@@ -60,6 +102,12 @@ export class HttpMilestoneImageProvider implements MilestoneImageProvider {
     const cacheKey = requestCacheKey(request);
     const cached = successfulRequestCache.get(cacheKey);
     if (cached) return cached;
+
+    const persisted = await readPersistentResult(cacheKey);
+    if (persisted) {
+      successfulRequestCache.set(cacheKey, persisted);
+      return persisted;
+    }
 
     // Do not share a cancellable in-flight request with a caller that supplied a
     // signal: one story transition must never abort another caller's valid edit.
@@ -104,6 +152,7 @@ export class HttpMilestoneImageProvider implements MilestoneImageProvider {
 
       const result: MilestoneImageResult = { imageUrl: data.imageUrl, provider: data.provider, generated: true };
       successfulRequestCache.set(cacheKey, result);
+      await writePersistentResult(cacheKey, result);
       return result;
     };
 
