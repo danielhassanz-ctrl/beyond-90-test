@@ -19,8 +19,6 @@ function assertPrivatePhotoHeaders(captured: Captured) {
 }
 
 const validBody = {
-  // Minimal JPEG-signature payload is sufficient for endpoint-contract QA; the
-  // upstream image service is mocked below and never receives a real photo.
   playerPhoto: "data:image/jpeg;base64,/9j/AAAA",
   brief: {
     scene: "presentation",
@@ -28,17 +26,14 @@ const validBody = {
     ageRule: "Render the same person at career age 23 with gradual identity-preserving maturation.",
     clubRule: "Use club name and configured club colours only; do not reproduce uncleared protected artwork.",
     composition: "Professional football signing presentation using only rights-safe club colours.",
-    prohibited: [
-      "identity drift",
-      "different person",
-      "official crest without cleared rights",
-      "sponsor logo without cleared rights",
-      "wrong career age",
-      "unearned trophy or award",
-    ],
+    prohibited: ["identity drift", "different person", "official crest without cleared rights", "sponsor logo without cleared rights", "wrong career age", "unearned trophy or award"],
   },
   output: { width: 1024, height: 1536 },
 };
+
+// Small contract-only PNG-shaped payload. Endpoint validation intentionally checks
+// the PNG signature; image decoding/rendering belongs to the provider/browser layer.
+const validGeneratedPng = "iVBORw0KGgoAAA==";
 
 async function main() {
   const originalFetch = globalThis.fetch;
@@ -63,9 +58,10 @@ async function main() {
     assertPrivatePhotoHeaders(mislabeled);
 
     let upstreamInit: RequestInit | undefined;
+    let providerResult = validGeneratedPng;
     globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
       upstreamInit = init;
-      return new Response(JSON.stringify({ output: [{ type: "image_generation_call", result: "ZmFrZS1wbmc=" }] }), {
+      return new Response(JSON.stringify({ output: [{ type: "image_generation_call", result: providerResult }] }), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
@@ -75,7 +71,7 @@ async function main() {
     await handler({ method: "POST", body: validBody }, response(ok));
     assert.equal(ok.status, 200);
     assert.deepEqual(ok.body, {
-      imageUrl: "data:image/png;base64,ZmFrZS1wbmc=",
+      imageUrl: `data:image/png;base64,${validGeneratedPng}`,
       provider: "openai:gpt-image-2.5-sunburst-2026-09-08",
       generated: true,
     });
@@ -93,8 +89,14 @@ async function main() {
     assert.ok(serialized.includes(validBody.playerPhoto));
     assert.ok(serialized.includes("Do not add text, watermarks, sponsor marks or unofficial/official crests"));
 
-    // Browser uploads can legitimately arrive as PNG or WebP. Keep these
-    // accepted while still rejecting mislabeled payloads before paid calls.
+    providerResult = "ZmFrZS1wbmc=";
+    const malformedProviderImage: Captured = {};
+    await handler({ method: "POST", body: validBody }, response(malformedProviderImage));
+    assert.equal(malformedProviderImage.status, 502, "non-PNG provider payload must never be persisted as a milestone photo");
+    assert.deepEqual(malformedProviderImage.body, { error: "image_generation_invalid_result" });
+    assertPrivatePhotoHeaders(malformedProviderImage);
+    providerResult = validGeneratedPng;
+
     const png: Captured = {};
     await handler({ method: "POST", body: { ...validBody, playerPhoto: "data:image/png;base64,iVBORw0KGgoAAA==" } }, response(png));
     assert.equal(png.status, 200, "PNG player photos with a real PNG signature must remain supported");
