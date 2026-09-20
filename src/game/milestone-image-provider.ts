@@ -95,19 +95,23 @@ async function writePersistentResult(cacheKey: string, result: MilestoneImageRes
 export class HttpMilestoneImageProvider implements MilestoneImageProvider {
   constructor(private readonly endpoint = "/api/milestone-image") {}
 
+  /** Restore an already-paid generated scene without ever contacting the backend. */
+  async cached(request: MilestoneImageRequest): Promise<MilestoneImageResult | null> {
+    const cacheKey = requestCacheKey(request);
+    const memory = successfulRequestCache.get(cacheKey);
+    if (memory) return memory;
+    const persisted = await readPersistentResult(cacheKey);
+    if (persisted) successfulRequestCache.set(cacheKey, persisted);
+    return persisted;
+  }
+
   async generate(request: MilestoneImageRequest, options: MilestoneImageGenerateOptions = {}): Promise<MilestoneImageResult> {
     if (!request.playerPhoto) throw new MilestoneImageUnavailableError("Player photo is required for identity-preserving generation");
     if (options.signal?.aborted) throw new MilestoneImageUnavailableError("Milestone image request was cancelled");
 
     const cacheKey = requestCacheKey(request);
-    const cached = successfulRequestCache.get(cacheKey);
+    const cached = await this.cached(request);
     if (cached) return cached;
-
-    const persisted = await readPersistentResult(cacheKey);
-    if (persisted) {
-      successfulRequestCache.set(cacheKey, persisted);
-      return persisted;
-    }
 
     // Do not share a cancellable in-flight request with a caller that supplied a
     // signal: one story transition must never abort another caller's valid edit.
