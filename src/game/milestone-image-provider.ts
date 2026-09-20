@@ -35,7 +35,7 @@ function isSafeGeneratedImageUrl(value: unknown): value is string {
 }
 
 const CLIENT_TIMEOUT_MS = 60_000;
-const PERSISTENT_CACHE_NAME = "beyond90-milestone-images-v1";
+const PERSISTENT_CACHE_NAME = "beyond90-milestone-images-v2";
 
 /** Fast page-lifetime cache. Persistent browser cache below survives reloads. */
 const successfulRequestCache = new Map<string, MilestoneImageResult>();
@@ -45,18 +45,29 @@ function requestCacheKey(request: MilestoneImageRequest): string {
   return JSON.stringify(request);
 }
 
-/** Deterministic non-cryptographic key; request/photo contents never enter the cache URL. */
+/**
+ * Compact 128-bit deterministic cache id. The original request and uploaded
+ * photo never enter the synthetic Cache API URL. Four independent lanes make
+ * accidental cross-player/cross-milestone restores materially less likely
+ * than the previous 64-bit key while remaining synchronous on WebKit.
+ */
 function compactCacheKey(value: string): string {
   let a = 0x811c9dc5;
   let b = 0x9e3779b9;
+  let c = 0x85ebca6b;
+  let d = 0xc2b2ae35;
   for (let i = 0; i < value.length; i += 1) {
     const code = value.charCodeAt(i);
     a ^= code;
     a = Math.imul(a, 0x01000193) >>> 0;
     b ^= code + i;
     b = Math.imul(b, 0x85ebca6b) >>> 0;
+    c ^= code + (i << 1);
+    c = Math.imul(c, 0xc2b2ae35) >>> 0;
+    d ^= code + (i << 2);
+    d = Math.imul(d, 0x27d4eb2f) >>> 0;
   }
-  return `${a.toString(16).padStart(8, "0")}${b.toString(16).padStart(8, "0")}`;
+  return [a, b, c, d].map((lane) => lane.toString(16).padStart(8, "0")).join("");
 }
 
 function persistentRequestUrl(cacheKey: string): string {
