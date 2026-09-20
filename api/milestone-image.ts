@@ -1,6 +1,7 @@
 type ApiRequest = {
   method?: string;
   body?: unknown;
+  headers?: Record<string, string | string[] | undefined>;
 };
 
 type ApiResponse = {
@@ -30,8 +31,6 @@ const MAX_GENERATED_IMAGE_CHARS = 20_000_000;
 const MAX_GENERATED_IMAGE_BYTES = 15_000_000;
 const MAX_BRIEF_FIELD_CHARS = 1_500;
 const IMAGE_TIMEOUT_MS = 55_000;
-// Pin the documented Sunburst snapshot so identity-edit behaviour cannot drift
-// underneath an existing career when the undated alias advances.
 const IMAGE_MODEL = "gpt-image-2.5-sunburst-2026-09-08";
 const RESPONSES_MODEL = "gpt-5.6-luna";
 const ALLOWED_SCENES = new Set(["presentation", "pitch", "celebration", "farewell", "portrait"]);
@@ -44,6 +43,28 @@ const REQUIRED_PROHIBITIONS = [
   "wrong career age",
   "unearned trophy or award",
 ];
+
+function header(req: ApiRequest, name: string): string | undefined {
+  const value = req.headers?.[name] ?? req.headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+/** Block ordinary cross-site browser POSTs before they can spend image credits. */
+function crossSiteBrowserRequest(req: ApiRequest): boolean {
+  const fetchSite = header(req, "sec-fetch-site")?.toLowerCase();
+  if (fetchSite === "cross-site") return true;
+
+  const origin = header(req, "origin");
+  if (!origin) return false;
+  const host = header(req, "x-forwarded-host") ?? header(req, "host");
+  if (!host) return true;
+  const proto = header(req, "x-forwarded-proto") ?? "https";
+  try {
+    return new URL(origin).origin !== `${proto}://${host}`;
+  } catch {
+    return true;
+  }
+}
 
 function boundedText(value: unknown): value is string {
   return typeof value === "string" && value.length > 0 && value.length <= MAX_BRIEF_FIELD_CHARS;
@@ -66,16 +87,14 @@ function validBrief(value: unknown): value is GenerationBrief {
 }
 
 function validPhotoSignature(prefix: string, encoded: string): boolean {
-  // Validate the actual file signature before spending an image-generation call.
-  // This rejects arbitrary/mislabeled base64 while keeping validation cheap.
   if (prefix.includes("jpeg")) return encoded.startsWith("/9j/");
   if (prefix.includes("png")) return encoded.startsWith("iVBORw0KGgo");
   if (prefix.includes("webp")) {
     try {
-      const header = Buffer.from(encoded.slice(0, 24), "base64");
-      return header.length >= 12
-        && header.toString("ascii", 0, 4) === "RIFF"
-        && header.toString("ascii", 8, 12) === "WEBP";
+      const headerBytes = Buffer.from(encoded.slice(0, 24), "base64");
+      return headerBytes.length >= 12
+        && headerBytes.toString("ascii", 0, 4) === "RIFF"
+        && headerBytes.toString("ascii", 8, 12) === "WEBP";
     } catch {
       return false;
     }
@@ -87,14 +106,11 @@ function validPlayerPhoto(value: unknown): value is string {
   if (typeof value !== "string" || value.length > MAX_PHOTO_CHARS) return false;
   const prefix = ALLOWED_PHOTO_PREFIXES.find((candidate) => value.startsWith(candidate));
   if (!prefix) return false;
-
   const encoded = value.slice(prefix.length);
   if (!encoded || encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return false;
   const padding = encoded.endsWith("==") ? 2 : encoded.endsWith("=") ? 1 : 0;
   const decodedBytes = (encoded.length / 4) * 3 - padding;
-  return decodedBytes > 0
-    && decodedBytes <= MAX_DECODED_PHOTO_BYTES
-    && validPhotoSignature(prefix, encoded);
+  return decodedBytes > 0 && decodedBytes <= MAX_DECODED_PHOTO_BYTES && validPhotoSignature(prefix, encoded);
 }
 
 function validGeneratedPng(value: unknown): value is string {
@@ -102,10 +118,7 @@ function validGeneratedPng(value: unknown): value is string {
   if (value.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) return false;
   const padding = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;
   const decodedBytes = (value.length / 4) * 3 - padding;
-  if (decodedBytes <= 0 || decodedBytes > MAX_GENERATED_IMAGE_BYTES) return false;
-  // The endpoint promises a PNG data URL. Do not forward a malformed provider
-  // payload into a persisted career/share card if the upstream response changes.
-  return value.startsWith("iVBORw0KGgo");
+  return decodedBytes > 0 && decodedBytes <= MAX_GENERATED_IMAGE_BYTES && value.startsWith("iVBORw0KGgo");
 }
 
 function promptFor(brief: GenerationBrief): string {
@@ -122,19 +135,17 @@ function promptFor(brief: GenerationBrief): string {
   ].join("\n");
 }
 
-/**
- * Server-only Vercel-compatible endpoint. OPENAI_API_KEY must be configured in
- * the deployment environment; it is never sent to the browser.
- */
 export default async function handler(req: ApiRequest, res: ApiResponse) {
-  // Requests and responses contain the player's persisted face photo. Never let
-  // a CDN, browser intermediary or shared cache retain these personalized assets.
   res.setHeader("Cache-Control", "private, no-store, max-age=0");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("X-Content-Type-Options", "nosniff");
 
   if (req.method !== "POST") {
     res.status(405).json({ error: "method_not_allowed" });
+    return;
+  }
+  if (crossSiteBrowserRequest(req)) {
+    res.status(403).json({ error: "cross_site_generation_forbidden" });
     return;
   }
 
@@ -158,26 +169,18 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       signal: controller.signal,
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        "content-type": "application/json",
-      },
+      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
       body: JSON.stringify({
         model: RESPONSES_MODEL,
-        input: [{
-          role: "user",
-          content: [
-            { type: "input_text", text: promptFor(body.brief) },
-            { type: "input_image", image_url: body.playerPhoto, detail: "high" },
-          ],
-        }],
+        input: [{ role: "user", content: [
+          { type: "input_text", text: promptFor(body.brief) },
+          { type: "input_image", image_url: body.playerPhoto, detail: "high" },
+        ] }],
         tools: [{
           type: "image_generation",
           model: IMAGE_MODEL,
           action: "edit",
           input_fidelity: "high",
-          // Milestone images are scarce, shareable career artifacts. Prefer
-          // fidelity over throughput so face/age continuity survives the edit.
           quality: "high",
           size,
           background: "opaque",
@@ -205,11 +208,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       return;
     }
 
-    res.status(200).json({
-      imageUrl: `data:image/png;base64,${image}`,
-      provider: `openai:${IMAGE_MODEL}`,
-      generated: true,
-    });
+    res.status(200).json({ imageUrl: `data:image/png;base64,${image}`, provider: `openai:${IMAGE_MODEL}`, generated: true });
   } catch (error) {
     const timedOut = error instanceof Error && error.name === "AbortError";
     console.error("milestone image endpoint error", timedOut ? "timeout" : error);
