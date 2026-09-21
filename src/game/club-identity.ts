@@ -50,6 +50,7 @@ const BY_LABEL: Record<string, Omit<ClubVisualIdentity, "crestAsset">> = {
   Rojo: { primary: "#d71920", secondary: "#ffffff", text: "#ffffff" },
   Rojillo: { primary: "#c8102e", secondary: "#0b1f45", text: "#ffffff" },
   Franjirrojo: { primary: "#ffffff", secondary: "#d71920", text: "#111111" },
+  Franjiverde: { primary: "#ffffff", secondary: "#0b7a3e", text: "#111111" },
   "Bermellón": { primary: "#d71920", secondary: "#111111", text: "#ffffff" },
   Pepinero: { primary: "#ffffff", secondary: "#1769aa", text: "#111111" },
   Violeta: { primary: "#6f2c91", secondary: "#ffffff", text: "#ffffff" },
@@ -59,6 +60,9 @@ const BY_LABEL: Record<string, Omit<ClubVisualIdentity, "crestAsset">> = {
   Neroazzurro: { primary: "#00529f", secondary: "#111111", text: "#ffffff" },
   Granate: { primary: "#8e1f2f", secondary: "#f0bc42", text: "#ffffff" },
   Azulnegro: { primary: "#1769aa", secondary: "#111111", text: "#ffffff" },
+  Granota: { primary: "#6f2c91", secondary: "#c8102e", text: "#ffffff" },
+  Armero: { primary: "#1769aa", secondary: "#d71920", text: "#ffffff" },
+  Arlequinado: { primary: "#1769aa", secondary: "#ffffff", text: "#ffffff" },
 };
 
 const FALLBACK = { primary: "#17181c", secondary: "#d4af37", text: "#ffffff" };
