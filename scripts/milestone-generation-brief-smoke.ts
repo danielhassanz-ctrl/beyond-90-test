@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { clubVisualIdentity, hasReadablePrimary } from "../src/game/club-identity";
+import { clubVisualIdentity, hasExactClubVisualIdentity, hasReadablePrimary } from "../src/game/club-identity";
 import { CLUB_POOL, EURO_POOL } from "../src/game/clubs";
 import { milestoneGenerationBrief, milestoneVisualSpec, playerVisualProfile } from "../src/game/milestone-visual";
 import type { ShareData } from "../src/game/types";
@@ -13,10 +13,11 @@ function assertRightsSafe(text: string): void {
   assert.doesNotMatch(text, /sponsor(?:ship)? (?:logo|mark)/i);
 }
 
-// Every club the career engine can surface must remain safe and readable in
-// milestone/share UI. This catches newly-added clubs before they can ship with
-// an invalid colour surface or an accidentally bundled crest asset.
+// Every club the career engine can surface must have a reviewed id-specific
+// palette. Nickname/fallback colours remain defensive only and must never hide
+// a missing playable-club mapping in milestone/share UI.
 for (const club of [...CLUB_POOL, ...EURO_POOL]) {
+  assert.ok(hasExactClubVisualIdentity(club.id), `${club.id}: missing exact milestone palette`);
   const visual = clubVisualIdentity(club.id);
   assert.match(visual.primary, /^#[0-9a-f]{6}$/i, `${club.id}: invalid primary colour`);
   assert.match(visual.secondary, /^#[0-9a-f]{6}$/i, `${club.id}: invalid secondary colour`);
