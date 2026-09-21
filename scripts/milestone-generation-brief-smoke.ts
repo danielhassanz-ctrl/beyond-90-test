@@ -38,6 +38,10 @@ assert.ok(signingBrief.prohibited.includes("identity drift"));
 assert.match(signingBrief.identityRule, /persisted uploaded player photo/i);
 assertRightsSafe(signingBrief.composition);
 
+const presentationSigning = milestoneVisualSpec(share("Presentación en el Real Betis"));
+assert.equal(presentationSigning.kind, "signing");
+assert.equal(presentationSigning.scene, "presentation");
+
 const debut = milestoneVisualSpec(share("Debut con el primer equipo"));
 const debutBrief = milestoneGenerationBrief(debut, playerVisualProfile(18), "Real Betis", identity);
 assert.equal(debut.scene, "pitch");
@@ -60,6 +64,14 @@ assert.equal(ligamentInjury.scene, "portrait");
 // Regression: broad `/fich/` matching treated medical/technical records as a
 // transfer and could generate a fake signing presentation after an injury.
 for (const headline of ["Ficha médica tras la lesión", "Actualizamos tu ficha técnica"]) {
+  const ordinaryCard = milestoneVisualSpec(share(headline));
+  assert.equal(ordinaryCard.kind, "career", headline);
+  assert.equal(ordinaryCard.scene, "portrait", headline);
+}
+
+// Regression: a bare `presentación` is not proof of a transfer. Press, sponsor
+// and medical presentations must not trigger a paid/generated signing image.
+for (const headline of ["Presentación ante la prensa", "Presentación de la nueva campaña", "Presentación médica de pretemporada"]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
   assert.equal(ordinaryCard.scene, "portrait", headline);
