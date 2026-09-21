@@ -30,9 +30,11 @@ for (const club of [...CLUB_POOL, ...EURO_POOL]) {
   if (![identity.primary, identity.secondary, identity.text].every((value) => hex.test(value))) {
     invalid.push(`${club.id}: invalid six-digit hex palette`);
   } else {
-    const bestTextContrast = Math.max(contrast(identity.text, identity.primary), contrast(identity.text, identity.secondary));
-    if (bestTextContrast < 4.5) {
-      invalid.push(`${club.id}: text colour has no WCAG AA contrast surface (${bestTextContrast.toFixed(2)}:1)`);
+    // The primary colour is the guaranteed text surface in milestone/share UI.
+    // A readable secondary colour must not hide an unreadable primary surface.
+    const primaryTextContrast = contrast(identity.text, identity.primary);
+    if (primaryTextContrast < 4.5) {
+      invalid.push(`${club.id}: text/primary fails WCAG AA contrast (${primaryTextContrast.toFixed(2)}:1)`);
     }
   }
   if (identity.primary.toLowerCase() === identity.secondary.toLowerCase()) {
@@ -48,4 +50,4 @@ if (invalid.length) {
   throw new Error(`Invalid milestone club visual data: ${invalid.join(", ")}`);
 }
 
-console.log(`club visual palette smoke: ${CLUB_POOL.length + EURO_POOL.length} clubs covered with valid, readable distinct palettes and no crest assets`);
+console.log(`club visual palette smoke: ${CLUB_POOL.length + EURO_POOL.length} clubs covered with valid, primary-readable distinct palettes and no crest assets`);
