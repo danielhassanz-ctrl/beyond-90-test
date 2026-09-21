@@ -57,6 +57,7 @@ const EXACT: Record<string, Omit<ClubVisualIdentity, "crestAsset">> = {
   tenerife: { primary: "#ffffff", secondary: "#1769aa", text: "#111111" },
   cartagena: { primary: "#ffffff", secondary: "#111111", text: "#111111" },
   sabadell: { primary: "#1769aa", secondary: "#ffffff", text: "#ffffff" },
+  andorra: { primary: "#1769aa", secondary: "#f2c94c", text: "#ffffff" },
 
   // European opponents need exact palettes: nickname-level fallbacks can be
   // semantically correct yet visually wrong (for example PSG as Azulgrana).
@@ -101,6 +102,7 @@ const BY_LABEL: Record<string, Omit<ClubVisualIdentity, "crestAsset">> = {
   Granota: { primary: "#6f2c91", secondary: "#c8102e", text: "#ffffff" },
   Armero: { primary: "#1769aa", secondary: "#d71920", text: "#ffffff" },
   Arlequinado: { primary: "#1769aa", secondary: "#ffffff", text: "#ffffff" },
+  Tricolor: { primary: "#1769aa", secondary: "#f2c94c", text: "#ffffff" },
 };
 
 const FALLBACK = { primary: "#17181c", secondary: "#d4af37", text: "#ffffff" };
