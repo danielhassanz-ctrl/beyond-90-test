@@ -80,10 +80,12 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   if (/\b(?:balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa)\b/.test(haystack)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
-  // Signing art needs an actual transfer/signing token. Broad `/fich/` used to
-  // misclassify ordinary text such as `ficha medica` as a club presentation.
-  const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|presentacion|cambio de club)\b/.test(haystack) && !excludedSigningContext;
+  // Signing art needs an actual transfer/signing token. A bare `presentacion`
+  // is too broad (press, medical and sponsor presentations are ordinary cards),
+  // so presentation-only wording must explicitly carry club/signing context.
+  const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext;
+  const clubPresentation = /\bpresentacion\b.{0,36}\b(?:con|en|como nuevo jugador|nuevo club)\b/.test(haystack) && !excludedSigningContext;
   const signedForClub = /\bfirma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext;
-  if (explicitClubMove || signedForClub) return { kind: "signing", label: "Nuevo capítulo", scene: "presentation" };
+  if (explicitClubMove || clubPresentation || signedForClub) return { kind: "signing", label: "Nuevo capítulo", scene: "presentation" };
   return { kind: "career", label: "Mi carrera", scene: "portrait" };
 }
