@@ -17,6 +17,7 @@
     "qa:persistent-cast": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/persistent-cast-smoke.ts",
     "qa:opening": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/opening-flow-smoke.ts",
     "qa:visual-age": "node --import tsx scripts/visual-age-share-smoke.ts",
+    "qa:club-visual-palettes": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/club-visual-palette-smoke.ts",
     "qa:milestone-brief": "node --import tsx scripts/milestone-generation-brief-smoke.ts",
     "qa:milestone-image-provider": "node --import tsx scripts/milestone-image-provider-smoke.ts",
     "qa:milestone-image-cancellation": "node --import tsx scripts/milestone-image-cancellation-smoke.ts",
@@ -75,7 +76,8 @@
     "tailwindcss": "^4.2.1",
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",
-    "vite-tsconfig-paths": "^6.0.2",
+    "vite": "^8.2.0",
+    "vite-plugin-singlefile": "2.3.3",
     "zod": "^3.24.2"
   },
   "devDependencies": {
