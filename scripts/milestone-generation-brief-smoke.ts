@@ -51,6 +51,12 @@ assert.equal(trophy.scene, "celebration");
 assert.match(trophyBrief.composition, /emotional celebration/i);
 assertRightsSafe(trophyBrief.composition);
 
+// Regression: substring matching used to treat `ligamento` as `liga`, which
+// could turn a serious injury into a generated trophy celebration.
+const ligamentInjury = milestoneVisualSpec(share("Lesión de ligamento: seis meses fuera"));
+assert.equal(ligamentInjury.kind, "career");
+assert.equal(ligamentInjury.scene, "portrait");
+
 const retirement = milestoneVisualSpec(share("Despedida: fin de carrera"));
 const retirementBrief = milestoneGenerationBrief(retirement, playerVisualProfile(38), "Real Betis", identity);
 assert.equal(retirement.scene, "farewell");
