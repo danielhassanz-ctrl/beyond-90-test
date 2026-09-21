@@ -13,9 +13,6 @@ function assertRightsSafe(text: string): void {
   assert.doesNotMatch(text, /sponsor(?:ship)? (?:logo|mark)/i);
 }
 
-// Every club the career engine can surface must have a reviewed id-specific
-// palette. Nickname/fallback colours remain defensive only and must never hide
-// a missing playable-club mapping in milestone/share UI.
 for (const club of [...CLUB_POOL, ...EURO_POOL]) {
   assert.ok(hasExactClubVisualIdentity(club.id), `${club.id}: missing exact milestone palette`);
   const visual = clubVisualIdentity(club.id);
@@ -55,22 +52,16 @@ assert.equal(trophy.scene, "celebration");
 assert.match(trophyBrief.composition, /emotional celebration/i);
 assertRightsSafe(trophyBrief.composition);
 
-// Regression: substring matching used to treat `ligamento` as `liga`, which
-// could turn a serious injury into a generated trophy celebration.
 const ligamentInjury = milestoneVisualSpec(share("Lesión de ligamento: seis meses fuera"));
 assert.equal(ligamentInjury.kind, "career");
 assert.equal(ligamentInjury.scene, "portrait");
 
-// Regression: broad `/fich/` matching treated medical/technical records as a
-// transfer and could generate a fake signing presentation after an injury.
 for (const headline of ["Ficha médica tras la lesión", "Actualizamos tu ficha técnica"]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
   assert.equal(ordinaryCard.scene, "portrait", headline);
 }
 
-// Regression: a bare `presentación` is not proof of a transfer. Press, sponsor
-// and medical presentations must not trigger a paid/generated signing image.
 for (const headline of ["Presentación ante la prensa", "Presentación de la nueva campaña", "Presentación médica de pretemporada"]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
@@ -84,6 +75,26 @@ assert.match(retirementBrief.composition, /stadium goodbye/i);
 assert.match(retirementBrief.ageRule, /career age 38/i);
 assert.match(retirementBrief.ageRule, /identity-preserving/i);
 assertRightsSafe(retirementBrief.composition);
+
+// Regression: `retirada` is common outside career retirement. These cards must
+// stay ordinary portraits so we never spend a generated farewell on an injury,
+// cash action or transfer-market withdrawal.
+for (const headline of [
+  "Retirada por lesión en el minuto 32",
+  "Retirada de efectivo para la entrada de la casa",
+  "El club confirma la retirada de la oferta de fichaje",
+  "Retirada del mercado de traspasos",
+]) {
+  const ordinaryCard = milestoneVisualSpec(share(headline));
+  assert.equal(ordinaryCard.kind, "career", headline);
+  assert.equal(ordinaryCard.scene, "portrait", headline);
+}
+
+for (const headline of ["Anuncias tu retirada", "Te retiras del fútbol", "Cuelgas las botas"]) {
+  const farewell = milestoneVisualSpec(share(headline));
+  assert.equal(farewell.kind, "retirement", headline);
+  assert.equal(farewell.scene, "farewell", headline);
+}
 
 for (const brief of [signingBrief, debutBrief, trophyBrief, retirementBrief]) {
   assert.match(brief.clubRule, /Do not invent or reproduce an official crest/i);
