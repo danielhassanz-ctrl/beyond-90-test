@@ -74,21 +74,24 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   // Farewell imagery is expensive and emotionally specific. Do not let generic
-  // uses of `retirada` (injury withdrawal, cash withdrawal, transfer-market
-  // withdrawal) masquerade as the end of the player's career.
+  // uses of `retirada` masquerade as the end of the player's career.
   const nonCareerRetirement = /\b(?:lesion|lesionado|medico|hospital|dinero|efectivo|cajero|mercado|oferta|fichaje|traspaso)\b/.test(haystack);
   const explicitFarewell = /\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas)\b/.test(haystack);
   const explicitRetirement = /\b(?:retirada|retiro|retirarse|se retira)\b/.test(haystack) && !nonCareerRetirement;
   if (explicitFarewell || explicitRetirement) return { kind: "retirement", label: "Despedida", scene: "farewell" };
-  if (/\b(?:debut|primer partido|estreno)\b/.test(haystack)) return { kind: "debut", label: "Debut", scene: "pitch" };
+
+  // `estreno` is ambiguous in Spanish: a player can estreno a boot, campaign,
+  // advert or house. Only explicit football debuts, or estreno wording carrying
+  // match/team context, deserve a generated pitch image.
+  const explicitDebut = /\bdebut\b/.test(haystack) || /\bprimer partido\b/.test(haystack);
+  const footballEstreno = /\bestreno\b/.test(haystack) && /\b(?:equipo|primer equipo|partido|liga|copa|champions|seleccion|titular|campo|cesped)\b/.test(haystack);
+  if (explicitDebut || footballEstreno) return { kind: "debut", label: "Debut", scene: "pitch" };
+
   // Keep trophy words token-bound. In particular, `liga` must never match
   // `ligamento` in an injury card and accidentally produce celebration art.
   if (/\b(?:balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa)\b/.test(haystack)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
-  // Signing art needs an actual transfer/signing token. A bare `presentacion`
-  // is too broad (press, medical and sponsor presentations are ordinary cards),
-  // so presentation-only wording must explicitly carry club/signing context.
   const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext;
   const clubPresentation = /\bpresentacion\b.{0,36}\b(?:con|en|como nuevo jugador|nuevo club)\b/.test(haystack) && !excludedSigningContext;
   const signedForClub = /\bfirma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext;
