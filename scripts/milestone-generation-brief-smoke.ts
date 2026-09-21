@@ -57,6 +57,14 @@ const ligamentInjury = milestoneVisualSpec(share("Lesión de ligamento: seis mes
 assert.equal(ligamentInjury.kind, "career");
 assert.equal(ligamentInjury.scene, "portrait");
 
+// Regression: broad `/fich/` matching treated medical/technical records as a
+// transfer and could generate a fake signing presentation after an injury.
+for (const headline of ["Ficha médica tras la lesión", "Actualizamos tu ficha técnica"]) {
+  const ordinaryCard = milestoneVisualSpec(share(headline));
+  assert.equal(ordinaryCard.kind, "career", headline);
+  assert.equal(ordinaryCard.scene, "portrait", headline);
+}
+
 const retirement = milestoneVisualSpec(share("Despedida: fin de carrera"));
 const retirementBrief = milestoneGenerationBrief(retirement, playerVisualProfile(38), "Real Betis", identity);
 assert.equal(retirement.scene, "farewell");
