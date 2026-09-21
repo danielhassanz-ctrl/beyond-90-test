@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { clubVisualIdentity } from "../src/game/club-identity";
+import { clubVisualIdentity, hasReadablePrimary } from "../src/game/club-identity";
+import { CLUB_POOL, EURO_POOL } from "../src/game/clubs";
 import { milestoneGenerationBrief, milestoneVisualSpec, playerVisualProfile } from "../src/game/milestone-visual";
 import type { ShareData } from "../src/game/types";
 
@@ -10,6 +11,18 @@ function share(headline: string): ShareData {
 function assertRightsSafe(text: string): void {
   assert.doesNotMatch(text, /official (?:club )?(?:crest|badge|logo)/i);
   assert.doesNotMatch(text, /sponsor(?:ship)? (?:logo|mark)/i);
+}
+
+// Every club the career engine can surface must remain safe and readable in
+// milestone/share UI. This catches newly-added clubs before they can ship with
+// an invalid colour surface or an accidentally bundled crest asset.
+for (const club of [...CLUB_POOL, ...EURO_POOL]) {
+  const visual = clubVisualIdentity(club.id);
+  assert.match(visual.primary, /^#[0-9a-f]{6}$/i, `${club.id}: invalid primary colour`);
+  assert.match(visual.secondary, /^#[0-9a-f]{6}$/i, `${club.id}: invalid secondary colour`);
+  assert.match(visual.text, /^#[0-9a-f]{6}$/i, `${club.id}: invalid text colour`);
+  assert.equal(visual.crestAsset, null, `${club.id}: official crest assets are not rights-cleared`);
+  assert.ok(hasReadablePrimary(visual), `${club.id}: milestone primary surface is not readable`);
 }
 
 const identity = clubVisualIdentity("betis");
