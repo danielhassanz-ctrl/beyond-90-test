@@ -79,9 +79,11 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   // `ligamento` in an injury card and accidentally produce celebration art.
   if (/\b(?:balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa)\b/.test(haystack)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
-  const excludedSigningContext = /renov|patrocin|sponsor|marca|adidas|nike|puma/.test(haystack);
-  const explicitClubMove = /fich|traspas|nuevo club|presentacion|cambio de club/.test(haystack);
-  const signedForClub = /firma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext;
+  const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
+  // Signing art needs an actual transfer/signing token. Broad `/fich/` used to
+  // misclassify ordinary text such as `ficha medica` as a club presentation.
+  const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|presentacion|cambio de club)\b/.test(haystack) && !excludedSigningContext;
+  const signedForClub = /\bfirma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext;
   if (explicitClubMove || signedForClub) return { kind: "signing", label: "Nuevo capítulo", scene: "presentation" };
   return { kind: "career", label: "Mi carrera", scene: "portrait" };
 }
