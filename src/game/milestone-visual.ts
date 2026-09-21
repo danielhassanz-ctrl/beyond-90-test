@@ -74,8 +74,10 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   if (/retir|despedida|ultimo partido|fin de carrera/.test(haystack)) return { kind: "retirement", label: "Despedida", scene: "farewell" };
-  if (/debut|primer partido|estreno/.test(haystack)) return { kind: "debut", label: "Debut", scene: "pitch" };
-  if (/balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa/.test(haystack)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
+  if (/\b(?:debut|primer partido|estreno)\b/.test(haystack)) return { kind: "debut", label: "Debut", scene: "pitch" };
+  // Keep trophy words token-bound. In particular, `liga` must never match
+  // `ligamento` in an injury card and accidentally produce celebration art.
+  if (/\b(?:balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa)\b/.test(haystack)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /renov|patrocin|sponsor|marca|adidas|nike|puma/.test(haystack);
   const explicitClubMove = /fich|traspas|nuevo club|presentacion|cambio de club/.test(haystack);
