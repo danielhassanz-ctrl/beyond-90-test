@@ -30,6 +30,17 @@ const EXACT: Record<string, Omit<ClubVisualIdentity, "crestAsset">> = {
   malaga: { primary: "#66b5e3", secondary: "#ffffff", text: "#10243e" },
   zaragoza: { primary: "#ffffff", secondary: "#1c5aa6", text: "#111111" },
   deportivo: { primary: "#1769aa", secondary: "#ffffff", text: "#ffffff" },
+
+  // European opponents need exact palettes: nickname-level fallbacks can be
+  // semantically correct yet visually wrong (for example PSG as Azulgrana).
+  "eu-ajax": { primary: "#ffffff", secondary: "#d2122e", text: "#111111" },
+  "eu-benfica": { primary: "#d00027", secondary: "#ffffff", text: "#ffffff" },
+  "eu-inter": { primary: "#00529f", secondary: "#111111", text: "#ffffff" },
+  "eu-bayern": { primary: "#c8102e", secondary: "#ffffff", text: "#ffffff" },
+  "eu-psg": { primary: "#001e62", secondary: "#d71920", text: "#ffffff" },
+  "eu-city": { primary: "#8ac3e8", secondary: "#ffffff", text: "#10243e" },
+  "eu-roma": { primary: "#8e1f2f", secondary: "#f0bc42", text: "#ffffff" },
+  "eu-brujas": { primary: "#00529f", secondary: "#111111", text: "#ffffff" },
 };
 
 const BY_LABEL: Record<string, Omit<ClubVisualIdentity, "crestAsset">> = {
