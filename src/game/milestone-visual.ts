@@ -73,7 +73,13 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const haystack = `${share.headline} ${share.kicker} ${share.lines.map((line) => `${line.label} ${line.value}`).join(" ")}`
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-  if (/retir|despedida|ultimo partido|fin de carrera/.test(haystack)) return { kind: "retirement", label: "Despedida", scene: "farewell" };
+  // Farewell imagery is expensive and emotionally specific. Do not let generic
+  // uses of `retirada` (injury withdrawal, cash withdrawal, transfer-market
+  // withdrawal) masquerade as the end of the player's career.
+  const nonCareerRetirement = /\b(?:lesion|lesionado|medico|hospital|dinero|efectivo|cajero|mercado|oferta|fichaje|traspaso)\b/.test(haystack);
+  const explicitFarewell = /\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas)\b/.test(haystack);
+  const explicitRetirement = /\b(?:retirada|retiro|retirarse|se retira)\b/.test(haystack) && !nonCareerRetirement;
+  if (explicitFarewell || explicitRetirement) return { kind: "retirement", label: "Despedida", scene: "farewell" };
   if (/\b(?:debut|primer partido|estreno)\b/.test(haystack)) return { kind: "debut", label: "Debut", scene: "pitch" };
   // Keep trophy words token-bound. In particular, `liga` must never match
   // `ligamento` in an injury card and accidentally produce celebration art.
