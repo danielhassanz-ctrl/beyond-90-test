@@ -78,13 +78,12 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   if ((explicitDebut || footballEstreno) && (!youthDebutContext || seniorDebutContext)) return { kind: "debut", label: "Debut", scene: "pitch" };
 
   const namedAward = /\b(?:balon de oro|the best|bota de oro|golden boy)\b/;
-  const awardWon = (namedAward.test(haystack) && /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|recibes?|recibe|levantas?|levanta|te coronas|premiado|galardonado)\b/.test(haystack)) ||
-    /\b(?:ganador|ganadora|vencedor|vencedora)\b.{0,36}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack);
+  const awardNearMiss = /\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b.{0,48}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) ||
+    /\b(?:balon de oro|the best|bota de oro|golden boy)\b.{0,48}\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b/.test(haystack);
+  const awardWon = !awardNearMiss && ((namedAward.test(haystack) && /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|recibes?|recibe|levantas?|levanta|te coronas|premiado|galardonado)\b/.test(haystack)) ||
+    /\b(?:ganador|ganadora|vencedor|vencedora)\b.{0,36}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack));
   const negatedAchievement = /\b(?:sin|ningun|ninguna|no (?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|recibes?|recibe))\b.{0,32}\b(?:titulo|trofeo|campeon|copa|liga|champions|mundial|eurocopa|europa league|balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) ||
     /\b(?:pierdes?|pierde|perdemos|eliminado|eliminada|subcampeon|subcampeona)\b.{0,32}\b(?:final|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
-  // Goals, promises and hypothetical futures can contain both "campeón" and a
-  // competition name. They are story beats, not earned achievements, so they
-  // must never trigger a paid/generated celebration image.
   const aspirationalAchievement = /\b(?:objetivo|meta|sueno|suenas|aspiras?|aspiracion|quieres?|esperas?|prometes?|reto)\b.{0,48}\b(?:ser|ganar|conquistar|levantar|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
   const genericAchievement = /\b(?:campeon(?:es|a|as)?|titulo|trofeo)\b/.test(haystack) && !negatedAchievement && !aspirationalAchievement;
   const competition = /\b(?:copa|liga|champions|mundial|eurocopa|europa league)\b/;
