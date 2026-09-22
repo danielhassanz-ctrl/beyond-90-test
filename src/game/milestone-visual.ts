@@ -35,13 +35,6 @@ export function playerVisualProfile(age: number): PlayerVisualProfile {
   return { age: safeAge, stage: "legacy", ageDirection: "late-career footballer; natural ageing; experienced appearance; preserve recognisable identity" };
 }
 
-/**
- * Backend-ready brief for future generated milestone photography. It is data,
- * not a claim that generation happened. The uploaded photo remains the sole
- * identity reference and age changes must never replace the player's identity.
- * A configured club palette may be supplied so a future backend can reproduce
- * the game's rights-safe visual identity without inventing protected artwork.
- */
 export function milestoneGenerationBrief(
   milestone: MilestoneVisualSpec,
   visual: PlayerVisualProfile,
@@ -73,22 +66,20 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const haystack = `${share.headline} ${share.kicker} ${share.lines.map((line) => `${line.label} ${line.value}`).join(" ")}`
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-  // Farewell imagery is expensive and emotionally specific. Do not let generic
-  // uses of `retirada` masquerade as the end of the player's career.
   const nonCareerRetirement = /\b(?:lesion|lesionado|medico|hospital|dinero|efectivo|cajero|mercado|oferta|fichaje|traspaso)\b/.test(haystack);
   const explicitFarewell = /\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas)\b/.test(haystack);
   const explicitRetirement = /\b(?:retirada|retiro|retirarse|se retira)\b/.test(haystack) && !nonCareerRetirement;
   if (explicitFarewell || explicitRetirement) return { kind: "retirement", label: "Despedida", scene: "farewell" };
 
-  // `estreno` is ambiguous in Spanish: a player can estreno a boot, campaign,
-  // advert or house. Only explicit football debuts, or estreno wording carrying
-  // match/team context, deserve a generated pitch image.
+  // A youth/reserve debut is a legitimate story beat but not the expensive,
+  // share-worthy first-team debut milestone. Require explicit senior context or
+  // an unqualified debut; suppress academy/B-team debuts.
+  const youthDebutContext = /\b(?:juvenil|cantera|filial|equipo b|sub[- ]?(?:17|18|19|20|21|23)|youth|academy|reserva)\b/.test(haystack);
+  const seniorDebutContext = /\b(?:primer equipo|senior|profesional|primera division|segunda division|liga|copa|champions|europa league|seleccion absoluta)\b/.test(haystack);
   const explicitDebut = /\bdebut\b/.test(haystack) || /\bprimer partido\b/.test(haystack);
   const footballEstreno = /\bestreno\b/.test(haystack) && /\b(?:equipo|primer equipo|partido|liga|copa|champions|seleccion|titular|campo|cesped)\b/.test(haystack);
-  if (explicitDebut || footballEstreno) return { kind: "debut", label: "Debut", scene: "pitch" };
+  if ((explicitDebut || footballEstreno) && (!youthDebutContext || seniorDebutContext)) return { kind: "debut", label: "Debut", scene: "pitch" };
 
-  // Keep trophy words token-bound. In particular, `liga` must never match
-  // `ligamento` in an injury card and accidentally produce celebration art.
   if (/\b(?:balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa)\b/.test(haystack)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
