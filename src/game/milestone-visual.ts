@@ -80,7 +80,15 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const footballEstreno = /\bestreno\b/.test(haystack) && /\b(?:equipo|primer equipo|partido|liga|copa|champions|seleccion|titular|campo|cesped)\b/.test(haystack);
   if ((explicitDebut || footballEstreno) && (!youthDebutContext || seniorDebutContext)) return { kind: "debut", label: "Debut", scene: "pitch" };
 
-  if (/\b(?:balon de oro|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa)\b/.test(haystack)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
+  // Competition names appear constantly in ordinary fixtures and previews. Only
+  // spend a celebration image when the copy actually says the player/team won
+  // or lifted the competition, or names an explicit award/title milestone.
+  const explicitAward = /\b(?:balon de oro|campeon(?:es|a|as)?|titulo|trofeo)\b/.test(haystack);
+  const competition = /\b(?:copa|liga|champions|mundial|eurocopa|europa league)\b/;
+  const achievementVerb = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|celebras?|celebra|coronas?|corona)\b/;
+  const competitionWon = (achievementVerb.test(haystack) && competition.test(haystack)) ||
+    /\b(?:copa|liga|champions|mundial|eurocopa|europa league)\b.{0,32}\b(?:ganada|conquistada|levantada|campeon)\b/.test(haystack);
+  if (explicitAward || competitionWon) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
   const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext;
