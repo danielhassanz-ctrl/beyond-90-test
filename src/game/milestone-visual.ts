@@ -87,11 +87,9 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const aspirationalAchievement = /\b(?:objetivo|meta|sueno|suenas|aspiras?|aspiracion|quieres?|esperas?|prometes?|reto)\b.{0,48}\b(?:ser|ganar|conquistar|levantar|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(haystack) ||
     /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(haystack);
-  const nonTitleChampionLabel = /\bcampeon(?:es|a|as)?\s+(?:(?:de|del)\s+)?(?:(?:torneo|trofeo)\s+(?:de\s+)?)?(?:invierno|pretemporada|amistoso|amistosa|amistosos|amistosas|moral)\b/.test(haystack);
+  const nonTitleChampionLabel = /\bcampeon(?:es|a|as)?\s+(?:(?:de|del)\s+)?(?:(?:torneo|trofeo)\s+(?:de\s+)?)?(?:invierno|verano|veraniego|veraniega|pretemporada|amistoso|amistosa|amistosos|amistosas|moral)\b/.test(haystack);
   const genericAchievement = /\b(?:campeon(?:es|a|as)?|titulo|trofeo)\b/.test(haystack) && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !nonTitleChampionLabel;
   const competitionName = "(?:copa|liga|champions|mundial|eurocopa|europa league)";
-  // A normal match win in a competition is not a trophy. Require language that
-  // explicitly says the competition itself was won/conquered/lifted.
   const explicitCompetitionWin = new RegExp(`\\b(?:ganas?|gana|ganamos|ganan)\\s+(?:la|el)\\s+${competitionName}\\b`).test(haystack);
   const strongCompetitionAchievement = new RegExp(`\\b(?:conquistas?|conquista|levantas?|levanta|alz(?:as|a)|coronas?|corona)\\b.{0,32}\\b${competitionName}\\b`).test(haystack) ||
     new RegExp(`\\b${competitionName}\\b.{0,32}\\b(?:ganada|conquistada|levantada|campeon)\\b`).test(haystack);
