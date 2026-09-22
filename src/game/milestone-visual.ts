@@ -87,7 +87,8 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const aspirationalAchievement = /\b(?:objetivo|meta|sueno|suenas|aspiras?|aspiracion|quieres?|esperas?|prometes?|reto)\b.{0,48}\b(?:ser|ganar|conquistar|levantar|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(haystack) ||
     /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(haystack);
-  const nonTitleChampionLabel = /\bcampeon(?:es|a|as)?\s+(?:(?:de|del)\s+)?(?:(?:torneo|trofeo)\s+(?:de\s+)?)?(?:invierno|verano|veraniego|veraniega|pretemporada|amistoso|amistosa|amistosos|amistosas|moral)\b/.test(haystack);
+  const nonTitleChampionLabel = /\bcampeon(?:es|a|as)?\s+(?:(?:de|del)\s+)?(?:(?:torneo|trofeo)\s+(?:de\s+)?)?(?:invierno|verano|veraniego|veraniega|pretemporada|amistoso|amistosa|amistosos|amistosas|moral)\b/.test(haystack) ||
+    /\bcampeon(?:es|a|as)?\s+(?:(?:de|del|de la|de los|de las)\s+)(?:vestuario|aficion|prensa|redes|mercado|entrenamiento|pretemporada)\b/.test(haystack);
   // Bare mentions of a title/trophy are not achievements. Require either an explicit
   // champion label or a win verb so ordinary story cards cannot trigger paid imagery.
   const championAchievement = /\bcampeon(?:es|a|as)?\b/.test(haystack) && !nonTitleChampionLabel;
