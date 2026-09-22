@@ -1044,7 +1044,7 @@ ${COMMON_RULES}
  * sobre media-40), escalada para que una carrera Pro completa (~200
  * semanas) acumule un patrimonio alto pero no absurdo.
  */
-function weeklySalary(media: number): number {
+export function weeklySalary(media: number): number {
   return Math.round(Math.max(150, Math.max(0, media - 40) ** 2 * 8) / 10) * 10;
 }
 

@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { seasonLabel } from "@/types/career";
 import { BottomNav } from "@/components/BottomNav";
+import { weeklySalary } from "@/lib/narrative/engine";
+import { NO_CLUB_YET } from "@/lib/constants";
 
 /**
  * Nivel de "presión financiera" — inspirado en el prototipo de
@@ -106,6 +108,12 @@ export default async function PatrimonioPage() {
           <p className="mt-1 font-cond text-xs uppercase tracking-[0.16em] text-muted-foreground">
             {player.club} · {player.agent_name ?? "sin representante"}
           </p>
+          {player.club !== NO_CLUB_YET && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Cobras tu sueldo cada semana sin que tengas que hacer nada — ahora mismo, unos{" "}
+              <span className="text-gold">{weeklySalary(player.media).toLocaleString("es")} €</span> por semana según tu nivel.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2 rounded-2xl border border-panel-border bg-surface p-4">
