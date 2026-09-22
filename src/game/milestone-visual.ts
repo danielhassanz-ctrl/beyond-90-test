@@ -72,10 +72,15 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   if (explicitFarewell || explicitRetirement) return { kind: "retirement", label: "Despedida", scene: "farewell" };
 
   const youthDebutContext = /\b(?:juvenil|cantera|filial|equipo b|sub[- ]?(?:17|18|19|20|21|23)|youth|academy|reserva)\b/.test(haystack);
-  const seniorDebutContext = /\b(?:primer equipo|senior|profesional|primera division|segunda division|liga|copa|champions|europa league|seleccion absoluta)\b/.test(haystack);
+  // Competition names alone must never upgrade an academy/reserve appearance into a
+  // paid/generated senior-debut milestone. Explicit senior/pro identity can override
+  // youth wording only when the copy genuinely says the player reached that level.
+  const explicitSeniorIdentity = /\b(?:primer equipo|senior|profesional|primera division|segunda division|seleccion absoluta)\b/.test(haystack);
+  const seniorCompetition = /\b(?:liga|copa|champions|europa league)\b/.test(haystack);
+  const seniorDebutContext = explicitSeniorIdentity || (!youthDebutContext && seniorCompetition);
   const explicitDebut = /\bdebut\b/.test(haystack) || /\bprimer partido\b/.test(haystack);
   const footballEstreno = /\bestreno\b/.test(haystack) && /\b(?:equipo|primer equipo|partido|liga|copa|champions|seleccion|titular|campo|cesped)\b/.test(haystack);
-  if ((explicitDebut || footballEstreno) && (!youthDebutContext || seniorDebutContext)) return { kind: "debut", label: "Debut", scene: "pitch" };
+  if ((explicitDebut || footballEstreno) && seniorDebutContext) return { kind: "debut", label: "Debut", scene: "pitch" };
 
   const namedAward = /\b(?:balon de oro|the best|bota de oro|golden boy)\b/;
   const awardNearMiss = /\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b.{0,48}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) ||
@@ -88,9 +93,6 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(haystack) ||
     /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(haystack);
   const championCompetition = "(?:liga|copa(?: del rey)?|champions|mundial|eurocopa|europa league|supercopa)";
-  // A bare "campeón" is too ambiguous for a paid/generated milestone: story copy can
-  // call someone champion of the dressing room, patience, social media, etc. Require
-  // a recognised football competition next to the champion label.
   const championAchievement = new RegExp(`\\bcampeon(?:es|a|as)?\\b.{0,24}\\b${championCompetition}\\b`).test(haystack) ||
     new RegExp(`\\b${championCompetition}\\b.{0,24}\\bcampeon(?:es|a|as)?\\b`).test(haystack);
   const genericTitleWon = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|recibes?|recibe)\b.{0,32}\b(?:titulo|trofeo)\b/.test(haystack) ||
