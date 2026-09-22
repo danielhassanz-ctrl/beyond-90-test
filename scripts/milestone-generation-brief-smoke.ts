@@ -76,6 +76,9 @@ for (const headline of [
   "Celebras la clasificación a Champions",
   "Ganas el partido que certifica tu clasificación al Mundial",
   "Billete a la Europa League tras ganar la última jornada",
+  "Ganas 2-0 en Liga ante el Sevilla",
+  "Victoria: ganas al Milan en Champions",
+  "Celebras un 3-1 en Copa del Rey",
 ]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
