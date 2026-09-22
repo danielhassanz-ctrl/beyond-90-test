@@ -52,7 +52,7 @@ assert.equal(trophy.scene, "celebration");
 assert.match(trophyBrief.composition, /emotional celebration/i);
 assertRightsSafe(trophyBrief.composition);
 
-for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial", "Ganas el Balón de Oro", "Ganas un título", "Levantas un trofeo"]) {
+for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial", "Ganas el Balón de Oro", "Ganas un título", "Levantas un trofeo", "Campeón de Liga", "Campeona de la Copa", "Campeones de Champions", "Campeón del Mundial", "Campeona de la Eurocopa", "Campeón de la Supercopa"]) {
   assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
 }
 
@@ -86,6 +86,10 @@ for (const headline of [
   "Campeones de la prensa por vuestra transparencia",
   "Campeón del mercado por renovar a tiempo",
   "Campeona de las redes tras una semana viral",
+  "Campeón de la paciencia durante la recuperación",
+  "Te sientes campeón después de volver a entrenar",
+  "Tu padre te llama campeón tras superar la lesión",
+  "El míster dice que eres un campeón fuera del campo",
   "Campeones de pretemporada tras tres amistosos",
   "Campeón del torneo de pretemporada",
   "Campeona del torneo amistoso",
