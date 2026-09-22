@@ -83,12 +83,14 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const namedAward = /\b(?:balon de oro|the best|bota de oro|golden boy)\b/;
   const awardWon = (namedAward.test(haystack) && /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|recibes?|recibe|levantas?|levanta|te coronas|premiado|galardonado)\b/.test(haystack)) ||
     /\b(?:ganador|ganadora|vencedor|vencedora)\b.{0,36}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack);
-  const genericAchievement = /\b(?:campeon(?:es|a|as)?|titulo|trofeo)\b/.test(haystack);
+  const negatedAchievement = /\b(?:sin|ningun|ninguna|no (?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|recibes?|recibe))\b.{0,32}\b(?:titulo|trofeo|campeon|copa|liga|champions|mundial|eurocopa|europa league|balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) ||
+    /\b(?:pierdes?|pierde|perdemos|eliminado|eliminada|subcampeon|subcampeona)\b.{0,32}\b(?:final|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
+  const genericAchievement = /\b(?:campeon(?:es|a|as)?|titulo|trofeo)\b/.test(haystack) && !negatedAchievement;
   const competition = /\b(?:copa|liga|champions|mundial|eurocopa|europa league)\b/;
   const achievementVerb = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|celebras?|celebra|coronas?|corona)\b/;
-  const competitionWon = (achievementVerb.test(haystack) && competition.test(haystack)) ||
-    /\b(?:copa|liga|champions|mundial|eurocopa|europa league)\b.{0,32}\b(?:ganada|conquistada|levantada|campeon)\b/.test(haystack);
-  if (awardWon || genericAchievement || competitionWon) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
+  const competitionWon = !negatedAchievement && ((achievementVerb.test(haystack) && competition.test(haystack)) ||
+    /\b(?:copa|liga|champions|mundial|eurocopa|europa league)\b.{0,32}\b(?:ganada|conquistada|levantada|campeon)\b/.test(haystack));
+  if (!negatedAchievement && (awardWon || genericAchievement || competitionWon)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
   const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext;
