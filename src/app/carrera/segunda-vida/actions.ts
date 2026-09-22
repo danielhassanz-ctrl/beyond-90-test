@@ -73,20 +73,31 @@ export async function resolveSecondLifeEvent(formData: FormData) {
   const willGenerate = willAttemptImage && quota?.allowed === true;
 
   if (milestoneAchieved) {
-    const { data: milestone } = await supabase
-      .from("milestones")
-      .insert({
-        player_id: player.id,
-        week: player.second_week,
-        type: event.milestoneType ?? "hito",
-        title: event.title,
-        subtitle: outcomeText ?? option.subtitle,
-        image_url: null,
-        image_status: willGenerate ? "pending" : "none",
-      })
-      .select("id")
-      .single();
-    milestoneId = milestone?.id ?? null;
+    // Sin try/catch, un fallo de red aquí (camino principal, antes de
+    // responder) podía tirar la Server Action entera y perder la jugada
+    // del turno — mismo hueco encontrado y arreglado en carrera/actions.ts.
+    try {
+      const { data: milestone, error: milestoneError } = await supabase
+        .from("milestones")
+        .insert({
+          player_id: player.id,
+          week: player.second_week,
+          type: event.milestoneType ?? "hito",
+          title: event.title,
+          subtitle: outcomeText ?? option.subtitle,
+          image_url: null,
+          image_status: willGenerate ? "pending" : "none",
+        })
+        .select("id")
+        .single();
+      if (milestoneError) {
+        console.error("[resolveSecondLifeEvent] milestones insert failed:", milestoneError.message);
+      }
+      milestoneId = milestone?.id ?? null;
+    } catch (err) {
+      console.error("[resolveSecondLifeEvent] milestones insert threw:", err instanceof Error ? err.message : err);
+      milestoneId = null;
+    }
 
     if (milestoneId && willGenerate) {
       const finalMilestoneId = milestoneId;
@@ -117,10 +128,19 @@ export async function resolveSecondLifeEvent(formData: FormData) {
             console.error("[resolveSecondLifeEvent:after] share branding compositing failed, using plain photo:", err);
           }
 
-          const [evolvedUrl, milestoneImageUrl] = await Promise.all([
+          // allSettled, no all: ver el mismo comentario en carrera/actions.ts.
+          const [evolvedResult, milestoneResult] = await Promise.allSettled([
             uploadGeneratedImage(supabase, finalUserId, buffer, "look"),
             uploadGeneratedImage(supabase, finalUserId, milestoneBuffer, "milestone"),
           ]);
+          const evolvedUrl = evolvedResult.status === "fulfilled" ? evolvedResult.value : null;
+          const milestoneImageUrl = milestoneResult.status === "fulfilled" ? milestoneResult.value : null;
+          if (evolvedResult.status === "rejected") {
+            console.error("[resolveSecondLifeEvent:after] look upload rejected unexpectedly:", evolvedResult.reason);
+          }
+          if (milestoneResult.status === "rejected") {
+            console.error("[resolveSecondLifeEvent:after] milestone upload rejected unexpectedly:", milestoneResult.reason);
+          }
 
           if (evolvedUrl) {
             await supabase.from("players").update({ current_photo_url: evolvedUrl }).eq("id", finalPlayerId);

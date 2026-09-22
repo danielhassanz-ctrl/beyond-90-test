@@ -444,28 +444,40 @@ export async function resolveEvent(formData: FormData) {
     // Crea el milestone al instante, sin esperar a ninguna imagen — el
     // turno del jugador no debe bloquearse por una llamada a Replicate
     // que puede tardar minutos. image_status dice si hay foto en camino.
+    //
+    // Esto corre en el camino PRINCIPAL de resolveEvent (antes de
+    // responder al jugador), no en segundo plano — sin el try/catch, un
+    // fallo de red aquí (no un error normal de Supabase) podía tirar la
+    // Server Action entera y perder la jugada del turno, no solo el
+    // hito. Un hito es "nice to have" (la carrera sigue igual sin él, ver
+    // el resto de esta función); nunca debería poder romper el turno.
     const milestoneType = isRetirementDecision ? "retiro_jugador" : (overrideMilestoneType ?? event.milestoneType ?? "hito");
-    const { data: milestone, error: milestoneError } = await supabase
-      .from("milestones")
-      .insert({
-        player_id: player.id,
-        week: player.week,
-        type: milestoneType,
-        title: isRetirementDecision ? "Cuelga las botas" : (overrideTitle ?? event.title),
-        subtitle: isRetirementDecision
-          ? `Después de ${player.week} semanas como profesional`
-          : overrideTitle
-            ? event.title
-            : (outcomeText ?? option.subtitle),
-        image_url: null,
-        image_status: willGenerate ? "pending" : "none",
-      })
-      .select("id")
-      .single();
-    if (milestoneError) {
-      console.error("[resolveEvent] milestones insert failed:", milestoneError.message);
+    try {
+      const { data: milestone, error: milestoneError } = await supabase
+        .from("milestones")
+        .insert({
+          player_id: player.id,
+          week: player.week,
+          type: milestoneType,
+          title: isRetirementDecision ? "Cuelga las botas" : (overrideTitle ?? event.title),
+          subtitle: isRetirementDecision
+            ? `Después de ${player.week} semanas como profesional`
+            : overrideTitle
+              ? event.title
+              : (outcomeText ?? option.subtitle),
+          image_url: null,
+          image_status: willGenerate ? "pending" : "none",
+        })
+        .select("id")
+        .single();
+      if (milestoneError) {
+        console.error("[resolveEvent] milestones insert failed:", milestoneError.message);
+      }
+      milestoneId = milestone?.id ?? null;
+    } catch (err) {
+      console.error("[resolveEvent] milestones insert threw:", err instanceof Error ? err.message : err);
+      milestoneId = null;
     }
-    milestoneId = milestone?.id ?? null;
 
     // La generación real ocurre DESPUÉS de responder al jugador (after()),
     // así que ni la más lenta llamada a Kontext Pro (~3 min en frío,
@@ -533,10 +545,23 @@ export async function resolveEvent(formData: FormData) {
             }
           }
 
-          const [evolvedUrl, milestoneImageUrl] = await Promise.all([
+          // allSettled, no all: uploadGeneratedImage ya no debería lanzar
+          // (ver upload.ts), pero si algo inesperado lo hiciera igual, con
+          // Promise.all un fallo en UNA subida tira también el resultado
+          // de la otra que sí había ido bien — con allSettled cada una se
+          // procesa por separado pase lo que pase con la otra.
+          const [evolvedResult, milestoneResult] = await Promise.allSettled([
             uploadGeneratedImage(supabase, finalUserId, buffer, "look"),
             uploadGeneratedImage(supabase, finalUserId, milestoneBuffer, "milestone"),
           ]);
+          const evolvedUrl = evolvedResult.status === "fulfilled" ? evolvedResult.value : null;
+          const milestoneImageUrl = milestoneResult.status === "fulfilled" ? milestoneResult.value : null;
+          if (evolvedResult.status === "rejected") {
+            console.error("[resolveEvent:after] look upload rejected unexpectedly:", evolvedResult.reason);
+          }
+          if (milestoneResult.status === "rejected") {
+            console.error("[resolveEvent:after] milestone upload rejected unexpectedly:", milestoneResult.reason);
+          }
 
           if (evolvedUrl) {
             await supabase.from("players").update({ current_photo_url: evolvedUrl }).eq("id", finalPlayerId);

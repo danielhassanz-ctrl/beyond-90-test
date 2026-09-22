@@ -28,14 +28,23 @@ export async function generateFromTemplate(
   playerPhotoUrl: string,
   fallbackPrompt: string,
 ): Promise<TemplateGenerationResult | null> {
-  const { data: existing, error: lookupError } = await supabase
-    .from("image_templates")
-    .select("image_url")
-    .eq("template_key", templateKey)
-    .maybeSingle();
-
-  if (lookupError) {
-    console.error(`[generateFromTemplate] template lookup failed for ${templateKey}:`, lookupError.message);
+  // La consulta de la plantilla no tenía try/catch (mismo hueco encontrado
+  // y arreglado en upload.ts/quota.ts) — un fallo de red aquí abortaba el
+  // hito entero antes incluso de intentar la generación completa de
+  // respaldo, que es justo lo que este bloque intenta evitar más abajo.
+  let existing: { image_url: string } | null = null;
+  try {
+    const { data, error: lookupError } = await supabase
+      .from("image_templates")
+      .select("image_url")
+      .eq("template_key", templateKey)
+      .maybeSingle();
+    if (lookupError) {
+      console.error(`[generateFromTemplate] template lookup failed for ${templateKey}:`, lookupError.message);
+    }
+    existing = data;
+  } catch (err) {
+    console.error(`[generateFromTemplate] template lookup threw for ${templateKey}:`, err instanceof Error ? err.message : err);
   }
 
   if (existing?.image_url) {
@@ -65,16 +74,20 @@ export async function saveAsTemplateIfMissing(
   templateKey: string,
   imageUrl: string,
 ): Promise<void> {
-  const { data: existing } = await supabase
-    .from("image_templates")
-    .select("id")
-    .eq("template_key", templateKey)
-    .maybeSingle();
+  try {
+    const { data: existing } = await supabase
+      .from("image_templates")
+      .select("id")
+      .eq("template_key", templateKey)
+      .maybeSingle();
 
-  if (existing) return; // otro jugador ya la creó mientras tanto, no duplicar
+    if (existing) return; // otro jugador ya la creó mientras tanto, no duplicar
 
-  const { error } = await supabase.from("image_templates").insert({ template_key: templateKey, image_url: imageUrl });
-  if (error) {
-    console.error(`[saveAsTemplateIfMissing] failed to save template ${templateKey}:`, error.message);
+    const { error } = await supabase.from("image_templates").insert({ template_key: templateKey, image_url: imageUrl });
+    if (error) {
+      console.error(`[saveAsTemplateIfMissing] failed to save template ${templateKey}:`, error.message);
+    }
+  } catch (err) {
+    console.error(`[saveAsTemplateIfMissing] threw for ${templateKey}:`, err instanceof Error ? err.message : err);
   }
 }

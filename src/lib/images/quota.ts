@@ -29,48 +29,67 @@ export type QuotaCheck =
   | { allowed: true }
   | { allowed: false; reason: "user_limit" | "global_limit" };
 
+/**
+ * A diferencia del resto del pipeline de imágenes (que corre en segundo
+ * plano dentro de after()), checkImageGenerationQuota se llama en el
+ * camino PRINCIPAL de resolveEvent, antes de responder al jugador — un
+ * fallo de red aquí sin capturar no solo perdería la imagen, rompería el
+ * turno entero. Mismo hueco encontrado y arreglado en uploadGeneratedImage
+ * (ver upload.ts): sin try/catch, un fallo de red (no un error normal de
+ * Supabase) se escapaba sin control en vez de caer al "allowed: true" ya
+ * pensado para cuando la tabla de tracking falla.
+ */
 export async function checkImageGenerationQuota(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<QuotaCheck> {
   const since = startOfMonthISO();
 
-  const [{ count: globalCount, error: globalError }, { count: userCount, error: userError }] =
-    await Promise.all([
-      supabase
-        .from("image_generation_log")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", since),
-      supabase
-        .from("image_generation_log")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .gte("created_at", since),
-    ]);
+  try {
+    const [{ count: globalCount, error: globalError }, { count: userCount, error: userError }] =
+      await Promise.all([
+        supabase
+          .from("image_generation_log")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", since),
+        supabase
+          .from("image_generation_log")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("created_at", since),
+      ]);
 
-  // Si la tabla de tracking falla (p.ej. no se ha creado todavía), no
-  // bloqueamos la generación por eso — es un freno de gasto, no una
-  // dependencia dura del juego.
-  if (globalError || userError) {
-    console.error(
-      "[checkImageGenerationQuota] tracking query failed, allowing generation:",
-      (globalError ?? userError)?.message,
-    );
+    // Si la tabla de tracking falla (p.ej. no se ha creado todavía), no
+    // bloqueamos la generación por eso — es un freno de gasto, no una
+    // dependencia dura del juego.
+    if (globalError || userError) {
+      console.error(
+        "[checkImageGenerationQuota] tracking query failed, allowing generation:",
+        (globalError ?? userError)?.message,
+      );
+      return { allowed: true };
+    }
+
+    if ((globalCount ?? 0) >= GLOBAL_MONTHLY_LIMIT) {
+      return { allowed: false, reason: "global_limit" };
+    }
+    if ((userCount ?? 0) >= PER_USER_MONTHLY_LIMIT) {
+      return { allowed: false, reason: "user_limit" };
+    }
+    return { allowed: true };
+  } catch (err) {
+    console.error("[checkImageGenerationQuota] threw, allowing generation:", err instanceof Error ? err.message : err);
     return { allowed: true };
   }
-
-  if ((globalCount ?? 0) >= GLOBAL_MONTHLY_LIMIT) {
-    return { allowed: false, reason: "global_limit" };
-  }
-  if ((userCount ?? 0) >= PER_USER_MONTHLY_LIMIT) {
-    return { allowed: false, reason: "user_limit" };
-  }
-  return { allowed: true };
 }
 
 export async function logImageGeneration(supabase: SupabaseClient, userId: string): Promise<void> {
-  const { error } = await supabase.from("image_generation_log").insert({ user_id: userId });
-  if (error) {
-    console.error("[logImageGeneration] failed to log usage:", error.message);
+  try {
+    const { error } = await supabase.from("image_generation_log").insert({ user_id: userId });
+    if (error) {
+      console.error("[logImageGeneration] failed to log usage:", error.message);
+    }
+  } catch (err) {
+    console.error("[logImageGeneration] threw:", err instanceof Error ? err.message : err);
   }
 }
