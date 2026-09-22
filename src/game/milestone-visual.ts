@@ -87,15 +87,16 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const aspirationalAchievement = /\b(?:objetivo|meta|sueno|suenas|aspiras?|aspiracion|quieres?|esperas?|prometes?|reto)\b.{0,48}\b(?:ser|ganar|conquistar|levantar|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(haystack) ||
     /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(haystack);
-  const nonTitleChampionLabel = /\bcampeon(?:es|a|as)?\s+(?:(?:de|del)\s+)?(?:(?:torneo|trofeo)\s+(?:de\s+)?)?(?:invierno|verano|veraniego|veraniega|pretemporada|amistoso|amistosa|amistosos|amistosas|moral)\b/.test(haystack) ||
-    /\bcampeon(?:es|a|as)?\s+(?:(?:de|del|de la|de los|de las)\s+)(?:vestuario|aficion|prensa|redes|mercado|entrenamiento|pretemporada)\b/.test(haystack);
-  // Bare mentions of a title/trophy are not achievements. Require either an explicit
-  // champion label or a win verb so ordinary story cards cannot trigger paid imagery.
-  const championAchievement = /\bcampeon(?:es|a|as)?\b/.test(haystack) && !nonTitleChampionLabel;
+  const championCompetition = "(?:liga|copa(?: del rey)?|champions|mundial|eurocopa|europa league|supercopa)";
+  // A bare "campeón" is too ambiguous for a paid/generated milestone: story copy can
+  // call someone champion of the dressing room, patience, social media, etc. Require
+  // a recognised football competition next to the champion label.
+  const championAchievement = new RegExp(`\\bcampeon(?:es|a|as)?\\b.{0,24}\\b${championCompetition}\\b`).test(haystack) ||
+    new RegExp(`\\b${championCompetition}\\b.{0,24}\\bcampeon(?:es|a|as)?\\b`).test(haystack);
   const genericTitleWon = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|recibes?|recibe)\b.{0,32}\b(?:titulo|trofeo)\b/.test(haystack) ||
     /\b(?:titulo|trofeo)\b.{0,32}\b(?:ganado|ganada|conquistado|conquistada|levantado|levantada)\b/.test(haystack);
   const genericAchievement = (championAchievement || genericTitleWon) && !negatedAchievement && !aspirationalAchievement && !qualificationOnly;
-  const competitionName = "(?:copa|liga|champions|mundial|eurocopa|europa league)";
+  const competitionName = "(?:copa|liga|champions|mundial|eurocopa|europa league|supercopa)";
   const explicitCompetitionWin = new RegExp(`\\b(?:ganas?|gana|ganamos|ganan)\\s+(?:la|el)\\s+${competitionName}\\b`).test(haystack);
   const strongCompetitionAchievement = new RegExp(`\\b(?:conquistas?|conquista|levantas?|levanta|alz(?:as|a)|coronas?|corona)\\b.{0,32}\\b${competitionName}\\b`).test(haystack) ||
     new RegExp(`\\b${competitionName}\\b.{0,32}\\b(?:ganada|conquistada|levantada|campeon)\\b`).test(haystack);
