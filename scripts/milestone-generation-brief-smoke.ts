@@ -52,12 +52,10 @@ assert.equal(trophy.scene, "celebration");
 assert.match(trophyBrief.composition, /emotional celebration/i);
 assertRightsSafe(trophyBrief.composition);
 
-for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial"]) {
+for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial", "Ganas el Balón de Oro"]) {
   assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
 }
 
-// Competition and award words are common in normal career copy. They must not
-// spend an expensive celebration image unless an actual achievement exists.
 for (const headline of [
   "Próximo partido de Liga ante el Sevilla",
   "Convocado para la Copa del Rey",
@@ -72,6 +70,9 @@ for (const headline of [
   "Nominado al Balón de Oro",
   "Sueñas con ganar el Balón de Oro",
   "Eres finalista del The Best",
+  "Segundo en el Balón de Oro: ganas el premio al mejor joven",
+  "Balón de Oro: terminas tercero pese a ganar la Liga",
+  "Favorito al Balón de Oro después de ganar la Champions",
 ]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
@@ -102,9 +103,6 @@ assert.match(retirementBrief.ageRule, /career age 38/i);
 assert.match(retirementBrief.ageRule, /identity-preserving/i);
 assertRightsSafe(retirementBrief.composition);
 
-// Regression: `retirada` is common outside career retirement. These cards must
-// stay ordinary portraits so we never spend a generated farewell on an injury,
-// cash action or transfer-market withdrawal.
 for (const headline of [
   "Retirada por lesión en el minuto 32",
   "Retirada de efectivo para la entrada de la casa",
