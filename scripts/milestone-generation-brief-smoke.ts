@@ -79,6 +79,9 @@ for (const headline of [
   "Ganas 2-0 en Liga ante el Sevilla",
   "Victoria: ganas al Milan en Champions",
   "Celebras un 3-1 en Copa del Rey",
+  "Campeón de invierno tras una gran primera vuelta",
+  "Campeón moral pese a perder la final",
+  "Campeones de pretemporada tras tres amistosos",
 ]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
