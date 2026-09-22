@@ -52,7 +52,7 @@ assert.equal(trophy.scene, "celebration");
 assert.match(trophyBrief.composition, /emotional celebration/i);
 assertRightsSafe(trophyBrief.composition);
 
-for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial", "Ganas el Balón de Oro"]) {
+for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial", "Ganas el Balón de Oro", "Ganas un título", "Levantas un trofeo"]) {
   assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
 }
 
@@ -90,6 +90,10 @@ for (const headline of [
   "Campeona del torneo de verano",
   "Campeones del trofeo veraniego",
   "Campeonas del torneo veraniego",
+  "El trofeo espera al ganador de la final",
+  "Visitas la sala de trofeos del club",
+  "El título de Liga es el gran objetivo del vestuario",
+  "Hablas con tu familia sobre el próximo título",
 ]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
