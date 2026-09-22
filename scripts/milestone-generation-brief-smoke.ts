@@ -46,6 +46,28 @@ assert.match(debutBrief.composition, /on the pitch with the ball/i);
 assert.match(debutBrief.ageRule, /career age 18/i);
 assertRightsSafe(debutBrief.composition);
 
+for (const headline of [
+  "Debut con el juvenil",
+  "Debut con el filial",
+  "Debut con el equipo B",
+  "Debut en la cantera",
+  "Primer partido con el sub-19",
+  "Primer partido con el equipo reserva",
+  "Debut de la nueva camiseta",
+  "Estreno de tus nuevas botas",
+  "Estreno de la campaña publicitaria",
+]) {
+  const ordinaryCard = milestoneVisualSpec(share(headline));
+  assert.equal(ordinaryCard.kind, "career", headline);
+  assert.equal(ordinaryCard.scene, "portrait", headline);
+}
+
+for (const headline of ["Debut en Liga con el primer equipo", "Primer partido profesional", "Estreno como titular en Copa"]) {
+  const seniorDebut = milestoneVisualSpec(share(headline));
+  assert.equal(seniorDebut.kind, "debut", headline);
+  assert.equal(seniorDebut.scene, "pitch", headline);
+}
+
 const trophy = milestoneVisualSpec(share("Campeón de Liga"));
 const trophyBrief = milestoneGenerationBrief(trophy, playerVisualProfile(29), "Real Betis", identity);
 assert.equal(trophy.scene, "celebration");
