@@ -71,24 +71,24 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const explicitRetirement = /\b(?:retirada|retiro|retirarse|se retira)\b/.test(haystack) && !nonCareerRetirement;
   if (explicitFarewell || explicitRetirement) return { kind: "retirement", label: "Despedida", scene: "farewell" };
 
-  // A youth/reserve debut is a legitimate story beat but not the expensive,
-  // share-worthy first-team debut milestone. Require explicit senior context or
-  // an unqualified debut; suppress academy/B-team debuts.
   const youthDebutContext = /\b(?:juvenil|cantera|filial|equipo b|sub[- ]?(?:17|18|19|20|21|23)|youth|academy|reserva)\b/.test(haystack);
   const seniorDebutContext = /\b(?:primer equipo|senior|profesional|primera division|segunda division|liga|copa|champions|europa league|seleccion absoluta)\b/.test(haystack);
   const explicitDebut = /\bdebut\b/.test(haystack) || /\bprimer partido\b/.test(haystack);
   const footballEstreno = /\bestreno\b/.test(haystack) && /\b(?:equipo|primer equipo|partido|liga|copa|champions|seleccion|titular|campo|cesped)\b/.test(haystack);
   if ((explicitDebut || footballEstreno) && (!youthDebutContext || seniorDebutContext)) return { kind: "debut", label: "Debut", scene: "pitch" };
 
-  // Competition names appear constantly in ordinary fixtures and previews. Only
-  // spend a celebration image when the copy actually says the player/team won
-  // or lifted the competition, or names an explicit award/title milestone.
-  const explicitAward = /\b(?:balon de oro|campeon(?:es|a|as)?|titulo|trofeo)\b/.test(haystack);
+  // Merely mentioning a famous award must never spend an image-generation call:
+  // nominations, predictions and dreams are ordinary story beats. Require an
+  // explicit win/receipt for named individual awards.
+  const namedAward = /\b(?:balon de oro|the best|bota de oro|golden boy)\b/;
+  const awardWon = (namedAward.test(haystack) && /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|recibes?|recibe|levantas?|levanta|te coronas|premiado|galardonado)\b/.test(haystack)) ||
+    /\b(?:ganador|ganadora|vencedor|vencedora)\b.{0,36}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack);
+  const genericAchievement = /\b(?:campeon(?:es|a|as)?|titulo|trofeo)\b/.test(haystack);
   const competition = /\b(?:copa|liga|champions|mundial|eurocopa|europa league)\b/;
   const achievementVerb = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|celebras?|celebra|coronas?|corona)\b/;
   const competitionWon = (achievementVerb.test(haystack) && competition.test(haystack)) ||
     /\b(?:copa|liga|champions|mundial|eurocopa|europa league)\b.{0,32}\b(?:ganada|conquistada|levantada|campeon)\b/.test(haystack);
-  if (explicitAward || competitionWon) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
+  if (awardWon || genericAchievement || competitionWon) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
   const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext;
