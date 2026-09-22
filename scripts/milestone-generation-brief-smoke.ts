@@ -73,6 +73,9 @@ for (const headline of [
   "Segundo en el Balón de Oro: ganas el premio al mejor joven",
   "Balón de Oro: terminas tercero pese a ganar la Liga",
   "Favorito al Balón de Oro después de ganar la Champions",
+  "Celebras la clasificación a Champions",
+  "Ganas el partido que certifica tu clasificación al Mundial",
+  "Billete a la Europa League tras ganar la última jornada",
 ]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
