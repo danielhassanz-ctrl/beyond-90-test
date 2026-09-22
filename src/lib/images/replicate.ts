@@ -81,9 +81,21 @@ async function pollUntilDone(getUrl: string, token: string, maxWaitMs = 180_000)
  * explícitamente (el look evoluciona con la edad, ver playerLook.ts). La
  * aclaración de la última frase evita que esta protección anule esos
  * cambios de estilo.
+ *
+ * Reforzado tras ver en vivo una generación real donde la cara SÍ
+ * cambiaba de forma notable (usuario: "me ha cambiado la cara entera").
+ * Kontext Pro no tiene ningún parámetro numérico de "fuerza de edición"
+ * (comprobado contra su esquema real) — el prompt es el único mando
+ * disponible. Dos cambios: (1) rasgos concretos (tono de piel, forma de
+ * cara, complexión) en vez de la frase genérica "facial identity and
+ * bone structure", más fácil de ignorar cuanta más gente describe el
+ * resto de la escena (un presidente de club, compañeros, público). (2)
+ * la instrucción de identidad se repite AL FINAL del prompt, no solo al
+ * principio — con escenas largas, lo último que lee el modelo pesa más
+ * que una frase de apertura que puede diluirse.
  */
 function withIdentityPreserved(prompt: string): string {
-  return `Edit this exact photo, keeping the same real person from the input image as the clear, recognizable main subject in the foreground — same facial identity and bone structure, do not replace them with a different person, a stock model, or a generic scene without them. Apply only these changes: ${prompt} The photographed person must remain fully recognizable as the same individual, even if hairstyle or facial hair changes as instructed above.`;
+  return `Edit this exact photo. The person already in the input image is the one and only main subject — preserve their exact face shape, skin tone, eye color, nose, and overall likeness pixel-faithfully, as if this were the same photograph continued. Do not generate a different person, a stock model, or a lookalike, even if the rest of the scene below describes other people around them. Apply only these changes: ${prompt} Before finishing: double-check the main subject's face against the original input photo — it must be immediately recognizable as the exact same individual, not just someone of similar age and build. Hairstyle or facial hair may change only if explicitly instructed above.`;
 }
 
 async function runFluxKontext(inputImageUrl: string, prompt: string): Promise<string | null> {
