@@ -82,6 +82,10 @@ for (const headline of [
   "Campeón de invierno tras una gran primera vuelta",
   "Campeón moral pese a perder la final",
   "Campeones de pretemporada tras tres amistosos",
+  "Campeón del torneo de pretemporada",
+  "Campeona del torneo amistoso",
+  "Campeones del trofeo de invierno",
+  "Campeonas del trofeo de amistosas",
 ]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
