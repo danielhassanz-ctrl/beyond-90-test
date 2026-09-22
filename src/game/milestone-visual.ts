@@ -88,7 +88,12 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(haystack) ||
     /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(haystack);
   const nonTitleChampionLabel = /\bcampeon(?:es|a|as)?\s+(?:(?:de|del)\s+)?(?:(?:torneo|trofeo)\s+(?:de\s+)?)?(?:invierno|verano|veraniego|veraniega|pretemporada|amistoso|amistosa|amistosos|amistosas|moral)\b/.test(haystack);
-  const genericAchievement = /\b(?:campeon(?:es|a|as)?|titulo|trofeo)\b/.test(haystack) && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !nonTitleChampionLabel;
+  // Bare mentions of a title/trophy are not achievements. Require either an explicit
+  // champion label or a win verb so ordinary story cards cannot trigger paid imagery.
+  const championAchievement = /\bcampeon(?:es|a|as)?\b/.test(haystack) && !nonTitleChampionLabel;
+  const genericTitleWon = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|recibes?|recibe)\b.{0,32}\b(?:titulo|trofeo)\b/.test(haystack) ||
+    /\b(?:titulo|trofeo)\b.{0,32}\b(?:ganado|ganada|conquistado|conquistada|levantado|levantada)\b/.test(haystack);
+  const genericAchievement = (championAchievement || genericTitleWon) && !negatedAchievement && !aspirationalAchievement && !qualificationOnly;
   const competitionName = "(?:copa|liga|champions|mundial|eurocopa|europa league)";
   const explicitCompetitionWin = new RegExp(`\\b(?:ganas?|gana|ganamos|ganan)\\s+(?:la|el)\\s+${competitionName}\\b`).test(haystack);
   const strongCompetitionAchievement = new RegExp(`\\b(?:conquistas?|conquista|levantas?|levanta|alz(?:as|a)|coronas?|corona)\\b.{0,32}\\b${competitionName}\\b`).test(haystack) ||
