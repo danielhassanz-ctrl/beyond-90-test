@@ -56,8 +56,8 @@ for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el
   assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
 }
 
-// Competition words are common in normal career copy. They must not spend an
-// expensive celebration image unless an actual title/award achievement exists.
+// Competition and award words are common in normal career copy. They must not
+// spend an expensive celebration image unless an actual achievement exists.
 for (const headline of [
   "Próximo partido de Liga ante el Sevilla",
   "Convocado para la Copa del Rey",
@@ -69,6 +69,9 @@ for (const headline of [
   "Eliminado de la Champions",
   "No ganas ningún título esta temporada",
   "Te quedas sin el Balón de Oro",
+  "Nominado al Balón de Oro",
+  "Sueñas con ganar el Balón de Oro",
+  "Eres finalista del The Best",
 ]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
