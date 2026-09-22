@@ -52,6 +52,24 @@ assert.equal(trophy.scene, "celebration");
 assert.match(trophyBrief.composition, /emotional celebration/i);
 assertRightsSafe(trophyBrief.composition);
 
+for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial"]) {
+  assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
+}
+
+// Competition words are common in normal career copy. They must not spend an
+// expensive celebration image unless an actual title/award achievement exists.
+for (const headline of [
+  "Próximo partido de Liga ante el Sevilla",
+  "Convocado para la Copa del Rey",
+  "Viaje de Champions a Milán",
+  "La final de Copa se acerca",
+  "Objetivo: clasificar al Mundial",
+]) {
+  const ordinaryCard = milestoneVisualSpec(share(headline));
+  assert.equal(ordinaryCard.kind, "career", headline);
+  assert.equal(ordinaryCard.scene, "portrait", headline);
+}
+
 const ligamentInjury = milestoneVisualSpec(share("Lesión de ligamento: seis meses fuera"));
 assert.equal(ligamentInjury.kind, "career");
 assert.equal(ligamentInjury.scene, "portrait");
