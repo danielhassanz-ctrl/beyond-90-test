@@ -64,6 +64,11 @@ for (const headline of [
   "Viaje de Champions a Milán",
   "La final de Copa se acerca",
   "Objetivo: clasificar al Mundial",
+  "Pierdes la final de Copa",
+  "Subcampeón de Liga",
+  "Eliminado de la Champions",
+  "No ganas ningún título esta temporada",
+  "Te quedas sin el Balón de Oro",
 ]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
