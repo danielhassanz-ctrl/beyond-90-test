@@ -67,8 +67,8 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   const nonCareerRetirement = /\b(?:lesion|lesionado|medico|hospital|dinero|efectivo|cajero|mercado|oferta|fichaje|traspaso)\b/.test(haystack);
-  const thirdPartyRetirement = /\b(?:rival|oponente|adversario|adversaria|companero|companera|otro jugador|otra jugadora|entrenador|seleccionador)\b/.test(haystack);
-  const explicitFarewell = /\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas)\b/.test(haystack);
+  const thirdPartyRetirement = /\b(?:rival|oponente|adversario|adversaria|companero|companera|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador)\b/.test(haystack);
+  const explicitFarewell = /\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas)\b/.test(haystack) && !nonCareerRetirement && !thirdPartyRetirement;
   const explicitRetirement = /\b(?:retirada|retiro|retirarse|se retira)\b/.test(haystack) && !nonCareerRetirement && !thirdPartyRetirement;
   if (explicitFarewell || explicitRetirement) return { kind: "retirement", label: "Despedida", scene: "farewell" };
 
