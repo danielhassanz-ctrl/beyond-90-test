@@ -62,6 +62,12 @@ for (const headline of [
   "Estreno de tus nuevas botas", "Estreno de la campaña publicitaria", "Debut de tu compañero con el primer equipo",
   "Un rival debuta en Liga", "Primer partido profesional de otro jugador", "El nuevo fichaje debuta en Copa",
   "Debut del club en Champions", "Estreno del equipo en Europa League",
+  "Tu padre recuerda su debut con el primer equipo", "Tu madre habla de su primer partido profesional",
+  "Tu hermano debuta en Liga con el primer equipo", "Tu hermana recuerda su estreno como titular en Copa",
+  "Tu hijo sueña con su debut profesional", "Tu hija cuenta su primer partido con la selección absoluta",
+  "Tu pareja recuerda su debut en Liga", "Tu novio habla de su primer partido profesional",
+  "Tu novia celebra su estreno como titular en Copa", "Tu amigo debuta con el primer equipo",
+  "Tu amiga recuerda su primer partido profesional",
 ]) {
   assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 }
