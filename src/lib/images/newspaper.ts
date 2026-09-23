@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import { getAppUrlLine } from "@/lib/constants";
+import { textToPath, wrapTextToPaths } from "@/lib/images/textToPath";
 
 /**
  * Compone la portada "WARCA" (parodia ficticia de un diario deportivo,
@@ -12,40 +13,6 @@ import { getAppUrlLine } from "@/lib/constants";
  * Kontext Pro, que a veces generaba texto de patrocinador ilegible en
  * las camisetas al intentar "dibujar" letras dentro de la imagen.
  */
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-/**
- * librsvg (el motor que usa sharp para rasterizar SVG) no soporta bien
- * `<foreignObject>` con HTML dentro — el texto simplemente no aparece.
- * Por eso el ajuste de línea se hace a mano aquí, partiendo por palabras
- * y devolviendo <tspan> con saltos de línea reales en SVG puro.
- */
-function wrapTextToTspans(text: string, maxCharsPerLine: number, x: number, lineHeight: number): string {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let current = "";
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
-    if (candidate.length > maxCharsPerLine && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = candidate;
-    }
-  }
-  if (current) lines.push(current);
-
-  return lines
-    .map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`)
-    .join("");
-}
-
 export async function composeWarcaCover(
   actionPhoto: Buffer,
   playerName: string,
@@ -68,6 +35,57 @@ export async function composeWarcaCover(
   const linkLine = getAppUrlLine();
   const brandLine = linkLine ? `Beyond 90 · ${linkLine}` : "Beyond 90";
 
+  // Sin fuente serif/itálica empaquetada, "WARCA" se dibuja con la misma
+  // Geist Regular que el resto, compensando el aspecto de titular de
+  // prensa con más tamaño, trazo engrosado (weight 900) y letterspacing.
+  const mastheadPath = textToPath("WARCA", {
+    x: 40,
+    y: MASTHEAD_HEIGHT / 2 + 34,
+    fontSize: 92,
+    fill: "#E30613",
+    weight: 900,
+    letterSpacing: 0.03,
+  });
+  const editionPath = textToPath("EDICIÓN ESPECIAL", {
+    x: WIDTH - 40,
+    y: MASTHEAD_HEIGHT / 2 + 34,
+    fontSize: 22,
+    fill: "#333333",
+    weight: 700,
+    anchor: "right",
+  });
+  const headlinePath = textToPath(headline, {
+    x: 40,
+    y: HEIGHT - 230,
+    fontSize: 64,
+    fill: "#FFFFFF",
+    weight: 900,
+  });
+  const bylinePath = wrapTextToPaths(byline, {
+    x: 40,
+    y: HEIGHT - 170,
+    fontSize: 32,
+    fill: "#F5B740",
+    weight: 700,
+    maxCharsPerLine: 34,
+    lineHeight: 40,
+  });
+  const todayPath = textToPath(today, {
+    x: 40,
+    y: HEIGHT - 15,
+    fontSize: 24,
+    fill: "#FFFFFF",
+    weight: 600,
+  });
+  const brandPath = textToPath(brandLine, {
+    x: WIDTH - 40,
+    y: HEIGHT - 15,
+    fontSize: 24,
+    fill: "#FFFFFF",
+    weight: 600,
+    anchor: "right",
+  });
+
   const overlaySvg = `
 <svg width="${WIDTH}" height="${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -79,23 +97,23 @@ export async function composeWarcaCover(
 
   <!-- Masthead: fondo blanco, letras rojas — estilo prensa deportiva española -->
   <rect x="0" y="0" width="${WIDTH}" height="${MASTHEAD_HEIGHT}" fill="#FFFFFF" />
-  <text x="40" y="${MASTHEAD_HEIGHT / 2 + 34}" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="96" font-style="italic" fill="#E30613" letter-spacing="1">WARCA</text>
-  <text x="${WIDTH - 40}" y="${MASTHEAD_HEIGHT / 2 + 34}" font-family="Arial, sans-serif" font-weight="700" font-size="22" fill="#333333" text-anchor="end">EDICIÓN ESPECIAL</text>
+  ${mastheadPath}
+  ${editionPath}
   <rect x="0" y="${MASTHEAD_HEIGHT - 8}" width="${WIDTH}" height="8" fill="#E30613" />
 
   <!-- Degradado inferior para que el titular se lea sobre la foto -->
   <rect x="0" y="${MASTHEAD_HEIGHT}" width="${WIDTH}" height="${HEIGHT - MASTHEAD_HEIGHT}" fill="url(#fade)" />
 
   <!-- Titular -->
-  <text x="40" y="${HEIGHT - 230}" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="64" fill="#FFFFFF">${escapeXml(headline)}</text>
+  ${headlinePath}
 
-  <!-- Bajada (ajuste de línea manual: foreignObject con HTML no renderiza en librsvg) -->
-  <text x="40" y="${HEIGHT - 170}" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="32" fill="#F5B740">${wrapTextToTspans(byline, 34, 40, 40)}</text>
+  <!-- Bajada -->
+  ${bylinePath}
 
   <!-- Fecha -->
   <rect x="0" y="${HEIGHT - 46}" width="${WIDTH}" height="46" fill="#111111" />
-  <text x="40" y="${HEIGHT - 15}" font-family="Arial, sans-serif" font-weight="600" font-size="24" fill="#FFFFFF">${escapeXml(today)}</text>
-  <text x="${WIDTH - 40}" y="${HEIGHT - 15}" font-family="Arial, sans-serif" font-weight="600" font-size="24" fill="#FFFFFF" text-anchor="end">${escapeXml(brandLine)}</text>
+  ${todayPath}
+  ${brandPath}
 </svg>`;
 
   return sharp({

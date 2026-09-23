@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import { getAppUrlLine } from "@/lib/constants";
+import { textToPath } from "@/lib/images/textToPath";
 
 /**
  * Marca de agua con el nombre del juego, la frase gancho del hito (ver
@@ -17,14 +18,6 @@ import { getAppUrlLine } from "@/lib/constants";
  * texto se dibuja con SVG → sharp en vez de pedírselo a la IA, para que
  * salga siempre legible.
  */
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 export async function addShareBranding(photo: Buffer, tagline: string): Promise<Buffer> {
   const image = sharp(photo);
   const metadata = await image.metadata();
@@ -39,6 +32,31 @@ export async function addShareBranding(photo: Buffer, tagline: string): Promise<
   const linkSize = Math.round(barHeight * 0.18);
   const padding = Math.round(width * 0.045);
 
+  const wordmarkPath = textToPath("BEYOND 90", {
+    x: padding,
+    y: height - barHeight * 0.62,
+    fontSize: wordmarkSize,
+    fill: "#F5B740",
+    weight: 900,
+    letterSpacing: 0.02,
+  });
+  const taglinePath = textToPath(tagline, {
+    x: padding,
+    y: height - barHeight * 0.62 + taglineSize + 6,
+    fontSize: taglineSize,
+    fill: "#FFFFFF",
+    weight: 600,
+  });
+  const linkPath = linkLine
+    ? textToPath(linkLine, {
+        x: padding,
+        y: height - barHeight * 0.62 + taglineSize + linkSize + 16,
+        fontSize: linkSize,
+        fill: "#F5B740",
+        weight: 700,
+      })
+    : "";
+
   const svg = `
 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -49,13 +67,9 @@ export async function addShareBranding(photo: Buffer, tagline: string): Promise<
     </linearGradient>
   </defs>
   <rect x="0" y="${height - barHeight}" width="${width}" height="${barHeight}" fill="url(#footerFade)" />
-  <text x="${padding}" y="${height - barHeight * 0.62}" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="${wordmarkSize}" fill="#F5B740" letter-spacing="1">BEYOND 90</text>
-  <text x="${padding}" y="${height - barHeight * 0.62 + taglineSize + 6}" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="${taglineSize}" fill="#FFFFFF">${escapeXml(tagline)}</text>
-  ${
-    linkLine
-      ? `<text x="${padding}" y="${height - barHeight * 0.62 + taglineSize + linkSize + 16}" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="${linkSize}" fill="#F5B740">${escapeXml(linkLine)}</text>`
-      : ""
-  }
+  ${wordmarkPath}
+  ${taglinePath}
+  ${linkPath}
 </svg>`;
 
   return image
