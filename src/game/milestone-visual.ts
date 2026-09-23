@@ -32,20 +32,21 @@ export function milestoneGenerationBrief(milestone: MilestoneVisualSpec, visual:
 /** Rights-safe milestone classification used by share cards. */
 export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const haystack = `${share.headline} ${share.kicker} ${share.lines.map((line) => `${line.label} ${line.value}`).join(" ")}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const thirdParty = /\b(?:rival|oponente|adversario|adversaria|companero|companera|excompanero|excompanera|exjugador|exjugadora|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|familia|familiar|padre|madre|hermano|hermana|hijo|hija|pareja|novio|novia|amigo|amiga)\b/.test(haystack);
+  const thirdParty = /\b(?:rival|oponente|adversario|adversaria|companero|companera|excompanero|excompanera|exjugador|exjugadora|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|presidente|director deportivo|director tecnica|directora deportiva|directora tecnica|fisio|fisioterapeuta|medico|doctora|staff|familia|familiar|padre|madre|hermano|hermana|hijo|hija|pareja|novio|novia|amigo|amiga)\b/.test(haystack);
+  const formerContext = /\b(?:exclub|ex club|antiguo club|anterior club|former club|exequipo|ex equipo|antiguo equipo|anterior equipo)\b/.test(haystack);
   const nonCareerRetirement = /\b(?:lesion|lesionado|medico|hospital|dinero|efectivo|cajero|mercado|oferta|fichaje|traspaso)\b/.test(haystack);
-  if ((/\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas|retirada|retiro|retirarse|se retira)\b/.test(haystack)) && !nonCareerRetirement && !thirdParty) return { kind: "retirement", label: "Despedida", scene: "farewell" };
+  if ((/\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas|retirada|retiro|retirarse|se retira)\b/.test(haystack)) && !nonCareerRetirement && !thirdParty && !formerContext) return { kind: "retirement", label: "Despedida", scene: "farewell" };
 
   const youthDebutContext = /\b(?:juvenil|cantera|filial|equipo b|sub[- ]?(?:17|18|19|20|21|23)|youth|academy|reserva)\b/.test(haystack);
   const seniorDebutContext = /\b(?:primer equipo|senior|profesional|primera division|segunda division|seleccion absoluta)\b/.test(haystack) || (!youthDebutContext && /\b(?:liga|copa|champions|europa league)\b/.test(haystack));
   const explicitDebut = /\bdebut\b|\bprimer partido\b/.test(haystack);
   const footballEstreno = /\bestreno\b/.test(haystack) && /\b(?:equipo|primer equipo|partido|liga|copa|champions|seleccion|titular|campo|cesped)\b/.test(haystack);
   const institutionalDebut = /\b(?:debut|estreno|primer partido)\s+(?:del|de la)\s+(?:club|equipo|seleccion)\b/.test(haystack);
-  if ((explicitDebut || footballEstreno) && seniorDebutContext && !thirdParty && !institutionalDebut) return { kind: "debut", label: "Debut", scene: "pitch" };
+  if ((explicitDebut || footballEstreno) && seniorDebutContext && !thirdParty && !institutionalDebut && !formerContext) return { kind: "debut", label: "Debut", scene: "pitch" };
 
   const namedAward = /\b(?:balon de oro|the best|bota de oro|golden boy)\b/;
   const awardNearMiss = /\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b.{0,48}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) || /\b(?:balon de oro|the best|bota de oro|golden boy)\b.{0,48}\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b/.test(haystack);
-  const awardWon = !thirdParty && !awardNearMiss && ((namedAward.test(haystack) && /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|recibes?|recibe|levantas?|levanta|te coronas|premiado|galardonado)\b/.test(haystack)) || /\b(?:ganador|ganadora|vencedor|vencedora)\b.{0,36}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack));
+  const awardWon = !thirdParty && !formerContext && !awardNearMiss && ((namedAward.test(haystack) && /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|recibes?|recibe|levantas?|levanta|te coronas|premiado|galardonado)\b/.test(haystack)) || /\b(?:ganador|ganadora|vencedor|vencedora)\b.{0,36}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack));
   const negatedAchievement = /\b(?:sin|ningun|ninguna|no (?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|recibes?|recibe))\b.{0,32}\b(?:titulo|trofeo|campeon|copa|liga|champions|mundial|eurocopa|europa league|balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) || /\b(?:pierdes?|pierde|perdemos|eliminado|eliminada|subcampeon|subcampeona)\b.{0,32}\b(?:final|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
   const aspirationalAchievement = /\b(?:objetivo|meta|sueno|suenas|aspiras?|aspiracion|quieres?|esperas?|prometes?|reto)\b.{0,48}\b(?:ser|ganar|conquistar|levantar|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(haystack) || /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(haystack);
@@ -55,11 +56,11 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const genericTitleWon = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|recibes?|recibe)\b.{0,32}\b(?:titulo|trofeo)\b/.test(haystack) || /\b(?:titulo|trofeo)\b.{0,32}\b(?:ganado|ganada|conquistado|conquistada|levantado|levantada)\b/.test(haystack);
   const explicitCompetitionWin = new RegExp(`\\b(?:ganas?|gana|ganamos|ganan)\\s+(?:la|el)\\s+${competitionName}\\b`).test(haystack);
   const strongCompetitionAchievement = new RegExp(`\\b(?:conquistas?|conquista|levantas?|levanta|alz(?:as|a)|coronas?|corona)\\b.{0,32}\\b${competitionName}\\b`).test(haystack) || new RegExp(`\\b${competitionName}\\b.{0,32}\\b(?:ganada|conquistada|levantada|campeon)\\b`).test(haystack);
-  if (!thirdParty && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (awardWon || championAchievement || genericTitleWon || explicitCompetitionWin || strongCompetitionAchievement)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
+  if (!thirdParty && !formerContext && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (awardWon || championAchievement || genericTitleWon || explicitCompetitionWin || strongCompetitionAchievement)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
   const speculativeMove = /\b(?:oferta|interes|negocia|negociacion|rumor|sondeo|posible|podria|puede|opcion)\b.{0,48}\b(?:fichaje|fichar|traspaso|cesion|cedido|nuevo club)\b/.test(haystack) || /\b(?:fichaje|fichar|traspaso|cesion|cedido|nuevo club)\b.{0,48}\b(?:oferta|interes|negocia|negociacion|rumor|sondeo|posible|podria|puede|opcion)\b/.test(haystack);
-  const thirdPartySigning = thirdParty || /\b(?:nuevo fichaje del club|fichaje rival|mercado)\b/.test(haystack);
+  const thirdPartySigning = thirdParty || formerContext || /\b(?:nuevo fichaje del club|fichaje rival|mercado)\b/.test(haystack);
   const explicitClubMove = /\b(?:fichaje|fichas|fichado|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext && !thirdPartySigning && !speculativeMove;
   const clubPresentation = /\bpresentacion\b.{0,36}\b(?:con|en|como nuevo jugador|nuevo club)\b/.test(haystack) && !excludedSigningContext && !thirdPartySigning && !speculativeMove;
   const signedForClub = /\bfirma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext && !thirdPartySigning && !speculativeMove;
