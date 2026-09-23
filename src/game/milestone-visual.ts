@@ -72,9 +72,6 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   if (explicitFarewell || explicitRetirement) return { kind: "retirement", label: "Despedida", scene: "farewell" };
 
   const youthDebutContext = /\b(?:juvenil|cantera|filial|equipo b|sub[- ]?(?:17|18|19|20|21|23)|youth|academy|reserva)\b/.test(haystack);
-  // Competition names alone must never upgrade an academy/reserve appearance into a
-  // paid/generated senior-debut milestone. Explicit senior/pro identity can override
-  // youth wording only when the copy genuinely says the player reached that level.
   const explicitSeniorIdentity = /\b(?:primer equipo|senior|profesional|primera division|segunda division|seleccion absoluta)\b/.test(haystack);
   const seniorCompetition = /\b(?:liga|copa|champions|europa league)\b/.test(haystack);
   const seniorDebutContext = explicitSeniorIdentity || (!youthDebutContext && seniorCompetition);
@@ -92,18 +89,21 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const aspirationalAchievement = /\b(?:objetivo|meta|sueno|suenas|aspiras?|aspiracion|quieres?|esperas?|prometes?|reto)\b.{0,48}\b(?:ser|ganar|conquistar|levantar|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(haystack) ||
     /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(haystack);
+  // Friendly/preseason silverware is deliberately not a premium visual milestone:
+  // generating paid trophy imagery for it would overstate ordinary career beats.
+  const friendlyAchievement = /\b(?:pretemporada|amistos[oa]s?|torneo amistoso|trofeo amistoso|torneo de verano|trofeo de verano|trofeo veraniego)\b/.test(haystack);
   const championCompetition = "(?:liga|copa(?: del rey)?|champions|mundial|eurocopa|europa league|supercopa)";
   const championAchievement = new RegExp(`\\bcampeon(?:es|a|as)?\\b.{0,24}\\b${championCompetition}\\b`).test(haystack) ||
     new RegExp(`\\b${championCompetition}\\b.{0,24}\\bcampeon(?:es|a|as)?\\b`).test(haystack);
   const genericTitleWon = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|recibes?|recibe)\b.{0,32}\b(?:titulo|trofeo)\b/.test(haystack) ||
     /\b(?:titulo|trofeo)\b.{0,32}\b(?:ganado|ganada|conquistado|conquistada|levantado|levantada)\b/.test(haystack);
-  const genericAchievement = (championAchievement || genericTitleWon) && !negatedAchievement && !aspirationalAchievement && !qualificationOnly;
+  const genericAchievement = (championAchievement || genericTitleWon) && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement;
   const competitionName = "(?:copa|liga|champions|mundial|eurocopa|europa league|supercopa)";
   const explicitCompetitionWin = new RegExp(`\\b(?:ganas?|gana|ganamos|ganan)\\s+(?:la|el)\\s+${competitionName}\\b`).test(haystack);
   const strongCompetitionAchievement = new RegExp(`\\b(?:conquistas?|conquista|levantas?|levanta|alz(?:as|a)|coronas?|corona)\\b.{0,32}\\b${competitionName}\\b`).test(haystack) ||
     new RegExp(`\\b${competitionName}\\b.{0,32}\\b(?:ganada|conquistada|levantada|campeon)\\b`).test(haystack);
-  const competitionWon = !negatedAchievement && !aspirationalAchievement && !qualificationOnly && (explicitCompetitionWin || strongCompetitionAchievement);
-  if (!negatedAchievement && !aspirationalAchievement && !qualificationOnly && (awardWon || genericAchievement || competitionWon)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
+  const competitionWon = !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (explicitCompetitionWin || strongCompetitionAchievement);
+  if (!negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (awardWon || genericAchievement || competitionWon)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
   const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext;
