@@ -1725,11 +1725,19 @@ export const EVENTS: GameEvent[] = [
     allowFreeText: true,
     freeTextPrompt: "¿Qué le cuentas al periodista?",
   },
+  // Antes había un único "Un rumor falso sobre ti" que nunca decía CUÁL
+  // era el rumor — solo un genérico "conflicto con el entrenador" que ni
+  // siquiera era gracioso ni surrealista, solo un aviso sin contenido.
+  // Visto en vivo: el jugador ni sabía qué se suponía que estaba
+  // desmintiendo. Ahora son varios rumores concretos, varios de ellos
+  // absurdos/surrealistas a propósito (parte del tono "gracioso" que
+  // pide la prensa deportiva real), cada uno con id propio para que no
+  // se repita el mismo dos veces en la misma carrera.
   {
-    id: "pre-rumor-falso",
+    id: "pre-rumor-falso-entrenador",
     category: "prensa",
     title: "Un rumor falso sobre ti",
-    description: "Un portal de rumores publica que estás en conflicto con el entrenador. No hay nada de cierto.",
+    description: "Un portal de rumores publica que estás en conflicto con el entrenador y que pediste la salida en la última reunión de vestuario. No hay nada de cierto — ni siquiera has hablado con él esta semana.",
     options: [
       {
         id: "a",
@@ -1746,6 +1754,98 @@ export const EVENTS: GameEvent[] = [
     ],
     allowFreeText: true,
     freeTextPrompt: "Si decides desmentirlo, ¿qué dices exactamente?",
+    minWeek: 4,
+  },
+  {
+    id: "pre-rumor-falso-tigre",
+    category: "prensa",
+    title: "Un rumor falso sobre ti",
+    description: "Un portal de cotilleos publica que te has comprado un tigre de mascota y lo tienes escondido en el jardín de tu casa. Es mentira de principio a fin, pero el titular ya lleva miles de comparticiones y varios compañeros te lo están preguntando en broma.",
+    options: [
+      {
+        id: "a",
+        label: "Desmentirlo públicamente",
+        subtitle: "Corta el ruido",
+        consequences: { fama: 2, rel_vestuario: 1 },
+      },
+      {
+        id: "b",
+        label: "Seguirle el juego en redes",
+        subtitle: "Más gracioso que serio",
+        consequences: { fama: 4, moral: 2 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "Si decides comentarlo, ¿qué dices exactamente sobre el supuesto tigre?",
+    minWeek: 4,
+  },
+  {
+    id: "pre-rumor-falso-dj",
+    category: "prensa",
+    title: "Un rumor falso sobre ti",
+    description: "Corre el rumor de que en secreto quieres dejar el fútbol para dedicarte a pinchar música electrónica, y que ya tienes hasta nombre artístico. Nadie sabe de dónde ha salido, pero parte de la afición ya lo corea en la grada como una broma cariñosa.",
+    options: [
+      {
+        id: "a",
+        label: "Desmentirlo públicamente",
+        subtitle: "Aclarar que el fútbol es lo único serio",
+        consequences: { rel_entrenador: 2, fama: 1 },
+      },
+      {
+        id: "b",
+        label: "Reírte del rumor sin desmentirlo",
+        subtitle: "Dejar que la broma siga viva",
+        consequences: { fama: 3, rel_aficion: 2 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "Un compañero te pregunta en broma por tu 'nombre de DJ'. ¿Qué le respondes?",
+    minWeek: 4,
+  },
+  {
+    id: "pre-rumor-falso-gemelo",
+    category: "prensa",
+    title: "Un rumor falso sobre ti",
+    description: "Un portal asegura que tienes un hermano gemelo secreto jugando en las categorías inferiores de otro club, separados al nacer. Es una historia completamente inventada, pero ya ha saltado a varios programas de radio deportiva.",
+    options: [
+      {
+        id: "a",
+        label: "Desmentirlo públicamente",
+        subtitle: "Aclarar que eres hijo único",
+        consequences: { fama: 1 },
+      },
+      {
+        id: "b",
+        label: "No decir nada y dejar que se apague solo",
+        subtitle: "No le das aire",
+        consequences: { moral: -1, fama: 1 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "Si decides desmentirlo, ¿qué dices exactamente sobre el supuesto hermano gemelo?",
+    minWeek: 4,
+  },
+  {
+    id: "pre-rumor-falso-churros",
+    category: "prensa",
+    title: "Un rumor falso sobre ti",
+    description: "Publican que te vieron en pijama a las cuatro de la madrugada comprando churros la noche antes de un partido importante, como prueba de una vida poco profesional. Es verdad que fuiste a por churros hace semanas, un día libre — la hora, el pijama y el partido importante se los han inventado enteros.",
+    options: [
+      {
+        id: "a",
+        label: "Desmentir los detalles inventados",
+        subtitle: "Aclarar el malentendido",
+        consequences: { rel_entrenador: 2, fama: 1 },
+      },
+      {
+        id: "b",
+        label: "Reírte y no aclarar nada",
+        subtitle: "Dejar que la anécdota crezca",
+        consequences: { fama: 3, moral: 1 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "Si decides comentarlo, ¿qué dices exactamente sobre los churros de madrugada?",
     minWeek: 4,
   },
   {

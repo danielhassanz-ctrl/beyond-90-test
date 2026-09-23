@@ -320,7 +320,8 @@ function sanitizeConsequences(raw: Consequences): Consequences {
 export const COMMON_RULES = `- Escribe en castellano de España (tú, nunca vos/tenés/vení; nada de vocabulario rioplatense o latinoamericano como "plata", "auto", "computadora", "celular", "plantel", "cancha", "vidriera", "afuera", "chico/a" con el sentido de "pequeño" — usa "dinero", "coche", "ordenador", "móvil", "plantilla", "campo", "exposición", "fuera", "pequeño/a"). Tono corto y directo: 2-3 frases en la descripción, como una escena de un simulador de carrera, no un narrador literario.
 - Las opciones deben ser entre 2 y 4 — varía la cantidad de una escena a otra, no pongas siempre el mismo número. Cada una con una etiqueta de acción corta y un subtítulo que adelante la consecuencia (ej. "+Vestuario", "Jugada de riesgo").
 - Las consecuencias numéricas deben ser sutiles para stats/relaciones (entre -10 y +10). El patrimonio puede moverse más si la escena lo justifica (ej. una prima de fichaje, un contrato nuevo).
-- Cualquier persona famosa que aparezca (cantante, influencer, otro futbolista) debe ser CLARAMENTE FICTICIA — nunca un nombre real.`;
+- Cualquier persona famosa que aparezca (cantante, influencer, otro futbolista) debe ser CLARAMENTE FICTICIA — nunca un nombre real.
+- PROHIBIDO ABSOLUTO inventar un partido: ni su resultado, ni el marcador, ni la ronda de un torneo (ej. "cuartos de Copa", "semifinal"), ni si el equipo sigue vivo o eliminado en una competición. El calendario real de partidos (Liga, Copa, Europa) y sus resultados los decide EXCLUSIVAMENTE otro sistema, ajeno a esta escena — si la escena necesita referirse a un partido pasado o futuro, hazlo de forma vaga y sin datos concretos ("el partido del fin de semana", "la próxima eliminatoria"), nunca inventando un rival, un resultado o el nombre de una ronda concretos.`;
 
 export async function callEventTool(
   prompt: string,

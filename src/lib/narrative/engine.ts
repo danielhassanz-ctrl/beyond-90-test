@@ -22,6 +22,13 @@ import { naturalFormaDegradation, calculateMediaPressure, deteriorateRelationshi
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
 import { EVENTS } from "@/lib/narrative/events";
+import {
+  buildAgentDialogueEvent,
+  shouldTriggerAgentDialogue,
+  pickEligibleAgentTrigger,
+  markAgentDialogueTriggered,
+} from "@/lib/narrative/agent-events";
+import { shouldTriggerLoanFork, buildLoanForkEvent, markLoanForkTriggered } from "@/lib/narrative/loan-fork";
 import { pickDetailedLifeScenario, markDetailedLifeUsed } from "@/lib/narrative/life-events-detailed";
 
 const PERCENT_FIELDS = [
@@ -1311,6 +1318,35 @@ export async function pickNextEventDynamic(
       return maybeAddFreeText(
         grandMomentEvent.id === "especial-lesion-grave" ? attachInjuryStart(grandMomentEvent) : grandMomentEvent,
       );
+    }
+  }
+
+  // La cesión: decisión que define carreras jóvenes de verdad (ver el
+  // documento de referencia de la partida original) y que el juego no
+  // tenía en absoluto — un jugador joven sin minutos solo generaba
+  // vestuario/entrenamiento genérico para siempre. Una única vez por
+  // carrera (marcado con loan_fork_seen), y con resultado real: puede
+  // salir redondo o puede ser un año perdido, nunca garantizado.
+  if (shouldTriggerLoanFork(player)) {
+    console.log(`[pickNextEventDynamic] Loan fork event for ${player.last_name}`);
+    markLoanForkTriggered(player);
+    return maybeAddFreeText(buildLoanForkEvent(player));
+  }
+
+  // Llamadas del representante: ofertas de otros clubes, otro agente
+  // queriendo robártelo, consejos de inversión, avisos sobre un club que
+  // huele mal. Este bloque existía en agent-events.ts desde hace tiempo
+  // pero nunca se llamaba desde aquí — el representante literalmente no
+  // hacía nada en toda la carrera salvo aparecer en la firma de contrato.
+  // Reportado en vivo: "tu repre no te llama para nada ni para
+  // oportunidad de inversión".
+  if (shouldTriggerAgentDialogue(player)) {
+    const trigger = pickEligibleAgentTrigger(player);
+    const agentEvent = trigger ? buildAgentDialogueEvent(player, trigger, player.agent_name ?? "Tu representante") : null;
+    if (agentEvent) {
+      console.log(`[pickNextEventDynamic] Agent dialogue event: "${agentEvent.title}"`);
+      markAgentDialogueTriggered(player);
+      return maybeAddFreeText(agentEvent);
     }
   }
 
