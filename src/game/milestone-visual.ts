@@ -77,10 +77,12 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const seniorDebutContext = explicitSeniorIdentity || (!youthDebutContext && seniorCompetition);
   const explicitDebut = /\bdebut\b/.test(haystack) || /\bprimer partido\b/.test(haystack);
   const footballEstreno = /\bestreno\b/.test(haystack) && /\b(?:equipo|primer equipo|partido|liga|copa|champions|seleccion|titular|campo|cesped)\b/.test(haystack);
-  // Premium debut imagery must describe the user's own milestone, not a teammate,
-  // rival, opponent or a general club/competition debut mentioned in the story.
-  const thirdPartyDebut = /\b(?:companero|companera|rival|oponente|adversario|adversaria|otro jugador|otra jugadora|nuevo companero|nuevo fichaje|el club|el equipo|seleccionador|entrenador|canterano|canterana)\b/.test(haystack);
-  if ((explicitDebut || footballEstreno) && seniorDebutContext && !thirdPartyDebut) return { kind: "debut", label: "Debut", scene: "pitch" };
+  // Premium debut imagery must describe the user's own milestone. Keep explicit
+  // third-party actors and institutional competition debuts out without treating
+  // ordinary phrases such as "debut con el equipo" as third-party references.
+  const thirdPartyDebut = /\b(?:companero|companera|rival|oponente|adversario|adversaria|otro jugador|otra jugadora|nuevo companero|nuevo fichaje|seleccionador|entrenador|canterano|canterana)\b/.test(haystack);
+  const institutionalDebut = /\b(?:debut|estreno|primer partido)\s+(?:del|de la)\s+(?:club|equipo|seleccion)\b/.test(haystack);
+  if ((explicitDebut || footballEstreno) && seniorDebutContext && !thirdPartyDebut && !institutionalDebut) return { kind: "debut", label: "Debut", scene: "pitch" };
 
   const namedAward = /\b(?:balon de oro|the best|bota de oro|golden boy)\b/;
   const awardNearMiss = /\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b.{0,48}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) ||
