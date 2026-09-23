@@ -39,6 +39,23 @@ const presentationSigning = milestoneVisualSpec(share("Presentación en el Real 
 assert.equal(presentationSigning.kind, "signing");
 assert.equal(presentationSigning.scene, "presentation");
 
+// Premium signing imagery must belong to the player's own career. Mentions of
+// teammates, rivals or transfer-market news must remain ordinary career cards
+// so they cannot trigger a paid image generation request for the wrong person.
+for (const headline of [
+  "Tu compañero completa su fichaje por el Valencia",
+  "Un rival es fichado por el Sevilla",
+  "Otro jugador negocia su traspaso al Villarreal",
+  "El nuevo compañero posa en su presentación con el club",
+  "El nuevo fichaje del club firma por tres temporadas",
+  "Fichaje rival: presentación en el estadio",
+  "Mercado: traspaso cerrado por el próximo rival",
+]) {
+  const ordinaryCard = milestoneVisualSpec(share(headline));
+  assert.equal(ordinaryCard.kind, "career", headline);
+  assert.equal(ordinaryCard.scene, "portrait", headline);
+}
+
 const debut = milestoneVisualSpec(share("Debut con el primer equipo"));
 const debutBrief = milestoneGenerationBrief(debut, playerVisualProfile(18), "Real Betis", identity);
 assert.equal(debut.scene, "pitch");
