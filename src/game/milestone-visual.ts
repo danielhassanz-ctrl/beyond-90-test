@@ -85,7 +85,8 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const namedAward = /\b(?:balon de oro|the best|bota de oro|golden boy)\b/;
   const awardNearMiss = /\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b.{0,48}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) ||
     /\b(?:balon de oro|the best|bota de oro|golden boy)\b.{0,48}\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b/.test(haystack);
-  const awardWon = !awardNearMiss && ((namedAward.test(haystack) && /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|recibes?|recibe|levantas?|levanta|te coronas|premiado|galardonado)\b/.test(haystack)) ||
+  const thirdPartyAchievement = /\b(?:companero|companera|rival|oponente|adversario|adversaria|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|excompanero|excompanera)\b/.test(haystack);
+  const awardWon = !thirdPartyAchievement && !awardNearMiss && ((namedAward.test(haystack) && /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|recibes?|recibe|levantas?|levanta|te coronas|premiado|galardonado)\b/.test(haystack)) ||
     /\b(?:ganador|ganadora|vencedor|vencedora)\b.{0,36}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack));
   const negatedAchievement = /\b(?:sin|ningun|ninguna|no (?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|recibes?|recibe))\b.{0,32}\b(?:titulo|trofeo|campeon|copa|liga|champions|mundial|eurocopa|europa league|balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) ||
     /\b(?:pierdes?|pierde|perdemos|eliminado|eliminada|subcampeon|subcampeona)\b.{0,32}\b(?:final|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
@@ -98,13 +99,13 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
     new RegExp(`\\b${championCompetition}\\b.{0,24}\\bcampeon(?:es|a|as)?\\b`).test(haystack);
   const genericTitleWon = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|recibes?|recibe)\b.{0,32}\b(?:titulo|trofeo)\b/.test(haystack) ||
     /\b(?:titulo|trofeo)\b.{0,32}\b(?:ganado|ganada|conquistado|conquistada|levantado|levantada)\b/.test(haystack);
-  const genericAchievement = (championAchievement || genericTitleWon) && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement;
+  const genericAchievement = (championAchievement || genericTitleWon) && !thirdPartyAchievement && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement;
   const competitionName = "(?:copa|liga|champions|mundial|eurocopa|europa league|supercopa)";
   const explicitCompetitionWin = new RegExp(`\\b(?:ganas?|gana|ganamos|ganan)\\s+(?:la|el)\\s+${competitionName}\\b`).test(haystack);
   const strongCompetitionAchievement = new RegExp(`\\b(?:conquistas?|conquista|levantas?|levanta|alz(?:as|a)|coronas?|corona)\\b.{0,32}\\b${competitionName}\\b`).test(haystack) ||
     new RegExp(`\\b${competitionName}\\b.{0,32}\\b(?:ganada|conquistada|levantada|campeon)\\b`).test(haystack);
-  const competitionWon = !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (explicitCompetitionWin || strongCompetitionAchievement);
-  if (!negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (awardWon || genericAchievement || competitionWon)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
+  const competitionWon = !thirdPartyAchievement && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (explicitCompetitionWin || strongCompetitionAchievement);
+  if (!thirdPartyAchievement && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (awardWon || genericAchievement || competitionWon)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
   const speculativeMove = /\b(?:oferta|interes|negocia|negociacion|rumor|sondeo|posible|podria|puede|opcion)\b.{0,48}\b(?:fichaje|fichar|traspaso|cesion|cedido|nuevo club)\b/.test(haystack) ||
