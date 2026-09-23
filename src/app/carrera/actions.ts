@@ -265,37 +265,37 @@ export async function resolveEvent(formData: FormData) {
       const { buildPreseasonBienvenidaEvent } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonBienvenidaEvent(player.club));
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonBienvenidaEvent(player.club, player.id));
     } else if (event.id === "pretemp-bienvenida") {
       const { buildPreseasonFisicoEvent } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonFisicoEvent());
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonFisicoEvent(player.id));
     } else if (event.id === "pretemp-fisico") {
       const { buildPreseasonCompetenciaEvent } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonCompetenciaEvent());
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonCompetenciaEvent(player.id));
     } else if (event.id === "pretemp-competencia") {
       const { buildPreseasonTacticaEvent } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonTacticaEvent());
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonTacticaEvent(player.id));
     } else if (event.id === "pretemp-tactica") {
       const { buildPreseasonCapitan } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonCapitan());
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonCapitan(player.id));
     } else if (event.id === "pretemp-capitan") {
       const { buildPreseasonPasado } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonPasado());
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonPasado(player.id));
     } else if (event.id === "pretemp-pasado") {
       const { buildPreseasonAmistoso } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonAmistoso());
+      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonAmistoso(player.id));
     }
     // Cadena de rookie: filial → tactica → debut oficial (semanas 11-15)
     else if (event.id === "pretemp-amistoso") {
