@@ -89,8 +89,6 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const aspirationalAchievement = /\b(?:objetivo|meta|sueno|suenas|aspiras?|aspiracion|quieres?|esperas?|prometes?|reto)\b.{0,48}\b(?:ser|ganar|conquistar|levantar|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(haystack);
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(haystack) ||
     /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(haystack);
-  // Friendly/preseason silverware is deliberately not a premium visual milestone:
-  // generating paid trophy imagery for it would overstate ordinary career beats.
   const friendlyAchievement = /\b(?:pretemporada|amistos[oa]s?|torneo amistoso|trofeo amistoso|torneo de verano|trofeo de verano|trofeo veraniego)\b/.test(haystack);
   const championCompetition = "(?:liga|copa(?: del rey)?|champions|mundial|eurocopa|europa league|supercopa)";
   const championAchievement = new RegExp(`\\bcampeon(?:es|a|as)?\\b.{0,24}\\b${championCompetition}\\b`).test(haystack) ||
@@ -106,9 +104,12 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   if (!negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (awardWon || genericAchievement || competitionWon)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
-  const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext;
-  const clubPresentation = /\bpresentacion\b.{0,36}\b(?:con|en|como nuevo jugador|nuevo club)\b/.test(haystack) && !excludedSigningContext;
-  const signedForClub = /\bfirma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext;
+  // A transfer mentioned in the story is not automatically the user's transfer.
+  // Avoid paid/premium signing imagery for teammates, rivals or market news.
+  const thirdPartySigning = /\b(?:companero|companera|rival|otro jugador|otra jugadora|nuevo companero|nuevo fichaje del club|fichaje rival|mercado)\b/.test(haystack);
+  const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext && !thirdPartySigning;
+  const clubPresentation = /\bpresentacion\b.{0,36}\b(?:con|en|como nuevo jugador|nuevo club)\b/.test(haystack) && !excludedSigningContext && !thirdPartySigning;
+  const signedForClub = /\bfirma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext && !thirdPartySigning;
   if (explicitClubMove || clubPresentation || signedForClub) return { kind: "signing", label: "Nuevo capítulo", scene: "presentation" };
   return { kind: "career", label: "Mi carrera", scene: "portrait" };
 }
