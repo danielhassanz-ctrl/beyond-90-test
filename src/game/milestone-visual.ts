@@ -32,7 +32,7 @@ export function milestoneGenerationBrief(milestone: MilestoneVisualSpec, visual:
 /** Rights-safe milestone classification used by share cards. */
 export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const haystack = `${share.headline} ${share.kicker} ${share.lines.map((line) => `${line.label} ${line.value}`).join(" ")}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const thirdParty = /\b(?:rival|oponente|adversario|adversaria|companero|companera|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|familia|familiar|padre|madre|hermano|hermana|hijo|hija|pareja|novio|novia|amigo|amiga)\b/.test(haystack);
+  const thirdParty = /\b(?:rival|oponente|adversario|adversaria|companero|companera|excompanero|excompanera|exjugador|exjugadora|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|familia|familiar|padre|madre|hermano|hermana|hijo|hija|pareja|novio|novia|amigo|amiga)\b/.test(haystack);
   const nonCareerRetirement = /\b(?:lesion|lesionado|medico|hospital|dinero|efectivo|cajero|mercado|oferta|fichaje|traspaso)\b/.test(haystack);
   if ((/\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas|retirada|retiro|retirarse|se retira)\b/.test(haystack)) && !nonCareerRetirement && !thirdParty) return { kind: "retirement", label: "Despedida", scene: "farewell" };
 
