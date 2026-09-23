@@ -4,12 +4,7 @@ import type { ClubVisualIdentity } from "./club-identity";
 export type MilestoneVisualKind = "signing" | "debut" | "trophy" | "retirement" | "career";
 export type PlayerVisualAgeStage = "academy" | "young-pro" | "prime" | "veteran" | "legacy";
 
-export interface MilestoneVisualSpec {
-  kind: MilestoneVisualKind;
-  label: string;
-  scene: "presentation" | "pitch" | "celebration" | "farewell" | "portrait";
-}
-
+export interface MilestoneVisualSpec { kind: MilestoneVisualKind; label: string; scene: "presentation" | "pitch" | "celebration" | "farewell" | "portrait"; }
 export interface PlayerVisualProfile { age: number; stage: PlayerVisualAgeStage; ageDirection: string; }
 export interface MilestoneGenerationBrief { scene: MilestoneVisualSpec["scene"]; identityRule: string; ageRule: string; clubRule: string; composition: string; prohibited: string[]; }
 
