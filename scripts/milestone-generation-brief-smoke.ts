@@ -183,6 +183,12 @@ for (const headline of [
   "Retirada de efectivo para la entrada de la casa",
   "El club confirma la retirada de la oferta de fichaje",
   "Retirada del mercado de traspasos",
+  "Tu compañero anuncia su retirada",
+  "Un rival se retira del fútbol",
+  "El entrenador anuncia su retirada",
+  "El seleccionador cuelga las botas",
+  "Otro jugador confirma el fin de su carrera",
+  "Despedida del capitán: último partido con el club",
 ]) {
   const ordinaryCard = milestoneVisualSpec(share(headline));
   assert.equal(ordinaryCard.kind, "career", headline);
