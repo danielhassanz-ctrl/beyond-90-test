@@ -116,6 +116,12 @@ const FAME_EVENT_IDS = new Set([
   "fama-reality-cocina",
   "fama-fiesta-piscina",
   "fama-leyenda-dorsal",
+  // Añadidos por la skill narrativas-futbol: vestuario/prensa graciosos
+  // o surrealistas, cortos y con gancho concreto (ver events.ts).
+  "ves-corte-pelo-obsesivo",
+  "ves-equipacion-prestada",
+  "ves-guerra-bromas-vestuario",
+  "ves-supersticion-ridicula",
 ]);
 const FAME_EVENTS: GameEvent[] = EVENTS.filter((event) => FAME_EVENT_IDS.has(event.id));
 
@@ -181,6 +187,17 @@ const GRAND_MOMENT_EVENT_IDS = new Set([
   "fork-titulo-liga",
   "fork-champions",
   "especial-lesion-grave",
+  // Añadidos por la skill narrativas-futbol: patrones reales de carrera
+  // (fichaje caro que no cuaja, choque cultural, lesión de rodilla,
+  // marginado por cambio de entrenador, cesión sin hueco al volver,
+  // suplente que explota tarde, veterano que vuelve a su club de debut).
+  "esp-fichaje-caro-presion",
+  "vid-choque-cultural-extranjero",
+  "esp-lesion-ligamento-cruzado",
+  "ent-marginado-nuevo-entrenador",
+  "rep-cesion-exito-sin-hueco",
+  "ves-suplente-explota-tarde",
+  "esp-veterano-vuelve-debut",
 ]);
 const GRAND_MOMENT_EVENTS: GameEvent[] = EVENTS.filter((event) => GRAND_MOMENT_EVENT_IDS.has(event.id));
 

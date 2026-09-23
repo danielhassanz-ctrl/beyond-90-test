@@ -5486,4 +5486,322 @@ export const EVENTS: GameEvent[] = [
       },
     ],
   },
+
+  // ── Patrones reales de carrera (skill narrativas-futbol) ──────────────
+  // Arquetipos que pasan constantemente en el fútbol de verdad (fichaje
+  // caro que no cuaja, choque cultural, lesión de rodilla, marginado por
+  // cambio de entrenador, suplente que explota tarde, veterano que
+  // vuelve a su debut) más varias escenas graciosas/surrealistas de
+  // vestuario y prensa — cortas y con gancho concreto, no descripción
+  // atmosférica larga.
+  {
+    id: "esp-fichaje-caro-presion",
+    category: "especial",
+    title: "El precio pesa",
+    description: "La prensa lleva semanas repitiendo tu cifra de traspaso. Empiezas flojo y la grada ya te pita el primer control malo.",
+    minWeek: 20,
+    minMedia: 60,
+    options: [
+      {
+        id: "a",
+        label: "Ignorar el ruido y trabajar",
+        subtitle: "Paciencia",
+        consequences: { moral: -2, forma: 2 },
+      },
+      {
+        id: "b",
+        label: "Salir a dar la cara en rueda de prensa",
+        subtitle: "Riesgo público",
+        resolve: {
+          baseChance: 0.5,
+          statModifier: "fama",
+          success: { text: "La sinceridad conecta con la afición. Te aplauden en el siguiente entrenamiento a puerta abierta.", consequences: { fama: 3, rel_aficion: 4 } },
+          fail: { text: "Tus palabras se recortan y se malinterpretan. El ruido crece en vez de apagarse.", consequences: { fama: -2, moral: -3 } },
+        },
+        consequences: {},
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices a la prensa sobre el precio de tu fichaje?",
+  },
+  {
+    id: "vid-choque-cultural-extranjero",
+    category: "vida",
+    title: "La luna de miel se acaba",
+    description: "Los primeros meses fuera fueron ilusión pura. Ahora el idioma sigue costando, comes solo casi cada noche y empiezas a echar de menos hasta lo que no soportabas de casa.",
+    minWeek: 15,
+    options: [
+      {
+        id: "a",
+        label: "Apuntarte a clases intensivas del idioma",
+        subtitle: "Invertir en adaptarte",
+        consequences: { patrimonio: -1500, rel_vestuario: 4, moral: 2 },
+      },
+      {
+        id: "b",
+        label: "Aislarte y centrarte solo en el fútbol",
+        subtitle: "Cabeza en el trabajo",
+        consequences: { forma: 3, moral: -4, rel_vestuario: -2 },
+      },
+      {
+        id: "c",
+        label: "Llamar a casa más de lo habitual",
+        subtitle: "Buscar ancla emocional",
+        consequences: { moral: 4, forma: -1 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué es lo que más echas de menos de casa esta semana?",
+  },
+  {
+    id: "esp-lesion-ligamento-cruzado",
+    category: "especial",
+    title: "La rodilla que lo para todo",
+    description: "Cruzado de ligamento roto en un apoyo mal hecho, sin contacto. Meses de baja, quirófano y la pregunta que nadie dice en voz alta: ¿volverás al mismo nivel?",
+    minWeek: 25,
+    minMedia: 55,
+    isMilestone: true,
+    imageScene: "Photorealistic photo of the photographed man on crutches leaving a hospital in tracksuit, knee heavily bandaged, determined but tired expression, overcast daylight, photojournalistic style",
+    options: [
+      {
+        id: "a",
+        label: "Rehabilitación agresiva, sin saltarte nada",
+        subtitle: "Disciplina total",
+        consequences: { forma: -8, moral: 2, rel_entrenador: 3 },
+      },
+      {
+        id: "b",
+        label: "Volver antes de lo recomendado",
+        subtitle: "Riesgo de recaída",
+        resolve: {
+          baseChance: 0.35,
+          statModifier: "forma",
+          success: { text: "Aguanta. Vuelves antes de lo previsto y sin secuelas visibles.", consequences: { forma: -2, fama: 3 } },
+          fail: { text: "La rodilla no estaba lista: recaída y vuelta a empezar la baja, esta vez con más miedo.", consequences: { forma: -12, moral: -8 } },
+        },
+        consequences: {},
+      },
+    ],
+  },
+  {
+    id: "ent-marginado-nuevo-entrenador",
+    category: "entrenamiento",
+    title: "El nuevo técnico no cuenta contigo",
+    description: "Cambia el entrenador. Con el anterior eras fijo; con este ni calientas. No te ha dado ninguna explicación todavía.",
+    minWeek: 20,
+    minMedia: 58,
+    options: [
+      {
+        id: "a",
+        label: "Pedirle una charla cara a cara",
+        subtitle: "Ir directo al grano",
+        resolve: {
+          baseChance: 0.45,
+          statModifier: "reputacion",
+          success: { text: "Te da una razón concreta y una oportunidad para demostrarlo en dos semanas.", consequences: { rel_entrenador: 5, moral: 3 } },
+          fail: { text: "La charla es fría y genérica. Sigues sin saber por qué no cuenta contigo.", consequences: { moral: -4 } },
+        },
+        consequences: {},
+      },
+      {
+        id: "b",
+        label: "Callar y trabajar el doble en cada entrenamiento",
+        subtitle: "Convencer con hechos",
+        consequences: { forma: 4, moral: -2 },
+      },
+      {
+        id: "c",
+        label: "Pedirle a tu representante que mueva un traspaso ya",
+        subtitle: "Salir cuanto antes",
+        consequences: { rel_representante: 2, moral: 1 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "Si le pides explicaciones al entrenador, ¿qué le dices exactamente?",
+  },
+  {
+    id: "rep-cesion-exito-sin-hueco",
+    category: "representante",
+    title: "Vuelves mejor, pero sigues sin hueco",
+    description: "Vuelves de la cesión siendo un jugador distinto. Tu club de origen te lo reconoce en la reunión... y en la misma frase te dice que en el once no hay sitio para ti.",
+    requiresFlag: "loan_active",
+    minMedia: 62,
+    options: [
+      {
+        id: "a",
+        label: "Exigir que te dejen salir de nuevo, esta vez con opción de compra",
+        subtitle: "No repetir la misma situación",
+        consequences: { rel_representante: 3, fama: 2 },
+      },
+      {
+        id: "b",
+        label: "Quedarte a forzar la situación desde dentro",
+        subtitle: "Última bala en tu club de origen",
+        consequences: { moral: -3, forma: 1 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices al director deportivo cuando te dice que sigue sin haber hueco?",
+  },
+  {
+    id: "ves-suplente-explota-tarde",
+    category: "vestuario",
+    title: "Años de banquillo, un minuto de gloria",
+    description: "Llevas temporadas siendo suplente fijo. Hoy entras en el minuto 70 por una lesión ajena y decides que no vas a desaprovecharlo.",
+    minWeek: 30,
+    maxMedia: 68,
+    options: [
+      {
+        id: "a",
+        label: "Jugar sin miedo a equivocarte",
+        subtitle: "Todo o nada",
+        resolve: {
+          baseChance: 0.4,
+          statModifier: "media",
+          success: { text: "Apareces decisivo justo cuando nadie lo esperaba. El vestuario entero te lo reconoce.", consequences: { media: 5, fama: 4, rel_vestuario: 5 } },
+          fail: { text: "Los nervios te pueden y desaprovechas el momento. Vuelves al banquillo la semana siguiente.", consequences: { moral: -5 } },
+        },
+        consequences: {},
+      },
+      {
+        id: "b",
+        label: "Jugar seguro, sin arriesgar nada",
+        subtitle: "No estropearlo",
+        consequences: { forma: 1, rel_entrenador: 1 },
+      },
+    ],
+  },
+  {
+    id: "esp-veterano-vuelve-debut",
+    category: "especial",
+    title: "Vuelves a donde empezó todo",
+    description: "Después de años fuera, firmas por el club donde debutaste. Nada es exactamente igual: ni el vestuario, ni la grada, ni tú.",
+    minWeek: 140,
+    isMilestone: true,
+    imageScene: "Photorealistic photo of the photographed man in his boyhood club's home kit, standing alone in the middle of the pitch looking up at the stands, emotional nostalgic expression, golden hour light, wide shot",
+    options: [
+      {
+        id: "a",
+        label: "Asumir un rol de líder veterano",
+        subtitle: "Guiar a los jóvenes",
+        consequences: { rel_vestuario: 6, moral: 5, fama: 3 },
+      },
+      {
+        id: "b",
+        label: "Centrarte solo en aportar en el campo",
+        subtitle: "Perfil bajo",
+        consequences: { forma: 3, rel_aficion: 2 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué sientes al volver a pisar el campo donde debutaste, años después?",
+  },
+  {
+    id: "ves-corte-pelo-obsesivo",
+    category: "vestuario",
+    title: "La noche antes, obsesionado con el pelo",
+    description: "La noche antes de un partido grande te obsesionas con cortarte el pelo. Terminas rapándote entero a las dos de la madrugada y casi llegas tarde a la concentración.",
+    options: [
+      {
+        id: "a",
+        label: "Presentarte igual, calvo y sin dormir",
+        subtitle: "Da igual, a jugar",
+        consequences: { forma: -1, fama: 3, moral: 2 },
+      },
+      {
+        id: "b",
+        label: "Ponerte gorra y esperar que nadie lo note",
+        subtitle: "Disimular",
+        consequences: { moral: 1, rel_vestuario: 2 },
+      },
+    ],
+  },
+  {
+    id: "ves-equipacion-prestada",
+    category: "vestuario",
+    title: "La equipación no ha llegado",
+    description: "Un fallo de logística: la nueva equipación se queda en la aduana. Toca salir a un partido con camisetas prestadas del filial, sin tu nombre ni tu dorsal.",
+    options: [
+      {
+        id: "a",
+        label: "Reírte del percance en redes",
+        subtitle: "Convertirlo en algo simpático",
+        consequences: { fama: 4, rel_aficion: 3 },
+      },
+      {
+        id: "b",
+        label: "Quejarte formalmente al club",
+        subtitle: "Que no vuelva a pasar",
+        consequences: { rel_entrenador: -1, fama: -1 },
+      },
+    ],
+  },
+  {
+    id: "ves-guerra-bromas-vestuario",
+    category: "vestuario",
+    title: "La guerra de bromas se descontrola",
+    description: "Llevabais semanas de bromas cruzadas en el vestuario. Hoy alguien se ha pasado tres pueblos justo antes de un entrenamiento importante y el ambiente se ha tensado de golpe.",
+    options: [
+      {
+        id: "a",
+        label: "Cortarlo con humor antes de que vaya a más",
+        subtitle: "Rebajar la tensión",
+        consequences: { rel_vestuario: 4, moral: 1 },
+      },
+      {
+        id: "b",
+        label: "Devolvérsela el doble de fuerte",
+        subtitle: "Escalar la broma",
+        resolve: {
+          baseChance: 0.5,
+          statModifier: "fama",
+          success: { text: "La respuesta es tan buena que hasta el afectado se ríe. Se convierte en anécdota del vestuario.", consequences: { rel_vestuario: 5, fama: 2 } },
+          fail: { text: "Se lo toma mal de verdad. El ambiente queda raro varios días.", consequences: { rel_vestuario: -6 } },
+        },
+        consequences: {},
+      },
+    ],
+  },
+  {
+    id: "ves-supersticion-ridicula",
+    category: "vestuario",
+    title: "La superstición que ya es ridícula",
+    description: "Un compañero lleva ganando desde que se pone las botas en un orden exacto y ahora exige que todo el vestuario siga su ritual antes de cada partido, por absurdo que sea.",
+    options: [
+      {
+        id: "a",
+        label: "Seguirle la corriente sin cuestionarlo",
+        subtitle: "Por si acaso",
+        consequences: { rel_vestuario: 3, moral: 1 },
+      },
+      {
+        id: "b",
+        label: "Negarte y reírte de la superstición",
+        subtitle: "No entrar al juego",
+        consequences: { rel_vestuario: -2, moral: 2 },
+      },
+    ],
+  },
+  {
+    id: "pre-rueda-prensa-surrealista",
+    category: "prensa",
+    title: "La pregunta más rara de tu carrera",
+    description: "En plena rueda de prensa, un periodista te hace una pregunta que no tiene nada que ver con el fútbol y espera una respuesta seria delante de todas las cámaras.",
+    options: [
+      {
+        id: "a",
+        label: "Seguirle el juego con humor",
+        subtitle: "Momento viral asegurado",
+        consequences: { fama: 5, moral: 2 },
+      },
+      {
+        id: "b",
+        label: "Redirigir con educación hacia el fútbol",
+        subtitle: "Profesional hasta el final",
+        consequences: { rel_entrenador: 2, fama: 1 },
+      },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le respondes exactamente a esa pregunta tan rara?",
+  },
 ];
