@@ -131,6 +131,10 @@ for (const headline of [
   "Tu compañero anuncia su retirada", "Un rival se retira del fútbol", "El entrenador anuncia su retirada",
   "El seleccionador cuelga las botas", "Otro jugador confirma el fin de su carrera",
   "Despedida del capitán: último partido con el club",
+  "Tu padre anuncia su retirada", "Tu madre se retira de su trabajo", "Tu hermano cuelga las botas",
+  "Tu hermana anuncia el fin de su carrera", "Tu hijo se retira del fútbol", "Tu hija anuncia su retirada",
+  "Tu pareja se retira", "Tu novio cuelga las botas", "Tu novia anuncia su retirada",
+  "Tu amigo confirma el fin de su carrera", "Tu amiga se retira del fútbol",
 ]) {
   assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 }
