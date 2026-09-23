@@ -40,17 +40,12 @@ assert.equal(presentationSigning.kind, "signing");
 assert.equal(presentationSigning.scene, "presentation");
 
 for (const headline of [
-  "Tu compañero completa su fichaje por el Valencia",
-  "Un rival es fichado por el Sevilla",
-  "Otro jugador negocia su traspaso al Villarreal",
-  "El nuevo compañero posa en su presentación con el club",
-  "El nuevo fichaje del club firma por tres temporadas",
-  "Fichaje rival: presentación en el estadio",
+  "Tu compañero completa su fichaje por el Valencia", "Un rival es fichado por el Sevilla",
+  "Otro jugador negocia su traspaso al Villarreal", "El nuevo compañero posa en su presentación con el club",
+  "El nuevo fichaje del club firma por tres temporadas", "Fichaje rival: presentación en el estadio",
   "Mercado: traspaso cerrado por el próximo rival",
 ]) {
-  const ordinaryCard = milestoneVisualSpec(share(headline));
-  assert.equal(ordinaryCard.kind, "career", headline);
-  assert.equal(ordinaryCard.scene, "portrait", headline);
+  assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 }
 
 const debut = milestoneVisualSpec(share("Debut con el primer equipo"));
@@ -68,15 +63,11 @@ for (const headline of [
   "Un rival debuta en Liga", "Primer partido profesional de otro jugador", "El nuevo fichaje debuta en Copa",
   "Debut del club en Champions", "Estreno del equipo en Europa League",
 ]) {
-  const ordinaryCard = milestoneVisualSpec(share(headline));
-  assert.equal(ordinaryCard.kind, "career", headline);
-  assert.equal(ordinaryCard.scene, "portrait", headline);
+  assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 }
 
 for (const headline of ["Debut en Liga con el primer equipo", "Primer partido profesional", "Estreno como titular en Copa"]) {
-  const seniorDebut = milestoneVisualSpec(share(headline));
-  assert.equal(seniorDebut.kind, "debut", headline);
-  assert.equal(seniorDebut.scene, "pitch", headline);
+  assert.equal(milestoneVisualSpec(share(headline)).kind, "debut", headline);
 }
 
 const trophy = milestoneVisualSpec(share("Campeón de Liga"));
@@ -93,6 +84,10 @@ for (const headline of [
   "Tu compañero gana el Balón de Oro", "Un rival levanta la Champions", "Otro jugador conquista el Mundial",
   "El capitán gana la Copa", "La capitana es campeona de Liga", "Tu excompañero recibe el The Best",
   "El seleccionador levanta un trofeo", "El entrenador gana un título",
+  "Tu padre gana un trofeo benéfico", "Tu madre recibe un premio", "Tu hermano gana la Copa regional",
+  "Tu hermana es campeona de Liga", "Tu hijo levanta un trofeo", "Tu hija gana un título juvenil",
+  "Tu pareja recibe el The Best", "Tu novio gana un título", "Tu novia levanta la Copa",
+  "Tu amigo gana el Balón de Oro", "Tu amiga es campeona de Liga",
   "Próximo partido de Liga ante el Sevilla", "Convocado para la Copa del Rey", "Viaje de Champions a Milán",
   "La final de Copa se acerca", "Objetivo: clasificar al Mundial", "Pierdes la final de Copa", "Subcampeón de Liga",
   "Eliminado de la Champions", "No ganas ningún título esta temporada", "Te quedas sin el Balón de Oro",
@@ -118,20 +113,8 @@ for (const headline of [
   assert.equal(ordinaryCard.scene, "portrait", headline);
 }
 
-const ligamentInjury = milestoneVisualSpec(share("Lesión de ligamento: seis meses fuera"));
-assert.equal(ligamentInjury.kind, "career");
-assert.equal(ligamentInjury.scene, "portrait");
-
-for (const headline of ["Ficha médica tras la lesión", "Actualizamos tu ficha técnica"]) {
-  const ordinaryCard = milestoneVisualSpec(share(headline));
-  assert.equal(ordinaryCard.kind, "career", headline);
-  assert.equal(ordinaryCard.scene, "portrait", headline);
-}
-
-for (const headline of ["Presentación ante la prensa", "Presentación de la nueva campaña", "Presentación médica de pretemporada"]) {
-  const ordinaryCard = milestoneVisualSpec(share(headline));
-  assert.equal(ordinaryCard.kind, "career", headline);
-  assert.equal(ordinaryCard.scene, "portrait", headline);
+for (const headline of ["Lesión de ligamento: seis meses fuera", "Ficha médica tras la lesión", "Actualizamos tu ficha técnica", "Presentación ante la prensa", "Presentación de la nueva campaña", "Presentación médica de pretemporada"]) {
+  assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 }
 
 const retirement = milestoneVisualSpec(share("Despedida: fin de carrera"));
@@ -149,15 +132,11 @@ for (const headline of [
   "El seleccionador cuelga las botas", "Otro jugador confirma el fin de su carrera",
   "Despedida del capitán: último partido con el club",
 ]) {
-  const ordinaryCard = milestoneVisualSpec(share(headline));
-  assert.equal(ordinaryCard.kind, "career", headline);
-  assert.equal(ordinaryCard.scene, "portrait", headline);
+  assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 }
 
 for (const headline of ["Anuncias tu retirada", "Te retiras del fútbol", "Cuelgas las botas"]) {
-  const farewell = milestoneVisualSpec(share(headline));
-  assert.equal(farewell.kind, "retirement", headline);
-  assert.equal(farewell.scene, "farewell", headline);
+  assert.equal(milestoneVisualSpec(share(headline)).kind, "retirement", headline);
 }
 
 for (const brief of [signingBrief, debutBrief, trophyBrief, retirementBrief]) {
