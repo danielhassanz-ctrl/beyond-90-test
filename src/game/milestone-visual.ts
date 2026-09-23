@@ -67,8 +67,9 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   const nonCareerRetirement = /\b(?:lesion|lesionado|medico|hospital|dinero|efectivo|cajero|mercado|oferta|fichaje|traspaso)\b/.test(haystack);
+  const thirdPartyRetirement = /\b(?:rival|oponente|adversario|adversaria|companero|companera|otro jugador|otra jugadora|entrenador|seleccionador)\b/.test(haystack);
   const explicitFarewell = /\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas)\b/.test(haystack);
-  const explicitRetirement = /\b(?:retirada|retiro|retirarse|se retira)\b/.test(haystack) && !nonCareerRetirement;
+  const explicitRetirement = /\b(?:retirada|retiro|retirarse|se retira)\b/.test(haystack) && !nonCareerRetirement && !thirdPartyRetirement;
   if (explicitFarewell || explicitRetirement) return { kind: "retirement", label: "Despedida", scene: "farewell" };
 
   const youthDebutContext = /\b(?:juvenil|cantera|filial|equipo b|sub[- ]?(?:17|18|19|20|21|23)|youth|academy|reserva)\b/.test(haystack);
@@ -106,8 +107,6 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   if (!negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (awardWon || genericAchievement || competitionWon)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
-  // Market/loan discussion is not a completed signing. Premium presentation imagery
-  // is reserved for a confirmed move by the player's own career.
   const speculativeMove = /\b(?:oferta|interes|negocia|negociacion|rumor|sondeo|posible|podria|puede|opcion)\b.{0,48}\b(?:fichaje|fichar|traspaso|cesion|cedido|nuevo club)\b/.test(haystack) ||
     /\b(?:fichaje|fichar|traspaso|cesion|cedido|nuevo club)\b.{0,48}\b(?:oferta|interes|negocia|negociacion|rumor|sondeo|posible|podria|puede|opcion)\b/.test(haystack);
   const thirdPartySigning = /\b(?:companero|companera|rival|otro jugador|otra jugadora|nuevo companero|nuevo fichaje del club|fichaje rival|mercado)\b/.test(haystack);
