@@ -77,9 +77,6 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const seniorDebutContext = explicitSeniorIdentity || (!youthDebutContext && seniorCompetition);
   const explicitDebut = /\bdebut\b/.test(haystack) || /\bprimer partido\b/.test(haystack);
   const footballEstreno = /\bestreno\b/.test(haystack) && /\b(?:equipo|primer equipo|partido|liga|copa|champions|seleccion|titular|campo|cesped)\b/.test(haystack);
-  // Premium debut imagery must describe the user's own milestone. Keep explicit
-  // third-party actors and institutional competition debuts out without treating
-  // ordinary phrases such as "debut con el equipo" as third-party references.
   const thirdPartyDebut = /\b(?:companero|companera|rival|oponente|adversario|adversaria|otro jugador|otra jugadora|nuevo companero|nuevo fichaje|seleccionador|entrenador|canterano|canterana)\b/.test(haystack);
   const institutionalDebut = /\b(?:debut|estreno|primer partido)\s+(?:del|de la)\s+(?:club|equipo|seleccion)\b/.test(haystack);
   if ((explicitDebut || footballEstreno) && seniorDebutContext && !thirdPartyDebut && !institutionalDebut) return { kind: "debut", label: "Debut", scene: "pitch" };
@@ -109,12 +106,14 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   if (!negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (awardWon || genericAchievement || competitionWon)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(haystack);
-  // A transfer mentioned in the story is not automatically the user's transfer.
-  // Avoid paid/premium signing imagery for teammates, rivals or market news.
+  // Market/loan discussion is not a completed signing. Premium presentation imagery
+  // is reserved for a confirmed move by the player's own career.
+  const speculativeMove = /\b(?:oferta|interes|negocia|negociacion|rumor|sondeo|posible|podria|puede|opcion)\b.{0,48}\b(?:fichaje|fichar|traspaso|cesion|cedido|nuevo club)\b/.test(haystack) ||
+    /\b(?:fichaje|fichar|traspaso|cesion|cedido|nuevo club)\b.{0,48}\b(?:oferta|interes|negocia|negociacion|rumor|sondeo|posible|podria|puede|opcion)\b/.test(haystack);
   const thirdPartySigning = /\b(?:companero|companera|rival|otro jugador|otra jugadora|nuevo companero|nuevo fichaje del club|fichaje rival|mercado)\b/.test(haystack);
-  const explicitClubMove = /\b(?:fichaje|fichas|fichado|fichar|traspaso|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext && !thirdPartySigning;
-  const clubPresentation = /\bpresentacion\b.{0,36}\b(?:con|en|como nuevo jugador|nuevo club)\b/.test(haystack) && !excludedSigningContext && !thirdPartySigning;
-  const signedForClub = /\bfirma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext && !thirdPartySigning;
+  const explicitClubMove = /\b(?:fichaje|fichas|fichado|traspasado|nuevo club|cambio de club)\b/.test(haystack) && !excludedSigningContext && !thirdPartySigning && !speculativeMove;
+  const clubPresentation = /\bpresentacion\b.{0,36}\b(?:con|en|como nuevo jugador|nuevo club)\b/.test(haystack) && !excludedSigningContext && !thirdPartySigning && !speculativeMove;
+  const signedForClub = /\bfirma(?:s|do)? (?:por|con) (?:el |la )?[a-z0-9]/.test(haystack) && !excludedSigningContext && !thirdPartySigning && !speculativeMove;
   if (explicitClubMove || clubPresentation || signedForClub) return { kind: "signing", label: "Nuevo capítulo", scene: "presentation" };
   return { kind: "career", label: "Mi carrera", scene: "portrait" };
 }
