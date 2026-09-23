@@ -85,7 +85,7 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const namedAward = /\b(?:balon de oro|the best|bota de oro|golden boy)\b/;
   const awardNearMiss = /\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b.{0,48}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) ||
     /\b(?:balon de oro|the best|bota de oro|golden boy)\b.{0,48}\b(?:nominad[oa]|finalista|segund[oa]|tercer[oa]|podio|candidat[oa]|aspirante|favorit[oa])\b/.test(haystack);
-  const thirdPartyAchievement = /\b(?:companero|companera|rival|oponente|adversario|adversaria|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|excompanero|excompanera)\b/.test(haystack);
+  const thirdPartyAchievement = /\b(?:companero|companera|rival|oponente|adversario|adversaria|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|excompanero|excompanera|padre|madre|hermano|hermana|hijo|hija|pareja|novio|novia|amigo|amiga)\b/.test(haystack);
   const awardWon = !thirdPartyAchievement && !awardNearMiss && ((namedAward.test(haystack) && /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|recibes?|recibe|levantas?|levanta|te coronas|premiado|galardonado)\b/.test(haystack)) ||
     /\b(?:ganador|ganadora|vencedor|vencedora)\b.{0,36}\b(?:balon de oro|the best|bota de oro|golden boy)\b/.test(haystack));
   const negatedAchievement = /\b(?:sin|ningun|ninguna|no (?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|recibes?|recibe))\b.{0,32}\b(?:titulo|trofeo|campeon|copa|liga|champions|mundial|eurocopa|europa league|balon de oro|the best|bota de oro|golden boy)\b/.test(haystack) ||
