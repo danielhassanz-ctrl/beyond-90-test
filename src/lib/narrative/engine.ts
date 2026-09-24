@@ -632,6 +632,335 @@ const GOALKEEPER_DECISION_SITUATIONS = [
 ];
 
 /**
+ * Antes cada posición tenía exactamente UNA terna de opciones fija — la
+ * escena (arriba) variaba, pero las tres decisiones en sí eran siempre
+ * las mismas tres, partido tras partido (reportado en vivo: "las mismas
+ * opciones siempre" en dos partidos de Liga distintos). Ahora cada
+ * posición tiene varios conjuntos de opciones y se elige uno al azar,
+ * independiente de qué escena tocó — mismo mecanismo `resolve` y mismo
+ * vocabulario de resultados que ya lee generateMatchDayEvent (save/
+ * concede/penalty_conceded, clean_tackle/foul_committed/contained/beaten,
+ * goal/assist/wondergoal/miss/miss_bad), solo cambia CÓMO se llega ahí.
+ */
+type DecisionFlagsFn = (outcome: string, style: string) => { [key: string]: string };
+
+const GOALKEEPER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
+  (flags) => [
+    {
+      id: "salir",
+      label: "Salir a cerrar el ángulo",
+      subtitle: "Agresivo: o paras el gol o dejas la portería vacía",
+      consequences: {},
+      resolve: {
+        baseChance: 0.4,
+        statModifier: "media",
+        success: { text: "Achicas el ángulo a la perfección — el rival no tiene hueco. ¡Paradón!", consequences: { fama: 2, flags: flags("save", "salida") } },
+        fail: { text: "Sales, pero te la pica por encima. Gol rival.", consequences: { flags: flags("concede", "salida") } },
+      },
+    },
+    {
+      id: "linea",
+      label: "Quedarte en la línea y cubrir el palo corto",
+      subtitle: "Más seguro, menos espectacular",
+      consequences: {},
+      resolve: {
+        baseChance: 0.55,
+        statModifier: "media",
+        success: { text: "Te mantienes firme y sacas el disparo con una buena estirada.", consequences: { flags: flags("save", "linea") } },
+        fail: { text: "El disparo pasa ajustado a tu palo. No llegas.", consequences: { flags: flags("concede", "linea") } },
+      },
+    },
+    {
+      id: "puños",
+      label: "Anticipar y despejar con los puños",
+      subtitle: "Todo o nada en el choque aéreo",
+      consequences: {},
+      resolve: {
+        baseChance: 0.32,
+        statModifier: "media",
+        success: { text: "Sales a por todas y despejas el peligro con autoridad total.", consequences: { fama: 2, flags: flags("save", "puños") } },
+        fail: { text: "Falla el cálculo: derribas al rival. El árbitro señala el punto de penalti.", consequences: { forma: -2, flags: flags("penalty_conceded", "puños") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "primer-palo",
+      label: "Tirarte al primer palo, anticipando el remate cruzado",
+      subtitle: "Apuestas por dónde va a chutar",
+      consequences: {},
+      resolve: {
+        baseChance: 0.38,
+        statModifier: "media",
+        success: { text: "Lees la intención perfectamente y sacas el disparo con el cuerpo.", consequences: { fama: 2, flags: flags("save", "primer_palo") } },
+        fail: { text: "Adivinas mal el lado — el disparo va al palo contrario. Gol.", consequences: { flags: flags("concede", "primer_palo") } },
+      },
+    },
+    {
+      id: "centrado",
+      label: "Quedarte centrado, sin comprarte el amago",
+      subtitle: "Paciencia: esperar a que decida el rival",
+      consequences: {},
+      resolve: {
+        baseChance: 0.52,
+        statModifier: "media",
+        success: { text: "No te mueves antes de tiempo y reaccionas justo cuando dispara. Gran parada.", consequences: { flags: flags("save", "centrado") } },
+        fail: { text: "El rival espera tu reacción y te la coloca por el otro lado.", consequences: { flags: flags("concede", "centrado") } },
+      },
+    },
+    {
+      id: "salida-desesperada",
+      label: "Salir en estirada desesperada a cortar el centro",
+      subtitle: "Todo o nada antes de que remate",
+      consequences: {},
+      resolve: {
+        baseChance: 0.3,
+        statModifier: "media",
+        success: { text: "Llegas justo a tiempo y despejas el centro antes del remate. Salvada providencial.", consequences: { fama: 2, flags: flags("save", "salida_desesperada") } },
+        fail: { text: "No llegas a tiempo y derribas al rival en la salida. Penalti señalado.", consequences: { forma: -2, flags: flags("penalty_conceded", "salida_desesperada") } },
+      },
+    },
+  ],
+];
+
+const DEFENDER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
+  (flags) => [
+    {
+      id: "entrada",
+      label: "Entrar fuerte al balón",
+      subtitle: "Alto riesgo de falta, pero robo limpio si sale bien",
+      consequences: {},
+      resolve: {
+        baseChance: 0.42,
+        statModifier: "media",
+        success: { text: "Entrada perfecta: te llevas el balón limpio y cortas el peligro de raíz.", consequences: { fama: 1, flags: flags("clean_tackle", "entrada") } },
+        fail: { text: "Llegas tarde. El árbitro no duda: falta y tarjeta.", consequences: { forma: -2, flags: flags("foul_committed", "entrada") } },
+      },
+    },
+    {
+      id: "contener",
+      label: "Contener sin arriesgar, llevarlo hacia fuera",
+      subtitle: "Menos vistoso, pero mucho más seguro",
+      consequences: {},
+      resolve: {
+        baseChance: 0.58,
+        statModifier: "media",
+        success: { text: "Le quitas los espacios con paciencia hasta que pierde el balón por su cuenta.", consequences: { flags: flags("contained", "contener") } },
+        fail: { text: "Te desborda igualmente. El peligro sigue vivo.", consequences: { flags: flags("beaten", "contener") } },
+      },
+    },
+    {
+      id: "anticipar",
+      label: "Anticipar con lectura de juego",
+      subtitle: "Todo o nada: adelantarte al pase antes de que llegue",
+      consequences: {},
+      resolve: {
+        baseChance: 0.3,
+        statModifier: "media",
+        success: { text: "Lees la jugada a la perfección y te llevas el balón antes de que nadie lo espere.", consequences: { fama: 2, flags: flags("clean_tackle", "anticipar") } },
+        fail: { text: "Fallas el cálculo y te quedas completamente fuera de la jugada.", consequences: { forma: -2, flags: flags("beaten", "anticipar") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "cabezazo",
+      label: "Despejar de cabeza como sea, sin filigranas",
+      subtitle: "Simplicidad ante todo: fuera de tu área",
+      consequences: {},
+      resolve: {
+        baseChance: 0.6,
+        statModifier: "media",
+        success: { text: "Despejas con contundencia. Balón lejos de tu portería, peligro cortado.", consequences: { flags: flags("clean_tackle", "cabezazo") } },
+        fail: { text: "El despeje sale mal calculado y el balón le cae de nuevo al rival dentro del área.", consequences: { flags: flags("beaten", "cabezazo") } },
+      },
+    },
+    {
+      id: "cortar-pase",
+      label: "Cortar la línea de pase antes de que llegue el balón",
+      subtitle: "Anticiparte a la jugada, no al rival",
+      consequences: {},
+      resolve: {
+        baseChance: 0.45,
+        statModifier: "media",
+        success: { text: "Interceptas el pase justo a tiempo. Ni siquiera necesitas entrar al choque.", consequences: { fama: 1, flags: flags("clean_tackle", "cortar_pase") } },
+        fail: { text: "Calculas mal la trayectoria y el balón pasa por delante de ti.", consequences: { flags: flags("beaten", "cortar_pase") } },
+      },
+    },
+    {
+      id: "carga",
+      label: "Cargar con el hombro dentro del reglamento",
+      subtitle: "Físico, al límite de la falta",
+      consequences: {},
+      resolve: {
+        baseChance: 0.4,
+        statModifier: "media",
+        success: { text: "La carga es limpia y reglamentaria: el rival pierde el equilibrio y el balón.", consequences: { flags: flags("clean_tackle", "carga") } },
+        fail: { text: "El árbitro interpreta que te pasas de fuerte. Falta señalada.", consequences: { forma: -1, flags: flags("foul_committed", "carga") } },
+      },
+    },
+  ],
+];
+
+const MIDFIELDER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
+  (flags) => [
+    {
+      id: "disparo",
+      label: "Probar el disparo lejano",
+      subtitle: "Vas a por el gol directo desde fuera del área",
+      consequences: {},
+      resolve: {
+        baseChance: 0.32,
+        statModifier: "media",
+        success: { text: "El balón se cuela pegado a la escuadra. ¡Golazo desde fuera del área!", consequences: { fama: 2, flags: flags("goal", "disparo") } },
+        fail: { text: "El disparo se marcha alto, por encima del larguero.", consequences: { flags: flags("miss", "disparo") } },
+      },
+    },
+    {
+      id: "pase",
+      label: "Filtrar el pase al delantero",
+      subtitle: "Menos gloria, más seguro",
+      consequences: {},
+      resolve: {
+        baseChance: 0.55,
+        statModifier: "media",
+        success: { text: "El pase es perfecto: tu compañero no perdona.", consequences: { flags: flags("assist", "pase") } },
+        fail: { text: "El pase se queda corto y el rival despeja el peligro.", consequences: { flags: flags("miss", "pase") } },
+      },
+    },
+    {
+      id: "proteger",
+      label: "Proteger el balón y reiniciar la jugada",
+      subtitle: "Sin riesgo: mantener la posesión del equipo",
+      consequences: {},
+      resolve: {
+        baseChance: 0.7,
+        statModifier: "media",
+        success: { text: "Proteges el balón con inteligencia y das tiempo a que el equipo suba.", consequences: { flags: flags("contained", "proteger") } },
+        fail: { text: "Te presionan entre dos rivales y pierdes el balón en una zona comprometida.", consequences: { forma: -1, flags: flags("beaten", "proteger") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "cambio-orientacion",
+      label: "Cambiar la orientación del juego al otro costado",
+      subtitle: "Paciencia: mover el balón, no el riesgo",
+      consequences: {},
+      resolve: {
+        baseChance: 0.68,
+        statModifier: "media",
+        success: { text: "El cambio de orientación pilla desubicado al rival y abre space por el otro lado.", consequences: { flags: flags("contained", "cambio_orientacion") } },
+        fail: { text: "El pase largo se va directo al rival: pérdida de balón peligrosa.", consequences: { forma: -1, flags: flags("beaten", "cambio_orientacion") } },
+      },
+    },
+    {
+      id: "conduccion",
+      label: "Encarar en conducción vertical hacia el área",
+      subtitle: "Ir tú mismo, todo o nada",
+      consequences: {},
+      resolve: {
+        baseChance: 0.36,
+        statModifier: "media",
+        success: { text: "Encaras a los centrales, aguantas el equilibrio y bates al portero desde la frontal.", consequences: { fama: 2, flags: flags("goal", "conduccion") } },
+        fail: { text: "Te cierran bien los espacios y pierdes el balón en la conducción.", consequences: { flags: flags("miss", "conduccion") } },
+      },
+    },
+    {
+      id: "pase-espacio",
+      label: "Buscar el pase al espacio entre líneas",
+      subtitle: "Pase de riesgo con mucha recompensa",
+      consequences: {},
+      resolve: {
+        baseChance: 0.48,
+        statModifier: "media",
+        success: { text: "El balón pasa entre dos rivales justo a la carrera de tu compañero. Asistencia de manual.", consequences: { flags: flags("assist", "pase_espacio") } },
+        fail: { text: "El pase se intercepta antes de llegar a su destino.", consequences: { flags: flags("miss", "pase_espacio") } },
+      },
+    },
+  ],
+];
+
+const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
+  (flags) => [
+    {
+      id: "disparo",
+      label: "Disparar a puerta",
+      subtitle: "Vas a por el gol directo",
+      consequences: {},
+      resolve: {
+        baseChance: 0.42,
+        statModifier: "media",
+        success: { text: "El balón entra pegado al palo. ¡Gol!", consequences: { flags: flags("goal", "disparo") } },
+        fail: { text: "El portero saca una mano providencial. No hay gol.", consequences: { flags: flags("miss", "disparo") } },
+      },
+    },
+    {
+      id: "pase",
+      label: "Pasar a un compañero mejor colocado",
+      subtitle: "Menos gloria, más seguro",
+      consequences: {},
+      resolve: {
+        baseChance: 0.55,
+        statModifier: "media",
+        success: { text: "El pase es perfecto: tu compañero no perdona.", consequences: { flags: flags("assist", "pase") } },
+        fail: { text: "El pase se queda corto y el rival despeja el peligro.", consequences: { flags: flags("miss", "pase") } },
+      },
+    },
+    {
+      id: "floritura",
+      label: "Intentar una jugada de calidad (regate, túnel, sombrero...)",
+      subtitle: "Todo o nada, para la galería",
+      consequences: {},
+      resolve: {
+        baseChance: 0.28,
+        statModifier: "media",
+        success: { text: "Sale perfecta. El estadio entero se levanta de sus asientos.", consequences: { fama: 3, flags: flags("wondergoal", "floritura") } },
+        fail: { text: "No sale — pierdes el balón y el rival sale a la contra.", consequences: { forma: -2, flags: flags("miss_bad", "floritura") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "primer-toque",
+      label: "Rematar de primeras sin controlar",
+      subtitle: "No le das tiempo al portero a colocarse",
+      consequences: {},
+      resolve: {
+        baseChance: 0.38,
+        statModifier: "media",
+        success: { text: "El remate de primeras sale ajustado, sin que el portero pueda reaccionar. ¡Gol!", consequences: { fama: 2, flags: flags("goal", "primer_toque") } },
+        fail: { text: "El control-remate te sale mal y el balón se marcha desviado.", consequences: { flags: flags("miss", "primer_toque") } },
+      },
+    },
+    {
+      id: "linea-fondo",
+      label: "Ganar la línea de fondo y centrar atrás",
+      subtitle: "Buscar el pase de la muerte en vez del gol propio",
+      consequences: {},
+      resolve: {
+        baseChance: 0.5,
+        statModifier: "media",
+        success: { text: "Te vas de tu marcador y pones un centro atrás perfecto que remata un compañero.", consequences: { flags: flags("assist", "linea_fondo") } },
+        fail: { text: "El centro se marcha directo al portero rival. Jugada cortada.", consequences: { flags: flags("miss", "linea_fondo") } },
+      },
+    },
+    {
+      id: "aguantar",
+      label: "Aguantar el balón de espaldas y pedir apoyo",
+      subtitle: "Sin riesgo: dar tiempo a que suba el equipo",
+      consequences: {},
+      resolve: {
+        baseChance: 0.65,
+        statModifier: "media",
+        success: { text: "Proteges el balón de espaldas hasta que llega apoyo y reinicias la jugada con calma.", consequences: { flags: flags("contained", "aguantar") } },
+        fail: { text: "El central rival te roba el balón limpiamente por la espalda.", consequences: { forma: -1, flags: flags("beaten", "aguantar") } },
+      },
+    },
+  ],
+];
+
+/**
  * El momento decisivo dentro del partido: antes esto no existía en
  * absoluto — el partido se resolvía entero de golpe y el jugador solo
  * podía reaccionar DESPUÉS (rueda de prensa, redes), nunca decidir algo
@@ -671,6 +1000,7 @@ export function buildMatchDecisionMoment(
 
   if (player.position === "Portero") {
     const situation = GOALKEEPER_DECISION_SITUATIONS[Math.floor(Math.random() * GOALKEEPER_DECISION_SITUATIONS.length)];
+    const optionSet = GOALKEEPER_OPTION_SETS[Math.floor(Math.random() * GOALKEEPER_OPTION_SETS.length)](flags);
     return {
       id: `match-decision-${match.week}-${Date.now()}`,
       category: "partido",
@@ -679,67 +1009,13 @@ export function buildMatchDecisionMoment(
       description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
       allowFreeText: true,
       freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
-      options: [
-        {
-          id: "salir",
-          label: "Salir a cerrar el ángulo",
-          subtitle: "Agresivo: o paras el gol o dejas la portería vacía",
-          consequences: {},
-          resolve: {
-            baseChance: 0.4,
-            statModifier: "media",
-            success: {
-              text: "Achicas el ángulo a la perfección — el rival no tiene hueco. ¡Paradón!",
-              consequences: { fama: 2, flags: flags("save", "salida") },
-            },
-            fail: {
-              text: "Sales, pero te la pica por encima. Gol rival.",
-              consequences: { flags: flags("concede", "salida") },
-            },
-          },
-        },
-        {
-          id: "linea",
-          label: "Quedarte en la línea y cubrir el palo corto",
-          subtitle: "Más seguro, menos espectacular",
-          consequences: {},
-          resolve: {
-            baseChance: 0.55,
-            statModifier: "media",
-            success: {
-              text: "Te mantienes firme y sacas el disparo con una buena estirada.",
-              consequences: { flags: flags("save", "linea") },
-            },
-            fail: {
-              text: "El disparo pasa ajustado a tu palo. No llegas.",
-              consequences: { flags: flags("concede", "linea") },
-            },
-          },
-        },
-        {
-          id: "puños",
-          label: "Anticipar y despejar con los puños",
-          subtitle: "Todo o nada en el choque aéreo",
-          consequences: {},
-          resolve: {
-            baseChance: 0.32,
-            statModifier: "media",
-            success: {
-              text: "Sales a por todas y despejas el peligro con autoridad total.",
-              consequences: { fama: 2, flags: flags("save", "puños") },
-            },
-            fail: {
-              text: "Falla el cálculo: derribas al rival. El árbitro señala el punto de penalti.",
-              consequences: { forma: -2, flags: flags("penalty_conceded", "puños") },
-            },
-          },
-        },
-      ],
+      options: optionSet,
     };
   }
 
   if (player.position === "Defensa") {
     const situation = DEFENDER_DECISION_SITUATIONS[Math.floor(Math.random() * DEFENDER_DECISION_SITUATIONS.length)];
+    const optionSet = DEFENDER_OPTION_SETS[Math.floor(Math.random() * DEFENDER_OPTION_SETS.length)](flags);
     return {
       id: `match-decision-${match.week}-${Date.now()}`,
       category: "partido",
@@ -748,67 +1024,13 @@ export function buildMatchDecisionMoment(
       description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
       allowFreeText: true,
       freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
-      options: [
-        {
-          id: "entrada",
-          label: "Entrar fuerte al balón",
-          subtitle: "Alto riesgo de falta, pero robo limpio si sale bien",
-          consequences: {},
-          resolve: {
-            baseChance: 0.42,
-            statModifier: "media",
-            success: {
-              text: "Entrada perfecta: te llevas el balón limpio y cortas el peligro de raíz.",
-              consequences: { fama: 1, flags: flags("clean_tackle", "entrada") },
-            },
-            fail: {
-              text: "Llegas tarde. El árbitro no duda: falta y tarjeta.",
-              consequences: { forma: -2, flags: flags("foul_committed", "entrada") },
-            },
-          },
-        },
-        {
-          id: "contener",
-          label: "Contener sin arriesgar, llevarlo hacia fuera",
-          subtitle: "Menos vistoso, pero mucho más seguro",
-          consequences: {},
-          resolve: {
-            baseChance: 0.58,
-            statModifier: "media",
-            success: {
-              text: "Le quitas los espacios con paciencia hasta que pierde el balón por su cuenta.",
-              consequences: { flags: flags("contained", "contener") },
-            },
-            fail: {
-              text: "Te desborda igualmente. El peligro sigue vivo.",
-              consequences: { flags: flags("beaten", "contener") },
-            },
-          },
-        },
-        {
-          id: "anticipar",
-          label: "Anticipar con lectura de juego",
-          subtitle: "Todo o nada: adelantarte al pase antes de que llegue",
-          consequences: {},
-          resolve: {
-            baseChance: 0.3,
-            statModifier: "media",
-            success: {
-              text: "Lees la jugada a la perfección y te llevas el balón antes de que nadie lo espere.",
-              consequences: { fama: 2, flags: flags("clean_tackle", "anticipar") },
-            },
-            fail: {
-              text: "Fallas el cálculo y te quedas completamente fuera de la jugada.",
-              consequences: { forma: -2, flags: flags("beaten", "anticipar") },
-            },
-          },
-        },
-      ],
+      options: optionSet,
     };
   }
 
   if (player.position === "Centrocampista") {
     const situation = MIDFIELDER_DECISION_SITUATIONS[Math.floor(Math.random() * MIDFIELDER_DECISION_SITUATIONS.length)];
+    const optionSet = MIDFIELDER_OPTION_SETS[Math.floor(Math.random() * MIDFIELDER_OPTION_SETS.length)](flags);
     return {
       id: `match-decision-${match.week}-${Date.now()}`,
       category: "partido",
@@ -817,67 +1039,13 @@ export function buildMatchDecisionMoment(
       description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
       allowFreeText: true,
       freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
-      options: [
-        {
-          id: "disparo",
-          label: "Probar el disparo lejano",
-          subtitle: "Vas a por el gol directo desde fuera del área",
-          consequences: {},
-          resolve: {
-            baseChance: 0.32,
-            statModifier: "media",
-            success: {
-              text: "El balón se cuela pegado a la escuadra. ¡Golazo desde fuera del área!",
-              consequences: { fama: 2, flags: flags("goal", "disparo") },
-            },
-            fail: {
-              text: "El disparo se marcha alto, por encima del larguero.",
-              consequences: { flags: flags("miss", "disparo") },
-            },
-          },
-        },
-        {
-          id: "pase",
-          label: "Filtrar el pase al delantero",
-          subtitle: "Menos gloria, más seguro",
-          consequences: {},
-          resolve: {
-            baseChance: 0.55,
-            statModifier: "media",
-            success: {
-              text: "El pase es perfecto: tu compañero no perdona.",
-              consequences: { flags: flags("assist", "pase") },
-            },
-            fail: {
-              text: "El pase se queda corto y el rival despeja el peligro.",
-              consequences: { flags: flags("miss", "pase") },
-            },
-          },
-        },
-        {
-          id: "proteger",
-          label: "Proteger el balón y reiniciar la jugada",
-          subtitle: "Sin riesgo: mantener la posesión del equipo",
-          consequences: {},
-          resolve: {
-            baseChance: 0.7,
-            statModifier: "media",
-            success: {
-              text: "Proteges el balón con inteligencia y das tiempo a que el equipo suba.",
-              consequences: { flags: flags("contained", "proteger") },
-            },
-            fail: {
-              text: "Te presionan entre dos rivales y pierdes el balón en una zona comprometida.",
-              consequences: { forma: -1, flags: flags("beaten", "proteger") },
-            },
-          },
-        },
-      ],
+      options: optionSet,
     };
   }
 
   // Delantero (y cualquier posición no reconocida, como red de seguridad).
   const situation = ATTACKER_DECISION_SITUATIONS[Math.floor(Math.random() * ATTACKER_DECISION_SITUATIONS.length)];
+  const optionSet = ATTACKER_OPTION_SETS[Math.floor(Math.random() * ATTACKER_OPTION_SETS.length)](flags);
   return {
     id: `match-decision-${match.week}-${Date.now()}`,
     category: "partido",
@@ -886,62 +1054,7 @@ export function buildMatchDecisionMoment(
     description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
     allowFreeText: true,
     freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
-    options: [
-      {
-        id: "disparo",
-        label: "Disparar a puerta",
-        subtitle: "Vas a por el gol directo",
-        consequences: {},
-        resolve: {
-          baseChance: 0.42,
-          statModifier: "media",
-          success: {
-            text: "El balón entra pegado al palo. ¡Gol!",
-            consequences: { flags: flags("goal", "disparo") },
-          },
-          fail: {
-            text: "El portero saca una mano providencial. No hay gol.",
-            consequences: { flags: flags("miss", "disparo") },
-          },
-        },
-      },
-      {
-        id: "pase",
-        label: "Pasar a un compañero mejor colocado",
-        subtitle: "Menos gloria, más seguro",
-        consequences: {},
-        resolve: {
-          baseChance: 0.55,
-          statModifier: "media",
-          success: {
-            text: "El pase es perfecto: tu compañero no perdona.",
-            consequences: { flags: flags("assist", "pase") },
-          },
-          fail: {
-            text: "El pase se queda corto y el rival despeja el peligro.",
-            consequences: { flags: flags("miss", "pase") },
-          },
-        },
-      },
-      {
-        id: "floritura",
-        label: "Intentar una jugada de calidad (regate, túnel, sombrero...)",
-        subtitle: "Todo o nada, para la galería",
-        consequences: {},
-        resolve: {
-          baseChance: 0.28,
-          statModifier: "media",
-          success: {
-            text: "Sale perfecta. El estadio entero se levanta de sus asientos.",
-            consequences: { fama: 3, flags: flags("wondergoal", "floritura") },
-          },
-          fail: {
-            text: "No sale — pierdes el balón y el rival sale a la contra.",
-            consequences: { forma: -2, flags: flags("miss_bad", "floritura") },
-          },
-        },
-      },
-    ],
+    options: optionSet,
   };
 }
 
