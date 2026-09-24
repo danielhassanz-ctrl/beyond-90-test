@@ -54,6 +54,8 @@ assert.equal(trophy.scene, "celebration");
 assert.match(trophyBrief.composition, /emotional celebration/i);
 assertRightsSafe(trophyBrief.composition);
 for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial", "Ganas el Balón de Oro", "Ganas un título", "Levantas un trofeo", "Campeón de Liga", "Campeona de la Copa", "Campeones de Champions", "Campeón del Mundial", "Campeona de la Eurocopa", "Campeón de la Supercopa"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
+// Youth/academy honours are deliberately not paid/generated senior milestones.
+for (const headline of ["Campeón de Liga juvenil", "Ganas la Copa con el filial", "Levantas un trofeo sub-19", "Campeón de Liga con el equipo B", "Conquistas el título de cantera", "Campeón de Copa con el equipo reserva"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 
 const retirement = milestoneVisualSpec(share("Despedida: fin de carrera"));
 const retirementBrief = milestoneGenerationBrief(retirement, playerVisualProfile(38), "Real Betis", identity);
@@ -64,8 +66,6 @@ assert.match(retirementBrief.ageRule, /identity-preserving/i);
 assertRightsSafe(retirementBrief.composition);
 for (const headline of ["Anuncias tu retirada", "Te retiras del fútbol", "Cuelgas las botas"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "retirement", headline);
 
-// Supporting context may mention family, staff, supporters or a former club. It must not suppress
-// a milestone whose headline/kicker clearly belongs to the player's career.
 const contextualMilestones: Array<[ShareData, string]> = [
   [contextualShare("Fichas por el Real Betis", [{ label: "Familia", value: "Tu padre te acompaña a la presentación" }]), "signing"],
   [contextualShare("Debut en Liga con el primer equipo", [{ label: "Vestuario", value: "El capitán te entrega el balón del partido" }]), "debut"],
