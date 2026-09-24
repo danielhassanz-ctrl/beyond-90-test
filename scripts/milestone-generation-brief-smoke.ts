@@ -58,6 +58,8 @@ for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el
 for (const headline of ["Campeón de Liga juvenil", "Ganas la Copa con el filial", "Levantas un trofeo sub-19", "Campeón de Liga con el equipo B", "Conquistas el título de cantera", "Campeón de Copa con el equipo reserva"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 // Named individual awards are genuine major milestones even when the award itself is age-limited.
 for (const headline of ["Ganas el Golden Boy sub-21", "Ganador del Golden Boy sub-21"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
+// Awards belonging to another person must never trigger a paid/generated player milestone.
+for (const headline of ["Premian a tu compañero con el Balón de Oro", "Entregan el Golden Boy a un rival", "Dan el The Best al capitán", "La prensa entrega la Bota de Oro a otro jugador"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 
 const retirement = milestoneVisualSpec(share("Despedida: fin de carrera"));
 const retirementBrief = milestoneGenerationBrief(retirement, playerVisualProfile(38), "Real Betis", identity);
