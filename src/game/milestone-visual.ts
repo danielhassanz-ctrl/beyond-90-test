@@ -35,7 +35,7 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const subject = normalize(`${share.headline} ${share.kicker}`);
   const haystack = normalize(`${share.headline} ${share.kicker} ${share.lines.map((line) => `${line.label} ${line.value}`).join(" ")}`);
   const thirdPartyActor = "(?:rival|oponente|adversario|adversaria|companero|companera|excompanero|excompanera|exjugador|exjugadora|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|presidente|director deportivo|director tecnico|directora deportiva|directora tecnica|fisio|fisioterapeuta|medico|doctora|staff|padre|madre|hermano|hermana|hijo|hija|pareja|novio|novia|amigo|amiga|aficion|aficionados|aficionadas|hinchas|seguidores|seguidoras|grada|prensa|periodista|periodistas|medios|diario|television|radio)";
-  const thirdPartySubject = new RegExp(`^(?:el |la |un |una |tu |tus )?${thirdPartyActor}\\b`).test(subject) || new RegExp(`\\b(?:de|del|para) (?:el |la |tu |tus )?${thirdPartyActor}\\b`).test(subject);
+  const thirdPartySubject = new RegExp(`^(?:el |la |un |una |tu |tus )?${thirdPartyActor}\\b`).test(subject) || new RegExp(`\\b(?:a|de|del|para) (?:el |la |tu |tus )?${thirdPartyActor}\\b`).test(subject);
   const formerSubject = /^(?:el |la |tu )?(?:exclub|ex club|antiguo club|anterior club|former club|exequipo|ex equipo|antiguo equipo|anterior equipo)\b/.test(subject);
   const nonCareerRetirement = /\b(?:lesion|lesionado|medico|hospital|dinero|efectivo|cajero|mercado|oferta|fichaje|traspaso)\b/.test(subject);
   if ((/\b(?:despedida|ultimo partido|fin de carrera|cuelga las botas|retirada|retiro|retirarse|se retira)\b/.test(subject)) && !nonCareerRetirement && !thirdPartySubject && !formerSubject) return { kind: "retirement", label: "Despedida", scene: "farewell" };
@@ -54,7 +54,6 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const aspirationalAchievement = /\b(?:objetivo|meta|sueno|suenas|aspiras?|aspiracion|quieres?|esperas?|prometes?|reto)\b.{0,48}\b(?:ser|ganar|conquistar|levantar|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(subject);
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(subject) || /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(subject);
   const friendlyAchievement = /\b(?:pretemporada|amistos[oa]s?|torneo amistoso|trofeo amistoso|torneo de verano|trofeo de verano|trofeo veraniego)\b/.test(subject);
-  // Academy/youth team honours are career context, not scarce paid milestones. Named individual awards remain eligible even when age-limited (for example Golden Boy).
   const youthAchievement = /\b(?:juvenil|cantera|filial|equipo b|sub[- ]?(?:17|18|19|20|21|23)|youth|academy|reserva)\b/.test(subject);
   const competitionName = "(?:copa(?: del rey)?|liga|champions|mundial|eurocopa|europa league|supercopa)";
   const championAchievement = new RegExp(`\\bcampeon(?:es|a|as)?\\b.{0,24}\\b${competitionName}\\b`).test(subject) || new RegExp(`\\b${competitionName}\\b.{0,24}\\bcampeon(?:es|a|as)?\\b`).test(subject);
