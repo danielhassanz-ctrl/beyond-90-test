@@ -64,13 +64,17 @@ assert.match(retirementBrief.ageRule, /identity-preserving/i);
 assertRightsSafe(retirementBrief.composition);
 for (const headline of ["Anuncias tu retirada", "Te retiras del fútbol", "Cuelgas las botas"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "retirement", headline);
 
-// Supporting context may mention family, staff or a former club. It must not suppress
+// Supporting context may mention family, staff, supporters or a former club. It must not suppress
 // a milestone whose headline/kicker clearly belongs to the player's career.
 const contextualMilestones: Array<[ShareData, string]> = [
   [contextualShare("Fichas por el Real Betis", [{ label: "Familia", value: "Tu padre te acompaña a la presentación" }]), "signing"],
   [contextualShare("Debut en Liga con el primer equipo", [{ label: "Vestuario", value: "El capitán te entrega el balón del partido" }]), "debut"],
   [contextualShare("Ganas la Copa", [{ label: "Entrenador", value: "El míster te abraza tras la final" }]), "trophy"],
   [contextualShare("Anuncias tu retirada", [{ label: "Historia", value: "Tu antiguo club y tu familia estarán en la despedida" }]), "retirement"],
+  [contextualShare("Debut en Liga con el primer equipo: la afición corea tu nombre", [{ label: "Grada", value: "Los aficionados celebran tu estreno" }]), "debut"],
+  [contextualShare("Ganas la Copa ante tu afición", [{ label: "Grada", value: "Los seguidores celebran contigo" }]), "trophy"],
+  [contextualShare("Fichas por el Real Betis ante miles de aficionados", [{ label: "Presentación", value: "La grada te recibe" }]), "signing"],
+  [contextualShare("Anuncias tu retirada ante la afición", [{ label: "Despedida", value: "Los seguidores te ovacionan" }]), "retirement"],
 ];
 for (const [card, expected] of contextualMilestones) assert.equal(milestoneVisualSpec(card).kind, expected, card.headline);
 
