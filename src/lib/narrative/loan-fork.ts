@@ -58,8 +58,9 @@ export function markLoanForkTriggered(player: Player): void {
 
 export function buildLoanForkEvent(player: Player): GameEvent {
   const seed = hashString(`${player.id}:loan-destination`);
-  const destination = LOAN_DESTINATIONS[seed % LOAN_DESTINATIONS.length];
   const originalClub = player.club;
+  const destinationPool = LOAN_DESTINATIONS.filter((c) => c !== originalClub);
+  const destination = destinationPool[seed % destinationPool.length];
 
   return {
     id: `fork-cesion-${Date.now()}`,
@@ -93,7 +94,7 @@ export function buildLoanForkEvent(player: Player): GameEvent {
         id: "cesion-segura",
         label: `Aceptar la cesión al ${destination}`,
         subtitle: "Salir a jugar, aunque sea en un proyecto más humilde",
-        consequences: { club: destination, flags: { loan_active: originalClub } },
+        consequences: { club: destination, flags: { loan_active: originalClub, loan_start_week: String(player.week) } },
         resolve: {
           baseChance: 0.62,
           statModifier: "media",
@@ -111,7 +112,7 @@ export function buildLoanForkEvent(player: Player): GameEvent {
         id: "cesion-ambiciosa",
         label: "Buscar la cesión más ambiciosa posible, aunque sea más arriesgada",
         subtitle: "Todo o nada: un proyecto más exigente, menos garantías",
-        consequences: { club: destination, flags: { loan_active: originalClub } },
+        consequences: { club: destination, flags: { loan_active: originalClub, loan_start_week: String(player.week) } },
         resolve: {
           baseChance: 0.38,
           statModifier: "media",
@@ -124,6 +125,52 @@ export function buildLoanForkEvent(player: Player): GameEvent {
             consequences: { moral: -8, forma: -4, media: -2 },
           },
         },
+      },
+    ],
+  };
+}
+
+/**
+ * Antes la cesión no tenía final: el jugador se quedaba en el club de
+ * destino para siempre (con el calendario y las ofertas de ESE club) y
+ * "el club que te cedió" nunca volvía a aparecer. El documento de
+ * referencia lo cuenta como un año: sales, juegas, y al terminar hay que
+ * decidir — volver, quedarte o esperar algo mejor.
+ */
+export function shouldEndLoan(player: Player): boolean {
+  const origin = player.flags?.loan_active;
+  if (typeof origin !== "string" || !origin || player.flags?.loan_returned) return false;
+  const start = parseInt(String(player.flags?.loan_start_week ?? "0"), 10) || 0;
+  return start > 0 && player.week - start >= 10;
+}
+
+export function buildLoanEndEvent(player: Player): GameEvent {
+  const origin = String(player.flags?.loan_active);
+  return {
+    id: `fork-fin-cesion-${Date.now()}`,
+    category: "representante",
+    title: "Se acaba la cesión",
+    description: `Un año en el ${player.club} y el ${origin} vuelve a llamar. Tu representante lo resume rápido: "Puedes volver, puedes pelear por quedarte aquí o puedes esperar a ver quién más se mueve."`,
+    allowFreeText: true,
+    freeTextPrompt: `¿Qué le dices al ${origin} y qué le dices al ${player.club}?`,
+    options: [
+      {
+        id: "volver",
+        label: `Volver al ${origin}`,
+        subtitle: "Otra oportunidad de ganarte el sitio",
+        consequences: { club: origin, moral: 2, flags: { loan_returned: true } },
+      },
+      {
+        id: "quedarme",
+        label: `Quedarte en el ${player.club} de forma definitiva`,
+        subtitle: "Ser importante donde ya lo eres",
+        consequences: { rel_aficion: 6, moral: 3, flags: { loan_returned: true } },
+      },
+      {
+        id: "esperar",
+        label: "Esperar a ver qué otras ofertas llegan",
+        subtitle: "Jugar tus cartas con calma",
+        consequences: { fama: 2, rel_representante: 2, flags: { loan_returned: true } },
       },
     ],
   };

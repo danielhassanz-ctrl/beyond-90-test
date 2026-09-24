@@ -240,6 +240,15 @@ export async function resolveEvent(formData: FormData) {
   const isFirstSigning = event.id === "inicio-fichaje-agente";
   if (typeof consequences.club === "string" && !willRetire) {
     const newClub = consequences.club;
+    // Cuenta de cambios de club (el fichaje inicial cuenta como 1). Varios
+    // eventos solo tienen sentido si de verdad hubo un traspaso real
+    // ("la prensa repite tu cifra de traspaso", "vuelves al club donde
+    // debutaste") y no había forma de saberlo.
+    const flagsSoFar = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    playerUpdate.flags = {
+      ...flagsSoFar,
+      club_changes: String((parseInt(String(flagsSoFar.club_changes ?? "0"), 10) || 0) + 1),
+    };
     const agentName = (playerUpdate.agent_name as string | undefined) ?? player.agent_name ?? "tu representante";
     const aiContractEvent = await generateContractEvent(
       { ...player, club: newClub, agent_name: agentName },

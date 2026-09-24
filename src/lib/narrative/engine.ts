@@ -17,7 +17,7 @@ import { pickCharacterToReappear, describeCharacterReappearance, updateCharacter
 import { shouldBeeFunnyMoment, pickRandomFunnyMoment, isSurrealMoment } from "@/lib/narrative/funny-surreal";
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
-import { getNextMatch, isMatchWeekNext, getMatchThisWeek, type MatchWeek, type MatchStakes } from "@/lib/calendar/match-calendar";
+import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, type MatchWeek, type MatchStakes } from "@/lib/calendar/match-calendar";
 import { getCopaProgress, advanceCupProgress, decideKnockoutResult } from "@/lib/calendar/competition-progress";
 import { naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
@@ -29,7 +29,7 @@ import {
   pickEligibleAgentTrigger,
   markAgentDialogueTriggered,
 } from "@/lib/narrative/agent-events";
-import { shouldTriggerLoanFork, buildLoanForkEvent, markLoanForkTriggered } from "@/lib/narrative/loan-fork";
+import { shouldTriggerLoanFork, buildLoanForkEvent, markLoanForkTriggered, shouldEndLoan, buildLoanEndEvent } from "@/lib/narrative/loan-fork";
 import { pickDetailedLifeScenario, markDetailedLifeUsed } from "@/lib/narrative/life-events-detailed";
 
 const PERCENT_FIELDS = [
@@ -224,10 +224,53 @@ const GRAND_MOMENT_EVENTS: GameEvent[] = EVENTS.filter((event) => GRAND_MOMENT_E
  * además pueden exigir confederación (Eurocopa solo tiene sentido para
  * una selección UEFA, Copa América para una CONMEBOL).
  */
+const FOREIGN_CLUBS = new Set([
+  "Atalanta", "AS Roma", "Inter de Milán", "Juventus", "Borussia Dortmund", "Bayern de Múnich", "Bayern Múnich",
+  "Bayern Munich", "Paris Saint-Germain", "PSG", "Liverpool FC", "Manchester City", "Benfica", "Ajax",
+  "Sporting CP", "Al-Nassr FC",
+]);
+const SEGUNDA_CLUBS = new Set([
+  "Real Zaragoza", "Deportivo de La Coruña", "Racing de Santander", "Real Sporting de Gijón", "Sporting de Gijón",
+  "SD Eibar", "Burgos CF", "CD Mirandés", "CD Tenerife",
+]);
+
+/**
+ * Un fork de traspaso ya escrito no sabe en qué club estás: sin este
+ * filtro, un simulador de carrera dio "aceptar el salto a Italia" a un
+ * jugador del Real Madrid, "llama un gigante europeo" (el Real Madrid) al
+ * propio Real Madrid, "choque cultural en el extranjero" a alguien en un
+ * club español y "partido de ascenso" a un equipo de Primera.
+ */
+function isEventCoherentWithClub(eventId: string, player: Player): boolean {
+  const club = player.club;
+  const foreign = FOREIGN_CLUBS.has(club);
+  const isGrande = getEuropeanCompetitionFor(club)?.competition === "champions";
+  const clubChanges = parseInt(String(player.flags?.club_changes ?? "0"), 10) || 0;
+  switch (eventId) {
+    case "fork-salto-internacional":
+      return !foreign && !isGrande;
+    case "fork-gigante-europeo":
+      return !isGrande && club !== "Real Madrid" && club !== "FC Barcelona";
+    case "fork-nuevo-reto":
+      return !player.flags?.en_premier && club !== "Liverpool FC" && club !== "Manchester City" && club !== "Al-Nassr FC";
+    case "vid-choque-cultural-extranjero":
+      return foreign;
+    case "fork-ascenso-division":
+      return SEGUNDA_CLUBS.has(club);
+    case "esp-fichaje-caro-presion":
+      return clubChanges >= 2;
+    case "esp-veterano-vuelve-debut":
+      return clubChanges >= 3;
+    default:
+      return true;
+  }
+}
+
 function pickGrandMomentEvent(player: Player, usedEventIds: string[]): GameEvent | null {
   const playerConfederation = getConfederation(player.nation);
   const eligible = GRAND_MOMENT_EVENTS.filter(
     (event) =>
+      isEventCoherentWithClub(event.id, player) &&
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
@@ -264,17 +307,75 @@ const MATCH_SPECIAL_MOMENT_IDS = new Set([
 ]);
 const MATCH_SPECIAL_MOMENTS: GameEvent[] = EVENTS.filter((event) => MATCH_SPECIAL_MOMENT_IDS.has(event.id));
 
+/**
+ * Segunda auditoría: 38 eventos de events.ts (vida familiar, vestuario,
+ * entrenamiento, representante, dorsal, "Puma o Adidas"...) no los
+ * llamaba ningún selector — contenido de "vida fuera del campo" que se
+ * echaba en falta y llevaba escrito todo el tiempo. Se conectan aquí 25;
+ * se dejan fuera a propósito los que chocarían con sistemas actuales:
+ * los par-* antiguos (inventan resultados de partido fuera del
+ * calendario), ent-primer-dia/ent-mister-pretemporada (ya cubiertos por
+ * preseason-expanded.ts), vid-primer-coche (ya hay evento de coche en
+ * page.tsx), vid-nueva-relacion (la saga de pareja ya tiene su propio
+ * inicio), vid-paparazzi-cita (duplica pre-paparazzi), vid-diego-reaparece
+ * (depende de otro evento previo), rep-primera-oferta (el representante
+ * ya se elige al empezar) y pat-bota-firma (ya está en sponsorships.ts).
+ */
+const LEGACY_LIFE_EVENT_IDS = new Set([
+  "ent-sesion-extra", "ent-lesion-susto", "ent-video-analisis", "ent-descanso",
+  "ves-novato", "ves-capitan", "ves-conflicto", "ves-cena-equipo", "ves-nuevo-fichaje",
+  "rep-comision", "rep-oferta-fichaje", "rep-patrocinio", "rep-consejo",
+  "rep-patrocinio-marca", "rep-inversion-startup",
+  "vid-familia", "vid-amigos-infancia", "vid-presion-familiar", "vid-dorsal-homenaje",
+  "vid-aceptar-la-realidad", "vid-hermano-pequeno", "vid-llamada-madre",
+  "vid-fiesta-familia", "vid-charla-entrenador", "vid-compañeros-colegio",
+]);
+/** Escenas que solo tienen sentido al empezar (colegio, novato, primer contrato, dorsal). */
+const LEGACY_EARLY_ONLY_IDS = new Set([
+  "ves-novato", "vid-compañeros-colegio", "vid-fiesta-familia", "vid-dorsal-homenaje",
+  "vid-amigos-infancia", "vid-hermano-pequeno",
+]);
+const LEGACY_LIFE_EVENTS: GameEvent[] = EVENTS.filter((event) => LEGACY_LIFE_EVENT_IDS.has(event.id));
+
+function pickLegacyLifeEvent(player: Player, usedEventIds: string[]): GameEvent | null {
+  const eligible = LEGACY_LIFE_EVENTS.filter(
+    (event) =>
+      (event.minWeek ?? 1) <= player.week &&
+      (!LEGACY_EARLY_ONLY_IDS.has(event.id) || player.week <= 60) &&
+      (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (event.minMedia === undefined || player.media >= event.minMedia) &&
+      (event.maxMedia === undefined || player.media <= event.maxMedia) &&
+      (!event.modes || event.modes.includes(player.mode)) &&
+      !usedEventIds.includes(event.id),
+  );
+  if (eligible.length === 0) return null;
+  return eligible[Math.floor(Math.random() * eligible.length)];
+}
+
+/**
+ * Estos eventos se devuelven con un id "matchday-special-*" (para que la
+ * semana avance como en cualquier partido resuelto), así que el id
+ * original NUNCA llega a career_events y usedEventIds no sirve para saber
+ * si ya salieron — sin un registro propio, el mismo penalti "en el último
+ * minuto" podía repetirse en cada partido. Se anota en un flag.
+ */
 function pickMatchSpecialMoment(player: Player, usedEventIds: string[]): GameEvent | null {
+  const usedSpecial = String(player.flags?.match_special_used ?? "").split(",");
   const eligible = MATCH_SPECIAL_MOMENTS.filter(
     (event) =>
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
+      !usedSpecial.includes(event.id) &&
+      isEventCoherentWithClub(event.id === "par-etiqueta-fichaje-caro" ? "esp-fichaje-caro-presion" : event.id, player) &&
       !usedEventIds.includes(event.id),
   );
   if (eligible.length === 0) return null;
-  return eligible[Math.floor(Math.random() * eligible.length)];
+  const chosen = eligible[Math.floor(Math.random() * eligible.length)];
+  if (!player.flags) player.flags = {};
+  player.flags.match_special_used = [...usedSpecial.filter(Boolean), chosen.id].join(",");
+  return chosen;
 }
 
 /** Semanas que dura una lesión larga real (ver tickInjury en career-dynamics.ts). */
@@ -2194,9 +2295,19 @@ export async function pickNextEventDynamic(
   // a jugar?" se repetía EN CADA TURNO sin parar nunca, potencialmente
   // durante cientos de turnos seguidos. Se recuerda como mucho una vez
   // cada 15 semanas, no cada vez que se genera un evento nuevo.
+  // entering_peak / exiting_peak / entering_decline tenían el mismo
+  // problema sin ningún freno: detectCareerTransition compara la EDAD
+  // exacta (25, 31-32, 32), y como un año son 10 semanas, la condición se
+  // cumplía en varios turnos seguidos — un simulador de 150 turnos sacó
+  // "Tu momento llegó: ERES UN FUTBOLISTA DE ÉLITE" 10 veces en una sola
+  // carrera. Son momentos únicos por definición: una vez por carrera.
+  const transitionSeenKey = `transition_seen_${careerTransition}`;
+  const oneTimeTransitionOk =
+    careerTransition === "ready_to_retire" || !careerTransition || !player.flags?.[transitionSeenKey];
   const retireReminderCooldownOk =
-    careerTransition !== "ready_to_retire" ||
-    player.week - parseInt(String(player.flags?.retire_reminder_last_week ?? "-999"), 10) >= 15;
+    (careerTransition !== "ready_to_retire" ||
+      player.week - parseInt(String(player.flags?.retire_reminder_last_week ?? "-999"), 10) >= 15) &&
+    oneTimeTransitionOk;
 
   if (careerTransition && retireReminderCooldownOk) {
     console.log(`[pickNextEventDynamic] Career transition detected: ${careerTransition}`);
@@ -2220,6 +2331,10 @@ export async function pickNextEventDynamic(
     }
 
     if (transitionEvent) {
+      if (careerTransition !== "ready_to_retire") {
+        if (!player.flags) player.flags = {};
+        player.flags[transitionSeenKey] = true;
+      }
       return maybeAddFreeText(transitionEvent);
     }
   }
@@ -2438,6 +2553,13 @@ export async function pickNextEventDynamic(
   // vestuario/entrenamiento genérico para siempre. Una única vez por
   // carrera (marcado con loan_fork_seen), y con resultado real: puede
   // salir redondo o puede ser un año perdido, nunca garantizado.
+  // Fin de la cesión: sin esto el jugador se quedaba para siempre en el
+  // club de destino (ver shouldEndLoan en loan-fork.ts).
+  if (shouldEndLoan(player)) {
+    console.log(`[pickNextEventDynamic] Loan end event for ${player.last_name}`);
+    return maybeAddFreeText(buildLoanEndEvent(player));
+  }
+
   if (shouldTriggerLoanFork(player)) {
     console.log(`[pickNextEventDynamic] Loan fork event for ${player.last_name}`);
     markLoanForkTriggered(player);
@@ -2458,6 +2580,17 @@ export async function pickNextEventDynamic(
       console.log(`[pickNextEventDynamic] Agent dialogue event: "${agentEvent.title}"`);
       markAgentDialogueTriggered(player);
       return maybeAddFreeText(agentEvent);
+    }
+  }
+
+  // Vida familiar, vestuario, entrenamiento y representante ya escritos
+  // (dorsal, "Puma o Adidas", llamada de tu madre, tu hermano pequeño...):
+  // ver LEGACY_LIFE_EVENT_IDS — llevaban sin selector desde siempre.
+  if (Math.random() < 0.14) {
+    const legacyEvent = pickLegacyLifeEvent(player, usedEventIds);
+    if (legacyEvent) {
+      console.log(`[pickNextEventDynamic] Legacy life/locker-room event: "${legacyEvent.title}"`);
+      return maybeAddFreeText(legacyEvent);
     }
   }
 
