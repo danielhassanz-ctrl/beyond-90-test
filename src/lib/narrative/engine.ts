@@ -17,7 +17,8 @@ import { pickCharacterToReappear, describeCharacterReappearance, updateCharacter
 import { shouldBeeFunnyMoment, pickRandomFunnyMoment, isSurrealMoment } from "@/lib/narrative/funny-surreal";
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
-import { getNextMatch, isMatchWeekNext, getMatchThisWeek, type MatchWeek } from "@/lib/calendar/match-calendar";
+import { getNextMatch, isMatchWeekNext, getMatchThisWeek, type MatchWeek, type MatchStakes } from "@/lib/calendar/match-calendar";
+import { getCopaProgress, advanceCupProgress, decideKnockoutResult } from "@/lib/calendar/competition-progress";
 import { naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
@@ -557,6 +558,7 @@ PRÓXIMO PARTIDO (semana ${match.week}):
 - Rival: ${match.rivalClub}
 - Contexto: ${match.homeTeam === player.club ? `Local, en tu estadio` : `Visitante, en ${match.awayTeam}`}
 - Competición: ${compContext[match.competition as keyof typeof compContext] || "Partido importante"}
+- Nivel de lo que está en juego: ${match.stakes === "decisivo" ? "DECISIVO — de este partido depende algo grande de la temporada (liderato, ronda avanzada, fase europea de máximo nivel)." : match.stakes === "importante" ? "IMPORTANTE — no es una jornada cualquiera." : "Rutina de temporada, sin presión especial más allá de sumar puntos."}
 
 TU SITUACIÓN ACTUAL:
 - Jugador: ${player.last_name}, ${age} años
@@ -648,9 +650,24 @@ const GOALKEEPER_DECISION_SITUATIONS = [
  * una y otra vez" mucho antes de lo que debería. Ahora la escena y las
  * tres opciones dependen de la posición real.
  */
-export function buildMatchDecisionMoment(player: Player, match: { week: number; rivalClub: string }): GameEvent {
+export function buildMatchDecisionMoment(
+  player: Player,
+  match: { week: number; rivalClub: string; stakes?: MatchStakes },
+): GameEvent {
   const decisionFlagKey = `match_decision_${match.week}`;
   const flags = (outcome: string, style: string) => ({ [decisionFlagKey]: JSON.stringify({ outcome, style }) });
+
+  // Antes CUALQUIER partido real (una jornada 1 cualquiera o la final de
+  // la temporada) generaba exactamente el mismo "El momento decisivo" —
+  // ahora el título y la tensión del arranque escalan según lo que
+  // match-calendar.ts (stakes) diga que hay en juego esta semana.
+  const decisionTitle = match.stakes === "decisivo" ? "El momento que lo decide todo" : "El momento decisivo";
+  const stakesLead =
+    match.stakes === "decisivo"
+      ? "Partido decisivo de la temporada en marcha, "
+      : match.stakes === "importante"
+        ? "Partido importante en marcha, "
+        : "Partido en marcha ";
 
   if (player.position === "Portero") {
     const situation = GOALKEEPER_DECISION_SITUATIONS[Math.floor(Math.random() * GOALKEEPER_DECISION_SITUATIONS.length)];
@@ -658,8 +675,8 @@ export function buildMatchDecisionMoment(player: Player, match: { week: number; 
       id: `match-decision-${match.week}-${Date.now()}`,
       category: "partido",
       rivalClub: match.rivalClub,
-      title: "El momento decisivo",
-      description: `Partido en marcha ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+      title: decisionTitle,
+      description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
       allowFreeText: true,
       freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
       options: [
@@ -727,8 +744,8 @@ export function buildMatchDecisionMoment(player: Player, match: { week: number; 
       id: `match-decision-${match.week}-${Date.now()}`,
       category: "partido",
       rivalClub: match.rivalClub,
-      title: "El momento decisivo",
-      description: `Partido en marcha ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+      title: decisionTitle,
+      description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
       allowFreeText: true,
       freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
       options: [
@@ -796,8 +813,8 @@ export function buildMatchDecisionMoment(player: Player, match: { week: number; 
       id: `match-decision-${match.week}-${Date.now()}`,
       category: "partido",
       rivalClub: match.rivalClub,
-      title: "El momento decisivo",
-      description: `Partido en marcha ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+      title: decisionTitle,
+      description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
       allowFreeText: true,
       freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
       options: [
@@ -865,8 +882,8 @@ export function buildMatchDecisionMoment(player: Player, match: { week: number; 
     id: `match-decision-${match.week}-${Date.now()}`,
     category: "partido",
     rivalClub: match.rivalClub,
-    title: "El momento decisivo",
-    description: `Partido en marcha ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+    title: decisionTitle,
+    description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
     allowFreeText: true,
     freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
     options: [
@@ -981,6 +998,7 @@ export async function generateMatchDayEvent(
   match: MatchWeek,
   history: HistoryItem[],
   decisionRaw?: string,
+  forcedResult?: { win: boolean; scoreLine: string },
 ): Promise<GameEvent | null> {
   const age = playerAge(player.week);
 
@@ -992,6 +1010,24 @@ export async function generateMatchDayEvent(
     amistoso: "Amistoso",
     internacional: "Partido internacional",
   };
+
+  // Solo Copa es eliminación directa de verdad en este calendario — el
+  // resultado se decide en código (decideKnockoutResult) ANTES de pedirle
+  // la crónica a la IA, para poder actualizar de forma fiable si el
+  // jugador sigue vivo en el torneo (ver competition-progress.ts). Sin
+  // esto, "seguir vivo en la Copa" no era más que prosa libre de la IA,
+  // imposible de usar para decidir si hay partido la semana siguiente —
+  // la causa raíz de que apareciera un "Cuartos de Copa" después de que
+  // el jugador ya estuviera eliminado esa misma temporada.
+  const resultInstruction = forcedResult
+    ? `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES NI LO CONTRADIGAS: "${forcedResult.scoreLine}" en formato ${player.club}-${match.rivalClub}. Tu equipo ${forcedResult.win ? "GANA y AVANZA de ronda" : "PIERDE y QUEDA ELIMINADO de la Copa"} — que el titular y la crónica lo dejen clarísimo, sin ambigüedad. Tu propio rendimiento personal (minutos, nota, goles) sí es libre, siempre que sea coherente con ese marcador.`
+    : "";
+  const stakesInstruction =
+    match.stakes === "decisivo"
+      ? "- Este es un partido DECISIVO de la temporada (se juega el liderato de Liga, una ronda avanzada de Copa, o la fase europea de más nivel) — la tensión, la prensa y el peso de las opciones de reacción tienen que sentirse a la altura, no como una jornada cualquiera."
+      : match.stakes === "importante"
+        ? "- Este partido es IMPORTANTE (no una jornada rutinaria) — dale algo más de peso narrativo de lo normal."
+        : "";
 
   const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista profesional.
 
@@ -1012,6 +1048,8 @@ ${buildDecisionInstruction(decisionRaw)}
 
 REGLAS CRÍTICAS:
 ${COMMON_RULES}
+${resultInstruction}
+${stakesInstruction}
 - PROHIBIDO ABSOLUTO: mencionar cualquier rival o competición que NO sea "${match.rivalClub}" en "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}". No inventes otro equipo, otra jornada ni otro torneo — es EL PARTIDO PROGRAMADO, no uno libre. rival_club debe ser exactamente "${match.rivalClub}".
 - En el título y la descripción, tu equipo se llama SIEMPRE "${player.club}" tal cual — NUNCA un nombre genérico o inventado como "Real Club", "tu equipo" o similar.
 - El marcador se escribe SIEMPRE en el orden "${player.club} - ${match.rivalClub}" (tu equipo primero, sin importar si juegas en casa o fuera), y el relato (quién ganó/perdió/empató) tiene que cuadrar aritméticamente con ese marcador — un marcador donde tu primer número es mayor es VICTORIA tuya, no derrota, y viceversa. Revísalo antes de escribir el texto final.
@@ -1196,10 +1234,18 @@ export async function pickNextEventDynamic(
     }
   }
 
+  // El progreso de Copa de ESTA temporada (competition-progress.ts) decide
+  // si hoy toca una segunda eliminatoria o esa semana queda libre — sin
+  // pasarlo aquí, el calendario no tendría forma de saber si el jugador
+  // sigue vivo en el torneo.
+  const currentSeason = Math.floor((playerWithDynamics.week - 1) / 10);
+  const copaProgress = getCopaProgress(playerWithDynamics, currentSeason);
+  const seasonProgress = { copa: { round: copaProgress.round, alive: copaProgress.alive } };
+
   // Verificar si el partido programado es ESTA semana — tiene que
   // comprobarse ANTES que "la próxima semana", o el partido nunca llega
   // a jugarse (el motor solo generaba la víspera una y otra vez).
-  const matchThisWeek = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club);
+  const matchThisWeek = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club, seasonProgress);
   if (matchThisWeek) {
     // Antes el partido se resolvía entero de golpe (marcador ya decidido)
     // y el jugador solo podía reaccionar DESPUÉS — nunca decidir nada
@@ -1219,8 +1265,18 @@ export async function pickNextEventDynamic(
     console.log(
       `[pickNextEventDynamic] This week IS match week (${matchThisWeek.competition}): ${matchThisWeek.description}. Resolving the match.`
     );
-    const matchDayEvent = await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history, decisionOutcome);
+    // Solo Copa necesita un resultado decidido en código (ver
+    // generateMatchDayEvent): es la única competición de eliminación
+    // directa de este calendario, así que es la única donde "seguir vivo"
+    // significa algo que el juego tiene que recordar entre semanas.
+    const forcedResult = matchThisWeek.competition === "copa" && matchThisWeek.cupRound
+      ? decideKnockoutResult(playerWithDynamics.media, matchThisWeek.cupRound)
+      : undefined;
+    const matchDayEvent = await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history, decisionOutcome, forcedResult);
     if (matchDayEvent) {
+      if (forcedResult && matchThisWeek.cupRound) {
+        advanceCupProgress(playerWithDynamics, "copa_progress", currentSeason, matchThisWeek.cupRound, forcedResult.win);
+      }
       return maybeAddFreeText(addMatchContext(matchDayEvent, playerWithDynamics));
     }
   }
@@ -1233,8 +1289,8 @@ export async function pickNextEventDynamic(
   // repetía turno tras turno (visto en vivo: 5 veces seguidas "La noche
   // antes del Getafe", cada una con texto distinto pero la misma premisa
   // — no tiene sentido narrativo vivir varias vísperas del mismo partido).
-  if (isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club)) {
-    const nextMatch = getNextMatch(playerWithDynamics.week, playerWithDynamics.club);
+  if (isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club, seasonProgress)) {
+    const nextMatch = getNextMatch(playerWithDynamics.week, playerWithDynamics.club, seasonProgress);
     const prematchFlagKey = `prematch_shown_${nextMatch?.week}`;
     if (nextMatch && !player.flags?.[prematchFlagKey]) {
       console.log(

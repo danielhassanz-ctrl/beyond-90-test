@@ -16,6 +16,17 @@
 
 export type CompetitionType = "liga" | "copa" | "champions" | "europa" | "amistoso" | "internacional";
 
+/**
+ * Antes todo partido real recibía el mismo tratamiento narrativo, jugara
+ * quien jugara contra quien — un amistoso de pretemporada, una jornada
+ * cualquiera de mitad de tabla y una final de Copa se sentían exactamente
+ * igual de "importantes". `stakes` deja que el motor narrativo (ver
+ * generateMatchDayEvent/buildMatchDecisionMoment en engine.ts) escale la
+ * tensión de verdad: más opciones, más en juego, mejor rival cuanto más
+ * alto el nivel.
+ */
+export type MatchStakes = "rutina" | "importante" | "decisivo";
+
 export interface MatchWeek {
   week: number;
   season: number;
@@ -26,15 +37,44 @@ export interface MatchWeek {
   rivalClub: string;
   mandatory: boolean; // si es obligatorio (jornada de liga) o opcional (amistoso)
   description: string; // "Jornada 15", "Cuartos de Copa", etc
+  stakes: MatchStakes;
+  /** Solo copa: la ronda dentro de esta temporada, para decidir si sigue habiendo partido después. */
+  cupRound?: number;
 }
+
+/** Progreso de competiciones de eliminación, para poder generar la SIGUIENTE ronda si el jugador sigue vivo. */
+export interface SeasonProgress {
+  copa?: { round: number; alive: boolean };
+}
+
+/** Rivales de Copa para la segunda eliminatoria (solo si se sobrevive a la primera): ya no es un equipo modesto, es un rival de Liga hecho y derecho. */
+const COPA_ROUND_2_RIVALS = [
+  "Real Sociedad",
+  "Athletic Club",
+  "Real Betis",
+  "Sevilla FC",
+  "Valencia CF",
+  "Villarreal CF",
+  "Celta de Vigo",
+  "Osasuna",
+];
 
 /**
  * Estructura del calendario de una temporada (escala 10 semanas).
  * Semana 1-2: Pretemporada
  * Semana 3-8: Temporada regular (6 jornadas Liga, espaciadas)
- * Semana 9-10: Copa + Europeo
+ * Semana 6: segundo partido europeo (si aplica)
+ * Semana 7: Copa, primera eliminatoria
+ * Semana 9: Copa, segunda eliminatoria (solo si se sigue vivo)
+ * Semana 10: Europa, partido de cierre
+ *
+ * `progress` es el estado de eliminatorias YA jugadas esta temporada
+ * (competition-progress.ts, leído de player.flags) — sin esto, una
+ * segunda ronda de Copa no podría existir nunca: no hay forma de saber
+ * si el jugador sigue vivo en el torneo sin consultar cómo acabó la
+ * primera ronda.
  */
-export function buildMatchCalendar(playerClub: string, season: number): MatchWeek[] {
+export function buildMatchCalendar(playerClub: string, season: number, progress?: SeasonProgress): MatchWeek[] {
   const WEEKS_PER_SEASON = 10;
   const calendar: MatchWeek[] = [];
   const baseWeek = season * WEEKS_PER_SEASON;
@@ -64,6 +104,7 @@ export function buildMatchCalendar(playerClub: string, season: number): MatchWee
       rivalClub: rival,
       mandatory: false,
       description: `Amistoso de pretemporada ante ${rival}`,
+      stakes: "rutina",
     });
   }
 
@@ -75,16 +116,35 @@ export function buildMatchCalendar(playerClub: string, season: number): MatchWee
   // partido seguidos, no pasa nada más". Ahora los partidos se reparten
   // con huecos reales, dejando semanas sueltas para que
   // pickNextEventDynamic meta narrativa normal entre partido y partido.
+  //
+  // La última jornada de Liga (semana 8) ya no es "una más": según el
+  // nivel real del club (mismo criterio que Champions/Europa League más
+  // abajo) se juega el liderato, una plaza europea o la permanencia — sin
+  // esto, un modesto peleando el descenso y un grande punteando la tabla
+  // vivían la jornada 3 exactamente igual de intrascendente.
   const laLigaRivals = generateLaLigaFixture(playerClub, season);
-  // La 3ª jornada va en la semana 8, no la 9: la 9 tiene que quedar libre
-  // de verdad como respiro antes del partido europeo de cierre en la 10
-  // (ver más abajo) — con un 9 aquí, esa "semana libre a propósito" tenía
-  // en realidad un partido de Liga, y encima consecutivo con el europeo
-  // de la semana siguiente, justo el problema que este reparto quería evitar.
   const ligaMatchdays = [3, 5, 8]; // 3 jornadas con huecos reales entre medias, no 6 semanas seguidas
+  const tier = CHAMPIONS_REGULARS.has(playerClub) ? "grande" : EUROPA_REGULARS.has(playerClub) ? "europeo" : "modesto";
   for (let i = 0; i < ligaMatchdays.length; i++) {
     const rival = laLigaRivals[i % laLigaRivals.length];
     const isHome = i % 2 === 0;
+    const isFinalMatchday = i === ligaMatchdays.length - 1;
+    const jornada = season * 3 + i + 1;
+
+    let stakes: MatchStakes = "rutina";
+    let angle = "";
+    if (isFinalMatchday) {
+      if (tier === "grande") {
+        stakes = "decisivo";
+        angle = " · Se decide el liderato de Liga";
+      } else if (tier === "europeo") {
+        stakes = "importante";
+        angle = " · En juego la clasificación europea";
+      } else {
+        stakes = "importante";
+        angle = " · Batalla directa por la permanencia";
+      }
+    }
 
     calendar.push({
       week: baseWeek + ligaMatchdays[i],
@@ -95,13 +155,15 @@ export function buildMatchCalendar(playerClub: string, season: number): MatchWee
       awayTeam: isHome ? rival : playerClub,
       rivalClub: rival,
       mandatory: true,
-      description: `La Liga - Jornada ${(season * 3 + i + 1)}`,
+      description: `La Liga - Jornada ${jornada}${angle}`,
+      stakes,
     });
   }
 
-  // Semana 7: Copa del Rey — sorpresa clásica del torneo: un equipo de
-  // categoría inferior que le pone las cosas difíciles al grande. Cae
-  // justo en medio del hueco entre las jornadas 5 y 9 de Liga.
+  // Semana 7: Copa del Rey, primera eliminatoria — sorpresa clásica del
+  // torneo: un equipo de categoría inferior que le pone las cosas
+  // difíciles al grande. Cae justo en medio del hueco entre las jornadas
+  // 5 y 9 de Liga.
   const copaRivals = [
     "CD Mirandés",
     "Racing de Ferrol",
@@ -123,12 +185,42 @@ export function buildMatchCalendar(playerClub: string, season: number): MatchWee
     awayTeam: copaRival,
     rivalClub: copaRival,
     mandatory: false,
-    description: `Copa del Rey - Eliminatoria ante ${copaRival}`,
+    description: `Copa del Rey - Dieciseisavos ante ${copaRival}`,
+    stakes: "importante",
+    cupRound: 1,
   });
 
-  // Semana 10: Europa — cierre de temporada. La semana 9 queda libre a
-  // propósito (igual que la 4), como respiro narrativo real antes del
-  // último partido del año.
+  // Semana 9: segunda eliminatoria de Copa — SOLO si el jugador ganó (o
+  // pasó por penaltis) la de la semana 7 esta misma temporada. Antes esta
+  // semana quedaba siempre libre por diseño; ahora sigue libre para quien
+  // cae eliminado, pero se convierte en un partido de verdad, y más duro,
+  // para quien sigue vivo en el torneo — así una Copa con recorrido real
+  // aporta 1-2 partidos "importantes" más a la temporada, en vez de que
+  // ganar la primera ronda no cambiara nada.
+  if (progress?.copa?.round === 2 && progress.copa.alive) {
+    const round2Random = seededRandom(hashString(`${playerClub}:${season}:copa-r2`));
+    const round2Pool = COPA_ROUND_2_RIVALS.filter((c) => c !== playerClub);
+    const round2Rival = round2Pool[Math.floor(round2Random() * round2Pool.length)];
+    calendar.push({
+      week: baseWeek + 9,
+      season,
+      matchday: 2,
+      competition: "copa",
+      homeTeam: playerClub,
+      awayTeam: round2Rival,
+      rivalClub: round2Rival,
+      mandatory: false,
+      description: `Copa del Rey - Octavos ante ${round2Rival}`,
+      stakes: "decisivo",
+      cupRound: 2,
+    });
+  }
+
+  // Semana 10 (y semana 6 si hay competición europea real): antes solo
+  // había UN partido europeo por temporada. Un club de Champions/Europa
+  // League de verdad juega varios partidos de grupo, no uno — ahora hay
+  // dos, uno de ida de temporada (semana 6, antes siempre libre) y el de
+  // cierre (semana 10).
   //
   // Antes esto metía Champions League a CUALQUIER club sin ningún
   // filtro: un Málaga CF de la parte baja de la tabla se plantaba en
@@ -136,23 +228,43 @@ export function buildMatchCalendar(playerClub: string, season: number): MatchWee
   // los clubes que de verdad son habituales de Champions juegan
   // Champions; el resto (si tiene algo de nivel europeo real) juega
   // Europa League; los clubes modestos simplemente no tienen partido
-  // europeo — esa semana queda libre para narrativa normal, coherente
+  // europeo — esas semanas quedan libres para narrativa normal, coherente
   // con el nivel del club.
   const europeanCompetition = getEuropeanCompetitionFor(playerClub);
   if (europeanCompetition) {
     const europeanRandom = seededRandom(hashString(`${playerClub}:${season}:${europeanCompetition.competition}`));
     const europeanPool = europeanCompetition.rivals.filter((c) => c !== playerClub);
-    const europeanRival = europeanPool[Math.floor(europeanRandom() * europeanPool.length)];
+    const europeanStakes: MatchStakes = europeanCompetition.competition === "champions" ? "decisivo" : "importante";
+
+    const firstRival = europeanPool[Math.floor(europeanRandom() * europeanPool.length)];
     calendar.push({
-      week: baseWeek + 10,
+      week: baseWeek + 6,
       season,
       matchday: 1,
       competition: europeanCompetition.competition,
       homeTeam: playerClub,
-      awayTeam: europeanRival,
-      rivalClub: europeanRival,
+      awayTeam: firstRival,
+      rivalClub: firstRival,
       mandatory: false,
-      description: `${europeanCompetition.label} ante ${europeanRival}`,
+      description: `${europeanCompetition.label} ante ${firstRival}`,
+      stakes: europeanStakes,
+    });
+
+    let secondRival = europeanPool[Math.floor(europeanRandom() * europeanPool.length)];
+    if (secondRival === firstRival) {
+      secondRival = europeanPool[(europeanPool.indexOf(firstRival) + 1) % europeanPool.length];
+    }
+    calendar.push({
+      week: baseWeek + 10,
+      season,
+      matchday: 2,
+      competition: europeanCompetition.competition,
+      homeTeam: playerClub,
+      awayTeam: secondRival,
+      rivalClub: secondRival,
+      mandatory: false,
+      description: `${europeanCompetition.label} ante ${secondRival}`,
+      stakes: europeanStakes,
     });
   }
 
@@ -316,10 +428,10 @@ function generateLaLigaFixture(playerClub: string, season: number): string[] {
  * Obtiene el próximo partido del jugador desde la semana actual.
  * Retorna null si no hay más partidos en la temporada.
  */
-export function getNextMatch(currentWeek: number, playerClub: string): MatchWeek | null {
+export function getNextMatch(currentWeek: number, playerClub: string, progress?: SeasonProgress): MatchWeek | null {
   const WEEKS_PER_SEASON = 10;
   const season = Math.floor((currentWeek - 1) / WEEKS_PER_SEASON);
-  const calendar = buildMatchCalendar(playerClub, season);
+  const calendar = buildMatchCalendar(playerClub, season, progress);
 
   // Buscar el próximo partido que no haya pasado
   return calendar.find((match) => match.week > currentWeek) ?? null;
@@ -328,16 +440,16 @@ export function getNextMatch(currentWeek: number, playerClub: string): MatchWeek
 /**
  * Obtiene todos los partidos de una temporada específica.
  */
-export function getSeasonMatches(season: number, playerClub: string): MatchWeek[] {
-  return buildMatchCalendar(playerClub, season);
+export function getSeasonMatches(season: number, playerClub: string, progress?: SeasonProgress): MatchWeek[] {
+  return buildMatchCalendar(playerClub, season, progress);
 }
 
 /**
  * Retorna si en la próxima semana hay un partido importante.
  * Usado por el narrativa engine para determinar si generar un evento pre-partido.
  */
-export function isMatchWeekNext(currentWeek: number, playerClub: string): boolean {
-  const nextMatch = getNextMatch(currentWeek, playerClub);
+export function isMatchWeekNext(currentWeek: number, playerClub: string, progress?: SeasonProgress): boolean {
+  const nextMatch = getNextMatch(currentWeek, playerClub, progress);
   return nextMatch !== null && nextMatch.week === currentWeek + 1;
 }
 
@@ -348,20 +460,20 @@ export function isMatchWeekNext(currentWeek: number, playerClub: string): boolea
  * jornada tras jornada, sin que el partido en sí llegara a jugarse nunca
  * — un fallo real, encontrado jugando una carrera de principio a fin.
  */
-export function getMatchThisWeek(currentWeek: number, playerClub: string): MatchWeek | null {
+export function getMatchThisWeek(currentWeek: number, playerClub: string, progress?: SeasonProgress): MatchWeek | null {
   const WEEKS_PER_SEASON = 10;
   const season = Math.floor((currentWeek - 1) / WEEKS_PER_SEASON);
-  const calendar = buildMatchCalendar(playerClub, season);
+  const calendar = buildMatchCalendar(playerClub, season, progress);
   return calendar.find((match) => match.week === currentWeek) ?? null;
 }
 
 /**
  * Obtiene estadísticas de partidos jugados hasta una semana.
  */
-export function getMatchStats(playerClub: string, upToWeek: number) {
+export function getMatchStats(playerClub: string, upToWeek: number, progress?: SeasonProgress) {
   const WEEKS_PER_SEASON = 10;
   const season = Math.floor((upToWeek - 1) / WEEKS_PER_SEASON);
-  const calendar = buildMatchCalendar(playerClub, season);
+  const calendar = buildMatchCalendar(playerClub, season, progress);
 
   const played = calendar.filter((m) => m.week <= upToWeek);
   const liga = played.filter((m) => m.competition === "liga").length;
@@ -373,6 +485,6 @@ export function getMatchStats(playerClub: string, upToWeek: number) {
     ligaMatches: liga,
     copaMatches: copa,
     championsMatches: champions,
-    nextMatch: getNextMatch(upToWeek, playerClub),
+    nextMatch: getNextMatch(upToWeek, playerClub, progress),
   };
 }
