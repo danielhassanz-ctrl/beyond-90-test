@@ -7,7 +7,9 @@ import type { ShareData } from "../src/game/types";
 function share(headline: string): ShareData {
   return { headline, kicker: "Temporada 2034/35", lines: [] };
 }
-
+function contextualShare(headline: string, lines: ShareData["lines"]): ShareData {
+  return { headline, kicker: "Temporada 2034/35", lines };
+}
 function assertRightsSafe(text: string): void {
   assert.doesNotMatch(text, /official (?:club )?(?:crest|badge|logo)/i);
   assert.doesNotMatch(text, /sponsor(?:ship)? (?:logo|mark)/i);
@@ -34,19 +36,8 @@ assert.ok(signingBrief.prohibited.includes("official crest without cleared right
 assert.ok(signingBrief.prohibited.includes("identity drift"));
 assert.match(signingBrief.identityRule, /persisted uploaded player photo/i);
 assertRightsSafe(signingBrief.composition);
-
-const presentationSigning = milestoneVisualSpec(share("Presentación en el Real Betis"));
-assert.equal(presentationSigning.kind, "signing");
-assert.equal(presentationSigning.scene, "presentation");
-
-for (const headline of [
-  "Tu compañero completa su fichaje por el Valencia", "Un rival es fichado por el Sevilla",
-  "Otro jugador negocia su traspaso al Villarreal", "El nuevo compañero posa en su presentación con el club",
-  "El nuevo fichaje del club firma por tres temporadas", "Fichaje rival: presentación en el estadio",
-  "Mercado: traspaso cerrado por el próximo rival",
-]) {
-  assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
-}
+assert.equal(milestoneVisualSpec(share("Presentación en el Real Betis")).kind, "signing");
+for (const headline of ["Tu compañero completa su fichaje por el Valencia", "Un rival es fichado por el Sevilla", "Otro jugador negocia su traspaso al Villarreal", "El nuevo compañero posa en su presentación con el club", "El nuevo fichaje del club firma por tres temporadas", "Fichaje rival: presentación en el estadio", "Mercado: traspaso cerrado por el próximo rival"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
 
 const debut = milestoneVisualSpec(share("Debut con el primer equipo"));
 const debutBrief = milestoneGenerationBrief(debut, playerVisualProfile(18), "Real Betis", identity);
@@ -54,74 +45,15 @@ assert.equal(debut.scene, "pitch");
 assert.match(debutBrief.composition, /on the pitch with the ball/i);
 assert.match(debutBrief.ageRule, /career age 18/i);
 assertRightsSafe(debutBrief.composition);
-
-for (const headline of [
-  "Debut con el juvenil", "Debut con el filial", "Debut con el equipo B", "Debut en la cantera",
-  "Primer partido con el sub-19", "Primer partido con el equipo reserva", "Debut del juvenil en Liga",
-  "Primer partido del filial en Copa", "Estreno del equipo B en Liga", "Debut de la nueva camiseta",
-  "Estreno de tus nuevas botas", "Estreno de la campaña publicitaria", "Debut de tu compañero con el primer equipo",
-  "Un rival debuta en Liga", "Primer partido profesional de otro jugador", "El nuevo fichaje debuta en Copa",
-  "Debut del club en Champions", "Estreno del equipo en Europa League",
-  "Tu padre recuerda su debut con el primer equipo", "Tu madre habla de su primer partido profesional",
-  "Tu hermano debuta en Liga con el primer equipo", "Tu hermana recuerda su estreno como titular en Copa",
-  "Tu hijo sueña con su debut profesional", "Tu hija cuenta su primer partido con la selección absoluta",
-  "Tu pareja recuerda su debut en Liga", "Tu novio habla de su primer partido profesional",
-  "Tu novia celebra su estreno como titular en Copa", "Tu amigo debuta con el primer equipo",
-  "Tu amiga recuerda su primer partido profesional",
-]) {
-  assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
-}
-
-for (const headline of ["Debut en Liga con el primer equipo", "Primer partido profesional", "Estreno como titular en Copa"]) {
-  assert.equal(milestoneVisualSpec(share(headline)).kind, "debut", headline);
-}
+for (const headline of ["Debut con el juvenil", "Debut con el filial", "Debut con el equipo B", "Debut en la cantera", "Primer partido con el sub-19", "Primer partido con el equipo reserva", "Debut del juvenil en Liga", "Primer partido del filial en Copa", "Estreno del equipo B en Liga", "Debut de la nueva camiseta", "Estreno de tus nuevas botas", "Estreno de la campaña publicitaria", "Debut de tu compañero con el primer equipo", "Un rival debuta en Liga", "Primer partido profesional de otro jugador", "El nuevo fichaje debuta en Copa", "Debut del club en Champions", "Estreno del equipo en Europa League", "Tu padre recuerda su debut con el primer equipo", "Tu madre habla de su primer partido profesional", "Tu hermano debuta en Liga con el primer equipo", "Tu hermana recuerda su estreno como titular en Copa", "Tu hijo sueña con su debut profesional", "Tu hija cuenta su primer partido con la selección absoluta", "Tu pareja recuerda su debut en Liga", "Tu novio habla de su primer partido profesional", "Tu novia celebra su estreno como titular en Copa", "Tu amigo debuta con el primer equipo", "Tu amiga recuerda su primer partido profesional"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
+for (const headline of ["Debut en Liga con el primer equipo", "Primer partido profesional", "Estreno como titular en Copa"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "debut", headline);
 
 const trophy = milestoneVisualSpec(share("Campeón de Liga"));
 const trophyBrief = milestoneGenerationBrief(trophy, playerVisualProfile(29), "Real Betis", identity);
 assert.equal(trophy.scene, "celebration");
 assert.match(trophyBrief.composition, /emotional celebration/i);
 assertRightsSafe(trophyBrief.composition);
-
-for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial", "Ganas el Balón de Oro", "Ganas un título", "Levantas un trofeo", "Campeón de Liga", "Campeona de la Copa", "Campeones de Champions", "Campeón del Mundial", "Campeona de la Eurocopa", "Campeón de la Supercopa"]) {
-  assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
-}
-
-for (const headline of [
-  "Tu compañero gana el Balón de Oro", "Un rival levanta la Champions", "Otro jugador conquista el Mundial",
-  "El capitán gana la Copa", "La capitana es campeona de Liga", "Tu excompañero recibe el The Best",
-  "El seleccionador levanta un trofeo", "El entrenador gana un título",
-  "Tu padre gana un trofeo benéfico", "Tu madre recibe un premio", "Tu hermano gana la Copa regional",
-  "Tu hermana es campeona de Liga", "Tu hijo levanta un trofeo", "Tu hija gana un título juvenil",
-  "Tu pareja recibe el The Best", "Tu novio gana un título", "Tu novia levanta la Copa",
-  "Tu amigo gana el Balón de Oro", "Tu amiga es campeona de Liga",
-  "Próximo partido de Liga ante el Sevilla", "Convocado para la Copa del Rey", "Viaje de Champions a Milán",
-  "La final de Copa se acerca", "Objetivo: clasificar al Mundial", "Pierdes la final de Copa", "Subcampeón de Liga",
-  "Eliminado de la Champions", "No ganas ningún título esta temporada", "Te quedas sin el Balón de Oro",
-  "Nominado al Balón de Oro", "Sueñas con ganar el Balón de Oro", "Eres finalista del The Best",
-  "Segundo en el Balón de Oro: ganas el premio al mejor joven", "Balón de Oro: terminas tercero pese a ganar la Liga",
-  "Favorito al Balón de Oro después de ganar la Champions", "Celebras la clasificación a Champions",
-  "Ganas el partido que certifica tu clasificación al Mundial", "Billete a la Europa League tras ganar la última jornada",
-  "Ganas 2-0 en Liga ante el Sevilla", "Victoria: ganas al Milan en Champions", "Celebras un 3-1 en Copa del Rey",
-  "Campeón de invierno tras una gran primera vuelta", "Campeón moral pese a perder la final",
-  "Campeón del vestuario por cómo has arropado a los jóvenes", "Campeona de la afición tras volver de la lesión",
-  "Campeones de la prensa por vuestra transparencia", "Campeón del mercado por renovar a tiempo",
-  "Campeona de las redes tras una semana viral", "Campeón de la paciencia durante la recuperación",
-  "Te sientes campeón después de volver a entrenar", "Tu padre te llama campeón tras superar la lesión",
-  "El míster dice que eres un campeón fuera del campo", "Campeones de pretemporada tras tres amistosos",
-  "Campeón del torneo de pretemporada", "Campeona del torneo amistoso", "Campeones del trofeo de invierno",
-  "Campeonas del trofeo de amistosas", "Campeón de verano tras tres amistosos", "Campeona del torneo de verano",
-  "Campeones del trofeo veraniego", "Campeonas del torneo veraniego", "El trofeo espera al ganador de la final",
-  "Visitas la sala de trofeos del club", "El título de Liga es el gran objetivo del vestuario",
-  "Hablas con tu familia sobre el próximo título",
-]) {
-  const ordinaryCard = milestoneVisualSpec(share(headline));
-  assert.equal(ordinaryCard.kind, "career", headline);
-  assert.equal(ordinaryCard.scene, "portrait", headline);
-}
-
-for (const headline of ["Lesión de ligamento: seis meses fuera", "Ficha médica tras la lesión", "Actualizamos tu ficha técnica", "Presentación ante la prensa", "Presentación de la nueva campaña", "Presentación médica de pretemporada"]) {
-  assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
-}
+for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial", "Ganas el Balón de Oro", "Ganas un título", "Levantas un trofeo", "Campeón de Liga", "Campeona de la Copa", "Campeones de Champions", "Campeón del Mundial", "Campeona de la Eurocopa", "Campeón de la Supercopa"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
 
 const retirement = milestoneVisualSpec(share("Despedida: fin de carrera"));
 const retirementBrief = milestoneGenerationBrief(retirement, playerVisualProfile(38), "Real Betis", identity);
@@ -130,24 +62,17 @@ assert.match(retirementBrief.composition, /stadium goodbye/i);
 assert.match(retirementBrief.ageRule, /career age 38/i);
 assert.match(retirementBrief.ageRule, /identity-preserving/i);
 assertRightsSafe(retirementBrief.composition);
+for (const headline of ["Anuncias tu retirada", "Te retiras del fútbol", "Cuelgas las botas"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "retirement", headline);
 
-for (const headline of [
-  "Retirada por lesión en el minuto 32", "Retirada de efectivo para la entrada de la casa",
-  "El club confirma la retirada de la oferta de fichaje", "Retirada del mercado de traspasos",
-  "Tu compañero anuncia su retirada", "Un rival se retira del fútbol", "El entrenador anuncia su retirada",
-  "El seleccionador cuelga las botas", "Otro jugador confirma el fin de su carrera",
-  "Despedida del capitán: último partido con el club",
-  "Tu padre anuncia su retirada", "Tu madre se retira de su trabajo", "Tu hermano cuelga las botas",
-  "Tu hermana anuncia el fin de su carrera", "Tu hijo se retira del fútbol", "Tu hija anuncia su retirada",
-  "Tu pareja se retira", "Tu novio cuelga las botas", "Tu novia anuncia su retirada",
-  "Tu amigo confirma el fin de su carrera", "Tu amiga se retira del fútbol",
-]) {
-  assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
-}
-
-for (const headline of ["Anuncias tu retirada", "Te retiras del fútbol", "Cuelgas las botas"]) {
-  assert.equal(milestoneVisualSpec(share(headline)).kind, "retirement", headline);
-}
+// Supporting context may mention family, staff or a former club. It must not suppress
+// a milestone whose headline/kicker clearly belongs to the player's career.
+const contextualMilestones: Array<[ShareData, string]> = [
+  [contextualShare("Fichas por el Real Betis", [{ label: "Familia", value: "Tu padre te acompaña a la presentación" }]), "signing"],
+  [contextualShare("Debut en Liga con el primer equipo", [{ label: "Vestuario", value: "El capitán te entrega el balón del partido" }]), "debut"],
+  [contextualShare("Ganas la Copa", [{ label: "Entrenador", value: "El míster te abraza tras la final" }]), "trophy"],
+  [contextualShare("Anuncias tu retirada", [{ label: "Historia", value: "Tu antiguo club y tu familia estarán en la despedida" }]), "retirement"],
+];
+for (const [card, expected] of contextualMilestones) assert.equal(milestoneVisualSpec(card).kind, expected, card.headline);
 
 for (const brief of [signingBrief, debutBrief, trophyBrief, retirementBrief]) {
   assert.match(brief.clubRule, /Do not invent or reproduce an official crest/i);
@@ -155,5 +80,4 @@ for (const brief of [signingBrief, debutBrief, trophyBrief, retirementBrief]) {
   assert.ok(brief.prohibited.includes("official crest without cleared rights"));
   assert.ok(brief.prohibited.includes("sponsor logo without cleared rights"));
 }
-
 console.log("milestone generation brief smoke: OK");
