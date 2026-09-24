@@ -609,6 +609,9 @@ const ATTACKER_DECISION_SITUATIONS = [
   "El portero rival sale mal y te queda la portería medio vacía desde fuera del área.",
   "Recibes en carrera por banda, con el lateral rival ya tarde para cubrirte.",
   "Un rebote en el larguero te cae de nuevo a los pies, con todo el mundo caído.",
+  "Recibes un pase al hueco entre el lateral y el central, con solo el portero por delante.",
+  "El balón te llega botando en el área, en un ángulo incómodo para rematar.",
+  "Te quedas mano a mano con el central que te marca, dentro del área pequeña.",
 ];
 
 const MIDFIELDER_DECISION_SITUATIONS = [
@@ -621,6 +624,9 @@ const MIDFIELDER_DECISION_SITUATIONS = [
   "El equipo pide un cambio de ritmo y tú tienes el balón para decidirlo.",
   "Recibes de espaldas con dos rivales cerrándote las dos únicas líneas de pase.",
   "Ves a tu lateral desmarcado por banda, pero el pase tiene que ser perfecto.",
+  "Recibes un balón suelto tras un rechace, a 25 metros de la portería rival.",
+  "El equipo lleva minutos sin ocasión y tú tienes que inventar algo desde el centro.",
+  "Ganas un balón dividido en el círculo central con el partido apretado.",
 ];
 
 const DEFENDER_DECISION_SITUATIONS = [
@@ -633,6 +639,9 @@ const DEFENDER_DECISION_SITUATIONS = [
   "Un compañero pierde el balón en salida y el rival encara tu área con ventaja numérica.",
   "Te llega un balón suelto en tu propia área, con el portero adelantado y fuera de posición.",
   "El árbitro deja seguir una jugada dudosa y el rival avanza hacia tu área.",
+  "Un rival se planta en el área pequeña tras un pase filtrado que nadie cortó.",
+  "El extremo rival centra desde la línea de fondo con varios compañeros esperando el remate.",
+  "Recibes bajo presión en tu propia área, con dos rivales cerrándote las salidas.",
 ];
 
 const GOALKEEPER_DECISION_SITUATIONS = [
@@ -644,6 +653,9 @@ const GOALKEEPER_DECISION_SITUATIONS = [
   "Un córner cerrado al primer palo te obliga a decidir en una décima de segundo.",
   "Un rechace de tu propio compañero te deja el balón suelto dentro del área pequeña.",
   "El rival remata de volea desde la frontal, sin apenas ángulo de reacción para ti.",
+  "Un rival se queda solo tras un rechace en el área pequeña, con la portería medio vacía.",
+  "El balón te llega con efecto en un centro cerrado, difícil de calcular.",
+  "Quedan segundos de partido y un córner final pone toda tu área patas arriba.",
 ];
 
 /**
@@ -850,6 +862,96 @@ const GOALKEEPER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
       },
     },
   ],
+  (flags) => [
+    {
+      id: "leer-trayectoria",
+      label: "Leer la trayectoria y colocarte antes del disparo",
+      subtitle: "Todo depende de acertar la posición",
+      consequences: {},
+      resolve: {
+        baseChance: 0.48,
+        statModifier: "media",
+        success: { text: "Te colocas exactamente donde tenía que ir el balón. Parada cómoda.", consequences: { flags: flags("save", "leer_trayectoria") } },
+        fail: { text: "Te colocas mal y el disparo va justo al lado contrario.", consequences: { flags: flags("concede", "leer_trayectoria") } },
+      },
+    },
+    {
+      id: "gritar-cambio-marca",
+      label: "Gritar el cambio de marca en vez de intervenir tú",
+      subtitle: "Confiar en que un compañero llegue antes",
+      consequences: {},
+      resolve: {
+        baseChance: 0.4,
+        statModifier: "media",
+        success: { text: "Tu grito llega a tiempo: un compañero corta el peligro antes de que llegue a ti.", consequences: { flags: flags("save", "gritar_cambio_marca") } },
+        fail: { text: "Nadie reacciona a tiempo y el rival remata sin oposición.", consequences: { flags: flags("concede", "gritar_cambio_marca") } },
+      },
+    },
+    {
+      id: "reves-instintivo",
+      label: "Reaccionar de puro instinto, sin pensarlo",
+      subtitle: "Todo o nada: fiarlo todo a los reflejos",
+      consequences: {},
+      resolve: {
+        baseChance: 0.36,
+        statModifier: "media",
+        success: { text: "El instinto te sale perfecto: una parada felina que nadie esperaba.", consequences: { fama: 2, flags: flags("save", "reves_instintivo") } },
+        fail: { text: "El instinto falla esta vez y el balón se cuela sin que puedas hacer nada.", consequences: { flags: flags("concede", "reves_instintivo") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "cortar-pase-clave",
+      label: "Adelantarte varios metros para cortar el pase clave",
+      subtitle: "Salir de tu área, arriesgando quedarte sin portería",
+      consequences: {},
+      resolve: {
+        baseChance: 0.34,
+        statModifier: "media",
+        success: { text: "Llegas primero al balón, lejos de tu portería. Peligro cortado de raíz.", consequences: { fama: 2, flags: flags("save", "cortar_pase_clave") } },
+        fail: { text: "No llegas a tiempo y dejas la portería completamente vacía.", consequences: { flags: flags("concede", "cortar_pase_clave") } },
+      },
+    },
+    {
+      id: "cuerpo-a-tierra",
+      label: "Tirarte a bloquear el balón raso, cuerpo a tierra",
+      subtitle: "Sacrificio total para no dejar rechace",
+      consequences: {},
+      resolve: {
+        baseChance: 0.5,
+        statModifier: "media",
+        success: { text: "Te tiras al suelo y bloqueas el disparo raso sin dejar ningún rechace peligroso.", consequences: { flags: flags("save", "cuerpo_a_tierra") } },
+        fail: { text: "El balón se te escapa entre las piernas. Gol evitable.", consequences: { flags: flags("concede", "cuerpo_a_tierra") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "calma-bajo-presion",
+      label: "Mantener la calma y esperar el remate sin precipitarte",
+      subtitle: "Confiar en tus reflejos hasta el último instante",
+      consequences: {},
+      resolve: {
+        baseChance: 0.47,
+        statModifier: "media",
+        success: { text: "Tu calma se nota: reaccionas justo cuando remata, sin haberte movido antes de tiempo.", consequences: { flags: flags("save", "calma_bajo_presion") } },
+        fail: { text: "Esperas demasiado y el disparo te sorprende sin reacción posible.", consequences: { flags: flags("concede", "calma_bajo_presion") } },
+      },
+    },
+    {
+      id: "juego-de-pies",
+      label: "Resolver con los pies en vez de con las manos",
+      subtitle: "Arriesgado, pero evita el rechace suelto",
+      consequences: {},
+      resolve: {
+        baseChance: 0.4,
+        statModifier: "media",
+        success: { text: "Despejas con los pies con más precisión de la esperada. Peligro resuelto sin rechace.", consequences: { fama: 1, flags: flags("save", "juego_de_pies") } },
+        fail: { text: "El control con los pies te sale mal y regalas el balón al rival dentro del área.", consequences: { flags: flags("concede", "juego_de_pies") } },
+      },
+    },
+  ],
 ];
 
 const DEFENDER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
@@ -1040,6 +1142,96 @@ const DEFENDER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         statModifier: "media",
         success: { text: "Lees la jugada perfectamente y cortas el pase antes de que llegue a nadie.", consequences: { fama: 1, flags: flags("clean_tackle", "leer_intencion") } },
         fail: { text: "Te adelantas mal y dejas un hueco enorme a tu espalda.", consequences: { forma: -1, flags: flags("beaten", "leer_intencion") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "empujon-reglamentario",
+      label: "Usar el cuerpo para sacarlo de la jugada, sin pasarte",
+      subtitle: "Físico dentro del límite del reglamento",
+      consequences: {},
+      resolve: {
+        baseChance: 0.5,
+        statModifier: "media",
+        success: { text: "El cuerpo a cuerpo es limpio: el rival pierde el equilibrio y el balón.", consequences: { flags: flags("clean_tackle", "empujon_reglamentario") } },
+        fail: { text: "El árbitro interpreta que ha sido empujón. Falta señalada.", consequences: { forma: -1, flags: flags("foul_committed", "empujon_reglamentario") } },
+      },
+    },
+    {
+      id: "esperar-error",
+      label: "No entrar, esperar a que el rival se equivoque solo",
+      subtitle: "Paciencia total, cero riesgo de falta",
+      consequences: {},
+      resolve: {
+        baseChance: 0.5,
+        statModifier: "media",
+        success: { text: "El rival se precipita y pierde el balón él solo, sin que hayas arriesgado nada.", consequences: { flags: flags("contained", "esperar_error") } },
+        fail: { text: "El rival no se precipita y te supera con calma, sin ni un roce.", consequences: { flags: flags("beaten", "esperar_error") } },
+      },
+    },
+    {
+      id: "salida-rapida",
+      label: "Salir rápido de tu posición a cortar antes de que controle",
+      subtitle: "Anticiparte al control, no al disparo",
+      consequences: {},
+      resolve: {
+        baseChance: 0.37,
+        statModifier: "media",
+        success: { text: "Llegas antes de que controle y te llevas el balón limpio.", consequences: { fama: 1, flags: flags("clean_tackle", "salida_rapida") } },
+        fail: { text: "Calculas mal el tiempo y le dejas controlar con ventaja.", consequences: { flags: flags("beaten", "salida_rapida") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "recorte-propio",
+      label: "Salir jugando con un recorte antes de que te presionen",
+      subtitle: "Arriesgar en tu propio campo para romper líneas",
+      consequences: {},
+      resolve: {
+        baseChance: 0.33,
+        statModifier: "media",
+        success: { text: "El recorte deja a dos rivales atrás y tu equipo sale jugando con ventaja.", consequences: { fama: 1, flags: flags("contained", "recorte_propio") } },
+        fail: { text: "Te presionan y pierdes el balón en tu propio campo. Ocasión clara en contra.", consequences: { forma: -2, flags: flags("beaten", "recorte_propio") } },
+      },
+    },
+    {
+      id: "sacrificio-cuerpo",
+      label: "Meter el cuerpo al disparo, sacrificándote",
+      subtitle: "Bloquear como sea, cueste lo que cueste",
+      consequences: {},
+      resolve: {
+        baseChance: 0.55,
+        statModifier: "media",
+        success: { text: "Bloqueas el disparo con el cuerpo. Duele, pero el peligro queda resuelto.", consequences: { flags: flags("clean_tackle", "sacrificio_cuerpo") } },
+        fail: { text: "El bloqueo sale mal y el balón se desvía justo hacia la portería.", consequences: { flags: flags("beaten", "sacrificio_cuerpo") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "vigilar-espalda",
+      label: "Quedarte atrás vigilando el espacio a tu espalda",
+      subtitle: "Prioridad: no dejar que te ganen la posición",
+      consequences: {},
+      resolve: {
+        baseChance: 0.52,
+        statModifier: "media",
+        success: { text: "No te ganan la espalda en ningún momento. Peligro controlado sin sobresaltos.", consequences: { flags: flags("contained", "vigilar_espalda") } },
+        fail: { text: "Te ganan la posición justo cuando bajas la guardia. Ocasión clara en contra.", consequences: { flags: flags("beaten", "vigilar_espalda") } },
+      },
+    },
+    {
+      id: "salto-anticipado",
+      label: "Saltar antes de tiempo para ganar el primer cabezazo",
+      subtitle: "Todo o nada en el juego aéreo",
+      consequences: {},
+      resolve: {
+        baseChance: 0.4,
+        statModifier: "media",
+        success: { text: "Ganas el salto con claridad y despejas el peligro de cabeza.", consequences: { fama: 1, flags: flags("clean_tackle", "salto_anticipado") } },
+        fail: { text: "Saltas antes de tiempo y el rival te gana la posición en el aire.", consequences: { flags: flags("beaten", "salto_anticipado") } },
       },
     },
   ],
@@ -1236,6 +1428,96 @@ const MIDFIELDER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
       },
     },
   ],
+  (flags) => [
+    {
+      id: "doble-paso",
+      label: "Doble paso para ganar la línea de fondo",
+      subtitle: "Ir directo a por el fondo, sin mirar atrás",
+      consequences: {},
+      resolve: {
+        baseChance: 0.44,
+        statModifier: "media",
+        success: { text: "Ganas la línea de fondo con un doble paso limpio y centras al corazón del área.", consequences: { flags: flags("assist", "doble_paso") } },
+        fail: { text: "El lateral rival te corta antes de llegar a la línea de fondo.", consequences: { flags: flags("miss", "doble_paso") } },
+      },
+    },
+    {
+      id: "disparo-primer-toque",
+      label: "Disparar de primer toque, sin controlar antes",
+      subtitle: "No dar tiempo a que se cierre el defensa",
+      consequences: {},
+      resolve: {
+        baseChance: 0.3,
+        statModifier: "media",
+        success: { text: "El disparo de primeras sorprende a todos, portero incluido. ¡Gol!", consequences: { fama: 2, flags: flags("goal", "disparo_primer_toque") } },
+        fail: { text: "El disparo sale descontrolado, muy desviado.", consequences: { flags: flags("miss", "disparo_primer_toque") } },
+      },
+    },
+    {
+      id: "buscar-penalti",
+      label: "Encarar buscando el contacto dentro del área",
+      subtitle: "Arriesgar la caída para forzar el penalti",
+      consequences: {},
+      resolve: {
+        baseChance: 0.32,
+        statModifier: "media",
+        success: { text: "El contacto es claro y el árbitro no duda: penalti a tu favor.", consequences: { fama: 1, flags: flags("assist", "buscar_penalti") } },
+        fail: { text: "El árbitro no ve nada claro y sigue el juego. Ocasión perdida.", consequences: { flags: flags("miss", "buscar_penalti") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "pase-diagonal-corto",
+      label: "Buscar el triángulo corto con el interior",
+      subtitle: "Paciencia: progresar metro a metro",
+      consequences: {},
+      resolve: {
+        baseChance: 0.6,
+        statModifier: "media",
+        success: { text: "El triángulo funciona a la perfección y el equipo avanza con el balón controlado.", consequences: { flags: flags("contained", "pase_diagonal_corto") } },
+        fail: { text: "El rival lee el triángulo y corta el pase antes de completarlo.", consequences: { flags: flags("beaten", "pase_diagonal_corto") } },
+      },
+    },
+    {
+      id: "disparo-parabola",
+      label: "Probar el globo por encima del portero adelantado",
+      subtitle: "Sorprender con la parábola exacta",
+      consequences: {},
+      resolve: {
+        baseChance: 0.26,
+        statModifier: "media",
+        success: { text: "La parábola cae justo bajo el larguero. El portero solo puede mirar. ¡Golazo!", consequences: { fama: 3, flags: flags("wondergoal", "disparo_parabola") } },
+        fail: { text: "El globo se pasa de largo y sale por encima del larguero.", consequences: { flags: flags("miss_bad", "disparo_parabola") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "cambio-frente-largo",
+      label: "Buscar el cambio de frente con un pase largo",
+      subtitle: "Sorprender al rival atacando por el otro lado",
+      consequences: {},
+      resolve: {
+        baseChance: 0.46,
+        statModifier: "media",
+        success: { text: "El cambio de frente pilla mal colocado al rival y genera peligro inmediato.", consequences: { flags: flags("assist", "cambio_frente_largo") } },
+        fail: { text: "El pase se va largo y termina directamente en fuera de banda.", consequences: { flags: flags("miss", "cambio_frente_largo") } },
+      },
+    },
+    {
+      id: "faltar-al-choque",
+      label: "Entrar al choque con decisión para recuperar el balón",
+      subtitle: "Físico, sin miedo a la tarjeta",
+      consequences: {},
+      resolve: {
+        baseChance: 0.4,
+        statModifier: "media",
+        success: { text: "Ganas el choque con contundencia y te llevas el balón limpio.", consequences: { flags: flags("clean_tackle", "faltar_al_choque") } },
+        fail: { text: "El árbitro interpreta que ha sido falta. Amarilla para ti.", consequences: { forma: -1, flags: flags("foul_committed", "faltar_al_choque") } },
+      },
+    },
+  ],
 ];
 
 const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
@@ -1426,6 +1708,96 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         statModifier: "media",
         success: { text: "El amago desconcierta a toda la defensa y te deja mano a mano con el portero. ¡Gol!", consequences: { fama: 2, flags: flags("wondergoal", "simular_centro") } },
         fail: { text: "Nadie se la compra y el rival corta la jugada sin problema.", consequences: { flags: flags("miss_bad", "simular_centro") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "picar-al-hueco",
+      label: "Picar al hueco entre los dos centrales",
+      subtitle: "Buscar el desmarque justo antes del pase",
+      consequences: {},
+      resolve: {
+        baseChance: 0.38,
+        statModifier: "media",
+        success: { text: "Te vas al hueco justo a tiempo y te plantas solo ante el portero. ¡Gol!", consequences: { flags: flags("goal", "picar_al_hueco") } },
+        fail: { text: "El linier levanta el banderín: fuera de juego.", consequences: { flags: flags("miss", "picar_al_hueco") } },
+      },
+    },
+    {
+      id: "bicicleta",
+      label: "Intentar la chilena si el balón te queda en el aire",
+      subtitle: "Todo o nada, jugada para el recuerdo",
+      consequences: {},
+      resolve: {
+        baseChance: 0.22,
+        statModifier: "media",
+        success: { text: "La chilena sale perfecta. El estadio entero enmudece antes de explotar en gritos. ¡Golazo histórico!", consequences: { fama: 4, flags: flags("wondergoal", "bicicleta") } },
+        fail: { text: "No conectas bien y el balón se marcha muy desviado. El banquillo se lleva las manos a la cabeza.", consequences: { forma: -2, flags: flags("miss_bad", "bicicleta") } },
+      },
+    },
+    {
+      id: "tocar-atras-primero",
+      label: "Tocar atrás para reiniciar antes de atacar de nuevo",
+      subtitle: "Sin riesgo: guardar la posesión del equipo",
+      consequences: {},
+      resolve: {
+        baseChance: 0.7,
+        statModifier: "media",
+        success: { text: "El toque atrás es sencillo y el equipo reorganiza el ataque con calma.", consequences: { flags: flags("contained", "tocar_atras_primero") } },
+        fail: { text: "El pase atrás sale mal y el rival roba el balón en una zona peligrosa.", consequences: { forma: -1, flags: flags("beaten", "tocar_atras_primero") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "remate-palomita",
+      label: "Rematar en palomita, estirándote al máximo",
+      subtitle: "Todo o nada por llegar al balón",
+      consequences: {},
+      resolve: {
+        baseChance: 0.34,
+        statModifier: "media",
+        success: { text: "Te estiras al límite y conectas el remate. ¡Gol de palomita!", consequences: { fama: 2, flags: flags("goal", "remate_palomita") } },
+        fail: { text: "No llegas por poco y el balón pasa rozando el larguero.", consequences: { flags: flags("miss", "remate_palomita") } },
+      },
+    },
+    {
+      id: "bajar-para-compañero",
+      label: "Bajar a por el balón y servirlo de espaldas al área",
+      subtitle: "Sacrificar tu ocasión por la de un compañero",
+      consequences: {},
+      resolve: {
+        baseChance: 0.54,
+        statModifier: "media",
+        success: { text: "El taco de espaldas sale perfecto y un compañero remata solo. Asistencia de lujo.", consequences: { flags: flags("assist", "bajar_para_companero") } },
+        fail: { text: "El taco se va desviado y el rival despeja sin problemas.", consequences: { flags: flags("miss", "bajar_para_companero") } },
+      },
+    },
+  ],
+  (flags) => [
+    {
+      id: "buscar-rebote",
+      label: "Quedarte cerca esperando un posible rebote",
+      subtitle: "Paciencia: estar en el sitio correcto",
+      consequences: {},
+      resolve: {
+        baseChance: 0.4,
+        statModifier: "media",
+        success: { text: "El rechace te cae perfecto y no perdonas desde cerca. ¡Gol!", consequences: { flags: flags("goal", "buscar_rebote") } },
+        fail: { text: "El rechace se va lejos de ti, hacia un defensa rival.", consequences: { flags: flags("miss", "buscar_rebote") } },
+      },
+    },
+    {
+      id: "simular-quiebro",
+      label: "Amagar el cuerpo hacia un lado y salir por el otro",
+      subtitle: "Ganarte medio metro con un solo gesto",
+      consequences: {},
+      resolve: {
+        baseChance: 0.37,
+        statModifier: "media",
+        success: { text: "El quiebro deja completamente sentado al defensa. Definición con toda tranquilidad. ¡Gol!", consequences: { fama: 2, flags: flags("goal", "simular_quiebro") } },
+        fail: { text: "El defensa no se la compra y te cierra el disparo justo a tiempo.", consequences: { flags: flags("miss", "simular_quiebro") } },
       },
     },
   ],
