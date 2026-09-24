@@ -4039,6 +4039,13 @@ export const EVENTS: GameEvent[] = [
     id: "par-cesion-revancha",
     category: "partido",
     priority: true,
+    // Antes exigía el flag "cedido_antes", que solo ponía fork-cesion — un
+    // evento igualmente huérfano, sin ningún selector que lo llamara nunca
+    // (ver el mismo hallazgo en la auditoría de esta sesión). El sistema
+    // de cesión real y en uso es loan-fork.ts, que marca `loan_active` con
+    // el club de origen — justo lo que necesita este evento ("el club que
+    // te dejó marchar").
+    requiresFlag: "loan_active",
     title: "El club que te dejó marchar, enfrente",
     description:
       "El sorteo del calendario te pone cara a cara contra el club que te cedió sin apenas darte una oportunidad. Nadie lo dice en voz alta en la rueda de prensa previa, pero todos en el vestuario saben que este partido es distinto para ti.",
@@ -4071,7 +4078,6 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     minWeek: 25,
-    requiresFlag: "cedido_antes",
   },
 
   // ── VESTUARIO Y PRENSA (momentos guionados) ───────────────────────
@@ -5471,6 +5477,12 @@ export const EVENTS: GameEvent[] = [
       "Same person, distinguished older look, greying hair and beard, elegant retired athlete portrait, natural light, photorealistic, keep facial identity and skin tone unchanged",
     modes: ["pro"],
     minWeek: PRO_RETIREMENT_MIN_WEEK,
+    // Ver el mismo comentario en buildReadyToRetireEvent
+    // (career-transitions.ts): el documento de referencia cierra la
+    // carrera con un mensaje de despedida escrito por el propio jugador,
+    // no solo con una tabla de estadísticas.
+    allowFreeText: true,
+    freeTextPrompt: "Si hoy fuera tu último día como profesional, ¿qué mensaje de despedida dejarías?",
     options: [
       {
         id: "jugar_mas",

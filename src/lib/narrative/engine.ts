@@ -199,6 +199,23 @@ const GRAND_MOMENT_EVENT_IDS = new Set([
   "rep-cesion-exito-sin-hueco",
   "ves-suplente-explota-tarde",
   "esp-veterano-vuelve-debut",
+  // Encontrados en la auditoría de eventos huérfanos: llevaban escritos
+  // en events.ts con `priority: true`, un campo que solo leía
+  // pickNextEventSmart — una función alternativa que nadie llama desde
+  // ningún sitio (pickNextEventDynamic es la que de verdad se usa). Entre
+  // ellos estaban justo los saltos de carrera que pide el documento de
+  // referencia (salto internacional, gigante europeo, Premier League) sin
+  // que pudieran salir NUNCA en una partida real.
+  "fork-fuera-de-planes",
+  "fork-no-renovacion",
+  "fork-premier-segundo-club",
+  "especial-mentor-joven",
+  "rep-renovacion-contrato",
+  "ves-conflicto-capitan",
+  "fork-salto-internacional",
+  "fork-gigante-europeo",
+  "fork-nuevo-reto",
+  "fork-ascenso-division",
 ]);
 const GRAND_MOMENT_EVENTS: GameEvent[] = EVENTS.filter((event) => GRAND_MOMENT_EVENT_IDS.has(event.id));
 
@@ -217,6 +234,43 @@ function pickGrandMomentEvent(player: Player, usedEventIds: string[]): GameEvent
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       (!event.requiresConfederation ||
         (playerConfederation !== null && event.requiresConfederation.includes(playerConfederation))) &&
+      !usedEventIds.includes(event.id),
+  );
+  if (eligible.length === 0) return null;
+  return eligible[Math.floor(Math.random() * eligible.length)];
+}
+
+/**
+ * Momentos especiales DENTRO de un partido (penalti decisivo, roja
+ * injusta, noche de hat-trick, mano a mano, revancha contra el club que
+ * te cedió...) — encontrados en la misma auditoría de eventos huérfanos:
+ * llevaban `priority: true` en events.ts pero, igual que los forks de
+ * arriba, ningún selector real los llamaba nunca. A diferencia de esos
+ * forks (categoría "representante"/"especial"), estos son categoría
+ * "partido" — así que SOLO se pueden usar en una semana con partido real
+ * programado (ver el uso de esta función en pickNextEventDynamic), nunca
+ * sueltos un turno cualquiera: hacerlo de otra forma habría reintroducido
+ * el mismo bug de "partido inventado sin conexión con el calendario" que
+ * se corrigió antes esta noche.
+ */
+const MATCH_SPECIAL_MOMENT_IDS = new Set([
+  "par-mano-a-mano",
+  "par-penal",
+  "par-roja-injusta",
+  "par-hat-trick",
+  "par-etiqueta-fichaje-caro",
+  "par-cesion-revancha",
+  "par-mvp-partido-clave",
+]);
+const MATCH_SPECIAL_MOMENTS: GameEvent[] = EVENTS.filter((event) => MATCH_SPECIAL_MOMENT_IDS.has(event.id));
+
+function pickMatchSpecialMoment(player: Player, usedEventIds: string[]): GameEvent | null {
+  const eligible = MATCH_SPECIAL_MOMENTS.filter(
+    (event) =>
+      (event.minWeek ?? 1) <= player.week &&
+      (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (event.minMedia === undefined || player.media >= event.minMedia) &&
+      (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       !usedEventIds.includes(event.id),
   );
   if (eligible.length === 0) return null;
@@ -2212,6 +2266,34 @@ export async function pickNextEventDynamic(
     const decisionOutcome = playerWithDynamics.flags?.[decisionFlagKey] as string | undefined;
 
     if (!decisionOutcome) {
+      // De vez en cuando, en vez del "momento decisivo" genérico según
+      // posición, se vive un momento especial ya escrito a mano (penalti
+      // en el último minuto, roja injusta, noche de hat-trick, revancha
+      // contra el club que te cedió...) — encontrados huérfanos en la
+      // auditoría de esta sesión, nunca alcanzables hasta ahora. A
+      // diferencia del momento decisivo normal, estos SON el partido
+      // entero (no solo una jugada seguida de crónica), así que se les da
+      // el mismo tratamiento que a un "matchday-*" real: el id se
+      // renombra con ese prefijo para que la semana avance siempre igual
+      // que tras cualquier partido resuelto (ver isSeasonCheckpoint en
+      // carrera/actions.ts) — sin esto, la misma semana de partido podría
+      // volver a ofrecer otro momento decisivo por no haber tocado nunca
+      // el flag match_decision_*.
+      if (Math.random() < 0.2) {
+        const specialMoment = pickMatchSpecialMoment(playerWithDynamics, usedEventIds);
+        if (specialMoment) {
+          console.log(
+            `[pickNextEventDynamic] This week IS match week (${matchThisWeek.competition}) — momento especial: "${specialMoment.title}".`
+          );
+          return maybeAddFreeText(
+            addMatchContext(
+              { ...specialMoment, id: `matchday-special-${matchThisWeek.week}-${Date.now()}`, rivalClub: matchThisWeek.rivalClub },
+              playerWithDynamics,
+            ),
+          );
+        }
+      }
+
       console.log(
         `[pickNextEventDynamic] This week IS match week (${matchThisWeek.competition}) — momento decisivo primero.`
       );

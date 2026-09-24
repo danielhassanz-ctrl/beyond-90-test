@@ -44,6 +44,24 @@ export default async function RetiroPage() {
     .eq("player_id", player.id)
     .order("created_at", { ascending: true });
 
+  // El documento de referencia de la partida original cierra la carrera
+  // con un mensaje de despedida escrito por el propio jugador ("la
+  // carrera termina como una biografía, no como una tabla de
+  // estadísticas") — antes esta pantalla era solo eso, una tabla de
+  // estadísticas. buildReadyToRetireEvent/fork-retiro-pro ya recogen ese
+  // texto libre (ver career-transitions.ts y events.ts); aquí se busca en
+  // career_events, donde queda guardado como en cualquier otra decisión.
+  const { data: farewellEvent } = await supabase
+    .from("career_events")
+    .select("free_text_response")
+    .eq("player_id", player.id)
+    .in("event_id", ["transition-ready-to-retire", "fork-retiro-pro"])
+    .not("free_text_response", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const farewellMessage = farewellEvent?.free_text_response as string | null | undefined;
+
   const heroImage = [...(milestones ?? [])].reverse().find((m) => m.image_url)?.image_url as
     | string
     | undefined;
@@ -129,6 +147,14 @@ export default async function RetiroPage() {
             </div>
           )}
         </div>
+
+        {/* Mensaje de despedida escrito por el propio jugador */}
+        {farewellMessage && farewellMessage.trim() && (
+          <div className="space-y-2 rounded-2xl border border-gold/40 bg-surface p-6 text-center">
+            <p className="text-kicker text-gold">Tu mensaje de despedida</p>
+            <p className="font-display text-lg italic text-foreground">&ldquo;{farewellMessage.trim()}&rdquo;</p>
+          </div>
+        )}
 
         {/* Timeline de momentos */}
         {milestones && milestones.length > 0 && (

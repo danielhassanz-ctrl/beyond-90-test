@@ -134,6 +134,18 @@ export function buildEnteringDeclineEvent(): GameEvent {
 /**
  * Evento: "TIEMPO DE RETIRARSE"
  */
+/**
+ * El documento de referencia de la partida original ("Beyond 90 · Partida
+ * Original · Día a Día") termina la carrera con Daniel redactando su
+ * propio mensaje de despedida: "La partida no termina pulsando
+ * simplemente 'retirarse' [...] la carrera termina como una biografía, no
+ * como una tabla de estadísticas". La pantalla de retiro (carrera/retiro/
+ * page.tsx) sí es una biografía en forma de línea de tiempo de hitos, pero
+ * le faltaba justo esa pieza: la propia voz del jugador. `allowFreeText`
+ * aquí se recoge en carrera/actions.ts como cualquier otro texto libre
+ * (career_events.free_text_response) y carrera/retiro/page.tsx lo busca
+ * específicamente para mostrarlo como cita destacada.
+ */
 export function buildReadyToRetireEvent(): GameEvent {
   return {
     id: "transition-ready-to-retire",
@@ -143,6 +155,8 @@ export function buildReadyToRetireEvent(): GameEvent {
     isMilestone: true,
     milestoneType: "carrera",
     imageScene: `Photorealistic Getty Images photo of a mature footballer at crossroads, contemplative older expression, empty stadium background, soft twilight light, reflective moment of end of era, peaceful but serious`,
+    allowFreeText: true,
+    freeTextPrompt: "Si hoy fuera tu último día como profesional, ¿qué mensaje de despedida dejarías?",
     options: [
       {
         id: "retirarse",
