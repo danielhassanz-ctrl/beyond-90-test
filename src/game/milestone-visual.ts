@@ -34,7 +34,7 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const subject = normalize(`${share.headline} ${share.kicker}`);
   const haystack = normalize(`${share.headline} ${share.kicker} ${share.lines.map((line) => `${line.label} ${line.value}`).join(" ")}`);
-  const thirdPartyActor = "(?:rival|oponente|adversario|adversaria|companero|companera|excompanero|excompanera|exjugador|exjugadora|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|presidente|director deportivo|director tecnico|directora deportiva|directora tecnica|fisio|fisioterapeuta|medico|doctora|staff|padre|madre|hermano|hermana|abuelo|abuela|tio|tia|primo|prima|hijo|hija|pareja|novio|novia|amigo|amiga|aficion|aficionados|aficionadas|hinchas|seguidores|seguidoras|grada|prensa|periodista|periodistas|medios|diario|television|radio)";
+  const thirdPartyActor = "(?:rival|oponente|adversario|adversaria|companero|companera|excompanero|excompanera|exjugador|exjugadora|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|presidente|director deportivo|director tecnico|directora deportiva|directora tecnica|fisio|fisioterapeuta|medico|doctora|staff|padre|madre|hermano|hermana|abuelo|abuela|tio|tia|primo|prima|sobrino|sobrina|hijo|hija|pareja|novio|novia|amigo|amiga|aficion|aficionados|aficionadas|hinchas|seguidores|seguidoras|grada|prensa|periodista|periodistas|medios|diario|television|radio)";
   // Cover singular and plural Spanish recipient articles so headlines such as
   // "Dan el The Best al capitán" or "Entregan el trofeo a los aficionados"
   // cannot be mistaken for an award won by the player's own character.
