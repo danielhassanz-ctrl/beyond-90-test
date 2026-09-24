@@ -54,8 +54,10 @@ assert.equal(trophy.scene, "celebration");
 assert.match(trophyBrief.composition, /emotional celebration/i);
 assertRightsSafe(trophyBrief.composition);
 for (const headline of ["Ganas la Copa", "Levantas la Champions", "Conquistas el Mundial", "Ganas el Balón de Oro", "Ganas un título", "Levantas un trofeo", "Campeón de Liga", "Campeona de la Copa", "Campeones de Champions", "Campeón del Mundial", "Campeona de la Eurocopa", "Campeón de la Supercopa"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
-// Youth/academy honours are deliberately not paid/generated senior milestones.
+// Youth/academy team honours are deliberately not paid/generated senior milestones.
 for (const headline of ["Campeón de Liga juvenil", "Ganas la Copa con el filial", "Levantas un trofeo sub-19", "Campeón de Liga con el equipo B", "Conquistas el título de cantera", "Campeón de Copa con el equipo reserva"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "career", headline);
+// Named individual awards are genuine major milestones even when the award itself is age-limited.
+for (const headline of ["Ganas el Golden Boy sub-21", "Ganador del Golden Boy sub-21"]) assert.equal(milestoneVisualSpec(share(headline)).kind, "trophy", headline);
 
 const retirement = milestoneVisualSpec(share("Despedida: fin de carrera"));
 const retirementBrief = milestoneGenerationBrief(retirement, playerVisualProfile(38), "Real Betis", identity);
