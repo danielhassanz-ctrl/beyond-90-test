@@ -200,6 +200,8 @@ export interface HistoryItem {
   chosen: string;
   /** Lo que el jugador escribió con sus propias palabras en la opción libre, si la usó. */
   freeText?: string | null;
+  /** Categoría del evento (entrenamiento/vestuario/representante/prensa/vida/especial/partido...) — usado por pickCategory para no repetir la misma categoría turno tras turno. */
+  category?: string | null;
 }
 
 /**
@@ -222,8 +224,26 @@ function buildLastFreeTextNote(history: HistoryItem[]): string {
   return "";
 }
 
-function pickCategory(): EventCategory {
-  return FLAVOR_CATEGORIES[Math.floor(Math.random() * FLAVOR_CATEGORIES.length)];
+/**
+ * Antes esto era un random puro entre las 6 categorías, sin memoria de lo
+ * que acababa de salir — con solo 6 opciones, repetir "vida" o "vestuario"
+ * dos o tres turnos seguidos por pura tirada era bastante probable, y aun
+ * variando el contenido de la IA por dentro, la carrera se sentía
+ * temáticamente repetitiva turno tras turno. Ahora se evita repetir
+ * cualquier categoría que ya haya salido en los 2 turnos más recientes,
+ * mientras quede al menos una alternativa — con solo 6 categorías, dejar
+ * SIEMPRE alguna disponible importa más que la aleatoriedad pura.
+ */
+function pickCategory(history: HistoryItem[] = []): EventCategory {
+  const recentCategories = new Set(
+    history
+      .slice(0, 2)
+      .map((h) => h.category)
+      .filter((c): c is string => Boolean(c)),
+  );
+  const notRecent = FLAVOR_CATEGORIES.filter((c) => !recentCategories.has(c));
+  const pool = notRecent.length > 0 ? notRecent : FLAVOR_CATEGORIES;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 const EVENT_TOOL: Anthropic.Tool = {
@@ -634,7 +654,7 @@ export async function generateAiEvent(
   player: Player,
   history: HistoryItem[],
 ): Promise<GameEvent | null> {
-  const category = pickCategory();
+  const category = pickCategory(history);
   const age = playerAge(player.week);
 
   const historyText = history.length

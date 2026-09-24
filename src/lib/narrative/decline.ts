@@ -96,6 +96,13 @@ export function buildDeclinePrompt(player: Player, signals: DeclineSignal[]): st
   const emotionalTone = signals.reduce((sum, s) => sum + s.emotionalWeight, 0) / signals.length;
   const toneName = emotionalTone > 0.7 ? "sombrío" : emotionalTone > 0.5 ? "reflexivo" : "esperanzador";
 
+  // describeDeclineContext ya existía (con matices reales por franja de
+  // edad: "el reloj marca" a los 30, "otros sueñan lo que tú ya viviste"
+  // a los 33+...) pero nunca se llamaba desde aquí — el prompt se quedaba
+  // solo con datos numéricos (edad, media, moral) sin ningún matiz
+  // emocional que ayude a la IA a escribir el momento con peso de verdad.
+  const emotionalContext = describeDeclineContext(player);
+
   return `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
 
 JUGADOR EN DECLIVE:
@@ -105,6 +112,7 @@ JUGADOR EN DECLIVE:
 - Moral: ${player.moral}
 - Club: ${player.club}
 - Estado mental: ${toneName}
+- Cómo lo siente por dentro: ${emotionalContext}
 
 SEÑALES DE DECLIVE:
 ${signalDescriptions}
