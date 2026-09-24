@@ -32,13 +32,8 @@ export function milestoneGenerationBrief(milestone: MilestoneVisualSpec, visual:
 /** Rights-safe milestone classification used by share cards. */
 export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  // Headline + kicker define whose milestone this is. Supporting lines are context
-  // (coach, family, physio, former club...) and must not erase a player milestone.
   const subject = normalize(`${share.headline} ${share.kicker}`);
   const haystack = normalize(`${share.headline} ${share.kicker} ${share.lines.map((line) => `${line.label} ${line.value}`).join(" ")}`);
-  // A third party only owns the milestone when the headline is actually about them.
-  // Merely mentioning a father, coach, captain, supporters or media reacting to the player's
-  // milestone must not suppress it; third-party-led headlines, however, are not the player's milestone.
   const thirdPartyActor = "(?:rival|oponente|adversario|adversaria|companero|companera|excompanero|excompanera|exjugador|exjugadora|otro jugador|otra jugadora|capitan|capitana|entrenador|seleccionador|presidente|director deportivo|director tecnico|directora deportiva|directora tecnica|fisio|fisioterapeuta|medico|doctora|staff|padre|madre|hermano|hermana|hijo|hija|pareja|novio|novia|amigo|amiga|aficion|aficionados|aficionadas|hinchas|seguidores|seguidoras|grada|prensa|periodista|periodistas|medios|diario|television|radio)";
   const thirdPartySubject = new RegExp(`^(?:el |la |un |una |tu |tus )?${thirdPartyActor}\\b`).test(subject) || new RegExp(`\\b(?:de|del) (?:el |la |tu )?${thirdPartyActor}\\b`).test(subject);
   const formerSubject = /^(?:el |la |tu )?(?:exclub|ex club|antiguo club|anterior club|former club|exequipo|ex equipo|antiguo equipo|anterior equipo)\b/.test(subject);
@@ -59,12 +54,14 @@ export function milestoneVisualSpec(share: ShareData): MilestoneVisualSpec {
   const aspirationalAchievement = /\b(?:objetivo|meta|sueno|suenas|aspiras?|aspiracion|quieres?|esperas?|prometes?|reto)\b.{0,48}\b(?:ser|ganar|conquistar|levantar|campeon|titulo|trofeo|copa|liga|champions|mundial|eurocopa|europa league)\b/.test(subject);
   const qualificationOnly = /\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b.{0,48}\b(?:champions|mundial|eurocopa|europa league|copa)\b/.test(subject) || /\b(?:champions|mundial|eurocopa|europa league|copa)\b.{0,48}\b(?:clasificas?|clasificacion|clasificado|clasificada|billete|pase|acceso)\b/.test(subject);
   const friendlyAchievement = /\b(?:pretemporada|amistos[oa]s?|torneo amistoso|trofeo amistoso|torneo de verano|trofeo de verano|trofeo veraniego)\b/.test(subject);
+  // Academy/youth honours are career context, not the scarce senior visual milestones that may incur image-generation cost.
+  const youthAchievement = /\b(?:juvenil|cantera|filial|equipo b|sub[- ]?(?:17|18|19|20|21|23)|youth|academy|reserva)\b/.test(subject);
   const competitionName = "(?:copa(?: del rey)?|liga|champions|mundial|eurocopa|europa league|supercopa)";
   const championAchievement = new RegExp(`\\bcampeon(?:es|a|as)?\\b.{0,24}\\b${competitionName}\\b`).test(subject) || new RegExp(`\\b${competitionName}\\b.{0,24}\\bcampeon(?:es|a|as)?\\b`).test(subject);
   const genericTitleWon = /\b(?:ganas?|gana|ganamos|ganan|conquistas?|conquista|levantas?|levanta|alz(?:as|a)|recibes?|recibe)\b.{0,32}\b(?:titulo|trofeo)\b/.test(subject) || /\b(?:titulo|trofeo)\b.{0,32}\b(?:ganado|ganada|conquistado|conquistada|levantado|levantada)\b/.test(subject);
   const explicitCompetitionWin = new RegExp(`\\b(?:ganas?|gana|ganamos|ganan)\\s+(?:la|el)\\s+${competitionName}\\b`).test(subject);
   const strongCompetitionAchievement = new RegExp(`\\b(?:conquistas?|conquista|levantas?|levanta|alz(?:as|a)|coronas?|corona)\\b.{0,32}\\b${competitionName}\\b`).test(subject) || new RegExp(`\\b${competitionName}\\b.{0,32}\\b(?:ganada|conquistada|levantada|campeon)\\b`).test(subject);
-  if (!thirdPartySubject && !formerSubject && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && (awardWon || championAchievement || genericTitleWon || explicitCompetitionWin || strongCompetitionAchievement)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
+  if (!thirdPartySubject && !formerSubject && !negatedAchievement && !aspirationalAchievement && !qualificationOnly && !friendlyAchievement && !youthAchievement && (awardWon || championAchievement || genericTitleWon || explicitCompetitionWin || strongCompetitionAchievement)) return { kind: "trophy", label: "Noche de gloria", scene: "celebration" };
 
   const excludedSigningContext = /\b(?:renov|patrocin|sponsor|marca|adidas|nike|puma|ficha medica|ficha tecnica)\b/.test(subject);
   const speculativeMove = /\b(?:oferta|interes|negocia|negociacion|rumor|sondeo|posible|podria|puede|opcion)\b.{0,48}\b(?:fichaje|fichar|traspaso|cesion|cedido|nuevo club)\b/.test(subject) || /\b(?:fichaje|fichar|traspaso|cesion|cedido|nuevo club)\b.{0,48}\b(?:oferta|interes|negocia|negociacion|rumor|sondeo|posible|podria|puede|opcion)\b/.test(subject);
