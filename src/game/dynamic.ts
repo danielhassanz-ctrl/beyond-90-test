@@ -879,7 +879,7 @@ function resolveInjury(s: GameState, card: DynamicCard, choiceId: string): Dynam
         tone: "neutral",
       };
     case "segunda": {
-      const better = Math.random() < 0.5;
+      const better = (hash(careerSeed(s), `injury-second-opinion:${s.seasonIndex}:${s.sceneCount}:${inj.matchesOut}`) % 100) < 50;
       if (better) {
         inj.matchesOut = Math.max(1, inj.matchesOut - 2);
         return { title: "Segunda opinión", text: `Un especialista en Barcelona ve la lesión menos grave: ${inj.matchesOut} partidos y un plan claro.`, tone: "good" };
