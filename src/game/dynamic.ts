@@ -990,7 +990,8 @@ function resolveAgentOffer(s: GameState, card: DynamicCard, choiceId: string, i:
     return { title: "Bronca con tu representante", text: `Le contestas fatal por teléfono. La operación se cae y la relación queda tocada.`, tone: "bad" };
   }
   if (decision === "usar") {
-    const ok = Math.random() < 0.55 + (s.rel.coach - 50) / 300;
+    const leverageChance = Math.max(0.15, Math.min(0.85, 0.55 + (s.rel.coach - 50) / 300));
+    const ok = (hash(careerSeed(s), `agent-leverage:${s.seasonIndex}:${s.sceneCount}:${clubName}`) % 10000) < leverageChance * 10000;
     if (ok) {
       s.salary += 40;
       s.contract = s.contract ?? "Renovación con mejora";
