@@ -110,7 +110,12 @@ export async function resolveEvent(formData: FormData) {
     // partido que se resuelve justo después — no puede avanzar la
     // semana él solo, o el partido en sí saltaría a la jornada
     // siguiente sin haberse jugado nunca.
-    event.id.startsWith("match-decision-");
+    event.id.startsWith("match-decision-") ||
+    // Rumores de mercado y ofertas formales (market-window.ts): pueden
+    // colarse en una semana de partido, así que no deben avanzarla o el
+    // partido se saltaría sin jugarse.
+    event.id.startsWith("mercado-") ||
+    event.id.startsWith("oferta-");
   // Un partido resuelto (matchday-*) TIENE que avanzar la semana siempre:
   // si se deja al avance probabilístico normal, cuando sale 0 el jugador
   // vuelve a caer en la misma jornada y el partido se narra dos veces con

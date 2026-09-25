@@ -29,6 +29,18 @@ import {
   pickEligibleAgentTrigger,
   markAgentDialogueTriggered,
 } from "@/lib/narrative/agent-events";
+import {
+  shouldTriggerMarketRumor,
+  markMarketRumorShown,
+  buildMarketRumorEvent,
+  shouldTriggerTransferOffer,
+  buildTransferOfferEvent,
+  clearStaleTransferInterest,
+  shouldTriggerOwnMoveDecision,
+  buildOwnMoveEvent,
+  shouldTriggerDeadlineDay,
+  buildDeadlineDayEvent,
+} from "@/lib/narrative/market-window";
 import { shouldTriggerLoanFork, buildLoanForkEvent, markLoanForkTriggered, shouldEndLoan, buildLoanEndEvent } from "@/lib/narrative/loan-fork";
 import { pickDetailedLifeScenario, markDetailedLifeUsed } from "@/lib/narrative/life-events-detailed";
 
@@ -2337,6 +2349,36 @@ export async function pickNextEventDynamic(
       }
       return maybeAddFreeText(transitionEvent);
     }
+  }
+
+  // Mercado de fichajes (verano y enero): SIEMPRE hay rumor al abrirse
+  // cada ventana — ver market-window.ts. Va antes de la pretemporada y
+  // de los partidos porque estos eventos no avanzan la semana (ver
+  // carrera/actions.ts), así que no se salta ningún partido. Si un rumor
+  // resultó ser real, después llega la oferta formal.
+  clearStaleTransferInterest(playerWithDynamics);
+  // No colarse entre la jugada decisiva y la crónica del MISMO partido.
+  const midMatch = Boolean(playerWithDynamics.flags?.[`match_decision_${playerWithDynamics.week}`]);
+  if (!midMatch && shouldTriggerMarketRumor(playerWithDynamics)) {
+    markMarketRumorShown(playerWithDynamics);
+    const rumor = buildMarketRumorEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Market rumor: "${rumor.title}"`);
+    return maybeAddFreeText(rumor);
+  }
+  if (!midMatch && shouldTriggerDeadlineDay(playerWithDynamics)) {
+    const deadline = buildDeadlineDayEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Deadline day: "${deadline.title}"`);
+    return maybeAddFreeText(deadline);
+  }
+  if (!midMatch && shouldTriggerOwnMoveDecision(playerWithDynamics)) {
+    const own = buildOwnMoveEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Own move decision`);
+    return maybeAddFreeText(own);
+  }
+  if (!midMatch && shouldTriggerTransferOffer(playerWithDynamics)) {
+    const offer = buildTransferOfferEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Formal transfer offer: "${offer.title}"`);
+    return maybeAddFreeText(offer);
   }
 
   // El cierre de una temporada y el arranque de la siguiente (edad+1,
