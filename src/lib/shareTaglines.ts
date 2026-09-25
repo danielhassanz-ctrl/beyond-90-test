@@ -22,6 +22,7 @@ const SELECCION = "Así defiendo a mi país. ¿Jugarías tú también?";
 const FAMA = "Así es mi fama. Atrévete a vivir la tuya.";
 const PRENSA = "Así hablan de mí. ¿Qué dirían de ti?";
 const BODA = "Este es mi gran día. Empieza el tuyo.";
+const DM = "Así me escriben cuando marco. ¿A ti quién te escribiría?";
 const SEGUNDA_VIDA = "Así sigue mi historia. ¿Cuál sería la tuya?";
 export const DEFAULT_TAGLINE = "Esta es mi carrera. ¿Cuál es la tuya?";
 
@@ -70,6 +71,8 @@ const SHARE_TAGLINES: Record<string, string> = {
   fama: FAMA,
 
   prensa: PRENSA,
+
+  dm_instagram: DM,
 
   boda: BODA,
 

@@ -71,6 +71,10 @@ export interface EventOption {
    * elegir algo tan importante como el primer club.
    */
   details?: { icon: string; label: string; text: string }[];
+  /** Solo en eventos con `dm`: lo que respondes por mensaje (sale en la captura compartible). */
+  dmReply?: string;
+  /** Lo que ella contesta después de tu respuesta (segunda burbuja de la captura). */
+  dmFollowUp?: string;
   /** Efecto directo, para opciones sin incertidumbre */
   consequences: Consequences;
   /**
@@ -116,6 +120,11 @@ export interface GameEvent {
    * compartible. Personajes que aparezcan deben ser ficticios.
    */
   imageScene?: string;
+  /**
+   * Mensaje directo de Instagram: el hito se dibuja en código como una
+   * captura de la conversación (src/lib/images/dmCard.ts), sin IA ni coste.
+   */
+  dm?: { handle: string; name: string; message: string };
   /**
    * Si está presente, este evento hace evolucionar la foto del jugador
    * (barba, pelo, madurez) para reflejar la etapa de la carrera.

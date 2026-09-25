@@ -42,6 +42,7 @@ import {
   shouldTriggerDeadlineDay,
   buildDeadlineDayEvent,
 } from "@/lib/narrative/market-window";
+import { shouldTriggerSocialDm, buildSocialDmEvent } from "@/lib/narrative/social-dm";
 import { shouldTriggerLoanFork, buildLoanForkEvent, markLoanForkTriggered, shouldEndLoan, buildLoanEndEvent } from "@/lib/narrative/loan-fork";
 import { pickDetailedLifeScenario, markDetailedLifeUsed } from "@/lib/narrative/life-events-detailed";
 
@@ -2386,6 +2387,11 @@ export async function pickNextEventDynamic(
     const own = buildOwnMoveEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Own move decision`);
     return maybeAddFreeText(own);
+  }
+  if (!midMatch && shouldTriggerSocialDm(playerWithDynamics)) {
+    const dmEvent = buildSocialDmEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Social DM: "${dmEvent.title}"`);
+    return dmEvent;
   }
   if (!midMatch && shouldTriggerTransferOffer(playerWithDynamics)) {
     const offer = buildTransferOfferEvent(playerWithDynamics);

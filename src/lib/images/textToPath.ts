@@ -93,3 +93,25 @@ export function wrapTextToPaths(
 
   return lines.map((line, i) => textToPath(line, { ...opts, y: opts.y + i * opts.lineHeight })).join("\n  ");
 }
+
+/** Ancho en píxeles de una línea de texto con la fuente empaquetada. */
+export function measureText(text: string, fontSize: number): number {
+  return getConverter().getMetrics(text, { fontSize }).width;
+}
+
+/** Parte un texto en líneas que caben en maxWidth píxeles (por palabras). */
+export function wrapByWidth(text: string, fontSize: number, maxWidth: number): string[] {
+  const lines: string[] = [];
+  let current = "";
+  for (const word of text.split(" ")) {
+    const candidate = current ? current + " " + word : word;
+    if (current && measureText(candidate, fontSize) > maxWidth) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}

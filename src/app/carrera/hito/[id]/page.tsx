@@ -102,6 +102,7 @@ export default async function HitoPage({
   // Mapeo de tipos de hito a etiquetas y emoji
   const milestoneMetadata: Record<string, { label: string; emoji: string }> = {
     debut: { label: "Debut profesional", emoji: "🌟" },
+    dm_instagram: { label: "Mensaje directo", emoji: "💬" },
     contrato: { label: "Fichaje importante", emoji: "⚽" },
     title_liga: { label: "Campeón", emoji: "🏆" },
     title_champions: { label: "Europa", emoji: "👑" },
@@ -196,7 +197,7 @@ export default async function HitoPage({
                   linkLine={linkLine}
                 />
               </ShareableCard>
-              {player.photo_url && (
+              {player.photo_url && milestone.type !== "dm_instagram" && (
                 <form action={regenerateMilestoneImage} className="text-center">
                   <input type="hidden" name="milestone_id" value={milestone.id} />
                   <button

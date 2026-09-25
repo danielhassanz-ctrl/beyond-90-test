@@ -15,6 +15,7 @@ import { getShareTagline } from "@/lib/shareTaglines";
 import { GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
 import { buildMatchContext } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
+import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
@@ -119,7 +120,9 @@ export async function resolveEvent(formData: FormData) {
     // colarse en una semana de partido, así que no deben avanzarla o el
     // partido se saltaría sin jugarse.
     event.id.startsWith("mercado-") ||
-    event.id.startsWith("oferta-");
+    event.id.startsWith("oferta-") ||
+    // Mensajes por redes (social-dm.ts): tampoco avanzan la semana.
+    event.id.startsWith("social-dm-");
   // Un partido resuelto (matchday-*) TIENE que avanzar la semana siempre:
   // si se deja al avance probabilístico normal, cuando sale 0 el jugador
   // vuelve a caer en la misma jornada y el partido se narra dos veces con
@@ -452,7 +455,8 @@ export async function resolveEvent(formData: FormData) {
 
     // Antes de gastar en Replicate, comprueba el freno de gasto (por
     // usuario y global — ver src/lib/images/quota.ts).
-    const willAttemptImage = !isRetirementDecision && Boolean(player.photo_url) && event.id !== "fork-retiro-pro";
+    const isDmEvent = Boolean(event.dm);
+    const willAttemptImage = !isDmEvent && !isRetirementDecision && Boolean(player.photo_url) && event.id !== "fork-retiro-pro";
     const quota = willAttemptImage ? await checkImageGenerationQuota(supabase, user.id) : null;
     if (quota && !quota.allowed) {
       console.warn(`[resolveEvent] Image generation will be skipped (${quota.reason}) for this milestone`);
@@ -484,7 +488,7 @@ export async function resolveEvent(formData: FormData) {
               ? event.title
               : (outcomeText ?? option.subtitle),
           image_url: null,
-          image_status: willGenerate ? "pending" : "none",
+          image_status: willGenerate || isDmEvent ? "pending" : "none",
         })
         .select("id")
         .single();
@@ -501,6 +505,28 @@ export async function resolveEvent(formData: FormData) {
     // así que ni la más lenta llamada a Kontext Pro (~3 min en frío,
     // medido) le bloquea el turno. Cuando termine, un pequeño componente
     // en la app avisa de que la foto está lista.
+    // Captura de mensajes por Instagram: se dibuja en código (dmCard.ts),
+    // sin Replicate ni cuota de imágenes.
+    if (milestoneId && event.dm) {
+      const dmMilestoneId = milestoneId;
+      const dmUserId = user.id;
+      const dmCard = { ...event.dm, reply: option.dmReply, followUp: option.dmFollowUp };
+      after(async () => {
+        try {
+          const raw = await composeDmCard(dmCard);
+          const branded = await addShareBranding(raw, getShareTagline("dm_instagram"));
+          const url = await uploadGeneratedImage(supabase, dmUserId, branded, "milestone");
+          await supabase
+            .from("milestones")
+            .update(url ? { image_url: url, image_status: "ready" } : { image_status: "failed" })
+            .eq("id", dmMilestoneId);
+        } catch (err) {
+          console.error("[resolveEvent:after] DM card failed:", err);
+          await supabase.from("milestones").update({ image_status: "failed" }).eq("id", dmMilestoneId);
+        }
+      });
+    }
+
     if (milestoneId && willGenerate) {
       const finalMilestoneId = milestoneId;
       const finalPrompt = milestoneImagePrompt || event.imageScene || "jugador celebrando momento épico";
