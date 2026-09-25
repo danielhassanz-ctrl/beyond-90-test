@@ -42,6 +42,7 @@ import {
   shouldTriggerDeadlineDay,
   buildDeadlineDayEvent,
 } from "@/lib/narrative/market-window";
+import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
 import { shouldTriggerSocialDm, buildSocialDmEvent } from "@/lib/narrative/social-dm";
 import { shouldTriggerLoanFork, buildLoanForkEvent, markLoanForkTriggered, shouldEndLoan, buildLoanEndEvent } from "@/lib/narrative/loan-fork";
 import { pickDetailedLifeScenario, markDetailedLifeUsed } from "@/lib/narrative/life-events-detailed";
@@ -2387,6 +2388,11 @@ export async function pickNextEventDynamic(
     const own = buildOwnMoveEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Own move decision`);
     return maybeAddFreeText(own);
+  }
+  if (!midMatch && shouldTriggerPreseasonLife(playerWithDynamics)) {
+    const pre = buildPreseasonLifeEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Preseason life: "${pre.title}"`);
+    return pre;
   }
   if (!midMatch && shouldTriggerSocialDm(playerWithDynamics)) {
     const dmEvent = buildSocialDmEvent(playerWithDynamics);

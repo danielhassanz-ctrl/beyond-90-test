@@ -122,7 +122,9 @@ export async function resolveEvent(formData: FormData) {
     event.id.startsWith("mercado-") ||
     event.id.startsWith("oferta-") ||
     // Mensajes por redes (social-dm.ts): tampoco avanzan la semana.
-    event.id.startsWith("social-dm-");
+    event.id.startsWith("social-dm-") ||
+    // Vida de pretemporada (preseason-life.ts): tampoco avanza la semana.
+    event.id.startsWith("preseason-ev-");
   // Un partido resuelto (matchday-*) TIENE que avanzar la semana siempre:
   // si se deja al avance probabilístico normal, cuando sale 0 el jugador
   // vuelve a caer en la misma jornada y el partido se narra dos veces con
