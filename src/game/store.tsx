@@ -188,7 +188,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (label) rememberBeat(next, label);
     return next;
   }), [apply]);
-  const answerFree = useCallback((eventId: string, text: string) => apply((prev) => {\n    const next = resolveEventFree(prev, eventId, text);\n    const beat = text.trim();\n    if (beat) rememberBeat(next, beat);\n    return next;\n  }), [apply]);
+  const answerFree = useCallback((eventId: string, text: string) => apply((prev) => {
+    const next = resolveEventFree(prev, eventId, text);
+    const beat = text.trim();
+    if (beat) rememberBeat(next, beat);
+    return next;
+  }), [apply]);
   const answerDynamic = useCallback((card: DynamicCard, choiceId: string, text?: string) => apply((prev) => {
     const next = resolveDynamicCard(prev, card, choiceId, text);
     rememberBeat(next, text?.trim() || choiceId.replace(/_/g, " "));
