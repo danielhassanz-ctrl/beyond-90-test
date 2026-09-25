@@ -167,14 +167,14 @@ type WithBeats = { beats?: string[] };
 
 /** Guarda un eco corto de la última decisión (máx. 6). */
 export function rememberBeat(s: GameState, text: string): void {
-  const beat = text.replace(/\\s+/g, " ").trim().slice(0, 90);
+  const beat = text.replace(/\s+/g, " ").trim().slice(0, 90);
   if (!beat) return;
   const mem = s.memory as unknown as WithBeats;
   const list = Array.isArray(mem.beats) ? mem.beats : [];
   const key = beat.toLocaleLowerCase("es");
   mem.beats = [
     beat,
-    ...list.filter((t) => t.replace(/\\s+/g, " ").trim().slice(0, 90).toLocaleLowerCase("es") !== key),
+    ...list.filter((t) => t.replace(/\s+/g, " ").trim().slice(0, 90).toLocaleLowerCase("es") !== key),
   ].slice(0, 6);
 }
 
