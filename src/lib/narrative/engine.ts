@@ -341,6 +341,10 @@ const LEGACY_LIFE_EVENT_IDS = new Set([
   "vid-familia", "vid-amigos-infancia", "vid-presion-familiar", "vid-dorsal-homenaje",
   "vid-aceptar-la-realidad", "vid-hermano-pequeno", "vid-llamada-madre",
   "vid-fiesta-familia", "vid-charla-entrenador", "vid-compañeros-colegio",
+  // Salseo cotidiano: el míster te habla, vestuario, familia.
+  "ent-bronca-tarde", "ent-elogio-publico", "ent-cambio-posicion", "ent-grada-sin-avisar",
+  "ent-concentracion-hotel", "ves-cumple-sorpresa", "ves-masajista-cotilla", "ves-companero-cobra-mas",
+  "ves-himno-equipo", "vid-entradas-primos", "vid-ex-escribe", "esp-utillero-leyenda",
 ]);
 /** Escenas que solo tienen sentido al empezar (colegio, novato, primer contrato, dorsal). */
 const LEGACY_EARLY_ONLY_IDS = new Set([

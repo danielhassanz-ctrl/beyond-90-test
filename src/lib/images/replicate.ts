@@ -1,3 +1,5 @@
+import { swapFaceIntoTemplate } from "@/lib/images/faceswap";
+
 const MODEL = "black-forest-labs/flux-kontext-pro";
 
 interface ReplicatePrediction {
@@ -98,7 +100,17 @@ function withIdentityPreserved(prompt: string): string {
   return `Edit this exact photo. The person already in the input image is the one and only main subject — preserve their exact face shape, skin tone, eye color, nose, and overall likeness pixel-faithfully, as if this were the same photograph continued. Do not generate a different person, a stock model, or a lookalike, even if the rest of the scene below describes other people around them. Apply only these changes: ${prompt} Before finishing: double-check the main subject's face against the original input photo — it must be immediately recognizable as the exact same individual, not just someone of similar age and build. Hairstyle or facial hair may change only if explicitly instructed above.`;
 }
 
-async function runFluxKontextOnce(inputImageUrl: string, prompt: string): Promise<string | null> {
+/**
+ * Versión corta para el reintento. Si Kontext rechazó la petición por
+ * moderación (E005) repetir EXACTAMENTE el mismo texto largo casi siempre
+ * vuelve a fallar igual — un texto distinto y más simple es la única
+ * palanca real que queda en el segundo intento.
+ */
+function withIdentityPreservedLite(prompt: string): string {
+  return `Edit this photo of a football player. Keep his face, hair and skin tone exactly the same. ${prompt}`;
+}
+
+async function runFluxKontextOnce(inputImageUrl: string, prompt: string, lite = false): Promise<string | null> {
   const token = process.env.REPLICATE_API_TOKEN;
   if (!token) {
     console.error("[runFluxKontext] no REPLICATE_API_TOKEN set");
@@ -117,7 +129,7 @@ async function runFluxKontextOnce(inputImageUrl: string, prompt: string): Promis
         },
         body: JSON.stringify({
           input: {
-            prompt: withIdentityPreserved(prompt),
+            prompt: lite ? withIdentityPreservedLite(prompt) : withIdentityPreserved(prompt),
             input_image: inputImageUrl,
             output_format: "png",
           },
@@ -171,7 +183,7 @@ async function runFluxKontext(inputImageUrl: string, prompt: string): Promise<st
   if (first) return first;
 
   console.error("[runFluxKontext] first attempt failed, retrying once more");
-  return runFluxKontextOnce(inputImageUrl, prompt);
+  return runFluxKontextOnce(inputImageUrl, prompt, true);
 }
 
 /**
@@ -185,6 +197,15 @@ export async function generatePlayerImage(
 ): Promise<Buffer | null> {
   const outputUrl = await runFluxKontext(inputImageUrl, prompt);
   if (!outputUrl) return null;
+
+  // Segunda pasada: Kontext no tiene ningún parámetro de "fuerza de
+  // identidad" y, aun con el prompt reforzado, a veces cambiaba la cara
+  // ("me ha cambiado la cara entera"). Un face-swap barato (~0,006€) con la
+  // foto real sobre la escena ya generada fija el parecido; si falla (cara
+  // no detectable, p.ej. de espaldas) se usa la imagen de Kontext tal cual.
+  const swapped = await swapFaceIntoTemplate(outputUrl, inputImageUrl);
+  if (swapped) return swapped;
+  console.warn("[generatePlayerImage] face-swap pass failed, using the Kontext output as is");
 
   try {
     const imageRes = await fetchWithTimeout(outputUrl, {}, 30_000);

@@ -40,6 +40,10 @@ import { ShareButton } from "@/components/ShareButton";
 import { PlayerCard } from "@/components/PlayerCard";
 import { ShareableCard } from "@/components/ShareableCard";
 import { MilestonePendingPoller } from "@/components/MilestonePendingPoller";
+import { regenerateMilestoneImage } from "./actions";
+
+// La regeneración de la foto corre en segundo plano (after()) y puede tardar minutos.
+export const maxDuration = 300;
 
 export default async function HitoPage({
   params,
@@ -123,7 +127,9 @@ export default async function HitoPage({
   // se trata igual que si no hubiera imagen — cae a la tarjeta compartible
   // sin foto, en vez de dejar al jugador mirando un spinner roto.
   const STALE_PENDING_MS = 5 * 60_000;
-  const pendingSince = milestone.created_at ? Date.now() - new Date(milestone.created_at).getTime() : 0;
+  const regenStartedAt = parseInt(String(player.flags?.[`regen_${milestone.id}`] ?? "0"), 10) || 0;
+  const startedAt = Math.max(regenStartedAt, milestone.created_at ? new Date(milestone.created_at).getTime() : 0);
+  const pendingSince = startedAt ? Date.now() - startedAt : 0;
   const isStalePending = milestone.image_status === "pending" && pendingSince > STALE_PENDING_MS;
 
   return (
@@ -190,6 +196,17 @@ export default async function HitoPage({
                   linkLine={linkLine}
                 />
               </ShareableCard>
+              {player.photo_url && (
+                <form action={regenerateMilestoneImage} className="text-center">
+                  <input type="hidden" name="milestone_id" value={milestone.id} />
+                  <button
+                    type="submit"
+                    className="rounded-full border border-gold/50 px-5 py-2 font-cond text-xs font-bold uppercase tracking-wide text-gold"
+                  >
+                    ✨ Generar la foto de este momento
+                  </button>
+                </form>
+              )}
             </div>
           )}
         </div>
