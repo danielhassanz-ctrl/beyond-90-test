@@ -4,6 +4,7 @@ import { renderDirector, resolveDirector } from "./director";
 import { renderConsequence, resolveConsequence } from "./consequences";
 import { clubById } from "./data";
 import { interpretFree } from "./interpret";
+import { careerSeed, hash } from "./npc";
 import { achieve, clamp, milestone, note, rel, stat } from "./mutate";
 import type { DynamicCard, EventCategory, GameState, Interpretation, SceneKey, ShareData } from "./types";
 
@@ -544,7 +545,8 @@ export function resolveDynamic(
       return { title: "Salto de nivel", text: str(d, "text", "Tu media sube."), tone: "gold" };
     case "match_flash": {
       if (choiceId === "hablar") {
-        const ok = s.rel.coach >= 45 ? Math.random() < 0.6 : Math.random() < 0.3;
+        const roll = hash(careerSeed(s), `match-flash-coach:${s.seasonIndex}:${s.sceneCount}:${s.rel.coach}`) % 100;
+        const ok = roll < (s.rel.coach >= 45 ? 60 : 30);
         rel(s, "coach", ok ? 5 : -5);
         stat(s, "morale", ok ? 5 : -5);
         return ok
