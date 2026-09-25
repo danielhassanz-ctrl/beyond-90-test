@@ -154,6 +154,7 @@ function assertSourceHasNoLegacyAgentCheck() {
   assert(!engine.includes('dyn("agent_check"'), "engine.ts can still emit the banned generic agent_check card");
   assert(!dynamic.includes('case "agent_check"'), "dynamic.ts still contains an agent_check render/resolve path");
   assert(!dynamic.includes("AGENT_TOPICS"), "dynamic.ts still contains the generic adviser copy bank");
+  assert(!dynamic.includes("Math.random("), "dynamic.ts contains nondeterministic Math.random; narrative outcomes must replay from career state");
 }
 
 function assertNarrativeNotRepeated(observations: NarrativeObservation[], seed: number) {
