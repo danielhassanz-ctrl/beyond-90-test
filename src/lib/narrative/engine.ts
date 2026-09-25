@@ -23,6 +23,7 @@ import { naturalFormaDegradation, calculateMediaPressure, deteriorateRelationshi
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
 import { EVENTS } from "@/lib/narrative/events";
+import { describeCast } from "@/lib/narrative/npcs";
 import {
   buildAgentDialogueEvent,
   shouldTriggerAgentDialogue,
@@ -737,6 +738,9 @@ TU SITUACIÓN ACTUAL:
 - Forma física: ${player.forma}/100
 - Moral/ánimo: ${player.moral}/100
 - Relación entrenador: ${player.rel_entrenador}/100
+
+PERSONAJES FIJOS (si mencionas a alguien de tu entorno, usa estos nombres y apellidos exactos):
+${describeCast(player)}
 
 ÚLTIMOS EVENTOS (no repitas tema ni premisa; si encaja, dale continuidad):
 ${historyText}
@@ -2172,6 +2176,9 @@ TU SITUACIÓN:
 - Media: ${player.media}/99, Forma: ${player.forma}/100, Moral: ${player.moral}/100
 - Partidos jugados como profesional hasta ahora (SIN contar este): ${player.stats_matches_played ?? 0}
 ${buildDecisionInstruction(decisionRaw)}
+
+PERSONAJES FIJOS (si mencionas a alguien de tu entorno, usa estos nombres y apellidos exactos):
+${describeCast(player)}
 
 REGLAS CRÍTICAS:
 ${COMMON_RULES}

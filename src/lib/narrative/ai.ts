@@ -11,6 +11,7 @@ import {
   generateSecondaryCharacterName,
 } from "@/lib/narrative/secondary-characters";
 import { NarrativeContent } from "@/lib/narrative/narrative-content";
+import { describeCast } from "@/lib/narrative/npcs";
 
 const MODEL = "claude-sonnet-5";
 
@@ -341,6 +342,7 @@ export const COMMON_RULES = `- Escribe en castellano de España (tú, nunca vos/
 - Las opciones deben ser entre 2 y 4 — varía la cantidad de una escena a otra, no pongas siempre el mismo número. Cada una con una etiqueta de acción corta y un subtítulo que adelante la consecuencia (ej. "+Vestuario", "Jugada de riesgo").
 - Las consecuencias numéricas deben ser sutiles para stats/relaciones (entre -10 y +10). El patrimonio puede moverse más si la escena lo justifica (ej. una prima de fichaje, un contrato nuevo).
 - Cualquier persona famosa que aparezca (cantante, influencer, otro futbolista) debe ser CLARAMENTE FICTICIA — nunca un nombre real.
+- PERSONAJES: cualquier persona con nombre propio que aparezca (compañero, rival, periodista, familiar, empresario...) lleva SIEMPRE nombre y apellidos, nunca solo el nombre de pila ni un genérico ("el míster", "un compañero") cuando la escena gira en torno a esa persona. Los del reparto fijo usan exactamente su nombre; los nuevos se inventan una sola vez y se mantienen. Nombres españoles creíbles, sin nombres de futbolistas reales.
 - TONO Y CHICHA (obligatorio): cada escena tiene que traer UN detalle concreto que se recuerde — un nombre propio inventado, una frase textual entre comillas, un objeto o situación absurda pero creíble. Prohibido relleno genérico tipo "el ambiente está tenso", "sientes una mezcla de emociones" o "todo el mundo te mira". Humor de vestuario español (picaresco, socarrón, irónico) mezclado con emoción real: que la misma escena pueda hacer sonreír y, si toca, un nudo en la garganta. Los dilemas tienen que costar algo de verdad. Piensa en lo que de verdad le pasa a un futbolista (mercado, representante, míster, familia, prensa, amigos de siempre), no en una novela.
 - PROHIBIDO ABSOLUTO inventar un partido: ni su resultado, ni el marcador, ni la ronda de un torneo (ej. "cuartos de Copa", "semifinal"), ni si el equipo sigue vivo o eliminado en una competición. El calendario real de partidos (Liga, Copa, Europa) y sus resultados los decide EXCLUSIVAMENTE otro sistema, ajeno a esta escena — si la escena necesita referirse a un partido pasado o futuro, hazlo de forma vaga y sin datos concretos ("el partido del fin de semana", "la próxima eliminatoria"), nunca inventando un rival, un resultado o el nombre de una ronda concretos.`;
 
@@ -564,6 +566,9 @@ ${europeanCompetitionNote}
 SU VIDA PERSONAL (ya existe — úsala):
 ${describePersonalLife(player.flags)}
 
+PERSONAJES FIJOS DE SU ENTORNO (nombres y apellidos EXACTOS: si la escena necesita a uno de ellos, usa este nombre tal cual y no inventes otro; no hace falta que salgan todos):
+${describeCast(player)}
+
 ÚLTIMOS EVENTOS (no repitas estos temas):
 ${historyText}
 ${buildLastFreeTextNote(history)}
@@ -707,6 +712,9 @@ JUGADOR:
 SU VIDA PERSONAL HASTA AHORA (esto ya pasó de verdad en su historia — no lo ignores ni inventes uno nuevo si ya existe):
 ${describePersonalLife(player.flags)}
 
+PERSONAJES FIJOS DE SU ENTORNO (nombres y apellidos EXACTOS: si la escena necesita a uno de ellos, usa este nombre tal cual y no inventes otro; no hace falta que salgan todos):
+${describeCast(player)}
+
 ÚLTIMOS EVENTOS DE SU CARRERA (no repitas el tema ni la premisa):
 ${historyText}
 
@@ -791,6 +799,9 @@ JUGADOR:
 
 SU VIDA PERSONAL HASTA AHORA:
 ${describePersonalLife(player.flags)}
+
+PERSONAJES FIJOS DE SU ENTORNO (nombres y apellidos EXACTOS: si la escena necesita a uno de ellos, usa este nombre tal cual y no inventes otro; no hace falta que salgan todos):
+${describeCast(player)}
 
 REGLAS:
 ${COMMON_RULES}
@@ -1245,6 +1256,9 @@ JUGADOR:
 
 SU VIDA PERSONAL HASTA AHORA:
 ${describePersonalLife(player.flags)}
+
+PERSONAJES FIJOS DE SU ENTORNO (nombres y apellidos EXACTOS: si la escena necesita a uno de ellos, usa este nombre tal cual y no inventes otro; no hace falta que salgan todos):
+${describeCast(player)}
 
 ÚLTIMOS EVENTOS DE SU CARRERA:
 ${historyText}

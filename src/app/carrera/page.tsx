@@ -32,6 +32,7 @@ import { EventScene } from "@/components/EventScene";
 import { MatchScene } from "@/components/MatchScene";
 import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
 import { resolveEvent } from "./actions";
+import { personalizeEvent } from "@/lib/narrative/npcs";
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   const pct = Math.max(0, Math.min(100, value));
@@ -282,6 +283,9 @@ export default async function CarreraPage() {
       event = (currentPlayer?.pending_event as typeof event) ?? event;
     }
   }
+
+  // Personajes con nombre y apellidos (el míster, el capitán, tu madre...): ver npcs.ts.
+  if (event) event = personalizeEvent(event, player);
 
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
 

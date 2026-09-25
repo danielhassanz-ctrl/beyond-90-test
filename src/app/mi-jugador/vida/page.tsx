@@ -73,6 +73,21 @@ export default async function VidaPage() {
             name: getNpcName(player, "fisio"),
             detail: "Cuida de ti cada semana, gane o pierda el equipo.",
           },
+          {
+            role: "director_deportivo" as const,
+            name: getNpcName(player, "director_deportivo"),
+            detail: "Manda en los fichajes y en las renovaciones.",
+          },
+          {
+            role: "presidente" as const,
+            name: getNpcName(player, "presidente"),
+            detail: "Firma los contratos y da la cara ante la afición.",
+          },
+          {
+            role: "utillero" as const,
+            name: getNpcName(player, "utillero"),
+            detail: "Lo ha visto todo en este club, y no cuenta ni la mitad.",
+          },
         ]
       : []),
     {
@@ -80,6 +95,19 @@ export default async function VidaPage() {
       name: getNpcName(player, "prensa"),
       detail: hasClub ? "Sigue tu carrera de cerca para su medio." : "Vigila a los agentes libres con proyección.",
     },
+    { role: "madre" as const, name: getNpcName(player, "madre"), detail: "Te llama los domingos, tengas o no noticias." },
+    { role: "padre" as const, name: getNpcName(player, "padre"), detail: "Opina de fútbol más de lo que debería." },
+    { role: "hermano" as const, name: getNpcName(player, "hermano"), detail: "Quiere ser como tú (y ganarte a la consola)." },
+    { role: "amigo" as const, name: getNpcName(player, "amigo"), detail: "El de siempre: te conoció antes de ser futbolista." },
+    ...(typeof player.flags?.pareja === "string" && player.flags.pareja
+      ? [
+          {
+            role: "pareja" as const,
+            name: player.flags.pareja === "Lucía" ? getNpcName(player, "pareja") : (player.flags.pareja as string),
+            detail: "Lo que hay fuera del campo cuando el campo se acaba.",
+          },
+        ]
+      : []),
     ...(player.agent_name
       ? [
           {

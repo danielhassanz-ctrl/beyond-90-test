@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { applyConsequences, nextWeekGap, resolveOption, maybeAddFreeText } from "@/lib/narrative/engine";
 import { tickInjury } from "@/lib/narrative/career-dynamics";
 import { generatePlayerImage } from "@/lib/images/replicate";
+import { personalizeEvent } from "@/lib/narrative/npcs";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
 import { generateFromTemplate, saveAsTemplateIfMissing } from "@/lib/images/templates";
@@ -37,7 +38,10 @@ export async function resolveEvent(formData: FormData) {
   // El evento vivo se lee siempre de lo que quedó guardado en el servidor
   // (nunca de lo que mande el formulario), así ninguna consecuencia puede
   // falsearse editando el HTML del lado del cliente.
-  const event = player.pending_event?.id === eventId ? player.pending_event : null;
+  const storedEvent = player.pending_event?.id === eventId ? player.pending_event : null;
+  // Mismo personalizado que al mostrarlo (npcs.ts): el texto de resultado y el historial
+  // guardan también los nombres y apellidos de los personajes.
+  const event = storedEvent ? personalizeEvent(storedEvent, player) : null;
   const option = event?.options.find((o) => o.id === optionId);
 
   if (!event || !option) {
