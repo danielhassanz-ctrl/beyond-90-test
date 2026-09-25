@@ -2412,7 +2412,15 @@ export async function pickNextEventDynamic(
   // Verificar si el partido programado es ESTA semana — tiene que
   // comprobarse ANTES que "la próxima semana", o el partido nunca llega
   // a jugarse (el motor solo generaba la víspera una y otra vez).
-  const matchThisWeek = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club, seasonProgress);
+  // Los amistosos de pretemporada ya no generan turnos: cada partido
+  // consume DOS turnos (jugada decisiva + crónica) y, con los amistosos,
+  // más de la mitad de los turnos de una carrera eran partidos (medido
+  // con un simulador del motor real) — justo la queja de "solo hay
+  // partidos, apenas vida fuera del campo". Esas semanas quedan libres
+  // para vida, mercado y vestuario, y se ahorra una llamada de IA por
+  // amistoso.
+  const scheduledMatch = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club, seasonProgress);
+  const matchThisWeek = scheduledMatch && scheduledMatch.competition !== "amistoso" ? scheduledMatch : null;
   if (matchThisWeek) {
     // Antes el partido se resolvía entero de golpe (marcador ya decidido)
     // y el jugador solo podía reaccionar DESPUÉS — nunca decidir nada
@@ -2422,7 +2430,14 @@ export async function pickNextEventDynamic(
     const decisionFlagKey = `match_decision_${matchThisWeek.week}`;
     const decisionOutcome = playerWithDynamics.flags?.[decisionFlagKey] as string | undefined;
 
-    if (!decisionOutcome) {
+    // Las jornadas de rutina (nada en juego) solo llevan jugada decisiva en
+    // la mitad de los casos — decidido por (jugador, semana) para que sea
+    // estable entre turnos; los partidos importantes y decisivos siempre.
+    let routineParity = 0;
+    for (const ch of `${playerWithDynamics.id}:${matchThisWeek.week}`) routineParity = (routineParity * 31 + ch.charCodeAt(0)) % 1000003;
+    const skipDecisiveMoment = matchThisWeek.stakes === "rutina" && routineParity % 2 === 1;
+
+    if (!decisionOutcome && !skipDecisiveMoment) {
       // De vez en cuando, en vez del "momento decisivo" genérico según
       // posición, se vive un momento especial ya escrito a mano (penalti
       // en el último minuto, roja injusta, noche de hat-trick, revancha
@@ -2487,7 +2502,7 @@ export async function pickNextEventDynamic(
   if (isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club, seasonProgress)) {
     const nextMatch = getNextMatch(playerWithDynamics.week, playerWithDynamics.club, seasonProgress);
     const prematchFlagKey = `prematch_shown_${nextMatch?.week}`;
-    if (nextMatch && !player.flags?.[prematchFlagKey]) {
+    if (nextMatch && nextMatch.competition !== "amistoso" && !player.flags?.[prematchFlagKey]) {
       console.log(
         `[pickNextEventDynamic] Next week is match week (${nextMatch.competition}): ${nextMatch.description}. Generating pre-match narrative.`
       );

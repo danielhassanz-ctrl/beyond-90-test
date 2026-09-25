@@ -45,8 +45,8 @@ export function shouldTriggerGolChilena(player: Player): boolean {
 
   const { lastWeek } = getTracker(player);
   const weeksSinceLast = player.week - lastWeek;
-  // Cooldown mínimo de 12 semanas: no se amontonan aunque la tirada salga
-  if (lastWeek > 0 && weeksSinceLast < 12) return false;
+  // Cooldown mínimo de 30 semanas (antes 12: un simulador de carreras de estrella daba hasta 6 goles de chilena con portada en una sola carrera, y cada uno genera foto): no se amontonan aunque la tirada salga
+  if (lastWeek > 0 && weeksSinceLast < 30) return false;
 
   // De ~1%/turno para alguien recién llegado al umbral, hasta ~8%/turno
   // para una superestrella (media 99, fama 100).
