@@ -346,6 +346,7 @@ const LEGACY_LIFE_EVENT_IDS = new Set([
   "ent-bronca-tarde", "ent-elogio-publico", "ent-cambio-posicion", "ent-grada-sin-avisar",
   "ent-concentracion-hotel", "ves-cumple-sorpresa", "ves-masajista-cotilla", "ves-companero-cobra-mas",
   "ves-himno-equipo", "vid-entradas-primos", "vid-ex-escribe", "esp-utillero-leyenda",
+  "vid-cunado-negocio", "vid-cunado-tactico", "vid-cunado-agente",
 ]);
 /** Escenas que solo tienen sentido al empezar (colegio, novato, primer contrato, dorsal). */
 const LEGACY_EARLY_ONLY_IDS = new Set([

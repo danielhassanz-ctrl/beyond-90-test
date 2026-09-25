@@ -5962,4 +5962,46 @@ export const EVENTS: GameEvent[] = [
     allowFreeText: true,
     freeTextPrompt: "El utillero espera. ¿Qué le dices?",
   },
+
+  // ── Tu cuñado ──────────────────────────────────────────────────────────
+  {
+    id: "vid-cunado-negocio",
+    category: "vida",
+    title: "Tu cuñado tiene un negocio infalible",
+    description: "Te lo suelta en plena comida familiar, con la copa en alto: un local de padel, un bar de smash burgers y una app, todo a la vez. \"Solo necesito un socio con nombre, y tú lo tienes\". Tu cuñado sonríe demasiado.",
+    minWeek: 25,
+    options: [
+      { id: "a", label: "Invertir un poco por no discutir en Navidad", subtitle: "Paz familiar, cartera en riesgo", consequences: {}, resolve: { baseChance: 0.25, statModifier: "reputacion", success: { text: "Contra todo pronóstico, el bar de smash burgers funciona y ya hay cola los sábados. Tu cuñado no se calla en tres semanas.", consequences: { patrimonio: 6000, moral: 4, fama: 1 } }, fail: { text: "Se cierra el local a los dos meses y el dinero se esfuma. Tu cuñado ya habla de \"un pequeño reajuste\".", consequences: { patrimonio: -4000, moral: -3 } } } },
+      { id: "b", label: "Pedirle el plan de negocio por escrito", subtitle: "Cortesía con trampa", consequences: { moral: 2, rel_representante: 1 } },
+      { id: "c", label: "Decirle que tu representante lo lleva todo", subtitle: "Escudo de agente", consequences: { rel_representante: 1, moral: 1 } },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "Tu cuñado espera tu respuesta con la copa en alto. ¿Qué le dices?",
+  },
+  {
+    id: "vid-cunado-tactico",
+    category: "vida",
+    title: "Tu cuñado sabe más de fútbol que el míster",
+    description: "En la sobremesa te explica, con servilletas y un salero como pivote, por qué tu entrenador no sabe alinear y cómo lo haría él: \"cuatro delanteros y a correr\". Nadie le ha pedido opinión.",
+    minWeek: 15,
+    options: [
+      { id: "a", label: "Darle la razón y pedir el postre", subtitle: "Paz ante todo", consequences: { moral: 3 } },
+      { id: "b", label: "Retarle a jugar contigo un uno contra uno", subtitle: "Que lo demuestre", consequences: {}, resolve: { baseChance: 0.75, statModifier: "forma", success: { text: "Le ganas 5-0 delante de toda la familia. Desde entonces solo comenta las jugadas en voz baja.", consequences: { moral: 5, fama: 1 } }, fail: { text: "Se lesiona de puro esfuerzo y tú te pasas la tarde llevándole hielo. Sales del apuro con la familia enfadada.", consequences: { moral: -2, rel_aficion: 0 } } } },
+      { id: "c", label: "Grabarlo y subirlo: 'mi cuñado, el entrenador'", subtitle: "Contenido gratis", consequences: { fama: 4, moral: 2 } },
+    ],
+  },
+  {
+    id: "vid-cunado-agente",
+    category: "representante",
+    title: "Tu cuñado se ha hecho pasar por tu agente",
+    description: "Te enteras por un periodista: tu cuñado lleva semanas escribiendo a clubes de tres países presentándose como \"tu representante\". Ha conseguido una reunión con un club de segunda de Rumanía.",
+    minWeek: 30,
+    options: [
+      { id: "a", label: "Llamarle esa misma noche y cortarlo de raíz", subtitle: "Con cariño, pero sin margen", consequences: { rel_representante: 3, moral: 1 } },
+      { id: "b", label: "Reírte y contarlo en redes", subtitle: "Momento viral", consequences: { fama: 4, moral: 2, rel_representante: -2 } },
+      { id: "c", label: "Ir a la reunión de Rumanía por curiosidad", subtitle: "Ya que está pagado el billete", consequences: {}, resolve: { baseChance: 0.3, statModifier: "fama", success: { text: "El presidente rumano resulta ser un hincha del fútbol español que te enseña su colección de camisetas. Nada que firmar, muchas anécdotas.", consequences: { fama: 3, moral: 4 } }, fail: { text: "El club no existe como lo describió tu cuñado y vuelves con el billete pagado y ganas de discutir.", consequences: { moral: -3, patrimonio: -800 } } } },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "Tu cuñado te llama para 'explicarlo todo'. ¿Qué le dices?",
+  },
 ];

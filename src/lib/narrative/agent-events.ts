@@ -1,6 +1,7 @@
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
+import { randomPersonName } from "@/lib/narrative/npcs";
 
 /**
  * Eventos donde el AGENTE/REPRESENTANTE es un personaje activo y conversacional.
@@ -184,7 +185,7 @@ export function buildAgentDialogueEvent(
             id: "2",
             label: "Cambiar de representante",
             subtitle: "Ir con la agencia grande",
-            consequences: { rel_representante: -10, fama: 3, agent_name: "Nueva agencia" },
+            consequences: { rel_representante: -10, fama: 3, agent_name: randomPersonName() },
           },
         ],
         isMilestone: false,

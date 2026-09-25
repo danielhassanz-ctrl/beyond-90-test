@@ -102,7 +102,7 @@ export default async function CarreraPage() {
     // IA escribe el texto (varía cada partida) pero el desglose de
     // nivel/desarrollo/competencia/minutos/riesgo sale siempre, no solo
     // cuando la IA falla y se cae al evento de reserva.
-    const offers = pickStartingClubOffers();
+    const offers = pickStartingClubOffers(player.agent_name);
     const aiEvent = await generateClubOffersEvent(agentName, offers);
     event = aiEvent ? attachClubOfferDetails(aiEvent, offers) : buildInicioFichajeEvent(agentName, offers);
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);

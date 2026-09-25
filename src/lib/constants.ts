@@ -177,9 +177,50 @@ const GIANT_ACADEMY_OFFERS = [
  * de los tres sea la cantera de un grande — no garantizado, para que siga
  * siendo una sorpresa cuando toca.
  */
-export type ClubOffer = (typeof STARTING_CLUB_OFFERS)[number] | (typeof GIANT_ACADEMY_OFFERS)[number];
+/**
+ * El agente alemán de la primera elección ("tengo contactos en Schalke y
+ * Borussia Dortmund") prometía la Bundesliga y después la pantalla de
+ * primeras ofertas salía SIEMPRE con tres clubes españoles — reportado
+ * jugando ("me dijo que me llevaría al Dortmund y luego me salen tres
+ * equipos españoles"). Si elegiste a ese agente, las ofertas son alemanas.
+ */
+const GERMAN_ACADEMY_OFFERS = [
+  {
+    club: "Borussia Dortmund",
+    pitch: "La cantera que más talento joven exporta de Europa: apuestan por chavales de 16 años sin miedo.",
+    nivel: 5,
+    desarrollo: "Una de las mejores canteras de Europa para dar el salto al primer equipo.",
+    competencia: "Alta. Talento de media Europa peleando por el mismo hueco.",
+    minutos: "Progresivos: juegas en el filial y el primer equipo llama si rindes.",
+    riesgo: "Cambiar de país a los 16: idioma, soledad y mucha exigencia.",
+  },
+  {
+    club: "FC Schalke 04",
+    pitch: "Tradición de sacar canteranos y una afición que te adopta si te dejas la piel.",
+    nivel: 4,
+    desarrollo: "Cantera con mucha historia y salida real al primer equipo.",
+    competencia: "Media-alta. Se juega por mérito, no por nombre.",
+    minutos: "Buenos en el filial, con opciones en el primer equipo.",
+    riesgo: "El club vive una etapa irregular; mucha presión para rendir rápido.",
+  },
+  {
+    club: "Bayer Leverkusen",
+    pitch: "Proyecto joven y ordenado, con fama de confiar en el talento que llega desde fuera.",
+    nivel: 4,
+    desarrollo: "Muy buena formación táctica y trabajo individual con cada jugador.",
+    competencia: "Media. Espacio para destacar si trabajas bien.",
+    minutos: "Progresivos, con cesiones cerca si hace falta rodaje.",
+    riesgo: "Adaptación a otro país y otra forma de entender el fútbol.",
+  },
+] as const;
 
-export function pickStartingClubOffers(): ClubOffer[] {
+export type ClubOffer =
+  | (typeof STARTING_CLUB_OFFERS)[number]
+  | (typeof GIANT_ACADEMY_OFFERS)[number]
+  | (typeof GERMAN_ACADEMY_OFFERS)[number];
+
+export function pickStartingClubOffers(agentName?: string | null): ClubOffer[] {
+  if (agentName === "Klaus Brandt") return [...GERMAN_ACADEMY_OFFERS];
   const shuffled = [...STARTING_CLUB_OFFERS].sort(() => Math.random() - 0.5);
   const picks: ClubOffer[] = shuffled.slice(0, 3);
 

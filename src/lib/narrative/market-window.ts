@@ -1,6 +1,7 @@
 import type { GameEvent, EventOption } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
+import { randomPersonName } from "@/lib/narrative/npcs";
 import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
 
 /**
@@ -409,7 +410,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
     Math.round((1500 + mediaNow * 90) / 100) * 100,
     Math.max(500, Math.round(((player.patrimonio ?? 0) * 0.25) / 100) * 100),
   );
-  const newAgent = pick(NEW_AGENT_NAMES);
+  const newAgent = randomPersonName();
 
   if (kind === "intermediario") {
     return {
@@ -903,7 +904,6 @@ export function buildDeadlineDayEvent(player: Player): GameEvent {
 }
 
 
-const NEW_AGENT_NAMES = ["Julián Ferrer", "Marta Olmedo", "Ramiro Sáez", "Elena Quintana", "Bruno Salcedo"];
 
 /**
  * El otro final posible de un rumor: que no haya nada. Con interés
@@ -923,7 +923,7 @@ function buildFizzleEvent(player: Player, source: string): GameEvent {
       Math.round((1500 + media * 90) / 100) * 100,
       Math.max(500, Math.round(((player.patrimonio ?? 0) * 0.25) / 100) * 100),
     );
-    const newAgent = pick(NEW_AGENT_NAMES);
+    const newAgent = randomPersonName();
     return {
       id: `oferta-engano-${Date.now()}`,
       category: "representante",
