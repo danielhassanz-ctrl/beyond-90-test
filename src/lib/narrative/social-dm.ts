@@ -54,6 +54,8 @@ interface DmCtx {
   first: string;
   mate: string;
   club: string;
+  /** Nombre de la red donde llega el mensaje. */
+  net: string;
 }
 
 interface DmScenario {
@@ -71,7 +73,7 @@ const SCENARIOS: DmScenario[] = [
     key: "cafe",
     title: "Un mensaje que no esperabas",
     flirty: true,
-    intro: ({ name }) => `Vibra el móvil en plena concentración. ${name}, una chica que no conoces de nada, te ha escrito por Instagram.`,
+    intro: ({ name, net }) => `Vibra el móvil en plena concentración. ${name}, una chica que no conoces de nada, te ha escrito por ${net}.`,
     message: () => "Oye, no sé si me vas a leer jaja. Te vi el sábado en el estadio y desde entonces no puedo dejar de pensar en ese control. ¿Un café cuando descanses?",
     options: [
       {
@@ -511,7 +513,9 @@ export function buildSocialDmEvent(player: Player): GameEvent {
   const name = getPersonName(player, `dm-girl-${week}-${scenario.key}`, "f");
   const first = name.split(" ")[0];
   const mate = getTeammateName(player, `dm-mate-${week}`);
-  const ctx: DmCtx = { name, first, mate, club: player.club };
+  const platform = (["instagram", "tiktok", "x"] as const)[Math.floor(Math.random() * 3)];
+  const net = { instagram: "Instagram", tiktok: "TikTok", x: "X" }[platform];
+  const ctx: DmCtx = { name, first, mate, club: player.club, net };
   const dmFlags = { dm_last_week: String(week), dm_last_key: scenario.key };
 
   return {
@@ -521,7 +525,7 @@ export function buildSocialDmEvent(player: Player): GameEvent {
     description: scenario.intro(ctx),
     isMilestone: true,
     milestoneType: "dm_instagram",
-    dm: { handle: handleFor(name, week), name, message: scenario.message(ctx) },
+    dm: { handle: handleFor(name, week), name, message: scenario.message(ctx), platform },
     options: scenario.options.map((o, i) => ({
       id: String(i),
       label: o.label,
