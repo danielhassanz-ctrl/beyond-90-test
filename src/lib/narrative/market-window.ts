@@ -82,16 +82,17 @@ function pickInterestedClub(player: Player): string {
   return pick(filtered.length ? filtered : POOL_MID);
 }
 
-const interestFlags = (club: string, week: number) => ({
+const interestFlags = (club: string, week: number, source: string = "prensa") => ({
   transfer_interest: club,
   transfer_interest_week: String(week),
+  transfer_interest_source: source,
 });
 
-type RumorKind = "interes" | "agente" | "competencia" | "bulo" | "capitan" | "clausula" | "familia" | "en_venta";
+type RumorKind = "interes" | "agente" | "competencia" | "bulo" | "capitan" | "clausula" | "familia" | "en_venta" | "intermediario" | "confundido" | "asador" | "hincha_rico" | "agente_doble" | "comision";
 
 function pickKind(player: Player): RumorKind {
   const last = String(player.flags?.market_last_kind ?? "");
-  const weighted: RumorKind[] = ["interes", "interes", "interes", "agente", "agente", "agente", "competencia", "bulo", "capitan", "clausula", "clausula", "familia", "en_venta", "en_venta"];
+  const weighted: RumorKind[] = ["interes", "interes", "interes", "agente", "agente", "agente", "competencia", "bulo", "capitan", "clausula", "clausula", "familia", "en_venta", "en_venta", "intermediario", "confundido", "asador", "hincha_rico", "agente_doble", "comision"];
   const options = weighted.filter((k) => k !== last);
   return pick(options);
 }
@@ -109,6 +110,8 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
   const position = (player.position ?? "jugador").toLowerCase();
   const id = `mercado-${w}-${Date.now()}`;
   const week = player.week;
+  // Si el interés nace de gestiones del representante, puede acabar siendo un montaje suyo.
+  const source = (["agente", "competencia", "familia", "en_venta"] as RumorKind[]).includes(kind) ? "agente" : "prensa";
 
   if (kind === "agente") {
     return {
@@ -129,7 +132,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
             statModifier: "reputacion",
             success: {
               text: `Suelta el nombre: ${art(club)}. Dice que han preguntado por tus condiciones. Ahora toca esperar.`,
-              consequences: { fama: 2, moral: 3, flags: interestFlags(club, week) },
+              consequences: { fama: 2, moral: 3, flags: interestFlags(club, week, source) },
             },
             fail: {
               text: `Se hace el misterioso, alarga la conversación y al final no suelta nada. Puro humo de agente.`,
@@ -153,7 +156,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
             statModifier: "fama",
             success: {
               text: `${outlet} lo publica en portada. Tu nombre suena en todas partes y ${art(club)} se da por aludido.`,
-              consequences: { fama: 5, rel_representante: 2, flags: interestFlags(club, week) },
+              consequences: { fama: 5, rel_representante: 2, flags: interestFlags(club, week, source) },
             },
             fail: {
               text: "Se descontrola: te acusan de forzar la salida. La grada te mira raro en el siguiente entrenamiento.",
@@ -202,7 +205,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
             statModifier: "fama",
             success: {
               text: `${agent} ya tenía un contacto: ${art(club)} escucharía una oferta por ti.`,
-              consequences: { rel_representante: 3, flags: interestFlags(club, week) },
+              consequences: { rel_representante: 3, flags: interestFlags(club, week, source) },
             },
             fail: { text: "Nadie se mueve por ti este mercado. Toca quedarse y competir.", consequences: { moral: -2 } },
           },
@@ -242,7 +245,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
             statModifier: "fama",
             success: {
               text: `Tu silencio hace ruido y ${art(club)} pregunta de verdad por ti. El bulo se convierte en algo.`,
-              consequences: { fama: 4, flags: interestFlags(club, week) },
+              consequences: { fama: 4, flags: interestFlags(club, week, source) },
             },
             fail: { text: "Nadie te toma en serio y el bulo muere solo, pero la grada duda de ti.", consequences: { rel_aficion: -4 } },
           },
@@ -314,7 +317,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           id: "dejar-que-pague",
           label: "Que pague quien te quiera: tú te dejas querer",
           subtitle: "Poner el foco en la salida",
-          consequences: { fama: 3, rel_aficion: -3, flags: interestFlags(club, week) },
+          consequences: { fama: 3, rel_aficion: -3, flags: interestFlags(club, week, source) },
         },
         {
           id: "sin-comentar",
@@ -341,7 +344,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           id: "escuchar",
           label: `Escuchar y decirle a ${agent} que se mueva`,
           subtitle: "Abrir la puerta con la familia detrás",
-          consequences: { moral: 2, rel_representante: 2, flags: interestFlags(club, week) },
+          consequences: { moral: 2, rel_representante: 2, flags: interestFlags(club, week, source) },
         },
         {
           id: "aqui-feliz",
@@ -384,7 +387,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           id: "aprovechar",
           label: `Aprovechar para que ${agent} busque ofertas`,
           subtitle: "Si me venden, que sea a mi favor",
-          consequences: { rel_representante: 3, flags: interestFlags(club, week) },
+          consequences: { rel_representante: 3, flags: interestFlags(club, week, source) },
         },
         {
           id: "demostrar",
@@ -392,6 +395,197 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           subtitle: "Que hablen tus números",
           consequences: { forma: 3, moral: 1, rel_entrenador: 2 },
         },
+      ],
+    };
+  }
+
+  // ── Picaresca: situaciones raras, pintorescas y con truco ────────────
+  const mediaNow = player.media ?? 50;
+  const cost = Math.min(
+    Math.round((800 + mediaNow * 40) / 100) * 100,
+    Math.max(300, Math.round(((player.patrimonio ?? 0) * 0.2) / 100) * 100),
+  );
+  const commission = Math.min(
+    Math.round((1500 + mediaNow * 90) / 100) * 100,
+    Math.max(500, Math.round(((player.patrimonio ?? 0) * 0.25) / 100) * 100),
+  );
+  const newAgent = pick(NEW_AGENT_NAMES);
+
+  if (kind === "intermediario") {
+    return {
+      id,
+      category: "representante",
+      title: "Un tipo de gabardina te ofrece un club",
+      description: `Un desconocido que se presenta como "intermediario" te para a la salida del entrenamiento y jura que puede colocarte en ${art(club)} en ${label}. Solo pide un adelanto "para gastos" y que no se lo cuentes a nadie. Huele raro, pero habla muy bien.`,
+      allowFreeText: true,
+      freeTextPrompt: "El tipo te tiende una tarjeta sin nombre. ¿Qué le dices?",
+      options: [
+        {
+          id: "pagar",
+          label: `Pagarle el adelanto (${cost.toLocaleString("es")} €)`,
+          subtitle: "Fiarte de un desconocido",
+          consequences: {},
+          resolve: {
+            baseChance: 0.2,
+            statModifier: "reputacion",
+            success: { text: `Milagro: el tipo sí tenía contactos y ${art(club)} pregunta de verdad por ti.`, consequences: { fama: 2, moral: 3, flags: interestFlags(club, week, "prensa") } },
+            fail: { text: "Desaparece con el dinero y su número da 'apagado o fuera de cobertura'. Te toca contarlo en el vestuario, donde no paran de reír.", consequences: { patrimonio: -cost, moral: -4, rel_vestuario: 1 } },
+          },
+        },
+        {
+          id: "al-agente",
+          label: `Pasarle el marrón a ${agent}`,
+          subtitle: "Que lo compruebe él",
+          consequences: {},
+          resolve: {
+            baseChance: 0.5,
+            statModifier: "reputacion",
+            success: { text: "Tu agente lo conoce de sobra: es un pelagatos de la zona. Te lo quita de encima y te agradece el aviso.", consequences: { rel_representante: 3, moral: 2 } },
+            fail: { text: "A tu agente le fastidia que dudes de su trabajo y se lo toma como una ofensa.", consequences: { rel_representante: -3 } },
+          },
+        },
+        {
+          id: "grabar",
+          label: "Grabarlo a escondidas y subirlo a redes",
+          subtitle: "Contenido gratis",
+          consequences: { fama: 5, moral: 2, rel_representante: -1 },
+        },
+        { id: "ignorar", label: "Ignorarlo y seguir andando", subtitle: "Cabeza fría", consequences: { moral: 1 } },
+      ],
+    };
+  }
+
+  if (kind === "confundido") {
+    return {
+      id,
+      category: "prensa",
+      title: "Te quieren fichar... por error",
+      description: `${cap(art(club))} llama a tu club para cerrar tu fichaje. Solo hay un problema: quieren a otro jugador que se apellida igual que tú. Tu club se parte de risa; ${agent}, no tanto.`,
+      allowFreeText: true,
+      freeTextPrompt: "Un compañero te llama 'el jugador equivocado'. ¿Qué le respondes?",
+      options: [
+        {
+          id: "aprovechar",
+          label: "Aprovechar el malentendido para negociar",
+          subtitle: "Ya que llaman...",
+          consequences: {},
+          resolve: {
+            baseChance: 0.35,
+            statModifier: "fama",
+            success: { text: `Al otro lado dicen que, ya que estás, te echan un vistazo. Empieza un interés de verdad.`, consequences: { fama: 3, moral: 3, flags: interestFlags(club, week, "prensa") } },
+            fail: { text: "Se dan cuenta del error a mitad de la llamada y cuelgan. Ridículo histórico, pero de los que se recuerdan con cariño.", consequences: { fama: 2, moral: -1 } },
+          },
+        },
+        { id: "reirte", label: "Reírte y subirlo a redes", subtitle: "Momento viral", consequences: { fama: 4, moral: 3 } },
+        { id: "agente", label: `Pedirle a ${agent} que se entere de todo antes que nadie`, subtitle: "Que no vuelva a pasar", consequences: { rel_representante: -3, moral: 1 } },
+      ],
+    };
+  }
+
+  if (kind === "asador") {
+    return {
+      id,
+      category: "representante",
+      title: "El presidente que ficha en un asador",
+      description: `El presidente ${de(club)} te cita en un asador de carretera. Te pone delante un cochinillo, un contrato escrito en una servilleta y una cifra que no cuadra con nada. "Aquí los fichajes se cierran comiendo", te dice con la boca llena.`,
+      allowFreeText: true,
+      freeTextPrompt: "El presidente levanta la copa. ¿Qué le dices?",
+      options: [
+        {
+          id: "servilleta",
+          label: "Firmar la servilleta",
+          subtitle: "Palabra de presidente",
+          consequences: {},
+          resolve: {
+            baseChance: 0.3,
+            statModifier: "fama",
+            success: { text: "Sorprendentemente, la servilleta va en serio: mañana te llaman con el papel de verdad.", consequences: { fama: 2, moral: 3, flags: interestFlags(club, week, "prensa") } },
+            fail: { text: "A la mañana siguiente el presidente ni se acuerda de la cena, y la servilleta no vale ni para limpiarte las manos.", consequences: { moral: -2, forma: -1 } },
+          },
+        },
+        { id: "postre", label: "Seguirle la corriente y pedir el postre", subtitle: "Cena gratis, sin compromiso", consequences: { moral: 3, forma: -2, fama: 1 } },
+        { id: "al-agente", label: `Decirle que hable con ${agent}`, subtitle: "Profesional hasta con el cochinillo", consequences: { rel_representante: 2, moral: 1 } },
+      ],
+    };
+  }
+
+  if (kind === "hincha_rico") {
+    return {
+      id,
+      category: "representante",
+      title: "Un hincha con dinero quiere pagar tu cláusula",
+      description: `Un empresario que jura ser hincha ${de(club)} te escribe: si nadie más lo hace, pagará tu cláusula "de su bolsillo" para llevarte a su equipo del alma. Tu representante dice que lo mirará "con los números".`,
+      allowFreeText: true,
+      freeTextPrompt: "El empresario te manda un audio de cuatro minutos. ¿Qué le contestas?",
+      options: [
+        {
+          id: "en-serio",
+          label: "Tomártelo en serio y pedir pruebas",
+          subtitle: "Que enseñe el dinero",
+          consequences: {},
+          resolve: {
+            baseChance: 0.4,
+            statModifier: "fama",
+            success: { text: `Resulta que sí tiene contactos y mueve hilos: ${art(club)} lo escucha de verdad.`, consequences: { fama: 3, moral: 2, flags: interestFlags(club, week, "prensa") } },
+            fail: { text: "El empresario tenía menos dinero que ideas: lo suyo eran 3.000 euros por Bizum y muchas ganas de salir en la tele.", consequences: { fama: -1, moral: -2 } },
+          },
+        },
+        { id: "humor", label: "Publicarlo con humor en redes", subtitle: "Que hable la gente", consequences: { fama: 3, moral: 2 } },
+        { id: "pasar", label: "Dejarlo en visto", subtitle: "Sin ruido", consequences: { moral: 1 } },
+      ],
+    };
+  }
+
+  if (kind === "agente_doble") {
+    return {
+      id,
+      category: "representante",
+      title: "Tu agente también lleva a tu competencia",
+      description: `Te enteras por casualidad de que ${agent} también representa a tu rival directo por el puesto y de que, cuando llegue una buena oferta, "ya veremos a cuál de los dos va". Nadie te lo había contado.`,
+      allowFreeText: true,
+      freeTextPrompt: `Tienes a ${agent} al teléfono. ¿Por dónde empiezas?`,
+      options: [
+        {
+          id: "explicaciones",
+          label: "Pedir explicaciones ahora mismo",
+          subtitle: "Sin rodeos",
+          consequences: {},
+          resolve: {
+            baseChance: 0.5,
+            statModifier: "reputacion",
+            success: { text: "Se disculpa, te pone por delante y te promete exclusividad. Por primera vez en meses parece sincero.", consequences: { rel_representante: 5, moral: 3 } },
+            fail: { text: "Lo niega todo con una sonrisa y te hace sentir un paranoico. Cuelgas peor de lo que empezaste.", consequences: { rel_representante: -4, moral: -3 } },
+          },
+        },
+        { id: "cambiar", label: `Cambiar de representante: ${newAgent}`, subtitle: "Romper y empezar de cero", consequences: { agent_name: newAgent, rel_representante: 10, moral: 2 } },
+        { id: "vigilar", label: "No decir nada y vigilarlo de cerca", subtitle: "Ojos abiertos", consequences: { rel_representante: -2, moral: -1 } },
+      ],
+    };
+  }
+
+  if (kind === "comision") {
+    return {
+      id,
+      category: "representante",
+      title: "Un cargo que no recuerdas haber pedido",
+      description: `En tu extracto aparece un cargo de ${commission.toLocaleString("es")} € de ${agent} por "gestiones de mercado". No recuerdas haberle encargado nada. Cuando se lo preguntas, habla de "esfuerzos que no se ven".`,
+      allowFreeText: true,
+      freeTextPrompt: `${agent} te habla de "esfuerzos que no se ven". ¿Qué le dices?`,
+      options: [
+        {
+          id: "factura",
+          label: "Exigir factura y desglose",
+          subtitle: "Quien no debe, no teme",
+          consequences: {},
+          resolve: {
+            baseChance: 0.5,
+            statModifier: "reputacion",
+            success: { text: "No tiene factura que enseñar y devuelve el dinero de golpe, con mala cara.", consequences: { rel_representante: -3, moral: 3 } },
+            fail: { text: "Te suelta un papel ilegible con un sello borroso. No hay manera de reclamar nada.", consequences: { patrimonio: -commission, rel_representante: -6, moral: -4 } },
+          },
+        },
+        { id: "cambiar", label: `Despedirle y fichar a ${newAgent}`, subtitle: "Aquí se acaba la confianza", consequences: { patrimonio: -commission, agent_name: newAgent, rel_representante: 10, moral: 2 } },
+        { id: "dejar", label: "Dejarlo pasar por esta vez", subtitle: "Elegir tus batallas", consequences: { patrimonio: -commission, rel_representante: -2, moral: -3 } },
       ],
     };
   }
@@ -415,7 +609,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           statModifier: "reputacion",
           success: {
             text: `Hay contacto real: ${art(club)} ha preguntado por tu situación y tus condiciones. Ahora hay que ver si dan el paso.`,
-            consequences: { fama: 2, moral: 3, flags: interestFlags(club, week) },
+            consequences: { fama: 2, moral: 3, flags: interestFlags(club, week, source) },
           },
           fail: { text: `${agent} se ríe: humo puro, ni una llamada. Alguien quería vender periódicos.`, consequences: { moral: -1 } },
         },
@@ -430,7 +624,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           statModifier: "fama",
           success: {
             text: `Tus palabras llegan a ${art(club)}, que se interesa de verdad. La afición local te mira con recelo.`,
-            consequences: { fama: 4, rel_aficion: -3, flags: interestFlags(club, week) },
+            consequences: { fama: 4, rel_aficion: -3, flags: interestFlags(club, week, source) },
           },
           fail: { text: "La afición se enfada y el rumor se apaga sin más.", consequences: { rel_aficion: -5, fama: 1 } },
         },
@@ -466,6 +660,16 @@ export function clearStaleTransferInterest(player: Player): void {
 
 export function buildTransferOfferEvent(player: Player): GameEvent {
   const club = String(player.flags?.transfer_interest);
+  // El rumor puede acabar en nada: un montaje del representante (si el
+  // interés vino por él) o un club que se echa atrás sin más.
+  const source = String(player.flags?.transfer_interest_source ?? "prensa");
+  const roll = Math.random();
+  if (source === "agente") {
+    if (roll < 0.3) return buildFizzleEvent(player, "agente");
+    if (roll < 0.4) return buildFizzleEvent(player, "otro");
+  } else if (roll < 0.15) {
+    return buildFizzleEvent(player, "otro");
+  }
   const agent = player.agent_name ?? "Tu representante";
   const raise = Math.round((8000 + (player.media ?? 50) * 300) / 500) * 500;
   const clear = { transfer_interest: "" };
@@ -694,6 +898,74 @@ export function buildDeadlineDayEvent(player: Player): GameEvent {
         subtitle: "Sin arrepentimientos",
         consequences: { rel_aficion: 6, moral: 1, flags: clear },
       },
+    ],
+  };
+}
+
+
+const NEW_AGENT_NAMES = ["Julián Ferrer", "Marta Olmedo", "Ramiro Sáez", "Elena Quintana", "Bruno Salcedo"];
+
+/**
+ * El otro final posible de un rumor: que no haya nada. Con interés
+ * generado a través del representante hay una probabilidad real de que
+ * el rumor fuera un montaje suyo (para cobrar unos "gastos de gestión" de
+ * un fichaje que nunca existió); en el resto, el club simplemente se echa
+ * atrás de la forma más pintoresca posible.
+ */
+function buildFizzleEvent(player: Player, source: string): GameEvent {
+  const club = String(player.flags?.transfer_interest);
+  const agent = player.agent_name ?? "Tu representante";
+  const media = player.media ?? 50;
+  const clear = { transfer_interest: "" };
+
+  if (source === "agente") {
+    const fee = Math.min(
+      Math.round((1500 + media * 90) / 100) * 100,
+      Math.max(500, Math.round(((player.patrimonio ?? 0) * 0.25) / 100) * 100),
+    );
+    const newAgent = pick(NEW_AGENT_NAMES);
+    return {
+      id: `oferta-engano-${Date.now()}`,
+      category: "representante",
+      title: "El fichaje que nunca existió",
+      description: `${agent} llega con la cara larga: "${cap(art(club))} se ha echado atrás. Cosas del mercado." Días después te enteras de que nunca hubo oferta y de que ya había cobrado ${fee.toLocaleString("es")} € de "gastos de gestión" a cuenta de ese traspaso.`,
+      allowFreeText: true,
+      freeTextPrompt: `${agent} te sonríe como si nada. ¿Qué le dices?`,
+      options: [
+        {
+          id: "plantar-cara",
+          label: "Plantarle cara y exigir el dinero",
+          subtitle: "Con pruebas en la mano",
+          consequences: {},
+          resolve: {
+            baseChance: 0.5,
+            statModifier: "reputacion",
+            success: { text: "Ante las pruebas se le acaba el teatro: devuelve hasta el último euro entre excusas y balbuceos.", consequences: { rel_representante: -5, moral: 4, flags: clear } },
+            fail: { text: "Lo niega todo, te acusa de desconfiar y no recuperas nada. Ni el dinero ni la confianza.", consequences: { patrimonio: -fee, rel_representante: -10, moral: -5, flags: clear } },
+          },
+        },
+        { id: "despedir", label: `Despedirle y fichar a ${newAgent}`, subtitle: "Aquí se acabó", consequences: { patrimonio: -fee, agent_name: newAgent, rel_representante: 10, moral: 2, flags: clear } },
+        { id: "callar", label: "Hacerte el tonto y seguir con él", subtitle: "Mal necesario", consequences: { patrimonio: -fee, rel_representante: 2, moral: -4, flags: clear } },
+      ],
+    };
+  }
+
+  const excuses = [
+    `${cap(art(club))} ha fichado a otro a última hora: "Le recomendó un primo del utillero y le salía más barato", te cuenta ${agent}.`,
+    `${cap(art(club))} se ha echado atrás porque su presidente ha decidido "reinvertir en el césped". Así, tal cual.`,
+    `Al final ${art(club)} ha cerrado a otro jugador tras una llamada de su suegra, según cuentan por los pasillos.`,
+  ];
+  return {
+    id: `oferta-humo-${Date.now()}`,
+    category: "representante",
+    title: "Se cae el fichaje",
+    description: pick(excuses),
+    allowFreeText: true,
+    freeTextPrompt: "Te toca contárselo al vestuario. ¿Qué dices?",
+    options: [
+      { id: "humor", label: "Tomártelo con humor en el vestuario", subtitle: "Reírte antes de que se rían de ti", consequences: { moral: 2, rel_vestuario: 3, flags: clear } },
+      { id: "rabia", label: "Guardarte la rabia y entrenar el doble", subtitle: "Convertirlo en gasolina", consequences: { forma: 3, moral: -2, rel_entrenador: 2, flags: clear } },
+      { id: "agente", label: `Pedirle cuentas a ${agent}`, subtitle: "Que se entere de todo antes", consequences: { rel_representante: -3, moral: 1, flags: clear } },
     ],
   };
 }
