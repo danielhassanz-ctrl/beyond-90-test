@@ -1057,7 +1057,8 @@ function resolveContract(s: GameState, card: DynamicCard, choiceId: string): Dyn
     return { title: "Sin firmar", text: "Decides esperar a final de temporada. Si va bien, ganas; si te lesionas, lo pagas.", tone: "neutral" };
   }
   if (choiceId === "mejorar") {
-    const ok = Math.random() < (s.agent.present ? 0.62 : 0.4) + (s.rel.coach - 50) / 400;
+    const improveChance = Math.max(0.15, Math.min(0.85, (s.agent.present ? 0.62 : 0.4) + (s.rel.coach - 50) / 400));
+    const ok = (hash(careerSeed(s), `contract-improve:${s.seasonIndex}:${s.sceneCount}:${years}:${salary}`) % 10000) < improveChance * 10000;
     if (ok) {
       s.contract = `${years} temporadas · cláusula de minutos`;
       s.salary = salary + 40;
@@ -1105,6 +1106,9 @@ function shareContract(s: GameState, years: number, salary: number): ShareData {
 
 export function randomSuitor(s: GameState): string {
   const pool = RIVAL_CLUBS.filter((c) => c !== clubById(s.clubId).name);
-  const returning = s.memory.rejectedClubs.find(() => Math.random() < 0.35);
-  return returning ?? pool[Math.floor(Math.random() * pool.length)]!;
+  const seed = careerSeed(s);
+  const returning = s.memory.rejectedClubs.length > 0 && (hash(seed, `suitor-return:${s.seasonIndex}:${s.sceneCount}`) % 100) < 35
+    ? s.memory.rejectedClubs[hash(seed, `suitor-return-club:${s.seasonIndex}:${s.sceneCount}`) % s.memory.rejectedClubs.length]
+    : undefined;
+  return returning ?? pool[hash(seed, `suitor-pool:${s.seasonIndex}:${s.sceneCount}`) % pool.length]!;
 }
