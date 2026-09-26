@@ -402,14 +402,15 @@ function opponentPool(stage: Stage, def: ClubDef): ClubDef[] {
   return pool.length ? pool : CLUB_POOL.filter((d) => d.id !== def.id);
 }
 
-export function derbyRivalOf(def: ClubDef): ClubDef | null {
+export function derbyRivalOf(def: ClubDef, seed = 0): ClubDef | null {
   const ids = DERBIES[def.id] ?? [];
-  for (const id of shuffle(ids)) {
+  for (let offset = 0; offset < ids.length; offset += 1) {
+    const id = ids[(hash(`${def.id}|derby|${seed}`) + offset) % ids.length]!;
     const rival = defById(id);
     if (rival) return rival;
   }
   const same = CLUB_POOL.filter((d) => d.region === def.region && d.id !== def.id);
-  return same.length ? shuffle(same)[0]! : null;
+  return same.length ? same[hash(`${def.id}|region-rival|${seed}`) % same.length]! : null;
 }
 
 /** Nombre de la ronda coherente con la competición. */
@@ -444,7 +445,7 @@ export function buildMatchContext(input: BuildCtxInput): MatchContext {
   if (slot.opponentId) opponent = defById(slot.opponentId) ?? null;
 
   if (!opponent && tag === "derby") {
-    opponent = derbyRivalOf(club);
+    opponent = derbyRivalOf(club, index);
     derby = true;
   }
   if (!opponent && tag === "exclub") {
@@ -453,17 +454,18 @@ export function buildMatchContext(input: BuildCtxInput): MatchContext {
   }
   if (!opponent) {
     const pool = opponentPool(stage, club);
-    opponent = shuffle(pool)[0] ?? CLUB_POOL.find((d) => d.id !== club.id)!;
+    opponent = pool[hash(`${club.id}|${stage}|${tag ?? "league"}|${index}|opponent`) % pool.length] ?? CLUB_POOL.find((d) => d.id !== club.id)!;
   }
   if (tag === "euro") {
     const euros = EURO_POOL.filter((d) => d.id !== club.id);
-    opponent = euros[Math.floor(Math.random() * euros.length)] ?? opponent;
+    opponent = euros[hash(`${club.id}|${stage}|euro|${index}`) % euros.length] ?? opponent;
     competition = slot.competition ?? "UEFA Europa League";
   }
   if (tag === "derby") derby = true;
   else if (tag === "cup" || (tie && tag !== "euro")) competition = "Copa del Rey";
 
-  const isHome = tag === "derby" ? Math.random() < 0.5 : Math.random() < 0.52;
+  const homeUnit = hash(`${club.id}|${stage}|${tag ?? "league"}|${index}|home`) / 100000;
+  const isHome = tag === "derby" ? homeUnit < 0.5 : homeUnit < 0.52;
   const homeDef = isHome ? club : opponent;
   const awayDef = isHome ? opponent : club;
 
