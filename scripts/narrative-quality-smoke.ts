@@ -154,7 +154,23 @@ function assertSourceHasNoLegacyAgentCheck() {
   assert(!engine.includes('dyn("agent_check"'), "engine.ts can still emit the banned generic agent_check card");
   assert(!dynamic.includes('case "agent_check"'), "dynamic.ts still contains an agent_check render/resolve path");
   assert(!dynamic.includes("AGENT_TOPICS"), "dynamic.ts still contains the generic adviser copy bank");
-  assert(!dynamic.includes("Math.random("), "dynamic.ts contains nondeterministic Math.random; narrative outcomes must replay from career state");
+
+  // Seeded smoke runs replace Math.random below, which can mask a regression.
+  // Scan the whole game source so every career outcome remains replayable.
+  const stack = ["src/game"];
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const path = `${current}/${entry.name}`;
+      if (entry.isDirectory()) {
+        stack.push(path);
+        continue;
+      }
+      if (!entry.isFile() || !entry.name.endsWith(".ts")) continue;
+      const source = fs.readFileSync(path, "utf8");
+      assert(!source.includes("Math.random("), `${path} contains nondeterministic Math.random; career outcomes must replay from career state`);
+    }
+  }
 }
 
 function assertNarrativeNotRepeated(observations: NarrativeObservation[], seed: number) {
