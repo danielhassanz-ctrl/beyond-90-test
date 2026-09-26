@@ -19,6 +19,15 @@ export function careerPhase(age: number): CareerPhase {
   return "declive";
 }
 
+function deterministicUnit(s: GameState, salt: string): number {
+  let h = ((s.careerSeed ?? 1) ^ Math.imul((s.seasonIndex ?? 0) + 1, 0x9e3779b1) ^ Math.imul((s.sceneCount ?? 0) + 1, 0x85ebca6b)) >>> 0;
+  for (let i = 0; i < salt.length; i += 1) {
+    h = Math.imul(h ^ salt.charCodeAt(i), 0x45d9f3b) >>> 0;
+    h ^= h >>> 16;
+  }
+  return (h >>> 0) / 0x100000000;
+}
+
 export const PHASE_LABEL: Record<CareerPhase, string> = {
   formacion: "Formación",
   eclosion: "Eclosión",
@@ -121,10 +130,10 @@ export function seasonHonours(s: GameState): { titles: string[]; awards: string[
 
   if (club.tier === 1 && s.tablePosition === 1 && elite) titles.push("LaLiga");
   if (club.tier === 2 && s.tablePosition <= 2) titles.push("Ascenso a Primera");
-  if ((s.flags["copa_rondas"] ?? 0) >= 4 && Math.random() < (elite ? 0.45 : 0.2)) titles.push("Copa del Rey");
-  if (euro === "UEFA Champions League" && club.prestige === 5 && s.tablePosition <= 3 && Math.random() < 0.15) {
+  if ((s.flags["copa_rondas"] ?? 0) >= 4 && deterministicUnit(s, "honours:copa") < (elite ? 0.45 : 0.2)) titles.push("Copa del Rey");
+  if (euro === "UEFA Champions League" && club.prestige === 5 && s.tablePosition <= 3 && deterministicUnit(s, "honours:champions") < 0.15) {
     titles.push("UEFA Champions League");
-  } else if (euro === "UEFA Europa League" && s.tablePosition <= 6 && Math.random() < 0.18) {
+  } else if (euro === "UEFA Europa League" && s.tablePosition <= 6 && deterministicUnit(s, "honours:europa") < 0.18) {
     titles.push("UEFA Europa League");
   }
 
@@ -140,7 +149,7 @@ export function seasonHonours(s: GameState): { titles: string[]; awards: string[
     apps >= 28 &&
     club.prestige === 5 &&
     titles.some((t) => t === "UEFA Champions League" || t === "LaLiga") &&
-    Math.random() < 0.25
+    deterministicUnit(s, "honours:ballon-dor") < 0.25
   ) {
     awards.push("Balón de Oro");
   }
@@ -199,7 +208,7 @@ export function buildMarketProposal(s: GameState): MarketProposal | null {
   const malo = apps < 12 || rating < 6.3;
 
   // 2. Declive o irregularidad: ofertas a la baja.
-  if ((phase === "declive" || (phase === "veterano" && malo)) && Math.random() < 0.55) {
+  if ((phase === "declive" || (phase === "veterano" && malo)) && deterministicUnit(s, "market:decline") < 0.55) {
     const dest = pickClubForLevel(s, s.overall - 6, club.tier === 1 && s.overall >= 72 ? 1 : 2, club.id);
     if (dest) {
       return {
@@ -214,7 +223,7 @@ export function buildMarketProposal(s: GameState): MarketProposal | null {
   }
 
   // 3. Rendimiento alto: interés de clubes de más nivel.
-  if (bueno && Math.random() < 0.7) {
+  if (bueno && deterministicUnit(s, "market:high-performance") < 0.7) {
     const better = CLUB_POOL.filter(
       (d) =>
         d.id !== club.id &&
@@ -222,7 +231,7 @@ export function buildMarketProposal(s: GameState): MarketProposal | null {
         requiredOverall(d) <= s.overall + 1 &&
         !(d.prestige === 5 && (s.overall < 80 || s.fame < 55)),
     );
-    const dest = better.length ? better[Math.floor(Math.random() * better.length)]! : null;
+    const dest = better.length ? better[Math.floor(deterministicUnit(s, "market:better-club") * better.length)]! : null;
     if (dest && (dest.prestige > club.prestige || dest.tier < club.tier)) {
       return {
         kind: "transfer",
@@ -251,7 +260,7 @@ function pickClubForLevel(s: GameState, level: number, tier: 1 | 2, excludeId: s
     (d) => d.id !== excludeId && d.tier === tier && requiredOverall(d) <= level + 3 && requiredOverall(d) >= level - 12,
   );
   if (!pool.length) return null;
-  const seed = (s.careerSeed ?? 1) + s.seasonIndex * 31 + Math.floor(Math.random() * 997);
+  const seed = (s.careerSeed ?? 1) + s.seasonIndex * 31 + Math.floor(deterministicUnit(s, `market:club:${tier}:${level}:${excludeId}`) * 997);
   return pool[seed % pool.length]!;
 }
 
@@ -288,7 +297,7 @@ export function moveToClub(s: GameState, clubId: string, salary: number, years: 
   s.rel.fans = clamp(loan ? 40 : 45);
   s.rel.coach = clamp(48);
   s.rel.dressing = clamp(46);
-  s.tablePosition = dest.prestige >= 4 ? 3 + Math.floor(Math.random() * 5) : 8 + Math.floor(Math.random() * 9);
+  s.tablePosition = dest.prestige >= 4 ? 3 + Math.floor(deterministicUnit(s, `move:${clubId}:elite-table`) * 5) : 8 + Math.floor(deterministicUnit(s, `move:${clubId}:table`) * 9);
   const season = currentSeason(s);
   if (season) season.club = dest.name;
   note(s, `${loan ? "Cesión" : "Fichaje"}: dejas el ${old} y firmas por el ${dest.name}.`, "gold");
@@ -308,9 +317,9 @@ export function shouldRetire(s: GameState): boolean {
   const apps = season?.apps ?? 0;
   if (s.age >= 38) return true;
   if (s.age >= 34 && apps < 8) return true;
-  if (s.age >= 33 && s.overall < 62 && Math.random() < 0.5) return true;
+  if (s.age >= 33 && s.overall < 62 && deterministicUnit(s, "retire:low-overall") < 0.5) return true;
   if ((s.flags["lesiones_graves"] ?? 0) >= 3 && s.age >= 32) return true;
-  return s.age >= 36 && Math.random() < 0.5;
+  return s.age >= 36 && deterministicUnit(s, "retire:veteran") < 0.5;
 }
 
 export interface CareerSummary {
