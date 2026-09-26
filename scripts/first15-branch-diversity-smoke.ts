@@ -18,6 +18,25 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
+function norm(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function similarity(a: string, b: string): number {
+  const A = new Set(norm(a).split(" ").filter((x) => x.length > 3));
+  const B = new Set(norm(b).split(" ").filter((x) => x.length > 3));
+  if (!A.size || !B.size) return 0;
+  let hits = 0;
+  for (const token of A) if (B.has(token)) hits += 1;
+  return hits / Math.min(A.size, B.size);
+}
+
 function player(seed: number): Player {
   const positions: Player["position"][] = ["DC", "MC", "MCO", "EXT", "DFC", "LAT"];
   return {
@@ -36,14 +55,90 @@ function choiceIndex(length: number, seed: number, decision: number): number {
   return Math.abs(seed * 17 + decision * 7 + 3) % length;
 }
 
-function isMeaningful(s: GameState): boolean {
+type SeenDecision = {
+  title: string;
+  text: string;
+  choices: string[];
+  family: string;
+  kind: string;
+};
+
+function describe(s: GameState): SeenDecision | null {
   const p = s.pending;
-  if (!p || p.type === "season") return false;
-  if (p.type === "match") return !!p.match.keyMoment;
-  if (p.type === "dynamic") {
-    assert(p.kind !== "match_flash", `BANNED match_flash reached alternative-branch playtest: ${JSON.stringify(p.data)}`);
+  if (!p || p.type === "season") return null;
+  if (p.type === "match") {
+    if (!p.match.keyMoment) return null;
+    return {
+      title: `${p.match.ctx.storyLabel} · ${p.match.opponent}`,
+      text: `${p.match.ctx.competition} · ${p.match.ctx.venue} · ${p.match.keyMoment.prompt}`,
+      choices: p.match.keyMoment.options.map((o) => o.label),
+      family: "match",
+      kind: "match",
+    };
   }
-  return true;
+  if (p.type === "event") {
+    const e = eventById(p.eventId);
+    assert(e, `missing event ${p.eventId}`);
+    return {
+      title: e.title,
+      text: typeof e.text === "function" ? e.text(s) : e.text,
+      choices: e.choices.map((c) => c.label),
+      family: e.family ?? e.category,
+      kind: `event:${e.id}`,
+    };
+  }
+  assert(p.kind !== "match_flash", `BANNED match_flash reached alternative-branch playtest: ${JSON.stringify(p.data)}`);
+  const view = renderDynamic(s, p);
+  const family = p.kind === "arc"
+    ? `arc:${String(p.data["arcId"] ?? view.category)}`
+    : p.kind === "thread"
+      ? `thread:${String(p.data["threadKind"] ?? view.category)}`
+      : p.kind === "arc_callback"
+        ? "callback"
+        : p.kind === "arc_beat"
+          ? `beat:${String(p.data["beatId"] ?? view.category)}`
+          : `${view.category}:${p.kind}`;
+  return { title: view.title, text: view.text, choices: view.choices.map((c) => c.label), family, kind: `dynamic:${p.kind}` };
+}
+
+function assertAlternateBranchVariety(mode: CareerMode, seed: number, seen: SeenDecision[]): void {
+  const titles = new Set<string>();
+  const choiceTriples = new Set<string>();
+  for (let i = 0; i < seen.length; i += 1) {
+    const current = seen[i]!;
+    const titleKey = current.kind === "match"
+      ? `${norm(current.title)}|${norm(current.text.split(" · ").slice(0, 2).join(" · "))}`
+      : norm(current.title);
+    assert(!titles.has(titleKey), `${mode}/${seed}: repeated setup after alternate choices: ${current.title}`);
+    titles.add(titleKey);
+
+    if (current.choices.length >= 3) {
+      const choicesKey = current.choices.map(norm).join("|");
+      assert(!choiceTriples.has(choicesKey), `${mode}/${seed}: repeated choice triple after alternate choices: ${current.choices.join(" / ")}`);
+      choiceTriples.add(choicesKey);
+    }
+
+    for (let j = 0; j < i; j += 1) {
+      const previous = seen[j]!;
+      if (current.text.length > 60 && previous.text.length > 60) {
+        assert(similarity(current.text, previous.text) < 0.82, `${mode}/${seed}: near-duplicate branch narrative: "${previous.title}" vs "${current.title}"`);
+      }
+    }
+
+    if (i >= 2) {
+      assert(
+        !(seen[i - 2]!.family === current.family && seen[i - 1]!.family === current.family),
+        `${mode}/${seed}: >2 consecutive decisions from family ${current.family} after alternate choices`,
+      );
+    }
+  }
+
+  assert(new Set(seen.map((x) => x.family)).size >= 5, `${mode}/${seed}: only ${new Set(seen.map((x) => x.family)).size} families after alternate choices`);
+  assert(seen.filter((x) => x.kind === "match").length <= 5, `${mode}/${seed}: alternate branch became too match-heavy`);
+}
+
+function isMeaningful(s: GameState): boolean {
+  return describe(s) !== null;
 }
 
 function resolvePending(s: GameState, seed: number, decision: number): { state: GameState; alternate: boolean } {
@@ -90,6 +185,7 @@ function run(mode: CareerMode, seed: number) {
     let alternateChoices = 0;
     let openingFinished = false;
     let stableCast: { coach: string; captain: string; physio: string; adviser: string } | null = null;
+    const seen: SeenDecision[] = [];
     let guard = 0;
 
     while (meaningful < 15 && guard++ < 700) {
@@ -99,15 +195,24 @@ function run(mode: CareerMode, seed: number) {
         const idx = choiceIndex(offers.length, seed, meaningful);
         if (idx > 0) alternateChoices += 1;
         meaningful += 1;
+        seen.push({
+          title: "Elegir primer club",
+          text: `Comparas cuatro proyectos con tu entorno antes de elegir ${offers[idx]!.clubId}.`,
+          choices: offers.map((o) => o.clubId),
+          family: "club_choice",
+          kind: "club_choice",
+        });
         s = afterOpeningClubChoice(chooseClub(s, offers[idx]!.clubId));
         continue;
       }
 
-      if (isMeaningful(s)) {
+      const decision = describe(s);
+      if (decision) {
         if ((s.flags["opening_completed"] ?? 0) !== 1 && s.pending?.type === "match") {
           throw new Error(`${mode}/${seed}: match before opening completion`);
         }
         meaningful += 1;
+        seen.push(decision);
       }
 
       const resolved = resolvePending(s, seed, meaningful);
@@ -127,9 +232,11 @@ function run(mode: CareerMode, seed: number) {
     }
 
     assert(meaningful === 15, `${mode}/${seed}: only ${meaningful} meaningful decisions reached`);
+    assert(seen.length === 15, `${mode}/${seed}: trace captured ${seen.length}/15 meaningful decisions`);
     assert(openingFinished, `${mode}/${seed}: opening never completed`);
     assert(alternateChoices >= 5, `${mode}/${seed}: only ${alternateChoices} non-default branches exercised`);
     assert(stableCast, `${mode}/${seed}: persistent cast was never captured`);
+    assertAlternateBranchVariety(mode, seed, seen);
 
     const cast = ensureCareerCast(s);
     assert(cast.coach.name === stableCast.coach, `${mode}/${seed}: coach drift after alternate choices`);
@@ -137,7 +244,7 @@ function run(mode: CareerMode, seed: number) {
     assert(cast.physio.name === stableCast.physio, `${mode}/${seed}: physio drift after alternate choices`);
     assert(cast.adviser.name === stableCast.adviser, `${mode}/${seed}: adviser drift after alternate choices`);
 
-    console.log(`${mode}/${seed}: 15 decisions, ${alternateChoices} non-default choices, cast stable`);
+    console.log(`${mode}/${seed}: ${seen.map((d, i) => `${i + 1}.${d.title}`).join(" | ")} · ${alternateChoices} non-default choices`);
   } finally {
     Math.random = oldRandom;
   }
@@ -149,4 +256,4 @@ for (const mode of modes) {
   for (const seed of seeds) run(mode, seed + modes.indexOf(mode) * 100000);
 }
 
-console.log("FIRST15_BRANCH_DIVERSITY_OK: 12 deterministic careers exercise non-default choices without chronology, match_flash, injury, or cast-continuity regressions.");
+console.log("FIRST15_BRANCH_DIVERSITY_OK: 12 deterministic careers exercise non-default choices under the same repetition, pacing, chronology and cast-continuity quality floor.");
