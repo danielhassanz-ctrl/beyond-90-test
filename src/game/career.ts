@@ -20,7 +20,7 @@ export function careerPhase(age: number): CareerPhase {
 }
 
 function deterministicUnit(s: GameState, salt: string): number {
-  let h = ((s.careerSeed ?? 1) ^ Math.imul((s.seasonIndex ?? 0) + 1, 0x9e3779b1) ^ Math.imul((s.sceneCount ?? 0) + 1, 0x85ebca6b)) >>> 0;
+  // Career-level outcomes must not flip merely because an unrelated scene was\n  // rendered before the same season-end calculation. Seed by career + season;\n  // callers provide a semantic salt for honours, market and retirement branches.\n  let h = ((s.careerSeed ?? 1) ^ Math.imul((s.seasonIndex ?? 0) + 1, 0x9e3779b1)) >>> 0;
   for (let i = 0; i < salt.length; i += 1) {
     h = Math.imul(h ^ salt.charCodeAt(i), 0x45d9f3b) >>> 0;
     h ^= h >>> 16;
