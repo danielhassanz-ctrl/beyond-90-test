@@ -21,6 +21,7 @@ on:
       - scripts/seed-ci-random.mjs
       - scripts/opening-flow-smoke.ts
       - scripts/real-career-playtest-smoke.ts
+      - scripts/first30-background-flash-smoke.ts
       - scripts/first15-chronology-smoke.ts
       - scripts/opening-intro-continuity-smoke.mjs
       - scripts/decision-state-coherence-smoke.ts
@@ -96,6 +97,9 @@ jobs:
 
       - name: Real-career first-15 human-style playtest
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+
+      - name: First-30 background-flash/injury chronology playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first30-background-flash-smoke.ts
 
       - name: First-15 money/status/competition chronology
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-chronology-smoke.ts

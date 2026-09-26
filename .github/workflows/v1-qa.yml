@@ -50,6 +50,8 @@ jobs:
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
       - name: Human-style first-15-decision QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/real-career-playtest-smoke.ts
+      - name: First-30 background-flash/injury chronology QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first30-background-flash-smoke.ts
       - name: First-15 decision quality floor
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
       - name: Alternative first-15 branch playtest
