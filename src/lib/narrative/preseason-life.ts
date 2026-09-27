@@ -7,15 +7,24 @@ import { getCelebrityName, getNpcName, getPersonName, getTeammateName } from "@/
  * Vida de pretemporada: en cada pretemporada (y, sobre todo, en la primera
  * de la carrera) pasan muchas cosas además de correr: giras, presentación
  * de la camiseta, fichajes que te amenazan el puesto, salidas de
- * compañeros, rumores de traspaso, renovaciones, dorsales, novatadas...
+ * compañeros, rumores de traspaso, renovaciones, dorsales, novatadas... y
+ * también un puñado de situaciones de humor puro o directamente
+ * disparatadas (la mascota escapada, la vidente de concentración, el
+ * doble viral, la taquilla maldita) — 38 plantillas en total.
  *
  * Todo en código (cero llamadas a la IA). Ids "preseason-ev-*": el flujo de
  * carrera/actions.ts los trata como eventos que NO avanzan la semana, y el
  * tope por temporada (flag `pre_n_<temporada>`) evita que se encadenen sin
  * fin. Los últimos usados van en `pre_recent` para no repetirse.
+ *
+ * `tone` es solo una etiqueta interna (no se muestra en el juego) para
+ * poder contar cuántos de estos eventos son de humor puro ("gracioso") o
+ * directamente disparatados ("surrealista") sin tener que releer los 37
+ * a ojo cada vez — pedido explícito: "cuántos eventos graciosos y cuántos
+ * surrealistas hay".
  */
 
-const MAX_PER_SEASON = 4;
+const MAX_PER_SEASON = 5;
 
 export function isPreseasonLifeWindow(week: number): boolean {
   const season = Math.floor((week - 1) / 10);
@@ -48,12 +57,16 @@ interface Ctx {
   kid: string;
   fame: string;
   city: string;
+  doppel: string;
+  stranger: string;
 }
 
 type Opt = Omit<EventOption, "id"> & { id?: string };
+type Tone = "gracioso" | "surrealista";
 interface Tpl {
   key: string;
   title: string;
+  tone?: Tone[];
   desc: (c: Ctx) => string;
   opts: (c: Ctx) => Opt[];
 }
@@ -83,6 +96,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "camiseta",
     title: "Presentación de la camiseta",
+    tone: ["gracioso"],
     desc: (c) => `El ${c.club} presenta la nueva equipación y te eligen para la sesión de fotos. Focos, maquillaje y un fotógrafo que te pide "cara de ganador".`,
     opts: () => [
       { label: "Posar con orgullo", subtitle: "Una foto que se hace viral", consequences: { fama: 4, moral: 2 } },
@@ -141,6 +155,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "altura",
     title: "Concentración en altura",
+    tone: ["gracioso"],
     desc: (c) => `El ${c.club} se concentra diez días en la montaña. Aire limpio, móviles sin cobertura y noches de cartas y bromas en la habitación.`,
     opts: (c) => [
       { label: "Ser el alma de las cartas", subtitle: `Con ${c.mate} y ${c.mate2}`, consequences: { rel_vestuario: 4, moral: 2 } },
@@ -201,6 +216,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "cena_novatada",
     title: "Cena de equipo y novatada",
+    tone: ["gracioso"],
     desc: (c) => `El vestuario del ${c.club} organiza la cena de inicio de temporada y ${c.captain} te señala: "Al nuevo le toca cantar".`,
     opts: () => [
       {
@@ -248,6 +264,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "famoso",
     title: "Un famoso en el entrenamiento",
+    tone: ["gracioso"],
     desc: (c) => `El club invita a ${c.fame}, muy conocido por sus redes, a ver el entrenamiento. Al terminar, pide una foto contigo delante de todo el mundo.`,
     opts: (c) => [
       { label: "Hacerte la foto", subtitle: "Una buena publicidad", consequences: { fama: 4, rel_vestuario: -1 } },
@@ -258,6 +275,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "dorsal",
     title: "Pelea por el dorsal",
+    tone: ["gracioso"],
     desc: (c) => `Queda libre un dorsal que a ti te gusta. ${c.mate} también lo quiere y ha ido ya a hablar con el utillero. Quedan dos días para inscribir.`,
     opts: (c) => [
       { label: "Ofrecerle un trato", subtitle: "Cena por dorsal", consequences: { patrimonio: -250, rel_vestuario: 2, fama: 1 } },
@@ -288,6 +306,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "vacaciones",
     title: "Vuelves de vacaciones",
+    tone: ["gracioso"],
     desc: (c) => `El vestuario del ${c.club} vuelve del verano: bronceados, anécdotas y algún kilo de más. ${c.coach} os pesa uno a uno con el cronómetro en la mano.`,
     opts: () => [
       {
@@ -356,11 +375,198 @@ const TEMPLATES: Tpl[] = [
   {
     key: "aficionado_rival",
     title: "Un mensaje de un hincha rival",
+    tone: ["gracioso"],
     desc: (c) => `Alguien te escribe desde el otro lado de la ciudad para decirte que el ${c.club} "no tiene nada que hacer" esta temporada. Se ha hecho viral.`,
     opts: () => [
       { label: "Responder con clase", subtitle: "Nos vemos en el campo", consequences: { fama: 2, reputacion: 2 } },
       { label: "Devolverla con ironía", subtitle: "Un titular más", consequences: { fama: 4, rel_aficion: 2, reputacion: -1 } },
       { label: "No responder", subtitle: "Ruido de fondo", consequences: { moral: 1 } },
+    ],
+  },
+  {
+    key: "mascota_fuga",
+    title: "La mascota del club se escapa",
+    tone: ["gracioso", "surrealista"],
+    desc: (c) => `En plena sesión de fotos, la persona disfrazada de mascota del ${c.club} sale corriendo detrás de una paloma y se cuela en pleno pueblo, con el traje de águila puesto y todo el club detrás intentando explicarlo.`,
+    opts: (c) => [
+      { label: "Unirte a la caza", subtitle: `Con ${c.mate} a perseguirla`, consequences: { rel_vestuario: 4, moral: 3, forma: -1 } },
+      { label: "Grabarlo todo", subtitle: "Contenido asegurado", consequences: { fama: 5, rel_vestuario: 1 } },
+      { label: "Quedarte al margen", subtitle: "Que se ocupe el utillero", consequences: { moral: 1 } },
+    ],
+  },
+  {
+    key: "vidente",
+    title: "La vidente de la concentración",
+    tone: ["surrealista"],
+    desc: (c) => `${c.captain} ha traído a una vidente al hotel de concentración "para que lea el aura del vestuario antes de la temporada". Te toca a ti sentarte primero frente a las cartas.`,
+    opts: (c) => [
+      { label: "Tomártelo en broma", subtitle: "Y seguirle el juego", consequences: { rel_vestuario: 3, moral: 2 } },
+      {
+        label: "Preguntarle en serio por la temporada",
+        subtitle: "Por si acaso",
+        consequences: { moral: 1 },
+        resolve: {
+          baseChance: 0.5,
+          success: { text: `Te dice, muy seria, que "un número par te traerá gloria en primavera". Ni tú ni ${c.mate} volvéis a mirar igual vuestro dorsal.`, consequences: { moral: 4, fama: 1 } },
+          fail: { text: "Te suelta una predicción tan siniestra sobre 'un rival de rojo' que no duermes en toda la concentración.", consequences: { moral: -3, forma: -1 } },
+        },
+      },
+      { label: "Negarte a participar", subtitle: "Esto no es serio", consequences: { rel_vestuario: -2, reputacion: 1 } },
+    ],
+  },
+  {
+    key: "doble_viral",
+    title: "Tu doble se ha hecho viral",
+    tone: ["surrealista"],
+    desc: (c) => `Un vídeo de ${c.doppel}, un tipo que es tu vivo retrato, haciendo el ridículo en un supermercado se ha vuelto viral con el titular "así es [tu nombre] fuera del campo". Media ciudad ya lo cree de verdad.`,
+    opts: (c) => [
+      { label: "Desmentirlo con humor", subtitle: "Un vídeo respuesta", consequences: { fama: 5, moral: 2 } },
+      {
+        label: `Buscar a ${c.doppel} y grabar algo juntos`,
+        subtitle: "Sacarle partido a la confusión",
+        consequences: { fama: 2 },
+        resolve: {
+          baseChance: 0.6,
+          success: { text: "Grabáis un vídeo de los dos juntos que arrasa: la gente no sabe distinguiros y el club lo comparte encantado.", consequences: { fama: 7, rel_aficion: 3, moral: 3 } },
+          fail: { text: `${c.doppel} resulta ser mucho más simpático en redes que tú y te acaba robando parte del cariño de la afición durante semanas.`, consequences: { fama: 1, moral: -2, rel_aficion: -2 } },
+        },
+      },
+      { label: "Ignorarlo", subtitle: "No darle más vueltas", consequences: { moral: 1 } },
+    ],
+  },
+  {
+    key: "picor_pica_pica",
+    title: "Pica-pica en las botas",
+    tone: ["gracioso"],
+    desc: (c) => `${c.mate} ha metido pica-pica dentro de tus botas de entrenamiento como venganza por una broma que ni recordabas. Todo el vestuario espera, en silencio, a que te las pongas.`,
+    opts: (c) => [
+      {
+        label: "Ponerte las botas igualmente",
+        subtitle: "Aguantar el tirón",
+        consequences: {},
+        resolve: {
+          baseChance: 0.5,
+          success: { text: "Aguantas impasible los primeros minutos y el farol te sale gratis: el vestuario aplaude tu sangre fría.", consequences: { rel_vestuario: 5, moral: 3 } },
+          fail: { text: "Duras cinco segundos antes de salir dando saltos por el vestuario entero. Vídeo garantizado para el resto de la temporada.", consequences: { rel_vestuario: 2, moral: -1, fama: 2 } },
+        },
+      },
+      { label: "Revisarlas antes", subtitle: "No fías de nadie", consequences: { rel_vestuario: -1, reputacion: 1 } },
+      { label: `Devolverle la broma a ${c.mate}`, subtitle: "Ojo por ojo", consequences: { rel_vestuario: 2, moral: 2 } },
+    ],
+  },
+  {
+    key: "autobus_averiado",
+    title: "El autobús se avería en mitad de la nada",
+    tone: ["gracioso", "surrealista"],
+    desc: (c) => `Volviendo de un amistoso, el autobús del ${c.club} se avería en un pueblo de trescientos habitantes. Los vecinos, que no tienen ni idea de fútbol, os confunden con los invitados de una boda que se celebra esa misma tarde.`,
+    opts: (c) => [
+      { label: "Seguirles la corriente", subtitle: "Colarse en la boda", consequences: { rel_vestuario: 5, moral: 4, fama: 2 } },
+      { label: "Aclarar el malentendido", subtitle: "Explicar quiénes sois", consequences: { reputacion: 2, rel_aficion: 2 } },
+      { label: "Aprovechar para entrenar en la plaza", subtitle: `Con ${c.mate} de balón`, consequences: { forma: 2, rel_aficion: 3, fama: 3 } },
+    ],
+  },
+  {
+    key: "maldicion_vestuario",
+    title: "La taquilla maldita",
+    tone: ["surrealista"],
+    desc: (c) => `Un veterano jura que la taquilla del fondo del vestuario "trae mala suerte": el año pasado, todo el que la usó se lesionó. Es la única que queda libre y te toca a ti.`,
+    opts: (c) => [
+      { label: "Usarla sin darle importancia", subtitle: "Supersticiones aparte", consequences: { rel_entrenador: 1 }, resolve: { baseChance: 0.6, success: { text: "No pasa absolutamente nada, claro. La superstición se apaga sola en un par de semanas.", consequences: { moral: 2, rel_vestuario: 2 } }, fail: { text: "Te tuerces un tobillo la primera semana de nada. El vestuario entero jura que 'ya lo sabía'.", consequences: { forma: -4, moral: -2, rel_vestuario: 1 } } } },
+      { label: "Pedir un cambio de taquilla", subtitle: "Mejor no arriesgar", consequences: { rel_vestuario: -1, moral: 1 } },
+      { label: "Organizar un ritual con el equipo", subtitle: "Purificarla entre todos", consequences: { rel_vestuario: 4, moral: 3 } },
+    ],
+  },
+  {
+    key: "reto_viral_ridiculo",
+    title: "El reto de moda te alcanza",
+    tone: ["gracioso"],
+    desc: (c) => `Todo el vestuario está enganchado a un reto viral absurdo — bailar en equilibrio sobre un balón medicinal mientras cantas el himno. ${c.mate2} ya lo intentó y acabó en el suelo.`,
+    opts: (c) => [
+      {
+        label: "Intentarlo delante de todos",
+        subtitle: "Sin red",
+        consequences: {},
+        resolve: {
+          baseChance: 0.45,
+          success: { text: "Bordas el equilibrio entre aplausos y móviles grabando. El vídeo se cuelga esa misma noche.", consequences: { fama: 5, rel_vestuario: 4, moral: 3 } },
+          fail: { text: "Acabas en el suelo entre risas del vestuario entero, con el himno a medio cantar.", consequences: { rel_vestuario: 3, moral: -1, fama: 1 } },
+        },
+      },
+      { label: "Grabar a los demás en vez de participar", subtitle: "Director de cine por un día", consequences: { rel_vestuario: 2, fama: 1 } },
+      { label: "Negarte", subtitle: "Esto es fútbol, no un circo", consequences: { reputacion: 2, rel_vestuario: -2 } },
+    ],
+  },
+  {
+    key: "sueno_raro",
+    title: "El sueño que no te quitas de la cabeza",
+    tone: ["surrealista"],
+    desc: (c) => `Llevas tres noches soñando lo mismo: marcas un gol imposible con una bota que no es tuya, en un campo que no reconoces, y al despertar te sabes de memoria la cara de un rival que nunca has visto. Se lo cuentas a ${c.mate} en el desayuno.`,
+    opts: (c) => [
+      { label: "Reírte y olvidarlo", subtitle: "Solo es un sueño", consequences: { moral: 1 } },
+      { label: `Contárselo al fisio ${c.fisio}`, subtitle: "Que te ayude a dormir mejor", consequences: { moral: 2, rel_vestuario: 1 } },
+      {
+        label: "Tomártelo como una señal",
+        subtitle: "Y jugar con esa bota imaginaria en la cabeza",
+        consequences: { moral: 2 },
+        resolve: {
+          baseChance: 0.5,
+          success: { text: "Rindes mejor de lo normal toda la semana, como si de verdad llevaras algo especial en la cabeza.", consequences: { forma: 3, moral: 3 } },
+          fail: { text: "Te pasas la semana distraído pensando en el sueño y el míster te llama la atención por estar en la luna.", consequences: { rel_entrenador: -2, moral: -1 } },
+        },
+      },
+    ],
+  },
+  {
+    key: "gemelo_perdido",
+    title: "El fan que jura ser tu primo perdido",
+    tone: ["gracioso", "surrealista"],
+    desc: (c) => `${c.stranger} se presenta en la puerta de entrenamientos con un árbol genealógico dibujado a mano y fotos borrosas de una boda de los años 90, convencido de que sois primos separados al nacer.`,
+    opts: (c) => [
+      { label: "Escucharle la historia entera", subtitle: "Por curiosidad", consequences: { moral: 2, rel_aficion: 2 } },
+      { label: "Hacerte una foto con él y seguirle la broma", subtitle: `"Primo, cuánto tiempo"`, consequences: { fama: 3, moral: 2 } },
+      { label: "Pedirle amablemente que se vaya", subtitle: "Esto empieza a dar miedo", consequences: { reputacion: 1, moral: -1 } },
+    ],
+  },
+  {
+    key: "comida_rara",
+    title: "El chef se pone experimental",
+    tone: ["gracioso"],
+    desc: (c) => `El nuevo chef de concentración presenta el menú de la semana: "algas fermentadas con proteína de grillo, receta del futuro". ${c.mate} ya ha puesto cara de circunstancias.`,
+    opts: (c) => [
+      {
+        label: "Probarlo sin rechistar",
+        subtitle: "Confiar en la ciencia",
+        consequences: {},
+        resolve: {
+          baseChance: 0.5,
+          success: { text: "Sorprendentemente, no está nada mal. Te conviertes en el defensor oficial del menú del futuro.", consequences: { forma: 2, rel_vestuario: 2, moral: 2 } },
+          fail: { text: "Pasas la noche entera sin poder dormir por el estómago. El chef promete 'ajustar la receta'.", consequences: { forma: -3, moral: -2 } },
+        },
+      },
+      { label: "Pedir el menú de siempre", subtitle: "Sin experimentos", consequences: { rel_vestuario: 1 } },
+      { label: "Convencer al vestuario de amotinarse", subtitle: "Huelga de tenedores", consequences: { rel_vestuario: 4, rel_entrenador: -2, moral: 2 } },
+    ],
+  },
+  {
+    key: "objeto_perdido",
+    title: "La maleta perdida en el aeropuerto",
+    tone: ["gracioso"],
+    desc: (c) => `Vuelves de la gira y tu maleta se ha perdido en el aeropuerto: botas, ropa y hasta tu amuleto de la suerte, desaparecidos. Tienes que entrenar con lo que te presta ${c.mate}, tres tallas más grande.`,
+    opts: (c) => [
+      { label: "Reírte de la pinta que llevas", subtitle: "Da igual la talla", consequences: { rel_vestuario: 4, moral: 3 } },
+      { label: "Ir a comprar equipo nuevo", subtitle: "Solución rápida", consequences: { patrimonio: -600, moral: 1 } },
+      { label: "Culpar a la aerolínea en redes", subtitle: "Que se enteren todos", consequences: { fama: 2, reputacion: -1 } },
+    ],
+  },
+  {
+    key: "fan_disfrazado",
+    title: "El hincha que se viste exactamente igual que tú",
+    tone: ["surrealista"],
+    desc: (c) => `Llevas semanas viendo, siempre en la misma esquina fuera del campo de entrenamiento, a ${c.stranger}: mismo corte de pelo, mismas botas, hasta el mismo gesto al calentar. Empieza a resultar un poco inquietante.`,
+    opts: (c) => [
+      { label: "Acercarte a hablar con él", subtitle: "Salir de dudas", consequences: { moral: 2, rel_aficion: 2 } },
+      { label: "Hacerte una foto juntos", subtitle: "Convertirlo en broma", consequences: { fama: 3, moral: 1 } },
+      { label: "Avisar a seguridad del club", subtitle: "Por si acaso", consequences: { reputacion: 1, moral: -1 } },
     ],
   },
 ];
@@ -388,6 +594,8 @@ export function buildPreseasonLifeEvent(player: Player): GameEvent {
     kid: getPersonName(player, `${salt}-kid`, "m").split(" ")[0],
     fame: getCelebrityName(player, "influencer", salt, "m"),
     city: "",
+    doppel: getPersonName(player, `${salt}-doppel`, "any"),
+    stranger: getPersonName(player, `${salt}-stranger`, "any"),
   };
 
   const n = Number(player.flags?.[`pre_n_${season}`] ?? 0) + 1;
