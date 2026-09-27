@@ -44,7 +44,7 @@ async function reachPlayableChoice(page, mode, seed, decision) {
     if (await choice.isVisible().catch(() => false)) return { article, choice };
 
     const advance = article.getByRole("button", {
-      name: /^(Continuar|Avanzar|Nueva temporada|Seguir el partido|Salir al campo|Ver el partido)$/i,
+      name: /^(Continuar|Avanzar|Nueva temporada|Seguir el partido|Salir al campo|Ver el partido|Siguiente escena)$/i,
     }).first();
     await expect(
       advance,
