@@ -265,7 +265,8 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
         text: `Minuto 72. El partido está parado y de pronto una zona del estadio empieza a cantar tu apellido. Se contagia a la grada entera. No has marcado hoy: esto ya no va solo de un partido.`,
         choices: [
           { id: "saludar", label: "Girar y agradecerlo", hint: "Momento compartible" },
-          { id: "seguir", label: "Seguir concentrado como si no lo oyeras", hint: "Mentalidad competitiva" },          { id: "escudo", label: "Besarte el escudo", hint: "Te vinculas públicamente al club" },
+          { id: "seguir", label: "Seguir concentrado como si no lo oyeras", hint: "Mentalidad competitiva" },
+          { id: "escudo", label: "Besarte el escudo", hint: "Te vinculas públicamente al club" },
         ],
         freeform: { prompt: "¿Cómo reaccionas a la grada?" },
       };
