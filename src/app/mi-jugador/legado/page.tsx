@@ -169,9 +169,17 @@ export default async function LegadoPage() {
                     className="object-cover transition group-hover:scale-105"
                   />
                 ) : player.photo_url ? (
-                  // Sin foto de IA propia para este hito: mejor tu foto real
-                  // de fondo que un cuadro casi vacío con solo un escudo
+                  // Sin foto de IA propia para este hito (todavía generándose,
+                  // se saltó por el límite de gasto, o falló): mejor tu foto
+                  // real de fondo que un cuadro casi vacío con solo un escudo
                   // pequeño en negro — antes era lo único que se veía aquí.
+                  //
+                  // "pending" y "failed/none" se veían IGUAL en esta grilla:
+                  // una foto en camino (unos minutos) y una que nunca vendrá
+                  // mostraban exactamente el mismo fallback silencioso, sin
+                  // ninguna pista de cuál de los dos casos era — visto en
+                  // vivo como "todos los hitos con la misma foto", cuando en
+                  // realidad algunos solo estaban tardando en generarse.
                   <>
                     <Image
                       src={player.photo_url}
@@ -182,6 +190,11 @@ export default async function LegadoPage() {
                     <div className="absolute right-1.5 top-1.5 drop-shadow-md">
                       <ClubCrest club={SECOND_LIFE_MILESTONE_TYPES.has(m.type) ? (player.second_club ?? player.club) : player.club} size={24} />
                     </div>
+                    {m.image_status === "pending" && (
+                      <div className="absolute inset-x-0 bottom-0 bg-black/70 px-1.5 py-1">
+                        <p className="font-cond text-[9px] uppercase tracking-wide text-gold">Generando foto…</p>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="flex h-full items-center justify-center">

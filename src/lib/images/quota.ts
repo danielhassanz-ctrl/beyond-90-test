@@ -7,7 +7,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  *   y volver a crear en bucle para generar gratis sin jugar de verdad).
  *   Una carrera real usa 25-30 imágenes (tras conectar el pool de
  *   famosos/virales, que añade hasta 13 hitos más de un solo uso cada
- *   uno); 40/mes cubre una carrera completa de sobra sin que nadie lo note.
+ *   uno). El límite original de 40/mes cubría una carrera de sobra, pero
+ *   en la práctica de desarrollo (jugar muchas carreras de prueba con la
+ *   MISMA cuenta el mismo mes) se agotaba mucho antes de fin de mes y el
+ *   juego se quedaba, en silencio, sin generar ninguna foto nueva más —
+ *   visto en vivo: cuatro hitos seguidos con la misma foto de perfil sin
+ *   editar, sin ningún aviso de que era el límite y no un fallo. 100/mes
+ *   cubre 3 carreras completas de una misma cuenta sin tocar apenas el
+ *   techo global, que sigue siendo la red de seguridad real.
  * - Global: techo absoluto de gasto mensual de todo el juego junto. Es la
  *   red de seguridad real: si el juego se viraliza, esto es lo único que
  *   impide una factura sin fin. Al llegar al techo, el juego sigue
@@ -15,7 +22,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  *   tarjeta cae al fallback ya existente (foto propia sin editar por IA)
  *   en vez de generar una nueva imagen.
  */
-const PER_USER_MONTHLY_LIMIT = 40;
+const PER_USER_MONTHLY_LIMIT = 100;
 
 /** ~30€/mes a ~0,05€/imagen (precio real de Flux Kontext Pro en Replicate). */
 const GLOBAL_MONTHLY_LIMIT = 600;
