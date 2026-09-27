@@ -44,6 +44,9 @@ import {
 } from "@/lib/narrative/market-window";
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
 import { shouldTriggerSocialDm, buildSocialDmEvent } from "@/lib/narrative/social-dm";
+import { shouldTriggerArcoRival, buildArcoRivalEvent } from "@/lib/narrative/arco-rival";
+import { shouldTriggerArcoHermano, buildArcoHermanoEvent } from "@/lib/narrative/arco-hermano";
+import { shouldTriggerArcoPatrocinador, buildArcoPatrocinadorEvent } from "@/lib/narrative/arco-patrocinador";
 import { shouldTriggerLoanFork, buildLoanForkEvent, markLoanForkTriggered, shouldEndLoan, buildLoanEndEvent } from "@/lib/narrative/loan-fork";
 import { pickDetailedLifeScenario, markDetailedLifeUsed } from "@/lib/narrative/life-events-detailed";
 
@@ -231,6 +234,11 @@ const GRAND_MOMENT_EVENT_IDS = new Set([
   "fork-gigante-europeo",
   "fork-nuevo-reto",
   "fork-ascenso-division",
+  // Skill narrativas-futbol, tanda 2: dos decisiones de carrera lo bastante
+  // grandes (pedir salir del club, quedarte fuera de una convocatoria pese
+  // a tu buen momento) como para vivir aquí en vez del pool genérico.
+  "rep-pedir-carta-libertad",
+  "sel-convocatoria-snub",
 ]);
 const GRAND_MOMENT_EVENTS: GameEvent[] = EVENTS.filter((event) => GRAND_MOMENT_EVENT_IDS.has(event.id));
 
@@ -349,6 +357,14 @@ const LEGACY_LIFE_EVENT_IDS = new Set([
   "ent-concentracion-hotel", "ves-cumple-sorpresa", "ves-masajista-cotilla", "ves-companero-cobra-mas",
   "ves-himno-equipo", "vid-entradas-primos", "vid-ex-escribe", "esp-utillero-leyenda",
   "vid-cunado-negocio", "vid-cunado-tactico", "vid-cunado-agente",
+  // Skill narrativas-futbol, tanda 2: patrones reales no cubiertos todavía
+  // (afición propia pitando, amigos de repente, asesor de cripto, perder
+  // la capitanía, un compañero con una crisis personal). No van en
+  // category "prensa" (auto-incluida) ni son "grandes momentos" de
+  // carrera, así que necesitan su propio hueco aquí para ser alcanzables.
+  "ves-pitada-propia-aficion", "vid-amigos-de-repente", "rep-asesor-financiero-cripto",
+  "esp-comparado-nueva-joya", "ves-perder-capitania", "ent-jugar-con-dolor",
+  "ves-companero-crisis-personal",
 ]);
 /** Escenas que solo tienen sentido al empezar (colegio, novato, primer contrato, dorsal). */
 const LEGACY_EARLY_ONLY_IDS = new Set([
@@ -2393,6 +2409,25 @@ export async function pickNextEventDynamic(
     const pre = buildPreseasonLifeEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Preseason life: "${pre.title}"`);
     return pre;
+  }
+  // Arcos narrativos de varios capítulos (skill narrativas-futbol): se
+  // comprueban antes que los DM/pretemporada normales porque son más
+  // escasos y significativos — cada uno solo avanza un capítulo por vez
+  // y guarda su propio progreso en player.flags (ver arco-*.ts).
+  if (!midMatch && shouldTriggerArcoRival(playerWithDynamics)) {
+    const arco = buildArcoRivalEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Arco rival: "${arco.title}"`);
+    return maybeAddFreeText(arco);
+  }
+  if (!midMatch && shouldTriggerArcoHermano(playerWithDynamics)) {
+    const arco = buildArcoHermanoEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Arco hermano: "${arco.title}"`);
+    return maybeAddFreeText(arco);
+  }
+  if (!midMatch && shouldTriggerArcoPatrocinador(playerWithDynamics)) {
+    const arco = buildArcoPatrocinadorEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Arco patrocinador: "${arco.title}"`);
+    return maybeAddFreeText(arco);
   }
   if (!midMatch && shouldTriggerSocialDm(playerWithDynamics)) {
     const dmEvent = buildSocialDmEvent(playerWithDynamics);

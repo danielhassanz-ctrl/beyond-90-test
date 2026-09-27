@@ -6004,4 +6004,260 @@ export const EVENTS: GameEvent[] = [
     allowFreeText: true,
     freeTextPrompt: "Tu cuñado te llama para 'explicarlo todo'. ¿Qué le dices?",
   },
+  // ── PATRONES REALES DE CARRERA (skill narrativas-futbol, tanda 2) ──
+  {
+    id: "ves-pitada-propia-aficion",
+    category: "vida",
+    title: "Te pita tu propia afición",
+    description:
+      "Fallas un control sencillo en tu propio estadio y una parte de la grada te pita a ti, justo a ti, en tu casa. El silencio que viene después pesa más que cualquier grito.",
+    minWeek: 20,
+    maxMedia: 62,
+    options: [
+      { id: "a", label: "Pedir el balón otra vez sin esconderte", subtitle: "Dar la cara", consequences: { forma: 2, moral: -1, rel_aficion: 2 } },
+      { id: "b", label: "Bajar los brazos un segundo", subtitle: "Humano, aunque no quede bien", consequences: { moral: -3, rel_aficion: -2 } },
+      {
+        id: "c",
+        label: "Buscar el gol que calle el campo",
+        subtitle: "Todo o nada",
+        consequences: {},
+        resolve: {
+          baseChance: 0.4,
+          statModifier: "forma",
+          success: { text: "Marcas pocos minutos después y el mismo campo que te pitaba se pone en pie. El silencio de antes ahora es tuyo.", consequences: { fama: 4, moral: 6, rel_aficion: 6 } },
+          fail: { text: "No llega el gol y el pitido se repite al salir del campo. Te cuesta dormir esa noche.", consequences: { moral: -5, rel_aficion: -3 } },
+        },
+      },
+    ],
+  },
+  {
+    id: "vid-amigos-de-repente",
+    category: "vida",
+    title: "Amigos que no sabías que tenías",
+    description:
+      "Desde que empezaste a cobrar de verdad, te escriben primos lejanos, compañeros de instituto que nunca te hablaron y gente que \"siempre creyó en ti\". Todos, sin excepción, necesitan un favor.",
+    minWeek: 20,
+    minMedia: 55,
+    options: [
+      { id: "a", label: "Poner un filtro y ayudar solo a quien de verdad conocías", subtitle: "Criterio ante todo", consequences: { moral: 3, reputacion: 2 } },
+      { id: "b", label: "Decir que sí a casi todo", subtitle: "Total, hay para todos", consequences: { patrimonio: -4000, moral: 2, rel_aficion: 1 } },
+      {
+        id: "c",
+        label: "Prestarle una cantidad grande a uno de ellos",
+        subtitle: "\"Te lo devuelvo seguro\"",
+        consequences: {},
+        resolve: {
+          baseChance: 0.35,
+          success: { text: "Te lo devuelve puntual, con intereses de gratitud eterna. Uno de los pocos que cumple su palabra.", consequences: { patrimonio: 2000, moral: 3 } },
+          fail: { text: "Nunca vuelves a ver ese dinero ni, la mitad de las veces, a esa persona.", consequences: { patrimonio: -6000, moral: -4 } },
+        },
+      },
+    ],
+  },
+  {
+    id: "prensa-ex-companero-pundit",
+    category: "prensa",
+    title: "Un excompañero te critica en la tele",
+    description:
+      "Un exjugador con el que compartiste vestuario hace tiempo, ahora comentarista, te dedica minutos enteros en un plató criticando tu actitud y tu rendimiento. Alguien te manda el vídeo sin que se lo pidas.",
+    minWeek: 25,
+    options: [
+      { id: "a", label: "Responderle en una entrevista", subtitle: "Sin insultos, pero sin callarte", consequences: { fama: 3, reputacion: -1 } },
+      {
+        id: "b",
+        label: "Llamarle en privado para aclararlo",
+        subtitle: "De jugador a jugador",
+        consequences: {},
+        resolve: {
+          baseChance: 0.55,
+          success: { text: "La conversación destensa todo: reconoce que se pasó y hasta lo dice en el siguiente programa.", consequences: { moral: 3, reputacion: 3 } },
+          fail: { text: "Cuelga sin ceder terreno y al día siguiente lo cuenta todo, tergiversado, en directo.", consequences: { moral: -3, fama: 2 } },
+        },
+      },
+      { id: "c", label: "Ignorarlo del todo", subtitle: "El campo hablará", consequences: { reputacion: 1 } },
+    ],
+  },
+  {
+    id: "rep-asesor-financiero-cripto",
+    category: "representante",
+    title: "Un asesor te promete duplicar tu dinero",
+    description:
+      "Un asesor financiero que no es tu agente contacta contigo directamente: dice tener acceso a una inversión en criptomonedas \"garantizada\" que duplicará lo que metas en seis meses. Tiene una presentación muy convincente.",
+    minWeek: 15,
+    options: [
+      { id: "a", label: "Pasarle el contacto a tu representante antes de nada", subtitle: "Que lo filtre él", consequences: { rel_representante: 2 } },
+      {
+        id: "b",
+        label: "Invertir una parte de tus ahorros",
+        subtitle: "Confiar en la presentación",
+        consequences: {},
+        resolve: {
+          baseChance: 0.25,
+          success: { text: "Contra todo pronóstico, la inversión sube y multiplicas lo puesto. El asesor se victoriza; tú, con dudas, retiras las ganancias.", consequences: { patrimonio: 15000, moral: 2 } },
+          fail: { text: "El proyecto se hunde de la noche a la mañana y el asesor desaparece del mapa. Ni rastro del dinero.", consequences: { patrimonio: -20000, moral: -5, rel_representante: -1 } },
+        },
+      },
+      { id: "c", label: "Rechazarlo de plano", subtitle: "Demasiado bonito para ser verdad", consequences: { reputacion: 1 } },
+    ],
+  },
+  {
+    id: "rep-pedir-carta-libertad",
+    category: "representante",
+    title: "Pides salir del club",
+    description:
+      "Estás convencido de que ya has agotado tu etapa aquí. Le pides a tu representante que mueva ficha para forzar una salida, aunque el club, de momento, no quiere ni oír hablar de venderte.",
+    minWeek: 40,
+    options: [
+      {
+        id: "a",
+        label: "Hacerlo público en una entrevista",
+        subtitle: "Presión desde fuera",
+        consequences: {},
+        resolve: {
+          baseChance: 0.45,
+          success: { text: "La presión mediática funciona: el club empieza a escuchar ofertas antes de lo previsto.", consequences: { fama: 3, rel_aficion: -4, rel_representante: 2 } },
+          fail: { text: "La afición se te echa encima por \"faltar al escudo\" y el club se cierra en banda todavía más.", consequences: { fama: 1, rel_aficion: -8, moral: -4 } },
+        },
+      },
+      { id: "b", label: "Dejar que tu representante lo gestione en privado", subtitle: "Sin ruido", consequences: { rel_representante: 3, moral: -1 } },
+      { id: "c", label: "Echarte atrás y quedarte", subtitle: "No merece la pena el conflicto", consequences: { rel_entrenador: 2, moral: -2 } },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "Si lo haces público, ¿qué dices exactamente en la entrevista?",
+  },
+  {
+    id: "sel-convocatoria-snub",
+    category: "especial",
+    title: "Te dejan fuera de la convocatoria",
+    description:
+      "Pese a tu buen momento, el seleccionador hace pública la lista y tu nombre no aparece. Los medios se preguntan por qué en directo; tú lo primero que sientes es rabia.",
+    minWeek: 30,
+    minMedia: 60,
+    options: [
+      {
+        id: "a",
+        label: "Pedir explicaciones directamente",
+        subtitle: "Cara a cara",
+        consequences: {},
+        resolve: {
+          baseChance: 0.4,
+          success: { text: "El seleccionador te da una razón concreta (una posición muy cubierta) y te promete la próxima ventana. Te quedas más tranquilo.", consequences: { moral: 3, reputacion: 1 } },
+          fail: { text: "La conversación no aclara nada y te quedas con más dudas que antes.", consequences: { moral: -3 } },
+        },
+      },
+      { id: "b", label: "Convertirlo en motivación silenciosa", subtitle: "Que hablen los números", consequences: { forma: 3, moral: 1 } },
+      { id: "c", label: "Quejarte públicamente", subtitle: "Que se sepa cómo te sientes", consequences: { fama: 2, reputacion: -2, moral: 1 } },
+    ],
+  },
+  {
+    id: "esp-comparado-nueva-joya",
+    category: "especial",
+    title: "La nueva joya de la cantera te compara",
+    description:
+      "Sube al primer equipo un canterano de 17 años con una calidad que llama la atención de todo el club. En la sala de prensa te preguntan, sin ningún tacto, si \"tienes miedo de que te quite el sitio\".",
+    minWeek: 25,
+    options: [
+      { id: "a", label: "Apadrinarlo en público", subtitle: "Grandeza, no amenaza", consequences: { reputacion: 4, rel_vestuario: 3, moral: 1 } },
+      { id: "b", label: "Responder con ambigüedad calculada", subtitle: "Ni sí ni no", consequences: { reputacion: 1 } },
+      { id: "c", label: "Dejar que se note que te incomoda", subtitle: "Sincero, aunque no quede bien", consequences: { moral: -1, reputacion: -2, forma: 2 } },
+    ],
+  },
+  {
+    id: "ves-perder-capitania",
+    category: "vestuario",
+    title: "Te avisan de que perderás el brazalete",
+    description:
+      "El entrenador te llama a su despacho: la próxima temporada, el brazalete de capitán pasará a otro jugador más joven. Te lo dice con respeto, pero la decisión ya está tomada.",
+    minWeek: 35,
+    options: [
+      { id: "a", label: "Aceptarlo con deportividad", subtitle: "El vestuario por encima del ego", consequences: { rel_entrenador: 3, rel_vestuario: 2, moral: -1 } },
+      {
+        id: "b",
+        label: "Pedir explicaciones",
+        subtitle: "Quieres entenderlo",
+        consequences: {},
+        resolve: {
+          baseChance: 0.5,
+          success: { text: "El entrenador te explica que es una apuesta de futuro, no un reproche a tu liderazgo. Te vas más en paz.", consequences: { moral: 2, rel_entrenador: 1 } },
+          fail: { text: "La conversación se queda corta y te vas con la sensación de que hay algo que no te cuenta.", consequences: { moral: -3, rel_entrenador: -1 } },
+        },
+      },
+      { id: "c", label: "Plantear que quizá sea hora de otro club", subtitle: "Sentirte de más aquí", consequences: { rel_representante: 2, moral: -2 } },
+    ],
+  },
+  {
+    id: "vid-opinion-politica-trampa",
+    category: "prensa",
+    title: "Te preguntan por un tema que no es fútbol",
+    description:
+      "En rueda de prensa, un periodista aprovecha para preguntarte por un asunto de actualidad que no tiene nada que ver con el partido. Todas las cámaras esperan tu respuesta.",
+    minWeek: 20,
+    options: [
+      { id: "a", label: "Responder con cautela y volver al fútbol", subtitle: "Diplomacia", consequences: { reputacion: 2 } },
+      { id: "b", label: "Dar tu opinión sin filtro", subtitle: "Decir lo que piensas", consequences: { fama: 4, reputacion: -2, rel_aficion: -1 } },
+      { id: "c", label: "Negarte a responder", subtitle: "Esto no toca aquí", consequences: { reputacion: 1, fama: -1 } },
+    ],
+  },
+  {
+    id: "ent-jugar-con-dolor",
+    category: "entrenamiento",
+    title: "Jugar dolorido el partido más importante",
+    description:
+      "Llegas a la semana del partido más importante del año con una molestia que el fisio no ve clara del todo. El equipo te necesita, pero forzar tiene riesgo real.",
+    minWeek: 20,
+    options: [
+      {
+        id: "a",
+        label: "Jugar igualmente, apretando los dientes",
+        subtitle: "El equipo primero",
+        consequences: {},
+        resolve: {
+          baseChance: 0.5,
+          statModifier: "forma",
+          success: { text: "Aguantas los 90 minutos y sales decisivo. Nadie en la grada sabe lo que te costó.", consequences: { fama: 4, moral: 5, rel_vestuario: 3 } },
+          fail: { text: "La molestia se agrava a mitad de partido y te tienes que retirar entre gestos de dolor.", consequences: { forma: -8, moral: -4 } },
+        },
+      },
+      { id: "b", label: "Ser prudente y descansar", subtitle: "Pensar en el resto de temporada", consequences: { forma: 2, rel_entrenador: -2, moral: -2 } },
+      {
+        id: "c",
+        label: "Pedir una infiltración para aguantar",
+        subtitle: "Jugársela del todo",
+        consequences: {},
+        resolve: {
+          baseChance: 0.6,
+          success: { text: "La infiltración funciona: no sientes nada durante el partido.", consequences: { fama: 3, moral: 3 } },
+          fail: { text: "El efecto se pasa demasiado pronto y terminas el partido cojeando de verdad.", consequences: { forma: -10, moral: -3 } },
+        },
+      },
+    ],
+  },
+  {
+    id: "ves-companero-crisis-personal",
+    category: "vestuario",
+    title: "Un compañero te pide ayuda en privado",
+    description:
+      "Un compañero de vestuario te confiesa, muy afectado, que tiene una deuda de juego que no puede pagar y que no sabe a quién más acudir. Te pide que no se lo cuentes a nadie.",
+    minWeek: 20,
+    options: [
+      { id: "a", label: "Prestarle el dinero sin condiciones", subtitle: "Un compañero es un compañero", consequences: { patrimonio: -5000, rel_vestuario: 6, moral: 2 } },
+      { id: "b", label: "Ayudarle a buscar ayuda profesional", subtitle: "La solución de fondo", consequences: { rel_vestuario: 4, moral: 3, reputacion: 1 } },
+      { id: "c", label: "Decirle que no puedes meterte en esto", subtitle: "No es tu responsabilidad", consequences: { rel_vestuario: -3, moral: -1 } },
+    ],
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices exactamente?",
+  },
+  {
+    id: "prensa-dia-mediatico-agotador",
+    category: "prensa",
+    title: "Día maratón de medios antes del partidazo",
+    description:
+      "La víspera del partido más esperado del mes se llena de entrevistas, grabaciones para el sponsor y sesiones de fotos que el club ha comprometido sin preguntarte. Llegas al entrenamiento agotado antes de empezar.",
+    minWeek: 15,
+    options: [
+      { id: "a", label: "Cumplir con todo sin quejarte", subtitle: "Parte del trabajo", consequences: { fama: 3, forma: -2, reputacion: 1 } },
+      { id: "b", label: "Pedir que recorten la agenda", subtitle: "Cuidar el partido", consequences: { forma: 1, rel_entrenador: 1, fama: -1 } },
+      { id: "c", label: "Saltarte alguna cita sin avisar", subtitle: "Priorizar el descanso", consequences: { forma: 2, reputacion: -2, patrimonio: -1000 } },
+    ],
+  },
 ];

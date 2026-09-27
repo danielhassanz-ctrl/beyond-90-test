@@ -23,6 +23,8 @@ const FAMA = "Así es mi fama. Atrévete a vivir la tuya.";
 const PRENSA = "Así hablan de mí. ¿Qué dirían de ti?";
 const BODA = "Este es mi gran día. Empieza el tuyo.";
 const DM = "Así me escriben cuando marco. ¿A ti quién te escribiría?";
+const DUELO = "Así fue nuestro duelo. ¿Quién sería tu rival?";
+const HERMANO = "Así seguimos el sueño en familia. ¿Quién te acompaña al tuyo?";
 const SEGUNDA_VIDA = "Así sigue mi historia. ¿Cuál sería la tuya?";
 export const DEFAULT_TAGLINE = "Esta es mi carrera. ¿Cuál es la tuya?";
 
@@ -48,6 +50,8 @@ const SHARE_TAGLINES: Record<string, string> = {
   primer_gol: GOL,
   primer_hat_trick: GOL,
   gol_chilena: GOL,
+  duelo_rival: DUELO,
+  hermano_debut: HERMANO,
 
   titulo: TITULO,
   primer_titulo: TITULO,
