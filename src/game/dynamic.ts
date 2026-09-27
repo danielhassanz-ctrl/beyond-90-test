@@ -652,7 +652,21 @@ function resolveMarket(
   const accept = choiceId === "aceptar" || (interp !== null && wantsOut && choiceId !== "rechazar");
 
   if (choiceId === "negociar") {
-    const ok = s.overall >= 78 || s.agent.trust >= 65 ? Math.random() < 0.6 : Math.random() < 0.3;
+    // Negotiation outcomes must be reproducible for a career/save. Using Math.random()
+    // here made the same player, offer and choice produce a different result after reload.
+    const negotiationKey = [
+      "transfer-negotiation",
+      s.seasonIndex,
+      s.sceneCount,
+      s.clubId,
+      clubId,
+      kind,
+      salary,
+      years,
+      choiceId,
+    ].join("|");
+    const roll = hash(careerSeed(s), negotiationKey) / 0x80000000;
+    const ok = roll < (s.overall >= 78 || s.agent.trust >= 65 ? 0.6 : 0.3);
     if (ok) {
       if (kind === "renewal") {
         s.salary = Math.round(salary * 1.15);
