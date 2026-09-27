@@ -28,6 +28,8 @@ jobs:
         run: git diff --exit-code -- package-lock.json
       - name: Typecheck
         run: npm run typecheck
+      - name: Reject escaped source artifacts
+        run: node --import tsx scripts/source-artifact-smoke.ts
       - name: Life and Patrimony chronology QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/money-life-chronology-smoke.ts
       - name: Early-career choice consequence divergence QA
