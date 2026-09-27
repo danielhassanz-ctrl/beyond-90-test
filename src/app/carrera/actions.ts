@@ -124,7 +124,17 @@ export async function resolveEvent(formData: FormData) {
     // Mensajes por redes (social-dm.ts): tampoco avanzan la semana.
     event.id.startsWith("social-dm-") ||
     // Vida de pretemporada (preseason-life.ts): tampoco avanza la semana.
-    event.id.startsWith("preseason-ev-");
+    event.id.startsWith("preseason-ev-") ||
+    // Arcos narrativos de varios capítulos (arco-*.ts): se comprueban ANTES
+    // que si hay un partido real programado esta semana (ver
+    // pickNextEventDynamic en engine.ts) — sin bloquear el calendario aquí
+    // igual que mercado-/social-dm-/preseason-ev-, un capítulo de arco caído
+    // justo en semana de partido de liga se comería ese partido entero sin
+    // que se llegara a narrar nunca, el mismo bug de fondo ya corregido
+    // antes para el resto de eventos "fuera de calendario".
+    event.id.startsWith("arco-rival-") ||
+    event.id.startsWith("arco-hermano-") ||
+    event.id.startsWith("arco-patrocinador-");
   // Un partido resuelto (matchday-*) TIENE que avanzar la semana siempre:
   // si se deja al avance probabilístico normal, cuando sale 0 el jugador
   // vuelve a caer en la misma jornada y el partido se narra dos veces con
