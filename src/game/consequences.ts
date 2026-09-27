@@ -278,7 +278,13 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
   switch (card.kind as Kind) {
     case "cons_bench": {
       if (choiceId === "hablar") {
-        const rollKey = `${s.careerSeed ?? 0}|${s.seasonIndex}|${s.sceneCount}|cons_bench|hablar`;\n        let roll = 2166136261;\n        for (let i = 0; i < rollKey.length; i += 1) {\n          roll ^= rollKey.charCodeAt(i);\n          roll = Math.imul(roll, 16777619);\n        }\n        const ok = s.discipline >= 55 || (roll >>> 0) / 4294967296 < 0.45;
+        const rollKey = `${s.careerSeed ?? 0}|${s.seasonIndex}|${s.sceneCount}|cons_bench|hablar`;
+        let roll = 2166136261;
+        for (let i = 0; i < rollKey.length; i += 1) {
+          roll ^= rollKey.charCodeAt(i);
+          roll = Math.imul(roll, 16777619);
+        }
+        const ok = s.discipline >= 55 || (roll >>> 0) / 4294967296 < 0.45;
         if (ok) {
           rel(s, "coach", 22);
           s.flags["nolist"] = 0;
