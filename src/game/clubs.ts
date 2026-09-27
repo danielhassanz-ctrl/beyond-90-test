@@ -389,7 +389,8 @@ export function competitionFor(stage: Stage, def: ClubDef): string {
 function youthPool(def: ClubDef): ClubDef[] {
   const same = CLUB_POOL.filter((d) => d.region === def.region && d.id !== def.id);
   const others = CLUB_POOL.filter((d) => d.region !== def.region && d.prestige <= 3);
-  return same.length >= 5 ? same : [...same, ...shuffle(others).slice(0, 6)];
+  const deterministicOthers = [...others].sort((a, b) => hash(`${def.id}|youth-opponent|${a.id}`) - hash(`${def.id}|youth-opponent|${b.id}`));
+  return same.length >= 5 ? same : [...same, ...deterministicOthers.slice(0, 6)];
 }
 
 function opponentPool(stage: Stage, def: ClubDef): ClubDef[] {
