@@ -652,7 +652,8 @@ function resolveMarket(
   const accept = choiceId === "aceptar" || (interp !== null && wantsOut && choiceId !== "rechazar");
 
   if (choiceId === "negociar") {
-    const ok = s.overall >= 78 || s.agent.trust >= 65 ? Math.random() < 0.6 : Math.random() < 0.3;
+    const negotiationChance = s.overall >= 78 || s.agent.trust >= 65 ? 60 : 30;
+    const ok = (hash(careerSeed(s), `market-negotiate:${s.seasonIndex}:${s.sceneCount}:${kind}:${clubId}:${salary}:${years}`) % 100) < negotiationChance;
     if (ok) {
       if (kind === "renewal") {
         s.salary = Math.round(salary * 1.15);
