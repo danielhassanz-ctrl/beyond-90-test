@@ -1,6 +1,6 @@
 ---
 name: narrativas-futbol
-description: Genera tandas de eventos narrativos nuevos para Beyond 90 (src/lib/narrative/events.ts) basados en patrones reales de carreras futbolísticas de los últimos ~15 años — sagas de traspasos, cesiones, vueltas de lesión, choques culturales al fichar fuera, crisis a mitad de carrera, declives, segundas oportunidades. Usar esta skill siempre que el usuario pida "más eventos", "más narrativas", "nuevas historias de fútbol", contenido inspirado en carreras reales, o cuando el contenido narrativo del juego se sienta repetitivo o poco realista. Nunca usa jugadores reales identificables: solo el patrón de la historia, nunca la biografía de una persona concreta.
+description: Genera tandas de eventos narrativos nuevos para Beyond 90 (src/lib/narrative/events.ts y los pools modulares como preseason-life.ts, market-window.ts, social-dm.ts, agent-events.ts) basados en patrones reales de carreras futbolísticas de los últimos ~15 años — sagas de traspasos, cesiones, vueltas de lesión, choques culturales al fichar fuera, crisis a mitad de carrera, declives, segundas oportunidades. También construye ARCOS NARRATIVOS de varios capítulos que reaparecen y evolucionan a lo largo de la carrera del jugador (una rivalidad que vuelve cada temporada, un hilo familiar/de negocio que avanza, una narrativa de prensa que cambia de fase), no solo escenas sueltas. Usar esta skill siempre que el usuario pida "más eventos", "más narrativas", "nuevas historias de fútbol", "historias que vayan pasando durante la carrera", contenido inspirado en carreras reales, o cuando el contenido narrativo del juego se sienta repetitivo o poco realista. Nunca usa jugadores reales identificables: solo el patrón de la historia, nunca la biografía de una persona concreta.
 ---
 
 # Narrativas de fútbol basadas en patrones reales
@@ -40,10 +40,25 @@ no debe ser reconocible como la historia de nadie en particular.
 
 Antes de escribir nada, repasa `src/lib/narrative/events.ts` (grep por
 `id: "` y por los prefijos de categoría: `par-`, `fork-`, `esp-`, `vid-`,
-`fama-`, `pre-`, `ves-`, `ent-`, `sel-`) para no repetir un tema que ya
-está cubierto. Con más de 450 eventos ya escritos, la parte que más valor
-aporta de esta skill es encontrar huecos temáticos reales, no añadir una
-quinta variante de algo que ya existe cinco veces.
+`fama-`, `pre-`, `ves-`, `ent-`, `sel-`) y los pools modulares que ya
+existen para huecos temáticos concretos: `preseason-life.ts` (vida de
+pretemporada), `market-window.ts` (rumores/ofertas de mercado),
+`social-dm.ts` (mensajes por redes), `agent-events.ts` (llamadas del
+representante), `loan-fork.ts` (cesiones). No repitas un tema que ya está
+cubierto en ninguno de ellos. Con cientos de eventos ya escritos, la parte
+que más valor aporta de esta skill es encontrar huecos temáticos reales,
+no añadir una quinta variante de algo que ya existe cinco veces.
+
+**Antes de escribir, decide el formato**: ¿es una escena suelta que puede
+salir en cualquier momento (→ sección "3. Escribir los eventos" más
+abajo, normalmente en `events.ts` o el pool modular que más encaje), o es
+una historia que tiene sentido que **reaparezca y avance** a lo largo de
+varias semanas o temporadas (→ sección "3-bis. Arcos narrativos
+multi-capítulo")? Lo segundo es lo que pide explícitamente el pilar de
+diseño "ninguna partida igual" cuando el jugador lleva ya muchas horas: un
+rival que solo aparece una vez se olvida; un rival que te persigue durante
+tres temporadas se convierte en parte de la identidad de esa carrera
+concreta.
 
 ### 2. Investigar patrones (WebSearch)
 
@@ -97,18 +112,86 @@ convenciones ya usadas en `events.ts`:
 - **Personajes**: cualquier nombre (agente, compañero, entrenador, familia)
   es inventado. Nunca un nombre real.
 
+### 3-bis. Arcos narrativos multi-capítulo
+
+Un arco es una historia con 3-5 capítulos que se disparan en momentos
+distintos de la carrera (no la misma semana) y que se acuerda de en qué
+punto va. Ejemplos de arquetipos reales que dan buen arco: una rivalidad
+con un jugador de tu quinta que va fichando por clubes cada vez más
+grandes que tú (o al revés), un patrocinador que va subiendo de nivel de
+compromiso hasta un escándalo o una ruptura, un hilo familiar (un hermano
+que también quiere ser futbolista y su carrera avanza en paralelo a la
+tuya), una narrativa de prensa que empieza como "la joven promesa" y va
+mutando capítulo a capítulo según cómo rindas.
+
+El mecanismo técnico ya existe en el proyecto en varias formas — no hace
+falta inventar nada nuevo, solo seguir el mismo patrón:
+
+- **Estado del arco en `player.flags`** (ver `agent-events.ts` con
+  `agent_dialogue_tracker`, o `loan-fork.ts` con `loan_active` /
+  `loan_start_week`): un flag tipo `arco_<nombre>_fase` con el número o
+  nombre del capítulo en el que va ese jugador concreto, más
+  `arco_<nombre>_last_week` para no encadenar dos capítulos seguidos sin
+  que pase tiempo de por medio.
+- **Un selector `shouldTriggerX(player)`** que decide si toca el
+  siguiente capítulo: normalmente exige que haya pasado un mínimo de
+  semanas desde el capítulo anterior (5-15 según el arco) y a veces una
+  condición de progreso (media/fama/edad) para que el capítulo 3 no salga
+  antes de que el jugador esté en condiciones de vivirlo.
+- **Un builder `buildXCapituloN(player)`** por cada fase, o una función
+  única que recibe el número de fase y devuelve el `GameEvent` de esa
+  fase — cada fase avanza el flag de fase al resolverse (en
+  `consequences.flags`, igual que hace `market-window.ts` con
+  `interestFlags`).
+- **Wiring en `engine.ts`**: añade el check `shouldTriggerX` junto a los
+  que ya existen en `pickNextEventDynamic` (busca
+  `shouldTriggerSocialDm` o `shouldTriggerPreseasonLife` como referencia
+  de dónde y cómo se engancha), respetando el guard `midMatch` para no
+  colarse a mitad de un partido.
+- **El desenlace importa**: la última fase de un arco es un buen momento
+  para un hito compartible (`isMilestone: true` + `imageScene`) si el
+  arco termina en algo grande (ganarle al rival de siempre en una final,
+  romper con el patrocinador públicamente, que tu hermano debute en tu
+  mismo equipo). No todos los arcos necesitan terminar bien — un arco que
+  acaba en fracaso o decepción es igual de válido y a veces más
+  memorable.
+
+Antes de proponer un arco nuevo, decide también su **frecuencia real**:
+la mayoría de las carreras solo deberían ver 1-3 arcos completos, no
+media docena en marcha a la vez compitiendo por las mismas semanas — así
+que la condición de disparo del capítulo 1 de cada arco debe ser lo
+bastante específica (una racha de partidos, cierto nivel de fama, cierto
+club) para que no todos los arcos empiecen a la vez en toda partida.
+
 ### 4. Entregar el resultado
 
-Por defecto, añade los eventos directamente a `src/lib/narrative/events.ts`
-(cerca de eventos de la misma categoría o del mismo hilo temático) y
-después corre:
+Escenas sueltas van a `src/lib/narrative/events.ts` (cerca de eventos de
+la misma categoría o del mismo hilo temático) o al pool modular que
+corresponda si es un tema muy específico (mercado, redes, pretemporada).
+Un arco multi-capítulo va en su propio archivo nuevo
+(`src/lib/narrative/arco-<nombre>.ts`), siguiendo la misma forma que
+`loan-fork.ts` o `social-dm.ts`, más el wiring correspondiente en
+`engine.ts`.
+
+En ambos casos, después de escribir:
 
 ```bash
-npx tsc --noEmit
+npx tsc --noEmit -p .
 npx eslint src
 ```
 
-Si el usuario solo quiere ver el borrador antes de tocar el archivo,
-entrega los objetos `GameEvent` en un bloque de código TypeScript con una
-frase por evento explicando en qué patrón real se basa, y espera
-confirmación antes de editar `events.ts`.
+Y, antes de dar nada por terminado, una comprobación local **gratis** (sin
+llamar a ninguna API — env -u ANTHROPIC_API_KEY) que simule cientos o
+miles de invocaciones del builder nuevo sobre jugadores de prueba,
+comprobando que ningún evento sale con `undefined`/`[object`/`NaN`, que
+las opciones tienen sentido y que el tope de repetición (si lo hay) frena
+de verdad. El patrón exacto de este script está en cómo se verificó
+`preseason-life.ts` y `social-dm.ts` en esta misma carrera del proyecto.
+Solo con esa comprobación en verde se hace commit y se despliega (ver
+skill `revision-pre-despliegue`).
+
+Si el usuario solo quiere ver el borrador antes de tocar nada, entrega los
+objetos `GameEvent` (o el esquema del arco: fases, flags, condiciones de
+disparo) en un bloque de código TypeScript con una frase por evento/fase
+explicando en qué patrón real se basa, y espera confirmación antes de
+escribir en el repositorio.
