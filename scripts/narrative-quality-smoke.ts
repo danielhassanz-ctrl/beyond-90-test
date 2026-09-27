@@ -168,7 +168,8 @@ function assertSourceHasNoLegacyAgentCheck() {
       }
       if (!entry.isFile() || !entry.name.endsWith(".ts")) continue;
       const source = fs.readFileSync(path, "utf8");
-      assert(!source.includes("Math.random("), `${path} contains nondeterministic Math.random; career outcomes must replay from career state`);
+      const executableSource = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+      assert(!executableSource.includes("Math.random("), `${path} contains nondeterministic Math.random; career outcomes must replay from career state`);
     }
   }
 }
