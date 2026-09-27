@@ -60,7 +60,7 @@ const NEGATIVE_RULES: Rule[] = [
 
 const POSITIVE_RULES: Rule[] = [
   { kind: "cons_coach_backing", flag: "cons_coach_backing_done", fires: (s) => s.rel.coach >= 78 && s.stage !== "youth" },
-  { kind: "cons_dressing_backing", flag: "cons_dressing_backing_done", fires: (s) => s.rel.dressing >= 80 && s.stage === "first" },
+  { kind: "cons_dressing_backing", flag: "cons_dressing_backing_done", fires: (s) => !s.injury && s.rel.dressing >= 80 && s.stage === "first" },
   { kind: "cons_agent_loyalty", flag: "cons_agent_loyalty_done", fires: (s) => s.agent.present && s.rel.agent >= 78 && s.agent.trust >= 65 },
   { kind: "cons_family_support", flag: "cons_family_support_done", fires: (s) => s.rel.family >= 82 && s.age >= 18 },
   { kind: "cons_fans_chant", flag: "cons_fans_chant_done", fires: (s) => !s.injury && s.rel.fans >= 82 && s.stage === "first" && s.fame >= 32 },
