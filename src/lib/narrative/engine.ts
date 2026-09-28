@@ -343,6 +343,21 @@ const MATCH_SPECIAL_MOMENTS: GameEvent[] = EVENTS.filter((event) => MATCH_SPECIA
  * inicio), vid-paparazzi-cita (duplica pre-paparazzi), vid-diego-reaparece
  * (depende de otro evento previo), rep-primera-oferta (el representante
  * ya se elige al empezar) y pat-bota-firma (ya está en sponsorships.ts).
+ *
+ * Auditoría posterior (sesión "sigue puliendo cosas"): dos casos más de
+ * la misma familia, encontrados repasando de nuevo qué ids de events.ts
+ * no caía ningún selector. Se dejan también fuera a propósito, no son
+ * huérfanos sin más — cada uno tiene un sistema dinámico más nuevo que lo
+ * sustituye por completo:
+ * - fork-cesion: superado por loan-fork.ts, que genera su propio evento
+ *   de cesión con id `fork-cesion-<timestamp>` (mismo prefijo, pero es
+ *   un objeto distinto y sí está conectado — ver shouldTriggerLoanFork).
+ * - fork-retiro-pro: superado por transition-ready-to-retire
+ *   (career-transitions.ts / buildReadyToRetireEvent). Su id sigue
+ *   apareciendo a propósito en actions.ts/retiro/page.tsx/
+ *   event-tracking.ts junto al nuevo — compatibilidad hacia atrás por si
+ *   algún jugador real se retiró con el sistema viejo antes del cambio,
+ *   no una referencia rota.
  */
 const LEGACY_LIFE_EVENT_IDS = new Set([
   "ent-sesion-extra", "ent-lesion-susto", "ent-video-analisis", "ent-descanso",
@@ -2903,28 +2918,58 @@ REGLAS:
     }
   }
 
-  // Fallback si la IA falla (raramente debería pasar)
+  // Fallback si la IA falla (raramente debería pasar). Antes era un único
+  // texto fijo ("Momento de reflexión") — si la IA fallaba varias veces
+  // seguidas (un rate limit, una caída puntual), el jugador podía ver
+  // literalmente la misma pantalla calcada turno tras turno, justo lo
+  // contrario del pilar "nunca texto genérico o de relleno". Con varias
+  // variantes, aunque sea un parche de emergencia, no se repite igual dos
+  // veces seguidas.
   console.error(
     `[pickNextEventDynamic] CRITICAL: IA generation returned null for ${player.last_name}, returning placeholder fallback`
   );
-  return {
-    id: `fallback-${Date.now()}`,
-    category: "vida",
-    title: "Momento de reflexión",
-    description: "Es un buen momento para pensar en dónde estás en tu carrera.",
-    options: [
-      {
-        id: "0",
-        label: "Seguir adelante",
-        subtitle: "Concentrarte en el siguiente partido",
-        consequences: {},
-      },
-      {
-        id: "1",
-        label: "Descansar",
-        subtitle: "Tomarte un tiempo para recuperarte",
-        consequences: { moral: 3 },
-      },
-    ],
-  };
+  const FALLBACK_VARIANTS: GameEvent[] = [
+    {
+      id: "fallback-reflexion",
+      category: "vida",
+      title: "Un momento de calma",
+      description: "Entre entrenamiento y entrenamiento, te paras un segundo a pensar en dónde estás de tu carrera y hacia dónde quieres llevarla.",
+      options: [
+        { id: "0", label: "Seguir adelante", subtitle: "Concentrarte en el siguiente partido", consequences: {} },
+        { id: "1", label: "Tomarte un respiro", subtitle: "Recuperar antes de seguir", consequences: { moral: 3 } },
+      ],
+    },
+    {
+      id: "fallback-rutina",
+      category: "entrenamiento",
+      title: "Una semana sin sobresaltos",
+      description: "No pasa nada digno de mención: entrenas, descansas, cuidas los detalles. A veces una carrera también se construye en las semanas tranquilas.",
+      options: [
+        { id: "0", label: "Aprovechar para pulir detalles técnicos", subtitle: "Constancia", consequences: { forma: 2 } },
+        { id: "1", label: "Desconectar del todo unos días", subtitle: "Cargar pilas", consequences: { moral: 3 } },
+      ],
+    },
+    {
+      id: "fallback-vestuario",
+      category: "vestuario",
+      title: "Una tarde tranquila en el vestuario",
+      description: "Nada urgente que resolver hoy: solo el runrún habitual del vestuario, bromas de siempre y la rutina de cualquier semana normal.",
+      options: [
+        { id: "0", label: "Sumarte al ambiente del grupo", subtitle: "Cohesión", consequences: { rel_vestuario: 2 } },
+        { id: "1", label: "Quedarte al margen, concentrado en lo tuyo", subtitle: "A tu rollo", consequences: { forma: 1 } },
+      ],
+    },
+    {
+      id: "fallback-casa",
+      category: "vida",
+      title: "Una noche tranquila en casa",
+      description: "Un día sin partido ni entrevistas: por una vez, tu vida se parece a la de cualquiera. Aprovechas para desconectar del fútbol un rato.",
+      options: [
+        { id: "0", label: "Ponerte al día con la gente que quieres", subtitle: "Vida fuera del campo", consequences: { moral: 3 } },
+        { id: "1", label: "Ver vídeos de tu próximo rival", subtitle: "Nunca del todo desconectado", consequences: { media: 1 } },
+      ],
+    },
+  ];
+  const variant = FALLBACK_VARIANTS[Math.floor(Math.random() * FALLBACK_VARIANTS.length)];
+  return { ...variant, id: `${variant.id}-${Date.now()}` };
 }

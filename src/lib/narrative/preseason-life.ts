@@ -475,8 +475,8 @@ const TEMPLATES: Tpl[] = [
     key: "maldicion_vestuario",
     title: "La taquilla maldita",
     tone: ["surrealista"],
-    desc: (c) => `Un veterano jura que la taquilla del fondo del vestuario "trae mala suerte": el año pasado, todo el que la usó se lesionó. Es la única que queda libre y te toca a ti.`,
-    opts: (c) => [
+    desc: () => `Un veterano jura que la taquilla del fondo del vestuario "trae mala suerte": el año pasado, todo el que la usó se lesionó. Es la única que queda libre y te toca a ti.`,
+    opts: () => [
       { label: "Usarla sin darle importancia", subtitle: "Supersticiones aparte", consequences: { rel_entrenador: 1 }, resolve: { baseChance: 0.6, success: { text: "No pasa absolutamente nada, claro. La superstición se apaga sola en un par de semanas.", consequences: { moral: 2, rel_vestuario: 2 } }, fail: { text: "Te tuerces un tobillo la primera semana de nada. El vestuario entero jura que 'ya lo sabía'.", consequences: { forma: -4, moral: -2, rel_vestuario: 1 } } } },
       { label: "Pedir un cambio de taquilla", subtitle: "Mejor no arriesgar", consequences: { rel_vestuario: -1, moral: 1 } },
       { label: "Organizar un ritual con el equipo", subtitle: "Purificarla entre todos", consequences: { rel_vestuario: 4, moral: 3 } },
@@ -487,7 +487,7 @@ const TEMPLATES: Tpl[] = [
     title: "El reto de moda te alcanza",
     tone: ["gracioso"],
     desc: (c) => `Todo el vestuario está enganchado a un reto viral absurdo — bailar en equilibrio sobre un balón medicinal mientras cantas el himno. ${c.mate2} ya lo intentó y acabó en el suelo.`,
-    opts: (c) => [
+    opts: () => [
       {
         label: "Intentarlo delante de todos",
         subtitle: "Sin red",
@@ -527,7 +527,7 @@ const TEMPLATES: Tpl[] = [
     title: "El fan que jura ser tu primo perdido",
     tone: ["gracioso", "surrealista"],
     desc: (c) => `${c.stranger} se presenta en la puerta de entrenamientos con un árbol genealógico dibujado a mano y fotos borrosas de una boda de los años 90, convencido de que sois primos separados al nacer.`,
-    opts: (c) => [
+    opts: () => [
       { label: "Escucharle la historia entera", subtitle: "Por curiosidad", consequences: { moral: 2, rel_aficion: 2 } },
       { label: "Hacerte una foto con él y seguirle la broma", subtitle: `"Primo, cuánto tiempo"`, consequences: { fama: 3, moral: 2 } },
       { label: "Pedirle amablemente que se vaya", subtitle: "Esto empieza a dar miedo", consequences: { reputacion: 1, moral: -1 } },
@@ -538,7 +538,7 @@ const TEMPLATES: Tpl[] = [
     title: "El chef se pone experimental",
     tone: ["gracioso"],
     desc: (c) => `El nuevo chef de concentración presenta el menú de la semana: "algas fermentadas con proteína de grillo, receta del futuro". ${c.mate} ya ha puesto cara de circunstancias.`,
-    opts: (c) => [
+    opts: () => [
       {
         label: "Probarlo sin rechistar",
         subtitle: "Confiar en la ciencia",
@@ -558,7 +558,7 @@ const TEMPLATES: Tpl[] = [
     title: "La maleta perdida en el aeropuerto",
     tone: ["gracioso"],
     desc: (c) => `Vuelves de la gira y tu maleta se ha perdido en el aeropuerto: botas, ropa y hasta tu amuleto de la suerte, desaparecidos. Tienes que entrenar con lo que te presta ${c.mate}, tres tallas más grande.`,
-    opts: (c) => [
+    opts: () => [
       { label: "Reírte de la pinta que llevas", subtitle: "Da igual la talla", consequences: { rel_vestuario: 4, moral: 3 } },
       { label: "Ir a comprar equipo nuevo", subtitle: "Solución rápida", consequences: { patrimonio: -600, moral: 1 } },
       { label: "Culpar a la aerolínea en redes", subtitle: "Que se enteren todos", consequences: { fama: 2, reputacion: -1 } },
@@ -569,7 +569,7 @@ const TEMPLATES: Tpl[] = [
     title: "El hincha que se viste exactamente igual que tú",
     tone: ["surrealista"],
     desc: (c) => `Llevas semanas viendo, siempre en la misma esquina fuera del campo de entrenamiento, a ${c.stranger}: mismo corte de pelo, mismas botas, hasta el mismo gesto al calentar. Empieza a resultar un poco inquietante.`,
-    opts: (c) => [
+    opts: () => [
       { label: "Acercarte a hablar con él", subtitle: "Salir de dudas", consequences: { moral: 2, rel_aficion: 2 } },
       { label: "Hacerte una foto juntos", subtitle: "Convertirlo en broma", consequences: { fama: 3, moral: 1 } },
       { label: "Avisar a seguridad del club", subtitle: "Por si acaso", consequences: { reputacion: 1, moral: -1 } },
@@ -608,7 +608,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "medico_revision",
     title: "Revisión médica anual",
-    desc: (c) => `El chequeo médico de pretemporada sale casi perfecto, pero el doctor se detiene un momento de más mirando una prueba: "Nada grave, pero vamos a vigilarlo de cerca este año".`,
+    desc: () => `El chequeo médico de pretemporada sale casi perfecto, pero el doctor se detiene un momento de más mirando una prueba: "Nada grave, pero vamos a vigilarlo de cerca este año".`,
     opts: () => [
       { label: "Pedir que te lo expliquen todo", subtitle: "Prefieres saberlo bien", consequences: { moral: 1, forma: 1 } },
       { label: "No darle más vueltas", subtitle: "Confiar en el cuerpo médico", consequences: { moral: -1 } },
@@ -618,7 +618,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "sponsor_evento",
     title: "Evento con el patrocinador principal",
-    desc: (c) => `El club te lleva a un evento con el patrocinador de la camiseta: cóctel, ejecutivos de traje y un directivo que insiste en enseñarte fotos de su hijo, que "también juega muy bien".`,
+    desc: () => `El club te lleva a un evento con el patrocinador de la camiseta: cóctel, ejecutivos de traje y un directivo que insiste en enseñarte fotos de su hijo, que "también juega muy bien".`,
     opts: () => [
       { label: "Ser encantador toda la noche", subtitle: "Relaciones públicas", consequences: { fama: 3, reputacion: 2, forma: -1 } },
       { label: "Cumplir lo justo y volver pronto", subtitle: "Descansar es lo primero", consequences: { forma: 1, reputacion: -1 } },
@@ -629,7 +629,7 @@ const TEMPLATES: Tpl[] = [
     key: "photocall_incomodo",
     title: "La foto oficial no sale como esperabas",
     tone: ["gracioso"],
-    desc: (c) => `En el photocall oficial de la plantilla te toca justo el segundo en el que estornudas. La foto, con los ojos cerrados y cara rarísima, se cuela en la web oficial antes de que nadie se dé cuenta.`,
+    desc: () => `En el photocall oficial de la plantilla te toca justo el segundo en el que estornudas. La foto, con los ojos cerrados y cara rarísima, se cuela en la web oficial antes de que nadie se dé cuenta.`,
     opts: () => [
       { label: "Reírte de la foto en tus redes", subtitle: "Autocrítica ganadora", consequences: { fama: 4, moral: 3, rel_aficion: 2 } },
       { label: "Pedir que la repitan", subtitle: "Salvar el honor", consequences: { reputacion: 1 } },
@@ -651,7 +651,7 @@ const TEMPLATES: Tpl[] = [
     key: "paseo_playa",
     title: "Día de piña en la playa",
     tone: ["gracioso"],
-    desc: (c) => `El cuerpo técnico organiza una tarde libre en la playa como premio tras una semana dura: fútbol descalzo en la arena, bañador y cero tácticas por unas horas.`,
+    desc: () => `El cuerpo técnico organiza una tarde libre en la playa como premio tras una semana dura: fútbol descalzo en la arena, bañador y cero tácticas por unas horas.`,
     opts: (c) => [
       { label: "Organizar un partidillo en la arena", subtitle: `Contigo y ${c.mate} de capitanes`, consequences: { rel_vestuario: 5, moral: 4 } },
       { label: "Desconectar del todo", subtitle: "Sin balón ni pantallas", consequences: { moral: 3, forma: 1 } },
@@ -673,7 +673,7 @@ const TEMPLATES: Tpl[] = [
     key: "hijo_entrenador",
     title: "El hijo del entrenador te tiene manía",
     desc: (c) => `El hijo pequeño de ${c.coach}, que anda siempre por la ciudad deportiva, ha decidido que tú eres su jugador favorito y te sigue a todas partes con un balón bajo el brazo.`,
-    opts: (c) => [
+    opts: () => [
       { label: "Entrenar un rato con él", subtitle: "Diez minutos que valen mucho", consequences: { rel_entrenador: 4, moral: 3 } },
       { label: "Regalarle una camiseta firmada", subtitle: "Un detalle bonito", consequences: { rel_entrenador: 3, patrimonio: -100, moral: 2 } },
       { label: "Pedirle a otro compañero que se ocupe", subtitle: "Ahora mismo no puedes", consequences: { rel_entrenador: -1 } },
@@ -682,7 +682,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "reportero_incomodo",
     title: "Una pregunta que se pasa de la raya",
-    desc: (c) => `En rueda de prensa, un periodista te pregunta directamente por tu vida privada, algo que nunca has compartido. Se hace un silencio incómodo en la sala.`,
+    desc: () => `En rueda de prensa, un periodista te pregunta directamente por tu vida privada, algo que nunca has compartido. Se hace un silencio incómodo en la sala.`,
     opts: () => [
       { label: "Responder con firmeza y educación", subtitle: "Marcar el límite sin dramas", consequences: { reputacion: 3, moral: 1 } },
       { label: "Levantarte y salir", subtitle: "No vas a permitirlo", consequences: { fama: 2, reputacion: -1, moral: -1 } },
@@ -693,7 +693,7 @@ const TEMPLATES: Tpl[] = [
     key: "viaje_retrasado",
     title: "Retraso eterno en el aeropuerto",
     tone: ["gracioso"],
-    desc: (c) => `El vuelo de vuelta de la gira se retrasa seis horas. La plantilla entera acampa en la sala de espera, entre partidas de cartas, siestas en el suelo y quejas al de la aerolínea.`,
+    desc: () => `El vuelo de vuelta de la gira se retrasa seis horas. La plantilla entera acampa en la sala de espera, entre partidas de cartas, siestas en el suelo y quejas al de la aerolínea.`,
     opts: (c) => [
       { label: "Organizar juegos para matar el tiempo", subtitle: `Con ${c.mate} de árbitro`, consequences: { rel_vestuario: 4, moral: 3 } },
       { label: "Aprovechar para dormir", subtitle: "Recuperar horas de sueño", consequences: { forma: 2 } },
@@ -715,7 +715,7 @@ const TEMPLATES: Tpl[] = [
     key: "veterano_retirada",
     title: "Un veterano se plantea colgar las botas",
     desc: (c) => `${c.veteran}, uno de los pesos pesados del vestuario, te confiesa en petit comité que esta puede ser su última pretemporada. "No se lo he dicho a nadie más todavía".`,
-    opts: (c) => [
+    opts: () => [
       { label: "Animarle a seguir un año más", subtitle: "El equipo lo necesita", consequences: { rel_vestuario: 4, moral: 3 } },
       { label: "Respetar su decisión en silencio", subtitle: "No es tu lugar para opinar", consequences: { rel_vestuario: 2, reputacion: 2 } },
       { label: "Proponerle organizar un homenaje", subtitle: "Que se vaya como se merece", consequences: { rel_vestuario: 5, moral: 4, patrimonio: -300 } },
@@ -744,7 +744,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "fisio_nuevo",
     title: "Llega un fisio con métodos distintos",
-    desc: (c) => `El club ficha a un nuevo fisioterapeuta con técnicas que nadie del vestuario ha probado antes: agujas, hielo extremo y estiramientos que duelen más de lo que ayudan al principio.`,
+    desc: () => `El club ficha a un nuevo fisioterapeuta con técnicas que nadie del vestuario ha probado antes: agujas, hielo extremo y estiramientos que duelen más de lo que ayudan al principio.`,
     opts: () => [
       { label: "Confiar en el método nuevo", subtitle: "Darle una oportunidad real", consequences: { forma: 3, rel_vestuario: 1 } },
       { label: "Pedir seguir con lo de siempre", subtitle: "Lo conocido da seguridad", consequences: { forma: 1, rel_entrenador: -1 } },
@@ -775,8 +775,8 @@ const TEMPLATES: Tpl[] = [
     key: "huelga_transporte",
     title: "Huelga de transporte el día del amistoso",
     tone: ["gracioso"],
-    desc: (c) => `Una huelga general de transporte deja tirado al autobús del club. Al final, toca improvisar: coches particulares, algún taxi y hasta la furgoneta del utillero para llegar a tiempo al amistoso.`,
-    opts: (c) => [
+    desc: () => `Una huelga general de transporte deja tirado al autobús del club. Al final, toca improvisar: coches particulares, algún taxi y hasta la furgoneta del utillero para llegar a tiempo al amistoso.`,
+    opts: () => [
       { label: "Organizar los coches tú mismo", subtitle: "Ponerte al mando", consequences: { rel_vestuario: 3, reputacion: 2 } },
       { label: "Ir de copiloto con el míster", subtitle: "Charla poco habitual", consequences: { rel_entrenador: 3, moral: 1 } },
       { label: "Compartir coche con la prensa que cubre el partido", subtitle: "Curioso, cuanto menos", consequences: { fama: 3, reputacion: -1 } },
@@ -786,7 +786,7 @@ const TEMPLATES: Tpl[] = [
     key: "suplente_estrella",
     title: "Un internacional llega cedido... y no está contento",
     desc: (c) => `El club anuncia la cesión de ${c.star}, un internacional acostumbrado a jugar en un club mucho más grande, que llega con cara de estar de paso y poca paciencia con los amistosos de pretemporada.`,
-    opts: (c) => [
+    opts: () => [
       { label: "Hacerle sentir parte del grupo", subtitle: "Sin rencores", consequences: { rel_vestuario: 3, media: 1 } },
       { label: "Marcarle distancia hasta que se lo gane", subtitle: "Aquí no hay favores", consequences: { rel_vestuario: -1, reputacion: 1 } },
       { label: "Pedirle consejo sobre el nivel de arriba", subtitle: "Aprovechar la experiencia", consequences: { media: 2, moral: 1 } },
@@ -815,7 +815,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "familia_visita",
     title: "Tu familia visita la concentración",
-    desc: (c) => `Tu familia se planta un día en la concentración de pretemporada, sin avisar del todo, solo para verte entrenar de cerca. Verlos ahí, en la grada vacía, te toca algo por dentro.`,
+    desc: () => `Tu familia se planta un día en la concentración de pretemporada, sin avisar del todo, solo para verte entrenar de cerca. Verlos ahí, en la grada vacía, te toca algo por dentro.`,
     opts: () => [
       { label: "Presentárselos a todo el vestuario", subtitle: "Que los conozcan", consequences: { rel_vestuario: 3, moral: 5 } },
       { label: "Pasar la tarde entera con ellos", subtitle: "El fútbol puede esperar unas horas", consequences: { moral: 6, forma: -1 } },
@@ -836,7 +836,7 @@ const TEMPLATES: Tpl[] = [
     key: "subasta_camiseta",
     title: "Subasta solidaria de camisetas",
     desc: (c) => `El club subasta las camisetas del amistoso benéfico. La de ${c.mate} está a punto de quedarse sin pujas y él, en broma, te mira esperando que hagas algo.`,
-    opts: (c) => [
+    opts: () => [
       { label: "Pujar tú mismo por su camiseta", subtitle: "Por una buena causa", consequences: { patrimonio: -800, rel_vestuario: 4, reputacion: 2 } },
       { label: "Animar a la afición a pujar más", subtitle: "Contagiar el ambiente", consequences: { rel_aficion: 3, fama: 1 } },
       { label: "Dejar que se resuelva sola", subtitle: "No es tu problema", consequences: { rel_vestuario: -1 } },
@@ -855,7 +855,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "amistoso_pica",
     title: "Un amistoso que se calienta más de la cuenta",
-    desc: (c) => `Lo que iba a ser un amistoso tranquilo se convierte en un partido de codazos y protestas contra un rival histórico. El árbitro, de mutuo acuerdo entre clubes, pierde el control del choque.`,
+    desc: () => `Lo que iba a ser un amistoso tranquilo se convierte en un partido de codazos y protestas contra un rival histórico. El árbitro, de mutuo acuerdo entre clubes, pierde el control del choque.`,
     opts: () => [
       { label: "Mantener la cabeza fría", subtitle: "No entrar al trapo", consequences: { rel_entrenador: 2, reputacion: 2 } },
       { label: "Responder a las provocaciones", subtitle: "Que no se confundan", consequences: { fama: 2, rel_vestuario: 2, reputacion: -2 } },
@@ -866,8 +866,8 @@ const TEMPLATES: Tpl[] = [
     key: "guru_fisico",
     title: "El nuevo gurú de la preparación física",
     tone: ["gracioso", "surrealista"],
-    desc: (c) => `El club contrata a un preparador físico "revolucionario" que os hace entrenar descalzos sobre arroz, meditar antes de cada rondo y respirar "como los lobos". Nadie entiende del todo el método, pero el club insiste en darle una oportunidad.`,
-    opts: (c) => [
+    desc: () => `El club contrata a un preparador físico "revolucionario" que os hace entrenar descalzos sobre arroz, meditar antes de cada rondo y respirar "como los lobos". Nadie entiende del todo el método, pero el club insiste en darle una oportunidad.`,
+    opts: () => [
       {
         label: "Entregarte al método sin cuestionarlo",
         subtitle: "Confianza ciega",
@@ -887,7 +887,7 @@ const TEMPLATES: Tpl[] = [
     title: "El baile del vestuario se hace viral",
     tone: ["gracioso"],
     desc: (c) => `Al terminar un entrenamiento, ${c.mate} improvisa un baile absurdo y todo el vestuario se suma en cadena. Alguien lo graba y lo sube sin pedir permiso a nadie.`,
-    opts: (c) => [
+    opts: () => [
       { label: "Subirlo tú también con orgullo", subtitle: "Que se vea la unión del grupo", consequences: { fama: 4, rel_vestuario: 3, rel_aficion: 2 } },
       { label: "Pedir que lo bajen", subtitle: "Prefieres discreción", consequences: { rel_vestuario: -1, reputacion: 1 } },
       { label: "Grabar una segunda parte", subtitle: "Darle continuidad", consequences: { fama: 5, rel_vestuario: 4 } },
@@ -896,7 +896,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "visita_cantera",
     title: "Vuelves a tu antigua cantera",
-    desc: (c) => `El club organiza una visita sorpresa a la cantera de donde salió parte de la plantilla. Pisar de nuevo aquel campo pequeño, con la pintura descascarillada, te trae de golpe todos los recuerdos.`,
+    desc: () => `El club organiza una visita sorpresa a la cantera de donde salió parte de la plantilla. Pisar de nuevo aquel campo pequeño, con la pintura descascarillada, te trae de golpe todos los recuerdos.`,
     opts: () => [
       { label: "Entrenar un rato con los más pequeños", subtitle: "Devolver algo de lo recibido", consequences: { rel_aficion: 4, moral: 5, reputacion: 2 } },
       { label: "Donar material para el club de cantera", subtitle: "Un gesto concreto", consequences: { patrimonio: -1500, reputacion: 3, moral: 3 } },
