@@ -245,7 +245,7 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
     case "cons_family_support":
       return {
         kicker: "Consecuencia",
-        title: "Tu gente aparece cuando peor pinta",
+        title: "Tu gente sigue siendo tu refugio",
         image: "family",
         category: "life",
         text: `Llegas a casa después de una semana cargada y la mesa está puesta. Nadie da por hecho que haya ido mal ni te obliga a hablar de estadísticas o rumores. Durante dos horas vuelves a ser la misma persona que antes de que el fútbol ocupara todas las habitaciones.`,
@@ -474,7 +474,7 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
       if (choiceId === "abrirte") {
         rel(s, "family", 6);
         stat(s, "morale", 12);
-        remember(s, "Tu familia te sostuvo cuando estabas atravesando una semana difícil");
+        remember(s, "Te abriste con tu familia durante una semana cargada y saliste con la cabeza más limpia");
         return { title: "Sin personaje", text: "Dices en voz alta lo que llevabas semanas escondiendo. Nadie intenta arreglarlo. Duermes mejor por eso.", tone: "good" };
       }
       if (choiceId === "prometer") {
