@@ -81,6 +81,27 @@ export default async function LoginPage({
               Crear cuenta
             </button>
           </div>
+
+          {/* Solo hace falta para "Crear cuenta" — deliberadamente sin
+              `required` aquí, porque este mismo <form> también manda
+              "Iniciar sesión" y `required` bloquearía a un jugador que
+              vuelve solo por no haber marcado una casilla pensada para el
+              registro. El bloqueo real está en el servidor: signup()
+              rechaza la petición si no viene marcada (ver actions.ts). */}
+          <label className="flex items-start gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" name="accept_terms" value="yes" className="mt-0.5 accent-gold" />
+            <span>
+              Al crear una cuenta aceptas los{" "}
+              <Link href="/legal/terminos" className="text-gold hover:underline" target="_blank">
+                Términos de uso
+              </Link>{" "}
+              y la{" "}
+              <Link href="/legal/privacidad" className="text-gold hover:underline" target="_blank">
+                Política de privacidad
+              </Link>{" "}
+              (subes una foto tuya que se procesa con IA para generar las imágenes del juego).
+            </span>
+          </label>
         </form>
       </div>
     </main>

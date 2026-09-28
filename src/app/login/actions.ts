@@ -53,6 +53,18 @@ export async function requestPasswordReset(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
+  // El checkbox de la pantalla de login NO lleva `required` en el HTML
+  // (ese <form> también manda "Iniciar sesión", y `required` habría
+  // bloqueado el login de cualquiera por no marcar una casilla pensada
+  // solo para crear cuenta nueva). El bloqueo real está aquí: sin esto,
+  // se podía crear una cuenta y empezar a subir fotos sin haber aceptado
+  // nunca los términos ni el aviso de que la foto se manda a una IA.
+  if (formData.get("accept_terms") !== "yes") {
+    redirect(
+      `/login?error=${encodeURIComponent("Tienes que aceptar los Términos de uso y la Política de privacidad para crear una cuenta.")}`,
+    );
+  }
+
   const supabase = await createClient();
 
   const email = formData.get("email") as string;
