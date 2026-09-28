@@ -43,12 +43,41 @@ export async function regenerateMilestoneImage(formData: FormData) {
     redirect(`/carrera/hito/${milestoneId}`);
   }
 
+  // Bloqueo optimista: reclama el hito ANTES de gastar tiempo en la
+  // comprobación de cuota o de arrancar nada. Sin este `.eq("image_status",
+  // milestone.image_status)`, dos clics rápidos seguidos (o dos pestañas)
+  // podían leer el mismo estado "failed" a la vez y las DOS disparar su
+  // propia generación completa (Kontext + face-swap) para el MISMO hito
+  // en paralelo — visto en vivo: seis peticiones al mismo hito en 26
+  // segundos. Dos pipelines de imagen a la vez desde la misma cuenta
+  // saturan el límite de peticiones simultáneas de Replicate, y el
+  // face-swap de la segunda falla en la propia llamada HTTP (antes
+  // siquiera de crear una "prediction"), así que ni sale en el historial
+  // de Replicate ni se puede diagnosticar después. Si `.select()` no
+  // devuelve fila, es que otra petición ya se adelantó: nos rendimos sin
+  // arrancar nada más.
+  const { data: claimed } = await supabase
+    .from("milestones")
+    .update({ image_status: "pending" })
+    .eq("id", milestoneId)
+    .eq("image_status", milestone.image_status)
+    .select("id")
+    .maybeSingle();
+  if (!claimed) {
+    redirect(`/carrera/hito/${milestoneId}`);
+  }
+
   const quota = await checkImageGenerationQuota(supabase, user.id);
-  if (!quota.allowed) redirect(`/carrera/hito/${milestoneId}`);
+  if (!quota.allowed) {
+    // Ya lo habíamos marcado "pending" al reclamarlo — si la cuota lo
+    // frena aquí, hay que revertirlo a "failed" o se quedaría "pending"
+    // colgado para siempre sin que nada lo esté generando de verdad.
+    await supabase.from("milestones").update({ image_status: "failed" }).eq("id", milestoneId);
+    redirect(`/carrera/hito/${milestoneId}`);
+  }
 
   // La marca de inicio va en los flags del jugador, NO en created_at: esa columna
   // ordena la línea temporal del retiro y no debe moverse al regenerar una foto.
-  await supabase.from("milestones").update({ image_status: "pending" }).eq("id", milestoneId);
   await supabase
     .from("players")
     .update({ flags: { ...(player.flags ?? {}), [`regen_${milestoneId}`]: String(Date.now()) } })

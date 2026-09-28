@@ -40,6 +40,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { PlayerCard } from "@/components/PlayerCard";
 import { ShareableCard } from "@/components/ShareableCard";
 import { MilestonePendingPoller } from "@/components/MilestonePendingPoller";
+import { RegenerateButton } from "@/components/RegenerateButton";
 import { regenerateMilestoneImage } from "./actions";
 
 // La regeneración de la foto corre en segundo plano (after()) y puede tardar minutos.
@@ -200,12 +201,7 @@ export default async function HitoPage({
               {player.photo_url && milestone.type !== "dm_instagram" && (
                 <form action={regenerateMilestoneImage} className="text-center">
                   <input type="hidden" name="milestone_id" value={milestone.id} />
-                  <button
-                    type="submit"
-                    className="rounded-full border border-gold/50 px-5 py-2 font-cond text-xs font-bold uppercase tracking-wide text-gold"
-                  >
-                    ✨ Generar la foto de este momento
-                  </button>
+                  <RegenerateButton />
                 </form>
               )}
             </div>
