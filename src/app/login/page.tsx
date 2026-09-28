@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { login, signup } from "./actions";
 
 export default async function LoginPage({
@@ -59,6 +60,11 @@ export default async function LoginPage({
               autoComplete="current-password"
               className="w-full rounded-full border border-input bg-surface-2 px-4 py-3 text-sm text-foreground outline-none focus:border-gold focus:ring-1 focus:ring-gold/50 transition-all"
             />
+            <p className="text-right">
+              <Link href="/login/recuperar" className="text-xs text-muted-foreground hover:text-gold hover:underline">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </p>
           </div>
 
           <div className="flex flex-col gap-2 pt-2">
