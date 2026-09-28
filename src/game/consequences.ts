@@ -248,7 +248,7 @@ export function renderConsequence(s: GameState, card: DynamicCard): DynamicView 
         title: "Tu gente aparece cuando peor pinta",
         image: "family",
         category: "life",
-        text: `Llegas a casa después de una semana horrible y la mesa está puesta. Nadie pregunta por estadísticas ni por rumores. Durante dos horas vuelves a ser la misma persona que antes de que el fútbol ocupara todas las habitaciones.`,
+        text: `Llegas a casa después de una semana cargada y la mesa está puesta. Nadie da por hecho que haya ido mal ni te obliga a hablar de estadísticas o rumores. Durante dos horas vuelves a ser la misma persona que antes de que el fútbol ocupara todas las habitaciones.`,
         choices: [
           { id: "abrirte", label: "Contarles lo que de verdad te preocupa", hint: "Recuperas cabeza" },
           { id: "disfrutar", label: "No hablar de fútbol en toda la noche", hint: "Desconexión limpia" },
