@@ -23,23 +23,35 @@ const STALE_PENDING_MS = 5 * 60_000;
  * segunda generación si ya hay una en marcha.
  */
 export async function regenerateMilestoneImage(formData: FormData) {
+  // Trazas paso a paso: el botón se quedaba en "Enviando…" sin ningún
+  // rastro en los logs porque esta función, hasta ahora, no tenía NI UN
+  // SOLO console.log antes de llegar a after() — cualquier cuelgue en la
+  // parte síncrona (lecturas/escrituras de Supabase) era invisible por
+  // completo. Con esto, el próximo intento dice exactamente en qué línea
+  // se queda parado, en vez de tener que adivinarlo.
   const milestoneId = String(formData.get("milestone_id") ?? "");
+  console.log(`[regenerateMilestoneImage] START milestoneId=${milestoneId}`);
+
   const { supabase, user, player } = await getCurrentUserAndPlayer();
+  console.log(`[regenerateMilestoneImage] got user/player: user=${!!user} player=${!!player}`);
   if (!user || !player || !milestoneId) redirect("/login");
 
-  const { data: milestone } = await supabase
+  const { data: milestone, error: fetchErr } = await supabase
     .from("milestones")
     .select("id, week, type, title, image_url, image_status, created_at")
     .eq("id", milestoneId)
     .eq("player_id", player.id)
     .maybeSingle();
+  console.log(`[regenerateMilestoneImage] fetched milestone: found=${!!milestone} status=${milestone?.image_status} error=${fetchErr?.message}`);
   if (!milestone) redirect("/mi-jugador/legado");
 
   const regenStart = parseInt(String(player.flags?.[`regen_${milestoneId}`] ?? "0"), 10) || 0;
   const startedAt = Math.max(regenStart, milestone.created_at ? new Date(milestone.created_at).getTime() : 0);
   const pendingAge = startedAt ? Date.now() - startedAt : Infinity;
   const isFreshPending = milestone.image_status === "pending" && pendingAge < STALE_PENDING_MS;
+  console.log(`[regenerateMilestoneImage] guard check: image_url=${!!milestone.image_url} isFreshPending=${isFreshPending} pendingAge=${pendingAge} hasPhoto=${!!player.photo_url}`);
   if (milestone.image_url || isFreshPending || !player.photo_url) {
+    console.log(`[regenerateMilestoneImage] EARLY EXIT via guard, redirecting back`);
     redirect(`/carrera/hito/${milestoneId}`);
   }
 
@@ -56,18 +68,21 @@ export async function regenerateMilestoneImage(formData: FormData) {
   // de Replicate ni se puede diagnosticar después. Si `.select()` no
   // devuelve fila, es que otra petición ya se adelantó: nos rendimos sin
   // arrancar nada más.
-  const { data: claimed } = await supabase
+  const { data: claimed, error: claimErr } = await supabase
     .from("milestones")
     .update({ image_status: "pending" })
     .eq("id", milestoneId)
     .eq("image_status", milestone.image_status)
     .select("id")
     .maybeSingle();
+  console.log(`[regenerateMilestoneImage] claim attempt: claimed=${!!claimed} error=${claimErr?.message}`);
   if (!claimed) {
+    console.log(`[regenerateMilestoneImage] EXIT: lost the claim race`);
     redirect(`/carrera/hito/${milestoneId}`);
   }
 
   const quota = await checkImageGenerationQuota(supabase, user.id);
+  console.log(`[regenerateMilestoneImage] quota check: allowed=${quota.allowed}`);
   if (!quota.allowed) {
     // Ya lo habíamos marcado "pending" al reclamarlo — si la cuota lo
     // frena aquí, hay que revertirlo a "failed" o se quedaría "pending"
@@ -82,6 +97,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
     .from("players")
     .update({ flags: { ...(player.flags ?? {}), [`regen_${milestoneId}`]: String(Date.now()) } })
     .eq("id", player.id);
+  console.log(`[regenerateMilestoneImage] flags updated, about to schedule after() and redirect`);
 
   const age = playerAge(milestone.week ?? player.week);
   const contextual = getMilestoneImagePrompt(String(milestone.type), age, player.club, player.last_name, String(milestone.type), player.agent_name ?? undefined);
@@ -95,8 +111,10 @@ export async function regenerateMilestoneImage(formData: FormData) {
   const type = String(milestone.type);
 
   after(async () => {
+    console.log(`[regenerateMilestoneImage:after] background job started for ${milestoneId}`);
     try {
       const buffer = await generatePlayerImage(photoUrl, prompt);
+      console.log(`[regenerateMilestoneImage:after] generatePlayerImage returned buffer=${!!buffer}`);
       if (!buffer) {
         await supabase.from("milestones").update({ image_status: "failed" }).eq("id", milestoneId);
         return;
@@ -127,5 +145,6 @@ export async function regenerateMilestoneImage(formData: FormData) {
   });
 
   revalidatePath(`/carrera/hito/${milestoneId}`);
+  console.log(`[regenerateMilestoneImage] redirecting back to hito page now`);
   redirect(`/carrera/hito/${milestoneId}`);
 }
