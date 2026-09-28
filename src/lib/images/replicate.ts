@@ -178,9 +178,22 @@ async function runFluxKontextOnce(inputImageUrl: string, prompt: string, lite = 
  * (nueva predicción completa, no solo otra semilla dentro de la misma)
  * es la única palanca real, y solo se paga si el primero falla.
  */
-async function runFluxKontext(inputImageUrl: string, prompt: string): Promise<string | null> {
+async function runFluxKontext(inputImageUrl: string, prompt: string, deadline: number): Promise<string | null> {
   const first = await runFluxKontextOnce(inputImageUrl, prompt);
   if (first) return first;
+
+  // El primer intento por sí solo ya puede tardar hasta ~250s en el peor
+  // caso (70s de POST + hasta 180s de sondeo) — un segundo intento
+  // completo detrás, sin comprobar cuánto presupuesto queda, podía por sí
+  // sola agotar el límite duro de 300s de la función (Vercel Hobby, sin
+  // margen para subirlo) antes siquiera de intentar el face-swap después.
+  // Mejor rendirse ya que colgar el turno entero sin marcar nunca el
+  // hito como fallido.
+  const remaining = deadline - Date.now();
+  if (remaining < 90_000) {
+    console.warn(`[runFluxKontext] first attempt failed and solo quedan ${remaining}ms de presupuesto — no reintenta`);
+    return null;
+  }
 
   console.error("[runFluxKontext] first attempt failed, retrying once more");
   return runFluxKontextOnce(inputImageUrl, prompt, true);
@@ -190,12 +203,25 @@ async function runFluxKontext(inputImageUrl: string, prompt: string): Promise<st
  * Genera (o edita) una imagen a partir de una foto real del jugador.
  * Devuelve los bytes de la imagen, o null si algo falla (sin foto, sin
  * crédito, error de red) — quien llame debe tener un fallback sin imagen.
+ *
+ * Presupuesto de tiempo compartido entre las dos pasadas (Kontext +
+ * face-swap): en Vercel Hobby el límite duro de una función son 300s, sin
+ * posibilidad de subirlo. Cada pasada por separado ya puede acercarse a
+ * ese tope en el peor caso (Kontext: hasta ~250s con reintento; face-swap:
+ * hasta ~220s) — encadenar las dos sin llevar la cuenta de cuánto queda
+ * fácilmente lo superaba, y la plataforma mata la función a medias sin
+ * ejecutar ningún catch: el hito se quedaba "pending" para siempre, sin
+ * marcarse jamás como fallido. Visto en vivo jugando, justo con el botón
+ * de regenerar una foto. Con presupuesto real, si Kontext ya consumió
+ * demasiado, se salta el face-swap y se devuelve la imagen de Kontext tal
+ * cual en vez de arriesgarse a agotar el tiempo entero sin devolver nada.
  */
 export async function generatePlayerImage(
   inputImageUrl: string,
   prompt: string,
 ): Promise<Buffer | null> {
-  const outputUrl = await runFluxKontext(inputImageUrl, prompt);
+  const deadline = Date.now() + 260_000; // 260s de 300s — deja margen para branding + 2 subidas + escrituras en BD en quien llama.
+  const outputUrl = await runFluxKontext(inputImageUrl, prompt, deadline);
   if (!outputUrl) return null;
 
   // Segunda pasada: Kontext no tiene ningún parámetro de "fuerza de
@@ -203,9 +229,14 @@ export async function generatePlayerImage(
   // ("me ha cambiado la cara entera"). Un face-swap barato (~0,006€) con la
   // foto real sobre la escena ya generada fija el parecido; si falla (cara
   // no detectable, p.ej. de espaldas) se usa la imagen de Kontext tal cual.
-  const swapped = await swapFaceIntoTemplate(outputUrl, inputImageUrl);
-  if (swapped) return swapped;
-  console.warn("[generatePlayerImage] face-swap pass failed, using the Kontext output as is");
+  const remainingForFaceSwap = deadline - Date.now();
+  if (remainingForFaceSwap < 40_000) {
+    console.warn(`[generatePlayerImage] solo quedan ${remainingForFaceSwap}ms tras Kontext — se salta el face-swap para no arriesgar el presupuesto`);
+  } else {
+    const swapped = await swapFaceIntoTemplate(outputUrl, inputImageUrl);
+    if (swapped) return swapped;
+    console.warn("[generatePlayerImage] face-swap pass failed, using the Kontext output as is");
+  }
 
   try {
     const imageRes = await fetchWithTimeout(outputUrl, {}, 30_000);
