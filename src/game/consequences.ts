@@ -474,7 +474,7 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
       if (choiceId === "abrirte") {
         rel(s, "family", 6);
         stat(s, "morale", 12);
-        remember(s, "Te abriste con tu familia durante una semana cargada y saliste con la cabeza más limpia");
+        remember(s, "Te abriste con tu familia y saliste con la cabeza más limpia");
         return { title: "Lo dices en voz alta", text: "Compartes lo que llevabas dentro sin convertir la cena en un parte de resultados. Nadie intenta arreglarlo. Duermes mejor por eso.", tone: "good" };
       }
       if (choiceId === "prometer") {
