@@ -99,7 +99,15 @@ async function startCareerViaUi(page, mode, label, seed) {
   const seenNarrative = new Set();
 
   for (let decision = 1; decision <= FIRST_DECISIONS; decision += 1) {
-    const { article, choice: firstChoice } = await reachPlayableChoice(page, mode, seed, decision);
+    const { article } = await reachPlayableChoice(page, mode, seed, decision);
+    const choices = article.locator(".space-y-2\\.5 > button");
+    const choiceCount = await choices.count();
+    expect(choiceCount, `${mode}/${seed}: decision ${decision} exposes no playable choices`).toBeGreaterThan(0);
+    // Do not validate only the first branch: rotate deterministically across the
+    // visible choices so the 12 seeded iPhone careers exercise different authored
+    // consequences while remaining reproducible in CI.
+    const choiceIndex = (seed + decision - 1) % choiceCount;
+    const selectedChoice = choices.nth(choiceIndex);
 
     // Player-visible regression gate: the opening run must not literally replay the
     // same authored decision. Transitional outcome/match/season screens are traversed
@@ -110,7 +118,7 @@ async function startCareerViaUi(page, mode, label, seed) {
     seenNarrative.add(narrative);
 
     const before = await savedState(page);
-    await firstChoice.click();
+    await selectedChoice.click();
     await expect.poll(async () => {
       const after = await savedState(page);
       return after.sceneCount ?? 0;
