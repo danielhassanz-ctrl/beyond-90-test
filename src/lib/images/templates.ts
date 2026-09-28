@@ -50,10 +50,25 @@ export async function generateFromTemplate(
   if (existing?.image_url) {
     const swapped = await swapFaceIntoTemplate(existing.image_url, playerPhotoUrl);
     if (swapped) return { buffer: swapped, isFreshGeneration: false };
-    // Si el face-swap falla puntualmente (p.ej. Replicate caído), no
-    // renunciamos a la imagen: caemos a generar la escena completa igual
-    // que si no hubiera plantilla.
-    console.warn(`[generateFromTemplate] face-swap failed for ${templateKey}, falling back to full generation`);
+    // Antes, si el face-swap fallaba, caía a generar la escena completa
+    // de cero como red de seguridad — bienintencionado, pero en Vercel
+    // Hobby (tope duro de 300s por función, sin margen para subirlo) esto
+    // apilaba dos llamadas lentas a Replicate una detrás de otra dentro
+    // del mismo turno: el intento de face-swap (con sus propios reintentos
+    // y timeouts, hasta ~100s) + una generación completa entera (~280s en
+    // el peor caso) fácilmente superaban el límite juntas. La plataforma
+    // mata la función a medio camino sin ejecutar ningún catch — el hito
+    // se queda en "pending" PARA SIEMPRE, sin marcarse nunca como
+    // fallido. Visto en vivo jugando: una firma de contrato con face-swap
+    // exitoso en los logs de Replicate que nunca llegó a completarse.
+    //
+    // Mejor fallar rápido aquí (la plantilla ya existe, reintentar el
+    // face-swap no la generación completa es lo barato) y dejar que el
+    // jugador pulse "Generar la foto de este momento" en la pantalla del
+    // hito si quiere reintentarlo — ese botón sí arranca con su propio
+    // presupuesto de 300s limpio, en vez de heredar el tiempo ya gastado.
+    console.warn(`[generateFromTemplate] face-swap failed for ${templateKey}, failing fast instead of stacking a full regeneration`);
+    return null;
   }
 
   const buffer = await generatePlayerImage(playerPhotoUrl, fallbackPrompt);

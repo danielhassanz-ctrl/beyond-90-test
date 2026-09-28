@@ -154,7 +154,19 @@ export default async function LegadoPage() {
         </p>
       ) : (
         <div className="grid w-full max-w-md grid-cols-2 gap-3">
-          {milestones.map((m) => (
+          {milestones.map((m) => {
+            // Mismo umbral que /carrera/hito/[id] (ver ahí el porqué del
+            // valor): pasados 5 minutos, un "pending" ya no es "está en
+            // camino", es un trabajo en segundo plano que la plataforma
+            // mató a medio hacer y que nunca va a terminar por su cuenta.
+            // Sin este cálculo también aquí, la grilla seguía prometiendo
+            // "Generando foto…" para siempre en ese caso — justo el hito
+            // que se quedó colgado de verdad jugando esta sesión.
+            const regenStartedAt = parseInt(String(player.flags?.[`regen_${m.id}`] ?? "0"), 10) || 0;
+            const startedAt = Math.max(regenStartedAt, m.created_at ? new Date(m.created_at).getTime() : 0);
+            const isStalePending = m.image_status === "pending" && startedAt > 0 && Date.now() - startedAt > 5 * 60_000;
+
+            return (
             <Link
               key={m.id}
               href={`/carrera/hito/${m.id}`}
@@ -190,7 +202,7 @@ export default async function LegadoPage() {
                     <div className="absolute right-1.5 top-1.5 drop-shadow-md">
                       <ClubCrest club={SECOND_LIFE_MILESTONE_TYPES.has(m.type) ? (player.second_club ?? player.club) : player.club} size={24} />
                     </div>
-                    {m.image_status === "pending" && (
+                    {m.image_status === "pending" && !isStalePending && (
                       <div className="absolute inset-x-0 bottom-0 bg-black/70 px-1.5 py-1">
                         <p className="font-cond text-[9px] uppercase tracking-wide text-gold">Generando foto…</p>
                       </div>
@@ -209,7 +221,8 @@ export default async function LegadoPage() {
                 </p>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
 
