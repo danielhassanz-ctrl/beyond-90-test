@@ -7,6 +7,7 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
+import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
 import { addShareBranding } from "@/lib/images/shareBranding";
 import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
 import { describeKit } from "@/lib/clubColors";
@@ -72,6 +73,11 @@ export async function regenerateMilestoneImage(formData: FormData) {
   // era que el botón NUNCA lograba arrancar una generación — mucho peor
   // que el problema que pretendía evitar. Se quita hasta poder investigar
   // esa condición con más calma.
+  if (!hasImageCredit(player)) {
+    console.log(`[regenerateMilestoneImage] EXIT: no image credit left for player ${player.id}`);
+    redirect(`/mi-jugador/fotos?error=${encodeURIComponent("Ya has usado todas tus fotos gratis. Compra un pack para seguir generando fotos.")}`);
+  }
+
   await supabase.from("milestones").update({ image_status: "pending" }).eq("id", milestoneId);
 
   const quota = await checkImageGenerationQuota(supabase, user.id);
@@ -101,6 +107,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
   const photoUrl = player.photo_url as string;
   const userId = user.id;
   const playerId = player.id;
+  const playerFlags = player.flags ?? {};
   const type = String(milestone.type);
 
   after(async () => {
@@ -113,6 +120,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
         return;
       }
       await logImageGeneration(supabase, userId);
+      await consumeImageCredit(supabase, { id: playerId, flags: playerFlags });
       let finalBuffer = buffer;
       try {
         finalBuffer = await addShareBranding(buffer, getShareTagline(type));

@@ -104,6 +104,17 @@ export default async function MiJugadorPage() {
           </Link>
 
           <Link
+            href="/mi-jugador/fotos"
+            className="flex items-center justify-between rounded-2xl border border-panel-border bg-surface px-4 py-3 hover:border-gold/50"
+          >
+            <span className="text-kicker">Fotos de tus hitos</span>
+            <span className="flex items-center gap-1 font-cond text-sm font-semibold uppercase tracking-wide text-gold">
+              Ver fotos
+              <span className="text-muted-foreground">›</span>
+            </span>
+          </Link>
+
+          <Link
             href="/mi-jugador/legado"
             className="flex items-center justify-between rounded-2xl border border-panel-border bg-surface px-4 py-3 hover:border-gold/50"
           >

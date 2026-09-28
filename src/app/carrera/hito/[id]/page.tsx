@@ -41,6 +41,7 @@ import { PlayerCard } from "@/components/PlayerCard";
 import { ShareableCard } from "@/components/ShareableCard";
 import { MilestonePendingPoller } from "@/components/MilestonePendingPoller";
 import { RegenerateButton } from "@/components/RegenerateButton";
+import { hasImageCredit } from "@/lib/images/credits";
 import { regenerateMilestoneImage } from "./actions";
 
 // La regeneración de la foto corre en segundo plano (after()) y puede tardar minutos.
@@ -199,10 +200,22 @@ export default async function HitoPage({
                 />
               </ShareableCard>
               {player.photo_url && milestone.type !== "dm_instagram" && (
-                <form action={regenerateMilestoneImage} className="text-center">
-                  <input type="hidden" name="milestone_id" value={milestone.id} />
-                  <RegenerateButton />
-                </form>
+                hasImageCredit(player) ? (
+                  <form action={regenerateMilestoneImage} className="text-center">
+                    <input type="hidden" name="milestone_id" value={milestone.id} />
+                    <RegenerateButton />
+                  </form>
+                ) : (
+                  <div className="space-y-2 text-center">
+                    <p className="text-xs text-muted-foreground">Ya has usado tus fotos gratis de esta carrera.</p>
+                    <Link
+                      href="/mi-jugador/fotos"
+                      className="inline-block rounded-full border border-gold/50 px-5 py-2 font-cond text-xs font-bold uppercase tracking-wide text-gold"
+                    >
+                      Comprar más fotos
+                    </Link>
+                  </div>
+                )
               )}
             </div>
           )}
