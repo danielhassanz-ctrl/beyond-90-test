@@ -97,12 +97,18 @@ async function startCareerViaUi(page, mode, label, seed) {
   expect(reloaded.player.name).toBe(`QA mode UI ${mode} ${seed}`);
 
   const seenNarrative = new Set();
+  const seenChoiceSets = new Set();
 
   for (let decision = 1; decision <= FIRST_DECISIONS; decision += 1) {
     const { article } = await reachPlayableChoice(page, mode, seed, decision);
     const choices = article.locator(".space-y-2\\.5 > button");
     const choiceCount = await choices.count();
     expect(choiceCount, `${mode}/${seed}: decision ${decision} exposes no playable choices`).toBeGreaterThan(0);
+    const choiceTexts = (await choices.allTextContents()).map((text) => text.replace(/\\s+/g, " ").trim());
+    const choiceSet = choiceTexts.join(" || ");
+    expect(choiceTexts.every(Boolean), `${mode}/${seed}: decision ${decision} exposes a blank choice`).toBe(true);
+    expect(seenChoiceSets.has(choiceSet), `${mode}/${seed}: repeated choice set at decision ${decision}: ${choiceSet}`).toBe(false);
+    seenChoiceSets.add(choiceSet);
     // Do not validate only the first branch: rotate deterministically across the
     // visible choices so the 12 seeded iPhone careers exercise different authored
     // consequences while remaining reproducible in CI.
