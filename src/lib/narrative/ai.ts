@@ -360,6 +360,14 @@ export async function callEventTool(
     console.log(`[callEventTool:${idPrefix}] calling Claude API with category=${category}...`);
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+    // Cronómetro real de la llamada — reportado en vivo como "el juego va
+    // muy lento en cada decisión" sin ningún dato de a qué se debía. Cada
+    // decisión del jugador puede disparar esta llamada (a veces dos, si
+    // el resultado sale excluido por reciente y se reintenta una vez —
+    // ver el "Retrying..." en pickNextEventDynamic), así que es el
+    // sospechoso principal de la lentitud percibida; con esto en los
+    // logs, la próxima vez hay una cifra real en vez de una sospecha.
+    const t0 = Date.now();
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 800,
@@ -368,6 +376,7 @@ export async function callEventTool(
       tool_choice: { type: "tool", name: "emit_event" },
       messages: [{ role: "user", content: prompt }],
     });
+    console.log(`[callEventTool:${idPrefix}] Claude respondió en ${Date.now() - t0}ms`);
 
     console.log(`[callEventTool:${idPrefix}] API response received, analyzing...`);
 
