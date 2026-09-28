@@ -21,8 +21,16 @@ export default async function BorrarJugadorPage() {
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-gold">¿Borrar a {displayName(player)}?</h1>
           <p className="text-sm text-neutral-400">
-            Se va a borrar toda su carrera: eventos vividos, hitos y estadísticas. Esta acción no
-            se puede deshacer.
+            Se va a borrar toda su carrera: eventos vividos, hitos, estadísticas y todas las fotos
+            (la tuya original y las generadas). Esta acción no se puede deshacer.
+          </p>
+          <p className="text-xs text-neutral-500">
+            Tu cuenta de acceso (email y contraseña) no se borra con esto — solo el personaje.
+            Si quieres cerrar también la cuenta por completo, escríbenos a{" "}
+            <a href="mailto:danielhassanz@gmail.com" className="text-gold hover:underline">
+              danielhassanz@gmail.com
+            </a>
+            .
           </p>
         </div>
 
