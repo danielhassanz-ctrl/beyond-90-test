@@ -31,6 +31,47 @@ function pick<T>(seed: string, salt: string, pool: readonly T[]): T {
   return pool[hashString(`${seed}:${salt}`) % pool.length];
 }
 
+/**
+ * Los 5 pasos "de pretemporada" del medio (todo menos bienvenida, que
+ * siempre es el primer día, y amistoso, que siempre cierra la
+ * pretemporada) son narrativamente independientes entre sí — no hay
+ * ninguna razón real para que el físico tenga que ir siempre antes que
+ * la charla táctica. Pero antes de esto, la cadena en carrera/actions.ts
+ * los encolaba en un orden fijo por código (if/else if), así que TODA
+ * carrera nueva vivía exactamente la misma secuencia de beats en el
+ * mismo orden — reportado en vivo como "iguales que las otras partidas"
+ * incluso con el texto de cada paso ya variado por semilla. Con esto, el
+ * ORDEN en sí también varía por carrera, no solo las palabras de cada
+ * paso.
+ */
+export const PRESEASON_MIDDLE_STEPS = [
+  { name: "fisico", id: "pretemp-fisico", build: buildPreseasonFisicoEvent },
+  { name: "competencia", id: "pretemp-competencia", build: buildPreseasonCompetenciaEvent },
+  { name: "tactica", id: "pretemp-tactica", build: buildPreseasonTacticaEvent },
+  { name: "capitan", id: "pretemp-capitan", build: buildPreseasonCapitan },
+  { name: "pasado", id: "pretemp-pasado", build: buildPreseasonPasado },
+] as const;
+
+/** Orden barajado y determinista de los 5 pasos intermedios, único por carrera. */
+export function getShuffledPreseasonOrder(seed: string): string[] {
+  const names: string[] = PRESEASON_MIDDLE_STEPS.map((s) => s.name);
+  for (let i = names.length - 1; i > 0; i--) {
+    const j = hashString(`${seed}:orden-pretemp:${i}`) % (i + 1);
+    [names[i], names[j]] = [names[j], names[i]];
+  }
+  return names;
+}
+
+export function buildPreseasonMiddleStepByName(name: string, seed: string): GameEvent | null {
+  const step = PRESEASON_MIDDLE_STEPS.find((s) => s.name === name);
+  return step ? step.build(seed) : null;
+}
+
+export function getPreseasonMiddleStepNameById(id: string): string | null {
+  const step = PRESEASON_MIDDLE_STEPS.find((s) => s.id === id);
+  return step ? step.name : null;
+}
+
 export function buildPreseasonBienvenidaEvent(club: string, seed: string): GameEvent {
   const quotes = [
     `Tu primer día en las instalaciones del ${club}. El director deportivo te recibe personalmente. 'Bienvenido', te dice. 'Sabemos que vienes de un buen proceso. Aquí queremos que continúes creciendo. La pretemporada es para adaptarte al ritmo, al grupo y a nuestras ideas. Trabaja duro, aprende rápido, y las oportunidades llegarán.'`,

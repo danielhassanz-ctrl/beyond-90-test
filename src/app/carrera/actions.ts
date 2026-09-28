@@ -294,42 +294,41 @@ export async function resolveEvent(formData: FormData) {
   // SECUENCIA COMPLETA DE CARRERA ROOKIE (semanas 4-11)
   // Pretemporada expandida (7 eventos) + Progresión hacia debut garantizado
   if (!willRetire) {
-    // Pretemporada expandida (semanas 4-10, reemplaza los 3 eventos antiguos)
+    // Pretemporada expandida (semanas 4-10, reemplaza los 3 eventos antiguos).
+    // bienvenida siempre abre (es el primer día) y amistoso siempre cierra
+    // (marca el fin de pretemporada), pero los 5 pasos del medio (físico,
+    // competencia, táctica, capitán, pasado) son independientes entre sí
+    // y se barajan por carrera — ver getShuffledPreseasonOrder, y el
+    // comentario ahí de por qué: antes iban siempre en el mismo orden fijo
+    // por código, así que toda carrera nueva se sentía "igual que las
+    // anteriores" pese a que cada paso ya tenía su propio texto variado.
     if (event.id.startsWith("contrato-debut")) {
-      const { buildPreseasonBienvenidaEvent } = await import(
+      const { buildPreseasonBienvenidaEvent, getShuffledPreseasonOrder } = await import(
         "@/lib/narrative/preseason-expanded"
       );
+      const flagsBase = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+      playerUpdate.flags = { ...flagsBase, preseason_order: getShuffledPreseasonOrder(player.id).join(",") };
       playerUpdate.pending_event = maybeAddFreeText(buildPreseasonBienvenidaEvent(player.club, player.id));
     } else if (event.id === "pretemp-bienvenida") {
-      const { buildPreseasonFisicoEvent } = await import(
+      const { buildPreseasonMiddleStepByName, buildPreseasonFisicoEvent } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonFisicoEvent(player.id));
-    } else if (event.id === "pretemp-fisico") {
-      const { buildPreseasonCompetenciaEvent } = await import(
+      const order = String(player.flags?.preseason_order ?? "").split(",").filter(Boolean);
+      const built = order[0] ? buildPreseasonMiddleStepByName(order[0], player.id) : null;
+      // Red de seguridad: si por lo que sea no hay orden guardado (una
+      // carrera ya en curso desde antes de este cambio), cae al primer
+      // paso de siempre en vez de romper la cadena.
+      playerUpdate.pending_event = maybeAddFreeText(built ?? buildPreseasonFisicoEvent(player.id));
+    } else if (["pretemp-fisico", "pretemp-competencia", "pretemp-tactica", "pretemp-capitan", "pretemp-pasado"].includes(event.id)) {
+      const { buildPreseasonMiddleStepByName, buildPreseasonAmistoso, getPreseasonMiddleStepNameById } = await import(
         "@/lib/narrative/preseason-expanded"
       );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonCompetenciaEvent(player.id));
-    } else if (event.id === "pretemp-competencia") {
-      const { buildPreseasonTacticaEvent } = await import(
-        "@/lib/narrative/preseason-expanded"
-      );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonTacticaEvent(player.id));
-    } else if (event.id === "pretemp-tactica") {
-      const { buildPreseasonCapitan } = await import(
-        "@/lib/narrative/preseason-expanded"
-      );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonCapitan(player.id));
-    } else if (event.id === "pretemp-capitan") {
-      const { buildPreseasonPasado } = await import(
-        "@/lib/narrative/preseason-expanded"
-      );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonPasado(player.id));
-    } else if (event.id === "pretemp-pasado") {
-      const { buildPreseasonAmistoso } = await import(
-        "@/lib/narrative/preseason-expanded"
-      );
-      playerUpdate.pending_event = maybeAddFreeText(buildPreseasonAmistoso(player.id));
+      const order = String(player.flags?.preseason_order ?? "").split(",").filter(Boolean);
+      const currentName = getPreseasonMiddleStepNameById(event.id);
+      const idx = currentName ? order.indexOf(currentName) : -1;
+      const nextName = idx >= 0 ? order[idx + 1] : undefined;
+      const built = nextName ? buildPreseasonMiddleStepByName(nextName, player.id) : null;
+      playerUpdate.pending_event = maybeAddFreeText(built ?? buildPreseasonAmistoso(player.id));
     }
     // Cadena de rookie: filial → tactica → debut oficial (semanas 11-15)
     else if (event.id === "pretemp-amistoso") {
