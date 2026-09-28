@@ -55,31 +55,24 @@ export async function regenerateMilestoneImage(formData: FormData) {
     redirect(`/carrera/hito/${milestoneId}`);
   }
 
-  // Bloqueo optimista: reclama el hito ANTES de gastar tiempo en la
-  // comprobación de cuota o de arrancar nada. Sin este `.eq("image_status",
-  // milestone.image_status)`, dos clics rápidos seguidos (o dos pestañas)
-  // podían leer el mismo estado "failed" a la vez y las DOS disparar su
-  // propia generación completa (Kontext + face-swap) para el MISMO hito
-  // en paralelo — visto en vivo: seis peticiones al mismo hito en 26
-  // segundos. Dos pipelines de imagen a la vez desde la misma cuenta
-  // saturan el límite de peticiones simultáneas de Replicate, y el
-  // face-swap de la segunda falla en la propia llamada HTTP (antes
-  // siquiera de crear una "prediction"), así que ni sale en el historial
-  // de Replicate ni se puede diagnosticar después. Si `.select()` no
-  // devuelve fila, es que otra petición ya se adelantó: nos rendimos sin
-  // arrancar nada más.
-  const { data: claimed, error: claimErr } = await supabase
-    .from("milestones")
-    .update({ image_status: "pending" })
-    .eq("id", milestoneId)
-    .eq("image_status", milestone.image_status)
-    .select("id")
-    .maybeSingle();
-  console.log(`[regenerateMilestoneImage] claim attempt: claimed=${!!claimed} error=${claimErr?.message}`);
-  if (!claimed) {
-    console.log(`[regenerateMilestoneImage] EXIT: lost the claim race`);
-    redirect(`/carrera/hito/${milestoneId}`);
-  }
+  // Marca el hito como "pending" antes de arrancar nada — el propio botón
+  // (ver RegenerateButton, useFormStatus) ya se desactiva en cuanto se
+  // envía una vez, que es lo que de verdad evita los clics repetidos por
+  // impaciencia vistos en vivo (varias peticiones al mismo hito en pocos
+  // segundos).
+  //
+  // ANTES había aquí un `.eq("image_status", milestone.image_status)`
+  // como bloqueo optimista extra (para el caso más raro de dos pestañas
+  // a la vez) — pero esa condición hacía que `.select().maybeSingle()`
+  // devolviera SIEMPRE `null` incluso cuando la fila sí se actualizaba
+  // (visto en vivo con logs paso a paso: claimed=false en cada intento,
+  // sin excepción, incluso en el primer intento limpio de un hito que
+  // nunca se había tocado). Sin saber la causa exacta (huele a cómo las
+  // políticas de RLS reevalúan el RETURNING de un UPDATE), el efecto neto
+  // era que el botón NUNCA lograba arrancar una generación — mucho peor
+  // que el problema que pretendía evitar. Se quita hasta poder investigar
+  // esa condición con más calma.
+  await supabase.from("milestones").update({ image_status: "pending" }).eq("id", milestoneId);
 
   const quota = await checkImageGenerationQuota(supabase, user.id);
   console.log(`[regenerateMilestoneImage] quota check: allowed=${quota.allowed}`);
