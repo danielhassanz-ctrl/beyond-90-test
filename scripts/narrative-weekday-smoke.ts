@@ -11,7 +11,10 @@ const narrativeSources = fs
   .filter((name) => narrativeFile.test(name))
   .map((name) => `../src/game/${name}`);
 
-const weekday = /\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b/giu;
+// Beyond 90 is Spanish-first, but English copy can enter through helpers or
+// future content. A named weekday in either language is equally dangerous if
+// the engine has no calendar evidence to support it.
+const weekday = /\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/giu;
 const calendarEvidence = /\b(?:calendar|calendario|weekday|dayOfWeek|fecha|date)\b/iu;
 const nonPlayerText = /^\s*(?:\/\/|\*|\/\*|const\s+\w*(?:weekday|calendar|date)|type\s+|interface\s+)/iu;
 
