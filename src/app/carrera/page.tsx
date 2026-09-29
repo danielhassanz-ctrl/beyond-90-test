@@ -299,7 +299,7 @@ export default async function CarreraPage() {
     mentionedRoles.slice(0, 2).map(async (role) => ({
       role,
       label: NPC_ROLE_LABELS[role],
-      url: await getOrCreateNpcFace(supabase, player, role),
+      url: await getOrCreateNpcFace(supabase, player, role, user.id),
     })),
   );
 

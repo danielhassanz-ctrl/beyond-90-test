@@ -113,6 +113,7 @@ export async function getOrCreateNpcFace(
   supabase: SupabaseClient,
   player: Pick<Player, "id" | "club" | "flags">,
   role: NpcRole,
+  userId: string,
 ): Promise<string | null> {
   const flagKey = faceFlagKey(role, player);
   const cached = player.flags?.[flagKey];
@@ -124,7 +125,12 @@ export async function getOrCreateNpcFace(
   const buffer = await generateNpcFace(prompt);
   if (!buffer) return null;
 
-  const url = await uploadGeneratedImage(supabase, player.id, buffer, `npcface-${role}`);
+  // La política de seguridad del bucket exige el id de AUTENTICACIÓN
+  // (auth.uid(), igual que hace el resto del pipeline de imágenes en
+  // carrera/actions.ts), no el id de la fila de `players` — son valores
+  // distintos. Usar player.id aquí rompía la subida con "row-level
+  // security policy", encontrado jugando una partida real en local.
+  const url = await uploadGeneratedImage(supabase, userId, buffer, `npcface-${role}`);
   if (!url) return null;
 
   try {
