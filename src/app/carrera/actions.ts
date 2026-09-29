@@ -467,13 +467,14 @@ export async function resolveEvent(formData: FormData) {
 
     // Antes de gastar en Replicate, comprueba el freno de gasto (por
     // usuario y global — ver src/lib/images/quota.ts) Y el crédito propio
-    // de este jugador (10 fotos gratis por carrera, luego packs de pago —
-    // ver src/lib/images/credits.ts). Son dos frenos independientes:
-    // quota.ts protege el gasto TOTAL del juego pase lo que pase; credits
-    // decide cuándo a ESTE jugador en concreto le toca pagar.
+    // de este jugador (5 fotos gratis por carrera, solo si está entre los
+    // primeros 100 jugadores; luego packs de pago — ver
+    // src/lib/images/credits.ts). Son dos frenos independientes: quota.ts
+    // protege el gasto TOTAL del juego pase lo que pase; credits decide
+    // cuándo a ESTE jugador en concreto le toca pagar.
     const isDmEvent = Boolean(event.dm);
-    const willAttemptImage =
-      !isDmEvent && !isRetirementDecision && Boolean(player.photo_url) && event.id !== "fork-retiro-pro" && hasImageCredit(player);
+    const wouldAttemptImage = !isDmEvent && !isRetirementDecision && Boolean(player.photo_url) && event.id !== "fork-retiro-pro";
+    const willAttemptImage = wouldAttemptImage && (await hasImageCredit(supabase, player, user.email));
     const quota = willAttemptImage ? await checkImageGenerationQuota(supabase, user.id) : null;
     if (quota && !quota.allowed) {
       console.warn(`[resolveEvent] Image generation will be skipped (${quota.reason}) for this milestone`);
@@ -552,6 +553,7 @@ export async function resolveEvent(formData: FormData) {
       const finalUserId = user.id;
       const finalPlayerId = player.id;
       const finalPlayerFlags = player.flags ?? {};
+      const finalUserEmail = user.email;
       const finalIsGolChilena = event.id === GOL_CHILENA_EVENT_ID;
       const finalClub = newClub;
       const finalMilestoneType = milestoneType;
@@ -582,7 +584,7 @@ export async function resolveEvent(formData: FormData) {
           }
 
           await logImageGeneration(supabase, finalUserId);
-          await consumeImageCredit(supabase, { id: finalPlayerId, flags: finalPlayerFlags });
+          await consumeImageCredit(supabase, { id: finalPlayerId, flags: finalPlayerFlags }, finalUserEmail);
 
           // El gol de chilena no comparte una foto de acción tal cual —
           // esa foto se compone dentro de la portada "WARCA" (ver

@@ -70,6 +70,8 @@ export default async function HitoPage({
     redirect("/carrera");
   }
 
+  const canGenerateMore = await hasImageCredit(supabase, player, user.email);
+
   const continueHref =
     player.status === "awaiting_second_life"
       ? "/carrera/segunda-vida/elegir"
@@ -200,7 +202,7 @@ export default async function HitoPage({
                 />
               </ShareableCard>
               {player.photo_url && milestone.type !== "dm_instagram" && (
-                hasImageCredit(player) ? (
+                canGenerateMore ? (
                   <form action={regenerateMilestoneImage} className="text-center">
                     <input type="hidden" name="milestone_id" value={milestone.id} />
                     <RegenerateButton />

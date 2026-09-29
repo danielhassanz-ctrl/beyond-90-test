@@ -212,9 +212,18 @@ async function runFluxKontext(inputImageUrl: string, prompt: string, deadline: n
  * fácilmente lo superaba, y la plataforma mata la función a medias sin
  * ejecutar ningún catch: el hito se quedaba "pending" para siempre, sin
  * marcarse jamás como fallido. Visto en vivo jugando, justo con el botón
- * de regenerar una foto. Con presupuesto real, si Kontext ya consumió
- * demasiado, se salta el face-swap y se devuelve la imagen de Kontext tal
- * cual en vez de arriesgarse a agotar el tiempo entero sin devolver nada.
+ * de regenerar una foto.
+ *
+ * IMPORTANTE — pedido explícito del usuario: "las imágenes tienen que
+ * ser perfectas y curradas, nada de fotos mal hechas con la cara del
+ * jugador poco realista". Antes, si el face-swap fallaba o se saltaba
+ * por presupuesto, se devolvía la imagen de Kontext SIN el ajuste de
+ * cara — mejor que nada, pero con riesgo real de una cara poco parecida
+ * ("a veces cambiaba la cara entera"). Ahora, sin face-swap exitoso no
+ * hay foto: se devuelve null y el hito se marca como fallido, para que
+ * el jugador pueda reintentar desde el botón de regenerar en vez de
+ * quedarse con un resultado de calidad dudosa. Prioriza el parecido
+ * real sobre "siempre entregar algo".
  */
 export async function generatePlayerImage(
   inputImageUrl: string,
@@ -224,30 +233,15 @@ export async function generatePlayerImage(
   const outputUrl = await runFluxKontext(inputImageUrl, prompt, deadline);
   if (!outputUrl) return null;
 
-  // Segunda pasada: Kontext no tiene ningún parámetro de "fuerza de
-  // identidad" y, aun con el prompt reforzado, a veces cambiaba la cara
-  // ("me ha cambiado la cara entera"). Un face-swap barato (~0,006€) con la
-  // foto real sobre la escena ya generada fija el parecido; si falla (cara
-  // no detectable, p.ej. de espaldas) se usa la imagen de Kontext tal cual.
   const remainingForFaceSwap = deadline - Date.now();
   if (remainingForFaceSwap < 40_000) {
-    console.warn(`[generatePlayerImage] solo quedan ${remainingForFaceSwap}ms tras Kontext — se salta el face-swap para no arriesgar el presupuesto`);
-  } else {
-    const swapped = await swapFaceIntoTemplate(outputUrl, inputImageUrl);
-    if (swapped) return swapped;
-    console.warn("[generatePlayerImage] face-swap pass failed, using the Kontext output as is");
-  }
-
-  try {
-    const imageRes = await fetchWithTimeout(outputUrl, {}, 30_000);
-    if (!imageRes.ok) {
-      console.error(`[generatePlayerImage] fetching output failed: HTTP ${imageRes.status}`);
-      return null;
-    }
-    const arrayBuffer = await imageRes.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  } catch (err) {
-    console.error("[generatePlayerImage] threw fetching output", err instanceof Error ? err.message : err);
+    console.warn(`[generatePlayerImage] solo quedan ${remainingForFaceSwap}ms tras Kontext — sin tiempo para el face-swap, se descarta esta generación`);
     return null;
   }
+
+  const swapped = await swapFaceIntoTemplate(outputUrl, inputImageUrl);
+  if (swapped) return swapped;
+
+  console.warn("[generatePlayerImage] face-swap pass failed — se descarta la imagen en vez de entregar una cara poco parecida");
+  return null;
 }

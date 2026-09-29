@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { BottomNav } from "@/components/BottomNav";
-import { FREE_IMAGES_PER_CAREER, CREDIT_PACK, getFreeImagesUsed, getFreeImagesRemaining, getPaidCredits } from "@/lib/images/credits";
+import { FREE_IMAGES_PER_CAREER, CREDIT_PACK, getFreeImagesUsed, getFreeImagesRemaining, getPaidCredits, isEligibleForFreeTier } from "@/lib/images/credits";
 import { createCreditCheckout } from "./actions";
 
 export default async function FotosPage({
@@ -10,13 +10,14 @@ export default async function FotosPage({
 }: {
   searchParams: Promise<{ error?: string; comprado?: string }>;
 }) {
-  const { user, player } = await getCurrentUserAndPlayer();
+  const { supabase, user, player } = await getCurrentUserAndPlayer();
   if (!user) redirect("/login");
   if (!player) redirect("/crear-jugador");
 
   const params = await searchParams;
+  const eligibleForFree = await isEligibleForFreeTier(supabase, player, user.email);
   const freeUsed = getFreeImagesUsed(player);
-  const freeLeft = getFreeImagesRemaining(player);
+  const freeLeft = eligibleForFree ? getFreeImagesRemaining(player) : 0;
   const paid = getPaidCredits(player);
   const totalLeft = freeLeft + paid;
 
@@ -42,28 +43,36 @@ export default async function FotosPage({
       )}
 
       <div className="w-full max-w-md space-y-3 rounded-2xl border border-panel-border bg-surface p-5">
-        <div className="flex items-center justify-between">
-          <span className="text-kicker">Fotos gratis usadas</span>
-          <span className="font-num text-lg font-bold text-foreground">
-            {freeUsed} / {FREE_IMAGES_PER_CAREER}
-          </span>
-        </div>
+        {eligibleForFree ? (
+          <>
+            <div className="flex items-center justify-between">
+              <span className="text-kicker">Fotos gratis usadas</span>
+              <span className="font-num text-lg font-bold text-foreground">
+                {freeUsed} / {FREE_IMAGES_PER_CAREER}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
+              <div
+                className="h-full rounded-full bg-gold transition-all"
+                style={{ width: `${Math.min(100, (freeUsed / FREE_IMAGES_PER_CAREER) * 100)}%` }}
+              />
+            </div>
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Este jugador no tiene fotos gratis (el cupo gratuito es solo para los primeros jugadores del juego) — puedes comprar un pack cuando quieras.
+          </p>
+        )}
         {paid > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-kicker">Fotos compradas disponibles</span>
             <span className="font-num text-lg font-bold text-gold">{paid}</span>
           </div>
         )}
-        <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
-          <div
-            className="h-full rounded-full bg-gold transition-all"
-            style={{ width: `${Math.min(100, (freeUsed / FREE_IMAGES_PER_CAREER) * 100)}%` }}
-          />
-        </div>
         <p className="text-xs text-muted-foreground">
           {totalLeft > 0
             ? `Te quedan ${totalLeft} fotos disponibles para tus próximos hitos.`
-            : "Has usado todas tus fotos gratis. Compra un pack para seguir generando fotos de tus momentos."}
+            : "No te quedan fotos disponibles. Compra un pack para seguir generando fotos de tus momentos."}
         </p>
       </div>
 
