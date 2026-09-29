@@ -386,6 +386,12 @@ export function buildPreseasonAmistoso(seed: string): GameEvent {
         subtitle: "Mentalidad ganadora",
         consequences: { moral: tramo.consequences.moral - 1, forma: tramo.consequences.forma + 1, rel_entrenador: tramo.consequences.rel_entrenador + 1 },
       },
+      {
+        id: "relativizar",
+        label: "Quitarle hierro delante de la prensa: 'es solo un amistoso'",
+        subtitle: "Gestión de imagen",
+        consequences: { fama: 1, rel_aficion: 1, forma: Math.max(0, tramo.consequences.forma - 1) },
+      },
     ],
   };
 }

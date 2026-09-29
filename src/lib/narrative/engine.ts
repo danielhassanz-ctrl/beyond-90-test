@@ -17,7 +17,7 @@ import { pickCharacterToReappear, describeCharacterReappearance, updateCharacter
 import { shouldBeeFunnyMoment, pickRandomFunnyMoment, isSurrealMoment } from "@/lib/narrative/funny-surreal";
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
-import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, type MatchWeek, type MatchStakes } from "@/lib/calendar/match-calendar";
+import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, type MatchWeek } from "@/lib/calendar/match-calendar";
 import { getCopaProgress, advanceCupProgress, decideKnockoutResult } from "@/lib/calendar/competition-progress";
 import { naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
@@ -2038,24 +2038,66 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
  * una y otra vez" mucho antes de lo que debería. Ahora la escena y las
  * tres opciones dependen de la posición real.
  */
-export function buildMatchDecisionMoment(
-  player: Player,
-  match: { week: number; rivalClub: string; stakes?: MatchStakes },
-): GameEvent {
+/**
+ * Antes de esto, cualquier partido real — una jornada de mitad de tabla,
+ * una eliminatoria de Copa o una noche de Champions — arrancaba con
+ * exactamente el mismo "Partido [importante/decisivo] en marcha, ante
+ * X": la única diferencia entre competiciones era la intensidad
+ * (stakes), nunca el SABOR. `match` ya traía `competition` y
+ * `description` (match-calendar.ts los calcula para cada semana), pero
+ * esta función solo miraba `stakes` — pedido explícito: que Liga, Copa,
+ * Champions, Europa y amistoso se sientan distintos de verdad, no solo
+ * "más o menos importantes".
+ */
+/**
+ * `description` en copa/champions/europa ya viene como "Champions League -
+ * Fase de grupos ante {rival}" (match-calendar.ts) — el rival va incluido
+ * porque otras pantallas del juego lo necesitan tal cual. Pero el propio
+ * `buildMatchDecisionMoment` de abajo SIEMPRE añade su propio "ante
+ * {rival}." al final de la frase (para las 4 posiciones), así que usar
+ * `description` entero aquí duplicaba el rival y a veces la competición
+ * dos veces seguidas. Esto se queda solo con la ronda ("Fase de grupos",
+ * "Dieciseisavos"), sin el "ante X" que ya viene después.
+ */
+function roundLabel(description: string): string {
+  return description.split(" ante ")[0];
+}
+
+function competitionFraming(match: MatchWeek): { title: string; lead: string } {
+  const decisivo = match.stakes === "decisivo";
+  switch (match.competition) {
+    case "champions":
+      return {
+        title: decisivo ? "Noche de Champions, sin margen de error" : "Noche de Champions",
+        lead: `${roundLabel(match.description)}, `,
+      };
+    case "europa":
+      return { title: "Noche europea", lead: `${roundLabel(match.description)}, ` };
+    case "copa":
+      return {
+        title: decisivo ? "La sorpresa que nadie quiere ser" : "Eliminatoria de Copa, a partido único",
+        lead: `${roundLabel(match.description)}, a vida o muerte, `,
+      };
+    case "amistoso":
+      return { title: "Primer contacto con el nuevo vestuario", lead: `Amistoso de pretemporada, ` };
+    case "internacional":
+      return {
+        title: decisivo ? "Con la selección, en el partido que lo decide todo" : "Con la selección",
+        lead: `${roundLabel(match.description)}, con la camiseta de tu país, `,
+      };
+    default:
+      return {
+        title: decisivo ? "El momento que lo decide todo" : "El momento decisivo",
+        lead: decisivo ? "Partido decisivo de la temporada en marcha, " : match.stakes === "importante" ? "Partido importante en marcha, " : "Partido en marcha ",
+      };
+  }
+}
+
+export function buildMatchDecisionMoment(player: Player, match: MatchWeek): GameEvent {
   const decisionFlagKey = `match_decision_${match.week}`;
   const flags = (outcome: string, style: string) => ({ [decisionFlagKey]: JSON.stringify({ outcome, style }) });
 
-  // Antes CUALQUIER partido real (una jornada 1 cualquiera o la final de
-  // la temporada) generaba exactamente el mismo "El momento decisivo" —
-  // ahora el título y la tensión del arranque escalan según lo que
-  // match-calendar.ts (stakes) diga que hay en juego esta semana.
-  const decisionTitle = match.stakes === "decisivo" ? "El momento que lo decide todo" : "El momento decisivo";
-  const stakesLead =
-    match.stakes === "decisivo"
-      ? "Partido decisivo de la temporada en marcha, "
-      : match.stakes === "importante"
-        ? "Partido importante en marcha, "
-        : "Partido en marcha ";
+  const { title: decisionTitle, lead: stakesLead } = competitionFraming(match);
 
   if (player.position === "Portero") {
     const situation = GOALKEEPER_DECISION_SITUATIONS[Math.floor(Math.random() * GOALKEEPER_DECISION_SITUATIONS.length)];
