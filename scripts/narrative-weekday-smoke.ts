@@ -3,9 +3,9 @@ import path from "node:path";
 
 const gameDir = new URL("../src/game/", import.meta.url);
 // Cover every source that can directly emit player-facing story, match, life,
-// finance or post-career copy. Calendar/data helpers stay excluded because
-// weekday names there can be legitimate implementation data.
-const narrativeFile = /^(?:bank-|events-|director|dynamic|opening|career-life|threads|consequences|engine|story(?:-alt)?|match|finance|postcareer|memory-return).*\.ts$/u;
+// finance, career progression or post-career copy. Calendar/data helpers stay
+// excluded because weekday names there can be legitimate implementation data.
+const narrativeFile = /^(?:bank-|events-|director|dynamic|opening|career(?:-life)?|threads|consequences|engine|story(?:-alt)?|match|finance|postcareer|memory-return).*\.ts$/u;
 const narrativeSources = fs
   .readdirSync(gameDir)
   .filter((name) => narrativeFile.test(name))
