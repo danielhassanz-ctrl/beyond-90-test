@@ -42,10 +42,17 @@ export const FREE_TIER_PLAYER_LIMIT = 100;
  */
 const OWNER_EMAIL = (process.env.OWNER_EMAIL || "danielhassanz@gmail.com").toLowerCase();
 
-/** Cuántas fotos concede cada pack comprado y su precio, en céntimos de euro. */
+/**
+ * Cuántas fotos concede cada pack comprado y su precio, en céntimos de
+ * euro. Subido de 2,00€ a 2,99€ al cambiar el motor de imágenes a Nano
+ * Banana Pro (~0,14€/foto frente a ~0,05€ del pipeline anterior): a 2,00€
+ * el margen se quedaba en ~0,32€ por pack (16%) tras la comisión de
+ * Stripe; a 2,99€ sube a ~1,29€ (43%), sano de verdad. Pedido explícito
+ * del usuario tras ver los números.
+ */
 export const CREDIT_PACK = {
   images: 10,
-  priceCents: 200,
+  priceCents: 299,
   currency: "eur",
   label: "10 fotos más",
 };

@@ -24,7 +24,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 const PER_USER_MONTHLY_LIMIT = 100;
 
-/** ~30€/mes a ~0,05€/imagen (precio real de Flux Kontext Pro en Replicate). */
+/**
+ * Con Nano Banana Pro (~0,14€/imagen, ver replicate.ts) este mismo tope
+ * de 600 fotos/mes ya no son ~30€/mes sino ~84€/mes — el número de fotos
+ * se deja igual por ahora (sigue siendo un techo razonable de VOLUMEN),
+ * pero si se quiere mantener el mismo techo de GASTO de antes, este
+ * número tendría que bajar a ~190.
+ */
 const GLOBAL_MONTHLY_LIMIT = 600;
 
 function startOfMonthISO(): string {

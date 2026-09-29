@@ -1,108 +1,44 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generatePlayerImage } from "@/lib/images/replicate";
-import { swapFaceIntoTemplate } from "@/lib/images/faceswap";
 
 /**
- * Genera la imagen final de un evento reutilizando plantillas: la primera
- * vez que un templateKey (p.ej. "primera-firma:Real Madrid") ocurre, se
- * genera la escena completa con Flux Kontext Pro a partir de la foto de
- * ESE jugador (lento, ~0,045€) y se guarda como plantilla para siempre.
- * Cualquier jugador siguiente que viva ese mismo evento con ese mismo
- * club solo paga un face-swap barato y rápido (~0,006€) sobre esa
- * plantilla ya existente, en vez de repetir la generación completa.
+ * Con el pipeline anterior (Flux Kontext Pro + face-swap encadenados),
+ * reutilizar una escena ya generada para un mismo hito+club vía un
+ * face-swap barato (~0,006€) tenía sentido: era MUCHO más barato que
+ * repetir la generación completa (~0,045€).
  *
- * No hay "coste perdido" por ser el primero: la plantilla resultante
- * tiene la cara de ESE jugador, pero el face-swap la sustituye limpio en
- * cada uso posterior — la propia plantilla es simplemente el punto de
- * partida, no algo que se vea nunca "genérico" ni sin cara.
+ * Con Nano Banana Pro (ver replicate.ts) esa diferencia de precio ya no
+ * existe: cada llamada cuesta lo mismo (~0,14€) haga lo que haga, así que
+ * "reutilizar una plantilla" no ahorra nada — solo añadía complejidad y
+ * un paso extra que podía fallar. Esta función ahora es un envoltorio
+ * fino que simplemente genera la imagen directamente; se mantiene la
+ * misma firma para no tocar los sitios que la llaman (actions.ts).
  */
 export interface TemplateGenerationResult {
   buffer: Buffer;
-  /** true si tocó generar la escena de cero — el caller debe guardarla como plantilla tras subirla. */
   isFreshGeneration: boolean;
 }
 
 export async function generateFromTemplate(
-  supabase: SupabaseClient,
-  templateKey: string,
+  _supabase: SupabaseClient,
+  _templateKey: string,
   playerPhotoUrl: string,
   fallbackPrompt: string,
 ): Promise<TemplateGenerationResult | null> {
-  // La consulta de la plantilla no tenía try/catch (mismo hueco encontrado
-  // y arreglado en upload.ts/quota.ts) — un fallo de red aquí abortaba el
-  // hito entero antes incluso de intentar la generación completa de
-  // respaldo, que es justo lo que este bloque intenta evitar más abajo.
-  let existing: { image_url: string } | null = null;
-  try {
-    const { data, error: lookupError } = await supabase
-      .from("image_templates")
-      .select("image_url")
-      .eq("template_key", templateKey)
-      .maybeSingle();
-    if (lookupError) {
-      console.error(`[generateFromTemplate] template lookup failed for ${templateKey}:`, lookupError.message);
-    }
-    existing = data;
-  } catch (err) {
-    console.error(`[generateFromTemplate] template lookup threw for ${templateKey}:`, err instanceof Error ? err.message : err);
-  }
-
-  if (existing?.image_url) {
-    const swapped = await swapFaceIntoTemplate(existing.image_url, playerPhotoUrl);
-    if (swapped) return { buffer: swapped, isFreshGeneration: false };
-    // Antes, si el face-swap fallaba, caía a generar la escena completa
-    // de cero como red de seguridad — bienintencionado, pero en Vercel
-    // Hobby (tope duro de 300s por función, sin margen para subirlo) esto
-    // apilaba dos llamadas lentas a Replicate una detrás de otra dentro
-    // del mismo turno: el intento de face-swap (con sus propios reintentos
-    // y timeouts, hasta ~100s) + una generación completa entera (~280s en
-    // el peor caso) fácilmente superaban el límite juntas. La plataforma
-    // mata la función a medio camino sin ejecutar ningún catch — el hito
-    // se queda en "pending" PARA SIEMPRE, sin marcarse nunca como
-    // fallido. Visto en vivo jugando: una firma de contrato con face-swap
-    // exitoso en los logs de Replicate que nunca llegó a completarse.
-    //
-    // Mejor fallar rápido aquí (la plantilla ya existe, reintentar el
-    // face-swap no la generación completa es lo barato) y dejar que el
-    // jugador pulse "Generar la foto de este momento" en la pantalla del
-    // hito si quiere reintentarlo — ese botón sí arranca con su propio
-    // presupuesto de 300s limpio, en vez de heredar el tiempo ya gastado.
-    console.warn(`[generateFromTemplate] face-swap failed for ${templateKey}, failing fast instead of stacking a full regeneration`);
-    return null;
-  }
-
   const buffer = await generatePlayerImage(playerPhotoUrl, fallbackPrompt);
   if (!buffer) return null;
-
-  return { buffer, isFreshGeneration: true };
+  return { buffer, isFreshGeneration: false };
 }
 
 /**
- * Guarda el resultado de una generación completa como plantilla nueva,
- * para que la próxima vez que ocurra ese mismo templateKey sea un
- * face-swap barato en vez de otra generación completa. Se llama solo
- * cuando `generateFromTemplate` tuvo que generar de cero (no cuando ya
- * reutilizó una plantilla existente vía face-swap).
+ * Ya no se guarda ninguna plantilla (ver arriba) — se deja como no-op en
+ * vez de borrar la función para no tener que tocar actions.ts, que sigue
+ * llamándola tras cada generación fresca.
  */
 export async function saveAsTemplateIfMissing(
-  supabase: SupabaseClient,
-  templateKey: string,
-  imageUrl: string,
+  _supabase: SupabaseClient,
+  _templateKey: string,
+  _imageUrl: string,
 ): Promise<void> {
-  try {
-    const { data: existing } = await supabase
-      .from("image_templates")
-      .select("id")
-      .eq("template_key", templateKey)
-      .maybeSingle();
-
-    if (existing) return; // otro jugador ya la creó mientras tanto, no duplicar
-
-    const { error } = await supabase.from("image_templates").insert({ template_key: templateKey, image_url: imageUrl });
-    if (error) {
-      console.error(`[saveAsTemplateIfMissing] failed to save template ${templateKey}:`, error.message);
-    }
-  } catch (err) {
-    console.error(`[saveAsTemplateIfMissing] threw for ${templateKey}:`, err instanceof Error ? err.message : err);
-  }
+  return;
 }
