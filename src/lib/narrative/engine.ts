@@ -247,9 +247,55 @@ const GRAND_MOMENT_EVENT_IDS = new Set([
   "esp-guino-rondo-imposible",
   "esp-guino-comparacion-prensa",
   "esp-guino-capitan-eterno",
-  "esp-boda-equivocada",
-  "esp-reality-error",
 ]);
+
+/**
+ * "La boda equivocada" y "El reality por error" (events.ts) NO viven en
+ * GRAND_MOMENT_EVENT_IDS a propósito: ese pool se revisa con un 35% de
+ * probabilidad CADA turno elegible durante toda la carrera, así que en
+ * una partida larga casi cualquier evento ahí dentro acaba ocurriendo
+ * tarde o temprano — correcto para el Balón de Oro o la capitanía
+ * (deben pasar en toda carrera exitosa), pero no para un despiste
+ * surrealista, que tiene que sentirse como una rareza que le pasa a
+ * ALGUNOS jugadores, no a todos. Pedido explícito: "que no salga siempre
+ * a todos los usuarios".
+ *
+ * Aquí se resuelve en dos capas: primero, si esta partida en concreto
+ * siquiera "tiene" alguna vez la posibilidad (un ~15% de los jugadores,
+ * decidido de forma determinista por su id — mismo jugador, mismo
+ * resultado siempre, sin necesidad de guardar nada hasta que ocurra); y
+ * solo si la tiene, una probabilidad baja por turno de que ocurra de
+ * verdad, una única vez en toda la carrera.
+ */
+const RARE_MISHAP_IDS = ["esp-boda-equivocada", "esp-reality-error"];
+
+function isEligibleForRareMishap(player: Player): boolean {
+  return mixHash(`${player.id}:rare-mishap-eligible`) % 100 < 15;
+}
+
+function mixHash(value: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    h ^= value.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 16;
+  return (h >>> 0) % 1000;
+}
+
+function shouldTriggerRareMishap(player: Player, usedEventIds: string[]): boolean {
+  if (player.week < 30) return false;
+  if (RARE_MISHAP_IDS.some((id) => usedEventIds.includes(id))) return false;
+  if (!isEligibleForRareMishap(player)) return false;
+  return Math.random() < 0.03;
+}
+
+function pickRareMishapEvent(usedEventIds: string[]): GameEvent | null {
+  const eligible = RARE_MISHAP_IDS.filter((id) => !usedEventIds.includes(id));
+  if (eligible.length === 0) return null;
+  const id = eligible[Math.floor(Math.random() * eligible.length)];
+  return EVENTS.find((e) => e.id === id) ?? null;
+}
 const GRAND_MOMENT_EVENTS: GameEvent[] = EVENTS.filter((event) => GRAND_MOMENT_EVENT_IDS.has(event.id));
 
 /**
@@ -2481,6 +2527,13 @@ export async function pickNextEventDynamic(
     const torneo = buildTorneoLifeEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Torneo life: "${torneo.title}"`);
     return torneo;
+  }
+  if (!midMatch && shouldTriggerRareMishap(playerWithDynamics, usedEventIds)) {
+    const mishap = pickRareMishapEvent(usedEventIds);
+    if (mishap) {
+      console.log(`[pickNextEventDynamic] Rare mishap: "${mishap.title}"`);
+      return maybeAddFreeText(mishap);
+    }
   }
   // Arcos narrativos de varios capítulos (skill narrativas-futbol): se
   // comprueban antes que los DM/pretemporada normales porque son más
