@@ -480,8 +480,8 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
       if (choiceId === "prometer") {
         rel(s, "family", 8);
         stat(s, "discipline", 3);
-        remember(s, "Prometiste reservar tiempo fijo para tu familia incluso en plena temporada");
-        return { title: "Una promesa concreta", text: "No prometes estar siempre. Prometes dos fechas al mes y las apuntas delante de ellos. Ahora habrá que cumplirlas.", tone: "good" };
+        remember(s, "Prometiste proteger tiempo concreto para tu familia incluso en plena temporada");
+        return { title: "Una promesa concreta", text: "No prometes estar siempre. Acordáis reservar momentos concretos y los apuntas delante de ellos. Ahora habrá que cumplirlos.", tone: "good" };
       }
       rel(s, "family", 5);
       stat(s, "morale", 9);
