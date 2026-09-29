@@ -32,7 +32,9 @@ import { EventScene } from "@/components/EventScene";
 import { MatchScene } from "@/components/MatchScene";
 import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
 import { resolveEvent } from "./actions";
-import { personalizeEvent } from "@/lib/narrative/npcs";
+import { personalizeEvent, detectMentionedRoles, NPC_ROLE_LABELS } from "@/lib/narrative/npcs";
+import { getOrCreateNpcFace, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
+import { NpcAvatarRow } from "@/components/NpcAvatarRow";
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   const pct = Math.max(0, Math.min(100, value));
@@ -287,6 +289,20 @@ export default async function CarreraPage() {
   // Personajes con nombre y apellidos (el míster, el capitán, tu madre...): ver npcs.ts.
   if (event) event = personalizeEvent(event, player);
 
+  // Cara del personaje que aparece en esta escena (entrenador, capitán,
+  // agente, madre, padre, pareja — ver npcFaces.ts). Como máximo 2 por
+  // turno: rarísima vez habla más de uno en la misma escena, y así
+  // ningún turno dispara de golpe un montón de generaciones nuevas si
+  // coincidieran varios roles sin cara todavía.
+  const mentionedRoles = event ? detectMentionedRoles(event, player).filter((r) => NPC_FACE_ROLES.includes(r)) : [];
+  const npcFaces = await Promise.all(
+    mentionedRoles.slice(0, 2).map(async (role) => ({
+      role,
+      label: NPC_ROLE_LABELS[role],
+      url: await getOrCreateNpcFace(supabase, player, role),
+    })),
+  );
+
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
 
   return (
@@ -322,6 +338,7 @@ export default async function CarreraPage() {
           )}
           <div className="space-y-3 px-4 pb-4">
             <p className="text-kicker">{CATEGORY_LABELS[event.category]}</p>
+            <NpcAvatarRow faces={npcFaces} />
             <h2 className="font-display text-xl text-foreground leading-tight">{event.title}</h2>
             <p className="text-sm text-muted-foreground">{event.description}</p>
 

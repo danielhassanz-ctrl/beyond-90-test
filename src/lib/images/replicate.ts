@@ -143,3 +143,82 @@ export async function generatePlayerImage(
     return null;
   }
 }
+
+const NPC_FACE_MODEL_OWNER = "black-forest-labs";
+const NPC_FACE_MODEL_NAME = "flux-schnell";
+
+/**
+ * Retrato de un personaje secundario del reparto fijo (entrenador,
+ * capitán, agente, madre, padre, pareja — ver npcFaces.ts). A diferencia
+ * de generatePlayerImage, aquí NO hay ninguna foto real que preservar: es
+ * un personaje inventado, así que no hace falta el motor caro de
+ * identidad (Nano Banana Pro, ~0,14€/imagen). Flux Schnell genera una
+ * imagen igual de creíble para un retrato secundario por una fracción del
+ * precio (~0,003€) y en 1-2 segundos — importante porque esto se genera
+ * una vez por personaje y se guarda, pero con hasta 5-6 roles por carrera
+ * (y más si cambias de club) el coste de usar el motor caro aquí también
+ * se habría sumado rápido.
+ *
+ * A diferencia de generatePlayerImage (que corre en segundo plano dentro
+ * de after()), esto se pide DENTRO de la carga de la página del turno, la
+ * primera vez que aparece cada personaje — así que los tiempos de espera
+ * son deliberadamente cortos: si Replicate va lento, preferimos que el
+ * turno cargue sin avatar a que el jugador se quede mirando una pantalla
+ * en blanco. Probado en real: una vez el modelo está "caliente" tarda
+ * 5-6s, pero la primerísima llamada tras un rato sin uso puede tener un
+ * arranque en frío bastante más largo — de ahí el margen generoso de
+ * abajo pese a que el propio cálculo es rápido.
+ */
+export async function generateNpcFace(prompt: string): Promise<Buffer | null> {
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) {
+    console.error("[generateNpcFace] no REPLICATE_API_TOKEN set");
+    return null;
+  }
+
+  try {
+    const res = await fetchWithTimeout(
+      `https://api.replicate.com/v1/models/${NPC_FACE_MODEL_OWNER}/${NPC_FACE_MODEL_NAME}/predictions`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Prefer: "wait=20",
+        },
+        body: JSON.stringify({
+          input: { prompt, aspect_ratio: "1:1", output_format: "png", num_outputs: 1 },
+        }),
+      },
+      25_000,
+    );
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[generateNpcFace] HTTP ${res.status}`, body.slice(0, 500));
+      return null;
+    }
+
+    let data = (await res.json()) as ReplicatePrediction;
+    if (data.status !== "succeeded" && data.urls?.get) {
+      const polled = await pollUntilDone(data.urls.get, token, 30_000);
+      if (polled) data = polled;
+    }
+
+    if (data.status !== "succeeded" || !data.output) {
+      console.error(`[generateNpcFace] prediction did not succeed: status=${data.status} error=${data.error ?? "(sin detalle)"}`);
+      return null;
+    }
+
+    const outputUrl = Array.isArray(data.output) ? data.output[0] : data.output;
+    const imageRes = await fetchWithTimeout(outputUrl, {}, 20_000);
+    if (!imageRes.ok) {
+      console.error(`[generateNpcFace] fetching output failed: HTTP ${imageRes.status}`);
+      return null;
+    }
+    return Buffer.from(await imageRes.arrayBuffer());
+  } catch (err) {
+    console.error("[generateNpcFace] threw", err instanceof Error ? err.message : err);
+    return null;
+  }
+}

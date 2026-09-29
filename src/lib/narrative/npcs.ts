@@ -445,3 +445,23 @@ export function personalizeEvent<T extends GameEvent>(rawEvent: T, player: Playe
 
   return { ...event, title, description, freeTextPrompt: event.freeTextPrompt ? freeTextPrompt : event.freeTextPrompt, options };
 }
+
+/**
+ * Qué roles del reparto fijo aparecen mencionados en un texto YA
+ * personalizado (título + descripción de un evento) — reutiliza los
+ * mismos patrones que ponen nombre a "el míster"/"tu madre", así que un
+ * personaje solo se detecta si de verdad habla o aparece en la escena, no
+ * en cualquier evento al azar. Pensado para decidir qué cara mostrar
+ * junto al evento (ver npcFaces.ts); no todo rol devuelto aquí tiene cara
+ * asignada, eso lo filtra quien llama a esta función.
+ */
+export function detectMentionedRoles(event: Pick<GameEvent, "title" | "description">, player: Player): NpcRole[] {
+  const text = `${event.title} ${event.description}`;
+  const found = new Set<NpcRole>();
+  for (const rule of MENTION_RULES) {
+    if (rule.re.test(text) || rule.namedRe.test(text)) found.add(rule.key as NpcRole);
+  }
+  const parejaName = typeof player.flags?.pareja === "string" ? player.flags.pareja : null;
+  if (parejaName && text.includes(parejaName)) found.add("pareja");
+  return [...found];
+}
