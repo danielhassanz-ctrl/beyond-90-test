@@ -302,7 +302,7 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
         stat(s, "fitness", 6);
         s.flags["nolist"] = 0;
         remember(s, "Te ganaste el regreso a la lista trabajando en silencio");
-        return { title: "Sin ruido", text: "Cinco semanas de primer en llegar y último en irse. Un martes cualquiera vuelves a aparecer en la pizarra.", tone: "good" };
+        return { title: "Sin ruido", text: "Cinco semanas de primer en llegar y último en irse. Un día cualquiera vuelves a aparecer en la pizarra.", tone: "good" };
       }
       s.flags["pedir_salida"] = 1;
       s.flags["nolist"] = 1;
@@ -357,7 +357,7 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
         stat(s, "morale", 10);
         stat(s, "form", -5);
         remember(s, "Paraste la semana para volver a casa");
-        return { title: "Volver", text: "Tres días de cocina de casa y silencio. El sábado juegas peor y duermes mejor que en meses.", tone: "good" };
+        return { title: "Volver", text: "Tres días de cocina de casa y silencio. En el siguiente partido juegas peor y duermes mejor que en meses.", tone: "good" };
       }
       if (choiceId === "reordenar") {
         rel(s, "family", 14);
