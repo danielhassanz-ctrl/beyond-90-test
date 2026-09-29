@@ -429,7 +429,7 @@ export function resolveConsequence(s: GameState, card: DynamicCard, choiceId: st
       if (choiceId === "responder") {
         stat(s, "form", 7);
         stat(s, "discipline", 4);
-        return { title: "Que hable el campo", text: "No publicas nada. Entrenas como si el respaldo fuera una deuda que quieres pagar el domingo.", tone: "good" };
+        return { title: "Que hable el campo", text: "No publicas nada. Entrenas como si el respaldo fuera una deuda que quieres pagar en el próximo partido.", tone: "good" };
       }
       rel(s, "dressing", 5);
       rel(s, "coach", 3);
