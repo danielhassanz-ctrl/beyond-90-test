@@ -48,6 +48,10 @@ jobs:
         run: npm run qa:career
       - name: Branch QA
         run: npm run qa:branches
+      - name: Narrative source chronology coverage QA
+        run: node --import tsx scripts/narrative-source-coverage-smoke.ts
+      - name: Narrative invented-weekday chronology QA
+        run: node --import tsx scripts/narrative-weekday-smoke.ts
       - name: Narrative anti-repetition QA
         run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
       - name: Human-style first-15-decision QA
