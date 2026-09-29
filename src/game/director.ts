@@ -3040,11 +3040,27 @@ export function renderDirector(s: GameState, card: DynamicCard): DirectorView | 
       image: "locker",
       category: "story",
       text: `${text}. ${CALLBACK_WRAP[hash(careerSeed(s), `cbw${s.sceneCount ?? 0}`) % CALLBACK_WRAP.length]}`,
-      choices: [
-        { id: "afrontar", label: "Afrontarlo de frente" },
-        { id: "esquivar", label: "Esquivarlo por ahora", hint: "Puede volver peor" },
-        { id: "consultar", label: "Hablar con alguien implicado antes de cerrar", hint: "Menos impulso, más contexto" },
-      ],
+      choices: (() => {
+        const cbId = typeof card.data["cbId"] === "string" ? card.data["cbId"] : "cb";
+        const variants = [
+          [
+            { id: "afrontar", label: "Afrontarlo de frente" },
+            { id: "esquivar", label: "Dejarlo pendiente por ahora", hint: "Puede volver peor" },
+            { id: "consultar", label: "Hablar con quien estuvo implicado", hint: "Menos impulso, más contexto" },
+          ],
+          [
+            { id: "afrontar", label: "Sentarte y responder hoy" },
+            { id: "esquivar", label: "Ganar tiempo antes de contestar", hint: "No cierra el asunto" },
+            { id: "consultar", label: "Contrastar primero lo que pasó", hint: "Buscas contexto antes de decidir" },
+          ],
+          [
+            { id: "afrontar", label: "Cerrar la conversación cara a cara" },
+            { id: "esquivar", label: "No entrar todavía", hint: "La conversación seguirá abierta" },
+            { id: "consultar", label: "Escuchar otra versión antes de cerrar", hint: "Evitas decidir con media historia" },
+          ],
+        ] as const;
+        return variants[hash(careerSeed(s), `callback-choices|${cbId}`) % variants.length]!.map((choice) => ({ ...choice }));
+      })(),
     };
   }
   if (card.kind !== "arc") return null;
