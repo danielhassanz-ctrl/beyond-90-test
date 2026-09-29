@@ -2,18 +2,19 @@ import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
 
 /**
- * Personajes fijos del entorno del jugador — todos con nombre y apellidos
- * y con el MISMO nombre en cada escena de la carrera (el míster no se
- * llama distinto cada vez que sale). A diferencia de
+ * Personajes fijos del entorno del jugador — todos con nombre y un
+ * apellido y con el MISMO nombre en cada escena de la carrera (el míster
+ * no se llama distinto cada vez que sale). A diferencia de
  * secondary-characters.ts (personajes episódicos que la IA introduce),
  * estos existen desde el minuto uno.
  *
  * El nombre se deriva de un hash del id del jugador (y del club, para el
  * personal del club: cuando fichas, el míster, el capitán y el presidente
  * cambian; la familia y los amigos no) — determinista, sin guardar nada
- * ni gastar una escritura. Antes había solo 6 nombres por rol y 5 roles;
- * ahora es una combinación de nombre + dos apellidos (miles de posibles),
- * así que dos carreras casi nunca comparten reparto.
+ * ni gastar una escritura. Un solo apellido a propósito (pedido explícito
+ * tras probar la versión con dos: "Iván Roca Solera" se lee más lento y
+ * más "de repartidor de reparto de serie" que "Iván Roca" — un futbolista
+ * de verdad casi nunca se nombra con los dos apellidos en el día a día).
  */
 export type NpcRole =
   | "entrenador"
@@ -105,16 +106,14 @@ function mix(value: string): number {
   return h >>> 0;
 }
 
-/** Nombre + dos apellidos a partir de una semilla; ninguno de los apellidos coincide con `own`. */
+/** Nombre + un apellido a partir de una semilla; el apellido nunca coincide con `own`. */
 function buildName(seed: string, gender: "m" | "f", own = ""): string {
   const firstPool = gender === "f" ? FIRST_F : FIRST_M;
   const first = firstPool[mix(seed + ":n") % firstPool.length];
   const ownLower = own.toLowerCase();
   let s1 = SURNAMES[mix(seed + ":a") % SURNAMES.length];
   if (s1.toLowerCase() === ownLower) s1 = SURNAMES[(SURNAMES.indexOf(s1) + 1) % SURNAMES.length];
-  let s2 = SURNAMES[mix(seed + ":b") % SURNAMES.length];
-  while (s2 === s1 || s2.toLowerCase() === ownLower) s2 = SURNAMES[(SURNAMES.indexOf(s2) + 1) % SURNAMES.length];
-  return `${first} ${s1} ${s2}`;
+  return `${first} ${s1}`;
 }
 
 function pickGender(seed: string, gender: "m" | "f" | "any"): "m" | "f" {
@@ -124,13 +123,13 @@ function pickGender(seed: string, gender: "m" | "f" | "any"): "m" | "f" {
 export function getNpcName(player: Player, role: NpcRole): string {
   const seed = CLUB_BOUND.has(role) ? `${player.id}:${role}:${player.club}` : `${player.id}:${role}`;
   const gender = pickGender(seed, ROLE_GENDER[role]);
-  const name = buildName(seed, gender, player.last_name ?? "");
-  // Tu padre y tu hermano comparten tu primer apellido.
-  if (role === "padre" || role === "hermano") {
-    const parts = name.split(" ");
-    return `${parts[0]} ${player.last_name ?? parts[1]} ${parts[2]}`;
+  // Tu padre y tu hermano comparten tu apellido — no hace falta generar uno propio.
+  if ((role === "padre" || role === "hermano") && player.last_name) {
+    const firstPool = gender === "f" ? FIRST_F : FIRST_M;
+    const first = firstPool[mix(seed + ":n") % firstPool.length];
+    return `${first} ${player.last_name}`;
   }
-  return name;
+  return buildName(seed, gender, player.last_name ?? "");
 }
 
 /** Un nombre completo al azar (p. ej. el nuevo representante cuando despides al anterior). */

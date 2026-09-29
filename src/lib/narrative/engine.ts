@@ -239,6 +239,12 @@ const GRAND_MOMENT_EVENT_IDS = new Set([
   // a tu buen momento) como para vivir aquí en vez del pool genérico.
   "rep-pedir-carta-libertad",
   "sel-convocatoria-snub",
+  // Guiños a leyendas reales sin nombrarlas ni recrear su cara (ver
+  // comentario junto a estos eventos en events.ts).
+  "esp-guino-saludo-leyenda",
+  "esp-guino-rondo-imposible",
+  "esp-guino-comparacion-prensa",
+  "esp-guino-capitan-eterno",
 ]);
 const GRAND_MOMENT_EVENTS: GameEvent[] = EVENTS.filter((event) => GRAND_MOMENT_EVENT_IDS.has(event.id));
 

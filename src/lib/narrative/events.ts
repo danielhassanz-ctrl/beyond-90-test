@@ -5109,6 +5109,126 @@ export const EVENTS: GameEvent[] = [
     minWeek: 110,
     minMedia: 66,
   },
+  /**
+   * Guiños a leyendas reales sin nombrarlas ni recrear su cara — pedido
+   * explícito del usuario tras descartar usar nombres/caras casi
+   * idénticas a jugadores reales (riesgo de derecho a la imagen: ver
+   * conversación de producto). El gancho vive en el TEXTO: la escena
+   * describe rasgos y contexto reconocibles (acento, gesto, cifra de
+   * partidos) sin decir nunca quién es, y es el propio jugador quien hace
+   * la broma al compartir la tarjeta. Solo "el capitán eterno" lleva
+   * imagen (genérica, sin rasgos identificables de nadie real); "la
+   * comparación" es pura prensa, sin imagen, precisamente para no correr
+   * ningún riesgo visual.
+   */
+  {
+    id: "esp-guino-saludo-leyenda",
+    category: "partido",
+    title: "El saludo antes del partido",
+    description:
+      "Antes de un amistoso de estrellas, un delantero con acento portugués y un gesto ya famoso te busca para saludarte. Contigo se para dos segundos de más: 'Sigue así'. No hace falta que diga su nombre.",
+    priority: true,
+    isMilestone: true,
+    milestoneType: "guino-leyenda",
+    imageScene:
+      "Photorealistic sports photo of the photographed man on the pitch before a friendly match, shaking hands with a rival forward of generic athletic build (not a real, identifiable person, no distinctive tattoos or signature pose), stadium floodlights, warm-up kits, candid photojournalism style",
+    options: [
+      {
+        id: "a",
+        label: "Guardarte el momento, sin decir nada",
+        subtitle: "Disfrutarlo en privado",
+        consequences: { moral: 5 },
+      },
+      {
+        id: "b",
+        label: "Compartirlo al momento en redes",
+        subtitle: "Que lo vea todo el mundo",
+        consequences: { fama: 6, moral: 3, rel_aficion: 3 },
+      },
+    ],
+    minWeek: 60,
+    minMedia: 78,
+  },
+  {
+    id: "esp-guino-rondo-imposible",
+    category: "entrenamiento",
+    title: "El rondo imposible",
+    description:
+      "En un entrenamiento conjunto con la absoluta, un argentino bajito te roba el balón tres veces sin ni mirarte. A la cuarta te deja pasar, te guiña un ojo, y el grupo entero se ríe contigo.",
+    priority: true,
+    isMilestone: true,
+    milestoneType: "guino-leyenda",
+    options: [
+      {
+        id: "a",
+        label: "Reírte y pedirle que te enseñe el truco",
+        subtitle: "Humildad ante un maestro",
+        consequences: { moral: 6, rel_vestuario: 2 },
+      },
+      {
+        id: "b",
+        label: "Tomártelo como una lección para mejorar",
+        subtitle: "Competitividad sana",
+        consequences: { moral: 3, forma: 3 },
+      },
+    ],
+    minWeek: 90,
+    minMedia: 80,
+  },
+  {
+    id: "esp-guino-comparacion-prensa",
+    category: "prensa",
+    title: "La comparación",
+    description:
+      "Un periodista veterano te para en zona mixta: 'Llevo 25 años cubriendo esto. Ese control orientado no lo veía desde 2009, en Wembley. El que lo hacía entonces ahora entrena a gente como tú.'",
+    priority: true,
+    isMilestone: true,
+    milestoneType: "guino-leyenda",
+    options: [
+      {
+        id: "a",
+        label: "Quitarle importancia: 'Aún me queda mucho'",
+        subtitle: "Humildad calculada",
+        consequences: { moral: 3, reputacion: 3 },
+      },
+      {
+        id: "b",
+        label: "Aceptar el cumplido con orgullo",
+        subtitle: "Confianza pública",
+        consequences: { fama: 5, moral: 4 },
+      },
+    ],
+    minWeek: 70,
+    minMedia: 82,
+  },
+  {
+    id: "esp-guino-capitan-eterno",
+    category: "vestuario",
+    title: "El veterano eterno",
+    description:
+      "Tu primer día en el vestuario nuevo, el jugador con más partidos en la historia del club se levanta a darte la mano. 'Aquí se suda como en ningún sitio', dice, con la voz rota de mil batallas.",
+    priority: true,
+    isMilestone: true,
+    milestoneType: "guino-leyenda",
+    imageScene:
+      "Photorealistic photo of the photographed man in a club dressing room, shaking hands with a veteran teammate of generic appearance (not a real, identifiable person), generic murals and trophy photos on the walls with no real club crests or real faces, warm documentary lighting",
+    options: [
+      {
+        id: "a",
+        label: "Agradecerle el gesto sin más",
+        subtitle: "Respeto discreto",
+        consequences: { moral: 4, rel_vestuario: 4 },
+      },
+      {
+        id: "b",
+        label: "Prometerle que estarás a la altura",
+        subtitle: "Asumir el peso del escudo",
+        consequences: { moral: 5, rel_vestuario: 2, fama: 2 },
+      },
+    ],
+    minWeek: 100,
+    minMedia: 85,
+  },
   {
     id: "sel-clasificacion-mundial",
     category: "especial",

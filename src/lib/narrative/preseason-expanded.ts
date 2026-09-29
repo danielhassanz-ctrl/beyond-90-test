@@ -74,12 +74,12 @@ export function getPreseasonMiddleStepNameById(id: string): string | null {
 
 export function buildPreseasonBienvenidaEvent(club: string, seed: string): GameEvent {
   const quotes = [
-    `Tu primer día en las instalaciones del ${club}. El director deportivo te recibe personalmente. 'Bienvenido', te dice. 'Sabemos que vienes de un buen proceso. Aquí queremos que continúes creciendo. La pretemporada es para adaptarte al ritmo, al grupo y a nuestras ideas. Trabaja duro, aprende rápido, y las oportunidades llegarán.'`,
-    `Llegas a la ciudad deportiva del ${club} con la maleta todavía en la mano. Te recibe el entrenador, no el director deportivo: 'No hago estas cosas con todos, pero quería conocerte en persona. Hemos visto algo en ti. No te prometo minutos, te prometo una oportunidad justa si trabajas.'`,
-    `El vestuario del ${club} está medio vacío cuando entras el primer día — la mayoría todavía está de vacaciones. Un utillero te enseña tu taquilla con tu nombre ya puesto. 'Bienvenido a casa', te dice sonriendo. 'Aquí vas a pasar más horas que en tu propia cama, ya lo verás.'`,
-    `En rueda de prensa de presentación, un periodista te pregunta si te sientes preparado. Contestas lo que se espera, pero por dentro los nervios son reales. Después, en el vestuario, el capitán te guiña un ojo: 'Todos hemos pasado por esa rueda de prensa. Relájate, esto solo acaba de empezar.'`,
-    `Nadie te recibe formalmente el primer día: te dejan un chándal del ${club} en la taquilla con una nota escrita a mano del preparador físico: 'A las 9 en el gimnasio, no llegues tarde'. Ni discursos ni cámaras, solo trabajo desde el minuto uno — y de algún modo, eso te tranquiliza más que cualquier bienvenida oficial.`,
-    `Te reciben con una charla de bienvenida colectiva, junto a otros dos fichajes del ${club} que tampoco conoces de nada. El director deportivo repite el mismo discurso para los tres, sin distinguirte especialmente — un recordatorio de que aquí empiezas exactamente igual que cualquiera, sin favores por cómo llegaste.`,
+    `Primer día en las instalaciones del ${club}. El director deportivo te recibe: 'Bienvenido. La pretemporada es para adaptarte. Trabaja duro y las oportunidades llegarán.'`,
+    `Llegas a la ciudad deportiva del ${club} con la maleta aún en la mano. 'No hago esto con todos', te dice el entrenador. 'No prometo minutos, prometo una oportunidad justa.'`,
+    `El vestuario del ${club} está medio vacío — la mayoría sigue de vacaciones. Un utillero te enseña tu taquilla, ya con tu nombre puesto. 'Bienvenido a casa', sonríe.`,
+    `Rueda de prensa de presentación: un periodista pregunta si te sientes preparado. Contestas lo que se espera, con los nervios reales por dentro.`,
+    `Nadie te recibe con discursos: solo un chándal del ${club} en la taquilla y una nota a mano. 'A las 9 en el gimnasio, no llegues tarde'. Y, de algún modo, eso te tranquiliza más.`,
+    `Charla de bienvenida colectiva, junto a otros dos fichajes que tampoco conoces de nada. Mismo discurso para los tres: aquí empiezas igual que cualquiera.`,
   ];
   return {
     id: "pretemp-bienvenida",
@@ -108,12 +108,12 @@ export function buildPreseasonBienvenidaEvent(club: string, seed: string): GameE
 
 export function buildPreseasonFisicoEvent(seed: string): GameEvent {
   const scenes = [
-    "El preparador físico te evalúa: sprint de 40m, salto vertical, resistencia anaeróbica. Tus números son sólidos para tu edad, pero claramente estás 'a mitad de ritmo' comparado con los veteranos que llevan meses en preparación. 'Tranquilo', te dice, 'en dos semanas estarás al nivel de todos.' Es un recordatorio: hay mucho trabajo por delante.",
-    "Test de VO2 máx en la cinta: te ponen una mascarilla y corres hasta que las piernas dicen basta. El preparador físico mira los datos en su tablet sin decir nada durante un buen rato. 'Tu capacidad aeróbica está bien', dice al fin, 'pero la fuerza en tren inferior necesita trabajo. Vamos a meterte en el grupo de refuerzo.'",
-    "Pesaje y composición corporal el primer día: el preparador físico anota cada dato en silencio. Al terminar, te mira: 'Físicamente estás donde debe estar alguien de tu edad. La diferencia con los veteranos no es el cuerpo, es la lectura de cuándo guardar energía. Eso solo lo da jugar partidos.'",
-    "En el gimnasio, uno de los veteranos te reta a una serie de sentadillas sin avisarte que es una broma habitual de pretemporada para calibrar a los nuevos. Aguantas más de lo que esperaban. El preparador físico, que lo estaba observando todo, apunta algo con una sonrisa que no sabes bien cómo interpretar.",
-    "Escáner de movimiento en 3D con cámaras por todo el gimnasio: analizan cada zancada tuya en una pantalla, buscando asimetrías. 'Cargas más el lado derecho al frenar', señala el preparador físico marcando el fotograma exacto. 'Nada grave, pero lo vamos a corregir antes de que se convierta en lesión.'",
-    "Test de fuerza en el press de banca junto a dos veteranos que llevan años en el club: tus números no están mal, pero se nota la diferencia de kilos de entrenamiento acumulado. Uno de ellos, sin maldad, comenta en voz alta: 'este va a necesitar un año entero de gimnasio para ponerse a nuestro nivel.'",
+    "Sprint, salto vertical, resistencia: el preparador físico revisa tus números. 'Vas a mitad de ritmo de los veteranos, pero tranquilo. En dos semanas estarás al nivel de todos.'",
+    "Test de VO2 máx en la cinta, mascarilla puesta, hasta que las piernas dicen basta. 'Capacidad aeróbica bien', dice el preparador físico. 'La fuerza en tren inferior necesita trabajo.'",
+    "Pesaje el primer día: el preparador físico anota cada dato en silencio. 'Físicamente estás donde debes. La diferencia con los veteranos es la lectura del partido, y eso solo lo da jugar.'",
+    "En el gimnasio, un veterano te reta a sentadillas sin avisar que es la broma habitual con los nuevos. Aguantas más de lo esperado, y el preparador físico apunta algo con media sonrisa.",
+    "Escáner de movimiento en 3D: analizan cada zancada buscando asimetrías. 'Cargas de más el lado derecho al frenar', señala el preparador físico. 'Lo corregimos antes de que sea lesión.'",
+    "Press de banca junto a dos veteranos del club: tus números no están mal, pero se nota la diferencia de kilos acumulados. Uno comenta, sin maldad: 'este necesita un año entero de gimnasio.'",
   ];
   return {
     id: "pretemp-fisico",
@@ -139,12 +139,12 @@ export function buildPreseasonFisicoEvent(seed: string): GameEvent {
 
 export function buildPreseasonCompetenciaEvent(seed: string): GameEvent {
   const scenes = [
-    "En el vestuario te presentan a los jugadores de tu posición. Hay dos: uno de 27 años, experimentado y 'indiscutible', y otro de 22, joven pero ya con experiencia. Los dos te saludan fríamente pero correctamente. Es claro: tienes que ganarles el puesto. No va a ser fácil.",
-    "Descubres en el primer entrenamiento táctico que hay tres jugadores más peleando por tu misma posición, uno de ellos recién llegado en un traspaso mucho más caro que tu fichaje. Nadie te lo dice directamente, pero el orden en que salen los nombres en la pizarra táctica no engaña.",
-    "Uno de los veteranos de tu posición se acerca en el primer descanso, no para saludarte sino para medirte: '¿Así que tú eres el nuevo? He visto tus vídeos.' No dice si le gustó lo que vio. El resto del entrenamiento sientes sus ojos encima cada vez que tocas el balón.",
-    "El entrenador junta a los cuatro jugadores de tu posición en una charla aparte: 'Va a haber competencia sana. El que mejor entrene, juega.' Suena justo dicho en voz alta, pero las miradas que cruzas con los otros tres dejan claro que nadie se lo va a poner fácil a nadie.",
-    "Te enteras, no por el club sino por un compañero, de que el titular de tu posición pidió salir hace semanas y el fichaje todavía no se ha cerrado — lo que significa que, si aguantas la pretemporada sin fallar, el sitio podría quedar libre antes de lo que nadie esperaba.",
-    "En la lista de convocados para el primer amistoso aparecen dos jugadores de tu posición, tú incluido. El otro es un canterano de 18 años del que todo el club habla en voz baja como 'el próximo crack'. Nadie dice en alto que sois rivales, pero los dos sabéis exactamente a qué habéis venido.",
+    "En el vestuario te presentan a los dos jugadores de tu posición: uno de 27, indiscutible, y otro de 22, con hambre. Los dos te saludan correctamente. El mensaje es claro: toca ganarles el puesto.",
+    "En el primer entrenamiento táctico descubres a tres jugadores más peleando por tu posición, uno recién llegado en un traspaso mucho más caro que el tuyo. El orden en la pizarra no engaña.",
+    "Un veterano de tu posición se acerca en el descanso, no a saludarte sino a medirte: '¿Tú eres el nuevo? He visto tus vídeos.' No dice si le gustó. Sientes sus ojos encima todo el entreno.",
+    "El entrenador junta a los cuatro jugadores de tu posición: 'Competencia sana. El que mejor entrene, juega.' Suena justo, pero las miradas que cruzas dejan claro que nadie te lo va a poner fácil.",
+    "Te enteras por un compañero, no por el club, de que el titular de tu posición pidió salir hace semanas. Si aguantas la pretemporada sin fallar, el sitio podría quedar libre antes de lo esperado.",
+    "En la lista del primer amistoso aparecéis dos de tu posición: tú, y un canterano de 18 años del que todos hablan como 'el próximo crack'. Nadie lo dice en alto, pero sabéis a qué habéis venido.",
   ];
   return {
     id: "pretemp-competencia",
@@ -170,12 +170,12 @@ export function buildPreseasonCompetenciaEvent(seed: string): GameEvent {
 
 export function buildPreseasonTacticaEvent(seed: string): GameEvent {
   const scenes = [
-    "El asistente del técnico te reúne con otros 3 jugadores de tu zona para explicar el sistema de juego: '4-3-3 de transición rápida. Aquí defendemos en bloque, contraatacamos verticalizados. Tu posición es clave para romper líneas en salida. Estudiamos vídeo de tus entrenamientos: tienes velocidad, pero a veces pierdes posición. Eso no puede pasar aquí.'",
-    "Charla de pizarra con todo el equipo: el técnico dibuja un 4-2-3-1 y señala directamente tu zona del campo. 'Aquí es donde se gana o se pierde el partido', dice sin mirarte a ti en concreto, pero todos entienden el mensaje. Después del vídeo, te llama aparte un segundo: 'Tienes que entender los espacios antes de tener el balón, no después.'",
-    "El cuerpo técnico proyecta un vídeo de la pretemporada del año pasado explicando el 3-5-2 que quieren instaurar. 'Este sistema exige mucho recorrido y mucha lectura', explica el segundo entrenador mirando en tu dirección. 'No todos los que llegan lo entienden a la primera. Tú vas a tener que hacerlo.'",
-    "En la sala de vídeo, el analista táctico pausa un fotograma exacto de un entrenamiento tuyo de dos días atrás: 'Aquí. Esta es la posición que nos interesa que ocupes en el 4-4-2 rombo.' Toda la sala mira la pantalla, y luego te mira a ti. Es la primera vez que sientes que te están estudiando de verdad.",
-    "El entrenador cambia el sistema a mitad de charla, sin avisar, solo para ver quién reacciona rápido: '4-3-3... no, mejor 3-4-3. Vosotros ahí.' Te señala a ti y a otro jugador para ocupar posiciones que ninguno de los dos ha jugado nunca. 'A ver cómo os las apañáis', dice, casi sonriendo.",
-    "Te entregan una carpeta impresa con tu nombre en la portada: análisis en vídeo de cada partido que jugaste la temporada pasada, con anotaciones del cuerpo técnico en los márgenes. 'Hemos hecho los deberes antes de que llegaras', te dice el analista. 'Ahora te toca a ti hacer los tuyos.'",
+    "El técnico reúne a tu zona del campo: '4-3-3 de transición rápida, defendemos en bloque. Tienes velocidad, pero a veces pierdes posición. Eso aquí no puede pasar.'",
+    "Charla de pizarra con todo el equipo: el técnico dibuja un 4-2-3-1 y señala tu zona. 'Aquí se gana o se pierde el partido.' Luego, aparte: 'Entiende el espacio antes de tener el balón.'",
+    "Vídeo de la pretemporada pasada explicando el nuevo 3-5-2: 'Este sistema exige mucho recorrido y mucha lectura', dice el técnico mirando en tu dirección. 'Tú vas a tener que entenderlo rápido.'",
+    "En la sala de vídeo, pausan un fotograma de tu entrenamiento: 'Aquí. Esta es la posición que nos interesa que ocupes.' Toda la sala mira la pantalla, y luego te mira a ti.",
+    "El técnico cambia el sistema a mitad de charla, sin avisar: '4-3-3... no, 3-4-3. Vosotros ahí.' Te señala a ti y a otro para una posición que ninguno ha jugado nunca. 'A ver cómo os las apañáis.'",
+    "Te entregan una carpeta con tu nombre en la portada: análisis en vídeo de cada partido de tu temporada pasada, anotado a mano. 'Hemos hecho los deberes antes de que llegaras. Ahora te toca a ti.'",
   ];
   return {
     id: "pretemp-tactica",
@@ -201,12 +201,12 @@ export function buildPreseasonTacticaEvent(seed: string): GameEvent {
 
 export function buildPreseasonCapitan(seed: string): GameEvent {
   const scenes = [
-    "Después del entrenamiento, el capitán (30 años, veterano absoluto) se te acerca. 'Oye, conozco la tensión que sientes. Yo estuve donde estás hace años. Mi consejo: no intentes demostrar todo el primer mes. Aprende el sistema, entiende a tus compañeros, gana su respeto. El fútbol es un equipo.' Te invita a comer con algunos jugadores. Es un gesto.",
-    "El capitán no dice gran cosa en el vestuario, pero al salir del entrenamiento te espera junto al coche: 'Súbete, te llevo a comer.' Durante el trayecto habla más de su primer año en el club que de fútbol en sí. Al despedirse, solo añade: 'Cualquier cosa que necesites, me buscas a mí primero, no a la prensa.'",
-    "En pretemporada, el capitán organiza una cena de equipo y te sienta deliberadamente a su lado, no en la punta de la mesa con el resto de los nuevos. 'Aquí las jerarquías se ganan en el campo, pero el respeto se construye en momentos como este', te dice mientras brinda con el resto del grupo.",
-    "Te sorprende que sea el capitán, y no el entrenador, quien te corrige un detalle técnico en un rondo: 'Ese control, ábrelo más al primer toque, aquí jugamos rápido.' No suena a bronca, suena a alguien que ya decidió invertir en ti. Después del entrenamiento te invita a su mesa habitual.",
-    "El capitán, lejos de acercarse él, te manda llamar por el utillero: 'Que vaya el nuevo al gimnasio pequeño.' Allí te espera solo, sin público, con dos botellas de agua. 'No hago discursos delante de todos', te dice. 'Prefiero conocer a la gente uno a uno primero. Cuéntame de dónde vienes.'",
-    "En el autobús de vuelta de un amistoso, el capitán se sienta a tu lado sin avisar y se queda dormido a los cinco minutos, con la cabeza casi en tu hombro. Cuando despierta, ni se disculpa: 'Contigo me siento tranquilo, no sé por qué', dice medio en broma. Es, a su manera, un cumplido.",
+    "Después del entrenamiento, el capitán se te acerca: 'Conozco la tensión que sientes, yo estuve ahí. No intentes demostrarlo todo el primer mes. Gana el respeto del vestuario.' Te invita a comer con el grupo.",
+    "El capitán te espera junto al coche al salir: 'Súbete, te llevo a comer.' Habla más de su primer año en el club que de fútbol. Al despedirse: 'Lo que necesites, me buscas a mí primero, no a la prensa.'",
+    "En una cena de equipo, el capitán te sienta deliberadamente a su lado. 'Aquí las jerarquías se ganan en el campo, pero el respeto se construye en momentos como este', dice, brindando con el grupo.",
+    "Te sorprende que sea el capitán, no el entrenador, quien te corrige en un rondo: 'Ese control, ábrelo al primer toque, aquí jugamos rápido.' No suena a bronca. Suena a alguien que ya invirtió en ti.",
+    "El capitán te manda llamar al gimnasio pequeño. Te espera solo, con dos botellas de agua: 'No hago discursos delante de todos. Prefiero conocer a la gente uno a uno. Cuéntame de dónde vienes.'",
+    "En el autobús de vuelta de un amistoso, el capitán se sienta a tu lado y se queda dormido en cinco minutos. Al despertar, sin disculparse: 'Contigo me siento tranquilo, no sé por qué', dice medio en broma.",
   ];
   return {
     id: "pretemp-capitan",
