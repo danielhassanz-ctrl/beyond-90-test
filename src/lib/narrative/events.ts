@@ -5091,11 +5091,11 @@ export const EVENTS: GameEvent[] = [
           statModifier: "forma",
           success: {
             text: "El equipo llega hasta el final y levantas el trofeo del Mundial. Es, hasta ahora, la noche más grande de tu carrera.",
-            consequences: { fama: 25, moral: 20, rel_aficion: 15 },
+            consequences: { fama: 25, moral: 20, rel_aficion: 15, flags: { torneo_activo: "mundial" } },
           },
           fail: {
             text: "El equipo cae eliminado antes de lo que esperabais. Vuelves a casa con la sensación de que la oportunidad estuvo cerca.",
-            consequences: { fama: 6, moral: -8 },
+            consequences: { fama: 6, moral: -8, flags: { torneo_activo: "mundial" } },
           },
         },
       },
@@ -5103,7 +5103,7 @@ export const EVENTS: GameEvent[] = [
         id: "b",
         label: "Jugar con la cabeza, priorizando no arriesgar de más",
         subtitle: "Gestión de la presión",
-        consequences: { moral: 2, fama: 4 },
+        consequences: { moral: 2, fama: 4, flags: { torneo_activo: "mundial" } },
       },
       {
         id: "c",
@@ -5115,11 +5115,11 @@ export const EVENTS: GameEvent[] = [
           statModifier: "moral",
           success: {
             text: "El grupo se agarra a ti en los momentos difíciles y el equipo saca fuerzas de donde no las había. La prensa empieza a hablar de ti como algo más que un jugador.",
-            consequences: { fama: 12, moral: 10, reputacion: 5, rel_vestuario: 4 },
+            consequences: { fama: 12, moral: 10, reputacion: 5, rel_vestuario: 4, flags: { torneo_activo: "mundial" } },
           },
           fail: {
             text: "Por mucho que intentes sostener al grupo, la presión del torneo puede con todos. Sales del Mundial con la sensación de haberlo dado todo fuera del campo también.",
-            consequences: { moral: -2, reputacion: 3 },
+            consequences: { moral: -2, reputacion: 3, flags: { torneo_activo: "mundial" } },
           },
         },
       },
@@ -5398,11 +5398,11 @@ export const EVENTS: GameEvent[] = [
           statModifier: "forma",
           success: {
             text: "El equipo llega hasta el final y levantas el trofeo de la Eurocopa. Un torneo entero de tu país parado para ver esto.",
-            consequences: { fama: 22, moral: 18, rel_aficion: 12 },
+            consequences: { fama: 22, moral: 18, rel_aficion: 12, flags: { torneo_activo: "eurocopa" } },
           },
           fail: {
             text: "La selección cae eliminada antes de lo esperado. El torneo termina con más preguntas que respuestas.",
-            consequences: { fama: 5, moral: -7 },
+            consequences: { fama: 5, moral: -7, flags: { torneo_activo: "eurocopa" } },
           },
         },
       },
@@ -5410,7 +5410,7 @@ export const EVENTS: GameEvent[] = [
         id: "b",
         label: "Jugar con la cabeza, priorizando no arriesgar de más",
         subtitle: "Gestión de la presión",
-        consequences: { moral: 2, fama: 3 },
+        consequences: { moral: 2, fama: 3, flags: { torneo_activo: "eurocopa" } },
       },
       {
         id: "c",
@@ -5422,11 +5422,11 @@ export const EVENTS: GameEvent[] = [
           statModifier: "moral",
           success: {
             text: "Los más jóvenes de la selección se agarran a tu experiencia y el grupo compite unido de principio a fin — un torneo entero hablando de la madurez que le has dado al equipo.",
-            consequences: { fama: 11, moral: 9, reputacion: 5, rel_vestuario: 4 },
+            consequences: { fama: 11, moral: 9, reputacion: 5, rel_vestuario: 4, flags: { torneo_activo: "eurocopa" } },
           },
           fail: {
             text: "Intentas sostener al grupo, pero la presión de un continente entero pendiente del torneo termina pesando también en el vestuario.",
-            consequences: { moral: -2, reputacion: 3 },
+            consequences: { moral: -2, reputacion: 3, flags: { torneo_activo: "eurocopa" } },
           },
         },
       },
@@ -5459,11 +5459,11 @@ export const EVENTS: GameEvent[] = [
           statModifier: "forma",
           success: {
             text: "El equipo llega hasta el final y levantas el trofeo de la Copa América. Todo el continente habla de esto.",
-            consequences: { fama: 22, moral: 18, rel_aficion: 12 },
+            consequences: { fama: 22, moral: 18, rel_aficion: 12, flags: { torneo_activo: "copa_america" } },
           },
           fail: {
             text: "La selección cae eliminada antes de lo esperado. El torneo termina con más preguntas que respuestas.",
-            consequences: { fama: 5, moral: -7 },
+            consequences: { fama: 5, moral: -7, flags: { torneo_activo: "copa_america" } },
           },
         },
       },
@@ -5471,7 +5471,7 @@ export const EVENTS: GameEvent[] = [
         id: "b",
         label: "Jugar con la cabeza, priorizando no arriesgar de más",
         subtitle: "Gestión de la presión",
-        consequences: { moral: 2, fama: 3 },
+        consequences: { moral: 2, fama: 3, flags: { torneo_activo: "copa_america" } },
       },
       {
         id: "c",
@@ -5483,11 +5483,11 @@ export const EVENTS: GameEvent[] = [
           statModifier: "forma",
           success: {
             text: "Esa energía de la grada se te contagia dentro del campo y das un nivel que ni tú sabías que tenías — el país entero lo celebra contigo.",
-            consequences: { fama: 12, moral: 10, rel_aficion: 8 },
+            consequences: { fama: 12, moral: 10, rel_aficion: 8, flags: { torneo_activo: "copa_america" } },
           },
           fail: {
             text: "Te deja llevar más de la cuenta por la presión de la grada y se nota en el campo — el torneo termina antes de lo que esperabas.",
-            consequences: { moral: -3, fama: 4 },
+            consequences: { moral: -3, fama: 4, flags: { torneo_activo: "copa_america" } },
           },
         },
       },

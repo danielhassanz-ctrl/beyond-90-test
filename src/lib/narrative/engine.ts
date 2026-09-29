@@ -43,6 +43,7 @@ import {
   buildDeadlineDayEvent,
 } from "@/lib/narrative/market-window";
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
+import { shouldTriggerTorneoLife, buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { shouldTriggerSocialDm, buildSocialDmEvent } from "@/lib/narrative/social-dm";
 import { shouldTriggerArcoRival, buildArcoRivalEvent } from "@/lib/narrative/arco-rival";
 import { shouldTriggerArcoHermano, buildArcoHermanoEvent } from "@/lib/narrative/arco-hermano";
@@ -2473,6 +2474,11 @@ export async function pickNextEventDynamic(
     const pre = buildPreseasonLifeEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Preseason life: "${pre.title}"`);
     return pre;
+  }
+  if (!midMatch && shouldTriggerTorneoLife(playerWithDynamics)) {
+    const torneo = buildTorneoLifeEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Torneo life: "${torneo.title}"`);
+    return torneo;
   }
   // Arcos narrativos de varios capítulos (skill narrativas-futbol): se
   // comprueban antes que los DM/pretemporada normales porque son más
