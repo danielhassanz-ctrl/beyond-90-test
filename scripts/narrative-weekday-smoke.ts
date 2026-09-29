@@ -1,25 +1,28 @@
 import fs from "node:fs";
+import path from "node:path";
 
-const narrativeSources = [
-  "../src/game/dynamic.ts",
-  "../src/game/opening.ts",
-  "../src/game/career-life.ts",
-  "../src/game/threads.ts",
-];
+const gameDir = new URL("../src/game/", import.meta.url);
+const narrativeFile = /^(?:bank-|events-|director|dynamic|opening|career-life|threads|consequences|engine).*\.ts$/u;
+const narrativeSources = fs
+  .readdirSync(gameDir)
+  .filter((name) => narrativeFile.test(name))
+  .map((name) => `../src/game/${name}`);
 
 const weekday = /\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b/giu;
-const allowedCalendarEvidence = /calendar|calendario|weekday|dayOfWeek|fecha|date/iu;
+const calendarEvidence = /\b(?:calendar|calendario|weekday|dayOfWeek|fecha|date)\b/iu;
+const nonPlayerText = /^\s*(?:\/\/|\*|\/\*|const\s+\w*(?:weekday|calendar|date)|type\s+|interface\s+)/iu;
 
 const hits: string[] = [];
 for (const relativePath of narrativeSources) {
   const url = new URL(relativePath, import.meta.url);
-  if (!fs.existsSync(url)) continue;
   const source = fs.readFileSync(url, "utf8");
   source.split("\n").forEach((line, index) => {
-    if (weekday.test(line) && !allowedCalendarEvidence.test(line)) {
+    weekday.lastIndex = 0;
+    const namesWeekday = weekday.test(line);
+    weekday.lastIndex = 0;
+    if (namesWeekday && !calendarEvidence.test(line) && !nonPlayerText.test(line)) {
       hits.push(`${relativePath}:${index + 1}: ${line.trim()}`);
     }
-    weekday.lastIndex = 0;
   });
 }
 
@@ -30,4 +33,6 @@ if (hits.length) {
   );
 }
 
-console.log("Narrative weekday chronology smoke passed across narrative sources.");
+console.log(
+  `Narrative weekday chronology smoke passed across ${narrativeSources.length} narrative-bearing sources under ${path.basename(new URL("../src/game/", import.meta.url).pathname)}.`,
+);
