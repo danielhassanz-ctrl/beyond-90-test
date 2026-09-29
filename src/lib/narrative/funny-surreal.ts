@@ -69,6 +69,20 @@ export const FUNNY_MOMENTS = {
     "Tu sombra juega con el otro equipo. Tú no puedes hacerle nada. Es tu sombra. Se va a otro club. Demanda sombra por hurto de identidad.",
   ],
 
+  // TE CUELAS DONDE NO TOCA (inspirado en el género "el futbolista que
+  // acabó en el sitio equivocado" — siempre con nombres y situaciones
+  // 100% inventados, nunca un jugador real ni un caso real, por la regla
+  // del proyecto de no usar gente real ni con el nombre cambiado).
+  // La boda y el reality tienen su propia versión con opciones fijas y
+  // garantizadas en events.ts (esp-boda-equivocada / esp-reality-error) —
+  // aquí solo quedan variantes sueltas donde sí vale que la IA decida las
+  // opciones libremente.
+  mishap: [
+    "Te metes en el ascensor equivocado del hotel y acabas en plena despedida de soltero de un desconocido. Te reciben con aplausos como si fueras la sorpresa de la noche.",
+    "Te invitan a dar una charla motivacional de empresa pensando que eres otro jugador con un nombre parecido al tuyo. Te das cuenta del error a mitad de la charla, pero ya has aceptado el cheque.",
+    "Un programa de cocina graba en el mismo hotel que tu concentración. Te piden que pruebes un plato en cámara sin preguntarte antes. Sales en el capítulo como 'jurado invitado sorpresa' sin haber firmado nada.",
+  ],
+
   // MOMENTOS RIDÍCULOS
   ridiculous: [
     "Celebración epíca de gol. Te caes. Toda celebración fue fracaso. Pero los fans lo aman más que el gol.",

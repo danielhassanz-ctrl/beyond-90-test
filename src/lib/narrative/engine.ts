@@ -247,6 +247,8 @@ const GRAND_MOMENT_EVENT_IDS = new Set([
   "esp-guino-rondo-imposible",
   "esp-guino-comparacion-prensa",
   "esp-guino-capitan-eterno",
+  "esp-boda-equivocada",
+  "esp-reality-error",
 ]);
 const GRAND_MOMENT_EVENTS: GameEvent[] = EVENTS.filter((event) => GRAND_MOMENT_EVENT_IDS.has(event.id));
 

@@ -5247,6 +5247,116 @@ export const EVENTS: GameEvent[] = [
     minWeek: 100,
     minMedia: 85,
   },
+  /**
+   * Momentos "te cuelas donde no tocas" con opciones fijas y garantizadas
+   * — inspirados en el patrón real de cuentas de humor futbolero (el
+   * jugador que acaba en una boda o un reality por error), pero con
+   * personajes y club 100% inventados (nunca un jugador real, ni con el
+   * nombre cambiado — misma regla que esp-guino-*). A diferencia de las
+   * variantes de funny-surreal.ts (semillas sueltas que la IA expande
+   * libremente), aquí las opciones están escritas a mano para asegurar
+   * el beat concreto que se pidió: el jugador termina pidiendo días
+   * libres / quedarse más tiempo por su propio malentendido.
+   */
+  {
+    id: "esp-boda-equivocada",
+    category: "vida",
+    title: "La boda equivocada",
+    description:
+      "Sales del hotel con prisa y te confundes de salón: acabas en la boda de dos desconocidos, en la ciudad donde jugáis fuera. Antes de que puedas explicarte, ya te han sentado en la mesa presidencial confundiéndote con un invitado VIP. Te quedas 'por educación'.",
+    priority: true,
+    isMilestone: true,
+    milestoneType: "boda_equivocada",
+    imageScene:
+      "Photorealistic photo of the photographed man at a wedding reception, wearing a suit, raising a toast with generic guests (not real, identifiable people), festive string lights and floral decor, joyful candid photography style",
+    options: [
+      {
+        id: "a",
+        label: "Pedirle al club días libres extra para ir a tu boda de verdad",
+        subtitle: "La que sí tenías planeada ese fin de semana",
+        consequences: {},
+        resolve: {
+          baseChance: 0.55,
+          success: {
+            text: "El club se ríe del despiste pero te concede el favor — 'una vez en la vida', te dicen. Llegas a tiempo a la boda que de verdad tenías planeada.",
+            consequences: { moral: 6, rel_entrenador: 1, fama: 3 },
+          },
+          fail: {
+            text: "El club no está para bromas esta semana y te lo niega. Te toca elegir entre el entrenamiento y perderte la boda de verdad — una decisión que no le vas a poder explicar bien a nadie.",
+            consequences: { moral: -3, rel_entrenador: -1, fama: 2 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Quedarte un rato por cortesía y desaparecer discretamente",
+        subtitle: "La opción prudente",
+        consequences: { moral: 2, reputacion: 1 },
+      },
+      {
+        id: "c",
+        label: "Aprovechar y hacerte fotos con los novios para las redes",
+        subtitle: "Que el error se convierta en contenido",
+        consequences: { fama: 5, moral: 3, rel_aficion: 2 },
+      },
+    ],
+    minWeek: 30,
+  },
+  {
+    id: "esp-reality-error",
+    category: "vida",
+    title: "El reality por error",
+    description:
+      "Un casting de un reality de supervivencia graba cerca de tu hotel de concentración. Te confunden con un concursante apuntado, te suben a la furgoneta con el resto del grupo, y antes de darte cuenta ya estás firmando papeles y poniéndote un micrófono.",
+    priority: true,
+    isMilestone: true,
+    milestoneType: "reality_error",
+    imageScene:
+      "Photorealistic photo of the photographed man wearing an outdoor survival-show contestant outfit and microphone pack, standing in a jungle-like set with generic crew and cameras in the background (not real, identifiable people or an existing real TV show branding), adventurous documentary lighting",
+    options: [
+      {
+        id: "a",
+        label: "Pedir permiso al club para quedarte hasta acabar el rodaje",
+        subtitle: "Total, ya has firmado",
+        consequences: {},
+        resolve: {
+          baseChance: 0.5,
+          success: {
+            text: "El club, entre risas, te da un par de días — 'esto va a dar más publicidad gratis que cualquier rueda de prensa'. Terminas el rodaje como uno más del reality.",
+            consequences: { fama: 10, moral: 5, rel_aficion: 4 },
+          },
+          fail: {
+            text: "El entrenador no se lo toma tan bien: 'esto es una plantilla profesional, no un plató'. Tienes que volver de inmediato, dejando el rodaje a medias.",
+            consequences: { moral: -3, rel_entrenador: -2, fama: 3 },
+          },
+        },
+      },
+      {
+        id: "b",
+        label: "Aclarar el malentendido enseguida y volver a la concentración",
+        subtitle: "Lo correcto, aunque menos divertido",
+        consequences: { rel_entrenador: 2, reputacion: 1 },
+      },
+      {
+        id: "c",
+        label: "Seguir la corriente sin decir nada, a ver hasta dónde llega",
+        subtitle: "Improvisar sobre la marcha",
+        consequences: {},
+        resolve: {
+          baseChance: 0.4,
+          success: {
+            text: "Nadie del programa se entera de que no estabas apuntado hasta que sale en redes — para entonces ya eres el fichaje sorpresa favorito de la temporada del reality.",
+            consequences: { fama: 8, moral: 4 },
+          },
+          fail: {
+            text: "Te descubren a mitad de una prueba y el numerito se vuelve viral por el motivo equivocado — más vergüenza ajena que otra cosa.",
+            consequences: { fama: 2, moral: -2, reputacion: -1 },
+          },
+        },
+      },
+    ],
+    minWeek: 30,
+  },
   {
     id: "sel-clasificacion-mundial",
     category: "especial",
