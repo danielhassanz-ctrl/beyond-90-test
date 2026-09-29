@@ -47,6 +47,7 @@ import { shouldTriggerSocialDm, buildSocialDmEvent } from "@/lib/narrative/socia
 import { shouldTriggerArcoRival, buildArcoRivalEvent } from "@/lib/narrative/arco-rival";
 import { shouldTriggerArcoHermano, buildArcoHermanoEvent } from "@/lib/narrative/arco-hermano";
 import { shouldTriggerArcoPatrocinador, buildArcoPatrocinadorEvent } from "@/lib/narrative/arco-patrocinador";
+import { shouldTriggerArcoReencuentro, buildArcoReencuentroEvent } from "@/lib/narrative/arco-reencuentro";
 import { shouldTriggerLoanFork, buildLoanForkEvent, markLoanForkTriggered, shouldEndLoan, buildLoanEndEvent } from "@/lib/narrative/loan-fork";
 import { pickDetailedLifeScenario, markDetailedLifeUsed } from "@/lib/narrative/life-events-detailed";
 
@@ -2448,6 +2449,11 @@ export async function pickNextEventDynamic(
   if (!midMatch && shouldTriggerArcoPatrocinador(playerWithDynamics)) {
     const arco = buildArcoPatrocinadorEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Arco patrocinador: "${arco.title}"`);
+    return maybeAddFreeText(arco);
+  }
+  if (!midMatch && shouldTriggerArcoReencuentro(playerWithDynamics)) {
+    const arco = buildArcoReencuentroEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Arco reencuentro: "${arco.title}"`);
     return maybeAddFreeText(arco);
   }
   if (!midMatch && shouldTriggerSocialDm(playerWithDynamics)) {
