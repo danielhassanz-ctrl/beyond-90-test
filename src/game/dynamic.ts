@@ -652,7 +652,7 @@ function resolveMarket(
   const accept = choiceId === "aceptar" || (interp !== null && wantsOut && choiceId !== "rechazar");
 
   if (choiceId === "negociar") {
-    // Negotiation outcomes must be reproducible for a career/save. Using Math.random()
+    // Negotiation outcomes must be reproducible for a career/save. Using a nondeterministic RNG
     // here made the same player, offer and choice produce a different result after reload.
     const negotiationKey = [
       "transfer-negotiation",
