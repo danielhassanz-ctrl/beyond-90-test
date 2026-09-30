@@ -219,12 +219,18 @@ export type ClubOffer =
   | (typeof GIANT_ACADEMY_OFFERS)[number]
   | (typeof GERMAN_ACADEMY_OFFERS)[number];
 
-export function pickStartingClubOffers(agentName?: string | null): ClubOffer[] {
+/**
+ * `boosted`: true si el jugador tuvo un vídeo viral durante la búsqueda
+ * de su primer club (ver agente-busqueda.ts) — sube bastante la
+ * probabilidad de que un club grande se fije en él, como recompensa real
+ * a la decisión de exponerse en redes, no solo un +fama cosmético.
+ */
+export function pickStartingClubOffers(agentName?: string | null, boosted = false): ClubOffer[] {
   if (agentName === "Klaus Brandt") return [...GERMAN_ACADEMY_OFFERS];
   const shuffled = [...STARTING_CLUB_OFFERS].sort(() => Math.random() - 0.5);
   const picks: ClubOffer[] = shuffled.slice(0, 3);
 
-  if (Math.random() < 0.15) {
+  if (Math.random() < (boosted ? 0.4 : 0.15)) {
     const giant = GIANT_ACADEMY_OFFERS[Math.floor(Math.random() * GIANT_ACADEMY_OFFERS.length)];
     const slot = Math.floor(Math.random() * picks.length);
     picks[slot] = giant;

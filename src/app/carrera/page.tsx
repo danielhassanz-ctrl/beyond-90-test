@@ -24,6 +24,7 @@ import {
 } from "@/lib/narrative/events";
 import { generateClubOffersEvent } from "@/lib/narrative/ai";
 import { NO_CLUB_YET, pickStartingClubOffers } from "@/lib/constants";
+import { shouldTriggerBusquedaEquipo, buildBusquedaEquipoEvent, hadViralMoment } from "@/lib/narrative/agente-busqueda";
 import { CONSEQUENCE_LABELS, MODE_TARGET_WEEKS, playerAge, seasonLabel } from "@/types/career";
 import { displayName } from "@/types/player";
 import { BottomNav } from "@/components/BottomNav";
@@ -98,13 +99,24 @@ export default async function CarreraPage() {
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 
+  // Antes de las ofertas de verdad, una búsqueda con tensión real: entre
+  // 0 y 3 turnos de espera (sorteado por carrera) con noticias de tu
+  // agente — nada, un grande que te ha visto, la opción de grabarte y
+  // subir vídeos a redes... en vez de que las ofertas llegasen siempre
+  // en el turno siguiente a elegir representante, sin ninguna
+  // incertidumbre. Ver agente-busqueda.ts.
+  if (!event && player.club === NO_CLUB_YET && shouldTriggerBusquedaEquipo(player)) {
+    event = buildBusquedaEquipoEvent(player);
+    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+  }
+
   if (!event && player.club === NO_CLUB_YET) {
     const agentName = player.agent_name ?? "Tu representante";
     // Se sortean los clubes UNA vez y se reparten al mismo sitio: así la
     // IA escribe el texto (varía cada partida) pero el desglose de
     // nivel/desarrollo/competencia/minutos/riesgo sale siempre, no solo
     // cuando la IA falla y se cae al evento de reserva.
-    const offers = pickStartingClubOffers(player.agent_name);
+    const offers = pickStartingClubOffers(player.agent_name, hadViralMoment(player));
     const aiEvent = await generateClubOffersEvent(agentName, offers);
     event = aiEvent ? attachClubOfferDetails(aiEvent, offers) : buildInicioFichajeEvent(agentName, offers);
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);

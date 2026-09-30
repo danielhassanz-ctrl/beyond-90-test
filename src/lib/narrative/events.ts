@@ -5259,6 +5259,60 @@ export const EVENTS: GameEvent[] = [
    * libres / quedarse más tiempo por su propio malentendido.
    */
   {
+    id: "rep-consejo-inversion",
+    category: "representante",
+    title: "Tu agente te habla de invertir",
+    description:
+      "Tu agente te sienta a hablar de números, no de fútbol: 'Estás ganando más de lo que puedes gastar sensatamente. Antes de que se te vaya en tonterías, piensa en meter una parte en algo que trabaje por ti — un fondo, algo seguro.'",
+    priority: true,
+    options: [
+      {
+        id: "invertir",
+        label: "Seguir su consejo y apartar una parte para invertir",
+        subtitle: "Pensar a largo plazo",
+        consequences: { patrimonio: -3000, reputacion: 3, rel_representante: 2 },
+      },
+      {
+        id: "gastar",
+        label: "Preferir disfrutar el dinero ahora",
+        subtitle: "Ya invertirás cuando ganes más",
+        consequences: { moral: 3, rel_representante: -1 },
+      },
+      {
+        id: "informarme",
+        label: "Pedirle que te lo explique bien antes de decidir nada",
+        subtitle: "No firmar nada a ciegas",
+        consequences: { reputacion: 1, rel_representante: 1 },
+      },
+    ],
+    minWeek: 20,
+    minMedia: 55,
+  },
+  {
+    id: "rep-consejo-vivienda",
+    category: "representante",
+    title: "Tu agente te sugiere dónde vivir",
+    description:
+      "'Deberías dejar de vivir como si esto fuera temporal', te dice tu agente. 'Con lo que ganas ya, plantéate algo tuyo — una casa es patrimonio real, no un alquiler que no te devuelve nada.'",
+    priority: true,
+    options: [
+      {
+        id: "buscar",
+        label: "Empezar a mirar opciones en serio",
+        subtitle: "Hacerle caso",
+        consequences: { moral: 2, rel_representante: 2 },
+      },
+      {
+        id: "esperar",
+        label: "Preferir esperar a estar más asentado en un club",
+        subtitle: "Todavía no toca",
+        consequences: { rel_representante: -1 },
+      },
+    ],
+    minWeek: 15,
+    minMedia: 50,
+  },
+  {
     id: "esp-boda-equivocada",
     category: "vida",
     title: "La boda equivocada",

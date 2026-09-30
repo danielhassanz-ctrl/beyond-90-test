@@ -247,6 +247,8 @@ const GRAND_MOMENT_EVENT_IDS = new Set([
   "esp-guino-rondo-imposible",
   "esp-guino-comparacion-prensa",
   "esp-guino-capitan-eterno",
+  "rep-consejo-inversion",
+  "rep-consejo-vivienda",
 ]);
 
 /**
