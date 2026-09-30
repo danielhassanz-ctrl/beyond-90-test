@@ -1,4 +1,5 @@
 import type { TableStandings, KnockoutStandings } from "@/lib/narrative/standings";
+import { ClubCrest } from "@/components/ClubCrest";
 
 export function StandingsTable({ standings }: { standings: TableStandings }) {
   return (
@@ -22,7 +23,12 @@ export function StandingsTable({ standings }: { standings: TableStandings }) {
               className={row.isPlayer ? "bg-gold/10 font-bold text-gold" : "text-foreground/90"}
             >
               <td className="py-2 pl-4 font-num">{i + 1}</td>
-              <td className="truncate py-2 pr-2">{row.club}</td>
+              <td className="py-2 pr-2">
+                <div className="flex items-center gap-2">
+                  <ClubCrest club={row.club} size={20} />
+                  <span className="truncate">{row.club}</span>
+                </div>
+              </td>
               <td className="py-2 text-center font-num">{row.played}</td>
               <td className="py-2 pr-4 text-right font-num">{row.points}</td>
             </tr>

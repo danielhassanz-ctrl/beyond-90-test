@@ -10,10 +10,17 @@ import { WEEKS_PER_SEASON } from "@/types/career";
  * subes, pues cambia la clasificación". No es una simulación real de
  * liga (no hay partido a partido de cada rival): es una tabla estable y
  * verosímil, generada de forma determinista (misma semilla → misma
- * tabla durante toda la temporada, cambia de una temporada a otra), con
- * tu posición influida por tu media — cuanto mejor rindas, más arriba
- * apareces. Prioriza sentirse real y dar contexto visual sobre simular
- * cada jornada de cada rival, que sería un sistema aparte mucho mayor.
+ * tabla durante toda la temporada, cambia de una temporada a otra).
+ *
+ * La posición del EQUIPO depende del NIVEL DEL CLUB (1-5, el mismo dato
+ * que ya usan las ofertas de fichaje en constants.ts), no de tu media
+ * personal — corregido tras una confusión real del usuario ("una cosa
+ * eres tú y otra el equipo donde estés"): el Real Madrid está arriba
+ * porque es el Real Madrid, no porque tú rindas bien o mal ese día. Tu
+ * rendimiento individual ya se cuenta aparte, en la tarjeta de
+ * estadísticas de la temporada (goles, asistencias...), y en qué clubes
+ * te quieren fichar — no debería mover también la clasificación entera
+ * del equipo.
  */
 
 export interface StandingsRow {
@@ -58,6 +65,38 @@ const MUNDIAL_POOL = ["Brasil", "Francia", "Argentina", "Inglaterra", "Alemania"
 const EUROCOPA_POOL = ["Alemania", "Francia", "Inglaterra", "Italia", "Portugal", "Países Bajos", "Bélgica", "Croacia"];
 const COPA_AMERICA_POOL = ["Brasil", "Argentina", "Uruguay", "Colombia", "Chile", "Ecuador", "Perú", "Paraguay"];
 
+/**
+ * Nivel de club 1-5 — mismo dato que ya usan las ofertas de fichaje
+ * (constants.ts) para los clubes que aparecen ahí; ampliado con el resto
+ * de equipos que pueden salir en las tablas (rivales de Champions/
+ * Europa/selecciones) que no vienen de esa lista. Cualquier club no
+ * mapeado (un canterano rival del filial, un club al que te traspasan
+ * más adelante en la carrera...) cae en el nivel medio (3) por defecto.
+ */
+const CLUB_TIER: Record<string, number> = {
+  // Grandes de LaLiga / Champions habituales
+  "Real Madrid": 5, "FC Barcelona": 5, "Atlético de Madrid": 5,
+  "Manchester City": 5, "Bayern Múnich": 5, "Paris Saint-Germain": 5, "Liverpool FC": 5,
+  "Borussia Dortmund": 5, "Inter de Milán": 5, "Juventus": 5,
+  // Europeos habituales / buenos
+  "Sevilla FC": 4, "Real Betis": 4, "Villarreal CF": 4, "Athletic Club": 4, "Real Sociedad": 4,
+  "Valencia CF": 4, "Benfica": 4, "AS Roma": 4, Ajax: 4, "Sporting CP": 4,
+  "FC Schalke 04": 4, "Bayer Leverkusen": 4, Feyenoord: 4, "Rangers FC": 4, Fenerbahçe: 4, "Slavia Praga": 4,
+  // Media tabla
+  "Celta de Vigo": 3, "Rayo Vallecano": 3, "CA Osasuna": 3, "RCD Mallorca": 3, "Getafe CF": 3, "Girona FC": 3,
+  "Real Valladolid": 3, "Sporting de Gijón": 3, "UD Almería": 3,
+  // Modestos
+  "Málaga CF": 2, "Cádiz CF": 2, "Levante UD": 2, "Real Zaragoza": 2, "Real Oviedo": 2,
+  // Selecciones (Mundial/Eurocopa/Copa América)
+  Brasil: 5, Francia: 5, Argentina: 5, Alemania: 5, Inglaterra: 5,
+  Portugal: 4, "Países Bajos": 4, Italia: 4, Bélgica: 4, Uruguay: 4, Croacia: 4, Colombia: 4,
+  Chile: 3, Ecuador: 3, Perú: 3, Paraguay: 3,
+};
+
+function clubTier(club: string): number {
+  return CLUB_TIER[club] ?? 3;
+}
+
 function mixSeed(value: string): number {
   let h = 2166136261;
   for (let i = 0; i < value.length; i++) {
@@ -68,30 +107,29 @@ function mixSeed(value: string): number {
   return h >>> 0;
 }
 
-/** Tabla de 8 con el club del jugador insertado — posición sesgada por media, puntos estables por temporada. */
-function buildTable(seed: string, playerClub: string, pool: string[], media: number, matchdayGuess: number, label: string): TableStandings {
+/**
+ * Tabla de 8 con el club del jugador insertado — la posición depende del
+ * NIVEL DEL CLUB (1-5), no de la media del jugador (ver comentario de
+ * arriba del todo). Puntos estables por temporada gracias a la semilla.
+ */
+function buildTable(seed: string, playerClub: string, pool: string[], matchdayGuess: number, label: string): TableStandings {
   const others = pool.filter((c) => c !== playerClub);
   const shuffled = [...others].sort((a, b) => mixSeed(`${seed}:${a}`) - mixSeed(`${seed}:${b}`));
   const rivals = shuffled.slice(0, 7);
+  const allClubs = [playerClub, ...rivals];
 
   const played = Math.max(1, Math.min(matchdayGuess, 12));
-  // Puntos estables por rival (2.2 puntos/partido de media, con algo de ruido por semilla).
-  const rivalPoints = rivals.map((club) => {
-    const noise = (mixSeed(`${seed}:${club}:pts`) % 100) / 100 - 0.5; // -0.5..0.5
-    return { club, points: Math.max(0, Math.round(played * (2.0 + noise * 1.6))), played };
-  });
-
-  // Posición del jugador según media (40-99 -> últimos-primeros), con un punto de ruido propio.
-  const mediaFrac = Math.max(0, Math.min(1, (media - 40) / 59));
-  const ownNoise = (mixSeed(`${seed}:${playerClub}:pos`) % 100) / 100 - 0.5;
-  const targetIdx = Math.round((1 - mediaFrac) * 7 + ownNoise);
-  const sortedRivals = [...rivalPoints].sort((a, b) => b.points - a.points);
-  const neighborPoints = sortedRivals[Math.max(0, Math.min(7, targetIdx))]?.points ?? Math.round(played * 2);
-  const ownPoints = Math.max(0, neighborPoints + (mixSeed(`${seed}:${playerClub}:adj`) % 3) - 1);
-
-  const rows: StandingsRow[] = [...sortedRivals, { club: playerClub, points: ownPoints, played, isPlayer: false }]
-    .sort((a, b) => b.points - a.points)
-    .map((r) => ({ ...r, isPlayer: r.club === playerClub }));
+  // Puntos por nivel de club: más nivel, más puntos de media por partido,
+  // con algo de ruido por semilla para que no sea un ranking mecánico.
+  const rows: StandingsRow[] = allClubs
+    .map((club) => {
+      const tier = clubTier(club);
+      const noise = (mixSeed(`${seed}:${club}:pts`) % 100) / 100 - 0.5; // -0.5..0.5
+      const pointsPerMatch = 0.9 + tier * 0.45 + noise * 0.7; // nivel 1 ~1.35, nivel 5 ~3.15
+      const points = Math.max(0, Math.round(played * pointsPerMatch));
+      return { club, points, played, isPlayer: club === playerClub };
+    })
+    .sort((a, b) => b.points - a.points);
 
   return { type: "table", label, rows };
 }
@@ -119,7 +157,7 @@ export function getActiveStandings(
   if (typeof torneo === "string" && torneo) {
     const pool = torneo === "mundial" ? MUNDIAL_POOL : torneo === "eurocopa" ? EUROCOPA_POOL : COPA_AMERICA_POOL;
     const label = torneo === "mundial" ? "Mundial · Fase de grupos" : torneo === "eurocopa" ? "Eurocopa · Fase de grupos" : "Copa América · Fase de grupos";
-    return { primary: buildTable(`${seed}:${torneo}`, player.nation, pool, player.media, matchdayGuess, label), secondary: null, copa: null };
+    return { primary: buildTable(`${seed}:${torneo}`, player.nation, pool, matchdayGuess, label), secondary: null, copa: null };
   }
 
   const rookieChainStarted = usedEventIds.includes("pretemp-amistoso");
@@ -127,13 +165,13 @@ export function getActiveStandings(
   const inFilial = rookieChainStarted && !rookieChainFinished;
 
   const primary = inFilial
-    ? buildTable(`${seed}:filial`, player.club, RESERVE_RIVALS, player.media, matchdayGuess, "Segunda RFEF · Filial")
-    : buildTable(`${seed}:liga`, player.club, LIGA_POOL, player.media, matchdayGuess, "LaLiga");
+    ? buildTable(`${seed}:filial`, player.club, RESERVE_RIVALS, matchdayGuess, "Segunda RFEF · Filial")
+    : buildTable(`${seed}:liga`, player.club, LIGA_POOL, matchdayGuess, "LaLiga");
 
   if (inFilial) return { primary, secondary: null, copa: null };
 
   const european = getEuropeanCompetitionFor(player.club);
-  const secondary = european ? buildTable(`${seed}:${european.competition}`, player.club, european.rivals, player.media, matchdayGuess, european.label) : null;
+  const secondary = european ? buildTable(`${seed}:${european.competition}`, player.club, european.rivals, matchdayGuess, european.label) : null;
 
   const copaProgress = getCopaProgress(player, season);
   const copa: KnockoutStandings | null =
