@@ -161,7 +161,13 @@ export function buildBusquedaEquipoEvent(player: Player): GameEvent {
   if (pool.length === 0) pool = TEMPLATES;
   const tpl = pool[Math.floor(Math.random() * pool.length)];
 
-  const ctx: Ctx = { agent: player.agent_name ?? "Tu representante" };
+  // "Sin representante aún"/"definitivo" son placeholders que guarda
+  // rechazar al primer agente (ver first-signing-variants.ts), no un
+  // nombre real — usarlos tal cual como si hablaran producía frases rotas
+  // ("Sin representante aún te llama..."). Mismo patrón de exclusión que
+  // ya usa npcs.ts para el mismo caso en las menciones de texto.
+  const hasRealAgent = !!player.agent_name && !/^(Tu |Sin |Nueva )/.test(player.agent_name);
+  const ctx: Ctx = { agent: hasRealAgent ? player.agent_name! : "Tu representante" };
   const newRecent = [...recent, tpl.key].slice(-3).join(",");
   const baseFlags: Consequences["flags"] = { busqueda_fase: String(fase + 1), busqueda_recent: newRecent };
   const withFlags = (c: Consequences, viral: boolean): Consequences => ({

@@ -32,6 +32,45 @@ function faceFlagKey(role: NpcRole, player: Pick<Player, "club">): string {
   return `npc_face_${role}`;
 }
 
+/**
+ * Clave del flag "ya lo has visto nombrado antes" — independiente de la
+ * cara en sí. Pedido explícito del usuario: "los personajes siguen
+ * apareciendo sin tan siquiera conocerlos, lo ideal es que vayan
+ * apareciendo conforme los conozcas". Se vio en vivo: la primerísima
+ * escena de una carrera nueva (elegir representante) menciona "tu padre"
+ * de pasada ("tu padre lo echaría, pero...") y, aun así, se le ponía cara
+ * y ficha ahí mismo — antes de que el jugador hubiera tenido ninguna
+ * escena real con él. Con esto, la PRIMERA vez que se menciona un rol
+ * solo se le pone nombre (ver npcs.ts), sin cara todavía; la cara aparece
+ * a partir de la segunda mención, cuando el personaje ya tiene algo de
+ * peso real en la carrera. Igual que faceFlagKey, distingue por club para
+ * los roles que cambian de club.
+ */
+function seenFlagKey(role: NpcRole, player: Pick<Player, "club">): string {
+  if (CLUB_BOUND_FACE_ROLES.has(role)) return `npc_seen_${role}_${slugifyClub(player.club)}`;
+  return `npc_seen_${role}`;
+}
+
+export function hasMetNpc(player: Pick<Player, "club" | "flags">, role: NpcRole): boolean {
+  return player.flags?.[seenFlagKey(role, player)] === "1";
+}
+
+/** Marca un rol como "ya mencionado" — la próxima vez que salga, ya tocará cara. */
+export async function markNpcSeen(
+  supabase: SupabaseClient,
+  player: Pick<Player, "id" | "club" | "flags">,
+  role: NpcRole,
+): Promise<void> {
+  if (hasMetNpc(player, role)) return;
+  try {
+    const flags = { ...(player.flags ?? {}), [seenFlagKey(role, player)]: "1" };
+    await supabase.from("players").update({ flags }).eq("id", player.id);
+    player.flags = flags;
+  } catch (err) {
+    console.error("[markNpcSeen] no se pudo guardar:", err instanceof Error ? err.message : err);
+  }
+}
+
 function mix(value: string): number {
   let h = 2166136261;
   for (let i = 0; i < value.length; i++) {

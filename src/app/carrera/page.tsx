@@ -34,7 +34,7 @@ import { MatchScene } from "@/components/MatchScene";
 import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
 import { resolveEvent } from "./actions";
 import { personalizeEvent, detectMentionedRoles, NPC_ROLE_LABELS } from "@/lib/narrative/npcs";
-import { getOrCreateNpcFace, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
+import { getOrCreateNpcFace, hasMetNpc, markNpcSeen, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
 import { NpcAvatarRow } from "@/components/NpcAvatarRow";
 import { DmPreview } from "@/components/DmPreview";
 
@@ -307,14 +307,31 @@ export default async function CarreraPage() {
   // turno: rarísima vez habla más de uno en la misma escena, y así
   // ningún turno dispara de golpe un montón de generaciones nuevas si
   // coincidieran varios roles sin cara todavía.
+  //
+  // La PRIMERA vez que se menciona un rol no se le pone cara, solo
+  // nombre (ver personalizeEvent más arriba) — pedido explícito: "los
+  // personajes siguen apareciendo sin tan siquiera conocerlos, lo ideal
+  // es que vayan apareciendo conforme los conozcas". Se vio en vivo: la
+  // escena de elegir representante, la primerísima de cualquier carrera,
+  // menciona "tu padre" solo de pasada ("tu padre lo echaría, pero...")
+  // y aun así aparecía su cara ahí mismo. A partir de la segunda mención
+  // (hasMetNpc ya en true) el personaje ya pesa algo de verdad en la
+  // carrera y sí se le pone cara.
   const mentionedRoles = event ? detectMentionedRoles(event, player).filter((r) => NPC_FACE_ROLES.includes(r)) : [];
-  const npcFaces = await Promise.all(
-    mentionedRoles.slice(0, 2).map(async (role) => ({
-      role,
-      label: NPC_ROLE_LABELS[role],
-      url: await getOrCreateNpcFace(supabase, player, role, user.id),
-    })),
+  const npcFacesRaw = await Promise.all(
+    mentionedRoles.slice(0, 2).map(async (role) => {
+      if (!hasMetNpc(player, role)) {
+        await markNpcSeen(supabase, player, role);
+        return null;
+      }
+      return {
+        role,
+        label: NPC_ROLE_LABELS[role],
+        url: await getOrCreateNpcFace(supabase, player, role, user.id),
+      };
+    }),
   );
+  const npcFaces = npcFacesRaw.filter((f): f is NonNullable<typeof f> => f !== null);
 
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
 
