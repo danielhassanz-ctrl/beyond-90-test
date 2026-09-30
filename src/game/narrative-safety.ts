@@ -4,7 +4,7 @@ import { eventById } from "./events";
 import type { GameEvent, GameState } from "./types";
 
 const DISALLOWED_DYNAMIC_KINDS = new Set(["agent_check", "match_flash"]);
-const INJURED_ON_FIELD_COPY = /(calienta(?:s)?\b|entras? t[uú]\b|sales? de titular|eres titular|entras? al campo|debut(?:as?| oficial)|minuto \d{1,3}\b|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|te cambian en|marcas? (?:un )?gol|gol decisivo|doble marca|faltas t[aá]cticas|tarjeta roja|roja directa|expulsi[oó]n|sustituci[oó]n|duelo t[aá]ctico)/i;
+const INJURED_ON_FIELD_COPY = /(calienta(?:s)?\\b|entras? t[uú]\\b|sales? de titular|eres titular|formas? parte del once|en el once inicial|entras? al campo|saltas? al campo|debut(?:as?| oficial)|minuto \\d{1,3}\\b|partidillo|dos actuaciones|rivales? te preparan|te silban al cambiarte|te cambian en|marcas? (?:un )?gol|anotas? (?:un )?gol|das? (?:una )?asistencia|gol decisivo|doble marca|faltas t[aá]cticas|tarjeta roja|roja directa|expulsi[oó]n|sustituci[oó]n|duelo t[aá]ctico)/i;
 
 function eventCopy(event: GameEvent, state: GameState): string {
   let text = "";
