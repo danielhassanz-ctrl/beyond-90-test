@@ -22,8 +22,13 @@ export function calculateCareerArc(player: Player): CareerArc {
   const age = playerAge(player.week);
   const media = player.media || 40;
 
-  // Ascenso: 16-25 años, media creciendo
-  if (age < 25 && media < 75) {
+  // Ascenso: 16-25 años, sea cual sea su media — antes exigía media < 75,
+  // así que un canterano precoz con media ya alta (un futuro crack que
+  // despunta pronto) no encajaba aquí NI en "pico" (que exige 25+ años),
+  // y caía por defecto en "decline" a los 17 años. Encontrado probando el
+  // ajuste de forma de abajo: la fase es sobre la EDAD, la media solo
+  // describe la intensidad de esa fase.
+  if (age < 25) {
     return {
       phase: "ascenso",
       intensity: Math.max(0, media / 75),
@@ -59,17 +64,29 @@ export function naturalFormaDegradation(player: Player): number {
   const arc = calculateCareerArc(player);
   const formaBefore = player.forma || 50;
 
-  // Forma degrada -2 a -5 por semana sin competición
-  let formaChange = -2;
+  // Antes esto era "el rico se hace más rico": -2 de forma cada semana
+  // salvo que la media ya estuviera por encima de 75, caso en el que se
+  // recuperaba sola. Un jugador todavía normal (la inmensa mayoría de
+  // cualquier carrera, sobre todo al principio) sangraba forma sin parar
+  // justo en el tramo donde más le costaba llegar a rendir lo bastante
+  // bien como para entrar en esa zona de recuperación — un suelo
+  // demasiado bajo para un juego pensado para enganchar, no para ser fiel
+  // a que en la vida real casi nadie llega arriba. Pedido explícito tras
+  // discutirlo: subir el suelo de las carreras normales sin tocar el
+  // techo (Balón de Oro, Times Square... siguen exigiendo lo mismo).
+  let formaChange = -1;
 
-  // Si es fase decline, degrada más rápido
   if (arc.phase === "decline") {
+    // La fase de decline SIEMPRE degrada fuerte, sin importar la media
+    // que tengas — es a propósito: ni una leyenda escapa del cuerpo que
+    // falla con la edad (ver las 7 escenas de buildReadyToRetireEvent en
+    // career-transitions.ts, que cuentan justo esto).
     formaChange = -4;
-  }
-
-  // Si acaba de jugar bien (media subió recientemente), forma sube
-  if (player.media && player.media > 75) {
-    formaChange = 2; // Recuperación por buen desempeño
+  } else if (player.media && player.media > 55) {
+    // Umbral bajado de 75 a 55: ya no hace falta ser una futura
+    // superestrella para entrar en modo recuperación, basta con ser un
+    // profesional decente — esto es lo que sube el suelo de verdad.
+    formaChange = 2;
   }
 
   // Forma se mueve en escala 10-100, igual que el resto de barras del
