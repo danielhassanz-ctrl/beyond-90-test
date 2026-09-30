@@ -1,15 +1,16 @@
 import type { GameEvent } from "@/types/career";
 
 /**
- * 100+ variantes narrativas de "La primera firma" - el evento que define el primer contacto
- * con un representante/padre. Cada carrera nueva sortea una aleatoria.
+ * Variantes narrativas de "La primera firma" — el evento que define el
+ * primer contacto con un representante/padre, literalmente la PRIMERA
+ * pantalla de cualquier carrera nueva en Beyond 90. Precisamente por eso
+ * (es lo primero que ve cualquiera, incluido quien rejuega varias
+ * carreras seguidas) es donde más se nota una repetición — se amplió de
+ * 16 a 21 variantes tras revisar el arranque completo de la carrera.
  *
- * Categorías:
- * - Agente hambriento/competitivo (20 variantes)
- * - Eres desconocido, padre/madre te representa (20 variantes)
- * - Compiten múltiples agentes (15 variantes)
- * - Agente oscuro/controvertido (15 variantes)
- * - Casos inesperados (30+ variantes)
+ * Categorías: agente hambriento/competitivo, eres desconocido (padre/
+ * madre/familia te representa), compiten múltiples agentes, agente
+ * oscuro/controvertido, casos inesperados.
  */
 
 export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
@@ -358,6 +359,111 @@ export const FIRST_SIGNING_VARIANTS: GameEvent[] = [
     ],
   },
 
+  {
+    id: "first-signing-unexpected-6",
+    category: "representante",
+    title: "El entrenador que cuelga el silbato",
+    description:
+      "Tu entrenador de categorías inferiores, el mismo que te formó desde niño, anuncia que deja de entrenar. 'Voy a representar solo a un jugador esta primera vez', te dice. 'A ti. Sé exactamente lo que necesitas porque te he visto crecer.'",
+    options: [
+      {
+        id: "confiar",
+        label: "Confiar en quien te conoce mejor que nadie",
+        subtitle: "Años de vínculo pesan más que la experiencia",
+        consequences: { agent_name: "Héctor Salgado", moral: 8, rel_representante: 6 },
+      },
+      {
+        id: "separar",
+        label: "Preferir que siga siendo tu entrenador, no tu agente",
+        subtitle: "No mezclar los dos roles",
+        consequences: { agent_name: "Sin representante aún", moral: 2, rel_entrenador: 2 },
+      },
+    ],
+  },
+  {
+    id: "first-signing-unexpected-7",
+    category: "representante",
+    title: "La agencia de datos",
+    description:
+      "Una agencia nueva, toda fría y numérica, te presenta un informe de 40 páginas sobre tu propio rendimiento que ni tú conocías al detalle. 'No creemos en el instinto, creemos en los números. Y tus números dicen que vas a valer mucho dinero.'",
+    options: [
+      {
+        id: "datos",
+        label: "Firmar con la agencia de datos",
+        subtitle: "Decisiones frías, resultados calculados",
+        consequences: { agent_name: "Ainhoa Prats", moral: 3, patrimonio: 3000, rel_representante: 2 },
+      },
+      {
+        id: "instinto",
+        label: "Preferir a alguien que hable de fútbol, no solo de estadísticas",
+        subtitle: "El fútbol también es sentimiento",
+        consequences: { agent_name: "Sin representante aún", moral: 4 },
+      },
+    ],
+  },
+  {
+    id: "first-signing-unexpected-8",
+    category: "representante",
+    title: "El empresario del barrio",
+    description:
+      "El dueño de la tienda de deportes de tu barrio, el que te regalaba botas cuando tu familia no llegaba, se ofrece como representante sin cobrar comisión el primer año. 'Ya invertí en ti sin saberlo. Solo quiero verte llegar.'",
+    options: [
+      {
+        id: "gratitud",
+        label: "Aceptar por gratitud y por lo que representa",
+        subtitle: "Devolver una fe antigua",
+        consequences: { agent_name: "Leandro Nadales", moral: 9, rel_representante: 7 },
+      },
+      {
+        id: "profesionalizar",
+        label: "Agradecérselo, pero buscar a alguien del sector",
+        subtitle: "El cariño no siempre basta en los contratos",
+        consequences: { agent_name: "Sin representante aún", moral: 3 },
+      },
+    ],
+  },
+  {
+    id: "first-signing-unexpected-9",
+    category: "representante",
+    title: "El rival te empuja a decidir",
+    description:
+      "Te enteras de que el chaval con el que siempre competiste de niño ya firmó con un agente conocido esta misma semana. Nadie te ha dicho que tengas que darte prisa, pero de repente sientes que cada día sin representante es un día de ventaja para él.",
+    options: [
+      {
+        id: "rapido",
+        label: "Firmar ya con el primer agente serio que se acerque",
+        subtitle: "No quedarte atrás",
+        consequences: { agent_name: "Yolanda Robledo", moral: 3, forma: -1 },
+      },
+      {
+        id: "paciencia",
+        label: "Tomarte tu tiempo pese a la comparación",
+        subtitle: "Tu carrera, tu ritmo",
+        consequences: { agent_name: "Sin representante aún", moral: 5 },
+      },
+    ],
+  },
+  {
+    id: "first-signing-unexpected-10",
+    category: "representante",
+    title: "La agente que empieza igual que tú",
+    description:
+      "Una recién licenciada en derecho deportivo, sin un solo cliente todavía, te escribe un mensaje larguísimo explicando exactamente por qué cree en tu perfil. No tiene contactos que enseñarte, pero tiene el mismo hambre de demostrar algo que tienes tú.",
+    options: [
+      {
+        id: "juntas",
+        label: "Empezar juntos desde cero",
+        subtitle: "Dos carreras arrancando a la vez",
+        consequences: { agent_name: "Cosme Bermejo", moral: 6, rel_representante: 5 },
+      },
+      {
+        id: "experiencia",
+        label: "Preferir a alguien con trayectoria ya hecha",
+        subtitle: "Menos riesgo en un momento clave",
+        consequences: { agent_name: "Sin representante aún", moral: 2 },
+      },
+    ],
+  },
   {
     id: "first-signing-unexpected-5",
     category: "representante",
