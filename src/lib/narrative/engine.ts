@@ -865,20 +865,39 @@ REGLAS CRÍTICAS:
   return callEventTool(prompt, "entrenamiento", `prematch-${match.week}`);
 }
 
-const ATTACKER_DECISION_SITUATIONS = [
-  "Recibes un balón filtrado y te plantas solo ante el portero.",
-  "Un rechace te cae a los pies dentro del área, con la portería a tiro.",
-  "Roban el balón: contragolpe, dos contra uno, la pelota es tuya.",
-  "Te llega un centro raso al segundo palo, sin marca encima.",
-  "Recibes de espaldas a la portería, con un defensa pegado a ti.",
-  "Ganas la posición en el área pequeña tras un córner en el último minuto.",
-  "Un compañero te deja un balón de tacón en plena área pequeña.",
-  "El portero rival sale mal y te queda la portería medio vacía desde fuera del área.",
-  "Recibes en carrera por banda, con el lateral rival ya tarde para cubrirte.",
-  "Un rebote en el larguero te cae de nuevo a los pies, con todo el mundo caído.",
-  "Recibes un pase al hueco entre el lateral y el central, con solo el portero por delante.",
-  "El balón te llega botando en el área, en un ángulo incómodo para rematar.",
-  "Te quedas mano a mano con el central que te marca, dentro del área pequeña.",
+/**
+ * Antes, la situación (frase de arriba) y el conjunto de opciones (más
+ * abajo) se elegían al azar COMPLETAMENTE independientes entre sí — con
+ * 13 situaciones × 8 conjuntos, muchas combinaciones no tenían sentido:
+ * "el portero sale mal y te queda la portería vacía desde fuera del
+ * área" podía tocar junto a opciones como "bajar el balón de pecho antes
+ * de decidir", que da por hecho que te ha llegado un balón por alto — no
+ * es lo que acaba de pasar en la situación. Reportado jugando una
+ * carrera real. Cada situación ahora lleva su `mode` ("suelo" — el balón
+ * ya está contigo a ras de césped, o "aereo" — te llega por alto, de
+ * centro o córner) y solo se combina con conjuntos de opciones del mismo
+ * modo (ver ATTACKER_OPTION_SETS).
+ */
+type Mode = "suelo" | "aereo";
+interface Situation {
+  text: string;
+  mode: Mode;
+}
+
+const ATTACKER_DECISION_SITUATIONS: Situation[] = [
+  { text: "Recibes un balón filtrado y te plantas solo ante el portero.", mode: "suelo" },
+  { text: "Un rechace te cae a los pies dentro del área, con la portería a tiro.", mode: "suelo" },
+  { text: "Roban el balón: contragolpe, dos contra uno, la pelota es tuya.", mode: "suelo" },
+  { text: "Te llega un centro raso al segundo palo, sin marca encima.", mode: "suelo" },
+  { text: "Recibes de espaldas a la portería, con un defensa pegado a ti.", mode: "suelo" },
+  { text: "Ganas la posición en el área pequeña tras un córner en el último minuto.", mode: "aereo" },
+  { text: "Un compañero te deja un balón de tacón en plena área pequeña.", mode: "suelo" },
+  { text: "El portero rival sale mal y te queda la portería medio vacía desde fuera del área.", mode: "suelo" },
+  { text: "Recibes en carrera por banda, con el lateral rival ya tarde para cubrirte.", mode: "suelo" },
+  { text: "Un rebote en el larguero te cae de nuevo a los pies, con todo el mundo caído.", mode: "aereo" },
+  { text: "Recibes un pase al hueco entre el lateral y el central, con solo el portero por delante.", mode: "suelo" },
+  { text: "El balón te llega botando en el área, en un ángulo incómodo para rematar.", mode: "suelo" },
+  { text: "Te quedas mano a mano con el central que te marca, dentro del área pequeña.", mode: "suelo" },
 ];
 
 const MIDFIELDER_DECISION_SITUATIONS = [
@@ -1787,8 +1806,19 @@ const MIDFIELDER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
   ],
 ];
 
-const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
-  (flags) => [
+/**
+ * Cada conjunto lleva su `mode`, emparejado con el de Situation de
+ * arriba: "suelo" para conjuntos que dan por hecho que el balón ya está
+ * a tus pies (disparo, regate, pase raso...), "aereo" para los que dan
+ * por hecho que te llega por alto (cabezazo, palomita, chilena...).
+ */
+interface OptionSet {
+  mode: Mode;
+  build: (flags: DecisionFlagsFn) => EventOption[];
+}
+
+const ATTACKER_OPTION_SETS: OptionSet[] = [
+  { mode: "suelo", build: (flags) => [
     {
       id: "disparo",
       label: "Disparar a puerta",
@@ -1825,8 +1855,8 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "No sale — pierdes el balón y el rival sale a la contra.", consequences: { forma: -2, flags: flags("miss_bad", "floritura") } },
       },
     },
-  ],
-  (flags) => [
+  ] },
+  { mode: "suelo", build: (flags) => [
     {
       id: "primer-toque",
       label: "Rematar de primeras sin controlar",
@@ -1863,8 +1893,8 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "El central rival te roba el balón limpiamente por la espalda.", consequences: { forma: -1, flags: flags("beaten", "aguantar") } },
       },
     },
-  ],
-  (flags) => [
+  ] },
+  { mode: "aereo", build: (flags) => [
     {
       id: "cabezazo",
       label: "Rematar de cabeza al primer palo",
@@ -1901,8 +1931,8 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "El recorte no sale limpio y pierdes el balón en el intento.", consequences: { forma: -1, flags: flags("miss_bad", "recorte_interior") } },
       },
     },
-  ],
-  (flags) => [
+  ] },
+  { mode: "suelo", build: (flags) => [
     {
       id: "vaselina",
       label: "Probar la vaselina por encima del portero adelantado",
@@ -1939,8 +1969,8 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "Te presionan entre dos y pierdes el balón cerca de tu propio campo.", consequences: { forma: -1, flags: flags("beaten", "proteger_esquina") } },
       },
     },
-  ],
-  (flags) => [
+  ] },
+  { mode: "suelo", build: (flags) => [
     {
       id: "definicion-rasa",
       label: "Definir raso, pegado al palo contrario",
@@ -1955,7 +1985,7 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
     },
     {
       id: "bajar-la-pelota",
-      label: "Bajar el balón de pecho antes de decidir",
+      label: "Controlarla con calma antes de decidir",
       subtitle: "Ganar un segundo extra pensando la jugada",
       consequences: {},
       resolve: {
@@ -1977,8 +2007,8 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "Nadie se la compra y el rival corta la jugada sin problema.", consequences: { flags: flags("miss_bad", "simular_centro") } },
       },
     },
-  ],
-  (flags) => [
+  ] },
+  { mode: "suelo", build: (flags) => [
     {
       id: "picar-al-hueco",
       label: "Picar al hueco entre los dos centrales",
@@ -2015,8 +2045,8 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "El pase atrás sale mal y el rival roba el balón en una zona peligrosa.", consequences: { forma: -1, flags: flags("beaten", "tocar_atras_primero") } },
       },
     },
-  ],
-  (flags) => [
+  ] },
+  { mode: "aereo", build: (flags) => [
     {
       id: "remate-palomita",
       label: "Rematar en palomita, estirándote al máximo",
@@ -2041,8 +2071,8 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "El taco se va desviado y el rival despeja sin problemas.", consequences: { flags: flags("miss", "bajar_para_companero") } },
       },
     },
-  ],
-  (flags) => [
+  ] },
+  { mode: "suelo", build: (flags) => [
     {
       id: "buscar-rebote",
       label: "Quedarte cerca esperando un posible rebote",
@@ -2067,7 +2097,7 @@ const ATTACKER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "El defensa no se la compra y te cierra el disparo justo a tiempo.", consequences: { flags: flags("miss", "simular_quiebro") } },
       },
     },
-  ],
+  ] },
 ];
 
 /**
@@ -2196,14 +2226,19 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
   }
 
   // Delantero (y cualquier posición no reconocida, como red de seguridad).
+  // La situación y el conjunto de opciones se emparejan por `mode`
+  // (suelo/aéreo) — antes se elegían del todo independientes y podían
+  // no tener sentido juntos (ver comentario junto a Situation arriba).
   const situation = ATTACKER_DECISION_SITUATIONS[Math.floor(Math.random() * ATTACKER_DECISION_SITUATIONS.length)];
-  const optionSet = ATTACKER_OPTION_SETS[Math.floor(Math.random() * ATTACKER_OPTION_SETS.length)](flags);
+  const matchingSets = ATTACKER_OPTION_SETS.filter((s) => s.mode === situation.mode);
+  const chosenSet = matchingSets.length > 0 ? matchingSets : ATTACKER_OPTION_SETS;
+  const optionSet = chosenSet[Math.floor(Math.random() * chosenSet.length)].build(flags);
   return {
     id: `match-decision-${match.week}-${Date.now()}`,
     category: "partido",
     rivalClub: match.rivalClub,
     title: decisionTitle,
-    description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+    description: `${stakesLead}ante ${match.rivalClub}. ${situation.text} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
     allowFreeText: true,
     freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
     options: optionSet,

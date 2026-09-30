@@ -36,6 +36,7 @@ import { resolveEvent } from "./actions";
 import { personalizeEvent, detectMentionedRoles, NPC_ROLE_LABELS } from "@/lib/narrative/npcs";
 import { getOrCreateNpcFace, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
 import { NpcAvatarRow } from "@/components/NpcAvatarRow";
+import { DmPreview } from "@/components/DmPreview";
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   const pct = Math.max(0, Math.min(100, value));
@@ -317,6 +318,17 @@ export default async function CarreraPage() {
 
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
 
+  // Antes esto era literalmente el texto fijo "Titular" siempre, aunque el
+  // jugador estuviera en plena cadena de debut con el filial (semanas
+  // 11-15 de cualquier carrera nueva, ver rookie-progression.ts) — el
+  // propio usuario lo reportó: "titular sin apenas hacer goles con el
+  // filial... con 16/17 años, un poco raro". Se deriva del progreso real
+  // de esa cadena en vez de darlo por hecho siempre.
+  const rookieChainStarted = usedEventIds.includes("pretemp-amistoso");
+  const rookieChainFinished = usedEventIds.includes("rookie-debut-oficial");
+  const statusLine =
+    player.club === NO_CLUB_YET ? "Sin equipo" : rookieChainStarted && !rookieChainFinished ? "Con el filial" : "Titular";
+
   return (
     <main className="flex flex-1 justify-center p-4 pb-24">
       <div className="w-full max-w-lg space-y-4 pb-8">
@@ -327,7 +339,7 @@ export default async function CarreraPage() {
             age={playerAge(player.week)}
             club={player.club}
             categoryLabel={seasonLabel(player.week)}
-            statusLine="Titular"
+            statusLine={statusLine}
             media={player.media}
             forma={player.forma}
             relEntrenador={player.club !== NO_CLUB_YET ? player.rel_entrenador : null}
@@ -352,6 +364,7 @@ export default async function CarreraPage() {
             <p className="text-kicker">{CATEGORY_LABELS[event.category]}</p>
             <NpcAvatarRow faces={npcFaces} />
             <h2 className="font-display text-xl text-foreground leading-tight">{event.title}</h2>
+            {event.dm && <DmPreview dm={event.dm} />}
             <p className="text-sm text-muted-foreground">{event.description}</p>
 
             {whatIsAtStake(event).length > 0 && (

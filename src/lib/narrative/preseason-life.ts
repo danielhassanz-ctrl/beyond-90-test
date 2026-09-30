@@ -1,5 +1,6 @@
 import type { Consequences, EventOption, GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
+import { displayName } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { getCelebrityName, getNpcName, getPersonName, getTeammateName } from "@/lib/narrative/npcs";
 
@@ -45,6 +46,7 @@ export function shouldTriggerPreseasonLife(player: Player): boolean {
 }
 
 interface Ctx {
+  name: string;
   club: string;
   coach: string;
   fisio: string;
@@ -424,7 +426,7 @@ const TEMPLATES: Tpl[] = [
     key: "doble_viral",
     title: "Tu doble se ha hecho viral",
     tone: ["surrealista"],
-    desc: (c) => `Un vídeo de ${c.doppel}, un tipo que es tu vivo retrato, haciendo el ridículo en un supermercado se ha vuelto viral con el titular "así es [tu nombre] fuera del campo". Media ciudad ya lo cree de verdad.`,
+    desc: (c) => `Un vídeo de ${c.doppel}, alguien que es tu vivo retrato, haciendo el ridículo en un supermercado se ha vuelto viral con el titular "así es ${c.name} fuera del campo". Media ciudad ya lo cree de verdad.`,
     opts: (c) => [
       { label: "Desmentirlo con humor", subtitle: "Un vídeo respuesta", consequences: { fama: 5, moral: 2 } },
       {
@@ -434,7 +436,7 @@ const TEMPLATES: Tpl[] = [
         resolve: {
           baseChance: 0.6,
           success: { text: "Grabáis un vídeo de los dos juntos que arrasa: la gente no sabe distinguiros y el club lo comparte encantado.", consequences: { fama: 7, rel_aficion: 3, moral: 3 } },
-          fail: { text: `${c.doppel} resulta ser mucho más simpático en redes que tú y te acaba robando parte del cariño de la afición durante semanas.`, consequences: { fama: 1, moral: -2, rel_aficion: -2 } },
+          fail: { text: `${c.doppel} resulta triunfar mucho más en redes que tú y te acaba robando parte del cariño de la afición durante semanas.`, consequences: { fama: 1, moral: -2, rel_aficion: -2 } },
         },
       },
       { label: "Ignorarlo", subtitle: "No darle más vueltas", consequences: { moral: 1 } },
@@ -526,11 +528,11 @@ const TEMPLATES: Tpl[] = [
     key: "gemelo_perdido",
     title: "El fan que jura ser tu primo perdido",
     tone: ["gracioso", "surrealista"],
-    desc: (c) => `${c.stranger} se presenta en la puerta de entrenamientos con un árbol genealógico dibujado a mano y fotos borrosas de una boda de los años 90, convencido de que sois primos separados al nacer.`,
+    desc: (c) => `${c.stranger} se presenta en la puerta de entrenamientos con un árbol genealógico dibujado a mano y fotos borrosas de una boda de los años 90, jurando que sois primos separados al nacer.`,
     opts: () => [
-      { label: "Escucharle la historia entera", subtitle: "Por curiosidad", consequences: { moral: 2, rel_aficion: 2 } },
-      { label: "Hacerte una foto con él y seguirle la broma", subtitle: `"Primo, cuánto tiempo"`, consequences: { fama: 3, moral: 2 } },
-      { label: "Pedirle amablemente que se vaya", subtitle: "Esto empieza a dar miedo", consequences: { reputacion: 1, moral: -1 } },
+      { label: "Escuchar la historia entera", subtitle: "Por curiosidad", consequences: { moral: 2, rel_aficion: 2 } },
+      { label: "Hacerte una foto y seguirle la broma", subtitle: `"Primo, cuánto tiempo"`, consequences: { fama: 3, moral: 2 } },
+      { label: "Pedir amablemente que se vaya", subtitle: "Esto empieza a dar miedo", consequences: { reputacion: 1, moral: -1 } },
     ],
   },
   {
@@ -570,7 +572,7 @@ const TEMPLATES: Tpl[] = [
     tone: ["surrealista"],
     desc: (c) => `Llevas semanas viendo, siempre en la misma esquina fuera del campo de entrenamiento, a ${c.stranger}: mismo corte de pelo, mismas botas, hasta el mismo gesto al calentar. Empieza a resultar un poco inquietante.`,
     opts: () => [
-      { label: "Acercarte a hablar con él", subtitle: "Salir de dudas", consequences: { moral: 2, rel_aficion: 2 } },
+      { label: "Acercarte a preguntar qué pasa", subtitle: "Salir de dudas", consequences: { moral: 2, rel_aficion: 2 } },
       { label: "Hacerte una foto juntos", subtitle: "Convertirlo en broma", consequences: { fama: 3, moral: 1 } },
       { label: "Avisar a seguridad del club", subtitle: "Por si acaso", consequences: { reputacion: 1, moral: -1 } },
     ],
@@ -958,6 +960,7 @@ export function buildPreseasonLifeEvent(player: Player): GameEvent {
 
   const salt = `pre-${week}-${tpl.key}`;
   const ctx: Ctx = {
+    name: displayName(player),
     club: player.club,
     coach: getNpcName(player, "entrenador"),
     fisio: getNpcName(player, "fisio"),
