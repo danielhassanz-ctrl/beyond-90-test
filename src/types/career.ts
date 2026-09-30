@@ -150,6 +150,15 @@ export interface GameEvent {
    */
   maxMedia?: number;
   /**
+   * Como minMedia, pero sobre la fama en vez del rendimiento deportivo —
+   * para hitos de marketing/imagen (Times Square, portadas...) que solo
+   * tienen sentido siendo una superestrella global reconocida, no solo un
+   * buen futbolista. Solo lo comprueban los eventos que lo necesitan
+   * (sponsorships.ts); el resto del pool de patrocinios sigue dependiendo
+   * únicamente del umbral general de isEligibleForSponsorship.
+   */
+  minFama?: number;
+  /**
    * Resumen corto de un vínculo o promesa que esta escena crea o resuelve
    * (un personaje nuevo, un rencor, algo pendiente) y que merece
    * recordarse mucho después de que salga del historial reciente. Se

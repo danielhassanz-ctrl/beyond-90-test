@@ -2953,7 +2953,7 @@ REGLAS:
   // Solo si fama >= 65 y el evento no ha sido usado antes
   if (isEligibleForSponsorship(player.fama) && Math.random() < 0.15) {
     const availableSponsorships = Object.values(SPONSORSHIP_EVENTS).filter(
-      (event) => !usedEventIds.includes(event.id)
+      (event) => !usedEventIds.includes(event.id) && (event.minFama === undefined || player.fama >= event.minFama)
     );
 
     if (availableSponsorships.length > 0) {

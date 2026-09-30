@@ -331,6 +331,37 @@ export const SPONSORSHIP_EVENTS: Record<string, GameEvent> = {
     ],
   },
 
+  "sponsor-times-square": {
+    id: "sponsor-times-square",
+    category: "especial",
+    title: "Tu cara en Times Square",
+    description: "Una marca global cierra el acuerdo más grande de tu carrera hasta ahora: tu imagen ocupa una pantalla gigante en pleno Times Square, en Nueva York, entre las mismas luces donde solo aparecen las estrellas más grandes del planeta. Tu representante te manda el vídeo diez veces antes de que puedas ni abrirlo.",
+    isMilestone: true,
+    milestoneType: "sponsor",
+    minFama: 88,
+    imageScene: "Photorealistic night photo of the photographed man's face on a giant digital billboard screen in Times Square, New York City, surrounded by other bright advertising screens, bustling crowds and yellow taxis below, vibrant neon city lights, iconic dramatic night photography",
+    options: [
+      {
+        id: "aceptar-times-square",
+        label: "Firmar el acuerdo global",
+        subtitle: "El salto definitivo a icono mundial",
+        consequences: { patrimonio: 60000, fama: 20, rel_representante: 6 },
+      },
+      {
+        id: "compartir-times-square",
+        label: "Compartir el momento con tu familia antes que con la prensa",
+        subtitle: "Que lo vivan ellos primero",
+        consequences: { patrimonio: 60000, fama: 16, moral: 6 },
+      },
+      {
+        id: "humilde-times-square",
+        label: "Quitarle importancia en público: 'sigo siendo el mismo'",
+        subtitle: "Gestionar el ego con cuidado",
+        consequences: { patrimonio: 60000, fama: 14, reputacion: 5 },
+      },
+    ],
+  },
+
   "sponsor-causa-social": {
     id: "sponsor-causa-social",
     category: "especial",
