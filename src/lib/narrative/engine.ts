@@ -2479,7 +2479,7 @@ export async function pickNextEventDynamic(
         transitionEvent = buildEnteringDeclineEvent();
         break;
       case "ready_to_retire":
-        transitionEvent = buildReadyToRetireEvent();
+        transitionEvent = buildReadyToRetireEvent(player);
         if (!player.flags) player.flags = {};
         player.flags.retire_reminder_last_week = String(player.week);
         break;

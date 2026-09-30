@@ -7,6 +7,7 @@ import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { playerAge } from "@/types/career";
 import { calculateCareerArc } from "./career-dynamics";
+import { getNpcName, getTeammateName } from "./npcs";
 
 export type TransitionType = "entering_peak" | "exiting_peak" | "entering_decline" | "ready_to_retire";
 
@@ -146,15 +147,79 @@ export function buildEnteringDeclineEvent(): GameEvent {
  * (career_events.free_text_response) y carrera/retiro/page.tsx lo busca
  * específicamente para mostrarlo como cita destacada.
  */
-export function buildReadyToRetireEvent(): GameEvent {
+function mixRetire(value: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    h ^= value.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 16;
+  return (h >>> 0) % 1000;
+}
+
+/**
+ * El momento de decidir retirarse es, por diseño, la decisión con más
+ * peso emocional de toda la carrera — y hasta ahora tenía un único
+ * párrafo fijo y genérico ("Tu cuerpo pide parar. O tu media está en
+ * caída libre. O tienes 35 años."), el mismo para cualquier jugador,
+ * cualquier posición, cualquier carrera. Contrastaba mal con el resto
+ * del juego, donde hasta una prueba física de pretemporada tiene 6
+ * variantes. Además, este evento puede reaparecer varias veces (cada ~15
+ * semanas si el jugador sigue diciendo que no), así que sin variantes el
+ * mismo jugador podía ver el idéntico texto tres o cuatro veces seguidas
+ * en los últimos años de su propia carrera.
+ */
+function buildRetireScene(player: Player, age: number): { desc: string; imageScene: string } {
+  const seed = `${player.id}:retire:${player.week}`;
+  const variantIdx = mixRetire(seed) % 7;
+  const coach = getNpcName(player, "entrenador");
+  const young = getTeammateName(player, `${seed}:young`);
+
+  const variants: { desc: string; imageScene: string }[] = [
+    {
+      desc: `Ya no recuperas entre partidos como antes. El fisio lo sabe, tú lo sabes, y esta mañana, al levantarte, tu cuerpo te lo ha dicho con más claridad que nunca: a los ${age}, cada semana de fútbol se cobra un precio que antes ni notabas.`,
+      imageScene: "Photorealistic photo of a mature footballer sitting alone on a treatment table in an empty medical room, head down, contemplative, soft clinical lighting, quiet reflective moment",
+    },
+    {
+      desc: `${coach} te sienta en el banquillo el partido entero. Desde ahí ves a ${young}, con la mitad de tus años, jugar el fútbol que tú jugabas hace una década. No es rabia lo que sientes. Es algo más parecido a reconocerte en un espejo que ya no existe.`,
+      imageScene: "Photorealistic photo of a mature footballer sitting on the substitutes' bench, watching the match intently, stadium lights, contemplative expression, photojournalism style",
+    },
+    {
+      desc: `El médico del club no le da vueltas: "Puedes seguir, pero cada año que pase, el riesgo sube y la recuperación baja. La decisión es tuya, no mía." Sales de la consulta con el diagnóstico más honesto que has escuchado en toda tu carrera.`,
+      imageScene: "Photorealistic photo of a mature footballer leaving a medical office, corridor lighting, pensive expression, realistic documentary style",
+    },
+    {
+      desc: `Te quedas solo en el túnel de vestuarios después de un partido cualquiera, con el estadio ya vacío y las luces apagándose una a una. A los ${age} años, por primera vez, ese silencio no se siente como paz. Se siente como una pregunta sin responder.`,
+      imageScene: "Photorealistic photo of a mature footballer standing alone in an empty stadium tunnel, lights dimming, reflective solitary moment, cinematic documentary lighting",
+    },
+    {
+      desc: `Tu agente te llama con la voz más seria de lo habitual: "Ya no llaman los mismos clubes que llamaban hace tres años. Todavía hay ofertas, pero no las de antes." No hace falta que lo diga más claro para que entiendas lo que de verdad te está contando.`,
+      imageScene: "Photorealistic photo of a mature footballer looking out a window while on a phone call, serious expression, soft indoor lighting, quiet dramatic moment",
+    },
+    {
+      desc: `La afición te dedica una ovación completa al ser sustituido, algo que llevaba años sin pasar. Se levanta el estadio entero. Es precioso y, a los ${age} años, también es la primera vez que una ovación así te suena a despedida en vez de a celebración.`,
+      imageScene: "Photorealistic photo of a mature footballer being substituted, applauding fans standing in the stadium background, emotional moment, warm stadium lighting, photojournalism style",
+    },
+    {
+      desc: `En casa, alguien te pregunta sin maldad si el año que viene seguirás jugando "con el mismo equipo de siempre". Es la primera vez que no tienes una respuesta clara que dar, y te sorprende lo mucho que te cuesta admitirlo en voz alta.`,
+      imageScene: "Photorealistic photo of a mature footballer sitting quietly at home, thoughtful expression, warm domestic lighting, intimate realistic photography",
+    },
+  ];
+
+  return variants[variantIdx];
+}
+
+export function buildReadyToRetireEvent(player: Player): GameEvent {
+  const age = playerAge(player.week);
+  const scene = buildRetireScene(player, age);
   return {
     id: "transition-ready-to-retire",
     category: "especial",
     title: "¿Hasta cuándo vas a jugar?",
-    description: `Tu cuerpo pide parar. O tu media está en caída libre. O tienes 35 años. La realidad: tu época como futbolista profesional está terminando. Puedes intentar jugar un par años más, pero ¿vale la pena? ¿No sería mejor retirarte ahora, mientras eres recordado como jugador, y comenzar tu segunda vida?`,
+    description: scene.desc,
     isMilestone: true,
     milestoneType: "carrera",
-    imageScene: `Photorealistic Getty Images photo of a mature footballer at crossroads, contemplative older expression, empty stadium background, soft twilight light, reflective moment of end of era, peaceful but serious`,
+    imageScene: scene.imageScene,
     allowFreeText: true,
     freeTextPrompt: "Si hoy fuera tu último día como profesional, ¿qué mensaje de despedida dejarías?",
     options: [
