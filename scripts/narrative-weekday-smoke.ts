@@ -20,7 +20,11 @@ if (narrativeSources.length === 0) {
 // the engine has no calendar evidence to support it.
 const weekday = /\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/giu;
 const calendarEvidence = /\b(?:calendar|calendario|weekday|dayOfWeek|fecha|date)\b/iu;
-const nonPlayerText = /^\s*(?:\/\/|\*|\/\*|const\s+\w*(?:weekday|calendar|date)|type\s+|interface\s+)/iu;
+// Only syntax that cannot itself become player-facing copy is exempt. Do not
+// exempt constants merely because their identifier contains "date", "weekday"
+// or "calendar": a dateCopy-style constant can still contain unsupported
+// narrative such as "el viernes" and must be caught by this gate.
+const nonPlayerText = /^\s*(?:\/\/|\*|\/\*|type\s+|interface\s+)/iu;
 
 const hits: string[] = [];
 for (const relativePath of narrativeSources) {
