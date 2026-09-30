@@ -42,7 +42,7 @@ async function reachPlayableChoice(page, mode, seed, decision) {
       expect(offerCount).toBe(4);
       await offers.nth((seed + decision - 1) % offerCount).click();
       await page.getByRole("button", { name: "Sentarnos a negociar con este club" }).click();
-      await expect(page).toHaveURL(/\\/historia\\/?$/);
+      await expect(page).toHaveURL(/\/historia\/?$/);
       continue;
     }
     const article = page.locator("article");
