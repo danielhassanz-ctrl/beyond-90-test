@@ -18,7 +18,7 @@ export function RegenerateButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-full border border-gold/50 px-5 py-2 font-cond text-xs font-bold uppercase tracking-wide text-gold disabled:cursor-not-allowed disabled:opacity-50"
+      className="cursor-pointer rounded-full border border-gold/50 px-5 py-2 font-cond text-xs font-bold uppercase tracking-wide text-gold disabled:cursor-not-allowed disabled:opacity-50"
     >
       {pending ? "Enviando…" : "✨ Generar la foto de este momento"}
     </button>

@@ -36,7 +36,7 @@ export default async function MiJugadorPage() {
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">
       <div className="flex w-full max-w-md justify-end">
         <form action={logout}>
-          <button type="submit" className="font-cond text-xs uppercase tracking-wide text-muted-foreground hover:text-gold">
+          <button type="submit" className="cursor-pointer font-cond text-xs uppercase tracking-wide text-muted-foreground hover:text-gold">
             Cerrar sesión
           </button>
         </form>

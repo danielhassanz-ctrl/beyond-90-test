@@ -79,7 +79,7 @@ export default async function FotosPage({
       <form action={createCreditCheckout} className="w-full max-w-md">
         <button
           type="submit"
-          className="gold-fill block w-full rounded-full px-4 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
+          className="gold-fill block w-full cursor-pointer rounded-full px-4 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
         >
           Comprar {CREDIT_PACK.images} fotos más — {(CREDIT_PACK.priceCents / 100).toLocaleString("es", { style: "currency", currency: "EUR" })}
         </button>

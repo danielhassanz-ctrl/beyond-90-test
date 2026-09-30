@@ -452,7 +452,7 @@ export default async function CarreraPage() {
 
               <button
                 type="submit"
-                className="gold-fill w-full rounded-full px-4 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
+                className="gold-fill w-full cursor-pointer rounded-full px-4 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
               >
                 Confirmar decisión
               </button>

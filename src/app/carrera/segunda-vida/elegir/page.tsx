@@ -161,7 +161,7 @@ export default async function ElegirSegundaVidaPage({
           ))}
           <button
             type="submit"
-            className="w-full rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
+            className="w-full cursor-pointer rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
           >
             Empezar esta nueva etapa
           </button>
@@ -196,7 +196,7 @@ export default async function ElegirSegundaVidaPage({
           ))}
           <button
             type="submit"
-            className="w-full rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
+            className="w-full cursor-pointer rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
           >
             Empezar esta nueva etapa
           </button>
@@ -224,7 +224,7 @@ export default async function ElegirSegundaVidaPage({
           ))}
           <button
             type="submit"
-            className="w-full rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
+            className="w-full cursor-pointer rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
           >
             Empezar esta nueva etapa
           </button>
@@ -250,7 +250,7 @@ export default async function ElegirSegundaVidaPage({
         ))}
         <button
           type="submit"
-          className="w-full rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
+          className="w-full cursor-pointer rounded-md bg-gold px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-gold-soft"
         >
           Empezar esta nueva etapa
         </button>

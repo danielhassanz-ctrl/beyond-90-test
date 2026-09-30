@@ -38,7 +38,7 @@ export default async function BorrarJugadorPage() {
           <form action={deletePlayer}>
             <button
               type="submit"
-              className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500"
+              className="w-full cursor-pointer rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500"
             >
               Sí, borrar y empezar de nuevo
             </button>

@@ -205,7 +205,7 @@ export default async function RetiroPage() {
             <form action={beginSecondLife}>
               <button
                 type="submit"
-                className="pitch-fill mt-4 inline-block rounded-full px-6 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
+                className="pitch-fill mt-4 inline-block cursor-pointer rounded-full px-6 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
               >
                 🚀 Comienza tu segunda vida
               </button>
