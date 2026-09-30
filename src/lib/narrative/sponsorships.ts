@@ -271,6 +271,66 @@ export const SPONSORSHIP_EVENTS: Record<string, GameEvent> = {
     ],
   },
 
+  "sponsor-autobus-club": {
+    id: "sponsor-autobus-club",
+    category: "especial",
+    title: "Tu cara en el autobús del club",
+    description: "El club rediseña el autobús oficial del equipo para la temporada, y tu cara ocupa todo un lateral, más grande que la de cualquier otro compañero. Es la primera vez que ves tu propia imagen así de gigante, en movimiento por la ciudad.",
+    isMilestone: true,
+    milestoneType: "sponsor",
+    imageScene: "Photorealistic photo of the photographed man's face printed huge on the side of a football club's official team bus, parked outside a stadium, dramatic low-angle shot, natural daylight, proud subtle smile looking up at his own image, professional sports photography",
+    options: [
+      {
+        id: "orgullo-autobus",
+        label: "Disfrutarlo con orgullo",
+        subtitle: "Un símbolo real de lo que has llegado a ser",
+        consequences: { moral: 6, fama: 4, rel_aficion: 3 },
+      },
+      {
+        id: "incomodo-autobus",
+        label: "Sentirte algo incómodo con tanto protagonismo",
+        subtitle: "No querías que fuera solo tu cara",
+        consequences: { moral: 1, rel_vestuario: -2 },
+      },
+      {
+        id: "compartir-autobus",
+        label: "Pedirle al club que incluya también a otros compañeros",
+        subtitle: "Repartir el foco",
+        consequences: { moral: 4, rel_vestuario: 5 },
+      },
+    ],
+  },
+
+  "sponsor-marquesinas-ciudad": {
+    id: "sponsor-marquesinas-ciudad",
+    category: "especial",
+    title: "Marquesinas por toda la ciudad",
+    description: "Una marca lanza una campaña con tu imagen en marquesinas de autobús por toda la ciudad. Al salir de casa, te cruzas con tu propia cara varias veces antes de llegar al entrenamiento — algo que todavía no te acostumbras a ver.",
+    isMilestone: true,
+    milestoneType: "sponsor",
+    imageScene: "Photorealistic street photography of the photographed man's face on a large advertising billboard at a city bus stop, urban street setting, pedestrians walking by in soft motion blur, natural daylight, candid documentary style capturing the scale of the ad",
+    options: [
+      {
+        id: "aceptar-marquesinas",
+        label: "Firmar la campaña completa",
+        subtitle: "Máxima visibilidad en toda la ciudad",
+        consequences: { patrimonio: 18000, fama: 12, rel_aficion: 4 },
+      },
+      {
+        id: "limitar-marquesinas",
+        label: "Aceptar, pero limitar la campaña a tu barrio",
+        subtitle: "Algo más manejable y cercano",
+        consequences: { patrimonio: 10000, fama: 6, moral: 3 },
+      },
+      {
+        id: "rechazar-marquesinas",
+        label: "Rechazar: demasiada exposición para tu gusto",
+        subtitle: "Prefieres mantener algo de vida privada",
+        consequences: { moral: 2 },
+      },
+    ],
+  },
+
   "sponsor-causa-social": {
     id: "sponsor-causa-social",
     category: "especial",
