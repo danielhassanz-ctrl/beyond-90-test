@@ -28,6 +28,9 @@ export interface StandingsRow {
   club: string;
   points: number;
   played: number;
+  won: number;
+  drawn: number;
+  lost: number;
   isPlayer: boolean;
 }
 
@@ -123,11 +126,39 @@ export interface SeasonMatchRecord {
 }
 
 /**
+ * Simula victorias/empates/derrotas partido a partido (no una media de
+ * puntos directa) para que el resultado sea SIEMPRE matemáticamente
+ * coherente: puntos = victorias×3 + empates, y victorias+empates+derrotas
+ * = partidos jugados, por construcción — imposible que salga "7 puntos
+ * en 2 partidos" o "24 puntos en 7 partidos" (bug real reportado por el
+ * usuario con capturas: el cálculo anterior sacaba una media de puntos
+ * por partido directamente, sin pasar por resultados reales, y para
+ * clubes de nivel alto con ruido a favor podía superar el máximo
+ * matemático de 3 puntos por partido). La probabilidad de victoria sube
+ * con el nivel del club; el empate es una probabilidad fija realista.
+ */
+function simulateRecord(seed: string, tier: number, played: number): { won: number; drawn: number; lost: number; points: number } {
+  const qualityNoise = ((mixSeed(`${seed}:quality`) % 1000) / 1000 - 0.5) * 0.08; // -0.04..0.04
+  const winProb = Math.max(0.1, Math.min(0.78, 0.14 + tier * 0.115 + qualityNoise));
+  const drawProb = 0.24;
+  let won = 0;
+  let drawn = 0;
+  let lost = 0;
+  for (let i = 0; i < played; i++) {
+    const r = (mixSeed(`${seed}:m${i}`) % 10000) / 10000;
+    if (r < winProb) won++;
+    else if (r < winProb + drawProb) drawn++;
+    else lost++;
+  }
+  return { won, drawn, lost, points: won * 3 + drawn };
+}
+
+/**
  * Tabla de 8 con el club del jugador insertado. Los RIVALES siguen una
  * simulación estable por semilla (nivel de club 1-5, ver comentario de
  * arriba del todo) porque no hay partido a partido real de cada uno de
- * ellos. TU fila, en cambio, usa puntos reales (3/1/0 por victoria/
- * empate/derrota) en cuanto `record` trae algún partido jugado esta
+ * ellos. TU fila, en cambio, usa resultados reales (victoria/empate/
+ * derrota de verdad) en cuanto `record` trae algún partido jugado esta
  * temporada — así que si ganas, subes; si pierdes o empatas mucho, te
  * quedas atrás, con consecuencia de verdad en vez de ser cosmético.
  */
@@ -154,16 +185,12 @@ function buildTable(
     .map((club) => {
       const isPlayer = club === playerClub;
       if (isPlayer && hasRealRecord) {
-        const points = record!.wins * 3 + record!.draws;
-        return { club, points, played, isPlayer };
+        const { wins, draws, losses } = record!;
+        return { club, points: wins * 3 + draws, played, won: wins, drawn: draws, lost: losses, isPlayer };
       }
-      // Puntos por nivel de club: más nivel, más puntos de media por
-      // partido, con algo de ruido por semilla para que no sea mecánico.
       const tier = clubTier(club);
-      const noise = (mixSeed(`${seed}:${club}:pts`) % 100) / 100 - 0.5; // -0.5..0.5
-      const pointsPerMatch = 0.9 + tier * 0.45 + noise * 0.7; // nivel 1 ~1.35, nivel 5 ~3.15
-      const points = Math.max(0, Math.round(played * pointsPerMatch));
-      return { club, points, played, isPlayer };
+      const sim = simulateRecord(`${seed}:${club}`, tier, played);
+      return { club, points: sim.points, played, won: sim.won, drawn: sim.drawn, lost: sim.lost, isPlayer };
     })
     .sort((a, b) => b.points - a.points);
 

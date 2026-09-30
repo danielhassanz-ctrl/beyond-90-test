@@ -10,10 +10,13 @@ export function StandingsTable({ standings }: { standings: TableStandings }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-kicker text-muted-foreground">
-            <th className="w-8 py-2 pl-4 text-left">#</th>
+            <th className="w-6 py-2 pl-4 text-left">#</th>
             <th className="py-2 text-left">Equipo</th>
-            <th className="w-10 py-2 text-center">PJ</th>
-            <th className="w-10 py-2 pr-4 text-right">Pts</th>
+            <th className="w-7 py-2 text-center text-[10px]">PJ</th>
+            <th className="w-7 py-2 text-center text-[10px]">PG</th>
+            <th className="w-7 py-2 text-center text-[10px]">PE</th>
+            <th className="w-7 py-2 text-center text-[10px]">PP</th>
+            <th className="w-9 py-2 pr-4 text-right">Pts</th>
           </tr>
         </thead>
         <tbody>
@@ -29,7 +32,10 @@ export function StandingsTable({ standings }: { standings: TableStandings }) {
                   <span className="truncate">{row.club}</span>
                 </div>
               </td>
-              <td className="py-2 text-center font-num">{row.played}</td>
+              <td className="py-2 text-center font-num text-xs">{row.played}</td>
+              <td className="py-2 text-center font-num text-xs">{row.won}</td>
+              <td className="py-2 text-center font-num text-xs">{row.drawn}</td>
+              <td className="py-2 text-center font-num text-xs">{row.lost}</td>
               <td className="py-2 pr-4 text-right font-num">{row.points}</td>
             </tr>
           ))}
