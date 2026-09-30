@@ -3,10 +3,7 @@ const { test, expect, devices } = require("@playwright/test");
 const BASE_URL = (process.env.TEST_BASE_URL || "http://127.0.0.1:4173/").replace(/\/?$/, "/");
 const routeUrl = (route = "") => new URL(route.replace(/^\//, ""), BASE_URL).toString();
 const SAVE_KEY = "beyond90:save:v1";
-const QA_PLAYER_PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-  "base64",
-);
+const QA_PLAYER_PNG = Buffer.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,4,0,0,0,181,28,12,2,0,0,0,11,73,68,65,84,120,218,99,100,248,15,0,1,5,1,1,39,24,227,102,0,0,0,0,73,69,78,68,174,66,96,130]);
 
 const CASES = [
   ["express", "Express", 101],
@@ -38,6 +35,16 @@ async function savedState(page) {
 
 async function reachPlayableChoice(page, mode, seed, decision) {
   for (let transition = 0; transition < 8; transition += 1) {
+    if (page.url().includes("/cantera")) {
+      const offers = page.locator("ul > li > button");
+      await expect(offers.first()).toBeVisible();
+      const offerCount = await offers.count();
+      expect(offerCount).toBe(4);
+      await offers.nth((seed + decision - 1) % offerCount).click();
+      await page.getByRole("button", { name: "Sentarnos a negociar con este club" }).click();
+      await expect(page).toHaveURL(/\\/historia\\/?$/);
+      continue;
+    }
     const article = page.locator("article");
     await expect(article, `${mode}/${seed}: narrative card missing before decision ${decision}`).toBeVisible();
     const choice = article.locator(".space-y-2\\.5 > button").first();
