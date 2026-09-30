@@ -11,6 +11,10 @@ const narrativeSources = fs
   .filter((name) => narrativeFile.test(name))
   .map((name) => `../src/game/${name}`);
 
+if (narrativeSources.length === 0) {
+  throw new Error("Narrative chronology gate scanned zero sources; source discovery has drifted.");
+}
+
 // Beyond 90 is Spanish-first, but English copy can enter through helpers or
 // future content. A named weekday in either language is equally dangerous if
 // the engine has no calendar evidence to support it.
