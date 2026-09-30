@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
@@ -108,30 +109,129 @@ function mixSeed(value: string): number {
 }
 
 /**
- * Tabla de 8 con el club del jugador insertado — la posición depende del
- * NIVEL DEL CLUB (1-5), no de la media del jugador (ver comentario de
- * arriba del todo). Puntos estables por temporada gracias a la semilla.
+ * Racha real de la temporada — victorias/empates/derrotas de TUS
+ * partidos de verdad, sacados de career_events (ver getSeasonMatchRecord
+ * más abajo). Pedido explícito: "lo lógico es que si gana partidos vayas
+ * escalando o te mantengas 1" — antes la tabla era una foto fija por
+ * semilla, sin memoria de si ganabas o perdías tus partidos.
  */
-function buildTable(seed: string, playerClub: string, pool: string[], matchdayGuess: number, label: string): TableStandings {
+export interface SeasonMatchRecord {
+  wins: number;
+  draws: number;
+  losses: number;
+  played: number;
+}
+
+/**
+ * Tabla de 8 con el club del jugador insertado. Los RIVALES siguen una
+ * simulación estable por semilla (nivel de club 1-5, ver comentario de
+ * arriba del todo) porque no hay partido a partido real de cada uno de
+ * ellos. TU fila, en cambio, usa puntos reales (3/1/0 por victoria/
+ * empate/derrota) en cuanto `record` trae algún partido jugado esta
+ * temporada — así que si ganas, subes; si pierdes o empatas mucho, te
+ * quedas atrás, con consecuencia de verdad en vez de ser cosmético.
+ */
+function buildTable(
+  seed: string,
+  playerClub: string,
+  pool: string[],
+  matchdayGuess: number,
+  label: string,
+  record?: SeasonMatchRecord,
+): TableStandings {
   const others = pool.filter((c) => c !== playerClub);
   const shuffled = [...others].sort((a, b) => mixSeed(`${seed}:${a}`) - mixSeed(`${seed}:${b}`));
   const rivals = shuffled.slice(0, 7);
   const allClubs = [playerClub, ...rivals];
 
-  const played = Math.max(1, Math.min(matchdayGuess, 12));
-  // Puntos por nivel de club: más nivel, más puntos de media por partido,
-  // con algo de ruido por semilla para que no sea un ranking mecánico.
+  const hasRealRecord = !!record && record.played > 0;
+  // Los rivales usan tu mismo número de jornadas jugadas cuando ya hay
+  // partidos reales tuyos esta temporada, para que la comparación de
+  // puntos tenga sentido (no "tú llevas 3 partidos, ellos 12").
+  const played = hasRealRecord ? record!.played : Math.max(1, Math.min(matchdayGuess, 12));
+
   const rows: StandingsRow[] = allClubs
     .map((club) => {
+      const isPlayer = club === playerClub;
+      if (isPlayer && hasRealRecord) {
+        const points = record!.wins * 3 + record!.draws;
+        return { club, points, played, isPlayer };
+      }
+      // Puntos por nivel de club: más nivel, más puntos de media por
+      // partido, con algo de ruido por semilla para que no sea mecánico.
       const tier = clubTier(club);
       const noise = (mixSeed(`${seed}:${club}:pts`) % 100) / 100 - 0.5; // -0.5..0.5
       const pointsPerMatch = 0.9 + tier * 0.45 + noise * 0.7; // nivel 1 ~1.35, nivel 5 ~3.15
       const points = Math.max(0, Math.round(played * pointsPerMatch));
-      return { club, points, played, isPlayer: club === playerClub };
+      return { club, points, played, isPlayer };
     })
     .sort((a, b) => b.points - a.points);
 
   return { type: "table", label, rows };
+}
+
+/**
+ * Racha real de tus partidos de esta temporada, leída de career_events —
+ * mismo criterio de "qué cuenta como partido real" que ya usa
+ * getCurrentSeasonStats (categoría "partido", sin contar match-decision-*
+ * ni el amistoso de pretemporada). El marcador se parsea del texto: el
+ * proyecto garantiza en el prompt de generación que siempre se escribe
+ * "tu equipo - rival" en ese orden, así que el primer número es el tuyo.
+ */
+// Las etiquetas son literales exactos que el prompt de generateMatchDayEvent
+// obliga a incluir en la descripción (compLabel en engine.ts) — Champions,
+// Europa League y Copa del Rey ya tienen su propio seguimiento real (tabla
+// europea aparte, cuadro de eliminatoria), así que por defecto se excluyen
+// de la racha "doméstica" para no mezclar dos competiciones en una tabla.
+const SEPARATE_COMPETITION_LABELS = ["Champions League", "Europa League", "Copa del Rey"];
+
+export async function getSeasonMatchRecord(
+  supabase: SupabaseClient,
+  player: Pick<Player, "id" | "week">,
+  opts?: { onlyLabels?: string[] },
+): Promise<SeasonMatchRecord> {
+  const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  const seasonStartWeek = season * WEEKS_PER_SEASON + 1;
+
+  const record: SeasonMatchRecord = { wins: 0, draws: 0, losses: 0, played: 0 };
+
+  try {
+    const { data, error } = await supabase
+      .from("career_events")
+      .select("title, description, category, event_id")
+      .eq("player_id", player.id)
+      .gte("week", seasonStartWeek)
+      .lte("week", player.week);
+
+    if (error || !data) return record;
+
+    for (const row of data) {
+      const eventId = (row.event_id as string) ?? "";
+      const isMatch = row.category === "partido" && !eventId.startsWith("match-decision-") && eventId !== "pretemp-amistoso";
+      if (!isMatch) continue;
+
+      const text = `${row.title ?? ""} ${row.description ?? ""}`;
+      if (opts?.onlyLabels) {
+        if (!opts.onlyLabels.some((label) => text.includes(label))) continue;
+      } else if (SEPARATE_COMPETITION_LABELS.some((label) => text.includes(label))) {
+        continue;
+      }
+
+      const scoreMatch = text.match(/marcador[^0-9]{0,20}(\d{1,2})\s*-\s*(\d{1,2})/i);
+      if (!scoreMatch) continue;
+
+      const ownGoals = parseInt(scoreMatch[1], 10);
+      const rivalGoals = parseInt(scoreMatch[2], 10);
+      record.played += 1;
+      if (ownGoals > rivalGoals) record.wins += 1;
+      else if (ownGoals === rivalGoals) record.draws += 1;
+      else record.losses += 1;
+    }
+  } catch (err) {
+    console.error("[getSeasonMatchRecord] threw:", err instanceof Error ? err.message : err);
+  }
+
+  return record;
 }
 
 /**
@@ -146,6 +246,7 @@ function buildTable(seed: string, playerClub: string, pool: string[], matchdayGu
 export function getActiveStandings(
   player: Player,
   usedEventIds: string[],
+  record?: SeasonMatchRecord,
 ): { primary: TableStandings | null; secondary: TableStandings | null; copa: KnockoutStandings | null } {
   if (player.club === NO_CLUB_YET) return { primary: null, secondary: null, copa: null };
 
@@ -157,7 +258,7 @@ export function getActiveStandings(
   if (typeof torneo === "string" && torneo) {
     const pool = torneo === "mundial" ? MUNDIAL_POOL : torneo === "eurocopa" ? EUROCOPA_POOL : COPA_AMERICA_POOL;
     const label = torneo === "mundial" ? "Mundial · Fase de grupos" : torneo === "eurocopa" ? "Eurocopa · Fase de grupos" : "Copa América · Fase de grupos";
-    return { primary: buildTable(`${seed}:${torneo}`, player.nation, pool, matchdayGuess, label), secondary: null, copa: null };
+    return { primary: buildTable(`${seed}:${torneo}`, player.nation, pool, matchdayGuess, label, record), secondary: null, copa: null };
   }
 
   const rookieChainStarted = usedEventIds.includes("pretemp-amistoso");
@@ -165,13 +266,20 @@ export function getActiveStandings(
   const inFilial = rookieChainStarted && !rookieChainFinished;
 
   const primary = inFilial
-    ? buildTable(`${seed}:filial`, player.club, RESERVE_RIVALS, matchdayGuess, "Segunda RFEF · Filial")
-    : buildTable(`${seed}:liga`, player.club, LIGA_POOL, matchdayGuess, "LaLiga");
+    ? buildTable(`${seed}:filial`, player.club, RESERVE_RIVALS, matchdayGuess, "Segunda RFEF · Filial", record)
+    : buildTable(`${seed}:liga`, player.club, LIGA_POOL, matchdayGuess, "LaLiga", record);
 
   if (inFilial) return { primary, secondary: null, copa: null };
 
+  // La tabla europea NO usa tu racha real: mezclaría resultados de liga y
+  // de Champions/Europa League en la misma cuenta de puntos, dos
+  // competiciones distintas con sus propias tablas reales. Se queda como
+  // simulación estable — el progreso real en esa competición concreta ya
+  // se cuenta aparte, en el propio evento de eliminatoria cuando toca.
   const european = getEuropeanCompetitionFor(player.club);
-  const secondary = european ? buildTable(`${seed}:${european.competition}`, player.club, european.rivals, matchdayGuess, european.label) : null;
+  const secondary = european
+    ? buildTable(`${seed}:${european.competition}`, player.club, european.rivals, matchdayGuess, european.label)
+    : null;
 
   const copaProgress = getCopaProgress(player, season);
   const copa: KnockoutStandings | null =

@@ -3,7 +3,7 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { BottomNav } from "@/components/BottomNav";
 import { StandingsTable, KnockoutBox } from "@/components/StandingsTable";
 import { SeasonStatsCard } from "@/components/SeasonStatsCard";
-import { getActiveStandings } from "@/lib/narrative/standings";
+import { getActiveStandings, getSeasonMatchRecord } from "@/lib/narrative/standings";
 import { getCurrentSeasonStats } from "@/lib/player/update-stats";
 import { displayName } from "@/types/player";
 import { seasonLabel } from "@/types/career";
@@ -23,7 +23,10 @@ export default async function ClasificacionPage() {
     .eq("player_id", player.id);
   const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
-  const { primary, secondary, copa } = getActiveStandings(player, usedEventIds);
+  const torneo = typeof player.flags?.torneo_activo === "string" ? player.flags.torneo_activo : null;
+  const matchRecord = await getSeasonMatchRecord(supabase, player, torneo ? { onlyLabels: ["Partido internacional"] } : undefined);
+
+  const { primary, secondary, copa } = getActiveStandings(player, usedEventIds, matchRecord);
   const seasonStats = await getCurrentSeasonStats(supabase, player);
 
   return (
