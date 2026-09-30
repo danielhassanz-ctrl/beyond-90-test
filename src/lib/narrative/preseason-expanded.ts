@@ -188,12 +188,14 @@ export function buildPreseasonTacticaEvent(seed: string): GameEvent {
         label: "Tomar notas mentales: 'Entiendo, voy a trabajar en eso'",
         subtitle: "Profesionalismo",
         consequences: { rel_entrenador: 4, forma: 1, moral: 2 },
+        outcomeText: "El técnico asiente, satisfecho, y sigue con la pizarra sin decir más — pero apunta algo en su libreta justo después de mirarte, y eso no te pasa desapercibido.",
       },
       {
         id: "seguro",
         label: "Confiado en tu instinto: 'Mi posición es mi fortaleza'",
         subtitle: "Confianza defensiva",
         consequences: { rel_entrenador: 1, forma: 3, moral: 2 },
+        outcomeText: "El técnico levanta una ceja, ni convencido ni molesto. 'Ya veremos', dice, con el tono de quien reserva su opinión para cuando de verdad importe: los partidos.",
       },
     ],
   };
@@ -221,12 +223,14 @@ export function buildPreseasonCapitan(seed: string): GameEvent {
         label: "Agradecerle sinceramente y aprender de su experiencia",
         subtitle: "Humildad valorada",
         consequences: { moral: 5, rel_vestuario: 5, forma: 0 },
+        outcomeText: "El capitán sonríe y te da un apretón de manos que dice más que cualquier discurso. Desde ese día, cuando habla el vestuario, también te mira a ti para ver cómo reaccionas.",
       },
       {
         id: "independiente",
         label: "Valorar el gesto pero preferir enfocarte solo en jugar",
         subtitle: "Mentalidad de lobo solitario",
         consequences: { moral: 2, rel_vestuario: 1, forma: 2 },
+        outcomeText: "El capitán asiente, sin ofenderse. 'Respeto', dice solamente, y vuelve a lo suyo — pero en los días siguientes lo notas un poco más distante, como quien no insiste dos veces.",
       },
     ],
   };
@@ -279,12 +283,14 @@ export function buildPreseasonPasado(seed: string): GameEvent {
         label: "Echar un poco de menos pero sentir que estás en el lugar correcto",
         subtitle: "Emoción controlada",
         consequences: { moral: 3, forma: 0 },
+        outcomeText: "Cuelgas con un nudo pequeño en el pecho, pero también con la certeza tranquila de que esto es justo donde tienes que estar ahora mismo.",
       },
       {
         id: "determinado",
         label: "Usar esa llamada como motivación: 'Voy a hacerlo por ellos'",
         subtitle: "Propósito familiar",
         consequences: { moral: 5, forma: 1 },
+        outcomeText: "Cuelgas con una energía distinta, casi física — la clase de motivación que no se explica con palabras, solo se nota al día siguiente en el campo.",
       },
     ],
   };

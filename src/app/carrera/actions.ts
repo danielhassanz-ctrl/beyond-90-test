@@ -52,7 +52,10 @@ export async function resolveEvent(formData: FormData) {
 
   const resolution = resolveOption(option, player);
   const consequences = resolution ? resolution.consequences : option.consequences;
-  const outcomeText = resolution ? resolution.text : null;
+  // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
+  // la reacción de la escena a decisiones sin incertidumbre — ver el
+  // comentario junto a EventOption.outcomeText en types/career.ts.
+  const outcomeText = resolution ? resolution.text : (option.outcomeText ?? null);
 
   const isRetirementDecision =
     (event.id === "fork-retiro-pro" && option.id === "retirarse") ||

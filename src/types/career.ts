@@ -88,6 +88,18 @@ export interface EventOption {
     success: ResolutionOutcome;
     fail: ResolutionOutcome;
   };
+  /**
+   * Reacción GARANTIZADA de la escena a esta decisión — a diferencia de
+   * `resolve` (que implica una tirada de éxito/fracaso), esto es para
+   * opciones sin incertidumbre que aun así merecen que se vea la
+   * consecuencia ("el capitán sonríe y te da un abrazo"), no solo un
+   * cambio de stats en silencio. Pedido explícito del usuario: decidir
+   * algo y no ver nunca cómo reacciona la otra persona rompía la
+   * sensación de que las decisiones importan. resolveEvent.ts la trata
+   * igual que el texto de un resolve a efectos de mostrar la pantalla de
+   * resultado.
+   */
+  outcomeText?: string;
 }
 
 export interface GameEvent {

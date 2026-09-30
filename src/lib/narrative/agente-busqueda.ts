@@ -64,8 +64,8 @@ const TEMPLATES: Tpl[] = [
     title: "Moviendo tu nombre",
     desc: (c) => `${c.agent} te llama para ponerte al día: "Estoy moviendo tu nombre entre varios clubes, pero esto lleva su tiempo. No te desesperes todavía."`,
     opts: () => [
-      { label: "Confiar y tener paciencia", subtitle: "Dejar que tu agente trabaje", consequences: { moral: 1 } },
-      { label: "Preguntar directamente qué clubes hay en danza", subtitle: "Necesitas saber algo concreto", consequences: { moral: -1, rel_representante: 1 } },
+      { label: "Confiar y tener paciencia", subtitle: "Dejar que tu agente trabaje", consequences: { moral: 1 }, outcomeText: "Tu agente lo agradece: 'Así me gusta, cabeza fría.' Cuelgas con la sensación de que de verdad sigue en ello." },
+      { label: "Preguntar directamente qué clubes hay en danza", subtitle: "Necesitas saber algo concreto", consequences: { moral: -1, rel_representante: 1 }, outcomeText: "Tu agente duda un segundo de más antes de soltar dos nombres, ninguno muy convincente. Al menos ya no es un misterio total." },
       {
         label: "Grabarte entrenando y subirlo a redes por tu cuenta",
         subtitle: "Ayudar mientras esperas",
@@ -89,8 +89,8 @@ const TEMPLATES: Tpl[] = [
     title: "De momento, nada",
     desc: (c) => `${c.agent} no se anda con rodeos: "Nada todavía. Ningún club ha mordido el anzuelo esta semana. Estas cosas a veces tardan más de lo que gustaría."`,
     opts: (c) => [
-      { label: "Mantener la calma", subtitle: "Confiar en que llegará", consequences: { moral: 1 } },
-      { label: "Frustrarte y decírselo a tu agente", subtitle: "La espera empieza a pesar", consequences: { moral: -2, rel_representante: -1 } },
+      { label: "Mantener la calma", subtitle: "Confiar en que llegará", consequences: { moral: 1 }, outcomeText: `${c.agent} valora el temple: "Eso es, no hay prisa que valga."` },
+      { label: "Frustrarte y decírselo a tu agente", subtitle: "La espera empieza a pesar", consequences: { moral: -2, rel_representante: -1 }, outcomeText: `${c.agent} encaja el golpe sin mucho drama: "Lo entiendo, pero gritarme a mí no mueve ningún fichaje."` },
       {
         label: "Proponerle tú la idea de subir contenido a TikTok e Instagram",
         subtitle: "Hacer algo en vez de solo esperar",
@@ -113,10 +113,10 @@ const TEMPLATES: Tpl[] = [
     key: "grande-te-ha-visto",
     title: "Un grande te ha visto",
     desc: (c) => `${c.agent} te llama con la voz distinta a las otras veces: "Un ojeador de un club grande estuvo en tu último partido. No es nada seguro todavía, pero quería que lo supieras."`,
-    opts: () => [
-      { label: "Ilusionarte abiertamente", subtitle: "Dejarte llevar por la noticia", consequences: { moral: 5 } },
-      { label: "No hacerte ilusiones todavía", subtitle: "Protegerte de una decepción", consequences: { moral: 1, forma: 1 } },
-      { label: "Preguntar de qué club se trata exactamente", subtitle: "Tu agente no suelta prenda", consequences: { moral: 2 } },
+    opts: (c) => [
+      { label: "Ilusionarte abiertamente", subtitle: "Dejarte llevar por la noticia", consequences: { moral: 5 }, outcomeText: "Pasas el resto del día distraído, revisando el teléfono cada dos minutos por si hay más noticias. No llega nada, pero la ilusión ya se ha instalado." },
+      { label: "No hacerte ilusiones todavía", subtitle: "Protegerte de una decepción", consequences: { moral: 1, forma: 1 }, outcomeText: "Sigues entrenando exactamente igual que ayer, aunque por dentro la noticia te ronde la cabeza más de lo que admites." },
+      { label: "Preguntar de qué club se trata exactamente", subtitle: "Tu agente no suelta prenda", consequences: { moral: 2 }, outcomeText: `${c.agent} sonríe y niega con la cabeza: "Eso, de momento, es solo mío."` },
     ],
   },
   {
@@ -140,7 +140,7 @@ const TEMPLATES: Tpl[] = [
           },
         },
       },
-      { label: "No sentirte cómodo exponiéndote así", subtitle: "Prefieres que hablen tus pies", consequences: { moral: 1, rel_representante: -1 } },
+      { label: "No sentirte cómodo exponiéndote así", subtitle: "Prefieres que hablen tus pies", consequences: { moral: 1, rel_representante: -1 }, outcomeText: "Tu agente se encoge de hombros: 'Tú te lo pierdes, pero lo entiendo.' No vuelve a sacar el tema." },
     ],
   },
   {
@@ -148,8 +148,8 @@ const TEMPLATES: Tpl[] = [
     title: "Estuvo a punto de pasar",
     desc: (c) => `${c.agent} te da una noticia agridulce: "Un club te iba a convocar a una prueba esta semana. Han cambiado de entrenador de un día para otro y lo han parado todo. No es un no, pero tampoco es un sí."`,
     opts: () => [
-      { label: "Verlo como parte del camino", subtitle: "Estas cosas pasan", consequences: { moral: 2 } },
-      { label: "Sentir que la mala suerte te persigue", subtitle: "Cuesta no tomárselo personal", consequences: { moral: -2 } },
+      { label: "Verlo como parte del camino", subtitle: "Estas cosas pasan", consequences: { moral: 2 }, outcomeText: "Sigues entrenando con la cabeza despejada — sabes que este tipo de cosas van a pasar más veces antes de que llegue la de verdad." },
+      { label: "Sentir que la mala suerte te persigue", subtitle: "Cuesta no tomárselo personal", consequences: { moral: -2 }, outcomeText: "Te cuesta sacudirte la sensación durante varios días, por mucho que intentes no darle más vueltas de las necesarias." },
     ],
   },
 ];
