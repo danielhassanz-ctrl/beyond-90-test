@@ -106,6 +106,22 @@ function mix(value: string): number {
   return h >>> 0;
 }
 
+/**
+ * El campo `last_name` del jugador en realidad guarda TODO lo que puso en
+ * "Nombre y apellidos" (no hay un campo de nombre de pila separado — ver
+ * types/player.ts), así que puede llevar más de una palabra ("Dani
+ * Hassan"). Para dar apellido a un familiar solo hace falta el ÚLTIMO
+ * apellido real, no la cadena entera — si no, "tu padre" salía con el
+ * nombre de pila del jugador pegado en medio ("Ismael Dani Hassan" en vez
+ * de "Ismael Hassan"), reportado en vivo por el usuario.
+ */
+function surnameOf(name: string | null | undefined): string {
+  const trimmed = (name ?? "").trim();
+  if (!trimmed) return "";
+  const parts = trimmed.split(/\s+/);
+  return parts[parts.length - 1];
+}
+
 /** Nombre + un apellido a partir de una semilla; el apellido nunca coincide con `own`. */
 function buildName(seed: string, gender: "m" | "f", own = ""): string {
   const firstPool = gender === "f" ? FIRST_F : FIRST_M;
@@ -127,9 +143,9 @@ export function getNpcName(player: Player, role: NpcRole): string {
   if ((role === "padre" || role === "hermano") && player.last_name) {
     const firstPool = gender === "f" ? FIRST_F : FIRST_M;
     const first = firstPool[mix(seed + ":n") % firstPool.length];
-    return `${first} ${player.last_name}`;
+    return `${first} ${surnameOf(player.last_name)}`;
   }
-  return buildName(seed, gender, player.last_name ?? "");
+  return buildName(seed, gender, surnameOf(player.last_name));
 }
 
 /** Un nombre completo al azar (p. ej. el nuevo representante cuando despides al anterior). */
@@ -140,13 +156,13 @@ export function randomPersonName(gender: "m" | "f" | "any" = "any"): string {
 
 /** Compañeros de equipo: cambian con el club, distintos entre sí según la `salt`. */
 export function getTeammateName(player: Player, salt: string): string {
-  return buildName(`${player.id}:${player.club}:mate:${salt}`, "m", player.last_name ?? "");
+  return buildName(`${player.id}:${player.club}:mate:${salt}`, "m", surnameOf(player.last_name));
 }
 
 /** Cualquier otra persona que aparece (un veterano, un periodista, un aficionado...). */
 export function getPersonName(player: Player, salt: string, gender: "m" | "f" | "any" = "any"): string {
   const seed = `${player.id}:person:${salt}`;
-  return buildName(seed, pickGender(seed, gender), player.last_name ?? "");
+  return buildName(seed, pickGender(seed, gender), surnameOf(player.last_name));
 }
 
 /**
