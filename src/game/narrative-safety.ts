@@ -29,7 +29,8 @@ function isInjuredParticipationEvent(state: GameState): boolean {
   if (event.category === "training" || event.image === "training" || event.image === "match") return true;
 
   // Some old youth/debut cards use neutral artwork (for example a tunnel) even
-  // though the copy requires the player to enter the pitch. Guard semantics too.\n  // Keep this semantic gate conservative: availability beats filler.
+  // though the copy requires the player to enter the pitch. Guard semantics too.
+  // Keep this semantic gate conservative: availability beats filler.
   return INJURED_ON_FIELD_COPY.test(eventCopy(event, state));
 }
 
