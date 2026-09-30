@@ -50,6 +50,16 @@ const ITEMS = [
     ),
   },
   {
+    href: "/mi-jugador/clasificacion",
+    label: "Clasificación",
+    emoji: "📊",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+        <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/mi-jugador",
     label: "Mi jugador",
     emoji: "👤",
@@ -66,7 +76,7 @@ const ITEMS = [
  * Navegación inferior con indicador de página activa.
  * Mejorado con: mejor visual, emojis, efecto activo mejorado, transiciones suaves.
  */
-export function BottomNav({ active }: { active: "carrera" | "patrimonio" | "vida" | "legado" | "jugador" }) {
+export function BottomNav({ active }: { active: "carrera" | "patrimonio" | "vida" | "legado" | "clasificacion" | "jugador" }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-amber-500/20 bg-gradient-to-t from-neutral-950 via-neutral-950/95 to-neutral-950/80 backdrop-blur-sm">
       {/* Línea de brillo superior */}
@@ -79,6 +89,7 @@ export function BottomNav({ active }: { active: "carrera" | "patrimonio" | "vida
             (active === "patrimonio" && item.href === "/mi-jugador/patrimonio") ||
             (active === "vida" && item.href === "/mi-jugador/vida") ||
             (active === "legado" && item.href === "/mi-jugador/legado") ||
+            (active === "clasificacion" && item.href === "/mi-jugador/clasificacion") ||
             (active === "jugador" && item.href === "/mi-jugador");
 
           return (

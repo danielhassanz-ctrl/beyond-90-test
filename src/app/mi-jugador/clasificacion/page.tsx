@@ -1,0 +1,66 @@
+import { redirect } from "next/navigation";
+import { getCurrentUserAndPlayer } from "@/lib/player";
+import { BottomNav } from "@/components/BottomNav";
+import { StandingsTable, KnockoutBox } from "@/components/StandingsTable";
+import { SeasonStatsCard } from "@/components/SeasonStatsCard";
+import { getActiveStandings } from "@/lib/narrative/standings";
+import { getCurrentSeasonStats } from "@/lib/player/update-stats";
+import { displayName } from "@/types/player";
+import { seasonLabel } from "@/types/career";
+import { NO_CLUB_YET } from "@/lib/constants";
+
+export default async function ClasificacionPage() {
+  const { supabase, user, player } = await getCurrentUserAndPlayer();
+
+  if (!user) redirect("/login");
+  if (!player) redirect("/crear-jugador");
+
+  // Mismo criterio que carrera/page.tsx para saber si sigues en el
+  // filial o si ya se disputó tu debut oficial con el primer equipo.
+  const { data: allHistory } = await supabase
+    .from("career_events")
+    .select("event_id")
+    .eq("player_id", player.id);
+  const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
+
+  const { primary, secondary, copa } = getActiveStandings(player, usedEventIds);
+  const seasonStats = await getCurrentSeasonStats(supabase, player);
+
+  return (
+    <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">
+      <div className="w-full max-w-md space-y-1 text-center">
+        <p className="text-4xl">📊</p>
+        <h1 className="font-display text-2xl">Clasificación</h1>
+        <p className="text-sm text-muted-foreground">Dónde estás ahora mismo, temporada a temporada.</p>
+      </div>
+
+      <div className="w-full max-w-md space-y-4">
+        {player.club === NO_CLUB_YET ? (
+          <div className="rounded-2xl border border-panel-border bg-surface p-6 text-center text-sm text-muted-foreground">
+            Todavía no has fichado por ningún club — aquí aparecerá tu clasificación en cuanto tengas equipo.
+          </div>
+        ) : (
+          <>
+            <SeasonStatsCard
+              photoUrl={player.current_photo_url ?? player.photo_url}
+              name={displayName(player)}
+              seasonLabel={seasonLabel(player.week)}
+              stats={seasonStats}
+            />
+
+            {primary && <StandingsTable standings={primary} />}
+            {secondary && <StandingsTable standings={secondary} />}
+            {copa && <KnockoutBox knockout={copa} />}
+
+            <p className="text-center text-xs text-muted-foreground">
+              Clasificación orientativa, no un resultado jornada a jornada de cada rival — lo importante es dónde
+              estás tú y cómo cambia según rindes.
+            </p>
+          </>
+        )}
+      </div>
+
+      <BottomNav active="clasificacion" />
+    </main>
+  );
+}

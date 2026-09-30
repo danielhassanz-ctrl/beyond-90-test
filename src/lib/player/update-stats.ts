@@ -3,8 +3,10 @@
  * Se llama después de resolver un evento para registrar logros.
  */
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
+import { WEEKS_PER_SEASON } from "@/types/career";
 
 export interface StatUpdate {
   matches_played?: number;
@@ -134,6 +136,64 @@ export function applyStatUpdate(player: Player, update: StatUpdate): Player {
     stats_yellow_cards: (player.stats_yellow_cards ?? 0) + (update.yellow_cards ?? 0),
     stats_titles: (player.stats_titles ?? 0) + (update.titles ?? 0),
   };
+}
+
+/**
+ * Estadísticas SOLO de la temporada actual (goles, asistencias, tarjetas,
+ * minutos, partidos) — player.stats_* son totales de toda la carrera, no
+ * había forma de saber "cómo llevo esta temporada" sin esto. En vez de
+ * una columna nueva en la base de datos, se reconstruye releyendo el
+ * historial ya guardado (career_events) de las semanas de la temporada
+ * en curso y pasando cada fila por extractStatsFromEvent — el mismo
+ * análisis de texto que ya se usa al resolver cada turno, así que no
+ * puede desincronizarse de los totales de carrera.
+ */
+export interface SeasonStats {
+  matches_played: number;
+  goals: number;
+  assists: number;
+  minutes_played: number;
+  yellow_cards: number;
+  red_cards: number;
+}
+
+export async function getCurrentSeasonStats(supabase: SupabaseClient, player: Pick<Player, "id" | "week">): Promise<SeasonStats> {
+  const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  const seasonStartWeek = season * WEEKS_PER_SEASON + 1;
+
+  const totals: SeasonStats = { matches_played: 0, goals: 0, assists: 0, minutes_played: 0, yellow_cards: 0, red_cards: 0 };
+
+  try {
+    const { data, error } = await supabase
+      .from("career_events")
+      .select("title, description, category, event_id")
+      .eq("player_id", player.id)
+      .gte("week", seasonStartWeek)
+      .lte("week", player.week);
+
+    if (error || !data) return totals;
+
+    for (const row of data) {
+      const fakeEvent = {
+        id: row.event_id as string,
+        category: row.category as GameEvent["category"],
+        title: (row.title as string) ?? "",
+        description: (row.description as string) ?? "",
+        options: [],
+      } as GameEvent;
+      const update = extractStatsFromEvent(fakeEvent);
+      totals.matches_played += update.matches_played ?? 0;
+      totals.goals += update.goals ?? 0;
+      totals.assists += update.assists ?? 0;
+      totals.minutes_played += update.minutes_played ?? 0;
+      totals.yellow_cards += update.yellow_cards ?? 0;
+      totals.red_cards += update.red_cards ?? 0;
+    }
+  } catch (err) {
+    console.error("[getCurrentSeasonStats] threw:", err instanceof Error ? err.message : err);
+  }
+
+  return totals;
 }
 
 /**
