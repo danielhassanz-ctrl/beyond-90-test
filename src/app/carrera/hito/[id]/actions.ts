@@ -14,6 +14,12 @@ import { describeKit } from "@/lib/clubColors";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { playerAge } from "@/types/career";
 
+// Ver el mismo comentario en carrera/actions.ts: una Server Action tiene
+// su propia función serverless, independiente del maxDuration de la
+// página que la llama — sin esto, el trabajo en segundo plano (after(),
+// generación con Replicate) podía morir en silencio antes de terminar.
+export const maxDuration = 300;
+
 const STALE_PENDING_MS = 5 * 60_000;
 
 /**
