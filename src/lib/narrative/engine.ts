@@ -143,6 +143,34 @@ const FAME_EVENT_IDS = new Set([
   "ves-equipacion-prestada",
   "ves-guerra-bromas-vestuario",
   "ves-supersticion-ridicula",
+  // Encontrados en una auditoría de huérfanos: 21 escenas graciosas/
+  // surrealistas completas (prensa, famoseo, redes) que llevaban
+  // escritas en events.ts desde hace tiempo pero nunca estuvieron en
+  // NINGÚN pool de selección — ninguna partida podía llegar a vivirlas
+  // nunca, pese a estar listas. El usuario pidió explícitamente "más
+  // acciones graciosas y surrealistas"; esto añade 21 de golpe sin
+  // escribir una sola línea de narrativa nueva, solo conectándolas.
+  "esp-confusion-identidad",
+  "esp-camiseta-pirata",
+  "fama-revista-corazon",
+  "fama-influencer-unboxing",
+  "fama-reportaje-hogar",
+  "fama-rumor-falso",
+  "fama-tiktok-trend",
+  "fama-periodista-finanzas",
+  "fama-indirectas-rival",
+  "fama-perfil-falso",
+  "fama-podcast-estrella",
+  "fama-portada-revista",
+  "fama-merchandising-falso",
+  "fama-streamer-fichaje-broma",
+  "fama-leyenda-confusion",
+  "fama-doble-viral",
+  "fama-cancion-dedicada",
+  "fama-hackeo-cuenta",
+  "fama-paparazzi-cena",
+  "fama-post-viral-propio",
+  "fama-portada-warca",
 ]);
 const FAME_EVENTS: GameEvent[] = EVENTS.filter((event) => FAME_EVENT_IDS.has(event.id));
 
