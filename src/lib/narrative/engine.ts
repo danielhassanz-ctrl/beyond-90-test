@@ -2669,7 +2669,7 @@ export async function pickNextEventDynamic(
   if (isPreseasson) {
     console.log(`[pickNextEventDynamic] Preseason detected for ${player.last_name}, season ${season}, age ${age}`);
     const { generatePreseasoneEvent } = await import("./ai");
-    const preseasoneEvent = await generatePreseasoneEvent(player, season, history);
+    const preseasoneEvent = await generatePreseasoneEvent(player, season, history, usedEventIds);
     if (preseasoneEvent) {
       console.log(`[pickNextEventDynamic] Generated preseason event: "${preseasoneEvent.title}"`);
       return maybeAddFreeText(addMatchContext(preseasoneEvent, player));

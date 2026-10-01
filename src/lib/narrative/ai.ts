@@ -1074,6 +1074,7 @@ export async function generatePreseasoneEvent(
   player: Player,
   season: number,
   history: HistoryItem[],
+  usedEventIds: string[] = [],
 ): Promise<GameEvent | null> {
   const theme = pickOne(PRESEASON_THEMES);
   const historyText = history.length
@@ -1088,9 +1089,18 @@ export async function generatePreseasoneEvent(
     : "(últimos eventos de su carrera)";
 
   const seasonContext = getSeasonContext(player.week, player.nation);
-  const tournamentNote = seasonContext.hasMajorTournament
-    ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)}`
-    : "";
+  // Si el jugador de verdad fue convocado a este torneo, ya tiene su
+  // propio hito (sel-mundial/sel-eurocopa/sel-copa-america) contando esa
+  // historia — aquí no hace falta repetirla. Si NO fue convocado pero el
+  // torneo sí existió este verano según el calendario, pedido explícito:
+  // que se note desde fuera (quién lo ganó, como aficionado más) antes de
+  // que el entrenador le cite para la pretemporada — no al revés.
+  const attendedTournament =
+    seasonContext.majorTournament !== undefined && usedEventIds.includes(`sel-${seasonContext.majorTournament}`);
+  const tournamentNote =
+    seasonContext.hasMajorTournament && !attendedTournament
+      ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)} El jugador NO fue convocado — lo vivió como aficionado más, viendo el torneo por televisión. Menciona de pasada quién se proclamó campeón (puedes inventar la selección ganadora si no quieres comprometerte con un resultado real) antes de que el entrenador le cite para la pretemporada.`
+      : "";
 
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
 Esta escena marca el CIERRE de la temporada anterior y el ARRANQUE de la nueva (verano de ${2026 + season}). Es el único momento del año donde se nota el paso del tiempo — antes de esto el jugador no tenía ninguna señal de que la temporada había terminado, solo notaba de golpe que tenía un año más. Este evento tiene que dejar claro que un año se cierra.
@@ -1114,9 +1124,13 @@ CONTEXTO TEMPORAL:
 - Período de temporada: ${seasonContext.period.toUpperCase()} (${seasonContext.monthApprox})
 - ${seasonContext.description}${tournamentNote}
 
+REGLAS:
+${COMMON_RULES}
+
 INSTRUCCIONES:
-- La descripción tiene que EMPEZAR reconociendo que la temporada anterior ha terminado — una frase o dos de balance real (cómo le fue, en qué quedó el equipo, qué cambió en él) usando los números de carrera de arriba como referencia, antes de meterse en la escena de pretemporada en sí (${theme}).
+- La descripción tiene que EMPEZAR reconociendo que la temporada anterior ha terminado — una frase de balance real (cómo le fue, en qué quedó el equipo, qué cambió en él) usando los números de carrera de arriba como referencia, antes de meterse en la escena de pretemporada en sí (${theme}). Esta escena cubre dos cosas (cierre de temporada + arranque de la nueva), así que puede ser algo más larga que la norma de 2-3 frases de las reglas comunes — pero el tope real son 4-5 frases EN TOTAL, nunca un párrafo largo. Una frase de balance, como mucho una de torneo si aplica, y el resto para la escena de pretemporada en sí.
 - Si hay CONTEXTO ESPECIAL de torneo de selecciones más abajo: el torneo YA ha pasado (se jugó en junio-julio, antes de esta pretemporada) — nunca lo escribas como algo que todavía está por llegar mientras se entrena. Si procede, menciónalo como algo recién vivido (o visto desde fuera), no como una amenaza futura.
+- La escena de pretemporada en sí tiene que arrancar con el motivo CONCRETO por el que el jugador vuelve a pisar las instalaciones del club — nunca "porque toca", siempre algo que el entrenador o el club han decidido sobre él: puede ser el entrenador diciéndole que cuenta con él de cara al nuevo curso, una citación para el reconocimiento médico de pretemporada (con algún detalle humano, como algún kilo de más tras las vacaciones), o algo similar propio del tema elegido (${theme}).
 - No marques is_milestone: es una escena rutinaria de arranque de temporada, no un hito — con 15-20 temporadas en una carrera larga, marcarla siempre saturaría de "momentos destacados" cosas que no lo son.
 - 2 opciones sobre cómo afrontar este momento de pretemporada.
 - Escribe image_scene en inglés describiendo la escena (estadio, vestuario, o área de entrenamientos).
