@@ -98,7 +98,7 @@ export const BANK_CORE: GameEvent[] = [
     image: "injury",
     category: "club",
     family: "arc_rival",
-    requires: (s) => on(s, "rival_2") && !on(s, "rival_3"),
+    requires: (s) => on(s, "rival_2") && !on(s, "rival_3") && !s.injury,
     text: (s) =>
       `${who(s, "rival")} se queda en el suelo en un rondo tonto. Rodilla. Se lo llevan en coche y el vestuario se queda mudo. Tú tienes el puesto y una sensación difícil de nombrar.`,
     choices: [
@@ -111,7 +111,7 @@ export const BANK_CORE: GameEvent[] = [
       {
         id: "aprovechar",
         label: "Centrarte en aprovechar tu momento",
-        outcome: "Marcas en el siguiente partido. Nadie te reprocha nada en voz alta.",
+        outcome: "Te centras en recuperar el puesto con tu rendimiento. En el vestuario notan la distancia, aunque nadie te reprocha nada en voz alta.",
         apply: (s) => { flag(s, "rival_3"); flag(s, "rival_frio"); stat(s, "form", 8); rel(s, "dressing", -6); },
       },
       {
