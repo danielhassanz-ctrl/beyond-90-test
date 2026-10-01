@@ -10,6 +10,7 @@ import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
 import { addShareBranding } from "@/lib/images/shareBranding";
 import { getShareTagline } from "@/lib/shareTaglines";
+import { logAppError } from "@/lib/errorLog";
 
 export async function resolveSecondLifeEvent(formData: FormData) {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
@@ -112,6 +113,11 @@ export async function resolveSecondLifeEvent(formData: FormData) {
         try {
           const buffer = await generatePlayerImage(finalPhotoUrl, finalPrompt);
           if (!buffer) {
+            await logAppError(supabase, "resolveSecondLifeEvent:milestone-image", "generatePlayerImage returned null", {
+              userId: finalUserId,
+              playerId: finalPlayerId,
+              detail: { milestoneId: finalMilestoneId },
+            });
             await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
             return;
           }
@@ -157,6 +163,11 @@ export async function resolveSecondLifeEvent(formData: FormData) {
           }
         } catch (err) {
           console.error(`[resolveSecondLifeEvent:after] Exception generating image for milestone ${finalMilestoneId}:`, err);
+          await logAppError(supabase, "resolveSecondLifeEvent:milestone-image", err, {
+            userId: finalUserId,
+            playerId: finalPlayerId,
+            detail: { milestoneId: finalMilestoneId },
+          });
           await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
         }
       });

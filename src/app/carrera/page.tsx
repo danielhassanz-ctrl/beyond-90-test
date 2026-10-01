@@ -363,6 +363,7 @@ export default async function CarreraPage() {
             relAficion={player.club !== NO_CLUB_YET ? player.rel_aficion : null}
             relVestuario={player.club !== NO_CLUB_YET ? player.rel_vestuario : null}
             relRepresentante={player.agent_name ? player.rel_representante : null}
+            streakDays={player.streak_days}
           />
         </div>
 

@@ -13,6 +13,7 @@ import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
 import { describeKit } from "@/lib/clubColors";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { playerAge } from "@/types/career";
+import { logAppError } from "@/lib/errorLog";
 
 const STALE_PENDING_MS = 5 * 60_000;
 
@@ -125,6 +126,11 @@ export async function regenerateMilestoneImage(formData: FormData) {
       const buffer = await generatePlayerImage(photoUrl, prompt);
       console.log(`[regenerateMilestoneImage:after] generatePlayerImage returned buffer=${!!buffer}`);
       if (!buffer) {
+        await logAppError(supabase, "regenerateMilestoneImage", "generatePlayerImage returned null", {
+          userId,
+          playerId,
+          detail: { milestoneId },
+        });
         await supabase.from("milestones").update({ image_status: "failed" }).eq("id", milestoneId);
         return;
       }
@@ -150,6 +156,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
       }
     } catch (err) {
       console.error(`[regenerateMilestoneImage] exception for ${milestoneId}:`, err);
+      await logAppError(supabase, "regenerateMilestoneImage", err, { userId, playerId, detail: { milestoneId } });
       await supabase.from("milestones").update({ image_status: "failed" }).eq("id", milestoneId);
     }
   });

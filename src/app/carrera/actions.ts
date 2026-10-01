@@ -25,6 +25,8 @@ import { MODE_TARGET_WEEKS, playerAge } from "@/types/career";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/player/update-stats";
 import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career-milestones";
+import { logAppError } from "@/lib/errorLog";
+import { computeStreakUpdate } from "@/lib/player/streak";
 import { displayName } from "@/types/player";
 
 export async function resolveEvent(formData: FormData) {
@@ -589,6 +591,11 @@ export async function resolveEvent(formData: FormData) {
 
           if (!buffer) {
             console.error(`[resolveEvent:after] Image generation failed for milestone ${finalMilestoneId}`);
+            await logAppError(supabase, "resolveEvent:milestone-image", "generatePlayerImage/generateFromTemplate returned null", {
+              userId: finalUserId,
+              playerId: finalPlayerId,
+              detail: { milestoneId: finalMilestoneId, templateKey: finalTemplateKey },
+            });
             await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
             return;
           }
@@ -659,6 +666,11 @@ export async function resolveEvent(formData: FormData) {
           }
         } catch (err) {
           console.error(`[resolveEvent:after] Exception generating image for milestone ${finalMilestoneId}:`, err);
+          await logAppError(supabase, "resolveEvent:milestone-image", err, {
+            userId: finalUserId,
+            playerId: finalPlayerId,
+            detail: { milestoneId: finalMilestoneId },
+          });
           await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
         }
       });
@@ -694,6 +706,11 @@ export async function resolveEvent(formData: FormData) {
           const buffer = await generatePlayerImage(refreshPhotoUrl, refreshPrompt);
           if (!buffer) {
             console.error("[resolveEvent:after] season photo refresh: generation failed");
+            await logAppError(supabase, "resolveEvent:season-photo-refresh", "generatePlayerImage returned null", {
+              userId: refreshUserId,
+              playerId: refreshPlayerId,
+              detail: { preseasonSeason },
+            });
             return;
           }
           await logImageGeneration(supabase, refreshUserId);
@@ -704,10 +721,18 @@ export async function resolveEvent(formData: FormData) {
           }
         } catch (err) {
           console.error("[resolveEvent:after] season photo refresh threw:", err);
+          await logAppError(supabase, "resolveEvent:season-photo-refresh", err, {
+            userId: refreshUserId,
+            playerId: refreshPlayerId,
+          });
         }
       });
     }
   }
+
+  // Racha de días jugados (ver streak.ts) — cada decisión real cuenta
+  // como "hoy has jugado", no cada visita a una página.
+  const streakUpdate = computeStreakUpdate(player);
 
   const { error: playerUpdateError } = await supabase
     .from("players")
@@ -716,6 +741,8 @@ export async function resolveEvent(formData: FormData) {
       ...playerUpdate,
       week: newWeek,
       status: isSecondCareerChoice ? "second_life" : isRetirementDecision ? "awaiting_second_life" : willRetire ? "retired" : "active",
+      last_active_at: streakUpdate.last_active_at,
+      streak_days: streakUpdate.streak_days,
     })
     .eq("id", player.id);
 

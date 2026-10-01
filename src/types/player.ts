@@ -34,6 +34,8 @@ export interface Player {
   current_photo_url: string | null;
   agent_name: string | null;
   flags: Record<string, string | boolean>;
+  last_active_at: string | null;
+  streak_days: number;
 
   // Estadísticas de carrera (career stats)
   stats_matches_played?: number; // Total partidos jugados

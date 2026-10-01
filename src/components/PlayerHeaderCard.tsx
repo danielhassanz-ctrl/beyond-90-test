@@ -44,6 +44,7 @@ export function PlayerHeaderCard({
   relAficion,
   relVestuario,
   relRepresentante,
+  streakDays,
 }: {
   photoUrl?: string | null;
   name: string;
@@ -53,6 +54,8 @@ export function PlayerHeaderCard({
   statusLine: string;
   media: number;
   forma: number;
+  /** Días seguidos jugando — gancho de vuelta diaria. No se muestra en 0-1 (todavía no hay nada que presumir). */
+  streakDays?: number;
   // null cuando el jugador todavía no tiene a quién referirse (sin club
   // todavía no hay entrenador/afición/vestuario reales; sin representante
   // todavía no hay relación con nadie que negocie por ti) — antes se
@@ -88,6 +91,11 @@ export function PlayerHeaderCard({
               {age} años · {club} · {categoryLabel}
             </p>
             <p className="truncate font-cond text-xs uppercase tracking-[0.16em] text-gold-soft">{statusLine}</p>
+            {streakDays !== undefined && streakDays > 1 && (
+              <p className="mt-0.5 font-cond text-xs font-semibold uppercase tracking-wide text-orange-400">
+                🔥 {streakDays} días seguidos
+              </p>
+            )}
           </div>
         </div>
         <div className="shrink-0 text-right">

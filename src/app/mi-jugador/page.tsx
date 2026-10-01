@@ -11,7 +11,7 @@ import { ShareableCard } from "@/components/ShareableCard";
 import { PlayerHeaderCard } from "@/components/PlayerHeaderCard";
 import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
 import { withShareLink, getAppUrlLine, NO_CLUB_YET } from "@/lib/constants";
-import { logout } from "./actions";
+import { logout, shareAndCompare } from "./actions";
 
 export default async function MiJugadorPage() {
   const supabase = await createClient();
@@ -91,6 +91,19 @@ export default async function MiJugadorPage() {
           >
             <CareerStatCard player={player} tagline="¿Cómo sería la tuya?" linkLine={getAppUrlLine()} />
           </ShareableCard>
+
+          <form action={shareAndCompare}>
+            <button
+              type="submit"
+              className="flex w-full cursor-pointer items-center justify-between rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-left hover:border-gold"
+            >
+              <span>
+                <span className="block text-kicker text-gold">Comparar carrera</span>
+                <span className="block text-xs text-muted-foreground">Genera un enlace público para retar a un amigo</span>
+              </span>
+              <span className="text-gold">›</span>
+            </button>
+          </form>
 
           <Link
             href="/mi-jugador/patrimonio"
