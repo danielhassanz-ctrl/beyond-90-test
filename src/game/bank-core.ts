@@ -63,7 +63,7 @@ export const BANK_CORE: GameEvent[] = [
   {
     id: "bc_rival_2",
     kicker: "Vestuario · Capítulo 2",
-    title: "El once del sábado",
+    title: "El próximo once",
     image: "locker",
     category: "club",
     family: "arc_rival",
@@ -111,7 +111,7 @@ export const BANK_CORE: GameEvent[] = [
       {
         id: "aprovechar",
         label: "Centrarte en aprovechar tu momento",
-        outcome: "Marcas el sábado. Nadie te reprocha nada en voz alta.",
+        outcome: "Marcas en el siguiente partido. Nadie te reprocha nada en voz alta.",
         apply: (s) => { flag(s, "rival_3"); flag(s, "rival_frio"); stat(s, "form", 8); rel(s, "dressing", -6); },
       },
       {
@@ -245,7 +245,7 @@ export const BANK_CORE: GameEvent[] = [
       {
         id: "sincero",
         label: "Reconocer que quieres ver otras opciones",
-        outcome: "Portada. Y una pañolada esperándote el domingo.",
+        outcome: "Portada. Y una pañolada esperándote en el próximo partido en casa.",
         apply: (s) => { flag(s, "renew_2"); flag(s, "aficion_dolida"); rel(s, "fans", -14); stat(s, "fame", 8); rel(s, "agent", 8); },
       },
       {
@@ -325,7 +325,7 @@ export const BANK_CORE: GameEvent[] = [
   {
     id: "bc_abroad_2",
     kicker: "Extranjero · Capítulo 2",
-    title: "Domingo de nadie",
+    title: "Día libre de nadie",
     image: "family",
     category: "life",
     family: "arc_extranjero",
