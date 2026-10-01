@@ -26,17 +26,6 @@ import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/
 import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career-milestones";
 import { displayName } from "@/types/player";
 
-// Las Server Actions tienen su PROPIA función serverless en Vercel,
-// independiente de la página que las llama — declarar maxDuration solo en
-// page.tsx (como se hizo antes, pensando que bastaba) no le da más tiempo
-// a esta acción. Encontrado en vivo: el trabajo en segundo plano (after(),
-// generación de imagen con Replicate, ~30s reales) arrancaba y se
-// registraba en los logs, pero nunca llegaba a terminar NI a registrar
-// ningún error — exactamente lo que pasa si la plataforma mata la función
-// a los pocos segundos sin avisar. Con esto, esta acción concreta también
-// tiene los 300s que de verdad necesita el pipeline de imagen.
-export const maxDuration = 300;
-
 export async function resolveEvent(formData: FormData) {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
 
