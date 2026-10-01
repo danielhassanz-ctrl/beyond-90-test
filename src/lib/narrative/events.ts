@@ -5184,6 +5184,7 @@ export const EVENTS: GameEvent[] = [
     description:
       "Después de años de carrera, llegas a tu primer Mundial como una pieza clave de la selección. Todo lo que has construido se mide ahora también aquí.",
     priority: true,
+    requiresMajorTournament: { type: "mundial", timing: "this_season" },
     isMilestone: true,
     milestoneType: "mundial",
     allowFreeText: true,
@@ -5525,6 +5526,7 @@ export const EVENTS: GameEvent[] = [
     id: "sel-clasificacion-mundial",
     category: "especial",
     priority: true,
+    requiresMajorTournament: { type: "mundial", timing: "season_before" },
     title: "Partido decisivo de clasificación al Mundial",
     description:
       "Última jornada de clasificación. Tu selección se juega el billete al Mundial en un partido que no admite errores. El estadio entero sabe lo que hay en juego esta noche.",
@@ -5566,6 +5568,7 @@ export const EVENTS: GameEvent[] = [
     id: "sel-clasificacion-eurocopa",
     category: "especial",
     priority: true,
+    requiresMajorTournament: { type: "eurocopa", timing: "season_before" },
     title: "Partido decisivo de clasificación a la Eurocopa",
     description:
       "Tu selección necesita puntuar sí o sí para asegurar la plaza en la Eurocopa. Es el partido más tenso de toda la fase de clasificación.",
@@ -5608,6 +5611,7 @@ export const EVENTS: GameEvent[] = [
     id: "sel-clasificacion-copa-america",
     category: "especial",
     priority: true,
+    requiresMajorTournament: { type: "copa_america", timing: "season_before" },
     title: "Partido decisivo de clasificación a la Copa América",
     description:
       "La selección se juega la clasificación a la Copa América en un partido que puede definir toda la campaña. La presión en el vestuario es máxima.",
@@ -5650,6 +5654,7 @@ export const EVENTS: GameEvent[] = [
     id: "sel-eurocopa",
     category: "especial",
     priority: true,
+    requiresMajorTournament: { type: "eurocopa", timing: "this_season" },
     title: "La Eurocopa",
     description:
       "Llegas a la Eurocopa como una pieza importante de tu selección. Semanas de convivencia, presión mediática constante y un torneo entero por delante.",
@@ -5711,6 +5716,7 @@ export const EVENTS: GameEvent[] = [
     id: "sel-copa-america",
     category: "especial",
     priority: true,
+    requiresMajorTournament: { type: "copa_america", timing: "this_season" },
     title: "La Copa América",
     description:
       "Llegas a la Copa América como una pieza importante de tu selección. Todo un continente pendiente del torneo, y tú en medio de él.",

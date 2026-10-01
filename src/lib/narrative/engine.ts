@@ -9,8 +9,9 @@ import type {
 import { generateAiEvent, generateMatchResult, generateNextEventDynamic, callEventTool, COMMON_RULES, type HistoryItem } from "./ai";
 import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
+import { hasMajorTournament } from "@/lib/calendar/season";
 import { buildMatchContext, NO_CLUB_YET } from "@/lib/constants";
-import { playerAge } from "@/types/career";
+import { playerAge, WEEKS_PER_SEASON } from "@/types/career";
 import { shouldGenerateAdversity, pickAdversityType, describeAdversity, buildAdversityPrompt, updateAdversityTracker, getAdversityTracker } from "@/lib/narrative/adversity";
 import { detectDeclineSignals, buildDeclinePrompt } from "@/lib/narrative/decline";
 import { pickCharacterToReappear, describeCharacterReappearance, updateCharacterLastSeen } from "@/lib/narrative/secondary-characters";
@@ -375,6 +376,25 @@ function isEventCoherentWithClub(eventId: string, player: Player): boolean {
   }
 }
 
+/**
+ * Comprueba si el año de calendario del jugador (misma cuenta que usa el
+ * texto de pretemporada generado por IA, ver hasMajorTournament en
+ * calendar/season.ts) coincide de verdad con el torneo que pide el
+ * evento — "this_season" para vivir el torneo en sí, "season_before" para
+ * la clasificatoria de la temporada anterior. Sin esto, sel-mundial podía
+ * salir en una temporada que el propio juego no consideraba año de
+ * Mundial, contradiciendo el texto ambiental que sí hace bien la cuenta.
+ */
+function isMajorTournamentDue(
+  requirement: NonNullable<GameEvent["requiresMajorTournament"]>,
+  player: Player,
+): boolean {
+  const currentSeason = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  const seasonToCheck = requirement.timing === "season_before" ? currentSeason + 1 : currentSeason;
+  const tournament = hasMajorTournament(seasonToCheck, playerAge(player.week), player.nation);
+  return tournament.has && tournament.type === requirement.type;
+}
+
 function pickGrandMomentEvent(player: Player, usedEventIds: string[]): GameEvent | null {
   const playerConfederation = getConfederation(player.nation);
   const eligible = GRAND_MOMENT_EVENTS.filter(
@@ -386,6 +406,7 @@ function pickGrandMomentEvent(player: Player, usedEventIds: string[]): GameEvent
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       (!event.requiresConfederation ||
         (playerConfederation !== null && event.requiresConfederation.includes(playerConfederation))) &&
+      (!event.requiresMajorTournament || isMajorTournamentDue(event.requiresMajorTournament, player)) &&
       !usedEventIds.includes(event.id),
   );
   if (eligible.length === 0) return null;

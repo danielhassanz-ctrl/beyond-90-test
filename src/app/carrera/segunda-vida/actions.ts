@@ -87,6 +87,7 @@ export async function resolveSecondLifeEvent(formData: FormData) {
           subtitle: outcomeText ?? option.subtitle,
           image_url: null,
           image_status: willGenerate ? "pending" : "none",
+          image_scene: (event.imageScene as string | undefined) ?? null,
         })
         .select("id")
         .single();

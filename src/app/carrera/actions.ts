@@ -510,6 +510,12 @@ export async function resolveEvent(formData: FormData) {
               : (outcomeText ?? option.subtitle),
           image_url: null,
           image_status: willGenerate || isDmEvent ? "pending" : "none",
+          // Se guarda aquí (no solo se usa al vuelo) para que
+          // regenerateMilestoneImage pueda reconstruir el prompt real y
+          // específico de la escena más adelante, en vez de caer a un
+          // genérico basado solo en el título — ver migración
+          // 20261001_add_milestones_image_scene.sql.
+          image_scene: milestoneImagePrompt,
         })
         .select("id")
         .single();

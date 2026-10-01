@@ -39,7 +39,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
 
   const { data: milestone, error: fetchErr } = await supabase
     .from("milestones")
-    .select("id, week, type, title, image_url, image_status, created_at")
+    .select("id, week, type, title, image_url, image_status, image_scene, created_at")
     .eq("id", milestoneId)
     .eq("player_id", player.id)
     .maybeSingle();
@@ -99,8 +99,16 @@ export async function regenerateMilestoneImage(formData: FormData) {
   console.log(`[regenerateMilestoneImage] flags updated, about to schedule after() and redirect`);
 
   const age = playerAge(milestone.week ?? player.week);
+  // image_scene es la descripción real y específica de la escena, guardada
+  // al crear el hito (ver migración 20261001_add_milestones_image_scene.sql)
+  // — sin ella, aquí solo había el título y el tipo, así que un hito como
+  // "La paloma que no se va" regeneraba una foto genérica sin ninguna
+  // paloma: la IA no tenía forma de saber qué escena dibujar. La prioridad
+  // es: escena real guardada > plantilla cinematográfica conocida (hitos
+  // "grandes") > genérico basado solo en el título, como última red.
   const contextual = getMilestoneImagePrompt(String(milestone.type), age, player.club, player.last_name, String(milestone.type), player.agent_name ?? undefined);
   const prompt =
+    (milestone.image_scene as string | null) ??
     contextual ??
     `Photorealistic cinematic photo of the photographed man in an emotional football moment: "${milestone.title}". He wears a ${describeKit(player.club)} football jersey, natural stadium light, expressive face, documentary sports photography style`;
 

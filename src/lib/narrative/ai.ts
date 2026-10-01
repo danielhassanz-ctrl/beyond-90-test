@@ -1116,6 +1116,7 @@ CONTEXTO TEMPORAL:
 
 INSTRUCCIONES:
 - La descripción tiene que EMPEZAR reconociendo que la temporada anterior ha terminado — una frase o dos de balance real (cómo le fue, en qué quedó el equipo, qué cambió en él) usando los números de carrera de arriba como referencia, antes de meterse en la escena de pretemporada en sí (${theme}).
+- Si hay CONTEXTO ESPECIAL de torneo de selecciones más abajo: el torneo YA ha pasado (se jugó en junio-julio, antes de esta pretemporada) — nunca lo escribas como algo que todavía está por llegar mientras se entrena. Si procede, menciónalo como algo recién vivido (o visto desde fuera), no como una amenaza futura.
 - No marques is_milestone: es una escena rutinaria de arranque de temporada, no un hito — con 15-20 temporadas en una carrera larga, marcarla siempre saturaría de "momentos destacados" cosas que no lo son.
 - 2 opciones sobre cómo afrontar este momento de pretemporada.
 - Escribe image_scene en inglés describiendo la escena (estadio, vestuario, o área de entrenamientos).

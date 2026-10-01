@@ -66,8 +66,19 @@ function getMonthApprox(weekInSeason: number): string {
   return months[weekInSeason - 1] || "Mes desconocido";
 }
 
-/** Detecta si ese año hay un gran torneo internacional */
-function hasMajorTournament(
+/**
+ * Detecta si ese año hay un gran torneo internacional — exportada (antes
+ * privada de este archivo) para que engine.ts pueda usar EXACTAMENTE el
+ * mismo cálculo al decidir si el hito real de Mundial/Eurocopa/Copa
+ * América es elegible esta temporada, en vez de duplicar la cuenta de
+ * años por su cuenta y arriesgarse a que diverja. Antes el texto generado
+ * por IA (ver generatePreseasoneEvent) sí usaba esta cuenta de años, pero
+ * los eventos reales de selección (sel-mundial, sel-eurocopa...) no tenían
+ * ninguna restricción de año — podían salir en cualquier temporada al
+ * azar, así que el texto podía anunciar "año de Eurocopa" sin que el
+ * propio juego lo considerase tal, o al revés.
+ */
+export function hasMajorTournament(
   season: number,
   playerAge: number,
   playerNation: string,
@@ -142,14 +153,23 @@ export function getSeasonContext(
   };
 }
 
+/**
+ * Pedido explícito tras un fallo real: el texto decía "año de Eurocopa...
+ * cada entrenamiento de julio cuenta doble" en plena pretemporada, como si
+ * el torneo todavía estuviera por llegar mientras se entrena — pero un
+ * torneo de selecciones se juega en junio-julio, ANTES de que arranque la
+ * pretemporada de club (agosto). Las frases dejan clara esa secuencia:
+ * el torneo ya ha pasado para cuando empieza esta escena, se haya vivido
+ * en persona (convocado) o solo como aficionado más.
+ */
 export function formatTournamentContext(tournament?: "mundial" | "eurocopa" | "copa_america"): string {
   if (!tournament) return "";
   const labels: Record<string, string> = {
-    mundial: "Año de MUNDIAL — presión de selección, oportunidad de gloria internacional.",
+    mundial: "Este verano, justo antes de esta pretemporada, se ha disputado el MUNDIAL — si el jugador fue convocado, llega de vivirlo; si no, lo ha visto desde fuera, con la sensación de que el fútbol mundial giró unas semanas sin él.",
     eurocopa:
-      "Año de EUROCOPA — competición de élite europea, máxima presión en selección.",
+      "Este verano, justo antes de esta pretemporada, se ha disputado la EUROCOPA — si el jugador fue convocado, llega de vivirla; si no, la ha visto desde fuera, con la sensación de que el fútbol europeo giró unas semanas sin él.",
     copa_america:
-      "Año de COPA AMÉRICA — torneo continental sudamericano, gran oportunidad.",
+      "Este verano, justo antes de esta pretemporada, se ha disputado la COPA AMÉRICA — si el jugador fue convocado, llega de vivirla; si no, la ha visto desde fuera, con la sensación de que el continente giró unas semanas sin él.",
   };
   return labels[tournament] || "";
 }

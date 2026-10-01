@@ -147,6 +147,24 @@ export interface GameEvent {
   /** Si se define, el evento solo es elegible si la selección del jugador pertenece a alguna de estas confederaciones (ej. Eurocopa, Copa América). */
   requiresConfederation?: ("UEFA" | "CONMEBOL")[];
   /**
+   * Los grandes torneos de selecciones tienen año real (Mundial cada 4
+   * años desde 2026, Eurocopa cada 4 años desde 2028, Copa América casi
+   * cada año impar) — ver hasMajorTournament en calendar/season.ts, la
+   * misma cuenta que ya usa el texto de pretemporada generado por IA.
+   * Antes los eventos reales (sel-mundial, sel-eurocopa...) no tenían
+   * ninguna restricción de año: podían salir en cualquier temporada al
+   * azar, pudiendo contradecir al propio texto ambiental del juego (que sí
+   * calculaba el año real) — un jugador podía vivir "su Mundial" en una
+   * temporada que, según el calendario del propio juego, no tocaba
+   * Mundial. "this_season" exige que el torneo caiga en la temporada
+   * actual; "season_before" (para las clasificatorias) exige que caiga en
+   * la temporada siguiente.
+   */
+  requiresMajorTournament?: {
+    type: "mundial" | "eurocopa" | "copa_america";
+    timing: "this_season" | "season_before";
+  };
+  /**
    * Si se define, el evento solo es elegible si la media futbolística del
    * jugador alcanza este mínimo. Así los grandes hitos (Real Madrid, Balón
    * de Oro, Champions, selección) solo le llegan a quien de verdad rinde,
