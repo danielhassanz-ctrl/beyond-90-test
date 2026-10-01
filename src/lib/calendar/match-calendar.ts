@@ -27,6 +27,19 @@ export type CompetitionType = "liga" | "copa" | "champions" | "europa" | "amisto
  */
 export type MatchStakes = "rutina" | "importante" | "decisivo";
 
+/**
+ * Semanas (dentro de una temporada de 10) en las que cae cada tipo de
+ * partido según buildMatchCalendar más abajo — exportadas para que otros
+ * sitios (como la clasificación de standings.ts) puedan saber "cuántas
+ * jornadas de esta competición han pasado ya" sin tener que reconstruir
+ * el calendario entero ni duplicar estos números a mano. Pedido explícito
+ * tras un bug real: la clasificación de Champions mostraba "1 partido
+ * jugado" en plena pretemporada, cuando la Champions real no empieza
+ * hasta la semana 6.
+ */
+export const LIGA_MATCHDAY_OFFSETS = [3, 5, 8];
+export const EUROPEAN_MATCHDAY_OFFSETS = [6, 10];
+
 export interface MatchWeek {
   week: number;
   season: number;

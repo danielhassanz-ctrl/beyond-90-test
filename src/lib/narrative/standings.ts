@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
-import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
+import { getEuropeanCompetitionFor, LIGA_MATCHDAY_OFFSETS, EUROPEAN_MATCHDAY_OFFSETS } from "@/lib/calendar/match-calendar";
 import { getCopaProgress, copaRoundName } from "@/lib/calendar/competition-progress";
 import { WEEKS_PER_SEASON } from "@/types/career";
 
@@ -178,8 +178,13 @@ function buildTable(
   const hasRealRecord = !!record && record.played > 0;
   // Los rivales usan tu mismo número de jornadas jugadas cuando ya hay
   // partidos reales tuyos esta temporada, para que la comparación de
-  // puntos tenga sentido (no "tú llevas 3 partidos, ellos 12").
-  const played = hasRealRecord ? record!.played : Math.max(1, Math.min(matchdayGuess, 12));
+  // puntos tenga sentido (no "tú llevas 3 partidos, ellos 12"). Sin
+  // racha real, `matchdayGuess` ahora puede ser 0 (antes se forzaba un
+  // mínimo de 1 siempre) — necesario para que una tabla de Champions no
+  // pueda mostrar "1 partido jugado" en plena pretemporada, cuando esa
+  // competición ni ha empezado todavía (ver cómo se calcula más abajo en
+  // getActiveStandings, con los huecos reales del calendario).
+  const played = hasRealRecord ? record!.played : Math.max(0, Math.min(matchdayGuess, 12));
 
   const rows: StandingsRow[] = allClubs
     .map((club) => {
@@ -278,8 +283,25 @@ export function getActiveStandings(
   if (player.club === NO_CLUB_YET) return { primary: null, secondary: null, copa: null };
 
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
-  const matchdayGuess = ((player.week - 1) % WEEKS_PER_SEASON) + 1;
+  const inSeasonWeek = ((player.week - 1) % WEEKS_PER_SEASON) + 1;
   const seed = `${player.id}:${season}`;
+
+  // Cuántas jornadas de CADA competición ya han pasado según el propio
+  // calendario del juego (ver LIGA_MATCHDAY_OFFSETS/EUROPEAN_MATCHDAY_OFFSETS
+  // en match-calendar.ts: Liga en las semanas 3/5/8, Champions/Europa en
+  // la 6/10 de cada temporada) — reportado por el usuario con captura: la
+  // tabla de Champions marcaba "1 partido jugado" en plena pretemporada,
+  // cuando esa competición real no empieza hasta la semana 6. Antes se
+  // usaba un "matchdayGuess" genérico (semana actual, sin más) para
+  // cualquier tabla, sin mirar si esa competición concreta ya había
+  // arrancado.
+  const ligaMatchdayGuess = LIGA_MATCHDAY_OFFSETS.filter((w) => w <= inSeasonWeek).length;
+  const europeanMatchdayGuess = EUROPEAN_MATCHDAY_OFFSETS.filter((w) => w <= inSeasonWeek).length;
+  // Filial y torneos de selección no tienen un calendario de jornadas
+  // fijas definido en match-calendar.ts (son narrativa, no partidos
+  // programados semana a semana) — se quedan con la estimación genérica
+  // de antes, proporcional a en qué semana de la temporada/torneo estás.
+  const matchdayGuess = inSeasonWeek;
 
   const torneo = player.flags?.torneo_activo;
   if (typeof torneo === "string" && torneo) {
@@ -294,7 +316,7 @@ export function getActiveStandings(
 
   const primary = inFilial
     ? buildTable(`${seed}:filial`, player.club, RESERVE_RIVALS, matchdayGuess, "Segunda RFEF · Filial", record)
-    : buildTable(`${seed}:liga`, player.club, LIGA_POOL, matchdayGuess, "LaLiga", record);
+    : buildTable(`${seed}:liga`, player.club, LIGA_POOL, ligaMatchdayGuess, "LaLiga", record);
 
   if (inFilial) return { primary, secondary: null, copa: null };
 
@@ -305,7 +327,7 @@ export function getActiveStandings(
   // se cuenta aparte, en el propio evento de eliminatoria cuando toca.
   const european = getEuropeanCompetitionFor(player.club);
   const secondary = european
-    ? buildTable(`${seed}:${european.competition}`, player.club, european.rivals, matchdayGuess, european.label)
+    ? buildTable(`${seed}:${european.competition}`, player.club, european.rivals, europeanMatchdayGuess, european.label)
     : null;
 
   const copaProgress = getCopaProgress(player, season);
