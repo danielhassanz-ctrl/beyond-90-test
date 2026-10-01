@@ -81,32 +81,50 @@ export const AGENT_MAIN_NAME = "Álvaro Montes";
 
 /* =============================== Creación =============================== */
 
-function startingOverall(position: Position, traits: TraitId[]): number {
+function deterministicRoll(seed: number, salt: string): number {
+  let h = (seed ^ 0x9e3779b9) >>> 0;
+  for (let i = 0; i < salt.length; i += 1) h = Math.imul(h ^ salt.charCodeAt(i), 16777619) >>> 0;
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x7feb352d) >>> 0;
+  h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+
+function stateRoll(s: GameState, salt: string): number {
+  const seed = typeof s.careerSeed === "number" && Number.isFinite(s.careerSeed) ? s.careerSeed : 1;
+  return deterministicRoll(seed, `${s.seasonIndex}:${s.beat}:${s.sceneCount}:${s.eventHistory.length}:${salt}`);
+}
+
+function freshCareerSeed(): number {
+  return ((Date.now() ^ Math.floor(performance.now() * 1000)) >>> 0) % 1_000_000 + 1;
+}
+
+function startingOverall(position: Position, traits: TraitId[], seed: number): number {
   // 16 años: normalmente 55-65; promesa excepcional 65-68.
-  let base = 55 + Math.floor(Math.random() * 9); // 55-63
+  let base = 55 + Math.floor(deterministicRoll(seed, "starting-overall") * 9); // 55-63
   if (traits.includes("profesional")) base += 1;
   if (position === "POR") base += 1;
-  if (Math.random() < 0.07) base = 65 + Math.floor(Math.random() * 4);
+  if (deterministicRoll(seed, "exceptional-start") < 0.07) base = 65 + Math.floor(deterministicRoll(seed, "exceptional-overall") * 4);
   return Math.min(68, base);
 }
 
 /** Techo oculto calibrado con la distribución de carreras pedida. */
-function rollPotential(overall: number, traits: TraitId[]): number {
-  const r = Math.random();
+function rollPotential(overall: number, traits: TraitId[], seed: number): number {
+  const r = deterministicRoll(seed, "potential-band");
   let pot: number;
-  if (r < 0.08) pot = 58 + Math.floor(Math.random() * 7); // truncada / modesta
-  else if (r < 0.27) pot = 65 + Math.floor(Math.random() * 7); // profesional modesto
-  else if (r < 0.65) pot = 72 + Math.floor(Math.random() * 8); // buen jugador de Primera
-  else if (r < 0.87) pot = 80 + Math.floor(Math.random() * 6); // gran jugador
-  else if (r < 0.97) pot = 86 + Math.floor(Math.random() * 6); // estrella mundial
-  else pot = 92 + Math.floor(Math.random() * 6); // leyenda
+  if (r < 0.08) pot = 58 + Math.floor(deterministicRoll(seed, "potential-low") * 7);
+  else if (r < 0.27) pot = 65 + Math.floor(deterministicRoll(seed, "potential-modest") * 7);
+  else if (r < 0.65) pot = 72 + Math.floor(deterministicRoll(seed, "potential-good") * 8);
+  else if (r < 0.87) pot = 80 + Math.floor(deterministicRoll(seed, "potential-great") * 6);
+  else if (r < 0.97) pot = 86 + Math.floor(deterministicRoll(seed, "potential-star") * 6);
+  else pot = 92 + Math.floor(deterministicRoll(seed, "potential-legend") * 6);
   if (traits.includes("ambicioso")) pot += 2;
   return Math.max(overall + 4, Math.min(99, pot));
 }
 
-function emptyAgent(): AgentState {
+function emptyAgent(seed: number): AgentState {
   return {
-    name: Math.random() < 0.7 ? AGENT_MAIN_NAME : pick(AGENT_NAMES),
+    name: deterministicRoll(seed, "agent-name") < 0.7 ? AGENT_MAIN_NAME : AGENT_NAMES[Math.floor(deterministicRoll(seed, "agent-alt-name") * AGENT_NAMES.length)]!,
     present: false,
     trust: 40,
     commission: 8,
@@ -121,8 +139,8 @@ function emptyMemory(): NarrativeMemory {
 }
 
 export function createGame(player: Player): GameState {
-  const overall = startingOverall(player.position, player.traits);
-  const careerSeed = Math.floor(Math.random() * 1_000_000) + 1;
+  const careerSeed = freshCareerSeed();
+  const overall = startingOverall(player.position, player.traits, careerSeed);
   return {
     version: STATE_VERSION,
     careerSeed,
@@ -142,7 +160,7 @@ export function createGame(player: Player): GameState {
     eventHistory: [],
 
     overall,
-    potential: rollPotential(overall, player.traits),
+    potential: rollPotential(overall, player.traits, careerSeed),
     xp: 0,
     form: 50,
     fitness: 74,
@@ -152,11 +170,11 @@ export function createGame(player: Player): GameState {
     injury: null,
     hasAgent: false,
     agentName: AGENT_MAIN_NAME,
-    agent: emptyAgent(),
+    agent: emptyAgent(careerSeed),
     memory: emptyMemory(),
     contract: null,
     salary: 0,
-    tablePosition: 6 + Math.floor(Math.random() * 8),
+    tablePosition: 6 + Math.floor(deterministicRoll(careerSeed, "initial-table") * 8),
     rel: {
       coach: 45,
       fans: 30,
@@ -289,7 +307,7 @@ export function ensureRuntime(s: GameState): void {
   if (!s.memory.threads || typeof s.memory.threads !== "object") s.memory.threads = {};
   if (!s.memory.npcs || typeof s.memory.npcs !== "object") s.memory.npcs = {};
   if (typeof s.careerSeed !== "number" || !Number.isFinite(s.careerSeed)) {
-    s.careerSeed = Math.floor(Math.random() * 1_000_000) + 1;
+    s.careerSeed = freshCareerSeed();
   }
   // FASE 6: campos de carrera profesional (saves antiguos incluidos).
   if (!Array.isArray(s.titles)) s.titles = [];
@@ -334,7 +352,7 @@ function keyMatchSpecs(s: GameState): KeySpec[] {
       { tag: "scouts" },
       { tag: "decisive" },
     ];
-    if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) developmental.splice(3, 0, { tag: "exclub" });
+    if (s.memory.rejectedClubs.length > 0 && stateRoll(s, "exclub-developmental") < 0.6) developmental.splice(3, 0, { tag: "exclub" });
     return developmental.slice(0, 7);
   }
 
@@ -349,8 +367,8 @@ function keyMatchSpecs(s: GameState): KeySpec[] {
   // Senior-only: European and cup stories require a first-team career.
   const euro = europeanCompetition(s);
   if (euro) specs.splice(2, 0, { tag: "euro", tie: true, competition: euro });
-  if (s.memory.rejectedClubs.length > 0 && Math.random() < 0.6) specs.splice(3, 0, { tag: "exclub" });
-  else if (finalPlausible(s) && Math.random() < 0.6) specs.push({ tag: "final", tie: true });
+  if (s.memory.rejectedClubs.length > 0 && stateRoll(s, "exclub-spec") < 0.6) specs.splice(3, 0, { tag: "exclub" });
+  else if (finalPlausible(s) && stateRoll(s, "final-spec") < 0.6) specs.push({ tag: "final", tie: true });
   else specs.push({ tag: "cup", tie: true });
   return specs.slice(0, 7);
 }
@@ -372,12 +390,12 @@ export function makeSeasonPlan(s: GameState): Slot[] {
   const narrative = (): Slot => ({ kind: "event", category: NARRATIVE_ROTATION[rotation++ % NARRATIVE_ROTATION.length]! });
 
   // PRETEMPORADA: 1-2 huecos narrativos como máximo (el director dosifica).
-  const preCount = 1 + (Math.floor(Math.random() * 2));
+  const preCount = 1 + Math.floor(stateRoll(s, "pre-count") * 2);
   for (let i = 0; i < preCount; i++) slots.push({ kind: "event", category: "preseason" });
-  if (s.agent.present && Math.random() < 0.35) slots.push({ kind: "agent" });
+  if (s.agent.present && stateRoll(s, "agent-slot") < 0.35) slots.push({ kind: "agent" });
 
   keys.forEach((k, idx) => {
-    const before = idx === 0 ? 1 : 1 + (Math.random() < 0.4 ? 1 : 0);
+    const before = idx === 0 ? 1 : 1 + (stateRoll(s, `before-match-${idx}`) < 0.4 ? 1 : 0);
     for (let i = 0; i < before; i++) slots.push(narrative());
     if (idx === 3) slots.push({ kind: "agent" });
 
@@ -439,7 +457,7 @@ function dyn(kind: string, data: DynamicCard["data"] = {}): DynamicCard {
 
 function agentEligible(s: GameState): boolean {
   if (s.agent.present) return false;
-  if (s.flags["agente_aplazado"] === 1 && Math.random() < 0.5) return false;
+  if (s.flags["agente_aplazado"] === 1 && stateRoll(s, "agent-delayed") < 0.5) return false;
   return s.age >= 17 || s.fame >= 22 || s.overall >= 64;
 }
 
@@ -621,7 +639,7 @@ export function advance(state: GameState): GameState {
 
 
 function agentCard(s: GameState): Card | null {
-  if (agentEligible(s)) return dyn("agent_intro", { commission: 8 + Math.floor(Math.random() * 3) });
+  if (agentEligible(s)) return dyn("agent_intro", { commission: 8 + Math.floor(stateRoll(s, "agent-intro-commission") * 3) });
   if (!s.agent.present) return null;
   const scene = s.sceneCount ?? 0;
   const lastAgentScene = s.flags["agent_last_scene"] ?? -99;
@@ -639,10 +657,10 @@ function agentCard(s: GameState): Card | null {
       const suitor = randomSuitor(s);
       s.agent.teaser = null;
       s.flags["agent_offer_season"] = s.seasonIndex;
-      return dyn("agent_offer", { clubName: suitor, salary: 150 + Math.floor(Math.random() * 500) });
+      return dyn("agent_offer", { clubName: suitor, salary: 150 + Math.floor(stateRoll(s, "agent-offer-salary") * 500) });
     }
   }
-  if (marketReady && s.flags["agent_teaser_season"] !== s.seasonIndex && Math.random() < 0.5) {
+  if (marketReady && s.flags["agent_teaser_season"] !== s.seasonIndex && stateRoll(s, "market-teaser") < 0.5) {
     const teaser = pick([
       "Ha llamado un club importante preguntando por ti",
       "Hay un ojeador que ha pedido tus últimos tres partidos en vídeo",
@@ -652,7 +670,7 @@ function agentCard(s: GameState): Card | null {
     s.flags["agent_teaser_season"] = s.seasonIndex;
     return dyn("agent_teaser", { teaser });
   }
-  if (s.age >= 18 && s.stage !== "youth" && s.agent.trust >= 50 && s.flags["agent_commission_season"] !== s.seasonIndex && Math.random() < 0.3) {
+  if (s.age >= 18 && s.stage !== "youth" && s.agent.trust >= 50 && s.flags["agent_commission_season"] !== s.seasonIndex && stateRoll(s, "agent-commission") < 0.3) {
     s.flags["agent_commission_season"] = s.seasonIndex;
     return dyn("agent_commission", { commission: Math.min(15, s.agent.commission + 2) });
   }
@@ -717,12 +735,12 @@ function applyRun(s: GameState, count: number): SimRun {
     20,
   );
 
-  if (!s.injury && s.fitness < 42 && Math.random() < 0.2) {
-    const severe = s.flags["riesgo_recaida"] === 1 && Math.random() < 0.4;
+  if (!s.injury && s.fitness < 42 && stateRoll(s, "injury-risk") < 0.2) {
+    const severe = s.flags["riesgo_recaida"] === 1 && stateRoll(s, "injury-severe") < 0.4;
     s.injury = {
       label: severe ? "Recaída muscular grave" : "Sobrecarga muscular",
       severity: severe ? "severe" : "minor",
-      matchesOut: severe ? 10 + Math.floor(Math.random() * 6) : 2 + Math.floor(Math.random() * 3),
+      matchesOut: severe ? 10 + Math.floor(stateRoll(s, "injury-severe-out") * 6) : 2 + Math.floor(stateRoll(s, "injury-minor-out") * 3),
       treated: false,
     };
     s.flags["riesgo_recaida"] = 0;
@@ -854,7 +872,7 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
 
   if (m.keyMoment && keyChoiceId) {
     const option = m.keyMoment.options.find((o) => o.id === keyChoiceId) ?? m.keyMoment.options[0]!;
-    const success = Math.random() < option.success;
+    const success = stateRoll(s, `free-success-${option.id}`) < option.success;
     keyOk = success;
     keyId = option.id;
 
@@ -896,7 +914,7 @@ export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: s
       } else {
         m.rating -= 0.9;
         s.rel.coach = clamp(s.rel.coach - 6);
-        if (option.id === "meter" && Math.random() < 0.35) {
+        if (option.id === "meter" && stateRoll(s, "free-meter-extra") < 0.35) {
           s.injury = { label: "Golpe fuerte en el tobillo", severity: "minor", matchesOut: 3, treated: false };
         } else if (option.id === "quedarte") {
           m.goalsAgainst += 1;
@@ -1090,7 +1108,7 @@ function seasonGrowth(s: GameState): number {
 
   // Declive: a partir de los 31 la edad pesa más que el trabajo.
   if (decline > 0) return -decline;
-  if (room <= 0) return Math.random() < 0.15 && ageFactor > 0 ? 1 : 0;
+  if (room <= 0) return stateRoll(s, "growth-overflow") < 0.15 && ageFactor > 0 ? 1 : 0;
   const cap = s.age <= 21 ? 5 : 3;
   return Math.max(apps === 0 ? -1 : 0, Math.round(Math.min(g, cap, room * 0.35)));
 }
@@ -1145,13 +1163,13 @@ function closeSeason(s: GameState): Outcome {
   s.seasonIndex += 1;
   s.fitness = clamp(s.fitness + 12);
   s.form = clamp(50 + (rating - 6.2) * 5);
-  s.tablePosition = 6 + Math.floor(Math.random() * 8);
+  s.tablePosition = 6 + Math.floor(stateRoll(s, "season-table") * 8);
   if (season) season.overall = s.overall;
 
   // Deriva del potencial: la irregularidad y las lesiones graves lo recortan.
-  if (apps === 0 && Math.random() < 0.5) s.potential = Math.max(s.overall + 2, s.potential - 2);
+  if (apps === 0 && stateRoll(s, "potential-no-apps") < 0.5) s.potential = Math.max(s.overall + 2, s.potential - 2);
   if (s.injury?.severity === "severe") s.potential = Math.max(s.overall + 1, s.potential - 3);
-  if (rating >= 7.2 && Math.random() < 0.35) s.potential = Math.min(100, s.potential + 2);
+  if (rating >= 7.2 && stateRoll(s, "potential-rating") < 0.35) s.potential = Math.min(100, s.potential + 2);
 
   const promo = evaluatePromotion(s);
   if (promo) {
