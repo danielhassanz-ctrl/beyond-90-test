@@ -20,6 +20,7 @@ if (narrativeSources.length === 0) {
 // the engine has no calendar evidence to support it.
 const weekday = /\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/giu;
 const calendarEvidence = /\b(?:calendar|calendario|weekday|dayOfWeek|fecha|date)\b/iu;
+const footballParticipation = /\b(?:jueg(?:as|a|an|o)|partido|convocatori[ao]|once|titular|suplente|lista|rival|estadio|entren(?:as|amiento)|sesi[oó]n|debut|final|semifinal|cuartos|ida|vuelta)\b/iu;
 // Only syntax that cannot itself become player-facing copy is exempt. Do not
 // exempt constants merely because their identifier contains "date", "weekday"
 // or "calendar": a dateCopy-style constant can still contain unsupported
@@ -34,7 +35,7 @@ for (const relativePath of narrativeSources) {
     weekday.lastIndex = 0;
     const namesWeekday = weekday.test(line);
     weekday.lastIndex = 0;
-    if (namesWeekday && !calendarEvidence.test(line) && !nonPlayerText.test(line)) {
+    if (namesWeekday && footballParticipation.test(line) && !calendarEvidence.test(line) && !nonPlayerText.test(line)) {
       hits.push(`${relativePath}:${index + 1}: ${line.trim()}`);
     }
   });
