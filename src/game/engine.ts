@@ -91,7 +91,11 @@ function deterministicRoll(seed: number, salt: string): number {
 }
 
 function stateRoll(s: GameState, salt: string): number {
-  return deterministicRoll(s.careerSeed, `${s.seasonIndex}:${s.beat}:${s.sceneCount}:${s.eventHistory.length}:${salt}`);
+  // Legacy saves can reach deterministic gameplay helpers before migration has
+  // persisted a career seed. Keep those saves replayable without weakening the
+  // GameState type contract or falling back to Math.random().
+  const seed = typeof s.careerSeed === "number" && Number.isFinite(s.careerSeed) ? s.careerSeed : 1;
+  return deterministicRoll(seed, `${s.seasonIndex}:${s.beat}:${s.sceneCount}:${s.eventHistory.length}:${salt}`);
 }
 
 function freshCareerSeed(): number {
