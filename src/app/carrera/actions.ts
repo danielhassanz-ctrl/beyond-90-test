@@ -16,6 +16,7 @@ import { getShareTagline } from "@/lib/shareTaglines";
 import { GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
 import { buildMatchContext } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
+import { describeLook } from "@/lib/playerLook";
 import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
@@ -659,6 +660,50 @@ export async function resolveEvent(formData: FormData) {
         } catch (err) {
           console.error(`[resolveEvent:after] Exception generating image for milestone ${finalMilestoneId}:`, err);
           await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
+        }
+      });
+    }
+  }
+
+  // Cada 4 temporadas, empezando por la primera (temporada 1, 5, 9...):
+  // pedido explícito del usuario — refresca la foto base del jugador con
+  // una generación de IA que refleje el club actual (colores/
+  // equipación real) y cómo ha cambiado su aspecto con la edad, para que
+  // la tarjeta de cierre de temporada no reutilice siempre la misma foto
+  // antigua durante años. Deliberadamente fuera del sistema de hitos (no
+  // entra en milestoneAchieved): no genera tarjeta propia ni aparece en
+  // Legado, solo actualiza current_photo_url en segundo plano.
+  const preseasonSeasonMatch = /^preseason-(\d+)$/.exec(event.id);
+  const preseasonSeason = preseasonSeasonMatch ? parseInt(preseasonSeasonMatch[1], 10) : null;
+  const isSeasonPhotoRefresh = preseasonSeason !== null && (preseasonSeason - 1) % 4 === 0;
+
+  if (isSeasonPhotoRefresh && player.photo_url && (await hasImageCredit(supabase, player, user.email))) {
+    const refreshQuota = await checkImageGenerationQuota(supabase, user.id);
+    if (refreshQuota.allowed) {
+      const refreshPhotoUrl = player.photo_url as string;
+      const refreshUserId = user.id;
+      const refreshUserEmail = user.email;
+      const refreshPlayerId = player.id;
+      const refreshPlayerFlags = player.flags ?? {};
+      const refreshAge = playerAge(newWeek);
+      const refreshClub = typeof consequences.club === "string" ? consequences.club : player.club;
+      const refreshPrompt = `Photorealistic professional portrait of a footballer wearing the ${describeKit(refreshClub)} kit, ${describeLook(refreshAge, player.last_name ?? "")}, confident calm expression, clean training ground or stadium backdrop, natural light, high-end sports photography style`;
+
+      after(async () => {
+        try {
+          const buffer = await generatePlayerImage(refreshPhotoUrl, refreshPrompt);
+          if (!buffer) {
+            console.error("[resolveEvent:after] season photo refresh: generation failed");
+            return;
+          }
+          await logImageGeneration(supabase, refreshUserId);
+          await consumeImageCredit(supabase, { id: refreshPlayerId, flags: refreshPlayerFlags }, refreshUserEmail);
+          const newUrl = await uploadGeneratedImage(supabase, refreshUserId, buffer, "look");
+          if (newUrl) {
+            await supabase.from("players").update({ current_photo_url: newUrl }).eq("id", refreshPlayerId);
+          }
+        } catch (err) {
+          console.error("[resolveEvent:after] season photo refresh threw:", err);
         }
       });
     }
