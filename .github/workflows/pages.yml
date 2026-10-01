@@ -177,7 +177,7 @@ jobs:
   verify-live-https:
     name: Verify deployed HTTPS on iPhone WebKit
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     needs: deploy
     env:
       DEPLOYED_URL: ${{ needs.deploy.outputs.page_url }}
@@ -243,7 +243,7 @@ jobs:
           BEYOND90_URL: ${{ needs.deploy.outputs.page_url }}
         run: node scripts/browser-smoke.mjs
 
-      - name: iPhone WebKit save recovery, first-15, Life/Patrimony/Legacy on live HTTPS
+      - name: iPhone WebKit save recovery, first-15 mode matrix, Life/Patrimony/Legacy on live HTTPS
         env:
           TEST_BASE_URL: ${{ needs.deploy.outputs.page_url }}
-        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-first15.spec.cjs scripts/browser-life-patrimony-legacy.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs scripts/browser-freshest-slot-recovery.spec.cjs scripts/browser-corrupt-primary-exact-recovery.spec.cjs --browser=webkit --reporter=line
+        run: npx playwright test scripts/browser-delivery.spec.cjs scripts/browser-first15.spec.cjs scripts/browser-first15-mode-matrix.spec.cjs scripts/browser-life-patrimony-legacy.spec.cjs scripts/browser-missing-primary-recovery.spec.cjs scripts/browser-primary-write-fallback.spec.cjs scripts/browser-freshest-slot-recovery.spec.cjs scripts/browser-corrupt-primary-exact-recovery.spec.cjs --browser=webkit --workers=1 --reporter=line
