@@ -242,7 +242,8 @@ export function migrate(raw: unknown): GameState | null {
   s.beat = typeof s.beat === "number" ? s.beat : 0;
   s.xp = typeof s.xp === "number" ? s.xp : 0;
   s.tablePosition = typeof s.tablePosition === "number" && s.tablePosition > 0 ? s.tablePosition : 8;
-  s.agent = s.agent && typeof s.agent === "object" ? { ...emptyAgent(), ...s.agent } : emptyAgent();
+  const migrationSeed = typeof s.careerSeed === "number" && Number.isFinite(s.careerSeed) ? s.careerSeed : 1;
+  s.agent = s.agent && typeof s.agent === "object" ? { ...emptyAgent(migrationSeed), ...s.agent } : emptyAgent(migrationSeed);
   if (s.hasAgent) s.agent.present = true;
   s.agentName = s.agent.name;
   s.memory = s.memory && typeof s.memory === "object" ? { ...emptyMemory(), ...s.memory } : emptyMemory();
