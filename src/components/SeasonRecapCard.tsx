@@ -1,90 +1,101 @@
+import Image from "next/image";
 import type { Player } from "@/types/player";
 import { displayName } from "@/types/player";
-import { CONSEQUENCE_LABELS } from "@/types/career";
+import type { SeasonStats } from "@/lib/player/update-stats";
 import { ClubCrest } from "@/components/ClubCrest";
 
 /**
- * Tarjeta compartible del cierre de temporada — mismo estilo de "carta de
- * stats" que CareerStatCard (colores planos, sin variables CSS/oklch) a
- * propósito: html-to-image captura este nodo para generar el PNG, y esa
- * ruta de exportación no está probada con los tokens del rediseño nuevo.
+ * Tarjeta compartible del cierre de temporada — pedido explícito del
+ * usuario, con una captura de referencia de estilo "carta de cromo" (foto
+ * dramática a sangre + media grande + stats reales encima, no una tarjeta
+ * de texto plano). Rediseñada para seguir el mismo lenguaje visual que
+ * PlayerCard (hitos sin imagen propia) en vez de ser una carta de stats
+ * aparte sin foto — antes esta tarjeta no llevaba ninguna foto del
+ * jugador, solo números.
+ *
+ * La foto usa current_photo_url (la más reciente generada por cualquier
+ * hito de la carrera) o, si todavía no hay ninguna, la foto original
+ * subida al crear el jugador — nunca genera una nueva, sigue sin gastar
+ * en Replicate como pedía el diseño original de esta tarjeta.
  */
 export function SeasonRecapCard({
   player,
   seasonLabel,
   age,
-  consequences,
+  stats,
   tagline,
   linkLine,
 }: {
   player: Player;
   seasonLabel: string;
   age: number;
-  consequences: [string, number][];
+  stats: SeasonStats;
   /** Frase gancho tipo "esta es mi carrera, ¿cuál es la tuya?" — ver lib/shareTaglines.ts. */
   tagline?: string;
   /** URL del juego sin protocolo (ver lib/constants.ts getAppUrl). */
   linkLine?: string | null;
 }) {
+  const photoUrl = player.current_photo_url ?? player.photo_url;
+  const statEntries: [string, number][] = [
+    ["Partidos", stats.matches_played],
+    ["Goles", stats.goals],
+    ["Asistencias", stats.assists],
+  ];
+
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl border-2 border-amber-400/80 bg-gradient-to-b from-amber-900/20 via-neutral-900 to-black p-5 shadow-[0_0_50px_-10px_rgba(245,183,64,0.35)]">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Fin de temporada</p>
-          <p className="text-xl font-black text-white">Temporada {seasonLabel} cerrada</p>
+    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border-2 border-amber-400/80 bg-neutral-900 shadow-[0_0_50px_-10px_rgba(245,183,64,0.35)]">
+      {photoUrl ? (
+        <Image src={photoUrl} alt={displayName(player)} fill className="object-cover object-top" />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center opacity-30">
+          <ClubCrest club={player.club} size={140} />
         </div>
-        <ClubCrest club={player.club} size={40} />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20" />
+
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 px-4 pt-4">
+        <span className="whitespace-nowrap rounded-full border border-amber-400/60 bg-black/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-amber-300 backdrop-blur">
+          Temporada {seasonLabel} cerrada
+        </span>
+        <span className="shrink-0 drop-shadow-md">
+          <ClubCrest club={player.club} size={28} />
+        </span>
       </div>
 
-      <div className="mt-5 flex items-center gap-3 border-t border-amber-500/20 pt-4">
-        <div className="flex flex-col items-center justify-center rounded-lg bg-amber-400 px-3 py-1.5 leading-none text-neutral-950">
+      <div className="absolute left-4 top-16 flex flex-col items-start leading-none">
+        <div className="flex items-baseline gap-1 rounded-lg bg-amber-400 px-2.5 py-1 text-neutral-950">
           <span className="text-[9px] font-bold uppercase">Media</span>
-          <span className="text-2xl font-black">{player.media}</span>
+          <span className="text-3xl font-black">{player.media}</span>
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-white">{displayName(player)}</p>
-          <p className="truncate text-xs text-neutral-400">
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 space-y-3 p-5">
+        {statEntries.some(([, v]) => v > 0) && (
+          <div className="grid grid-cols-3 gap-2">
+            {statEntries.map(([label, value]) => (
+              <div key={label} className="rounded-lg border border-amber-500/30 bg-black/50 px-2 py-2 text-center backdrop-blur">
+                <p className="text-lg font-black text-white">{value}</p>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-200/80">{label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center">
+          <p className="text-2xl font-black uppercase tracking-wide text-white drop-shadow-lg">{displayName(player)}</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-200/90">
             {player.club} · {age} años
           </p>
         </div>
-      </div>
 
-      {consequences.length > 0 && (
-        <div className="mt-5 grid grid-cols-2 gap-2">
-          {consequences.map(([key, value]) => {
-            const isPositive = value > 0;
-            return (
-              <div
-                key={key}
-                className={`rounded-lg border px-3 py-2 text-center ${
-                  isPositive
-                    ? "border-green-500/30 bg-green-500/10 text-green-300"
-                    : "border-red-500/30 bg-red-500/10 text-red-300"
-                }`}
-              >
-                <p className="text-lg font-black">
-                  {isPositive ? "+" : ""}
-                  {value}
-                </p>
-                <p className="text-[9px] font-semibold uppercase tracking-wide">
-                  {CONSEQUENCE_LABELS[key as keyof typeof CONSEQUENCE_LABELS] || key}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="mt-5 flex items-center justify-between border-t border-amber-500/20 pt-3 text-[10px] text-neutral-500">
-        <span>Beyond 90</span>
-        <span className="font-semibold uppercase text-amber-300">Nueva temporada</span>
+        {(tagline || linkLine) && (
+          <div className="border-t border-white/10 pt-2 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-300">Beyond 90</p>
+            {tagline && <p className="text-[10px] text-neutral-300">{tagline}</p>}
+            {linkLine && <p className="text-[10px] font-semibold text-amber-200/90">{linkLine}</p>}
+          </div>
+        )}
       </div>
-      {(tagline || linkLine) && (
-        <div className="mt-2 text-center">
-          {tagline && <p className="text-[10px] text-neutral-300">{tagline}</p>}
-          {linkLine && <p className="text-[10px] font-semibold text-amber-200/90">{linkLine}</p>}
-        </div>
-      )}
     </div>
   );
 }

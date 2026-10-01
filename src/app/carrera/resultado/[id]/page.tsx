@@ -8,6 +8,7 @@ import { SeasonRecapCard } from "@/components/SeasonRecapCard";
 import { CONSEQUENCE_LABELS, WEEKS_PER_SEASON, seasonLabel, playerAge } from "@/types/career";
 import { displayName } from "@/types/player";
 import { EventScene } from "@/components/EventScene";
+import { getCurrentSeasonStats } from "@/lib/player/update-stats";
 
 export default async function ResultadoPage({
   params,
@@ -54,6 +55,12 @@ export default async function ResultadoPage({
   // sin gastar en Replicate.
   const isSeasonRecap = careerEvent.event_id?.startsWith("preseason-") ?? false;
   const closedSeasonWeek = Math.max(1, careerEvent.week - WEEKS_PER_SEASON);
+  // Para la temporada que se acaba de cerrar, no la nueva que ya empezó —
+  // player.week ya ha avanzado a la temporada siguiente para cuando se ve
+  // esta pantalla, así que hay que pedir las stats con la semana de cierre.
+  const seasonStats = isSeasonRecap
+    ? await getCurrentSeasonStats(supabase, { id: player.id, week: closedSeasonWeek })
+    : null;
 
   return (
     <main className="flex flex-1 items-center justify-center bg-background p-4">
@@ -123,7 +130,7 @@ export default async function ResultadoPage({
               player={player}
               seasonLabel={seasonLabel(closedSeasonWeek)}
               age={playerAge(careerEvent.week)}
-              consequences={consequencesList}
+              stats={seasonStats!}
               tagline="Así cerré la temporada. ¿Cómo vas tú?"
               linkLine={getAppUrlLine()}
             />
