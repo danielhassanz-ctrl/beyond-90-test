@@ -2252,6 +2252,20 @@ function competitionFraming(match: MatchWeek): { title: string; lead: string } {
  * (match_recent_sit / match_recent_set) y se guardan con la consecuencia
  * de la opción elegida, ver `flags` más abajo.
  */
+/**
+ * Minuto de la jugada decisiva, como etiqueta ("38", "90+3"). Cubre el
+ * partido entero: los primeros minutos, el tramo central y, con más peso
+ * dramático del que tendría un reparto uniforme, el final y el descuento
+ * (en el fútbol real se decide mucho ahí).
+ */
+function pickMatchMinute(): string {
+  const r = Math.random();
+  if (r < 0.07) return String(1 + Math.floor(Math.random() * 5)); // 1-5
+  if (r < 0.77) return String(6 + Math.floor(Math.random() * 79)); // 6-84
+  if (r < 0.9) return String(85 + Math.floor(Math.random() * 6)); // 85-90
+  return `90+${1 + Math.floor(Math.random() * 5)}`; // descuento
+}
+
 function parseRecentIdx(raw: unknown): number[] {
   return String(raw ?? "")
     .split(",")
@@ -2283,7 +2297,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
       // "solo ante el portero, la mandaste a las nubes" (reportado en vivo).
       // `min` lo fija el código: si lo elige la IA, siempre cae en el mismo
       // (reportado en vivo: "el minuto 38" partido tras partido).
-      [decisionFlagKey]: JSON.stringify({ outcome, style, sit: sitText, min: 6 + Math.floor(Math.random() * 78) }),
+      [decisionFlagKey]: JSON.stringify({ outcome, style, sit: sitText, min: pickMatchMinute() }),
       match_recent_sit: pushRecentIdx(recentSit, sitIdx, sitKeep),
       match_recent_set: pushRecentIdx(recentSet, setIdx, setKeep),
     });
@@ -2381,7 +2395,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
  */
 function buildDecisionInstruction(decisionRaw?: string): string {
   if (!decisionRaw) return "";
-  let decision: { outcome: string; style: string; sit?: string; min?: number };
+  let decision: { outcome: string; style: string; sit?: string; min?: string | number };
   try {
     decision = JSON.parse(decisionRaw);
   } catch {
@@ -2413,7 +2427,7 @@ function buildDecisionInstruction(decisionRaw?: string): string {
   const playLine = decision.sit
     ? ` La jugada fue exactamente esta: "${decision.sit}" — cuéntala con ESTOS hechos (el lugar, el tipo de jugada), sin cambiarla por otra. Si el resultado fue fallo, varía CÓMO se falló (poste, paradón, despeje, bloqueo, disparo desviado...) y NO uses la fórmula "solo ante el portero / la mandaste a las nubes" salvo que la jugada diga eso literalmente.`
     : "";
-  const minLine = decision.min ? ` Ocurrió en el minuto ${decision.min} (úsalo tal cual; los minutos jugados deben ser coherentes con él).` : "";
+  const minLine = decision.min ? ` Ocurrió en el minuto ${decision.min} (úsalo tal cual; estabas en el campo en ese momento, así que los minutos jugados deben llegar al menos hasta ahí — si es en el descuento, jugaste el partido completo o casi).` : "";
   return `- MOMENTO DECISIVO YA VIVIDO Y FIJO, NO LO CONTRADIGAS: ${line}${playLine}${minLine}`;
 }
 
