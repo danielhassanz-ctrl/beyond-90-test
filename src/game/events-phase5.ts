@@ -450,7 +450,7 @@ const LIFE: GameEvent[] = [
     choices: [
       { id: "ahorrar", label: "Ahorrar casi todo", outcome: "Aburrido y sensato. Tu familia respira.", apply: (s) => { rel(s, "family", 9); stat(s, "discipline", 4); } },
       { id: "coche", label: "Comprarte el coche", outcome: "Cuatro fotos en redes y bromas en el vestuario.", apply: (s) => { stat(s, "fame", 7); rel(s, "dressing", 4); rel(s, "family", -5); } },
-      { id: "invertir", label: "Invertir en el negocio del amigo", outcome: "Puede salir bien. O muy mal.", apply: (s) => { if (seededChance(s, "f5_inversion_amigo:invertir", 0.45)) { note(s, "La inversión sale bien: tranquilidad económica.", "good"); stat(s, "morale", 8); } else { note(s, "La inversión se hunde y te llevas un disgusto caro.", "bad"); stat(s, "morale", -10); rel(s, "family", -6); } } },
+      { id: "invertir", label: "Invertir en el negocio del amigo", outcome: (s) => seededChance(s, "f5_inversion_amigo:invertir", 0.45) ? "El negocio despega. Por primera vez sientes que tu futuro no depende solo del fútbol." : "El negocio se hunde. Pierdes dinero y en casa te recuerdan que te avisaron.", apply: (s) => { if (seededChance(s, "f5_inversion_amigo:invertir", 0.45)) { note(s, "La inversión sale bien: tranquilidad económica.", "good"); stat(s, "morale", 8); } else { note(s, "La inversión se hunde y te llevas un disgusto caro.", "bad"); stat(s, "morale", -10); rel(s, "family", -6); } } },
     ],
   },
   {
