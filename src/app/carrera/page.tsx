@@ -35,6 +35,7 @@ import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
 import { resolveEvent } from "./actions";
 import { personalizeEvent, detectMentionedRoles, NPC_ROLE_LABELS } from "@/lib/narrative/npcs";
 import { getOrCreateNpcFace, hasMetNpc, markNpcSeen, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
+import { getGameDateLabel } from "@/lib/calendar/season";
 import { NpcAvatarRow } from "@/components/NpcAvatarRow";
 import { DmPreview } from "@/components/DmPreview";
 
@@ -388,7 +389,9 @@ export default async function CarreraPage() {
             <EventScene club={player.club} category={event.category} titles={clubTitleCount} />
           )}
           <div className="space-y-3 px-4 pb-4">
-            <p className="text-kicker">{CATEGORY_LABELS[event.category]}</p>
+            <p className="text-kicker">
+              {CATEGORY_LABELS[event.category]} · {getGameDateLabel(player.week)}
+            </p>
             <NpcAvatarRow faces={npcFaces} />
             <h2 className="font-display text-xl text-foreground leading-tight">{event.title}</h2>
             {event.dm && <DmPreview dm={event.dm} />}

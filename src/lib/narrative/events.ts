@@ -806,7 +806,7 @@ export async function buildCasaEvent(player: Player, supabase: SupabaseClient): 
           consequences: {
             patrimonio: -downPayment,
             moral: 5,
-            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment }) },
+            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null }) },
           },
         };
       }),
@@ -864,7 +864,7 @@ export async function buildMansionEvent(player: Player, supabase: SupabaseClient
             patrimonio: -downPayment,
             moral: 8,
             fama: 3,
-            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment }) },
+            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null }) },
           },
         };
       }),
@@ -904,7 +904,7 @@ export async function buildYachtEvent(player: Player, supabase: SupabaseClient):
           patrimonio: -l.price,
           moral: 6,
           fama: 2,
-          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price }) },
+          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null }) },
         },
       })),
       {
@@ -938,7 +938,7 @@ export async function buildJetEvent(player: Player, supabase: SupabaseClient): P
           patrimonio: -l.price,
           moral: 8,
           fama: 4,
-          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price }) },
+          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null }) },
         },
       })),
       {
@@ -978,7 +978,7 @@ export async function buildCarEvent(player: Player, supabase: SupabaseClient): P
           patrimonio: -l.price,
           moral: 6,
           fama: 1,
-          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price }) },
+          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null }) },
         },
       })),
       {

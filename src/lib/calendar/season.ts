@@ -50,20 +50,36 @@ function getSeasonPeriod(weekInSeason: number): SeasonPeriod {
   return "final_temporada";
 }
 
+const MONTHS_BY_WEEK = [
+  "Julio", // Semana 1
+  "Agosto", // Semana 2
+  "Septiembre", // Semana 3
+  "Octubre", // Semana 4
+  "Noviembre", // Semana 5
+  "Diciembre", // Semana 6
+  "Enero", // Semana 7
+  "Febrero", // Semana 8
+  "Abril", // Semana 9 (eliminatorias de Champions/Copa)
+  "Mayo", // Semana 10 (cierre de temporada; junio-julio queda para el torneo de selecciones)
+];
+
 function getMonthApprox(weekInSeason: number): string {
-  const months = [
-    "Julio", // Semana 1
-    "Agosto", // Semana 2
-    "Septiembre", // Semana 3
-    "Octubre", // Semana 4
-    "Noviembre", // Semana 5
-    "Diciembre", // Semana 6
-    "Enero", // Semana 7
-    "Febrero", // Semana 8
-    "Marzo", // Semana 9
-    "Junio", // Semana 10
-  ];
-  return months[weekInSeason - 1] || "Mes desconocido";
+  return MONTHS_BY_WEEK[weekInSeason - 1] || "Mes desconocido";
+}
+
+/**
+ * Fecha de calendario de una semana de juego, para enseñarla en cada
+ * evento ("Octubre 2026") — pedido explícito: nadie sabía en qué mes del
+ * año estaba. La temporada arranca en julio del año 2026+temporada y de
+ * enero a mayo ya es el año siguiente.
+ */
+export function getGameDateLabel(week: number): string {
+  const season = Math.floor((week - 1) / 10);
+  const weekInSeason = ((week - 1) % 10) + 1;
+  const month = getMonthApprox(weekInSeason);
+  const startYear = 2026 + season;
+  const year = weekInSeason >= 7 ? startYear + 1 : startYear;
+  return `${month} ${year}`;
 }
 
 /**

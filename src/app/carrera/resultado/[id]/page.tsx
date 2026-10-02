@@ -9,6 +9,7 @@ import { CONSEQUENCE_LABELS, WEEKS_PER_SEASON, seasonLabel, playerAge } from "@/
 import { displayName } from "@/types/player";
 import { EventScene } from "@/components/EventScene";
 import { getCurrentSeasonStats } from "@/lib/player/update-stats";
+import { getGameDateLabel } from "@/lib/calendar/season";
 
 export default async function ResultadoPage({
   params,
@@ -69,7 +70,12 @@ export default async function ResultadoPage({
           <EventScene club={player.club} category={careerEvent.category} />
 
           <div className="space-y-4 p-6">
-            <p className="text-kicker">Consecuencias</p>
+            <p className="text-kicker">
+              Consecuencias
+              {player.status !== "second_life" && player.status !== "awaiting_second_life"
+                ? ` · ${getGameDateLabel(careerEvent.week)}`
+                : ""}
+            </p>
             <h1 className="font-display text-2xl text-foreground leading-tight">{careerEvent.title}</h1>
 
             <p className="text-sm text-muted-foreground leading-relaxed">{careerEvent.description}</p>

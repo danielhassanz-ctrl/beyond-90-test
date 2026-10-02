@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
-import { seasonLabel } from "@/types/career";
+import { seasonLabel, WEEKS_PER_SEASON } from "@/types/career";
+import { getGameDateLabel } from "@/lib/calendar/season";
 import { BottomNav } from "@/components/BottomNav";
 import { weeklySalary } from "@/lib/narrative/engine";
 import { NO_CLUB_YET } from "@/lib/constants";
@@ -72,6 +74,21 @@ export default async function PatrimonioPage() {
   // que reservaba esta sección para lo que de verdad marca una carrera.
   const bigDecisions = movimientos.filter((m) => Math.abs(m.monto) >= 10000).slice(0, 4);
 
+  // Resumen separando lo que entra de lo que sale — pedido explícito: "no
+  // se entiende los ingresos y los pagos". El sueldo no se guarda como
+  // movimiento (se suma solo en cada turno, ver applyCareerDynamics), así
+  // que aquí solo van los ingresos y gastos que salieron de decisiones.
+  // Cada turno de juego equivale a un mes y una temporada tiene 10.
+  const currentSeason = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  const sumBy = (rows: typeof movimientos) => ({
+    ingresos: rows.filter((m) => m.monto > 0).reduce((acc, m) => acc + m.monto, 0),
+    gastos: rows.filter((m) => m.monto < 0).reduce((acc, m) => acc + Math.abs(m.monto), 0),
+  });
+  const playerMovs = movimientos.filter((m) => !m.isSecondLife);
+  const seasonTotals = sumBy(playerMovs.filter((m) => Math.floor((m.week - 1) / WEEKS_PER_SEASON) === currentSeason));
+  const careerTotals = sumBy(movimientos);
+  const monthlySalary = player.club !== NO_CLUB_YET ? weeklySalary(player.media) : 0;
+
   // Las casas/mansiones se registran como flags "propiedad_..." (ver
   // buildCasaEvent / buildMansionEvent) — antes no se guardaban en
   // ningún sitio y esta sección estaba siempre vacía, comprases lo que
@@ -80,13 +97,13 @@ export default async function PatrimonioPage() {
     .filter(([key]) => key.startsWith("propiedad_"))
     .map(([key, value]) => {
       try {
-        const parsed = JSON.parse(String(value)) as { name: string; price: number; downPayment: number };
+        const parsed = JSON.parse(String(value)) as { name: string; price: number; downPayment: number; photoUrl?: string | null };
         return { key, ...parsed };
       } catch {
         return null;
       }
     })
-    .filter((p): p is { key: string; name: string; price: number; downPayment: number } => p !== null);
+    .filter((p): p is { key: string; name: string; price: number; downPayment: number; photoUrl?: string | null } => p !== null);
 
   const pressure = getFinancialPressure(player.patrimonio);
 
@@ -108,12 +125,45 @@ export default async function PatrimonioPage() {
           <p className="mt-1 font-cond text-xs uppercase tracking-[0.16em] text-muted-foreground">
             {player.club} · {player.agent_name ?? "sin representante"}
           </p>
-          {player.club !== NO_CLUB_YET && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Cobras tu sueldo cada semana sin que tengas que hacer nada — ahora mismo, unos{" "}
-              <span className="text-gold">{weeklySalary(player.media).toLocaleString("es")} €</span> por semana según tu nivel.
+        </div>
+
+        {player.club !== NO_CLUB_YET && (
+          <div className="space-y-3 rounded-2xl border border-panel-border bg-surface p-4">
+            <p className="text-kicker">Sueldo del club</p>
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="rounded-xl bg-surface-2 p-3">
+                <p className="font-num text-lg font-bold text-pitch">+{monthlySalary.toLocaleString("es")} €</p>
+                <p className="text-kicker text-[9px]">Al mes</p>
+              </div>
+              <div className="rounded-xl bg-surface-2 p-3">
+                <p className="font-num text-lg font-bold text-pitch">
+                  +{(monthlySalary * WEEKS_PER_SEASON).toLocaleString("es")} €
+                </p>
+                <p className="text-kicker text-[9px]">Por temporada</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Se ingresa solo en cada turno, sin que hagas nada. Sube con tu media.
             </p>
-          )}
+          </div>
+        )}
+
+        <div className="space-y-3 rounded-2xl border border-panel-border bg-surface p-4">
+          <p className="text-kicker">Ingresos y gastos de tus decisiones</p>
+          <div className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-2 text-sm">
+            <span />
+            <span className="text-kicker text-[9px]">Esta temporada</span>
+            <span className="text-kicker text-[9px]">Toda la carrera</span>
+            <span className="text-foreground/90">Ingresos extra</span>
+            <span className="font-num text-right font-semibold text-pitch">+{seasonTotals.ingresos.toLocaleString("es")} €</span>
+            <span className="font-num text-right font-semibold text-pitch">+{careerTotals.ingresos.toLocaleString("es")} €</span>
+            <span className="text-foreground/90">Gastos</span>
+            <span className="font-num text-right font-semibold text-destructive">-{seasonTotals.gastos.toLocaleString("es")} €</span>
+            <span className="font-num text-right font-semibold text-destructive">-{careerTotals.gastos.toLocaleString("es")} €</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Aquí no entra el sueldo: son los patrocinios, compras e inversiones que has decidido tú.
+          </p>
         </div>
 
         <div className="space-y-2 rounded-2xl border border-panel-border bg-surface p-4">
@@ -151,11 +201,21 @@ export default async function PatrimonioPage() {
               comprando en tu carrera van a aparecer en esta sección.
             </p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {propiedades.map((p) => (
-                <li key={p.key} className="flex items-center justify-between text-xs">
-                  <span className="text-foreground/90">{p.name}</span>
-                  <span className="font-num font-semibold text-gold">{p.price.toLocaleString("es")} €</span>
+                <li key={p.key} className="flex items-center gap-3">
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-panel-border bg-surface-2">
+                    {p.photoUrl ? (
+                      <Image src={p.photoUrl} alt={p.name} fill className="object-cover" />
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-xl">🏠</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-foreground/90">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">Entrada pagada: {p.downPayment.toLocaleString("es")} €</p>
+                  </div>
+                  <span className="font-num text-sm font-semibold text-gold">{p.price.toLocaleString("es")} €</span>
                 </li>
               ))}
             </ul>
@@ -178,15 +238,20 @@ export default async function PatrimonioPage() {
                   <div>
                     <p className="text-sm font-medium text-foreground">{m.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {m.isSecondLife ? `Semana ${m.week} de tu segunda vida` : `Temporada ${seasonLabel(m.week)}`}
+                      {m.isSecondLife
+                        ? `Semana ${m.week} de tu segunda vida`
+                        : `${getGameDateLabel(m.week)} · Temporada ${seasonLabel(m.week)}`}
                     </p>
                   </div>
-                  <span
-                    className={`font-num text-sm font-bold ${m.monto >= 0 ? "text-pitch" : "text-destructive"}`}
-                  >
-                    {m.monto >= 0 ? "+" : ""}
-                    {m.monto.toLocaleString("es")} €
-                  </span>
+                  <div className="text-right">
+                    <span
+                      className={`font-num text-sm font-bold ${m.monto >= 0 ? "text-pitch" : "text-destructive"}`}
+                    >
+                      {m.monto >= 0 ? "+" : ""}
+                      {m.monto.toLocaleString("es")} €
+                    </span>
+                    <p className="text-kicker text-[9px]">{m.monto >= 0 ? "Ingreso" : "Gasto"}</p>
+                  </div>
                 </li>
               ))}
             </ul>
