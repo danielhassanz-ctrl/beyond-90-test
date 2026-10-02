@@ -1,6 +1,6 @@
 import { clubById } from "./data";
 import { flag, hasTrait, injure, milestone, note, rel, stat } from "./mutate";
-import { npcMood, npcName } from "./npc";
+import { careerSeed, hash, npcMood, npcName } from "./npc";
 import type { GameEvent, GameState } from "./types";
 
 const nick = (s: GameState) => s.player.nickname || s.player.name.split(" ")[0] || s.player.name;
@@ -12,6 +12,10 @@ function conflict(s: GameState, text: string) {
 }
 function promise(s: GameState, text: string) {
   if (!s.memory.promises.includes(text)) s.memory.promises.push(text);
+}
+function seededChance(s: GameState, salt: string, probability: number): boolean {
+  const roll = (hash(careerSeed(s), `${salt}|${s.seasonIndex}|${s.sceneCount ?? 0}|${s.beat ?? 0}`) % 10000) / 10000;
+  return roll < probability;
 }
 
 /* =========================================================================
@@ -505,7 +509,7 @@ const MEDICAL: GameEvent[] = [
     text: (s) => `${npcName(s, "physio")} te mira el isquio: "Esto, si sigues forzando, revienta. Y si paras dos semanas, no pasa nada".`,
     choices: [
       { id: "parar", label: "Parar dos semanas", outcome: "Pierdes el sitio un tiempo, salvas la temporada.", apply: (s) => { stat(s, "fitness", 14); rel(s, "coach", -3); stat(s, "form", -4); npcMood(s, "physio", 10); } },
-      { id: "infiltrar", label: "Jugar con infiltración", outcome: "Juegas. El isquio pasa factura después.", apply: (s) => { stat(s, "form", 5); rel(s, "coach", 6); stat(s, "fitness", -12); if (Math.random() < 0.35) injure(s, 6, "Rotura del isquiotibial"); } },
+      { id: "infiltrar", label: "Jugar con infiltración", outcome: "Juegas. El isquio pasa factura después.", apply: (s) => { stat(s, "form", 5); rel(s, "coach", 6); stat(s, "fitness", -12); if (seededChance(s, "m5_molestia:infiltrar", 0.35)) injure(s, 6, "Rotura del isquiotibial"); } },
       { id: "gestion", label: "Gestionar cargas con el preparador", outcome: "Menos minutos, cero riesgo.", apply: (s) => { stat(s, "fitness", 8); rel(s, "coach", 2); } },
     ],
   },
