@@ -3,6 +3,8 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { BottomNav } from "@/components/BottomNav";
 import { StandingsTable, KnockoutBox } from "@/components/StandingsTable";
 import { SeasonStatsCard } from "@/components/SeasonStatsCard";
+import { CompetitionStatsCard } from "@/components/CompetitionStatsCard";
+import { getCompetitionStats } from "@/lib/player/competition-stats";
 import { getActiveStandings, getSeasonMatchRecord } from "@/lib/narrative/standings";
 import { getCurrentSeasonStats } from "@/lib/player/update-stats";
 import { displayName } from "@/types/player";
@@ -31,6 +33,7 @@ export default async function ClasificacionPage() {
 
   const { primary, secondary, copa, euro } = getActiveStandings(player, usedEventIds, matchRecord);
   const seasonStats = await getCurrentSeasonStats(supabase, player, player.pending_event);
+  const competitionStats = await getCompetitionStats(supabase, player, player.pending_event);
 
   return (
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">
@@ -52,6 +55,12 @@ export default async function ClasificacionPage() {
               name={displayName(player)}
               seasonLabel={seasonLabel(player.week)}
               stats={seasonStats}
+            />
+
+            <CompetitionStatsCard
+              season={competitionStats.season}
+              career={competitionStats.career}
+              seasonLabel={seasonLabel(player.week)}
             />
 
             {primary && <StandingsTable standings={primary} />}

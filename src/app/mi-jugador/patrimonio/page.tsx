@@ -105,7 +105,15 @@ export default async function PatrimonioPage() {
     })
     .filter((p): p is { key: string; name: string; price: number; downPayment: number; photoUrl?: string | null } => p !== null);
 
-  const pressure = getFinancialPressure(player.patrimonio);
+  // Patrimonio NETO de verdad: el dinero en la cuenta + lo que valen las
+  // propiedades − lo que aún debes de hipoteca. Antes solo se enseñaba el
+  // efectivo, así que comprar una casa de 400.000 € con 80.000 de entrada
+  // hacía parecer que habías perdido 80.000 € (y no que tenías una casa).
+  const propertyValue = propiedades.reduce((acc, p) => acc + p.price, 0);
+  const mortgageDebt = propiedades.reduce((acc, p) => acc + Math.max(0, p.price - p.downPayment), 0);
+  const netWorth = player.patrimonio + propertyValue - mortgageDebt;
+
+  const pressure = getFinancialPressure(netWorth);
 
   return (
     <main className="flex flex-1 justify-center p-6 pb-24">
@@ -121,10 +129,65 @@ export default async function PatrimonioPage() {
 
         <div className="rounded-2xl border border-panel-border bg-surface px-4 py-5 text-center">
           <p className="text-kicker">Patrimonio neto</p>
-          <p className="gold-text font-display text-4xl">{player.patrimonio.toLocaleString("es")} €</p>
+          <p className="gold-text font-display text-4xl">{netWorth.toLocaleString("es")} €</p>
           <p className="mt-1 font-cond text-xs uppercase tracking-[0.16em] text-muted-foreground">
             {player.club} · {player.agent_name ?? "sin representante"}
           </p>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-xl bg-surface-2 p-2.5">
+              <p className="font-num text-sm font-bold text-foreground">{player.patrimonio.toLocaleString("es")} €</p>
+              <p className="text-kicker text-[9px]">Dinero</p>
+            </div>
+            <div className="rounded-xl bg-surface-2 p-2.5">
+              <p className="font-num text-sm font-bold text-pitch">+{propertyValue.toLocaleString("es")} €</p>
+              <p className="text-kicker text-[9px]">Propiedades</p>
+            </div>
+            <div className="rounded-xl bg-surface-2 p-2.5">
+              <p className="font-num text-sm font-bold text-destructive">-{mortgageDebt.toLocaleString("es")} €</p>
+              <p className="text-kicker text-[9px]">Hipotecas</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">Neto = dinero + propiedades − hipotecas pendientes.</p>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-kicker">Tus propiedades</p>
+          {propiedades.length === 0 ? (
+            <p className="rounded-2xl border border-panel-border bg-surface p-4 text-xs text-muted-foreground">
+              Aún no tienes ninguna. Cuando tu representante te proponga una casa o una inversión y la compres, aparecerá aquí con su foto.
+            </p>
+          ) : (
+            propiedades.map((p) => (
+              <div key={p.key} className="overflow-hidden rounded-2xl border border-panel-border bg-surface">
+                <div className="relative aspect-[16/10] w-full bg-surface-2">
+                  {p.photoUrl ? (
+                    <Image src={p.photoUrl} alt={p.name} fill className="object-cover" unoptimized />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-gradient-to-br from-surface-2 to-surface text-5xl">🏠</div>
+                  )}
+                </div>
+                <div className="space-y-2 p-4">
+                  <p className="font-display text-base text-foreground">{p.name}</p>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-xl bg-surface-2 p-2">
+                      <p className="font-num text-sm font-bold text-gold">{p.price.toLocaleString("es")} €</p>
+                      <p className="text-kicker text-[9px]">Valor</p>
+                    </div>
+                    <div className="rounded-xl bg-surface-2 p-2">
+                      <p className="font-num text-sm font-bold text-foreground">{p.downPayment.toLocaleString("es")} €</p>
+                      <p className="text-kicker text-[9px]">Entrada pagada</p>
+                    </div>
+                    <div className="rounded-xl bg-surface-2 p-2">
+                      <p className="font-num text-sm font-bold text-destructive">
+                        {Math.max(0, p.price - p.downPayment).toLocaleString("es")} €
+                      </p>
+                      <p className="text-kicker text-[9px]">Hipoteca</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {player.club !== NO_CLUB_YET && (
@@ -187,35 +250,6 @@ export default async function PatrimonioPage() {
                     {m.monto >= 0 ? "+" : ""}
                     {m.monto.toLocaleString("es")} €
                   </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-panel-border bg-surface p-4">
-          <p className="mb-3 text-kicker">Propiedades e inversiones</p>
-          {propiedades.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              Todavía no hay nada que registrar aquí — las casas, coches e inversiones que vayas
-              comprando en tu carrera van a aparecer en esta sección.
-            </p>
-          ) : (
-            <ul className="space-y-3">
-              {propiedades.map((p) => (
-                <li key={p.key} className="flex items-center gap-3">
-                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-panel-border bg-surface-2">
-                    {p.photoUrl ? (
-                      <Image src={p.photoUrl} alt={p.name} fill className="object-cover" />
-                    ) : (
-                      <span className="flex h-full items-center justify-center text-xl">🏠</span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-foreground/90">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">Entrada pagada: {p.downPayment.toLocaleString("es")} €</p>
-                  </div>
-                  <span className="font-num text-sm font-semibold text-gold">{p.price.toLocaleString("es")} €</span>
                 </li>
               ))}
             </ul>
