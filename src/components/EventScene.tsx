@@ -68,7 +68,7 @@ export function EventScene({
   const categoryLabel = CATEGORY_LABELS[category] ?? category;
 
   return (
-    <div className="relative h-48 w-full overflow-hidden rounded-xl bg-neutral-900 border border-amber-500/20 shadow-lg">
+    <div className="relative h-24 w-full overflow-hidden rounded-xl bg-neutral-900 border border-amber-500/20 shadow-lg">
       {/* Imagen base */}
       {sceneUrl && (
         <Image
@@ -102,23 +102,23 @@ export function EventScene({
       />
 
       {/* Categoría badge (arriba izquierda) */}
-      <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-sm border border-amber-500/30">
-        <span className="text-lg">{categoryIcon}</span>
-        <span className="text-xs font-bold uppercase tracking-widest text-amber-300">
+      <div className="absolute left-2.5 top-2.5 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur-sm border border-amber-500/30">
+        <span className="text-sm">{categoryIcon}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300">
           {categoryLabel}
         </span>
       </div>
 
       {/* Club crest (arriba derecha) */}
       {hasClub && (
-        <div className="absolute right-3 top-3 drop-shadow-lg">
-          <ClubCrest club={club} size={40} titles={titles} />
+        <div className="absolute right-2.5 top-2 drop-shadow-lg">
+          <ClubCrest club={club} size={30} titles={titles} />
         </div>
       )}
 
       {/* Decoración visual de esquina inferior derecha */}
       <div
-        className="absolute bottom-0 right-0 h-16 w-16 opacity-20"
+        className="absolute bottom-0 right-0 h-10 w-10 opacity-20"
         style={{
           background: `radial-gradient(circle, ${colors.primary}, transparent)`,
           borderRadius: "100% 0 0 0",
