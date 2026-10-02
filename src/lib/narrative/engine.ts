@@ -176,6 +176,17 @@ const FAME_EVENT_IDS = new Set([
 const FAME_EVENTS: GameEvent[] = EVENTS.filter((event) => FAME_EVENT_IDS.has(event.id));
 
 /**
+ * Hay un representante de verdad (una persona ajena a la familia): ni sin
+ * representante todavía, ni "Tu padre/madre/hermano/tía". Las escenas donde
+ * "tu representante" pide algo o negocia solo tienen sentido con uno real
+ * (reportado en vivo: te pedía subir la comisión alguien que no existía).
+ */
+function hasExternalAgent(player: Player): boolean {
+  const name = player.agent_name;
+  return !!name && !/^(Tu |Sin |Nueva )/.test(name);
+}
+
+/**
  * Igual que pickScriptedLifeEvent, para el pool de famosos/virales/surreal.
  */
 function pickFameEvent(player: Player, usedEventIds: string[]): GameEvent | null {
@@ -183,6 +194,7 @@ function pickFameEvent(player: Player, usedEventIds: string[]): GameEvent | null
     (event) =>
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (!event.requiresExternalAgent || hasExternalAgent(player)) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       !usedEventIds.includes(event.id),
@@ -203,6 +215,7 @@ function pickScriptedLifeEvent(player: Player, usedEventIds: string[]): GameEven
     (event) =>
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (!event.requiresExternalAgent || hasExternalAgent(player)) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       !usedEventIds.includes(event.id),
@@ -402,6 +415,7 @@ function pickGrandMomentEvent(player: Player, usedEventIds: string[]): GameEvent
       isEventCoherentWithClub(event.id, player) &&
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (!event.requiresExternalAgent || hasExternalAgent(player)) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       (!event.requiresConfederation ||
@@ -501,6 +515,7 @@ function pickLegacyLifeEvent(player: Player, usedEventIds: string[]): GameEvent 
       (event.minWeek ?? 1) <= player.week &&
       (!LEGACY_EARLY_ONLY_IDS.has(event.id) || player.week <= 60) &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (!event.requiresExternalAgent || hasExternalAgent(player)) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       (!event.modes || event.modes.includes(player.mode)) &&
@@ -523,6 +538,7 @@ function pickMatchSpecialMoment(player: Player, usedEventIds: string[]): GameEve
     (event) =>
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (!event.requiresExternalAgent || hasExternalAgent(player)) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       !usedSpecial.includes(event.id) &&
@@ -594,6 +610,7 @@ export async function pickNextEventSmart(
       (event.minWeek ?? 1) <= player.week &&
       (!event.modes || event.modes.includes(player.mode)) &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
+      (!event.requiresExternalAgent || hasExternalAgent(player)) &&
       (!event.requiresConfederation ||
         (playerConfederation !== null &&
           event.requiresConfederation.includes(playerConfederation))) &&
@@ -2227,15 +2244,58 @@ function competitionFraming(match: MatchWeek): { title: string; lead: string } {
   }
 }
 
+/**
+ * Elige un índice al azar evitando los usados en los últimos partidos.
+ * Reportado en vivo: dos partidos seguidos con la misma jugada, las mismas
+ * opciones y el mismo resultado — antes era Math.random() pelado, sin
+ * ninguna memoria. Las últimas elecciones viajan en player.flags
+ * (match_recent_sit / match_recent_set) y se guardan con la consecuencia
+ * de la opción elegida, ver `flags` más abajo.
+ */
+function parseRecentIdx(raw: unknown): number[] {
+  return String(raw ?? "")
+    .split(",")
+    .filter(Boolean)
+    .map(Number)
+    .filter((n) => !Number.isNaN(n));
+}
+
+function pickIndexAvoiding(count: number, recent: number[], keep: number, allowed?: number[]): number {
+  const candidates = allowed ?? Array.from({ length: count }, (_, i) => i);
+  const avoid = new Set(recent.slice(-keep));
+  const fresh = candidates.filter((i) => !avoid.has(i));
+  const pool = fresh.length > 0 ? fresh : candidates;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function pushRecentIdx(recent: number[], idx: number, keep: number): string {
+  return [...recent, idx].slice(-keep).join(",");
+}
+
 export function buildMatchDecisionMoment(player: Player, match: MatchWeek): GameEvent {
   const decisionFlagKey = `match_decision_${match.week}`;
-  const flags = (outcome: string, style: string) => ({ [decisionFlagKey]: JSON.stringify({ outcome, style }) });
+  const recentSit = parseRecentIdx(player.flags?.match_recent_sit);
+  const recentSet = parseRecentIdx(player.flags?.match_recent_set);
+  const makeFlags =
+    (sitIdx: number, setIdx: number, sitKeep: number, setKeep: number, sitText: string) => (outcome: string, style: string) => ({
+      // `sit` viaja con el resultado para que la crónica cuente ESTA jugada
+      // y no una inventada: sin ella la IA rellenaba siempre el hueco con
+      // "solo ante el portero, la mandaste a las nubes" (reportado en vivo).
+      [decisionFlagKey]: JSON.stringify({ outcome, style, sit: sitText }),
+      match_recent_sit: pushRecentIdx(recentSit, sitIdx, sitKeep),
+      match_recent_set: pushRecentIdx(recentSet, setIdx, setKeep),
+    });
+  const keepFor = (size: number, max: number) => Math.max(1, Math.min(max, Math.floor(size / 2)));
 
   const { title: decisionTitle, lead: stakesLead } = competitionFraming(match);
 
   if (player.position === "Portero") {
-    const situation = GOALKEEPER_DECISION_SITUATIONS[Math.floor(Math.random() * GOALKEEPER_DECISION_SITUATIONS.length)];
-    const optionSet = GOALKEEPER_OPTION_SETS[Math.floor(Math.random() * GOALKEEPER_OPTION_SETS.length)](flags);
+    const sitKeep = keepFor(GOALKEEPER_DECISION_SITUATIONS.length, 5);
+    const setKeep = keepFor(GOALKEEPER_OPTION_SETS.length, 3);
+    const sitIdx = pickIndexAvoiding(GOALKEEPER_DECISION_SITUATIONS.length, recentSit, sitKeep);
+    const setIdx = pickIndexAvoiding(GOALKEEPER_OPTION_SETS.length, recentSet, setKeep);
+    const situation = GOALKEEPER_DECISION_SITUATIONS[sitIdx];
+    const optionSet = GOALKEEPER_OPTION_SETS[setIdx](makeFlags(sitIdx, setIdx, sitKeep, setKeep, situation));
     return {
       id: `match-decision-${match.week}-${Date.now()}`,
       category: "partido",
@@ -2249,8 +2309,12 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
   }
 
   if (player.position === "Defensa") {
-    const situation = DEFENDER_DECISION_SITUATIONS[Math.floor(Math.random() * DEFENDER_DECISION_SITUATIONS.length)];
-    const optionSet = DEFENDER_OPTION_SETS[Math.floor(Math.random() * DEFENDER_OPTION_SETS.length)](flags);
+    const sitKeep = keepFor(DEFENDER_DECISION_SITUATIONS.length, 5);
+    const setKeep = keepFor(DEFENDER_OPTION_SETS.length, 3);
+    const sitIdx = pickIndexAvoiding(DEFENDER_DECISION_SITUATIONS.length, recentSit, sitKeep);
+    const setIdx = pickIndexAvoiding(DEFENDER_OPTION_SETS.length, recentSet, setKeep);
+    const situation = DEFENDER_DECISION_SITUATIONS[sitIdx];
+    const optionSet = DEFENDER_OPTION_SETS[setIdx](makeFlags(sitIdx, setIdx, sitKeep, setKeep, situation));
     return {
       id: `match-decision-${match.week}-${Date.now()}`,
       category: "partido",
@@ -2264,8 +2328,12 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
   }
 
   if (player.position === "Centrocampista") {
-    const situation = MIDFIELDER_DECISION_SITUATIONS[Math.floor(Math.random() * MIDFIELDER_DECISION_SITUATIONS.length)];
-    const optionSet = MIDFIELDER_OPTION_SETS[Math.floor(Math.random() * MIDFIELDER_OPTION_SETS.length)](flags);
+    const sitKeep = keepFor(MIDFIELDER_DECISION_SITUATIONS.length, 5);
+    const setKeep = keepFor(MIDFIELDER_OPTION_SETS.length, 3);
+    const sitIdx = pickIndexAvoiding(MIDFIELDER_DECISION_SITUATIONS.length, recentSit, sitKeep);
+    const setIdx = pickIndexAvoiding(MIDFIELDER_OPTION_SETS.length, recentSet, setKeep);
+    const situation = MIDFIELDER_DECISION_SITUATIONS[sitIdx];
+    const optionSet = MIDFIELDER_OPTION_SETS[setIdx](makeFlags(sitIdx, setIdx, sitKeep, setKeep, situation));
     return {
       id: `match-decision-${match.week}-${Date.now()}`,
       category: "partido",
@@ -2282,10 +2350,14 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
   // La situación y el conjunto de opciones se emparejan por `mode`
   // (suelo/aéreo) — antes se elegían del todo independientes y podían
   // no tener sentido juntos (ver comentario junto a Situation arriba).
-  const situation = ATTACKER_DECISION_SITUATIONS[Math.floor(Math.random() * ATTACKER_DECISION_SITUATIONS.length)];
-  const matchingSets = ATTACKER_OPTION_SETS.filter((s) => s.mode === situation.mode);
-  const chosenSet = matchingSets.length > 0 ? matchingSets : ATTACKER_OPTION_SETS;
-  const optionSet = chosenSet[Math.floor(Math.random() * chosenSet.length)].build(flags);
+  const sitKeep = keepFor(ATTACKER_DECISION_SITUATIONS.length, 5);
+  const sitIdx = pickIndexAvoiding(ATTACKER_DECISION_SITUATIONS.length, recentSit, sitKeep);
+  const situation = ATTACKER_DECISION_SITUATIONS[sitIdx];
+  const matchingIdx = ATTACKER_OPTION_SETS.map((s, i) => (s.mode === situation.mode ? i : -1)).filter((i) => i >= 0);
+  const allowedSets = matchingIdx.length > 0 ? matchingIdx : ATTACKER_OPTION_SETS.map((_, i) => i);
+  const setKeep = keepFor(allowedSets.length, 3);
+  const setIdx = pickIndexAvoiding(ATTACKER_OPTION_SETS.length, recentSet, setKeep, allowedSets);
+  const optionSet = ATTACKER_OPTION_SETS[setIdx].build(makeFlags(sitIdx, setIdx, sitKeep, setKeep, situation.text));
   return {
     id: `match-decision-${match.week}-${Date.now()}`,
     category: "partido",
@@ -2307,7 +2379,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
  */
 function buildDecisionInstruction(decisionRaw?: string): string {
   if (!decisionRaw) return "";
-  let decision: { outcome: string; style: string };
+  let decision: { outcome: string; style: string; sit?: string };
   try {
     decision = JSON.parse(decisionRaw);
   } catch {
@@ -2333,7 +2405,13 @@ function buildDecisionInstruction(decisionRaw?: string): string {
   };
   const line = byOutcome[decision.outcome];
   if (!line) return "";
-  return `- MOMENTO DECISIVO YA VIVIDO Y FIJO, NO LO CONTRADIGAS: ${line}`;
+  // La jugada concreta que vivió el jugador, para que la crónica la cuente
+  // tal cual. Sin esto, "tuvo una ocasión clara y la falló" se rellenaba
+  // siempre igual (solo ante el portero, a las nubes) partido tras partido.
+  const playLine = decision.sit
+    ? ` La jugada fue exactamente esta: "${decision.sit}" — cuéntala con ESTOS hechos (el lugar, el tipo de jugada), sin cambiarla por otra. Si el resultado fue fallo, varía CÓMO se falló (poste, paradón, despeje, bloqueo, disparo desviado...) y NO uses la fórmula "solo ante el portero / la mandaste a las nubes" salvo que la jugada diga eso literalmente.`
+    : "";
+  return `- MOMENTO DECISIVO YA VIVIDO Y FIJO, NO LO CONTRADIGAS: ${line}${playLine}`;
 }
 
 /**

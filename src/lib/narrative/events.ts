@@ -1635,7 +1635,8 @@ export const EVENTS: GameEvent[] = [
     id: "rep-comision",
     category: "representante",
     title: "Tu representante pide subir su comisión",
-    description: "Alega que con tu progresión reciente el trabajo que hace vale más. Tu familia no está de acuerdo.",
+    description: "Alega que con tu progresión reciente el trabajo que hace vale más y quiere un porcentaje mayor de tus contratos. Desde casa creen que se está pasando.",
+    requiresExternalAgent: true,
     options: [
       {
         id: "a",
@@ -1655,7 +1656,7 @@ export const EVENTS: GameEvent[] = [
         id: "c",
         label: "Romper la relación",
         subtitle: "Te quedas sin representante",
-        consequences: { rel_representante: -30, moral: -2 },
+        consequences: { rel_representante: -30, moral: -2, agent_name: "Sin representante aún" },
         outcomeText: "La llamada termina en un silencio tenso y un \"como quieras\" seco antes de colgar. Te quedas sin representante, y la búsqueda de uno nuevo empieza de cero.",
       },
     ],
