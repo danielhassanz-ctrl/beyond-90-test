@@ -1336,6 +1336,13 @@ import { BANK_V21 } from "./bank-v21";
 
 import { careerSeed, hash } from "./npc";
 
+/** Stable 0..1 roll derived from persisted career state so reloads/replays cannot reroll story outcomes. */
+function eventRoll(s: GameState, scope: string): number {
+  const scene = s.sceneCount ?? 0;
+  const season = s.seasonIndex ?? 0;
+  return (hash(careerSeed(s), `${scope}:${season}:${scene}`) % 1_000_000) / 1_000_000;
+}
+
 export const ALL_EVENTS: GameEvent[] = [
   ...STORY,
   ...STORY_ALT,
@@ -1487,7 +1494,7 @@ function weightedPick(s: GameState, pool: GameEvent[]): GameEvent | null {
   if (pool.length === 0) return null;
   const weights = pool.map((e) => weightOf(s, e));
   const total = weights.reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
+  let r = eventRoll(s, `weighted:${pool.map((e) => e.id).join("|")}`) * total;
   for (let i = 0; i < pool.length; i++) {
     r -= weights[i]!;
     if (r <= 0) return pool[i]!;
@@ -1521,7 +1528,7 @@ export function pickEvent(s: GameState, preferred?: EventCategory): GameEvent | 
     const band = pool.filter((e) => (e.priority ?? 0) >= 100 && maxPriority - (e.priority ?? 0) <= 60);
     const weights = band.map((e) => storyWeight(s, e.id) * (1 + ((e.priority ?? 100) - 100) / 90));
     const total = weights.reduce((a, b) => a + b, 0);
-    let r = Math.random() * total;
+    let r = eventRoll(s, `story:${band.map((e) => e.id).join("|")}`) * total;
     for (let i = 0; i < band.length; i++) {
       r -= weights[i]!;
       if (r <= 0) return band[i]!;
