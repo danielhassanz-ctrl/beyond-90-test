@@ -787,6 +787,10 @@ export function whatIsAtStake(event: GameEvent): string[] {
     }
   }
 
+  // La postura del entrenador (coachStance) mueve la relación con él en
+  // cualquier opción, aunque ninguna lo declare — que se vea en "En juego".
+  if (event.coachStance) keys.add("rel_entrenador");
+
   return Array.from(keys);
 }
 

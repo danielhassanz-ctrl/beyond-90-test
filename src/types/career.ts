@@ -36,6 +36,13 @@ export interface Consequences {
   second_career?: SecondCareerRole;
 }
 
+/** Valor al que se lleva rel_entrenador según la postura que fija la escena (ver GameEvent.coachStance). */
+export const COACH_STANCE_TARGET: Record<"no_cuenta" | "neutral" | "cuenta", number> = {
+  no_cuenta: 22,
+  neutral: 50,
+  cuenta: 78,
+};
+
 export const CONSEQUENCE_LABELS: Record<string, string> = {
   forma: "Forma física",
   moral: "Ánimo",
@@ -164,6 +171,17 @@ export interface GameEvent {
     type: "mundial" | "eurocopa" | "copa_america";
     timing: "this_season" | "season_before";
   };
+  /**
+   * Postura del entrenador hacia el jugador cuando la escena la FIJA
+   * (llega un técnico nuevo y dice que no cuenta contigo, o que sí). La
+   * frase "Opinión del entrenador" del entorno sale solo del número
+   * rel_entrenador, así que si la escena dice una cosa y el número otra,
+   * se contradicen (reportado en vivo: "no cuenta contigo" en la escena y
+   * "confía en ti sin fisuras" en el entorno). Al resolver, la relación se
+   * lleva al valor de esa postura (COACH_STANCE_TARGET) y encima se suma lo
+   * que cambie la opción elegida.
+   */
+  coachStance?: "no_cuenta" | "neutral" | "cuenta";
   /**
    * Si se define, el evento solo es elegible si la media futbolística del
    * jugador alcanza este mínimo. Así los grandes hitos (Real Madrid, Balón

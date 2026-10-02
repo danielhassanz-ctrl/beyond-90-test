@@ -263,6 +263,12 @@ const EVENT_TOOL: Anthropic.Tool = {
         type: "string",
         description: "Solo para eventos de partido: nombre corto y real del club rival (ej. 'Villarreal CF'), igual al usado en la descripción.",
       },
+      coach_stance: {
+        type: "string",
+        enum: ["no_cuenta", "neutral", "cuenta"],
+        description:
+          "SOLO si esta escena fija de forma clara qué piensa el entrenador del jugador (llega un entrenador nuevo y deja claro que no cuenta con él, o que sí; el míster le comunica abiertamente su papel en la plantilla). 'no_cuenta': el entrenador no cuenta con el jugador. 'cuenta': confía en él. 'neutral': todavía no se ha decidido. El juego ajusta la relación con el entrenador a esa postura para que el entorno no contradiga la escena. Si la escena no trata sobre eso, NO incluyas este campo.",
+      },
       memorable_thread: {
         type: "string",
         description:
@@ -402,6 +408,7 @@ export async function callEventTool(
       image_scene?: string;
       rival_club?: string;
       memorable_thread?: string;
+      coach_stance?: "no_cuenta" | "neutral" | "cuenta";
       options?: Array<{ label?: string; subtitle?: string; outcome_text?: string; consequences?: Consequences }>;
     };
 
@@ -460,6 +467,7 @@ export async function callEventTool(
       imageScene: isMilestone ? data.image_scene : undefined,
       rivalClub: data.rival_club || undefined,
       memorableThread: data.memorable_thread || undefined,
+      coachStance: data.coach_stance || undefined,
       options,
     };
 

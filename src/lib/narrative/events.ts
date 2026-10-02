@@ -6054,6 +6054,7 @@ export const EVENTS: GameEvent[] = [
     category: "entrenamiento",
     title: "El nuevo técnico no cuenta contigo",
     description: "Cambia el entrenador. Con el anterior eras fijo; con este ni calientas. No te ha dado ninguna explicación todavía.",
+    coachStance: "no_cuenta",
     minWeek: 20,
     minMedia: 58,
     options: [

@@ -21,7 +21,7 @@ import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
-import { MODE_TARGET_WEEKS, playerAge } from "@/types/career";
+import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/player/update-stats";
 import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career-milestones";
@@ -54,7 +54,19 @@ export async function resolveEvent(formData: FormData) {
   }
 
   const resolution = resolveOption(option, player);
-  const consequences = resolution ? resolution.consequences : option.consequences;
+  const baseConsequences = resolution ? resolution.consequences : option.consequences;
+  // Si la escena fija la postura del entrenador ("no cuenta contigo"), la
+  // relación se lleva a ese valor y encima se suma lo que cambie la opción
+  // — así el entorno ("Opinión del entrenador") nunca contradice la
+  // escena. Queda en consequences para verse como cambio en la pantalla
+  // de resultado, no como un ajuste invisible.
+  const consequences = event.coachStance
+    ? {
+        ...baseConsequences,
+        rel_entrenador:
+          COACH_STANCE_TARGET[event.coachStance] - player.rel_entrenador + (baseConsequences.rel_entrenador ?? 0),
+      }
+    : baseConsequences;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.
