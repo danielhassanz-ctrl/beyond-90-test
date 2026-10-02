@@ -12,6 +12,7 @@ import {
 } from "@/lib/narrative/secondary-characters";
 import { NarrativeContent } from "@/lib/narrative/narrative-content";
 import { describeCast } from "@/lib/narrative/npcs";
+import { buildStateBrief } from "@/lib/narrative/state-brief";
 
 const MODEL = "claude-sonnet-5";
 
@@ -199,6 +200,10 @@ function describePersonalLife(flags: Record<string, string | boolean> | null | u
 export interface HistoryItem {
   title: string;
   chosen: string;
+  /** Resumen de los cambios que dejó la decisión ("Ánimo +5, Entrenador −3"). */
+  effects?: string | null;
+  /** La reacción visible que vio el jugador tras decidir. */
+  outcome?: string | null;
   /** Lo que el jugador escribió con sus propias palabras en la opción libre, si la usó. */
   freeText?: string | null;
   /** Categoría del evento (entrenamiento/vestuario/representante/prensa/vida/especial/partido...) — usado por pickCategory para no repetir la misma categoría turno tras turno. */
@@ -597,6 +602,8 @@ ${describePersonalLife(player.flags)}
 PERSONAJES FIJOS DE SU ENTORNO (nombres y apellidos EXACTOS: si la escena necesita a uno de ellos, usa este nombre tal cual y no inventes otro; no hace falta que salgan todos):
 ${describeCast(player)}
 
+${buildStateBrief(player, history)}
+
 ÚLTIMOS EVENTOS (no repitas estos temas):
 ${historyText}
 ${buildLastFreeTextNote(history)}
@@ -742,6 +749,8 @@ ${describePersonalLife(player.flags)}
 
 PERSONAJES FIJOS DE SU ENTORNO (nombres y apellidos EXACTOS: si la escena necesita a uno de ellos, usa este nombre tal cual y no inventes otro; no hace falta que salgan todos):
 ${describeCast(player)}
+
+${buildStateBrief(player, history)}
 
 ÚLTIMOS EVENTOS DE SU CARRERA (no repitas el tema ni la premisa):
 ${historyText}
@@ -1135,6 +1144,8 @@ JUGADOR:
 
 ESCENA DE PRETEMPORADA UNA VEZ CERRADO EL AÑO ANTERIOR: ${theme}.
 
+${buildStateBrief(player, history)}
+
 ÚLTIMOS EVENTOS:
 ${historyText}
 ${buildLastFreeTextNote(history)}
@@ -1208,6 +1219,8 @@ JUGADOR:
 - Club: ${player.club}
 - Media: ${player.media}/99, Fama: ${player.fama}/100
 - Patrimonio: ${player.patrimonio} €
+
+${buildStateBrief(player, history)}
 
 ÚLTIMOS EVENTOS:
 ${historyText}
@@ -1302,6 +1315,8 @@ ${describePersonalLife(player.flags)}
 
 PERSONAJES FIJOS DE SU ENTORNO (nombres y apellidos EXACTOS: si la escena necesita a uno de ellos, usa este nombre tal cual y no inventes otro; no hace falta que salgan todos):
 ${describeCast(player)}
+
+${buildStateBrief(player, history)}
 
 ÚLTIMOS EVENTOS DE SU CARRERA:
 ${historyText}

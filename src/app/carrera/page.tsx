@@ -36,6 +36,7 @@ import { resolveEvent } from "./actions";
 import { personalizeEvent, detectMentionedRoles, NPC_ROLE_LABELS } from "@/lib/narrative/npcs";
 import { getOrCreateNpcFace, hasMetNpc, markNpcSeen, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
 import { getGameDateLabel } from "@/lib/calendar/season";
+import { summarizeEffects } from "@/lib/narrative/state-brief";
 import { computeRole, ROLE_LABELS } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { NpcAvatarRow } from "@/components/NpcAvatarRow";
@@ -240,7 +241,7 @@ export default async function CarreraPage() {
     // no inflar el prompt.
     const { data: recentHistory } = await supabase
       .from("career_events")
-      .select("title, chosen_option_label, free_text_response, category")
+      .select("title, chosen_option_label, free_text_response, category, consequences, outcome_text")
       .eq("player_id", player.id)
       .order("created_at", { ascending: false })
       .limit(10);
@@ -249,6 +250,8 @@ export default async function CarreraPage() {
       chosen: (h.chosen_option_label as string | null) ?? "",
       freeText: h.free_text_response as string | null,
       category: h.category as string | null,
+      effects: summarizeEffects(h.consequences as Record<string, unknown> | null),
+      outcome: (h.outcome_text as string | null) ?? null,
     }));
 
     event = await pickNextEventDynamic(player, historyForAi, usedEventIds);

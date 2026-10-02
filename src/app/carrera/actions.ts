@@ -63,11 +63,20 @@ export async function resolveEvent(formData: FormData) {
   // — así el entorno ("Opinión del entrenador") nunca contradice la
   // escena. Queda en consequences para verse como cambio en la pantalla
   // de resultado, no como un ajuste invisible.
+  // Y la postura también manda sobre el RÓL (role.ts): "no cuenta contigo"
+  // aparta de verdad unos meses (coach_bench); "cuenta" lo levanta. Las
+  // escenas escritas a mano que ya fijan coach_bench por su cuenta se respetan.
+  const stanceBench =
+    event.coachStance === "no_cuenta" ? "4" : event.coachStance === "cuenta" ? "0" : undefined;
   const consequences = event.coachStance
     ? {
         ...baseConsequences,
         rel_entrenador:
           COACH_STANCE_TARGET[event.coachStance] - player.rel_entrenador + (baseConsequences.rel_entrenador ?? 0),
+        flags:
+          stanceBench !== undefined && baseConsequences.flags?.coach_bench === undefined
+            ? { ...baseConsequences.flags, coach_bench: stanceBench }
+            : baseConsequences.flags,
       }
     : baseConsequences;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
@@ -161,6 +170,9 @@ export async function resolveEvent(formData: FormData) {
     event.id.startsWith("sel-eurocopa-s") ||
     event.id.startsWith("sel-copa-america-s") ||
     event.id.startsWith("torneo-life-") ||
+    // Escenas con el fisio durante una lesión: no adelantan el calendario.
+    event.id.startsWith("fisio-") ||
+    event.id.startsWith("mercado-banquillo-") ||
     event.id.startsWith("matchday-torneo-") ||
     event.id.startsWith("arco-rival-") ||
     event.id.startsWith("arco-hermano-") ||
@@ -294,7 +306,10 @@ export async function resolveEvent(formData: FormData) {
   // descuenta hasta el turno siguiente. Se aplica encima de lo que ya
   // haya en playerUpdate.flags para no perder lo que puso el bloque de
   // arriba. Ver tickInjury en career-dynamics.ts.
-  const injuryTick = tickInjury(player.flags);
+  // La baja se cuenta en meses de calendario: solo baja cuando el calendario
+  // avanza de verdad (antes descontaba en CADA evento resuelto, y una
+  // lesión se evaporaba en un par de partidos).
+  const injuryTick = newWeek > player.week ? tickInjury(player.flags) : null;
   if (injuryTick) {
     const flagsBase = {
       ...((playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {}),

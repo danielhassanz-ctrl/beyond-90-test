@@ -45,6 +45,8 @@ import {
 } from "@/lib/narrative/market-window";
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
+import { buildStateBrief } from "@/lib/narrative/state-brief";
+import { shouldTriggerPhysioScene, buildPhysioEvent } from "@/lib/narrative/injury-events";
 import { computeRole, roleInstruction, roleMinuteRange, type PlayerRole } from "@/lib/narrative/role";
 import { buildBenchedMatchEvent, shouldTriggerBenchEscape, buildBenchEscapeEvent } from "@/lib/narrative/role-events";
 import {
@@ -565,7 +567,7 @@ function pickMatchSpecialMoment(player: Player, usedEventIds: string[]): GameEve
 }
 
 /** Semanas que dura una lesión larga real (ver tickInjury en career-dynamics.ts). */
-const INJURY_LONG_DURATION_WEEKS = 8;
+const INJURY_LONG_DURATION_WEEKS = 3;
 
 /**
  * La IA nunca escribe flags en sus consecuencias (sanitizeConsequences
@@ -578,13 +580,23 @@ function attachInjuryStart(event: GameEvent): GameEvent {
   const injuryFlagKey = `injury_duration_${Date.now()}`;
   return {
     ...event,
-    options: event.options.map((option) => ({
-      ...option,
-      consequences: {
-        ...option.consequences,
-        flags: { ...option.consequences.flags, [injuryFlagKey]: String(INJURY_LONG_DURATION_WEEKS) },
-      },
-    })),
+    options: event.options.map((option) => {
+      const injuryFlags = { [injuryFlagKey]: String(INJURY_LONG_DURATION_WEEKS), physio_stage: "0" };
+      const withInjury = (c: Consequences): Consequences => ({ ...c, flags: { ...c.flags, ...injuryFlags } });
+      return {
+        ...option,
+        consequences: withInjury(option.consequences),
+        // Las opciones con tirada (segunda opinión...) resuelven con su propio
+        // desenlace: la lesión tiene que arrancar también ahí, no solo en las fijas.
+        resolve: option.resolve
+          ? {
+              ...option.resolve,
+              success: { ...option.resolve.success, consequences: withInjury(option.resolve.success.consequences) },
+              fail: { ...option.resolve.fail, consequences: withInjury(option.resolve.fail.consequences) },
+            }
+          : undefined,
+      };
+    }),
   };
 }
 
@@ -925,6 +937,8 @@ TU SITUACIÓN ACTUAL:
 
 PERSONAJES FIJOS (si mencionas a alguien de tu entorno, usa estos nombres y apellidos exactos):
 ${describeCast(player)}
+
+${buildStateBrief(player, history)}
 
 ÚLTIMOS EVENTOS (no repitas tema ni premisa; si encaja, dale continuidad):
 ${historyText}
@@ -2899,6 +2913,14 @@ export async function pickNextEventDynamic(
     getInjuryRemaining(playerWithDynamics.flags) > 0,
   );
   if (torneoEvent) return torneoEvent;
+
+  // Lesión en curso: el fisio va tratándote y la cosa se complica o mejora
+  // (injury-events.ts) — escenas que cambian los meses de baja que quedan.
+  if (shouldTriggerPhysioScene(playerWithDynamics)) {
+    const physio = buildPhysioEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Fisio: "${physio.title}"`);
+    return physio;
+  }
 
   // Mercado de fichajes (verano y enero): SIEMPRE hay rumor al abrirse
   // cada ventana — ver market-window.ts. Va antes de la pretemporada y

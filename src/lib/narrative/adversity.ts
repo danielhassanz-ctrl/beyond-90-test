@@ -111,7 +111,7 @@ export function pickAdversityType(player: Player): AdversityType {
  */
 export function describeAdversity(type: AdversityType): string {
   const descriptions: Record<AdversityType, string> = {
-    injury_long: `Una lesión grave — ligamento roto, fractura, rotura de menisco — te deja fuera de circulación durante meses. No es una molestia de pretemporada. Es un golpe real que frena la carrera justo cuando iba bien.`,
+    injury_long: `Una lesión grave — ligamento roto, fractura, rotura de menisco — te deja fuera de circulación hasta tres meses. No es una molestia de pretemporada. Es un golpe real que frena la carrera justo cuando iba bien.`,
 
     failure_crucial: `El partido más importante de la temporada. Tu equipo pierde. Y fue culpa tuya — fallo, amarilla tonta, duda en un momento crítico. Los medios no lo van a olvidar. Ni tú tampoco.`,
 

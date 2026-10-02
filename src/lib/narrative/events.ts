@@ -5010,7 +5010,7 @@ export const EVENTS: GameEvent[] = [
     priority: true,
     title: "La lesión que lo para todo",
     description:
-      "Un mal apoyo en un partido cualquiera y sientes que la rodilla cede. La resonancia lo confirma esa misma noche: rotura de ligamento, meses fuera. De un momento a otro, tu carrera se detiene.",
+      "Un mal apoyo en un partido cualquiera y sientes que la rodilla cede. La resonancia lo confirma esa misma noche: lesión de ligamento, hasta tres meses fuera. De un momento a otro, tu carrera se detiene.",
     isMilestone: true,
     imageScene:
       "Photorealistic photo of the photographed man sitting on a hospital bed or physio table wearing a knee brace, using crutches nearby, somber lighting, medical clinic setting, realistic and emotional but not graphic",
@@ -5948,7 +5948,7 @@ export const EVENTS: GameEvent[] = [
     id: "esp-lesion-ligamento-cruzado",
     category: "especial",
     title: "La rodilla que lo para todo",
-    description: "Cruzado de ligamento roto en un apoyo mal hecho, sin contacto. Quirófano y unos 6 o 7 meses de baja (de 4 a 9 según cómo lleves la recuperación), y la pregunta que nadie dice en voz alta: ¿volverás al mismo nivel?",
+    description: "Rotura parcial de ligamento en un apoyo mal hecho, sin contacto. Unos 3 meses de baja (menos si todo va bien) y la pregunta que nadie dice en voz alta: ¿volverás al mismo nivel?",
     minWeek: 25,
     minMedia: 55,
     isMilestone: true,
@@ -5957,19 +5957,19 @@ export const EVENTS: GameEvent[] = [
       {
         id: "a",
         label: "Rehabilitación agresiva, sin saltarte nada",
-        subtitle: "Disciplina total · baja de unos 6 meses",
-        consequences: { forma: -8, moral: 2, rel_entrenador: 3, flags: { injury_duration_acl: "6" } },
-        outcomeText: "Fisioterapeutas, gimnasio y paciencia: seis meses de baja contados día a día, sin atajos.",
+        subtitle: "Disciplina total · baja de unos 3 meses",
+        consequences: { forma: -8, moral: 2, rel_entrenador: 3, flags: { injury_duration_acl: "3", physio_stage: "0" } },
+        outcomeText: "Fisioterapeutas, gimnasio y paciencia: tres meses de baja contados día a día, sin atajos.",
       },
       {
         id: "b",
         label: "Volver antes de lo recomendado",
-        subtitle: "Riesgo de recaída · de 4 a 9 meses de baja",
+        subtitle: "Riesgo de recaída · de 2 a 3 meses de baja",
         resolve: {
           baseChance: 0.35,
           statModifier: "forma",
-          success: { text: "Aguanta. Vuelves en unos 4 meses, antes de lo previsto y sin secuelas visibles.", consequences: { forma: -2, fama: 3, flags: { injury_duration_acl: "4" } } },
-          fail: { text: "La rodilla no estaba lista: recaída y vuelta a empezar la baja, esta vez con más miedo. Serán unos 9 meses en total.", consequences: { forma: -12, moral: -8, flags: { injury_duration_acl: "9" } } },
+          success: { text: "Aguanta. Vuelves en unos 2 meses, antes de lo previsto y sin secuelas visibles.", consequences: { forma: -2, fama: 3, flags: { injury_duration_acl: "2", physio_stage: "0" } } },
+          fail: { text: "La rodilla no estaba lista: recaída y vuelta a empezar la baja, esta vez con más miedo. Serán 3 meses completos.", consequences: { forma: -12, moral: -8, flags: { injury_duration_acl: "3", physio_stage: "0" } } },
         },
         consequences: {},
       },
