@@ -349,6 +349,15 @@ export default async function CarreraPage() {
   return (
     <main className="flex flex-1 justify-center p-4 pb-24">
       <div className="w-full max-w-lg space-y-4 pb-8">
+        {typeof player.flags?.streak_toast === "string" &&
+          String(player.flags?.streak_toast_week ?? "") === String(player.week) && (
+            <div className="rounded-2xl border border-orange-400/50 bg-orange-500/10 p-4">
+              <p className="font-cond text-xs font-bold uppercase tracking-wide text-orange-400">
+                🔥 Racha de {player.streak_days} días
+              </p>
+              <p className="mt-1 text-sm text-foreground/90">{player.flags.streak_toast}</p>
+            </div>
+          )}
         <div className="rounded-2xl border border-panel-border bg-surface p-4">
           <PlayerHeaderCard
             photoUrl={player.current_photo_url ?? player.photo_url}

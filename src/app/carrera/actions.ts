@@ -26,7 +26,7 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/player/update-stats";
 import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career-milestones";
 import { logAppError } from "@/lib/errorLog";
-import { computeStreakUpdate } from "@/lib/player/streak";
+import { computeStreakUpdate, STREAK_MILESTONES } from "@/lib/player/streak";
 import { displayName } from "@/types/player";
 
 export async function resolveEvent(formData: FormData) {
@@ -733,6 +733,31 @@ export async function resolveEvent(formData: FormData) {
   // Racha de días jugados (ver streak.ts) — cada decisión real cuenta
   // como "hoy has jugado", no cada visita a una página.
   const streakUpdate = computeStreakUpdate(player);
+
+  // Premio de umbral (3/7/14/30 días): bonus pequeño aplicado UNA vez y un
+  // aviso narrativo guardado con la semana en la que debe mostrarse — al
+  // avanzar la semana desaparece solo, sin tener que borrarlo después. La
+  // frase rota por umbral (índice guardado en flags) para no repetirse si
+  // el jugador rompe la racha y la vuelve a alcanzar.
+  if (streakUpdate.milestone !== null) {
+    const reward = STREAK_MILESTONES[streakUpdate.milestone];
+    const clamp = (n: number) => Math.max(0, Math.min(100, n));
+    const current = (key: "forma" | "moral" | "fama") => (playerUpdate[key] as number | undefined) ?? player[key];
+    if (reward.bonus.forma) playerUpdate.forma = clamp(current("forma") + reward.bonus.forma);
+    if (reward.bonus.moral) playerUpdate.moral = clamp(current("moral") + reward.bonus.moral);
+    if (reward.bonus.fama) playerUpdate.fama = clamp(current("fama") + reward.bonus.fama);
+
+    const flagsBase = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    const variantKey = `streak_variant_${streakUpdate.milestone}`;
+    const prev = parseInt(String(flagsBase[variantKey] ?? "-1"), 10);
+    const nextVariant = (Number.isNaN(prev) ? 0 : prev + 1) % reward.messages.length;
+    playerUpdate.flags = {
+      ...flagsBase,
+      [variantKey]: String(nextVariant),
+      streak_toast: reward.messages[nextVariant],
+      streak_toast_week: String(newWeek),
+    };
+  }
 
   const { error: playerUpdateError } = await supabase
     .from("players")
