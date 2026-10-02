@@ -176,6 +176,19 @@ export function shouldTriggerDeclineReflection(player: Player): boolean {
 }
 
 /**
+ * Turnos (meses) de baja que le quedan al jugador por lesión larga, o 0 si
+ * está sano. Mientras sea > 0 no juega partidos ni ve jugadas decisivas.
+ */
+export function getInjuryRemaining(
+  flags: Record<string, string | boolean> | null | undefined,
+): number {
+  if (!flags) return 0;
+  const key = Object.keys(flags).find((k) => k.startsWith("injury_duration_"));
+  if (!key) return 0;
+  return Math.max(0, parseInt(String(flags[key]), 10) || 0);
+}
+
+/**
  * Cuenta atrás real de una lesión larga: cada turno resuelto después de
  * que empieza (ver INJURY_LONG_DURATION_WEEKS en engine.ts, que crea el
  * flag "injury_duration_*" cuando se dispara la adversidad injury_long)

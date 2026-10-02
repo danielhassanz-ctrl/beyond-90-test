@@ -51,7 +51,10 @@ export function extractStatsFromEvent(event: GameEvent): StatUpdate {
   const isMatch =
     (event.category === "partido" || event.id?.startsWith("matchday-")) &&
     !event.id?.startsWith("match-decision-") &&
-    event.id !== "pretemp-amistoso";
+    event.id !== "pretemp-amistoso" &&
+    // Partido que el equipo juega sin ti por lesión (buildInjuredMatchEvent):
+    // no suma partido, minutos ni nada a tus estadísticas.
+    !event.id?.startsWith("matchday-baja-");
   if (isMatch) {
     update.matches_played = 1;
   }

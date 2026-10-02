@@ -20,7 +20,7 @@ import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sp
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
 import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, type MatchWeek } from "@/lib/calendar/match-calendar";
 import { getCopaProgress, advanceCupProgress, decideKnockoutResult } from "@/lib/calendar/competition-progress";
-import { naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
+import { getInjuryRemaining, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
 import { EVENTS } from "@/lib/narrative/events";
@@ -2456,6 +2456,60 @@ function buildDecisionInstruction(decisionRaw?: string): string {
  * tras jornada sin que el partido llegara a jugarse nunca — encontrado
  * jugando una carrera real de principio a fin.
  */
+/**
+ * Partido del equipo con el jugador de baja: el club juega igual (la
+ * clasificación cuenta el resultado) pero el jugador lo ve desde la grada —
+ * sin jugada decisiva, sin minutos ni nota. Sin esto, con el ligamento roto
+ * seguías saliendo de titular. Todo en código: cero llamadas a la IA.
+ */
+function buildInjuredMatchEvent(player: Player, match: MatchWeek, monthsLeft: number): GameEvent {
+  const compLabel: Record<string, string> = {
+    liga: "La Liga",
+    copa: "Copa del Rey",
+    champions: "Champions League",
+    europa: "Europa League",
+    internacional: "Partido internacional",
+  };
+  let h = 0;
+  for (const ch of `${player.id}:${match.week}:baja`) h = (h * 31 + ch.charCodeAt(0)) % 1000003;
+  const roll = (h % 100) / 100;
+  const own = roll < 0.5 ? 2 + (h % 2) : roll < 0.75 ? 1 : h % 2;
+  const rival = roll < 0.5 ? h % 2 : roll < 0.75 ? 1 : 2 + (h % 2);
+  const verdict = own > rival ? "gana" : own === rival ? "empata" : "pierde";
+  const comp = compLabel[match.competition] ?? "partido oficial";
+  const left = `${monthsLeft} ${monthsLeft === 1 ? "mes" : "meses"}`;
+  return {
+    id: `matchday-baja-${match.week}-${Date.now()}`,
+    category: "partido",
+    rivalClub: match.rivalClub,
+    title: `Desde la grada: ${player.club} ${verdict} ante ${match.rivalClub}`,
+    description: `${comp} ante ${match.rivalClub}. No juegas: sigues de baja (te quedan unos ${left}). Marcador: ${own}-${rival} (${player.club}-${match.rivalClub}). Lo ves desde fuera, con la rodilla vendada y el partido pasando sin ti.`,
+    options: [
+      {
+        id: "a",
+        label: "Animar al equipo desde la grada",
+        subtitle: "Estar presente aunque no juegues",
+        consequences: { moral: 2, rel_vestuario: 3 },
+        outcomeText: "Los compañeros te buscan con la mirada al acabar. Un abrazo rápido: se nota que cuentan contigo.",
+      },
+      {
+        id: "b",
+        label: "Verlo en casa y centrarte en la rehabilitación",
+        subtitle: "Cabeza fría, sin distracciones",
+        consequences: { forma: 2, moral: -1 },
+        outcomeText: "Apagas la tele con el pitido final y vuelves a los ejercicios. Cada día cuenta.",
+      },
+      {
+        id: "c",
+        label: "Escribir un mensaje de ánimo al vestuario",
+        subtitle: "Liderar sin pisar el campo",
+        consequences: { rel_vestuario: 4, fama: 1 },
+        outcomeText: "El mensaje llega al grupo en segundos. Alguien lo comparte en redes y la afición lo aplaude.",
+      },
+    ],
+  };
+}
+
 export async function generateMatchDayEvent(
   player: Player,
   match: MatchWeek,
@@ -2810,6 +2864,13 @@ export async function pickNextEventDynamic(
   // amistoso.
   const scheduledMatch = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club, seasonProgress);
   const matchThisWeek = scheduledMatch && scheduledMatch.competition !== "amistoso" ? scheduledMatch : null;
+  // Con una lesión larga en curso el jugador no pisa el campo: el equipo
+  // juega igual, pero él lo ve desde la grada (sin jugada ni crónica de IA).
+  const injuryMonthsLeft = getInjuryRemaining(playerWithDynamics.flags);
+  if (matchThisWeek && injuryMonthsLeft > 0) {
+    console.log(`[pickNextEventDynamic] Match week but player is injured (${injuryMonthsLeft} left) — partido sin él.`);
+    return buildInjuredMatchEvent(playerWithDynamics, matchThisWeek, injuryMonthsLeft);
+  }
   if (matchThisWeek) {
     // Antes el partido se resolvía entero de golpe (marcador ya decidido)
     // y el jugador solo podía reaccionar DESPUÉS — nunca decidir nada
