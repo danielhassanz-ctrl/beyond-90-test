@@ -154,6 +154,14 @@ export async function resolveEvent(formData: FormData) {
     // justo en semana de partido de liga se comería ese partido entero sin
     // que se llegara a narrar nunca, el mismo bug de fondo ya corregido
     // antes para el resto de eventos "fuera de calendario".
+    // Torneo de selecciones (torneo.ts): llegada, escenas de concentración y
+    // partidos ocurren "en verano" sin avanzar el calendario — el último
+    // partido tampoco, para que la pretemporada siga arrancando después.
+    event.id.startsWith("sel-mundial-s") ||
+    event.id.startsWith("sel-eurocopa-s") ||
+    event.id.startsWith("sel-copa-america-s") ||
+    event.id.startsWith("torneo-life-") ||
+    event.id.startsWith("matchday-torneo-") ||
     event.id.startsWith("arco-rival-") ||
     event.id.startsWith("arco-hermano-") ||
     event.id.startsWith("arco-patrocinador-");

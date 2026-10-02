@@ -28,6 +28,25 @@ const CLUB_COLORS: Record<string, { primary: string; secondary: string }> = {
   "Borussia Dortmund": { primary: "#FDE100", secondary: "#000000" },
   "Liverpool FC": { primary: "#C8102E", secondary: "#F6EB61" },
   "Manchester City": { primary: "#6CABDD", secondary: "#1C2C5B" },
+  // Selecciones (torneos Mundial/Eurocopa/Copa América): colores de equipación.
+  España: { primary: "#C60B1E", secondary: "#FFC400" },
+  Brasil: { primary: "#FFDF00", secondary: "#009C3B" },
+  Argentina: { primary: "#75AADB", secondary: "#FFFFFF" },
+  Francia: { primary: "#002395", secondary: "#FFFFFF" },
+  Alemania: { primary: "#FFFFFF", secondary: "#1A1A1A" },
+  Inglaterra: { primary: "#FFFFFF", secondary: "#CF081F" },
+  Portugal: { primary: "#C8102E", secondary: "#046A38" },
+  "Países Bajos": { primary: "#F36C21", secondary: "#FFFFFF" },
+  Italia: { primary: "#0066B2", secondary: "#FFFFFF" },
+  Bélgica: { primary: "#E30613", secondary: "#FDDA24" },
+  Croacia: { primary: "#E30613", secondary: "#FFFFFF" },
+  Uruguay: { primary: "#5CBFEB", secondary: "#1A1A1A" },
+  Colombia: { primary: "#FCD116", secondary: "#003893" },
+  Chile: { primary: "#D52B1E", secondary: "#0039A6" },
+  Marruecos: { primary: "#C1272D", secondary: "#006233" },
+  México: { primary: "#006847", secondary: "#FFFFFF" },
+  Dinamarca: { primary: "#C60C30", secondary: "#FFFFFF" },
+  Suiza: { primary: "#D52B1E", secondary: "#FFFFFF" },
 };
 
 /** Paleta de reserva para clubes sin entrada (fichajes inventados por la IA en el mercado europeo). */

@@ -44,7 +44,20 @@ import {
   buildDeadlineDayEvent,
 } from "@/lib/narrative/market-window";
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
-import { shouldTriggerTorneoLife, buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
+import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
+import {
+  getTorneoProgress,
+  saveTorneoProgress,
+  shouldStartTorneo,
+  startTorneoProgress,
+  buildTorneoMatch,
+  decideTorneoResult,
+  advanceTorneo,
+  torneoYear,
+  TORNEO_NAMES,
+  TORNEO_STAGE_LABELS,
+  TORNEO_STAGES,
+} from "@/lib/narrative/torneo";
 import { shouldTriggerSocialDm, buildSocialDmEvent } from "@/lib/narrative/social-dm";
 import { shouldTriggerArcoRival, buildArcoRivalEvent } from "@/lib/narrative/arco-rival";
 import { shouldTriggerArcoHermano, buildArcoHermanoEvent } from "@/lib/narrative/arco-hermano";
@@ -238,12 +251,9 @@ function pickScriptedLifeEvent(player: Player, usedEventIds: string[]): GameEven
 const GRAND_MOMENT_EVENT_IDS = new Set([
   "sel-primera-convocatoria",
   "sel-capitania",
-  "sel-mundial",
   "sel-clasificacion-mundial",
   "sel-clasificacion-eurocopa",
   "sel-clasificacion-copa-america",
-  "sel-eurocopa",
-  "sel-copa-america",
   "premio-balon-oro",
   "premio-pichichi",
   "premio-mvp-torneo",
@@ -2457,6 +2467,124 @@ function buildDecisionInstruction(decisionRaw?: string): string {
  * jugando una carrera real de principio a fin.
  */
 /**
+ * Torneo de selecciones (Mundial, Eurocopa, Copa América) partido a partido.
+ * Orden de cada vuelta: llegada → escena de concentración → jugada decisiva
+ * → crónica → escena de concentración → … hasta eliminación o final. Todo
+ * ocurre "en verano": ninguno de estos eventos avanza la semana (ver
+ * carrera/actions.ts), así que al terminar sigue la pretemporada normal.
+ */
+async function pickTorneoEvent(
+  player: Player,
+  history: HistoryItem[],
+  weekInSeason: number,
+  injured: boolean,
+): Promise<GameEvent | null> {
+  const progress = getTorneoProgress(player);
+
+  if (!progress) {
+    const type = shouldStartTorneo(player, weekInSeason, injured);
+    if (!type) return null;
+    startTorneoProgress(player, type);
+    const base = EVENTS.find((e) => e.id === `sel-${type === "copa_america" ? "copa-america" : type}`);
+    if (!base) return null;
+    console.log(`[pickNextEventDynamic] Torneo ${type}: llegada.`);
+    return maybeAddFreeText({ ...base, id: `${base.id}-s${Math.floor((player.week - 1) / 10)}` });
+  }
+
+  // Escena de concentración antes del siguiente partido.
+  if (progress.lifeDue && progress.alive) {
+    const lifeEvent = buildTorneoLifeEvent(player, progress);
+    saveTorneoProgress(player, { ...progress, lifeDue: false, lifeCount: progress.lifeCount + 1 });
+    console.log(`[pickNextEventDynamic] Torneo life: "${lifeEvent.title}"`);
+    return maybeAddFreeText(lifeEvent);
+  }
+
+  // Red de seguridad: un torneo ya terminado no debe quedarse abierto.
+  if (!progress.alive || progress.stage >= TORNEO_STAGES) {
+    saveTorneoProgress(player, null);
+    return null;
+  }
+
+  const match = buildTorneoMatch(player, progress);
+  const stageKey = matchKey(match);
+  const decisionOutcome = player.flags?.[`match_decision_${match.week}_${stageKey}`] as string | undefined;
+
+  if (!decisionOutcome) {
+    console.log(`[pickNextEventDynamic] Torneo ${progress.type}: ${TORNEO_STAGE_LABELS[progress.stage]} — momento decisivo.`);
+    return { ...maybeAddFreeText(buildMatchDecisionMoment(player, match)), ownTeam: player.nation, matchKey: stageKey };
+  }
+
+  // Crónica del partido: el resultado y lo que implica (pasar de fase,
+  // eliminación, título) se deciden en código ANTES de pedírsela a la IA.
+  const result = decideTorneoResult(player, progress, match.rivalClub);
+  const adv = advanceTorneo(progress, result);
+  const tName = `${TORNEO_NAMES[progress.type]} ${torneoYear(progress.season)}`;
+  const nation = player.nation;
+  const lines: string[] = [];
+  if (result.kind === "group") {
+    const verdict = result.win ? "victoria" : result.draw ? "empate" : "derrota";
+    lines.push(
+      `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES: "${result.scoreLine}" en formato ${nation}-${match.rivalClub} (${verdict} de ${nation}). Puntos de grupo de tu selección tras este partido: ${adv.next.groupPts}.`,
+    );
+    if (progress.stage === 2) {
+      lines.push(
+        adv.qualified
+          ? `- Era el último partido de grupo: con este resultado ${nation} SE CLASIFICA para octavos de final. Que quede claro.`
+          : `- Era el último partido de grupo: con este resultado ${nation} QUEDA ELIMINADA del torneo en la fase de grupos. Que quede claro, con el peso emocional que tiene.`,
+      );
+    }
+  }
+  if (progress.stage === 6) {
+    lines.push(
+      result.win
+        ? `- Es la FINAL de ${tName} y ${nation} la GANA: es un TÍTULO. Escribe con claridad que "te proclamas campeón" y "levantas el trofeo".`
+        : `- Es la FINAL de ${tName} y ${nation} la PIERDE: queda la espina clavada del subcampeón, sin título. NO uses las palabras "campeón" ni "título" para tu selección.`,
+    );
+  }
+  const hito = progress.stage === 0 || progress.stage >= 5 || adv.finished;
+  lines.push(
+    hito
+      ? `- Este partido es un HITO COMPARTIBLE: is_milestone debe ser true y image_scene una foto realista del jugador con la camiseta de la selección de ${nation} en ${tName} (sin logos ni nombres reales, escena concreta de este partido: ${progress.stage === 0 ? "su debut en el torneo" : adv.finished && !adv.champion ? "la eliminación, con el vestuario roto o consolándose" : result.win && progress.stage === 6 ? "levantando el trofeo" : "un momento clave del partido"}).`
+      : `- is_milestone solo si hay un gol o una actuación realmente histórica; si no, false.`,
+  );
+  const styleByKey: Record<string, string> = {
+    riesgo: "salió dispuesto a arriesgarlo todo en cada partido",
+    cabeza: "juega con la cabeza, priorizando no arriesgar de más",
+    lider: "asumió el papel de líder del vestuario",
+  };
+  const style = styleByKey[String(player.flags?.torneo_style ?? "")];
+  if (style) lines.push(`- Tu planteamiento en este torneo: ${style}. Puedes reflejarlo con una pincelada.`);
+  lines.push(`- Esto es ${tName} con la camiseta de ${nation}: la camiseta, el himno y el país pendiente deben notarse. NUNCA nombres el club (${player.club}) como tu equipo en este partido.`);
+
+  const forcedResult = result.kind === "ko" ? { win: result.win, scoreLine: result.scoreLine } : undefined;
+  const event = await generateMatchDayEvent(
+    player,
+    match,
+    history,
+    decisionOutcome,
+    forcedResult,
+    lines.join("\n"),
+    tName,
+  );
+  if (!event) return null;
+
+  if (adv.finished) {
+    if (!player.flags) player.flags = {};
+    player.flags[`torneo_result_${progress.type}_${progress.season}`] = adv.outcome;
+    saveTorneoProgress(player, null);
+  } else {
+    saveTorneoProgress(player, adv.next);
+  }
+  return {
+    ...event,
+    id: `matchday-torneo-${match.week}-${progress.stage}-${Date.now()}`,
+    ownTeam: nation,
+    rivalClub: match.rivalClub,
+    matchKey: stageKey,
+  };
+}
+
+/**
  * Partido del equipo con el jugador de baja: el club juega igual (la
  * clasificación cuenta el resultado) pero el jugador lo ve desde la grada —
  * sin jugada decisiva, sin minutos ni nota. Sin esto, con el ligamento roto
@@ -2517,8 +2645,11 @@ export async function generateMatchDayEvent(
   decisionRaw?: string,
   forcedResult?: { win: boolean; scoreLine: string },
   extraInstruction?: string,
+  torneoLabel?: string,
 ): Promise<GameEvent | null> {
   const age = playerAge(player.week);
+  // En un torneo de selecciones el "club" del partido es la selección.
+  const team = match.competition === "internacional" ? player.nation : player.club;
 
   const compLabel: Record<string, string> = {
     liga: "La Liga",
@@ -2526,7 +2657,7 @@ export async function generateMatchDayEvent(
     champions: "Champions League",
     europa: "Europa League",
     amistoso: "Amistoso",
-    internacional: "Partido internacional",
+    internacional: torneoLabel ? `Partido internacional (${torneoLabel})` : "Partido internacional",
   };
 
   // Solo Copa es eliminación directa de verdad en este calendario — el
@@ -2538,7 +2669,7 @@ export async function generateMatchDayEvent(
   // la causa raíz de que apareciera un "Cuartos de Copa" después de que
   // el jugador ya estuviera eliminado esa misma temporada.
   const resultInstruction = forcedResult
-    ? `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES NI LO CONTRADIGAS: "${forcedResult.scoreLine}" en formato ${player.club}-${match.rivalClub}. Tu equipo ${forcedResult.win ? "GANA y AVANZA de ronda" : "PIERDE y QUEDA ELIMINADO de la competición"} — que el titular y la crónica lo dejen clarísimo, sin ambigüedad. Tu propio rendimiento personal (minutos, nota, goles) sí es libre, siempre que sea coherente con ese marcador.`
+    ? `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES NI LO CONTRADIGAS: "${forcedResult.scoreLine}" en formato ${team}-${match.rivalClub}. Tu equipo ${forcedResult.win ? "GANA y AVANZA de ronda" : "PIERDE y QUEDA ELIMINADO de la competición"} — que el titular y la crónica lo dejen clarísimo, sin ambigüedad. Tu propio rendimiento personal (minutos, nota, goles) sí es libre, siempre que sea coherente con ese marcador.`
     : "";
   const stakesInstruction =
     match.stakes === "decisivo"
@@ -2552,11 +2683,11 @@ export async function generateMatchDayEvent(
 EL PARTIDO YA SE HA JUGADO. Genera su ficha con resultado real.
 
 PARTIDO (semana ${match.week}) — ESTOS DATOS SON FIJOS, NO SE INVENTAN:
-- Tu club: ${player.club}
+- Tu club: ${team}
 - Rival: ${match.rivalClub}
 - Competición: ${compLabel[match.competition as keyof typeof compLabel] ?? "Partido importante"}
 - Jornada: ${match.description}
-- Contexto: ${match.homeTeam === player.club ? "Jugaste en tu estadio" : `Jugaste como visitante en ${match.awayTeam}`}
+- Contexto: ${match.competition === "internacional" ? "Sede neutral del torneo, con tu país representado por la selección" : match.homeTeam === team ? "Jugaste en tu estadio" : `Jugaste como visitante en ${match.awayTeam}`}
 
 TU SITUACIÓN:
 - Jugador: ${player.last_name}, ${age} años, ${player.position}
@@ -2573,10 +2704,10 @@ ${resultInstruction}
 ${extraInstruction ?? ""}
 ${stakesInstruction}
 - PROHIBIDO ABSOLUTO: mencionar cualquier rival o competición que NO sea "${match.rivalClub}" en "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}". No inventes otro equipo, otra jornada ni otro torneo — es EL PARTIDO PROGRAMADO, no uno libre. rival_club debe ser exactamente "${match.rivalClub}".
-- En el título y la descripción, tu equipo se llama SIEMPRE "${player.club}" tal cual — NUNCA un nombre genérico o inventado como "Real Club", "tu equipo" o similar.
-- El marcador se escribe SIEMPRE en el orden "${player.club} - ${match.rivalClub}" (tu equipo primero, sin importar si juegas en casa o fuera), y el relato (quién ganó/perdió/empató) tiene que cuadrar aritméticamente con ese marcador — un marcador donde tu primer número es mayor es VICTORIA tuya, no derrota, y viceversa. Revísalo antes de escribir el texto final.
+- En el título y la descripción, tu equipo se llama SIEMPRE "${team}" tal cual — NUNCA un nombre genérico o inventado como "Real Club", "tu equipo" o similar.
+- El marcador se escribe SIEMPRE en el orden "${team} - ${match.rivalClub}" (tu equipo primero, sin importar si juegas en casa o fuera), y el relato (quién ganó/perdió/empató) tiene que cuadrar aritméticamente con ese marcador — un marcador donde tu primer número es mayor es VICTORIA tuya, no derrota, y viceversa. Revísalo antes de escribir el texto final.
 - OBLIGATORIO en la descripción, en este orden: (1) "${match.rivalClub}" y "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}" tal cual, (2) marcador EXACTO en el orden indicado arriba (ej "2-1"), (3) minutos jugados, (4) tu nota (0-10, decimal), (5) GOLES exactos (0, 1, 2+), (6) asistencias. Crónica MUY corta: 2-3 frases en total y máximo ~60 palabras tras los datos (jugada clave + ambiente + una pincelada del entrenador o la grada, no las tres cosas largas) — que quede clarísimo si metiste gol o no, y si tu equipo ganó, perdió o empató, es el dato más importante de todo el evento.
-- FORMATO RECOMENDADO: "Ante ${match.rivalClub} en ${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}, jugaste [X] minutos. Nota: [X.X]/10. Goles: [0/1/2+]. Asistencias: [X]. Marcador: [X-X] (${player.club}-${match.rivalClub})."
+- FORMATO RECOMENDADO: "Ante ${match.rivalClub} en ${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}, jugaste [X] minutos. Nota: [X.X]/10. Goles: [0/1/2+]. Asistencias: [X]. Marcador: [X-X] (${team}-${match.rivalClub})."
 - ${
     (player.stats_matches_played ?? 0) > 0
       ? `PROHIBIDO llamar a esto "debut" o "primer partido" de ninguna forma — ya lleva ${player.stats_matches_played} partido(s) jugados como profesional. Trátalo como un partido más de una carrera en marcha, con el peso narrativo que corresponda a ese momento (racha, presión, rutina, rivalidad concreta), nunca como una primera vez.`
@@ -2750,6 +2881,17 @@ export async function pickNextEventDynamic(
     }
   }
 
+  // Torneo de selecciones (Mundial/Eurocopa/Copa América) al arrancar la
+  // temporada de un año de torneo: llega ANTES que la pretemporada, que solo
+  // empieza cuando el torneo termina.
+  const torneoEvent = await pickTorneoEvent(
+    playerWithDynamics,
+    history,
+    weekInSeason,
+    getInjuryRemaining(playerWithDynamics.flags) > 0,
+  );
+  if (torneoEvent) return torneoEvent;
+
   // Mercado de fichajes (verano y enero): SIEMPRE hay rumor al abrirse
   // cada ventana — ver market-window.ts. Va antes de la pretemporada y
   // de los partidos porque estos eventos no avanzan la semana (ver
@@ -2782,11 +2924,6 @@ export async function pickNextEventDynamic(
     const pre = buildPreseasonLifeEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Preseason life: "${pre.title}"`);
     return pre;
-  }
-  if (!midMatch && shouldTriggerTorneoLife(playerWithDynamics)) {
-    const torneo = buildTorneoLifeEvent(playerWithDynamics);
-    console.log(`[pickNextEventDynamic] Torneo life: "${torneo.title}"`);
-    return torneo;
   }
   if (!midMatch && shouldTriggerRareMishap(playerWithDynamics, usedEventIds)) {
     const mishap = pickRareMishapEvent(usedEventIds);

@@ -1,5 +1,6 @@
 import type { Consequences, EventOption, GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
+import type { TorneoProgress } from "@/lib/narrative/torneo";
 import { getPersonName, getTeammateName, getCelebrityName } from "@/lib/narrative/npcs";
 
 /**
@@ -21,15 +22,9 @@ import { getPersonName, getTeammateName, getCelebrityName } from "@/lib/narrativ
  * ocurre el torneo.
  */
 
-const MAX_PER_TORNEO = 3;
-
-export function shouldTriggerTorneoLife(player: Player): boolean {
-  const torneo = player.flags?.torneo_activo;
-  if (!torneo || typeof torneo !== "string") return false;
-  const n = Number(player.flags?.torneo_life_n ?? 0);
-  if (n >= MAX_PER_TORNEO) return false;
-  return Math.random() < 0.6;
-}
+// Cuándo toca la escena de concentración dentro del torneo lo decide el
+// motor (ver pickTorneoEvent en engine.ts): una antes del primer partido y
+// otra entre cada dos partidos, no al azar.
 
 function torneoLabel(torneo: string): string {
   if (torneo === "mundial") return "el Mundial";
@@ -55,6 +50,10 @@ type Tone = "gracioso" | "surrealista";
 interface Tpl {
   key: string;
   title: string;
+  /** "arrival" = primera escena del torneo; "final" = víspera de la final; sin valor = cualquier momento. */
+  phase?: "arrival" | "final";
+  /** Si está presente, la escena es un hito compartible con foto con la camiseta de la selección. */
+  milestone?: { type: string; imageScene: string };
   tone?: Tone[];
   desc: (c: Ctx) => string;
   opts: (c: Ctx) => Opt[];
@@ -235,15 +234,177 @@ const TEMPLATES: Tpl[] = [
       { label: `Retar directamente a ${c.veteran} a la final`, subtitle: "Ir a por el más veterano", consequences: { rel_vestuario: 2, moral: 1 } },
     ],
   },
+  // ── Llegada y camiseta (primera escena del torneo) ──────────────────────
+  {
+    key: "llegada-camiseta-nombre",
+    title: "Tu nombre en la camiseta del torneo",
+    phase: "arrival",
+    milestone: {
+      type: "torneo_camiseta",
+      imageScene:
+        "Photorealistic photo of the photographed man in a national team dressing room, holding up his national team football shirt with his name and number on the back, emotional proud smile, other players blurred in the background, official tournament photo style, no real logos",
+    },
+    desc: (c) =>
+      `El utillero te entrega la camiseta de ${c.torneo} con tu apellido y tu dorsal ya estampados, doblada con un cuidado casi religioso. Nunca habías sentido tanto peso en un trozo de tela. ${c.veteran} te mira desde su taquilla y sonríe sin decir nada: él también pasó por esto.`,
+    opts: (c) => [
+      { label: "Hacerte la foto con la camiseta y mandarla a casa", subtitle: "Compartirlo con los tuyos", consequences: { moral: 5, rel_aficion: 2, fama: 2 }, outcomeText: "Tu familia responde en segundos con tres emojis llorando y un audio de tu madre que no te atreves a escuchar entero." },
+      { label: "Guardarla un momento en silencio antes de ponértela", subtitle: "Un instante solo para ti", consequences: { moral: 4, forma: 1 }, outcomeText: "Cuentas hasta diez, respiras y te la pones. Te queda mejor de lo que imaginabas." },
+      { label: `Pedirle a ${c.veteran} un consejo para el primer día`, subtitle: "Aprender del que ya estuvo", consequences: { rel_vestuario: 3, moral: 3 }, outcomeText: `"Disfrútalo, que pasa volando", te dice. Y por primera vez en semanas, se te afloja el nudo del estómago.` },
+    ],
+  },
+  {
+    key: "viaje-sede-torneo",
+    title: "Un aeropuerto entero esperándote",
+    phase: "arrival",
+    tone: ["gracioso"],
+    desc: () =>
+      `La expedición aterriza en la sede del torneo y, al cruzar las puertas de llegadas, hay cientos de aficionados con bufandas y banderas coreando el nombre de tu país. Un niño de unos seis años se abre paso entre la seguridad con una camiseta que le llega hasta las rodillas, gritando tu nombre.`,
+    opts: () => [
+      { label: "Agacharte, firmarle la camiseta y hacerte la foto", subtitle: "Gesto con la afición", consequences: { fama: 4, rel_aficion: 4 }, outcomeText: "El niño se queda mudo un segundo y luego rompe a llorar de la emoción. Su padre te da las gracias con los ojos rojos." },
+      { label: "Saludar desde lejos y seguir al autobús", subtitle: "Cumplir con el protocolo", consequences: { fama: 1 }, outcomeText: "El autobús arranca entre cánticos. Desde la ventanilla ves al niño corriendo detrás unos metros." },
+      { label: "Cantar con ellos el himno desde las escaleras", subtitle: "Ponerte a su altura", consequences: { fama: 3, rel_aficion: 3, rel_vestuario: 1 }, outcomeText: "Al segundo verso, medio vestuario se te une. El vídeo corre por las redes antes de que lleguéis al hotel." },
+    ],
+  },
+  // ── Durante el torneo ───────────────────────────────────────────────────
+  {
+    key: "camiseta-firmada-beso",
+    title: "Una camiseta, una firma y una foto que lo cambia todo",
+    tone: ["gracioso", "surrealista"],
+    desc: () =>
+      `Estás firmando camisetas a la salida del hotel cuando una aficionada te alarga la suya, te dice que lleva dos días esperándote y, en el segundo exacto en que te inclinas a firmar, te planta un beso en la mejilla. Un fotógrafo dispara justo ahí. La imagen ya está en tres cuentas de fútbol antes de que llegues a tu habitación.`,
+    opts: (c) => [
+      { label: "Tomártelo con humor y compartir tú la foto", subtitle: "Dar la vuelta a la historia", consequences: { fama: 5, moral: 3 }, outcomeText: "Tu publicación se hace viral por lo bien que te lo tomas. La aficionada comenta: 'Valió la pena la espera'." },
+      { label: "Pedirle al fotógrafo que no la publique", subtitle: "Cuidar tu imagen", consequences: { reputacion: 2, fama: 1 }, outcomeText: "El fotógrafo se encoge de hombros: demasiado tarde, ya la tienen tres agencias. Al menos has dado la cara." },
+      { label: `Enseñarle la foto a ${c.teammate} antes de que lo haga la prensa`, subtitle: "Que lo sepa por ti", consequences: { rel_vestuario: 3, moral: 2 }, outcomeText: `${c.teammate} se pasa la cena entera imitando tu cara de susto. Ya sois leyenda del grupo.` },
+    ],
+  },
+  {
+    key: "intruso-comedor",
+    title: "Un desconocido en la mesa de la selección",
+    tone: ["surrealista", "gracioso"],
+    desc: (c) =>
+      `A mitad de la cena, un señor con acreditación de cartón se sienta con toda naturalidad entre ${c.teammate} y ${c.teammate2}, se sirve una ración de pasta y empieza a explicarle al grupo "cómo lo habría hecho él en el partido de ayer". Nadie sabe quién es. Todos asienten por educación.`,
+    opts: (c) => [
+      { label: "Seguirle la corriente y pedirle la pizarra", subtitle: "Dejar que se explique", consequences: { rel_vestuario: 4, moral: 3 }, outcomeText: "Dibuja una jugada en una servilleta que, para sorpresa de todos, no es tan mala. El cuerpo técnico se hace el sordo." },
+      { label: "Avisar con discreción a seguridad", subtitle: "Resolverlo sin escándalo", consequences: { rel_entrenador: 2, reputacion: 1 }, outcomeText: "Se lo llevan con mucha educación. Al irse, te estrecha la mano: 'Mañana marcas, chaval'." },
+      { label: `Preguntarle a ${c.teammate2} si lo conoce, a ver si cuela`, subtitle: "Seguir el juego", consequences: { rel_vestuario: 2 }, outcomeText: "Resulta ser el tío segundo del utillero. Se queda a cenar y a nadie le importa." },
+    ],
+  },
+  {
+    key: "ninos-entreno-abierto",
+    title: "Entrenamiento a puertas abiertas",
+    desc: () =>
+      `La federación abre el entrenamiento a diez mil niños de los colegios de la ciudad. Al acabar, te rodean con camisetas, balones y rotuladores. Una niña te enseña un dibujo tuyo marcando un gol, con las piernas más largas que el cuerpo.`,
+    opts: () => [
+      { label: "Quedarte hasta firmar la última camiseta", subtitle: "Que nadie se vaya sin firma", consequences: { rel_aficion: 5, fama: 3, forma: -1 }, outcomeText: "Llegas el último al autobús con la mano dolorida y una sonrisa que no se te quita. El cuerpo técnico te lo perdona." },
+      { label: "Quedarte con el dibujo y prometerle un gol", subtitle: "Una promesa de las serias", consequences: { moral: 5, rel_aficion: 3 }, outcomeText: "Te lo guardas doblado en la bolsa. Ya no hay vuelta atrás: ahora tienes que marcar." },
+      { label: "Montar un partidillo improvisado con los niños", subtitle: "Volver a ser un crío", consequences: { moral: 4, rel_vestuario: 2, forma: -1 }, outcomeText: "Te meten tres goles por la escuadra y celebran como si hubieran ganado el torneo." },
+    ],
+  },
+  {
+    key: "himno-sesenta-mil",
+    title: "El himno, con sesenta mil gargantas",
+    milestone: {
+      type: "torneo_himno",
+      imageScene:
+        "Photorealistic photo of the photographed man in a national team kit lined up with teammates in a packed World Cup style stadium during the national anthem, hand on chest, eyes closed, intense emotional expression, dramatic stadium lights, no real logos",
+    },
+    desc: () =>
+      `Suena el himno y el estadio entero lo canta a pleno pulmón. Tienes la mano en el pecho y, en mitad del segundo estribillo, te das cuenta de que te tiembla la voz. Piensas en el patio del colegio donde empezaste a dar patadas a un balón desinflado.`,
+    opts: () => [
+      { label: "Cantarlo con todas tus fuerzas, aunque se te quiebre", subtitle: "Entregarte al momento", consequences: { moral: 6, rel_aficion: 4, fama: 3 }, outcomeText: "Las cámaras te cogen en primer plano con los ojos brillantes. Ese plano dará la vuelta al país." },
+      { label: "Cerrar los ojos y pensar en quienes te trajeron hasta aquí", subtitle: "Un momento íntimo", consequences: { moral: 6, forma: 1 }, outcomeText: "Ves a tu familia sentada en la grada sin necesidad de abrir los ojos. Cuando los abres, el balón ya está rodando." },
+      { label: "Mirar a tus compañeros y apretar el brazo del de al lado", subtitle: "Estar juntos", consequences: { rel_vestuario: 5, moral: 3 }, outcomeText: "Hasta el más serio del grupo te devuelve el apretón. Esto ya no es un equipo: es una familia." },
+    ],
+  },
+  {
+    key: "mensaje-familia-grada",
+    title: "Tu familia en la grada",
+    desc: () =>
+      `Antes del calentamiento, encuentras en el móvil una foto de tu familia ya sentada en la grada, con bufandas de la selección y tu camiseta puesta, incluida tu abuela, que no había salido nunca de su pueblo. Debajo, un texto de tu padre: "Aquí estamos. Pase lo que pase, ya has ganado".`,
+    opts: () => [
+      { label: "Contestar con una foto tuya en el túnel", subtitle: "Dedicárselo", consequences: { moral: 6 }, outcomeText: "Tu abuela responde con un audio larguísimo que consiste, básicamente, en llorar. Lo guardas para siempre." },
+      { label: "No contestar todavía: guardarlo para después del partido", subtitle: "Concentración total", consequences: { forma: 2, moral: 3 }, outcomeText: "Te guardas el móvil, pero el mensaje te acompaña durante todo el calentamiento." },
+    ],
+  },
+  {
+    key: "seleccionador-cena-solo",
+    title: "El seleccionador te saca a cenar",
+    desc: () =>
+      `Al acabar la sesión, el seleccionador te dice que no vayas al comedor: te lleva a cenar a solas a un restaurante del centro. Entre plato y plato te habla del partido, de tu sitio en el equipo y de lo que espera de ti en los próximos días. No te da respuestas fáciles, pero te mira a los ojos todo el rato.`,
+    opts: () => [
+      { label: "Pedirle claridad: ¿cuál es tu papel?", subtitle: "Directo al grano", consequences: { rel_entrenador: 4, moral: 2 }, outcomeText: "Te lo dice sin rodeos y respiras: sabes exactamente qué se espera de ti." },
+      { label: "Escuchar y asentir, sin pedir nada", subtitle: "Dejarle hablar", consequences: { rel_entrenador: 2, reputacion: 2 }, outcomeText: "Sales del restaurante con la sensación de haber pasado un examen que no sabías que estabas haciendo." },
+      { label: "Aprovechar para pedirle consejo sobre tu carrera", subtitle: "Mirar más allá del torneo", consequences: { rel_entrenador: 3, reputacion: 3 }, outcomeText: "Te recomienda dos cosas que no esperabas y un contacto que podría cambiarte el futuro." },
+    ],
+  },
+  {
+    key: "brazalete-calentamiento",
+    title: "El capitán te cede el brazalete",
+    milestone: {
+      type: "torneo_brazalete",
+      imageScene:
+        "Photorealistic photo of the photographed man in a national team kit wearing a captain armband during warm-up in a big tournament stadium, serious determined face, teammates behind him, floodlights, no real logos",
+    },
+    desc: (c) =>
+      `${c.veteran}, el capitán, se te acerca en pleno calentamiento, se quita el brazalete y te lo coloca en el brazo durante unos segundos: "Para que lo sientas", te dice. Medio vestuario lo ve y nadie dice nada. Es solo un gesto, pero ya lo has entendido todo.`,
+    opts: () => [
+      { label: "Devolvérselo con un abrazo", subtitle: "Respeto total", consequences: { rel_vestuario: 5, moral: 4 }, outcomeText: "Te da una palmada en la espalda con más fuerza de la necesaria. Es su forma de decirte que cuenta contigo." },
+      { label: "Guardar el recuerdo en la cabeza y salir a jugar", subtitle: "Combustible emocional", consequences: { forma: 2, moral: 5 }, outcomeText: "Sales al campo con el brazo aún caliente de ese momento." },
+    ],
+  },
+  {
+    key: "ensayo-penaltis-entreno",
+    title: "Ensayo de tanda de penaltis",
+    desc: (c) =>
+      `El cuerpo técnico organiza un ensayo de tanda de penaltis al final de la sesión. Todo el grupo mira. ${c.teammate} falla el primero y se lleva una ovación burlona. Cuando te toca a ti, el silencio se corta con un cuchillo.`,
+    opts: () => [
+      { label: "Picarla por el centro, con el pecho por delante", subtitle: "Valentía", consequences: { fama: 1, moral: 3 }, resolve: { baseChance: 0.55, statModifier: "moral", success: { text: "Gol por el centro y rugido del grupo. Hasta el portero aplaude.", consequences: { rel_vestuario: 3, moral: 3 } }, fail: { text: "El portero se queda quieto y la para con el pecho. Risas generales, pero te queda la espinita.", consequences: { rel_vestuario: 1, moral: -2 } } } },
+      { label: "Colocarla a la escuadra, sin riesgo de portero", subtitle: "Precisión", consequences: { forma: 1 }, resolve: { baseChance: 0.5, statModifier: "forma", success: { text: "Al ángulo, imposible. El grupo estalla.", consequences: { rel_vestuario: 3, moral: 3 } }, fail: { text: "Se te va por encima del larguero. Eso en el torneo sería carísimo.", consequences: { moral: -3 } } } },
+      { label: "Declinar y dejar el turno a otro", subtitle: "No jugártela en un ensayo", consequences: { rel_vestuario: -1 }, outcomeText: "Alguien murmura 'cobarde' en broma. Sabes que lo ha dicho con cariño, pero te escuece un poco." },
+    ],
+  },
+  {
+    key: "victoria-noche-vestuario",
+    title: "La noche del vestuario",
+    desc: (c) =>
+      `Volvéis al hotel y nadie quiere acostarse. ${c.teammate} saca un altavoz, alguien apaga las luces del pasillo y, de repente, medio equipo está bailando en calcetines. El cuerpo técnico mira desde el fondo, fingiendo que no ha visto nada.`,
+    opts: () => [
+      { label: "Unirte y bailar como si nadie mirase", subtitle: "Soltarte", consequences: { rel_vestuario: 5, moral: 4, forma: -1 }, outcomeText: "Alguien te graba. El vídeo del baile dará más de que hablar que el propio gol." },
+      { label: "Dar una vuelta y acostarte antes de medianoche", subtitle: "Responsabilidad", consequences: { forma: 2, rel_entrenador: 1 }, outcomeText: "Te despiertas fresco al día siguiente. Los demás, bastante menos." },
+    ],
+  },
+  // ── Víspera de la final ─────────────────────────────────────────────────
+  {
+    key: "vispera-final",
+    title: "La noche antes de la final",
+    phase: "final",
+    milestone: {
+      type: "torneo_vispera_final",
+      imageScene:
+        "Photorealistic photo of the photographed man in a national team tracksuit sitting alone on an empty stadium pitch at dusk the night before a tournament final, looking up at the stands, quiet emotional atmosphere, no real logos",
+    },
+    desc: () =>
+      `Es la noche anterior a la final. En el hotel nadie habla más alto de lo necesario. Miras el techo de la habitación, repasas cada jugada de los últimos años y sientes que todo el camino —el colegio, la cantera, las lesiones, las dudas— ha servido para estar aquí mañana.`,
+    opts: () => [
+      { label: "Salir a pasear solo por el jardín del hotel", subtitle: "Despejar la cabeza", consequences: { moral: 5, forma: 2 }, outcomeText: "El aire frío te sienta de maravilla. Vuelves a la habitación con la cabeza clara y el corazón tranquilo." },
+      { label: "Escribir una carta a tu yo de dieciséis años", subtitle: "Mirar atrás", consequences: { moral: 6, reputacion: 2 }, outcomeText: "No sabes para qué la escribes, pero al terminar notas un peso que se va." },
+      { label: "Reunirte con los veteranos en la sala común", subtitle: "Compartir los nervios", consequences: { rel_vestuario: 5, moral: 3 }, outcomeText: "Nadie dice grandes frases. Solo os quedáis juntos, y eso basta." },
+    ],
+  },
 ];
 
-export function buildTorneoLifeEvent(player: Player): GameEvent {
-  const torneoRaw = player.flags?.torneo_activo;
+export function buildTorneoLifeEvent(player: Player, progress?: TorneoProgress | null): GameEvent {
+  const torneoRaw = progress?.type ?? player.flags?.torneo_activo;
   const torneo = typeof torneoRaw === "string" && torneoRaw ? torneoRaw : "mundial";
   const week = player.week;
   const recent = String(player.flags?.torneo_life_recent ?? "").split(",").filter(Boolean);
-  let pool = TEMPLATES.filter((t) => !recent.includes(t.key));
-  if (pool.length === 0) pool = TEMPLATES;
+
+  // Primera escena = llegada; víspera de la final = escena especial; el resto, cualquiera.
+  const wantedPhase: "arrival" | "final" | undefined =
+    progress && progress.lifeCount === 0 ? "arrival" : progress && progress.stage === 6 ? "final" : undefined;
+  let pool = TEMPLATES.filter((t) => (wantedPhase ? t.phase === wantedPhase : !t.phase) && !recent.includes(t.key));
+  if (pool.length === 0) pool = TEMPLATES.filter((t) => (wantedPhase ? t.phase === wantedPhase : !t.phase));
   const tpl = pool[Math.floor(Math.random() * pool.length)];
 
   const salt = `torneo-${week}-${tpl.key}`;
@@ -259,20 +420,16 @@ export function buildTorneoLifeEvent(player: Player): GameEvent {
     bigClub: BIG_CLUBS[(player.id.length + week) % BIG_CLUBS.length],
   };
 
-  const n = Number(player.flags?.torneo_life_n ?? 0) + 1;
-  const newRecent = [...recent, tpl.key].slice(-6).join(",");
-  const flags: Consequences["flags"] = { torneo_life_n: String(n), torneo_life_recent: newRecent };
-  // Se apaga solo tras MAX_PER_TORNEO apariciones — sin esto seguiría
-  // disparándose indefinidamente cada vez que el jugador vuelva a
-  // encontrarse en semana de torneo en carreras muy largas.
-  if (n >= MAX_PER_TORNEO) flags.torneo_activo = "";
+  const newRecent = [...recent, tpl.key].slice(-8).join(",");
+  const flags: Consequences["flags"] = { torneo_life_recent: newRecent };
   const withFlags = (c: Consequences): Consequences => ({ ...c, flags: { ...(c.flags ?? {}), ...flags } });
 
   return {
-    id: `torneo-life-${tpl.key}-${week}`,
+    id: `torneo-life-${tpl.key}-${week}-${progress?.stage ?? 0}`,
     category: "vida",
     title: tpl.title,
     description: tpl.desc(ctx),
+    ...(tpl.milestone ? { isMilestone: true, milestoneType: tpl.milestone.type, imageScene: tpl.milestone.imageScene } : {}),
     options: tpl.opts(ctx).map((o, i) => ({
       ...o,
       id: String(i),

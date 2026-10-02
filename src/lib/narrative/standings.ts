@@ -275,7 +275,7 @@ function buildLigaTable(seed: string, playerClub: string, record?: SeasonMatchRe
 // Europa League y Copa del Rey ya tienen su propio seguimiento real (tabla
 // europea aparte, cuadro de eliminatoria), así que por defecto se excluyen
 // de la racha "doméstica" para no mezclar dos competiciones en una tabla.
-const SEPARATE_COMPETITION_LABELS = ["Champions League", "Europa League", "Copa del Rey"];
+const SEPARATE_COMPETITION_LABELS = ["Champions League", "Europa League", "Copa del Rey", "Partido internacional"];
 
 export async function getSeasonMatchRecord(
   supabase: SupabaseClient,

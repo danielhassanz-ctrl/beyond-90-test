@@ -385,7 +385,7 @@ export default async function CarreraPage() {
 
         <div className="space-y-3 overflow-hidden rounded-2xl border border-panel-border bg-surface">
           {event.category === "partido" && event.rivalClub ? (
-            <MatchScene club={player.club} rivalClub={event.rivalClub} titles={clubTitleCount} />
+            <MatchScene club={event.ownTeam ?? player.club} rivalClub={event.rivalClub} titles={event.ownTeam ? 0 : clubTitleCount} />
           ) : (
             <EventScene club={player.club} category={event.category} titles={clubTitleCount} />
           )}

@@ -91,6 +91,8 @@ export interface MatchWeek {
   euroKoRound?: number;
   /** Solo fase de grupos europea: 1 o 2 (último partido de grupo = 2). */
   euroGroupIndex?: number;
+  /** Solo torneos de selecciones: partido 0-6 (3 de grupos, octavos, cuartos, semifinal, final). */
+  torneoStage?: number;
 }
 
 /** Progreso de competiciones de eliminación, para poder generar la SIGUIENTE ronda si el jugador sigue vivo. */
@@ -116,7 +118,8 @@ const COPA_ROUND_2_RIVALS = [
  * en player.flags al jugarlo (match_done_week) para saber cuáles quedan, aunque
  * el calendario se recalcule con otro progreso de eliminatorias.
  */
-export function matchKey(m: Pick<MatchWeek, "competition" | "jornada" | "cupRound" | "euroKoRound" | "euroGroupIndex">): string {
+export function matchKey(m: Pick<MatchWeek, "competition" | "jornada" | "cupRound" | "euroKoRound" | "euroGroupIndex" | "torneoStage">): string {
+  if (m.torneoStage !== undefined) return `torneo.${m.torneoStage}`;
   if (m.competition === "liga") return `liga.${m.jornada ?? 0}`;
   if (m.competition === "copa") return `copa.${m.cupRound ?? 0}`;
   if (m.euroKoRound) return `euro.k${m.euroKoRound}`;

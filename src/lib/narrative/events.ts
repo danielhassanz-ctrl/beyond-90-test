@@ -762,6 +762,16 @@ const CAR_LISTINGS = [
  * en la decisión en vez de comprar en solitario. Cada opción trae su foto
  * real (generada una vez por listado y cacheada — ver property-photos.ts).
  */
+/**
+ * Prompt de la foto de un listado por su nombre exacto — para poder generar
+ * (una sola vez, ver getOrCreatePropertyPhoto) la foto de una propiedad
+ * comprada cuando no llegó a guardarse en su momento.
+ */
+export function findPropertyPrompt(name: string): string | null {
+  const all = [...HOME_LISTINGS, ...MANSION_LISTINGS, ...YACHT_LISTINGS, ...JET_LISTINGS, ...CAR_LISTINGS] as { name: string; prompt: string }[];
+  return all.find((l) => l.name === name)?.prompt ?? null;
+}
+
 export async function buildCasaEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
   // El umbral de patrimonio que dispara este evento solo garantiza que
   // la vivienda MÁS BARATA de todo el catálogo sea pagable — pero los 3
@@ -5181,63 +5191,35 @@ export const EVENTS: GameEvent[] = [
   {
     id: "sel-mundial",
     category: "especial",
-    title: "El Mundial",
+    title: "Arranca el Mundial",
     description:
-      "Después de años de carrera, llegas a tu primer Mundial como una pieza clave de la selección. Todo lo que has construido se mide ahora también aquí.",
-    priority: true,
-    requiresMajorTournament: { type: "mundial", timing: "this_season" },
-    isMilestone: true,
-    milestoneType: "mundial",
+      "Se abre el Mundial y tu nombre está en la lista final. Maletas, concentración, la camiseta, el himno: todo lo que has construido se mide ahora también aquí. Cada partido va a contar, y el país entero está pendiente.",
     allowFreeText: true,
     freeTextPrompt: "¿Qué dices en la rueda de prensa previa al torneo?",
-    imageScene:
-      "Photorealistic sports photography of the photographed man in his national team kit, celebrating passionately on a World Cup stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting",
     options: [
       {
         id: "a",
-        label: "Jugar cada partido a todo o nada",
+        label: "Salir a jugar cada partido a todo o nada",
         subtitle: "Asumir riesgos para liderar al equipo",
-        consequences: {},
-        resolve: {
-          baseChance: 0.4,
-          statModifier: "forma",
-          success: {
-            text: "El equipo llega hasta el final y levantas el trofeo del Mundial. Es, hasta ahora, la noche más grande de tu carrera.",
-            consequences: { fama: 25, moral: 20, rel_aficion: 15, flags: { torneo_activo: "mundial" } },
-          },
-          fail: {
-            text: "El equipo cae eliminado antes de lo que esperabais. Vuelves a casa con la sensación de que la oportunidad estuvo cerca.",
-            consequences: { fama: 6, moral: -8, flags: { torneo_activo: "mundial" } },
-          },
-        },
+        consequences: { fama: 2, moral: 2, flags: { torneo_activo: "mundial", torneo_style: "riesgo" } },
+        outcomeText: "Lo dices sin vacilar ante las cámaras: no vas a especular. Los titulares del día siguiente son tuyos.",
       },
       {
         id: "b",
         label: "Jugar con la cabeza, priorizando no arriesgar de más",
         subtitle: "Gestión de la presión",
-        consequences: { moral: 2, fama: 4, flags: { torneo_activo: "mundial" } },
+        consequences: { moral: 3, reputacion: 2, flags: { torneo_activo: "mundial", torneo_style: "cabeza" } },
+        outcomeText: "Tu respuesta es serena y medida. El seleccionador asiente desde la mesa: es justo lo que necesitaba oír.",
       },
       {
         id: "c",
         label: "Asumir el papel de líder del vestuario",
         subtitle: "Sostener al grupo, no solo a ti mismo",
-        consequences: {},
-        resolve: {
-          baseChance: 0.5,
-          statModifier: "moral",
-          success: {
-            text: "El grupo se agarra a ti en los momentos difíciles y el equipo saca fuerzas de donde no las había. La prensa empieza a hablar de ti como algo más que un jugador.",
-            consequences: { fama: 12, moral: 10, reputacion: 5, rel_vestuario: 4, flags: { torneo_activo: "mundial" } },
-          },
-          fail: {
-            text: "Por mucho que intentes sostener al grupo, la presión del torneo puede con todos. Sales del Mundial con la sensación de haberlo dado todo fuera del campo también.",
-            consequences: { moral: -2, reputacion: 3, flags: { torneo_activo: "mundial" } },
-          },
-        },
+        consequences: { rel_vestuario: 3, moral: 2, flags: { torneo_activo: "mundial", torneo_style: "lider" } },
+        outcomeText: "Hablas del grupo antes que de ti. En el vestuario, esa misma tarde, alguien repite tus palabras en voz alta.",
       },
     ],
-    minWeek: 110,
-    minMedia: 66,
+    minWeek: 30,
   },
   /**
    * Guiños a leyendas reales sin nombrarlas ni recrear su cara — pedido
@@ -5654,126 +5636,68 @@ export const EVENTS: GameEvent[] = [
   {
     id: "sel-eurocopa",
     category: "especial",
-    priority: true,
-    requiresMajorTournament: { type: "eurocopa", timing: "this_season" },
-    title: "La Eurocopa",
+    title: "Arranca la Eurocopa",
     description:
-      "Llegas a la Eurocopa como una pieza importante de tu selección. Semanas de convivencia, presión mediática constante y un torneo entero por delante.",
-    isMilestone: true,
-    milestoneType: "eurocopa",
+      "Se abre la Eurocopa y estás en la lista final de tu selección. Semanas de convivencia, presión mediática constante y un torneo entero por delante con todo un continente mirando.",
     allowFreeText: true,
     freeTextPrompt: "¿Qué dices en la rueda de prensa previa al torneo?",
-    imageScene:
-      "Photorealistic sports photography of the photographed man in his national team kit, celebrating passionately on a European Championship stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting",
-    requiresConfederation: ["UEFA"],
-    minMedia: 68,
     options: [
       {
         id: "a",
-        label: "Jugar cada partido a todo o nada",
+        label: "Salir a jugar cada partido a todo o nada",
         subtitle: "Asumir riesgos para liderar al equipo",
-        consequences: {},
-        resolve: {
-          baseChance: 0.4,
-          statModifier: "forma",
-          success: {
-            text: "El equipo llega hasta el final y levantas el trofeo de la Eurocopa. Un torneo entero de tu país parado para ver esto.",
-            consequences: { fama: 22, moral: 18, rel_aficion: 12, flags: { torneo_activo: "eurocopa" } },
-          },
-          fail: {
-            text: "La selección cae eliminada antes de lo esperado. El torneo termina con más preguntas que respuestas.",
-            consequences: { fama: 5, moral: -7, flags: { torneo_activo: "eurocopa" } },
-          },
-        },
+        consequences: { fama: 2, moral: 2, flags: { torneo_activo: "eurocopa", torneo_style: "riesgo" } },
+        outcomeText: "Lo dices sin vacilar ante las cámaras: no vas a especular. Los titulares del día siguiente son tuyos.",
       },
       {
         id: "b",
         label: "Jugar con la cabeza, priorizando no arriesgar de más",
         subtitle: "Gestión de la presión",
-        consequences: { moral: 2, fama: 3, flags: { torneo_activo: "eurocopa" } },
+        consequences: { moral: 3, reputacion: 2, flags: { torneo_activo: "eurocopa", torneo_style: "cabeza" } },
+        outcomeText: "Tu respuesta es serena y medida. El seleccionador asiente desde la mesa: es justo lo que necesitaba oír.",
       },
       {
         id: "c",
-        label: "Convertirte en la referencia del vestuario",
-        subtitle: "Calmar los nervios de los más jóvenes",
-        consequences: {},
-        resolve: {
-          baseChance: 0.5,
-          statModifier: "moral",
-          success: {
-            text: "Los más jóvenes de la selección se agarran a tu experiencia y el grupo compite unido de principio a fin — un torneo entero hablando de la madurez que le has dado al equipo.",
-            consequences: { fama: 11, moral: 9, reputacion: 5, rel_vestuario: 4, flags: { torneo_activo: "eurocopa" } },
-          },
-          fail: {
-            text: "Intentas sostener al grupo, pero la presión de un continente entero pendiente del torneo termina pesando también en el vestuario.",
-            consequences: { moral: -2, reputacion: 3, flags: { torneo_activo: "eurocopa" } },
-          },
-        },
+        label: "Asumir el papel de líder del vestuario",
+        subtitle: "Sostener al grupo, no solo a ti mismo",
+        consequences: { rel_vestuario: 3, moral: 2, flags: { torneo_activo: "eurocopa", torneo_style: "lider" } },
+        outcomeText: "Hablas del grupo antes que de ti. En el vestuario, esa misma tarde, alguien repite tus palabras en voz alta.",
       },
     ],
-    minWeek: 115,
+    minWeek: 30,
   },
   {
     id: "sel-copa-america",
     category: "especial",
-    priority: true,
-    requiresMajorTournament: { type: "copa_america", timing: "this_season" },
-    title: "La Copa América",
+    title: "Arranca la Copa América",
     description:
-      "Llegas a la Copa América como una pieza importante de tu selección. Todo un continente pendiente del torneo, y tú en medio de él.",
-    isMilestone: true,
-    milestoneType: "copa_america",
+      "Se abre la Copa América y estás en la lista final. Todo un continente pendiente del torneo, y tú en medio de él, con la camiseta de tu país.",
     allowFreeText: true,
     freeTextPrompt: "¿Qué dices en la rueda de prensa previa al torneo?",
-    imageScene:
-      "Photorealistic sports photography of the photographed man in his national team kit, celebrating passionately on a Copa America stadium pitch, huge crowd and confetti in the background, dramatic stadium lighting",
-    requiresConfederation: ["CONMEBOL"],
-    minMedia: 68,
     options: [
       {
         id: "a",
-        label: "Jugar cada partido a todo o nada",
+        label: "Salir a jugar cada partido a todo o nada",
         subtitle: "Asumir riesgos para liderar al equipo",
-        consequences: {},
-        resolve: {
-          baseChance: 0.4,
-          statModifier: "forma",
-          success: {
-            text: "El equipo llega hasta el final y levantas el trofeo de la Copa América. Todo el continente habla de esto.",
-            consequences: { fama: 22, moral: 18, rel_aficion: 12, flags: { torneo_activo: "copa_america" } },
-          },
-          fail: {
-            text: "La selección cae eliminada antes de lo esperado. El torneo termina con más preguntas que respuestas.",
-            consequences: { fama: 5, moral: -7, flags: { torneo_activo: "copa_america" } },
-          },
-        },
+        consequences: { fama: 2, moral: 2, flags: { torneo_activo: "copa_america", torneo_style: "riesgo" } },
+        outcomeText: "Lo dices sin vacilar ante las cámaras: no vas a especular. Los titulares del día siguiente son tuyos.",
       },
       {
         id: "b",
         label: "Jugar con la cabeza, priorizando no arriesgar de más",
         subtitle: "Gestión de la presión",
-        consequences: { moral: 2, fama: 3, flags: { torneo_activo: "copa_america" } },
+        consequences: { moral: 3, reputacion: 2, flags: { torneo_activo: "copa_america", torneo_style: "cabeza" } },
+        outcomeText: "Tu respuesta es serena y medida. El seleccionador asiente desde la mesa: es justo lo que necesitaba oír.",
       },
       {
         id: "c",
-        label: "Jugar con la pasión que se vive el torneo en la calle",
-        subtitle: "Dejarte llevar por la afición",
-        consequences: {},
-        resolve: {
-          baseChance: 0.5,
-          statModifier: "forma",
-          success: {
-            text: "Esa energía de la grada se te contagia dentro del campo y das un nivel que ni tú sabías que tenías — el país entero lo celebra contigo.",
-            consequences: { fama: 12, moral: 10, rel_aficion: 8, flags: { torneo_activo: "copa_america" } },
-          },
-          fail: {
-            text: "Te deja llevar más de la cuenta por la presión de la grada y se nota en el campo — el torneo termina antes de lo que esperabas.",
-            consequences: { moral: -3, fama: 4, flags: { torneo_activo: "copa_america" } },
-          },
-        },
+        label: "Asumir el papel de líder del vestuario",
+        subtitle: "Sostener al grupo, no solo a ti mismo",
+        consequences: { rel_vestuario: 3, moral: 2, flags: { torneo_activo: "copa_america", torneo_style: "lider" } },
+        outcomeText: "Hablas del grupo antes que de ti. En el vestuario, esa misma tarde, alguien repite tus palabras en voz alta.",
       },
     ],
-    minWeek: 115,
+    minWeek: 30,
   },
 
   // ── VIDA TEMPRANA (primeros meses de carrera) ──────────────────

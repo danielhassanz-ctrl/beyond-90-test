@@ -6,6 +6,8 @@ import { seasonLabel, WEEKS_PER_SEASON } from "@/types/career";
 import { getGameDateLabel } from "@/lib/calendar/season";
 import { BottomNav } from "@/components/BottomNav";
 import { weeklySalary } from "@/lib/narrative/engine";
+import { findPropertyPrompt } from "@/lib/narrative/events";
+import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
 import { NO_CLUB_YET } from "@/lib/constants";
 
 /**
@@ -37,6 +39,9 @@ function getFinancialPressure(patrimonio: number): { label: string; tone: string
     description: "El dinero ya no es tu problema del día a día. Ahora se trata de no malgastarlo.",
   };
 }
+
+// Generar la foto de una propiedad sin foto puede tardar unos segundos la primera vez.
+export const maxDuration = 60;
 
 export default async function PatrimonioPage() {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
@@ -93,7 +98,7 @@ export default async function PatrimonioPage() {
   // buildCasaEvent / buildMansionEvent) — antes no se guardaban en
   // ningún sitio y esta sección estaba siempre vacía, comprases lo que
   // comprases.
-  const propiedades = Object.entries(player.flags ?? {})
+  const propiedadesSinFoto = Object.entries(player.flags ?? {})
     .filter(([key]) => key.startsWith("propiedad_"))
     .map(([key, value]) => {
       try {
@@ -104,6 +109,18 @@ export default async function PatrimonioPage() {
       }
     })
     .filter((p): p is { key: string; name: string; price: number; downPayment: number; photoUrl?: string | null } => p !== null);
+  // Si la foto no llegó a guardarse al comprar (fallo puntual de generación),
+  // se genera ahora UNA sola vez por listado y queda cacheada para siempre
+  // (getOrCreatePropertyPhoto mira primero image_templates) — cuesta ~0,003 €.
+  const propiedades = await Promise.all(
+    propiedadesSinFoto.map(async (p) => {
+      if (p.photoUrl) return p;
+      const prompt = findPropertyPrompt(p.name);
+      if (!prompt) return p;
+      const photoUrl = await getOrCreatePropertyPhoto(supabase, user.id, p.name, prompt);
+      return { ...p, photoUrl };
+    }),
+  );
 
   // Patrimonio NETO de verdad: el dinero en la cuenta + lo que valen las
   // propiedades − lo que aún debes de hipoteca. Antes solo se enseñaba el
