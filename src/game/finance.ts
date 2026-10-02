@@ -6,8 +6,15 @@
 import { clubById } from "./data";
 import { moneyOfferAllowed, sponsorshipAllowed } from "./money-gating";
 import { note } from "./mutate";
+import { careerSeed, hash } from "./npc";
 import type { DynamicCard, GameState } from "./types";
 import type { DynamicResult, DynamicView } from "./dynamic";
+
+function stableStoryRoll(s: GameState, scope: string): number {
+  const season = s.seasonIndex ?? 0;
+  const scene = s.sceneCount ?? 0;
+  return (hash(careerSeed(s), `story:${scope}:${season}:${scene}`) % 1_000_000) / 1_000_000;
+}
 
 export interface Property {
   name: string;
@@ -119,10 +126,10 @@ export function seasonFinance(s: GameState, seasonTitleCount = 0): { income: num
   const label = season?.season ?? `Temporada ${s.seasonIndex}`;
   const text = `Ingresos ${gross}.000 € · gastos ${spend}.000 € · saldo ${f.cash}.000 €`;
   // Los activos viven: los negocios pueden crecer o quebrar, la cartera compone.
-  for (const p of f.properties) {
+  for (const [propertyIndex, p] of f.properties.entries()) {
     const risky = p.name.includes("Negocio") || p.name.includes("Restaurante") || p.name.includes("Local");
     if (risky) {
-      const roll = Math.random();
+      const roll = stableStoryRoll(s, `season:${label}:property:${propertyIndex}:${p.name}`);
       if (roll < 0.16) {
         f.history.unshift({ season: label, text: `Quiebra: ${p.name} cierra y te comes la pérdida.`, amount: -p.value });
         p.value = 0;
@@ -134,7 +141,7 @@ export function seasonFinance(s: GameState, seasonTitleCount = 0): { income: num
         note(s, `${p.name} va bien: reparto de beneficios.`, "good");
       }
     } else if (p.name.includes("Cartera")) {
-      p.value = Math.round(p.value * (1.02 + Math.random() * 0.09));
+      p.value = Math.round(p.value * (1.02 + stableStoryRoll(s, `season:${label}:portfolio:${propertyIndex}:${p.name}`) * 0.09));
     } else if (p.name.includes("Coche")) {
       p.value = Math.round(p.value * 0.84);
     }
@@ -291,8 +298,8 @@ export function moneyCard(s: GameState): DynamicCard | null {
   if (scene - f.lastOfferScene < 7) return null;
 
   // Patrocinio: cuando hay notoriedad real y aún no hay marca.
-  if (!f.sponsorName && s.fame >= 32 && sponsorshipAllowed(s) && Math.random() < 0.5) {
-    const brand = SPONSORS[Math.floor(Math.random() * SPONSORS.length)]!;
+  if (!f.sponsorName && s.fame >= 32 && sponsorshipAllowed(s) && stableStoryRoll(s, "sponsor:offer") < 0.5) {
+    const brand = SPONSORS[Math.floor(stableStoryRoll(s, "sponsor:brand") * SPONSORS.length)]!;
     f.lastOfferScene = scene;
     return { type: "dynamic", kind: "money", data: { offer: "patrocinio", brand, price: 0 } };
   }
@@ -307,8 +314,8 @@ export function moneyCard(s: GameState): DynamicCard | null {
     );
   });
   if (candidates.length === 0) return null;
-  if (Math.random() < 0.35) return null;
-  const offer = candidates[Math.floor(Math.random() * candidates.length)]!;
+  if (stableStoryRoll(s, "money:offer-gate") < 0.35) return null;
+  const offer = candidates[Math.floor(stableStoryRoll(s, `money:candidates:${candidates.map((candidate) => candidate.id).join("|")}`) * candidates.length)]!;
   f.lastOfferScene = scene;
   return { type: "dynamic", kind: "money", data: { offer: offer.id, price: offer.price } };
 }
@@ -370,7 +377,7 @@ export function resolveMoney(s: GameState, card: DynamicCard, choiceId: string):
       s.flags["patrocinio_rechazado"] = 1;
       return { title: "Sin marca", text: `Dices que no a ${brand}. Tu representante tarda dos días en contestarte al teléfono.`, tone: "neutral" };
     }
-    if (choiceId === "negociar" && Math.random() < 0.45) {
+    if (choiceId === "negociar" && stableStoryRoll(s, `sponsor:negotiate:${brand}`) < 0.45) {
       s.agent.trust = Math.max(0, s.agent.trust - 6);
       return { title: "Se cae el acuerdo", text: `${brand} no acepta y se lleva el contrato a otro jugador de tu posición. Lo verás con esas botas el resto del año.`, tone: "bad" };
     }
