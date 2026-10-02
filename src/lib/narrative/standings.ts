@@ -220,12 +220,45 @@ const SEPARATE_COMPETITION_LABELS = ["Champions League", "Europa League", "Copa 
 export async function getSeasonMatchRecord(
   supabase: SupabaseClient,
   player: Pick<Player, "id" | "week">,
-  opts?: { onlyLabels?: string[] },
+  opts?: {
+    onlyLabels?: string[];
+    /**
+     * El evento que el jugador tiene delante ahora mismo (player.pending_event).
+     * Si es un partido con marcador, ese resultado YA lo está leyendo — la
+     * clasificación tiene que reflejarlo ya, no esperar a que pulse
+     * continuar. Reportado en vivo: perdió un partido, la tabla decía
+     * "1 partido, 3 puntos" hasta pasar de escena. Al resolverse, el evento
+     * pasa a career_events y deja de ser pending, así que no se cuenta dos veces.
+     */
+    pendingEvent?: { id?: string; category?: string; title?: string; description?: string } | null;
+  },
 ): Promise<SeasonMatchRecord> {
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const seasonStartWeek = season * WEEKS_PER_SEASON + 1;
 
   const record: SeasonMatchRecord = { wins: 0, draws: 0, losses: 0, played: 0 };
+
+  const countRow = (eventId: string, category: string | undefined, title: string, description: string) => {
+    const isMatch = category === "partido" && !eventId.startsWith("match-decision-") && eventId !== "pretemp-amistoso";
+    if (!isMatch) return;
+
+    const text = `${title} ${description}`;
+    if (opts?.onlyLabels) {
+      if (!opts.onlyLabels.some((label) => text.includes(label))) return;
+    } else if (SEPARATE_COMPETITION_LABELS.some((label) => text.includes(label))) {
+      return;
+    }
+
+    const scoreMatch = text.match(/marcador[^0-9]{0,20}(\d{1,2})\s*-\s*(\d{1,2})/i);
+    if (!scoreMatch) return;
+
+    const ownGoals = parseInt(scoreMatch[1], 10);
+    const rivalGoals = parseInt(scoreMatch[2], 10);
+    record.played += 1;
+    if (ownGoals > rivalGoals) record.wins += 1;
+    else if (ownGoals === rivalGoals) record.draws += 1;
+    else record.losses += 1;
+  };
 
   try {
     const { data, error } = await supabase
@@ -235,30 +268,14 @@ export async function getSeasonMatchRecord(
       .gte("week", seasonStartWeek)
       .lte("week", player.week);
 
-    if (error || !data) return record;
-
-    for (const row of data) {
-      const eventId = (row.event_id as string) ?? "";
-      const isMatch = row.category === "partido" && !eventId.startsWith("match-decision-") && eventId !== "pretemp-amistoso";
-      if (!isMatch) continue;
-
-      const text = `${row.title ?? ""} ${row.description ?? ""}`;
-      if (opts?.onlyLabels) {
-        if (!opts.onlyLabels.some((label) => text.includes(label))) continue;
-      } else if (SEPARATE_COMPETITION_LABELS.some((label) => text.includes(label))) {
-        continue;
+    if (!error && data) {
+      for (const row of data) {
+        countRow((row.event_id as string) ?? "", row.category as string | undefined, (row.title as string) ?? "", (row.description as string) ?? "");
       }
-
-      const scoreMatch = text.match(/marcador[^0-9]{0,20}(\d{1,2})\s*-\s*(\d{1,2})/i);
-      if (!scoreMatch) continue;
-
-      const ownGoals = parseInt(scoreMatch[1], 10);
-      const rivalGoals = parseInt(scoreMatch[2], 10);
-      record.played += 1;
-      if (ownGoals > rivalGoals) record.wins += 1;
-      else if (ownGoals === rivalGoals) record.draws += 1;
-      else record.losses += 1;
     }
+
+    const pending = opts?.pendingEvent;
+    if (pending) countRow(pending.id ?? "", pending.category, pending.title ?? "", pending.description ?? "");
   } catch (err) {
     console.error("[getSeasonMatchRecord] threw:", err instanceof Error ? err.message : err);
   }
@@ -295,8 +312,13 @@ export function getActiveStandings(
   // usaba un "matchdayGuess" genérico (semana actual, sin más) para
   // cualquier tabla, sin mirar si esa competición concreta ya había
   // arrancado.
-  const ligaMatchdayGuess = LIGA_MATCHDAY_OFFSETS.filter((w) => w <= inSeasonWeek).length;
-  const europeanMatchdayGuess = EUROPEAN_MATCHDAY_OFFSETS.filter((w) => w <= inSeasonWeek).length;
+  // Estrictamente ANTES de esta semana: el partido de la semana en curso
+  // todavía no se ha jugado hasta que el jugador resuelve su escena (si ya
+  // está leyendo el resultado, entra por el pendingEvent de
+  // getSeasonMatchRecord). Antes se contaba como jugado de antemano y la
+  // tabla se inventaba un resultado que luego contradecía a la narración.
+  const ligaMatchdayGuess = LIGA_MATCHDAY_OFFSETS.filter((w) => w < inSeasonWeek).length;
+  const europeanMatchdayGuess = EUROPEAN_MATCHDAY_OFFSETS.filter((w) => w < inSeasonWeek).length;
   // Filial y torneos de selección no tienen un calendario de jornadas
   // fijas definido en match-calendar.ts (son narrativa, no partidos
   // programados semana a semana) — se quedan con la estimación genérica

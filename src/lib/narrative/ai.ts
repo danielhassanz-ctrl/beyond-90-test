@@ -277,6 +277,11 @@ const EVENT_TOOL: Anthropic.Tool = {
           properties: {
             label: { type: "string" },
             subtitle: { type: "string" },
+            outcome_text: {
+              type: "string",
+              description:
+                "La reacción visible a esta decisión, 1-2 frases en castellano de España, concreta y con vida: qué hace o dice la persona implicada (entrenador, capitán, pareja, afición, prensa...) o qué pasa justo después. Ej: 'El míster te mira un segundo de más y asiente: \"Eso es lo que quería ver.\"'. Nada genérico tipo 'tu decisión tiene consecuencias'. Inclúyela en cuanto la decisión afecte a alguien o tenga un resultado; solo puedes omitirla en decisiones puramente internas o triviales.",
+            },
             consequences: {
               type: "object",
               properties: {
@@ -397,7 +402,7 @@ export async function callEventTool(
       image_scene?: string;
       rival_club?: string;
       memorable_thread?: string;
-      options?: Array<{ label?: string; subtitle?: string; consequences?: Consequences }>;
+      options?: Array<{ label?: string; subtitle?: string; outcome_text?: string; consequences?: Consequences }>;
     };
 
     // Comprobar Array.isArray explícitamente, no solo la longitud: si el
@@ -429,6 +434,12 @@ export async function callEventTool(
         label: stripLeakedToolSyntax(o.label as string),
         subtitle: stripLeakedToolSyntax(o.subtitle as string),
         consequences: sanitizeConsequences(o.consequences ?? {}),
+        // La reacción visible a la decisión (pantalla de consecuencias):
+        // sin esto, toda escena generada por IA — la mayor parte del juego
+        // — se resolvía en silencio, saltando directo a la siguiente.
+        ...(typeof o.outcome_text === "string" && o.outcome_text.trim()
+          ? { outcomeText: stripLeakedToolSyntax(o.outcome_text) }
+          : {}),
       }));
 
     if (options.length < 2) {

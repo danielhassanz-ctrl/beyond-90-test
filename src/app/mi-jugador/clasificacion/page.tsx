@@ -24,10 +24,13 @@ export default async function ClasificacionPage() {
   const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
   const torneo = typeof player.flags?.torneo_activo === "string" ? player.flags.torneo_activo : null;
-  const matchRecord = await getSeasonMatchRecord(supabase, player, torneo ? { onlyLabels: ["Partido internacional"] } : undefined);
+  const matchRecord = await getSeasonMatchRecord(supabase, player, {
+    onlyLabels: torneo ? ["Partido internacional"] : undefined,
+    pendingEvent: player.pending_event,
+  });
 
   const { primary, secondary, copa } = getActiveStandings(player, usedEventIds, matchRecord);
-  const seasonStats = await getCurrentSeasonStats(supabase, player);
+  const seasonStats = await getCurrentSeasonStats(supabase, player, player.pending_event);
 
   return (
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">

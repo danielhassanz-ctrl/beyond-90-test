@@ -157,7 +157,11 @@ export interface SeasonStats {
   red_cards: number;
 }
 
-export async function getCurrentSeasonStats(supabase: SupabaseClient, player: Pick<Player, "id" | "week">): Promise<SeasonStats> {
+export async function getCurrentSeasonStats(
+  supabase: SupabaseClient,
+  player: Pick<Player, "id" | "week">,
+  pendingEvent?: GameEvent | null,
+): Promise<SeasonStats> {
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const seasonStartWeek = season * WEEKS_PER_SEASON + 1;
 
@@ -173,7 +177,22 @@ export async function getCurrentSeasonStats(supabase: SupabaseClient, player: Pi
 
     if (error || !data) return totals;
 
-    for (const row of data) {
+    // El partido que el jugador está leyendo ahora mismo todavía no está en
+    // career_events (se guarda al resolver la escena) pero ya conoce su
+    // resultado, goles y minutos — que la tarjeta de temporada lo refleje
+    // ya, no un turno después.
+    // Solo si ya trae marcador: la víspera de un partido también es
+    // categoría "partido" pero todavía no se ha jugado nada.
+    const pendingIsPlayedMatch =
+      pendingEvent && /marcador[^0-9]{0,20}\d{1,2}\s*-\s*\d{1,2}/i.test(`${pendingEvent.title} ${pendingEvent.description}`);
+    const rowsToCount = pendingIsPlayedMatch && pendingEvent
+      ? [
+          ...data,
+          { event_id: pendingEvent.id, category: pendingEvent.category, title: pendingEvent.title, description: pendingEvent.description },
+        ]
+      : data;
+
+    for (const row of rowsToCount) {
       const fakeEvent = {
         id: row.event_id as string,
         category: row.category as GameEvent["category"],
