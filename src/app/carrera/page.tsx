@@ -36,6 +36,7 @@ import { resolveEvent } from "./actions";
 import { personalizeEvent, detectMentionedRoles, NPC_ROLE_LABELS } from "@/lib/narrative/npcs";
 import { getOrCreateNpcFace, hasMetNpc, markNpcSeen, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
 import { getGameDateLabel } from "@/lib/calendar/season";
+import { computeRole, ROLE_LABELS } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { NpcAvatarRow } from "@/components/NpcAvatarRow";
 import { DmPreview } from "@/components/DmPreview";
@@ -346,7 +347,7 @@ export default async function CarreraPage() {
   const rookieChainStarted = usedEventIds.includes("pretemp-amistoso");
   const rookieChainFinished = usedEventIds.includes("rookie-debut-oficial");
   const statusLine =
-    player.club === NO_CLUB_YET ? "Sin equipo" : rookieChainStarted && !rookieChainFinished ? "Con el filial" : "Titular";
+    player.club === NO_CLUB_YET ? "Sin equipo" : rookieChainStarted && !rookieChainFinished ? "Con el filial" : ROLE_LABELS[computeRole(player).role];
 
   return (
     <main className="flex flex-1 justify-center p-4 pb-24">

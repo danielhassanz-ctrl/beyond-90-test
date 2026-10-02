@@ -316,6 +316,18 @@ export async function resolveEvent(formData: FormData) {
     };
   }
 
+  // El entrenador te mantiene fuera durante unos turnos tras una decisión
+  // suya (coach_bench, ver role.ts): se descuenta según avanza el calendario.
+  const benchLeft = parseInt(String(player.flags?.coach_bench ?? "0"), 10) || 0;
+  if (benchLeft > 0 && newWeek > player.week) {
+    const flagsBase = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    const remaining = Math.max(0, benchLeft - (newWeek - player.week));
+    // Si este mismo evento ya fijó coach_bench (p. ej. una charla con el míster), no se pisa.
+    if (consequences.flags?.coach_bench === undefined) {
+      playerUpdate.flags = { ...flagsBase, coach_bench: String(remaining) };
+    }
+  }
+
   if (consequences.agent_name) {
     playerUpdate.agent_name = consequences.agent_name;
   }

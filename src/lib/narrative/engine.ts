@@ -45,6 +45,8 @@ import {
 } from "@/lib/narrative/market-window";
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
+import { computeRole, roleInstruction, roleMinuteRange, type PlayerRole } from "@/lib/narrative/role";
+import { buildBenchedMatchEvent, shouldTriggerBenchEscape, buildBenchEscapeEvent } from "@/lib/narrative/role-events";
 import {
   getTorneoProgress,
   saveTorneoProgress,
@@ -2280,7 +2282,11 @@ const NEGATIVE_DECISION_OUTCOMES = new Set(["miss", "miss_bad", "concede", "pena
  * dramático del que tendría un reparto uniforme, el final y el descuento
  * (en el fútbol real se decide mucho ahí).
  */
-function pickMatchMinute(): string {
+function pickMatchMinute(role: PlayerRole = "titular"): string {
+  if (role === "suplente" || role === "rotacion") {
+    const { from, to } = roleMinuteRange(role);
+    return String(from + Math.floor(Math.random() * (to - from + 1)));
+  }
   const r = Math.random();
   if (r < 0.07) return String(1 + Math.floor(Math.random() * 5)); // 1-5
   if (r < 0.77) return String(6 + Math.floor(Math.random() * 79)); // 6-84
@@ -2313,6 +2319,8 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
   const recentSit = parseRecentIdx(player.flags?.match_recent_sit);
   const recentSet = parseRecentIdx(player.flags?.match_recent_set);
   const missStreak = parseInt(String(player.flags?.match_miss_streak ?? "0"), 10) || 0;
+  // El rol manda sobre CUÁNDO cae la jugada: un suplente solo entra al final.
+  const minuteRole: PlayerRole = match.competition === "internacional" ? "titular" : computeRole(player).role;
   const makeFlags =
     (sitIdx: number, setIdx: number, sitKeep: number, setKeep: number, sitText: string) => (outcome: string, style: string) => ({
       // `sit` viaja con el resultado para que la crónica cuente ESTA jugada
@@ -2320,7 +2328,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
       // "solo ante el portero, la mandaste a las nubes" (reportado en vivo).
       // `min` lo fija el código: si lo elige la IA, siempre cae en el mismo
       // (reportado en vivo: "el minuto 38" partido tras partido).
-      [decisionFlagKey]: JSON.stringify({ outcome, style, sit: sitText, min: pickMatchMinute() }),
+      [decisionFlagKey]: JSON.stringify({ outcome, style, sit: sitText, min: pickMatchMinute(minuteRole) }),
       // Racha de jugadas malas seguidas (ver resolveOption: compensa la suerte).
       match_miss_streak: NEGATIVE_DECISION_OUTCOMES.has(outcome) ? String(missStreak + 1) : "0",
       match_recent_sit: pushRecentIdx(recentSit, sitIdx, sitKeep),
@@ -3020,6 +3028,22 @@ export async function pickNextEventDynamic(
   // Con una lesión larga en curso el jugador no pisa el campo: el equipo
   // juega igual, pero él lo ve desde la grada (sin jugada ni crónica de IA).
   const injuryMonthsLeft = getInjuryRemaining(playerWithDynamics.flags);
+  // ROL en el equipo (role.ts): lo que decides con el entrenador manda sobre
+  // lo que juegas. Solo con el primer equipo (no en la cadena de debut).
+  const firstTeam = usedEventIds.includes("rookie-debut-oficial");
+  const roleInfo = computeRole(playerWithDynamics);
+  if (!playerWithDynamics.flags) playerWithDynamics.flags = {};
+  if (roleInfo.role !== "apartado" && playerWithDynamics.flags.bench_streak && playerWithDynamics.flags.bench_streak !== "0") {
+    playerWithDynamics.flags.bench_streak = "0";
+  }
+  if (firstTeam && !midMatch && injuryMonthsLeft === 0 && shouldTriggerBenchEscape(playerWithDynamics)) {
+    console.log("[pickNextEventDynamic] Rol apartado dos partidos seguidos — el club te pide que busques salida.");
+    return buildBenchEscapeEvent(playerWithDynamics);
+  }
+  if (matchThisWeek && firstTeam && injuryMonthsLeft === 0 && roleInfo.role === "apartado") {
+    console.log(`[pickNextEventDynamic] Rol apartado (score ${roleInfo.score.toFixed(1)}) — fuera de la convocatoria.`);
+    return { ...buildBenchedMatchEvent(playerWithDynamics, matchThisWeek), matchKey: matchKey(matchThisWeek) };
+  }
   if (matchThisWeek && injuryMonthsLeft > 0) {
     console.log(`[pickNextEventDynamic] Match week but player is injured (${injuryMonthsLeft} left) — partido sin él.`);
     return { ...buildInjuredMatchEvent(playerWithDynamics, matchThisWeek, injuryMonthsLeft), matchKey: matchKey(matchThisWeek) };
@@ -3038,7 +3062,10 @@ export async function pickNextEventDynamic(
     // estable entre turnos; los partidos importantes y decisivos siempre.
     let routineParity = 0;
     for (const ch of `${playerWithDynamics.id}:${matchThisWeek.week}:${matchKey(matchThisWeek)}`) routineParity = (routineParity * 31 + ch.charCodeAt(0)) % 1000003;
-    const skipDecisiveMoment = matchThisWeek.stakes === "rutina" && routineParity % 2 === 1;
+    // Un suplente solo vive la jugada decisiva en la minoría de partidos en que entra con peso.
+    const skipDecisiveMoment =
+      (matchThisWeek.stakes === "rutina" && routineParity % 2 === 1) ||
+      (firstTeam && roleInfo.role === "suplente" && matchThisWeek.stakes !== "decisivo" && routineParity % 5 < 3);
 
     if (!decisionOutcome && !skipDecisiveMoment) {
       // De vez en cuando, en vez del "momento decisivo" genérico según
@@ -3105,6 +3132,10 @@ export async function pickNextEventDynamic(
       extraInstruction = forcedResult.win
         ? `- Es una FINAL y tu equipo la GANA: es un TÍTULO. Escribe con claridad que "te proclamas campeón" y "levantas el trofeo". is_milestone debe ser true, con image_scene del momento de levantar el trofeo.`
         : `- Es una FINAL y tu equipo la PIERDE: queda la espina clavada del subcampeón, sin ningún título. NO uses las palabras "campeón" ni "título" para tu equipo.`;
+    }
+    if (firstTeam) {
+      const roleLine = roleInstruction(roleInfo.role, playerWithDynamics.rel_entrenador ?? 50);
+      if (roleLine) extraInstruction = [extraInstruction, roleLine].filter(Boolean).join("\n");
     }
     const matchDayEvent = await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history, decisionOutcome, forcedResult, extraInstruction);
     if (matchDayEvent) {

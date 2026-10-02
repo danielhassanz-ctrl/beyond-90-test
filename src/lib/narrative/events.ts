@@ -5991,8 +5991,8 @@ export const EVENTS: GameEvent[] = [
         resolve: {
           baseChance: 0.45,
           statModifier: "reputacion",
-          success: { text: "Te da una razón concreta y una oportunidad para demostrarlo en dos semanas.", consequences: { rel_entrenador: 5, moral: 3 } },
-          fail: { text: "La charla es fría y genérica. Sigues sin saber por qué no cuenta contigo.", consequences: { moral: -4 } },
+          success: { text: "Te da una razón concreta y una oportunidad para demostrarlo: vuelves a la convocatoria de inmediato.", consequences: { rel_entrenador: 5, moral: 3, flags: { coach_bench: "0" } } },
+          fail: { text: "La charla es fría y genérica. Sigues sin saber por qué no cuenta contigo, y no te convoca en los próximos partidos.", consequences: { moral: -4, flags: { coach_bench: "5" } } },
         },
         consequences: {},
       },
@@ -6000,13 +6000,17 @@ export const EVENTS: GameEvent[] = [
         id: "b",
         label: "Callar y trabajar el doble en cada entrenamiento",
         subtitle: "Convencer con hechos",
-        consequences: { forma: 4, moral: -2 },
+        consequences: { forma: 4, moral: -2, flags: { coach_bench: "4" } },
+        outcomeText: "Entrenas el doble, sin una queja. Aun así, de momento, ni calientas: el míster quiere ver cuánto aguantas.",
       },
       {
         id: "c",
         label: "Pedirle a tu representante que mueva un traspaso ya",
         subtitle: "Salir cuanto antes",
-        consequences: { rel_representante: 2, moral: 1 },
+        // bench_streak ya en 2: el club activa de inmediato la escena de
+        // salida (role-events.ts) con ofertas reales de otros clubes.
+        consequences: { rel_representante: 2, moral: 1, flags: { coach_bench: "5", bench_streak: "2" } },
+        outcomeText: "Tu representante recibe el mensaje y no hace preguntas. En el club, la noticia corre más rápido que tú.",
       },
     ],
     allowFreeText: true,

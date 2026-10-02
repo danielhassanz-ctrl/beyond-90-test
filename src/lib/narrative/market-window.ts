@@ -3,6 +3,7 @@ import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { randomPersonName } from "@/lib/narrative/npcs";
 import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
+import { computeRole } from "@/lib/narrative/role";
 
 /**
  * Mercado de fichajes: dos ventanas por temporada (verano y enero) y en
@@ -734,7 +735,7 @@ export function shouldTriggerOwnMoveDecision(player: Player): boolean {
   if (!w) return false;
   if (!player.flags?.[windowKey(player.week, w)]) return false; // primero el rumor
   if (player.flags?.[`market_own_${seasonOf(player.week)}_${w}`]) return false;
-  const unhappy = (player.moral ?? 70) < 55 || (player.rel_entrenador ?? 60) < 50;
+  const unhappy = (player.moral ?? 70) < 55 || (player.rel_entrenador ?? 60) < 50 || ["suplente", "apartado"].includes(computeRole(player).role);
   const outgrown = (player.media ?? 50) >= 75 && getEuropeanCompetitionFor(player.club)?.competition !== "champions";
   const chance = Math.min(0.85, 0.4 + (unhappy ? 0.3 : 0) + (outgrown ? 0.15 : 0));
   if (Math.random() >= chance) {
@@ -760,7 +761,7 @@ export function buildOwnMoveEvent(player: Player): GameEvent {
   const minutesPool = (media >= 72 ? POOL_MID : POOL_LOW).filter((c) => c !== player.club);
   const minutesClub = pick(minutesPool.length ? minutesPool : POOL_LOW);
   const raise = Math.round((7000 + media * 280) / 500) * 500;
-  const unhappy = (player.moral ?? 70) < 55 || (player.rel_entrenador ?? 60) < 50;
+  const unhappy = (player.moral ?? 70) < 55 || (player.rel_entrenador ?? 60) < 50 || ["suplente", "apartado"].includes(computeRole(player).role);
   const mood = unhappy
     ? "Llevas semanas con la cabeza en otra parte y todo el vestuario lo nota."
     : media >= 75
