@@ -20,8 +20,14 @@ export interface CupProgress {
   alive: boolean;
 }
 
-const COPA_ROUND_NAMES = ["Dieciseisavos de Copa del Rey", "Octavos de Copa del Rey"];
-const EURO_ROUND_NAMES = ["Fase de grupos", "Octavos de final"];
+const COPA_ROUND_NAMES = [
+  "Dieciseisavos de Copa del Rey",
+  "Octavos de Copa del Rey",
+  "Cuartos de Copa del Rey",
+  "Semifinal de Copa del Rey",
+  "Final de Copa del Rey",
+];
+const EURO_ROUND_NAMES = ["Octavos de final", "Cuartos de final", "Semifinal", "Final"];
 
 function parseProgress(raw: string | boolean | undefined, season: number): CupProgress {
   if (typeof raw === "string") {
@@ -49,6 +55,37 @@ export function copaRoundName(round: number): string {
 
 export function euroRoundName(round: number): string {
   return EURO_ROUND_NAMES[round - 1] ?? "Fase de grupos";
+}
+
+/**
+ * Estado de las dos competiciones de eliminatoria de esta temporada para el
+ * calendario de partidos clave (ver buildMatchCalendar): `round` es la
+ * SIGUIENTE ronda por jugar (o la que se perdió, si `alive` es false).
+ * En la competición europea, round 0 = aún en fase de grupos.
+ */
+export function getSeasonProgress(player: Player, season: number): {
+  copa: { round: number; alive: boolean };
+  euro: { round: number; alive: boolean };
+} {
+  const copa = getCopaProgress(player, season);
+  const euro = getEuroProgress(player, season);
+  return {
+    copa: { round: copa.round, alive: copa.alive },
+    euro: { round: euro.round, alive: euro.alive },
+  };
+}
+
+/**
+ * Tras el último partido de grupo decide en CÓDIGO si pasas a eliminatorias
+ * (88 % un grande, 65 % un europeo, algo más con buena media) y lo guarda.
+ */
+export function resolveEuroGroupStage(player: Player, season: number, level: "grande" | "europeo" | "modesto"): boolean {
+  const base = level === "grande" ? 0.88 : level === "europeo" ? 0.65 : 0.4;
+  const mediaBonus = Math.min(0.08, Math.max(-0.08, ((player.media ?? 60) - 65) / 300));
+  const qualified = Math.random() < base + mediaBonus;
+  if (!player.flags) player.flags = {};
+  player.flags.euro_progress = JSON.stringify({ season, round: qualified ? 1 : 0, alive: qualified } satisfies CupProgress);
+  return qualified;
 }
 
 /**
@@ -84,10 +121,11 @@ export function advanceCupProgress(
 export function decideKnockoutResult(
   playerMedia: number,
   round: number,
+  levelBonus = 0,
 ): { win: boolean; scoreLine: string; wentToPenalties: boolean } {
   const mediaFactor = Math.min(0.2, Math.max(-0.15, (playerMedia - 60) / 200));
   const baseChance = round === 1 ? 0.66 : 0.5;
-  const winChance = Math.min(0.88, Math.max(0.25, baseChance + mediaFactor));
+  const winChance = Math.min(0.88, Math.max(0.25, baseChance + mediaFactor + levelBonus));
 
   const roll = Math.random();
   if (roll < winChance * 0.7) {

@@ -21,7 +21,10 @@ import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
-import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET } from "@/types/career";
+import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET, WEEKS_PER_SEASON } from "@/types/career";
+import { getMatchesInWeek, matchKey, parseMatchDone, addMatchDone } from "@/lib/calendar/match-calendar";
+import { getSeasonProgress } from "@/lib/calendar/competition-progress";
+import type { Player } from "@/types/player";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/player/update-stats";
 import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career-milestones";
@@ -158,12 +161,38 @@ export async function resolveEvent(formData: FormData) {
   // si se deja al avance probabilístico normal, cuando sale 0 el jugador
   // vuelve a caer en la misma jornada y el partido se narra dos veces con
   // el mismo marcador — encontrado jugando una carrera real.
-  const isSeasonCheckpoint = SEASON_CHECKPOINT_EVENT_IDS.has(event.id) || event.id.startsWith("matchday-");
+  const isMatchdayEvent = event.id.startsWith("matchday-");
+  const isSeasonCheckpoint = SEASON_CHECKPOINT_EVENT_IDS.has(event.id) || isMatchdayEvent;
+
+  // Un mes puede traer varios partidos clave (ver buildMatchCalendar): el
+  // mes solo avanza cuando se han jugado todos. Mientras quede alguno por
+  // jugar, ni siquiera una escena de vida normal (la que se cuela entre
+  // dos partidos) puede adelantar la semana — se comería ese partido.
+  const doneMatchKeys = parseMatchDone(player.flags, player.week);
+  let matchDoneFlag: string | undefined;
+  if (isMatchdayEvent && event.matchKey && !doneMatchKeys.includes(event.matchKey)) {
+    matchDoneFlag = addMatchDone(player.flags, player.week, event.matchKey);
+    doneMatchKeys.push(event.matchKey);
+  }
+  const weekMatches = getMatchesInWeek(
+    player.week,
+    player.club,
+    getSeasonProgress(player as Player, Math.floor((player.week - 1) / WEEKS_PER_SEASON)),
+  );
+  const weekHasPendingMatches =
+    (!isMatchdayEvent || Boolean(event.matchKey)) && weekMatches.some((m) => !doneMatchKeys.includes(matchKey(m)));
+
   const newWeek = isCalendarLocked
     ? player.week
-    : isSeasonCheckpoint
-      ? player.week + 1
-      : player.week + nextWeekGap(player.media, player.mode);
+    : isMatchdayEvent
+      ? weekHasPendingMatches
+        ? player.week
+        : player.week + 1
+      : weekHasPendingMatches
+        ? player.week
+        : isSeasonCheckpoint
+          ? player.week + 1
+          : player.week + nextWeekGap(player.media, player.mode);
   const targetWeeks = MODE_TARGET_WEEKS[player.mode];
   const willRetire = !isRetirementDecision && player.mode !== "pro" && newWeek > targetWeeks;
 
@@ -270,6 +299,13 @@ export async function resolveEvent(formData: FormData) {
     playerUpdate.flags = flagsBase;
     const formaBase = (patch.forma as number | undefined) ?? player.forma;
     playerUpdate.forma = Math.max(0, Math.min(100, Math.round(formaBase + injuryTick.formaDelta)));
+  }
+
+  if (matchDoneFlag) {
+    playerUpdate.flags = {
+      ...((playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {}),
+      match_done_week: matchDoneFlag,
+    };
   }
 
   if (consequences.agent_name) {

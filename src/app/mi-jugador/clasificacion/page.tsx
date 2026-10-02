@@ -29,7 +29,7 @@ export default async function ClasificacionPage() {
     pendingEvent: player.pending_event,
   });
 
-  const { primary, secondary, copa } = getActiveStandings(player, usedEventIds, matchRecord);
+  const { primary, secondary, copa, euro } = getActiveStandings(player, usedEventIds, matchRecord);
   const seasonStats = await getCurrentSeasonStats(supabase, player, player.pending_event);
 
   return (
@@ -57,6 +57,7 @@ export default async function ClasificacionPage() {
             {primary && <StandingsTable standings={primary} />}
             {secondary && <StandingsTable standings={secondary} />}
             {copa && <KnockoutBox knockout={copa} />}
+            {euro && <KnockoutBox knockout={euro} />}
 
             <p className="text-center text-xs text-muted-foreground">
               Clasificación orientativa, no un resultado jornada a jornada de cada rival — lo importante es dónde

@@ -1,8 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
-import { getEuropeanCompetitionFor, LIGA_MATCHDAY_OFFSETS, EUROPEAN_MATCHDAY_OFFSETS } from "@/lib/calendar/match-calendar";
-import { getCopaProgress, copaRoundName } from "@/lib/calendar/competition-progress";
+import {
+  getEuropeanCompetitionFor,
+  LIGA_JORNADA_BY_WEEK,
+  LIGA_TOTAL_JORNADAS,
+  EURO_GROUP_WEEKS,
+  EURO_GROUP_JORNADAS,
+} from "@/lib/calendar/match-calendar";
+import { getCopaProgress, getEuroProgress, copaRoundName, euroRoundName } from "@/lib/calendar/competition-progress";
 import { WEEKS_PER_SEASON } from "@/types/career";
 
 /**
@@ -65,6 +71,9 @@ const LIGA_POOL = [
   "CA Osasuna", "RCD Mallorca", "Getafe CF", "Girona FC",
 ];
 
+/** Los 20 equipos de la tabla completa de LaLiga (38 jornadas). */
+const LIGA_FULL_POOL = [...LIGA_POOL, "Elche CF", "UD Almería", "UD Las Palmas", "Cádiz CF"];
+
 const MUNDIAL_POOL = ["Brasil", "Francia", "Argentina", "Inglaterra", "Alemania", "Portugal", "Países Bajos", "Italia"];
 const EUROCOPA_POOL = ["Alemania", "Francia", "Inglaterra", "Italia", "Portugal", "Países Bajos", "Bélgica", "Croacia"];
 const COPA_AMERICA_POOL = ["Brasil", "Argentina", "Uruguay", "Colombia", "Chile", "Ecuador", "Perú", "Paraguay"];
@@ -123,6 +132,11 @@ export interface SeasonMatchRecord {
   draws: number;
   losses: number;
   played: number;
+  /**
+   * Resultado de cada partido clave doméstico, con el mes (1-10) en que se
+   * jugó: sirve para saber a qué jornada real de las 38 corresponde.
+   */
+  results: { inSeasonWeek: number; r: "W" | "D" | "L" }[];
 }
 
 /**
@@ -202,6 +216,52 @@ function buildTable(
   return { type: "table", label, rows };
 }
 
+/** Resultado simulado (estable por semilla) del partido número `g` de un club. */
+function simulateGame(seed: string, tier: number, g: number): "W" | "D" | "L" {
+  const qualityNoise = ((mixSeed(`${seed}:quality`) % 1000) / 1000 - 0.5) * 0.08;
+  const winProb = Math.max(0.1, Math.min(0.78, 0.14 + tier * 0.115 + qualityNoise));
+  const r = (mixSeed(`${seed}:m${g}`) % 10000) / 10000;
+  return r < winProb ? "W" : r < winProb + 0.24 ? "D" : "L";
+}
+
+/**
+ * Tabla completa de LaLiga (20 equipos, 38 jornadas). Tus partidos clave
+ * son partidos reales de jornadas concretas (4, 9, 14...); las demás
+ * jornadas de tu equipo se simulan de forma estable. Así "PJ" es siempre
+ * la jornada real en la que estás, y puntos = 3·G + E con G+E+P = PJ.
+ */
+function buildLigaTable(seed: string, playerClub: string, record?: SeasonMatchRecord): TableStandings {
+  const keyByJornada = new Map<number, "W" | "D" | "L">();
+  for (const res of record?.results ?? []) {
+    const jornada = LIGA_JORNADA_BY_WEEK[res.inSeasonWeek];
+    if (jornada) keyByJornada.set(jornada, res.r);
+  }
+  const jornadaNow = keyByJornada.size > 0 ? Math.max(...keyByJornada.keys()) : 0;
+
+  const others = LIGA_FULL_POOL.filter((c) => c !== playerClub)
+    .sort((a, b) => mixSeed(`${seed}:${a}`) - mixSeed(`${seed}:${b}`))
+    .slice(0, 19);
+  const rows: StandingsRow[] = [playerClub, ...others]
+    .map((club) => {
+      const isPlayer = club === playerClub;
+      let won = 0;
+      let drawn = 0;
+      let lost = 0;
+      const tier = clubTier(club);
+      for (let g = 1; g <= jornadaNow; g++) {
+        const res = isPlayer && keyByJornada.has(g) ? keyByJornada.get(g)! : simulateGame(`${seed}:${club}`, tier, g);
+        if (res === "W") won++;
+        else if (res === "D") drawn++;
+        else lost++;
+      }
+      return { club, points: won * 3 + drawn, played: jornadaNow, won, drawn, lost, isPlayer };
+    })
+    .sort((a, b) => b.points - a.points || b.won - a.won);
+
+  const label = jornadaNow > 0 ? `LaLiga · Jornada ${jornadaNow} de ${LIGA_TOTAL_JORNADAS}` : "LaLiga";
+  return { type: "table", label, rows };
+}
+
 /**
  * Racha real de tus partidos de esta temporada, leída de career_events —
  * mismo criterio de "qué cuenta como partido real" que ya usa
@@ -236,9 +296,9 @@ export async function getSeasonMatchRecord(
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const seasonStartWeek = season * WEEKS_PER_SEASON + 1;
 
-  const record: SeasonMatchRecord = { wins: 0, draws: 0, losses: 0, played: 0 };
+  const record: SeasonMatchRecord = { wins: 0, draws: 0, losses: 0, played: 0, results: [] };
 
-  const countRow = (eventId: string, category: string | undefined, title: string, description: string) => {
+  const countRow = (eventId: string, category: string | undefined, title: string, description: string, week: number) => {
     const isMatch = category === "partido" && !eventId.startsWith("match-decision-") && eventId !== "pretemp-amistoso";
     if (!isMatch) return;
 
@@ -255,27 +315,36 @@ export async function getSeasonMatchRecord(
     const ownGoals = parseInt(scoreMatch[1], 10);
     const rivalGoals = parseInt(scoreMatch[2], 10);
     record.played += 1;
-    if (ownGoals > rivalGoals) record.wins += 1;
-    else if (ownGoals === rivalGoals) record.draws += 1;
+    const r = ownGoals > rivalGoals ? "W" : ownGoals === rivalGoals ? "D" : "L";
+    if (r === "W") record.wins += 1;
+    else if (r === "D") record.draws += 1;
     else record.losses += 1;
+    record.results.push({ inSeasonWeek: week - seasonStartWeek + 1, r });
   };
 
   try {
     const { data, error } = await supabase
       .from("career_events")
-      .select("title, description, category, event_id")
+      .select("title, description, category, event_id, week")
       .eq("player_id", player.id)
       .gte("week", seasonStartWeek)
-      .lte("week", player.week);
+      .lte("week", player.week)
+      .order("week", { ascending: true });
 
     if (!error && data) {
       for (const row of data) {
-        countRow((row.event_id as string) ?? "", row.category as string | undefined, (row.title as string) ?? "", (row.description as string) ?? "");
+        countRow(
+          (row.event_id as string) ?? "",
+          row.category as string | undefined,
+          (row.title as string) ?? "",
+          (row.description as string) ?? "",
+          (row.week as number) ?? player.week,
+        );
       }
     }
 
     const pending = opts?.pendingEvent;
-    if (pending) countRow(pending.id ?? "", pending.category, pending.title ?? "", pending.description ?? "");
+    if (pending) countRow(pending.id ?? "", pending.category, pending.title ?? "", pending.description ?? "", player.week);
   } catch (err) {
     console.error("[getSeasonMatchRecord] threw:", err instanceof Error ? err.message : err);
   }
@@ -296,8 +365,8 @@ export function getActiveStandings(
   player: Player,
   usedEventIds: string[],
   record?: SeasonMatchRecord,
-): { primary: TableStandings | null; secondary: TableStandings | null; copa: KnockoutStandings | null } {
-  if (player.club === NO_CLUB_YET) return { primary: null, secondary: null, copa: null };
+): { primary: TableStandings | null; secondary: TableStandings | null; copa: KnockoutStandings | null; euro: KnockoutStandings | null } {
+  if (player.club === NO_CLUB_YET) return { primary: null, secondary: null, copa: null, euro: null };
 
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const inSeasonWeek = ((player.week - 1) % WEEKS_PER_SEASON) + 1;
@@ -317,8 +386,10 @@ export function getActiveStandings(
   // está leyendo el resultado, entra por el pendingEvent de
   // getSeasonMatchRecord). Antes se contaba como jugado de antemano y la
   // tabla se inventaba un resultado que luego contradecía a la narración.
-  const ligaMatchdayGuess = LIGA_MATCHDAY_OFFSETS.filter((w) => w < inSeasonWeek).length;
-  const europeanMatchdayGuess = EUROPEAN_MATCHDAY_OFFSETS.filter((w) => w < inSeasonWeek).length;
+  // Fase de grupos europea: dos partidos clave que representan las jornadas
+  // 3 y 6 de 6 (ver EURO_GROUP_JORNADAS en match-calendar.ts).
+  const euroGroupsPlayed = EURO_GROUP_WEEKS.filter((w) => w < inSeasonWeek).length;
+  const europeanMatchdayGuess = euroGroupsPlayed === 0 ? 0 : EURO_GROUP_JORNADAS[euroGroupsPlayed - 1];
   // Filial y torneos de selección no tienen un calendario de jornadas
   // fijas definido en match-calendar.ts (son narrativa, no partidos
   // programados semana a semana) — se quedan con la estimación genérica
@@ -329,7 +400,7 @@ export function getActiveStandings(
   if (typeof torneo === "string" && torneo) {
     const pool = torneo === "mundial" ? MUNDIAL_POOL : torneo === "eurocopa" ? EUROCOPA_POOL : COPA_AMERICA_POOL;
     const label = torneo === "mundial" ? "Mundial · Fase de grupos" : torneo === "eurocopa" ? "Eurocopa · Fase de grupos" : "Copa América · Fase de grupos";
-    return { primary: buildTable(`${seed}:${torneo}`, player.nation, pool, matchdayGuess, label, record), secondary: null, copa: null };
+    return { primary: buildTable(`${seed}:${torneo}`, player.nation, pool, matchdayGuess, label, record), secondary: null, copa: null, euro: null };
   }
 
   const rookieChainStarted = usedEventIds.includes("pretemp-amistoso");
@@ -338,9 +409,9 @@ export function getActiveStandings(
 
   const primary = inFilial
     ? buildTable(`${seed}:filial`, player.club, RESERVE_RIVALS, matchdayGuess, "Segunda RFEF · Filial", record)
-    : buildTable(`${seed}:liga`, player.club, LIGA_POOL, ligaMatchdayGuess, "LaLiga", record);
+    : buildLigaTable(`${seed}:liga`, player.club, record);
 
-  if (inFilial) return { primary, secondary: null, copa: null };
+  if (inFilial) return { primary, secondary: null, copa: null, euro: null };
 
   // La tabla europea NO usa tu racha real: mezclaría resultados de liga y
   // de Champions/Europa League en la misma cuenta de puntos, dos
@@ -358,5 +429,11 @@ export function getActiveStandings(
       ? { type: "knockout", label: "Copa del Rey", roundLabel: copaRoundName(copaProgress.round), alive: true }
       : null;
 
-  return { primary, secondary, copa };
+  const euroProgress = getEuroProgress(player, season);
+  const euro: KnockoutStandings | null =
+    european && euroProgress.round > 0 && euroProgress.alive
+      ? { type: "knockout", label: european.competition === "champions" ? "Champions League" : "Europa League", roundLabel: euroRoundName(euroProgress.round), alive: true }
+      : null;
+
+  return { primary, secondary, copa, euro };
 }

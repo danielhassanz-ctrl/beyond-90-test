@@ -18,8 +18,8 @@ import { pickCharacterToReappear, describeCharacterReappearance, updateCharacter
 import { shouldBeeFunnyMoment, pickRandomFunnyMoment, isSurrealMoment } from "@/lib/narrative/funny-surreal";
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
-import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, type MatchWeek } from "@/lib/calendar/match-calendar";
-import { getCopaProgress, advanceCupProgress, decideKnockoutResult } from "@/lib/calendar/competition-progress";
+import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, getClubLevel, matchKey, parseMatchDone, type MatchWeek } from "@/lib/calendar/match-calendar";
+import { getSeasonProgress, advanceCupProgress, decideKnockoutResult, resolveEuroGroupStage } from "@/lib/calendar/competition-progress";
 import { getInjuryRemaining, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
@@ -2299,7 +2299,7 @@ function pushRecentIdx(recent: number[], idx: number, keep: number): string {
 }
 
 export function buildMatchDecisionMoment(player: Player, match: MatchWeek): GameEvent {
-  const decisionFlagKey = `match_decision_${match.week}`;
+  const decisionFlagKey = `match_decision_${match.week}_${matchKey(match)}`;
   const recentSit = parseRecentIdx(player.flags?.match_recent_sit);
   const recentSet = parseRecentIdx(player.flags?.match_recent_set);
   const missStreak = parseInt(String(player.flags?.match_miss_streak ?? "0"), 10) || 0;
@@ -2516,6 +2516,7 @@ export async function generateMatchDayEvent(
   history: HistoryItem[],
   decisionRaw?: string,
   forcedResult?: { win: boolean; scoreLine: string },
+  extraInstruction?: string,
 ): Promise<GameEvent | null> {
   const age = playerAge(player.week);
 
@@ -2537,7 +2538,7 @@ export async function generateMatchDayEvent(
   // la causa raíz de que apareciera un "Cuartos de Copa" después de que
   // el jugador ya estuviera eliminado esa misma temporada.
   const resultInstruction = forcedResult
-    ? `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES NI LO CONTRADIGAS: "${forcedResult.scoreLine}" en formato ${player.club}-${match.rivalClub}. Tu equipo ${forcedResult.win ? "GANA y AVANZA de ronda" : "PIERDE y QUEDA ELIMINADO de la Copa"} — que el titular y la crónica lo dejen clarísimo, sin ambigüedad. Tu propio rendimiento personal (minutos, nota, goles) sí es libre, siempre que sea coherente con ese marcador.`
+    ? `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES NI LO CONTRADIGAS: "${forcedResult.scoreLine}" en formato ${player.club}-${match.rivalClub}. Tu equipo ${forcedResult.win ? "GANA y AVANZA de ronda" : "PIERDE y QUEDA ELIMINADO de la competición"} — que el titular y la crónica lo dejen clarísimo, sin ambigüedad. Tu propio rendimiento personal (minutos, nota, goles) sí es libre, siempre que sea coherente con ese marcador.`
     : "";
   const stakesInstruction =
     match.stakes === "decisivo"
@@ -2569,6 +2570,7 @@ ${describeCast(player)}
 REGLAS CRÍTICAS:
 ${COMMON_RULES}
 ${resultInstruction}
+${extraInstruction ?? ""}
 ${stakesInstruction}
 - PROHIBIDO ABSOLUTO: mencionar cualquier rival o competición que NO sea "${match.rivalClub}" en "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}". No inventes otro equipo, otra jornada ni otro torneo — es EL PARTIDO PROGRAMADO, no uno libre. rival_club debe ser exactamente "${match.rivalClub}".
 - En el título y la descripción, tu equipo se llama SIEMPRE "${player.club}" tal cual — NUNCA un nombre genérico o inventado como "Real Club", "tu equipo" o similar.
@@ -2755,7 +2757,11 @@ export async function pickNextEventDynamic(
   // resultó ser real, después llega la oferta formal.
   clearStaleTransferInterest(playerWithDynamics);
   // No colarse entre la jugada decisiva y la crónica del MISMO partido.
-  const midMatch = Boolean(playerWithDynamics.flags?.[`match_decision_${playerWithDynamics.week}`]);
+  const matchDoneKeys = parseMatchDone(playerWithDynamics.flags, playerWithDynamics.week);
+  const decisionPrefix = `match_decision_${playerWithDynamics.week}_`;
+  const midMatch = Object.keys(playerWithDynamics.flags ?? {}).some(
+    (k) => k.startsWith(decisionPrefix) && !matchDoneKeys.includes(k.slice(decisionPrefix.length)),
+  );
   if (!midMatch && shouldTriggerMarketRumor(playerWithDynamics)) {
     markMarketRumorShown(playerWithDynamics);
     const rumor = buildMarketRumorEvent(playerWithDynamics);
@@ -2849,8 +2855,7 @@ export async function pickNextEventDynamic(
   // pasarlo aquí, el calendario no tendría forma de saber si el jugador
   // sigue vivo en el torneo.
   const currentSeason = Math.floor((playerWithDynamics.week - 1) / 10);
-  const copaProgress = getCopaProgress(playerWithDynamics, currentSeason);
-  const seasonProgress = { copa: { round: copaProgress.round, alive: copaProgress.alive } };
+  const seasonProgress = getSeasonProgress(playerWithDynamics, currentSeason);
 
   // Verificar si el partido programado es ESTA semana — tiene que
   // comprobarse ANTES que "la próxima semana", o el partido nunca llega
@@ -2862,14 +2867,25 @@ export async function pickNextEventDynamic(
   // partidos, apenas vida fuera del campo". Esas semanas quedan libres
   // para vida, mercado y vestuario, y se ahorra una llamada de IA por
   // amistoso.
-  const scheduledMatch = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club, seasonProgress);
-  const matchThisWeek = scheduledMatch && scheduledMatch.competition !== "amistoso" ? scheduledMatch : null;
+  const scheduledMatch = getMatchThisWeek(playerWithDynamics.week, playerWithDynamics.club, seasonProgress, matchDoneKeys);
+  let matchThisWeek = scheduledMatch && scheduledMatch.competition !== "amistoso" ? scheduledMatch : null;
+  // Un mes puede traer varios partidos clave: entre el primero y el
+  // siguiente se deja pasar UNA escena de vida (el partido no se pierde, ver
+  // el bloqueo de semana en carrera/actions.ts), para no encadenar cuatro
+  // escenas de partido seguidas.
+  const breatherKey = `match_breather_${playerWithDynamics.week}`;
+  const matchesPendingThisWeek = matchThisWeek !== null;
+  if (matchThisWeek && matchDoneKeys.length > 0 && !playerWithDynamics.flags?.[breatherKey]) {
+    if (!playerWithDynamics.flags) playerWithDynamics.flags = {};
+    playerWithDynamics.flags[breatherKey] = true;
+    matchThisWeek = null;
+  }
   // Con una lesión larga en curso el jugador no pisa el campo: el equipo
   // juega igual, pero él lo ve desde la grada (sin jugada ni crónica de IA).
   const injuryMonthsLeft = getInjuryRemaining(playerWithDynamics.flags);
   if (matchThisWeek && injuryMonthsLeft > 0) {
     console.log(`[pickNextEventDynamic] Match week but player is injured (${injuryMonthsLeft} left) — partido sin él.`);
-    return buildInjuredMatchEvent(playerWithDynamics, matchThisWeek, injuryMonthsLeft);
+    return { ...buildInjuredMatchEvent(playerWithDynamics, matchThisWeek, injuryMonthsLeft), matchKey: matchKey(matchThisWeek) };
   }
   if (matchThisWeek) {
     // Antes el partido se resolvía entero de golpe (marcador ya decidido)
@@ -2877,14 +2893,14 @@ export async function pickNextEventDynamic(
     // mientras el balón seguía en juego. Ahora primero se vive el momento
     // decisivo (rematar/pasar/floritura) y solo cuando ya está resuelto
     // se genera la crónica del partido, coherente con esa jugada.
-    const decisionFlagKey = `match_decision_${matchThisWeek.week}`;
+    const decisionFlagKey = `match_decision_${matchThisWeek.week}_${matchKey(matchThisWeek)}`;
     const decisionOutcome = playerWithDynamics.flags?.[decisionFlagKey] as string | undefined;
 
     // Las jornadas de rutina (nada en juego) solo llevan jugada decisiva en
     // la mitad de los casos — decidido por (jugador, semana) para que sea
     // estable entre turnos; los partidos importantes y decisivos siempre.
     let routineParity = 0;
-    for (const ch of `${playerWithDynamics.id}:${matchThisWeek.week}`) routineParity = (routineParity * 31 + ch.charCodeAt(0)) % 1000003;
+    for (const ch of `${playerWithDynamics.id}:${matchThisWeek.week}:${matchKey(matchThisWeek)}`) routineParity = (routineParity * 31 + ch.charCodeAt(0)) % 1000003;
     const skipDecisiveMoment = matchThisWeek.stakes === "rutina" && routineParity % 2 === 1;
 
     if (!decisionOutcome && !skipDecisiveMoment) {
@@ -2909,7 +2925,7 @@ export async function pickNextEventDynamic(
           );
           return maybeAddFreeText(
             addMatchContext(
-              { ...specialMoment, id: `matchday-special-${matchThisWeek.week}-${Date.now()}`, rivalClub: matchThisWeek.rivalClub },
+              { ...specialMoment, id: `matchday-special-${matchThisWeek.week}-${Date.now()}`, rivalClub: matchThisWeek.rivalClub, matchKey: matchKey(matchThisWeek) },
               playerWithDynamics,
             ),
           );
@@ -2925,19 +2941,42 @@ export async function pickNextEventDynamic(
     console.log(
       `[pickNextEventDynamic] This week IS match week (${matchThisWeek.competition}): ${matchThisWeek.description}. Resolving the match.`
     );
-    // Solo Copa necesita un resultado decidido en código (ver
-    // generateMatchDayEvent): es la única competición de eliminación
-    // directa de este calendario, así que es la única donde "seguir vivo"
-    // significa algo que el juego tiene que recordar entre semanas.
-    const forcedResult = matchThisWeek.competition === "copa" && matchThisWeek.cupRound
-      ? decideKnockoutResult(playerWithDynamics.media, matchThisWeek.cupRound)
+    // Copa y las eliminatorias europeas necesitan un resultado decidido en
+    // código (ver generateMatchDayEvent): son las competiciones de
+    // eliminación directa, donde "seguir vivo" es algo que el juego tiene
+    // que recordar entre meses. El nivel del club inclina la balanza.
+    const level = getClubLevel(playerWithDynamics.club);
+    const levelBonus = level === "grande" ? 0.1 : level === "europeo" ? 0.04 : -0.06;
+    const koRound = matchThisWeek.cupRound ?? (matchThisWeek.euroKoRound ? matchThisWeek.euroKoRound + 1 : 0);
+    const forcedResult = koRound
+      ? decideKnockoutResult(playerWithDynamics.media, koRound, levelBonus)
       : undefined;
-    const matchDayEvent = await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history, decisionOutcome, forcedResult);
+    // Último partido de la fase de grupos europea: se decide aquí si pasas
+    // de fase, y la crónica tiene que cuadrar con ello.
+    let extraInstruction: string | undefined;
+    if (matchThisWeek.euroGroupIndex === 2) {
+      const groupQualified = resolveEuroGroupStage(playerWithDynamics, currentSeason, level);
+      const compName = matchThisWeek.competition === "champions" ? "Champions League" : "Europa League";
+      extraInstruction = groupQualified
+        ? `- Era el ÚLTIMO partido de la fase de grupos de la ${compName}: con este resultado tu equipo SE CLASIFICA para las eliminatorias (octavos de final). Que la crónica lo deje claro.`
+        : `- Era el ÚLTIMO partido de la fase de grupos de la ${compName}: con este resultado tu equipo QUEDA ELIMINADO de la competición europea. Que la crónica lo deje claro.`;
+    }
+    // Finales (Copa o europea): ganar es un TÍTULO — el contador de títulos lo
+    // detecta por el texto, así que se pide expresarlo claramente.
+    const isFinal = matchThisWeek.cupRound === 5 || matchThisWeek.euroKoRound === 4;
+    if (isFinal && forcedResult) {
+      extraInstruction = forcedResult.win
+        ? `- Es una FINAL y tu equipo la GANA: es un TÍTULO. Escribe con claridad que "te proclamas campeón" y "levantas el trofeo". is_milestone debe ser true, con image_scene del momento de levantar el trofeo.`
+        : `- Es una FINAL y tu equipo la PIERDE: queda la espina clavada del subcampeón, sin ningún título. NO uses las palabras "campeón" ni "título" para tu equipo.`;
+    }
+    const matchDayEvent = await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history, decisionOutcome, forcedResult, extraInstruction);
     if (matchDayEvent) {
       if (forcedResult && matchThisWeek.cupRound) {
         advanceCupProgress(playerWithDynamics, "copa_progress", currentSeason, matchThisWeek.cupRound, forcedResult.win);
+      } else if (forcedResult && matchThisWeek.euroKoRound) {
+        advanceCupProgress(playerWithDynamics, "euro_progress", currentSeason, matchThisWeek.euroKoRound, forcedResult.win);
       }
-      return maybeAddFreeText(addMatchContext(matchDayEvent, playerWithDynamics));
+      return maybeAddFreeText(addMatchContext({ ...matchDayEvent, matchKey: matchKey(matchThisWeek) }, playerWithDynamics));
     }
   }
 
@@ -2949,7 +2988,7 @@ export async function pickNextEventDynamic(
   // repetía turno tras turno (visto en vivo: 5 veces seguidas "La noche
   // antes del Getafe", cada una con texto distinto pero la misma premisa
   // — no tiene sentido narrativo vivir varias vísperas del mismo partido).
-  if (isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club, seasonProgress)) {
+  if (!matchesPendingThisWeek && isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club, seasonProgress)) {
     const nextMatch = getNextMatch(playerWithDynamics.week, playerWithDynamics.club, seasonProgress);
     const prematchFlagKey = `prematch_shown_${nextMatch?.week}`;
     if (nextMatch && nextMatch.competition !== "amistoso" && !player.flags?.[prematchFlagKey]) {

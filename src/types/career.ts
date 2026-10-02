@@ -123,6 +123,8 @@ export interface GameEvent {
   minWeek?: number;
   /** Marca un evento de fichaje: si se resuelve con éxito, cambia de club */
   transferOnSuccess?: boolean;
+  /** Identificador del partido clave que resuelve este evento (ver matchKey en match-calendar.ts). */
+  matchKey?: string;
   /** Solo elegible si el jugador tiene un representante de verdad (no familiar ni "sin representante"). */
   requiresExternalAgent?: boolean;
   /** Si se define, el evento solo es elegible en estos modos de carrera */
