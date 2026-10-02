@@ -2281,7 +2281,9 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
       // `sit` viaja con el resultado para que la crónica cuente ESTA jugada
       // y no una inventada: sin ella la IA rellenaba siempre el hueco con
       // "solo ante el portero, la mandaste a las nubes" (reportado en vivo).
-      [decisionFlagKey]: JSON.stringify({ outcome, style, sit: sitText }),
+      // `min` lo fija el código: si lo elige la IA, siempre cae en el mismo
+      // (reportado en vivo: "el minuto 38" partido tras partido).
+      [decisionFlagKey]: JSON.stringify({ outcome, style, sit: sitText, min: 6 + Math.floor(Math.random() * 78) }),
       match_recent_sit: pushRecentIdx(recentSit, sitIdx, sitKeep),
       match_recent_set: pushRecentIdx(recentSet, setIdx, setKeep),
     });
@@ -2379,7 +2381,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
  */
 function buildDecisionInstruction(decisionRaw?: string): string {
   if (!decisionRaw) return "";
-  let decision: { outcome: string; style: string; sit?: string };
+  let decision: { outcome: string; style: string; sit?: string; min?: number };
   try {
     decision = JSON.parse(decisionRaw);
   } catch {
@@ -2411,7 +2413,8 @@ function buildDecisionInstruction(decisionRaw?: string): string {
   const playLine = decision.sit
     ? ` La jugada fue exactamente esta: "${decision.sit}" — cuéntala con ESTOS hechos (el lugar, el tipo de jugada), sin cambiarla por otra. Si el resultado fue fallo, varía CÓMO se falló (poste, paradón, despeje, bloqueo, disparo desviado...) y NO uses la fórmula "solo ante el portero / la mandaste a las nubes" salvo que la jugada diga eso literalmente.`
     : "";
-  return `- MOMENTO DECISIVO YA VIVIDO Y FIJO, NO LO CONTRADIGAS: ${line}${playLine}`;
+  const minLine = decision.min ? ` Ocurrió en el minuto ${decision.min} (úsalo tal cual; los minutos jugados deben ser coherentes con él).` : "";
+  return `- MOMENTO DECISIVO YA VIVIDO Y FIJO, NO LO CONTRADIGAS: ${line}${playLine}${minLine}`;
 }
 
 /**
@@ -2487,7 +2490,7 @@ ${stakesInstruction}
 - PROHIBIDO ABSOLUTO: mencionar cualquier rival o competición que NO sea "${match.rivalClub}" en "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}". No inventes otro equipo, otra jornada ni otro torneo — es EL PARTIDO PROGRAMADO, no uno libre. rival_club debe ser exactamente "${match.rivalClub}".
 - En el título y la descripción, tu equipo se llama SIEMPRE "${player.club}" tal cual — NUNCA un nombre genérico o inventado como "Real Club", "tu equipo" o similar.
 - El marcador se escribe SIEMPRE en el orden "${player.club} - ${match.rivalClub}" (tu equipo primero, sin importar si juegas en casa o fuera), y el relato (quién ganó/perdió/empató) tiene que cuadrar aritméticamente con ese marcador — un marcador donde tu primer número es mayor es VICTORIA tuya, no derrota, y viceversa. Revísalo antes de escribir el texto final.
-- OBLIGATORIO en la descripción, en este orden: (1) "${match.rivalClub}" y "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}" tal cual, (2) marcador EXACTO en el orden indicado arriba (ej "2-1"), (3) minutos jugados, (4) tu nota (0-10, decimal), (5) GOLES exactos (0, 1, 2+), (6) asistencias. Crónica corta (3-5 frases) — que quede clarísimo si metiste gol o no, y si tu equipo ganó, perdió o empató, es el dato más importante de todo el evento.
+- OBLIGATORIO en la descripción, en este orden: (1) "${match.rivalClub}" y "${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}" tal cual, (2) marcador EXACTO en el orden indicado arriba (ej "2-1"), (3) minutos jugados, (4) tu nota (0-10, decimal), (5) GOLES exactos (0, 1, 2+), (6) asistencias. Crónica MUY corta: 2-3 frases en total y máximo ~60 palabras tras los datos (jugada clave + ambiente + una pincelada del entrenador o la grada, no las tres cosas largas) — que quede clarísimo si metiste gol o no, y si tu equipo ganó, perdió o empató, es el dato más importante de todo el evento.
 - FORMATO RECOMENDADO: "Ante ${match.rivalClub} en ${compLabel[match.competition as keyof typeof compLabel] ?? match.competition}, jugaste [X] minutos. Nota: [X.X]/10. Goles: [0/1/2+]. Asistencias: [X]. Marcador: [X-X] (${player.club}-${match.rivalClub})."
 - ${
     (player.stats_matches_played ?? 0) > 0

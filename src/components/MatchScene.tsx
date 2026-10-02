@@ -28,20 +28,20 @@ export function MatchScene({
       />
 
       {/* Contenedor principal */}
-      <div className="relative flex items-center justify-between gap-2 px-4 py-5 sm:gap-4">
+      <div className="relative flex items-center justify-between gap-2 px-4 py-2.5 sm:gap-4">
         {/* Equipo local */}
-        <div className="flex flex-1 flex-col items-center gap-2 text-center">
+        <div className="flex flex-1 flex-col items-center gap-1 text-center">
           <div className="relative">
             <div
-              className="absolute inset-0 blur-xl opacity-30 rounded-full"
+              className="absolute inset-0 blur-lg opacity-30 rounded-full"
               style={{ background: clubColors.primary }}
             />
             <div className="relative">
-              <ClubCrest club={club} size={52} titles={titles} />
+              <ClubCrest club={club} size={34} titles={titles} />
             </div>
           </div>
           <div className="min-w-0">
-            <span className="block max-w-[7rem] text-xs font-bold uppercase leading-tight tracking-widest text-white drop-shadow-sm">
+            <span className="block max-w-[7rem] text-[11px] font-bold uppercase leading-tight tracking-wider text-white drop-shadow-sm">
               {club}
             </span>
             {titles > 0 && (
@@ -54,26 +54,26 @@ export function MatchScene({
 
         {/* Separador VS */}
         <div className="flex flex-col items-center gap-1">
-          <div className="h-8 border-l border-r border-amber-500/50" />
+          <div className="h-4 border-l border-r border-amber-500/50" />
           <span className="text-xs font-black uppercase tracking-[0.3em] text-amber-300 drop-shadow-md">
             VS
           </span>
-          <div className="h-8 border-l border-r border-amber-500/50" />
+          <div className="h-4 border-l border-r border-amber-500/50" />
         </div>
 
         {/* Equipo rival */}
-        <div className="flex flex-1 flex-col items-center gap-2 text-center">
+        <div className="flex flex-1 flex-col items-center gap-1 text-center">
           <div className="relative">
             <div
-              className="absolute inset-0 blur-xl opacity-30 rounded-full"
+              className="absolute inset-0 blur-lg opacity-30 rounded-full"
               style={{ background: rivalColors.primary }}
             />
             <div className="relative">
-              <ClubCrest club={rivalClub} size={52} />
+              <ClubCrest club={rivalClub} size={34} />
             </div>
           </div>
           <div className="min-w-0">
-            <span className="block max-w-[7rem] text-xs font-bold uppercase leading-tight tracking-widest text-white drop-shadow-sm">
+            <span className="block max-w-[7rem] text-[11px] font-bold uppercase leading-tight tracking-wider text-white drop-shadow-sm">
               {rivalClub}
             </span>
             <span className="text-[10px] text-neutral-400 font-semibold">Rival</span>
