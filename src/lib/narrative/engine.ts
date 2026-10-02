@@ -823,13 +823,23 @@ export interface Resolution {
  * La forma/moral/fama del jugador empujan la probabilidad, pero nunca
  * la garantizan.
  */
-export function resolveOption(option: EventOption, state: CareerState): Resolution | null {
+export function resolveOption(
+  option: EventOption,
+  state: CareerState & { flags?: Record<string, string | boolean> | null },
+): Resolution | null {
   if (!option.resolve) return null;
 
   const { baseChance, statModifier, success, fail } = option.resolve;
   const statValue = statModifier ? state[statModifier] : 50;
   const nudge = (statValue - 50) / 250; // pequeño empujón, nunca decisivo
-  const chance = Math.max(0.1, Math.min(0.9, baseChance + nudge));
+  // Jugadas decisivas de partido: tras varias malas seguidas la suerte
+  // "compensa" (+7 puntos por fallo acumulado, hasta +25) y hay un pequeño
+  // plus base. Reportado en vivo: 4-5 partidos sin acertar ni una, y así
+  // nadie se engancha — se sigue pudiendo fallar, pero no eternamente.
+  const isMatchMoment = Object.keys(success.consequences.flags ?? {}).some((k) => k.startsWith("match_decision_"));
+  const missStreak = isMatchMoment ? parseInt(String(state.flags?.match_miss_streak ?? "0"), 10) || 0 : 0;
+  const mercy = isMatchMoment ? 0.04 + Math.min(0.25, missStreak * 0.07) : 0;
+  const chance = Math.max(0.1, Math.min(0.9, baseChance + nudge + mercy));
 
   const isSuccess = Math.random() < chance;
   const outcome: ResolutionOutcome = isSuccess ? success : fail;
@@ -2252,6 +2262,8 @@ function competitionFraming(match: MatchWeek): { title: string; lead: string } {
  * (match_recent_sit / match_recent_set) y se guardan con la consecuencia
  * de la opción elegida, ver `flags` más abajo.
  */
+const NEGATIVE_DECISION_OUTCOMES = new Set(["miss", "miss_bad", "concede", "penalty_conceded", "foul_committed", "beaten"]);
+
 /**
  * Minuto de la jugada decisiva, como etiqueta ("38", "90+3"). Cubre el
  * partido entero: los primeros minutos, el tramo central y, con más peso
@@ -2290,6 +2302,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
   const decisionFlagKey = `match_decision_${match.week}`;
   const recentSit = parseRecentIdx(player.flags?.match_recent_sit);
   const recentSet = parseRecentIdx(player.flags?.match_recent_set);
+  const missStreak = parseInt(String(player.flags?.match_miss_streak ?? "0"), 10) || 0;
   const makeFlags =
     (sitIdx: number, setIdx: number, sitKeep: number, setKeep: number, sitText: string) => (outcome: string, style: string) => ({
       // `sit` viaja con el resultado para que la crónica cuente ESTA jugada
@@ -2298,6 +2311,8 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
       // `min` lo fija el código: si lo elige la IA, siempre cae en el mismo
       // (reportado en vivo: "el minuto 38" partido tras partido).
       [decisionFlagKey]: JSON.stringify({ outcome, style, sit: sitText, min: pickMatchMinute() }),
+      // Racha de jugadas malas seguidas (ver resolveOption: compensa la suerte).
+      match_miss_streak: NEGATIVE_DECISION_OUTCOMES.has(outcome) ? String(missStreak + 1) : "0",
       match_recent_sit: pushRecentIdx(recentSit, sitIdx, sitKeep),
       match_recent_set: pushRecentIdx(recentSet, setIdx, setKeep),
     });
