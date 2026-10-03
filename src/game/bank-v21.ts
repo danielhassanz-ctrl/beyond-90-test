@@ -999,7 +999,7 @@ export const BANK_V21: GameEvent[] = [
     category: "club",
     family: "coach_exit",
     requires: (s) => s.age >= 19 && s.rel.coach >= 55,
-    text: (s) => `Tres derrotas y la directiva ya tiene sustituto. ${who(s, "coach")}, el que te puso cuando nadie te conocía, se juega el puesto el domingo.`,
+    text: (s) => `Tres derrotas y la directiva ya tiene sustituto. ${who(s, "coach")}, el que te puso cuando nadie te conocía, se juega el puesto en el próximo partido.`,
     choices: [
       { id: "publico", label: "Defenderle públicamente en rueda de prensa", outcome: "El club no lo agradece. Él, para siempre.", apply: (s) => { rel(s, "coach", 12); npcMood(s, "coach", 20); stat(s, "fame", 5); flag(s, "defendi_mister"); } },
       { id: "campo", label: "Ganar el domingo y salvarle sin hablar", outcome: "Partidazo. Sigue una jornada más.", apply: (s) => { stat(s, "form", 8); rel(s, "coach", 8); } },
