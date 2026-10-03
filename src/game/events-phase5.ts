@@ -164,10 +164,10 @@ const FOOTBALL: GameEvent[] = [
     image: "locker",
     category: "club",
     requires: (s) => s.rel.coach <= 55 && s.stage !== "youth",
-    text: (s) => `Pizarra del sábado. Tu nombre no está. ${npcName(s, "rival")} sí. El míster no da explicaciones a nadie.`,
+    text: (s) => `Sale la convocatoria. Tu nombre no está. ${npcName(s, "rival")} sí. El míster no da explicaciones a nadie.`,
     choices: [
       { id: "hablar", label: "Pedir explicaciones en privado", outcome: "\"Te falta un punto de intensidad sin balón.\" Duro, pero concreto.", apply: (s) => { rel(s, "coach", 3); stat(s, "morale", -3); flag(s, "aviso_intensidad"); } },
-      { id: "entrenar", label: "Tragar y entrenar como un animal", outcome: "El sábado siguiente estás en la lista.", apply: (s) => { stat(s, "form", 6); rel(s, "coach", 6); stat(s, "fitness", -4); } },
+      { id: "entrenar", label: "Tragar y entrenar como un animal", outcome: "En la siguiente convocatoria estás en la lista.", apply: (s) => { stat(s, "form", 6); rel(s, "coach", 6); stat(s, "fitness", -4); } },
       { id: "molestar", label: "Mostrar el enfado en el entrenamiento", outcome: "Entrada dura al rondo y bronca delante de todos.", apply: (s) => { rel(s, "coach", -9); rel(s, "dressing", -3); conflict(s, "Enfado público por la suplencia"); } },
     ],
   },
@@ -408,7 +408,7 @@ const LIFE: GameEvent[] = [
     image: "family",
     category: "life",
     requires: () => true,
-    text: (s) => `En el campo de tierra donde empezaste te piden que des una charla a los alevines. Nadie va a pagarte y el sábado juegas fuera.`,
+    text: (s) => `En el campo de tierra donde empezaste te piden que des una charla a los alevines. Nadie va a pagarte y tienes el próximo partido fuera.`,
     choices: [
       { id: "ir", label: "Ir aunque sea contrarreloj", outcome: "Cincuenta niños y un nudo en la garganta.", apply: (s) => { rel(s, "fans", 9); rel(s, "family", 7); stat(s, "morale", 8); stat(s, "fitness", -3); } },
       { id: "video", label: "Grabarles un vídeo", outcome: "Lo ponen en la pantalla del club. Aplauden igual.", apply: (s) => { rel(s, "fans", 4); stat(s, "fame", 3); } },
