@@ -2,17 +2,31 @@ import { buildMatchContext, competitionFor as compFor, defById, CLUB_POOL, valid
 import { clubDef } from "./data";
 import type { GameState, KeyMoment, MatchContext, MatchData, MatchMoment, Position, RecentResult, Slot } from "./types";
 
+// Match simulation must replay exactly from persisted career state. A tiny local
+// PRNG keeps outcomes stable across reloads instead of depending on browser entropy.
+let matchRngState = 0x6d2b79f5;
+function seedMatchRng(state: GameState, salt: number): void {
+  matchRngState = (((state.careerSeed ?? 1) ^ Math.imul(state.seasonIndex + 1, 0x9e3779b1) ^ Math.imul((state.sceneCount ?? 0) + 1, 0x85ebca6b) ^ Math.imul(salt + 1, 0xc2b2ae35)) >>> 0) || 1;
+}
+function random(): number {
+  matchRngState += 0x6d2b79f5;
+  let t = matchRngState;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
 export function pick<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]!;
+  return arr[Math.floor(random() * arr.length)]!;
 }
 
 function rnd(min: number, max: number): number {
-  return min + Math.floor(Math.random() * (max - min + 1));
+  return min + Math.floor(random() * (max - min + 1));
 }
 
 function weighted<T>(entries: readonly [T, number][]): T {
   const total = entries.reduce((a, e) => a + e[1], 0);
-  let r = Math.random() * total;
+  let r = random() * total;
   for (const [value, w] of entries) {
     r -= w;
     if (r <= 0) return value;
@@ -140,8 +154,8 @@ function scoreline(state: GameState, opponentPrestige: number): [number, number]
   let [gf, ga] = weighted(SCORELINES);
   const club = clubDef(state.clubId);
   const strength = club.prestige - opponentPrestige;
-  if (strength > 0 && Math.random() < 0.2 + strength * 0.06 && ga > gf) [gf, ga] = [ga, gf];
-  if (strength < 0 && Math.random() < 0.2 - strength * 0.06 && gf > ga) [gf, ga] = [ga, gf];
+  if (strength > 0 && random() < 0.2 + strength * 0.06 && ga > gf) [gf, ga] = [ga, gf];
+  if (strength < 0 && random() < 0.2 - strength * 0.06 && gf > ga) [gf, ga] = [ga, gf];
   return [gf, ga];
 }
 
@@ -166,6 +180,7 @@ export function makeContext(state: GameState, slot: Slot, index = 0): MatchConte
  * jugador, asistencias, rating y relato salen todos de aquí y son coherentes.
  */
 export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, index = 0): MatchData {
+  seedMatchRng(state, index);
   let ctx = makeContext(state, slot, index);
   // Key matches should not feel like the fixture generator is stuck. Avoid
   // surfacing the same opponent twice in the same season when an alternative
@@ -180,7 +195,7 @@ export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, 
   const oppPrestige = oppDef?.prestige ?? 3;
 
   let [gf, ga] = scoreline(state, oppPrestige);
-  if (!ctx.isHome && Math.random() < 0.12 && gf > ga) [gf, ga] = [ga, gf];
+  if (!ctx.isHome && random() < 0.12 && gf > ga) [gf, ga] = [ga, gf];
 
   const minutes = role === 0 || role === 1 ? 0 : role === 2 ? rnd(12, 44) : rnd(60, 90);
 
@@ -194,14 +209,14 @@ export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, 
     const share = minutes / 90;
     // Reparto de los goles REALES del equipo: nunca puede marcar más que el equipo.
     for (let i = 0; i < gf; i++) {
-      if (Math.random() < goalShare(state.player.position) * share * (1 + quality * 0.12)) goals += 1;
+      if (random() < goalShare(state.player.position) * share * (1 + quality * 0.12)) goals += 1;
     }
     const remaining = gf - goals;
     for (let i = 0; i < remaining; i++) {
-      if (Math.random() < assistShare(state.player.position) * share) assists += 1;
+      if (random() < assistShare(state.player.position) * share) assists += 1;
     }
 
-    rating = 5.7 + quality + (Math.random() * 2 - 1) + (state.fitness - 70) * 0.004;
+    rating = 5.7 + quality + (random() * 2 - 1) + (state.fitness - 70) * 0.004;
     rating += goals * 0.9 + assists * 0.55;
     if (state.player.position === "POR" || state.player.position === "DFC") {
       rating += ga === 0 ? 0.6 : ga >= 3 ? -0.7 : 0;
@@ -213,10 +228,10 @@ export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, 
     const kickoff = Math.max(0, 90 - minutes);
     const span = Math.max(6, minutes - 6);
     for (let i = 0; i < goals; i++) {
-      moments.push({ minute: kickoff + 4 + Math.floor(Math.random() * span), text: "Gol tuyo.", tone: "good" });
+      moments.push({ minute: kickoff + 4 + Math.floor(random() * span), text: "Gol tuyo.", tone: "good" });
     }
     for (let i = 0; i < assists; i++) {
-      moments.push({ minute: kickoff + 4 + Math.floor(Math.random() * span), text: "Asistencia tuya.", tone: "good" });
+      moments.push({ minute: kickoff + 4 + Math.floor(random() * span), text: "Asistencia tuya.", tone: "good" });
     }
     const teamOthers = gf - goals - assists;
     for (let i = 0; i < Math.max(0, teamOthers); i++) {
@@ -227,7 +242,7 @@ export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, 
     }
     if (rating < 5.2) moments.push({ minute: kickoff + 20, text: "Pérdida evitable en zona peligrosa.", tone: "bad" });
     if (rating >= 7.4) moments.push({ minute: kickoff + 12, text: "Jugada de calidad aplaudida por la grada.", tone: "good" });
-    if (Math.random() < 0.14) moments.push({ minute: kickoff + 25, text: "Tarjeta amarilla.", tone: "bad" });
+    if (random() < 0.14) moments.push({ minute: kickoff + 25, text: "Tarjeta amarilla.", tone: "bad" });
   } else {
     for (let i = 0; i < gf; i++) moments.push({ minute: rnd(6, 88), text: "Gol de tu equipo.", tone: "neutral" });
     for (let i = 0; i < ga; i++) moments.push({ minute: rnd(6, 88), text: `Gol del ${ctx.opponentShort}.`, tone: "bad" });
@@ -238,7 +253,7 @@ export function simulateMatch(state: GameState, slot: Slot = { kind: "match" }, 
   // choice set has appeared in this career it cannot be selected again. If the
   // small authored pool is exhausted, the match simply has no key decision.
   let keyMoment: KeyMoment | undefined;
-  if (minutes >= 30 && Math.random() < 0.6) {
+  if (minutes >= 30 && random() < 0.6) {
     const unseen = KEY_MOMENTS
       .map((moment, index) => ({ moment, index }))
       .filter(({ index }) => !state.seenEvents.includes(`key_moment_${index}`));
@@ -300,7 +315,7 @@ export function validateMatch(m: MatchData): MatchData {
     if (!m.shootout) {
       const us = rnd(3, 5);
       const them = us === 5 ? rnd(3, 4) : rnd(us + 1, 5);
-      m.shootout = Math.random() < 0.5 ? { us, them: Math.min(them, us - 1 >= 0 ? us - 1 : 0) } : { us: Math.min(them, 4), them: us };
+      m.shootout = random() < 0.5 ? { us, them: Math.min(them, us - 1 >= 0 ? us - 1 : 0) } : { us: Math.min(them, 4), them: us };
       if (m.shootout.us === m.shootout.them) m.shootout.them = m.shootout.us + 1;
     }
   } else {
@@ -376,6 +391,7 @@ export interface SimRun {
  * ocasionalmente, un hecho notable que el motor sí convierte en escena.
  */
 export function simulateRun(state: GameState, count: number): SimRun {
+  seedMatchRng(state, count + 1000);
   const club = clubDef(state.clubId);
   const role = computeRole(state);
   const run: SimRun = {
@@ -413,16 +429,16 @@ export function simulateRun(state: GameState, count: number): SimRun {
     if (played) {
       const share = role === 3 ? 0.95 : 0.42;
       for (let g = 0; g < gf; g++) {
-        if (Math.random() < goalShare(state.player.position) * share) goals += 1;
+        if (random() < goalShare(state.player.position) * share) goals += 1;
       }
       for (let g = 0; g < gf - goals; g++) {
-        if (Math.random() < assistShare(state.player.position) * share * 0.8) assists += 1;
+        if (random() < assistShare(state.player.position) * share * 0.8) assists += 1;
       }
       goals = Math.min(goals, gf);
       assists = Math.min(assists, Math.max(0, gf - goals));
       const rating = Math.max(
         4,
-        Math.min(9.2, 5.9 + (state.overall - baselineOverall(state)) * 0.08 + goals * 0.8 + assists * 0.4 + (Math.random() * 1.4 - 0.7)),
+        Math.min(9.2, 5.9 + (state.overall - baselineOverall(state)) * 0.08 + goals * 0.8 + assists * 0.4 + (random() * 1.4 - 0.7)),
       );
       run.apps += 1;
       run.goals += goals;
@@ -433,22 +449,22 @@ export function simulateRun(state: GameState, count: number): SimRun {
       if (!run.notable) {
         if (goals >= 2) {
           run.notable = { kind: "brace", text: `Firmas ${goals} goles en un partido que nadie esperaba que jugaras entero.`, opponent: ctx.opponent };
-        } else if (goals === 1 && res === "W" && gf - ga === 1 && Math.random() < 0.7) {
+        } else if (goals === 1 && res === "W" && gf - ga === 1 && random() < 0.7) {
           run.notable = { kind: "winner", text: `Tu gol decide el partido ante el ${ctx.opponent}.`, opponent: ctx.opponent };
-        } else if (Math.random() < 0.06) {
+        } else if (random() < 0.06) {
           run.notable = { kind: "red", text: `Te expulsan en ${ctx.venue} con el partido roto.`, opponent: ctx.opponent };
-        } else if (rating < 4.8 && Math.random() < 0.35) {
+        } else if (rating < 4.8 && random() < 0.35) {
           run.notable = { kind: "bad", text: `Partido para olvidar ante el ${ctx.opponent}: te cambian antes de la hora.`, opponent: ctx.opponent };
         }
       }
-    } else if (!run.notable && role <= 1 && Math.random() < 0.05) {
+    } else if (!run.notable && role <= 1 && random() < 0.05) {
       run.notable = { kind: "snub", text: `Te quedas fuera de la lista para ir a ${ctx.venueCity}. El míster no da explicaciones.`, opponent: ctx.opponent };
     }
 
     run.results.push({ opponent: oppDef?.short ?? ctx.opponentShort, gf, ga, res, played, goals, assists });
   }
 
-  if (club.prestige >= 5 && run.losses > run.wins && Math.random() < 0.3) {
+  if (club.prestige >= 5 && run.losses > run.wins && random() < 0.3) {
     // Los grandes no encajan bien las malas rachas: material para escena.
     if (!run.notable) run.notable = { kind: "crisis", text: "La racha ha encendido al entorno del club.", opponent: run.results[0]?.opponent ?? "" };
   }
