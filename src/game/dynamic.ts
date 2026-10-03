@@ -611,7 +611,7 @@ export function resolveDynamic(
       note(s, "Te retiras. Campo lleno, camiseta al aire y final de historia.", "gold");
       return {
         title: "Se acabó",
-        text: "Lo anuncias en sala de prensa con la voz rota. El último domingo el estadio se pone en pie y ya nadie te pide nada más.",
+        text: "Lo anuncias en sala de prensa con la voz rota. En tu último partido en casa el estadio se pone en pie y ya nadie te pide nada más.",
         tone: "gold",
       };
     }
@@ -719,7 +719,7 @@ function resolveMarket(
     title: kind === "loan" ? "Cedido" : "Fichaje cerrado",
     text:
       kind === "loan"
-        ? `Sales cedido al ${clubName} para jugar cada domingo. Vuelves a empezar de cero en un vestuario que no te conoce.`
+        ? `Sales cedido al ${clubName} para tener minutos. Vuelves a empezar de cero en un vestuario que no te conoce.`
         : `Firmas por el ${clubName}. Foto con la camiseta, ficha de ${salary}.000 € y una presión nueva.`,
     tone: "gold",
     share: {
@@ -792,7 +792,7 @@ function resolveThread(
       if (hostile) {
         rel(s, "coach", -10);
         s.flags["nolist"] = 1;
-        return { title: "Conversación rota", text: "Te levantas antes de que acabe. El domingo no estás en la lista.", tone: "bad" };
+        return { title: "Conversación rota", text: "Te levantas antes de que acabe. En el siguiente partido no estás en la lista.", tone: "bad" };
       }
       if (effectiveFace || warm) {
         rel(s, "coach", 8);
