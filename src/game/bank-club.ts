@@ -109,7 +109,7 @@ const COACH: GameEvent[] = [
     requires: (s) => s.rel.coach >= 62 && s.age >= 17,
     text: (s) => `Un periodista pregunta por qué sigues jugando si llevas cuatro partidos sin aparecer. ${who(s, "coach")} responde: "Porque veo lo que hace cuando no tiene el balón. Y porque me da la gana."`,
     choices: [
-      { id: "gracias", label: "Agradecérselo en privado", outcome: "\"No me des las gracias. Devuélvemelo el domingo.\"", apply: (s) => { rel(s, "coach", 6); stat(s, "morale", 8); promise(s, "Le debes un partido al entrenador"); } },
+      { id: "gracias", label: "Agradecérselo en privado", outcome: "\"No me des las gracias. Devuélvemelo en el próximo partido.\"", apply: (s) => { rel(s, "coach", 6); stat(s, "morale", 8); promise(s, "Le debes un partido al entrenador"); } },
       { id: "publico", label: "Devolvérselo públicamente en redes", outcome: "Queda bien fuera, algo pelota dentro.", apply: (s) => { stat(s, "fame", 5); rel(s, "coach", 2); rel(s, "dressing", -3); } },
     ],
   },
