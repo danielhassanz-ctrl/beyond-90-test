@@ -27,6 +27,16 @@ export interface FinanceLine {
   amount: number;
 }
 
+function financeRoll(s: GameState, salt: string): number {
+  const input = `${s.careerSeed ?? 0}:${s.seasonIndex}:${s.sceneCount ?? 0}:${salt}`;
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 0x100000000;
+}
+
 export interface Finance {
   cash: number;
   annualSalary: number;
@@ -122,7 +132,7 @@ export function seasonFinance(s: GameState, seasonTitleCount = 0): { income: num
   for (const p of f.properties) {
     const risky = p.name.includes("Negocio") || p.name.includes("Restaurante") || p.name.includes("Local");
     if (risky) {
-      const roll = Math.random();
+      const roll = financeRoll(s, `asset:${p.name}:${label}`);
       if (roll < 0.16) {
         f.history.unshift({ season: label, text: `Quiebra: ${p.name} cierra y te comes la pérdida.`, amount: -p.value });
         p.value = 0;
@@ -134,7 +144,7 @@ export function seasonFinance(s: GameState, seasonTitleCount = 0): { income: num
         note(s, `${p.name} va bien: reparto de beneficios.`, "good");
       }
     } else if (p.name.includes("Cartera")) {
-      p.value = Math.round(p.value * (1.02 + Math.random() * 0.09));
+      p.value = Math.round(p.value * (1.02 + financeRoll(s, `portfolio:${p.name}:${label}`) * 0.09));
     } else if (p.name.includes("Coche")) {
       p.value = Math.round(p.value * 0.84);
     }
@@ -291,8 +301,8 @@ export function moneyCard(s: GameState): DynamicCard | null {
   if (scene - f.lastOfferScene < 7) return null;
 
   // Patrocinio: cuando hay notoriedad real y aún no hay marca.
-  if (!f.sponsorName && s.fame >= 32 && sponsorshipAllowed(s) && Math.random() < 0.5) {
-    const brand = SPONSORS[Math.floor(Math.random() * SPONSORS.length)]!;
+  if (!f.sponsorName && s.fame >= 32 && sponsorshipAllowed(s) && financeRoll(s, "sponsor:surface") < 0.5) {
+    const brand = SPONSORS[Math.floor(financeRoll(s, "sponsor:brand") * SPONSORS.length)]!;
     f.lastOfferScene = scene;
     return { type: "dynamic", kind: "money", data: { offer: "patrocinio", brand, price: 0 } };
   }
@@ -307,8 +317,8 @@ export function moneyCard(s: GameState): DynamicCard | null {
     );
   });
   if (candidates.length === 0) return null;
-  if (Math.random() < 0.35) return null;
-  const offer = candidates[Math.floor(Math.random() * candidates.length)]!;
+  if (financeRoll(s, "money:surface") < 0.35) return null;
+  const offer = candidates[Math.floor(financeRoll(s, "money:offer") * candidates.length)]!;
   f.lastOfferScene = scene;
   return { type: "dynamic", kind: "money", data: { offer: offer.id, price: offer.price } };
 }
@@ -370,7 +380,7 @@ export function resolveMoney(s: GameState, card: DynamicCard, choiceId: string):
       s.flags["patrocinio_rechazado"] = 1;
       return { title: "Sin marca", text: `Dices que no a ${brand}. Tu representante tarda dos días en contestarte al teléfono.`, tone: "neutral" };
     }
-    if (choiceId === "negociar" && Math.random() < 0.45) {
+    if (choiceId === "negociar" && financeRoll(s, `sponsor:negotiate:${brand}`) < 0.45) {
       s.agent.trust = Math.max(0, s.agent.trust - 6);
       return { title: "Se cae el acuerdo", text: `${brand} no acepta y se lleva el contrato a otro jugador de tu posición. Lo verás con esas botas el resto del año.`, tone: "bad" };
     }
