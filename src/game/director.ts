@@ -2303,7 +2303,7 @@ const BEATS: Beat[] = [
     build: (s) => ({
       kicker: `${currentMonth(s)} · lista`,
       title: "No estás en la convocatoria",
-      text: `Vuelven a colgar la lista y tu apellido no aparece. Nadie te explica nada; el míster habla del rival. ${who(s, "friend")} te manda un mensaje: "vente al gimnasio el domingo, yo tampoco voy".`,
+      text: `Vuelven a colgar la lista y tu apellido no aparece. Nadie te explica nada; el míster habla del rival. ${who(s, "friend")} te manda un mensaje: "vente al gimnasio el día libre, yo tampoco voy".`,
       choices: [
         { id: "gym", label: "Entrenar mientras juegan", apply: (st) => { stat(st, "fitness", 6); st.xp += 14; return { title: "Gimnasio mientras juegan", text: "El estadio se oye desde la sala de pesas. Trabajas igual.", tone: "neutral" }; } },
         { id: "preguntar", label: "Preguntar al entrenador por qué", apply: (st) => { const ok = st.rel.coach >= 50; rel(st, "coach", ok ? 3 : -6); return ok ? { title: "Respuesta honesta", text: "\"Es semana de gente hecha. La siguiente entras\".", tone: "neutral" } : { title: "Mala respuesta", text: "\"Cuando tenga que explicarte algo, te llamo yo\".", tone: "bad" }; } },
@@ -2602,7 +2602,7 @@ const BEATS: Beat[] = [
     build: (s) => ({
       kicker: `${currentMonth(s)} · federación`,
       title: "Llamada de la selección",
-      text: `Convocatoria para la sub-21. Coincide con la semana clave del club y ${who(s, "coach")} deja caer que "el que se va se pierde el once del domingo".`,
+      text: `Convocatoria para la sub-21. Coincide con la semana clave del club y ${who(s, "coach")} deja caer que "el que se va se pierde el próximo once".`,
       choices: [
         { id: "ir", label: "Ir con la selección", apply: (st) => { stat(st, "fame", 10); rel(st, "coach", -5); milestone(st, "Internacional en categorías inferiores"); return { title: "Camiseta nacional", text: "Debutas con la sub-21 y vuelves con la pierna cargada.", tone: "good" }; } },
         { id: "quedarme", label: "Alegar molestias y quedarte", apply: (st) => { rel(st, "coach", 8); stat(st, "fame", -4); return { title: "Te quedas", text: "Juegas el siguiente partido. En la federación apuntan tu nombre con lápiz.", tone: "neutral" }; } },
