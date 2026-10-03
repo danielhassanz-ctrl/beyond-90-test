@@ -297,7 +297,7 @@ const ARCS: Arc[] = [
         kicker: (c) => `Entrenamiento · ${c.month}`,
         title: (c) => `El duelo con ${c.rival}`,
         text: (c) =>
-          `Partidillo de los martes: tú contra ${c.rival} en la misma banda. Él lleva 6 partidos de titular; tú llevas 6 de chándal. ${c.captain} arbitra y se ríe: "esto vale más que la Copa".`,
+          `Partidillo interno: tú contra ${c.rival} en la misma banda. Él lleva 6 partidos de titular; tú llevas 6 de chándal. ${c.captain} arbitra y se ríe: "esto vale más que la Copa".`,
         choices: [
           {
             id: "dominar",
@@ -1173,7 +1173,7 @@ const ARCS: Arc[] = [
               rel(c.s, "coach", 8);
               flag(c.s, "prueba_coach", 1);
               remember(c.s, `${npc(c.s, "coach").name} te dio una última oportunidad`);
-              return { title: "Un partido", text: "\"El sábado juegas. Si no me convences, no vuelves a preguntar\".", tone: "neutral" };
+              return { title: "Un partido", text: "\"En el próximo partido juegas. Si no me convences, no vuelves a preguntar\".", tone: "neutral" };
             },
           },
           {
@@ -1778,7 +1778,7 @@ const ARCS: Arc[] = [
         kicker: (c) => `${c.month} · mensaje pendiente`,
         title: () => "El grupo del barrio",
         text: (c) =>
-          `El grupo de WhatsApp de tus amigos no para: este fin de semana juegan el torneo que disputabais desde niños. Quieren que vayas aunque sea a ver la final, pero el lunes tienes una sesión que el cuerpo técnico considera importante. Uno de tus amigos te suelta que “desde que estás en la cantera ya nunca puedes”. No es una gran crisis, pero por primera vez notas que tu vida antigua y la nueva ya no caben enteras en la misma agenda.`,
+          `El grupo de WhatsApp de tus amigos no para: este fin de semana juegan el torneo que disputabais desde niños. Quieren que vayas aunque sea a ver la final, pero después tienes una sesión que el cuerpo técnico considera importante. Uno de tus amigos te suelta que “desde que estás en la cantera ya nunca puedes”. No es una gran crisis, pero por primera vez notas que tu vida antigua y la nueva ya no caben enteras en la misma agenda.`,
         freeform: "¿Qué les contestas a tus amigos?",
         choices: [
           {
@@ -1790,7 +1790,7 @@ const ARCS: Arc[] = [
               stat(c.s, "morale", 7);
               stat(c.s, "fitness", -4);
               remember(c.s, "Volviste al torneo del barrio aunque al día siguiente entrenabas");
-              return { title: "Dos vidas en un día", text: "No juegas ni un minuto, pero acabas celebrando como antes. El lunes las piernas pesan y la cabeza está bastante más ligera.", tone: "good", end: true };
+              return { title: "Dos vidas en un día", text: "No juegas ni un minuto, pero acabas celebrando como antes. En la siguiente sesión las piernas pesan y la cabeza está bastante más ligera.", tone: "good", end: true };
             },
           },
           {
@@ -1802,7 +1802,7 @@ const ARCS: Arc[] = [
               rel(c.s, "coach", 5);
               rel(c.s, "family", -3);
               remember(c.s, "Elegiste entrenar cuando tus amigos te pidieron volver al torneo del barrio");
-              return { title: "El lunes primero", text: "Entrenas muy bien y el cuerpo técnico lo ve. En el grupo del barrio hay menos mensajes durante unos días.", tone: "neutral", end: true };
+              return { title: "Primero, el entrenamiento", text: "Entrenas muy bien y el cuerpo técnico lo ve. En el grupo del barrio hay menos mensajes durante unos días.", tone: "neutral", end: true };
             },
           },
           {
@@ -2305,7 +2305,7 @@ const BEATS: Beat[] = [
       title: "No estás en la convocatoria",
       text: `Vuelven a colgar la lista y tu apellido no aparece. Nadie te explica nada; el míster habla del rival. ${who(s, "friend")} te manda un mensaje: "vente al gimnasio el domingo, yo tampoco voy".`,
       choices: [
-        { id: "gym", label: "Entrenar el domingo mientras juegan", apply: (st) => { stat(st, "fitness", 6); st.xp += 14; return { title: "Domingo de gimnasio", text: "El estadio se oye desde la sala de pesas. Trabajas igual.", tone: "neutral" }; } },
+        { id: "gym", label: "Entrenar mientras juegan", apply: (st) => { stat(st, "fitness", 6); st.xp += 14; return { title: "Gimnasio mientras juegan", text: "El estadio se oye desde la sala de pesas. Trabajas igual.", tone: "neutral" }; } },
         { id: "preguntar", label: "Preguntar al entrenador por qué", apply: (st) => { const ok = st.rel.coach >= 50; rel(st, "coach", ok ? 3 : -6); return ok ? { title: "Respuesta honesta", text: "\"Es semana de gente hecha. La siguiente entras\".", tone: "neutral" } : { title: "Mala respuesta", text: "\"Cuando tenga que explicarte algo, te llamo yo\".", tone: "bad" }; } },
 
           {
@@ -2605,7 +2605,7 @@ const BEATS: Beat[] = [
       text: `Convocatoria para la sub-21. Coincide con la semana clave del club y ${who(s, "coach")} deja caer que "el que se va se pierde el once del domingo".`,
       choices: [
         { id: "ir", label: "Ir con la selección", apply: (st) => { stat(st, "fame", 10); rel(st, "coach", -5); milestone(st, "Internacional en categorías inferiores"); return { title: "Camiseta nacional", text: "Debutas con la sub-21 y vuelves con la pierna cargada.", tone: "good" }; } },
-        { id: "quedarme", label: "Alegar molestias y quedarte", apply: (st) => { rel(st, "coach", 8); stat(st, "fame", -4); return { title: "Te quedas", text: "Juegas el domingo. En la federación apuntan tu nombre con lápiz.", tone: "neutral" }; } },
+        { id: "quedarme", label: "Alegar molestias y quedarte", apply: (st) => { rel(st, "coach", 8); stat(st, "fame", -4); return { title: "Te quedas", text: "Juegas el siguiente partido. En la federación apuntan tu nombre con lápiz.", tone: "neutral" }; } },
 
           {
             id: "tercera_via",
