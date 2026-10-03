@@ -1453,6 +1453,13 @@ export function eligibleEvents(s: GameState, allowMuted = false, familyWindow = 
     const fam = e.family ?? `solo:${e.id}`;
     const isArcChapter = fam.startsWith("arc_");
     if ((e.priority ?? 0) < 100 && !isArcChapter && fams.has(fam)) return false;
+    // Los arcos deben respirar: un capítulo puede continuar antes que una familia
+    // ambiental, pero nunca inmediatamente detrás de otro capítulo del mismo arco.
+    // Evita que una trama de semanas/meses se descargue como tres tarjetas seguidas.
+    if ((e.priority ?? 0) < 100 && isArcChapter) {
+      const latest = Array.isArray(s.eventHistory) ? s.eventHistory[0] : undefined;
+      if (latest && FAMILY_BY_ID.get(latest.id) === fam) return false;
+    }
     if (!allowMuted && mutedInCareer(s, e)) return false;
     return true;
   });
