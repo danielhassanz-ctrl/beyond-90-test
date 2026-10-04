@@ -1108,6 +1108,36 @@ const GOALKEEPER_DECISION_SITUATIONS = [
  */
 type DecisionFlagsFn = (outcome: string, style: string) => { [key: string]: string };
 
+/**
+ * Opción de jugada decisiva con tirada (éxito/fallo) y su resultado ya
+ * etiquetado para la crónica — mismo patrón que las opciones escritas a mano
+ * de más abajo, sin repetir el boilerplate en cada una.
+ */
+function rollOpt(
+  flags: DecisionFlagsFn,
+  id: string,
+  label: string,
+  subtitle: string,
+  baseChance: number,
+  ok: [text: string, outcome: string],
+  fail: [text: string, outcome: string],
+  okExtra: Consequences = {},
+): EventOption {
+  const style = id.replace(/-/g, "_");
+  return {
+    id,
+    label,
+    subtitle,
+    consequences: {},
+    resolve: {
+      baseChance,
+      statModifier: "media",
+      success: { text: ok[0], consequences: { ...okExtra, flags: flags(ok[1], style) } },
+      fail: { text: fail[0], consequences: { flags: flags(fail[1], style) } },
+    },
+  };
+}
+
 const GOALKEEPER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
   (flags) => [
     {
@@ -1388,6 +1418,39 @@ const GOALKEEPER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "El control con los pies te sale mal y regalas el balón al rival dentro del área.", consequences: { flags: flags("concede", "juego_de_pies") } },
       },
     },
+  ],
+  (flags) => [
+    rollOpt(flags, "palo-lejano", "Tirarte al palo lejano por instinto", "Sin pensarlo, a ciegas", 0.4,
+      ["La punta de tus dedos desvía el balón en el último instante. ¡Paradón!", "save"],
+      ["Llegas tarde y el disparo entra raso. Gol rival.", "concede"], { fama: 1 }),
+    rollOpt(flags, "pies-por-delante", "Achicar con los pies por delante", "Rápido y arriesgado", 0.42,
+      ["Sacas el balón con el pie en el último momento y el estadio ruge.", "save"],
+      ["El pie llega un segundo tarde y el rival marca sin oposición.", "concede"]),
+    rollOpt(flags, "esperar-decision", "Esperar a que el rival decida primero", "Paciencia de portero", 0.5,
+      ["No te mueves y el rival tira a tus manos: parada tranquila.", "save"],
+      ["Te la coloca al otro lado mientras sigues clavado. Gol.", "concede"]),
+  ],
+  (flags) => [
+    rollOpt(flags, "salir-por-alto", "Salir a achicar por alto", "Valiente, con el área detrás", 0.38,
+      ["Sales con decisión y atrapas el balón en el aire, delante de dos rivales.", "save"],
+      ["Sales a destiempo y derribas a un rival: penalti.", "penalty_conceded"]),
+    rollOpt(flags, "primer-palo-defensa", "Cubrir el primer palo y fiarte de tu defensa", "Confianza en el equipo", 0.5,
+      ["Tu defensa cierra el segundo palo y tú cubres el primero: el balón sale fuera.", "save"],
+      ["Tu defensa se despista y el remate entra por el palo que no cubrías.", "concede"]),
+    rollOpt(flags, "tirarse-antes", "Lanzarte al suelo antes de que dispare", "Apuesta valiente", 0.32,
+      ["Adivinas el lado y desvías el disparo con una mano. ¡Parada de campeón!", "save"],
+      ["Te lanzas al lado equivocado y el balón entra por el otro.", "concede"], { fama: 2 }),
+  ],
+  (flags) => [
+    rollOpt(flags, "despejar-corner", "Despejar a córner sin pensarlo", "Seguro, aunque regalas una jugada", 0.55,
+      ["Mandas el balón a córner con un manotazo seco. Peligro conjurado.", "save"],
+      ["El despeje sale flojo y el rival aprovecha el rechace. Gol.", "concede"]),
+    rollOpt(flags, "centro-porteria", "Colocarte en el centro de la portería", "Cubrir los dos lados", 0.45,
+      ["El disparo llega a tus guantes sin que tengas que moverte.", "save"],
+      ["El balón entra por un ángulo que no llegabas a cubrir desde el centro.", "concede"]),
+    rollOpt(flags, "palma-mano", "Sacar el balón con la palma de la mano", "Preciso, con riesgo", 0.4,
+      ["La palma desvía el disparo al larguero y el balón sale fuera. ¡Qué reflejos!", "save"],
+      ["La palma llega tarde y el balón se cuela por debajo.", "concede"]),
   ],
 ];
 
@@ -1672,6 +1735,39 @@ const DEFENDER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
       },
     },
   ],
+  (flags) => [
+    rollOpt(flags, "robo-limpio", "Intentar el robo por detrás con limpieza", "Sin tocarle, solo el balón", 0.45,
+      ["Le robas el balón sin tocarle: entrada de manual y aplauso de la grada.", "clean_tackle"],
+      ["Llegas tarde, le haces falta y el árbitro saca amarilla.", "foul_committed"]),
+    rollOpt(flags, "acompanar", "Acompañar sin abalanzarte", "Aguantar hasta que se equivoque", 0.55,
+      ["Le acompañas hasta la línea de fondo y se queda sin ángulo.", "contained"],
+      ["Se te va con un cambio de ritmo y te deja atrás.", "beaten"]),
+    rollOpt(flags, "falta-tactica", "Hacer una falta táctica antes de que arranque", "Frenar la contra a cualquier precio", 0.5,
+      ["El árbitro la pita sin tarjeta y cortas la contra.", "contained"],
+      ["Amarilla directa, pero cortas el peligro.", "foul_committed"]),
+  ],
+  (flags) => [
+    rollOpt(flags, "anticipar-rebote", "Anticipar el rebote en el área", "Estar donde cae el balón", 0.45,
+      ["Llegas primero al rechace y lo mandas lejos del peligro.", "clean_tackle"],
+      ["El rebote te sorprende y el rival se queda con el balón.", "beaten"]),
+    rollOpt(flags, "tapar-tiro", "Tapar la línea de tiro con el cuerpo", "Sacrificio sin balón", 0.5,
+      ["Bloqueas el disparo con el muslo y el balón sale a córner.", "contained"],
+      ["Se cuela entre tus piernas y el portero ya no llega.", "beaten"]),
+    rollOpt(flags, "empujon-disimulado", "Empujar al rival sin que se note", "Picardía defensiva", 0.35,
+      ["Le desequilibras justo lo necesario y el árbitro no ve nada.", "contained"],
+      ["El árbitro lo ve todo: falta y amarilla.", "foul_committed"]),
+  ],
+  (flags) => [
+    rollOpt(flags, "cabeza-dividido", "Entrar de cabeza al balón dividido", "Sin miedo al choque", 0.45,
+      ["Ganas el cabezazo y despejas lejos del área.", "clean_tackle"],
+      ["El rival gana la posición y se queda con la segunda jugada.", "beaten"]),
+    rollOpt(flags, "cerrar-por-dentro", "Cerrar al atacante por dentro", "Obligarle a ir hacia fuera", 0.5,
+      ["Le cierras el camino y el rival acaba mandando el centro a la grada.", "contained"],
+      ["Se cuela por el pasillo interior y encara al portero.", "beaten"]),
+    rollOpt(flags, "reorganizar-linea", "Dar un grito y reorganizar la línea", "Liderar sin balón", 0.55,
+      ["Tu grito coloca a toda la defensa justo a tiempo: el rival se queda sin hueco.", "contained"],
+      ["Tus compañeros no te oyen y se abre un hueco enorme.", "beaten"]),
+  ],
 ];
 
 const MIDFIELDER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
@@ -1954,6 +2050,39 @@ const MIDFIELDER_OPTION_SETS: ((flags: DecisionFlagsFn) => EventOption[])[] = [
         fail: { text: "El árbitro interpreta que ha sido falta. Amarilla para ti.", consequences: { forma: -1, flags: flags("foul_committed", "faltar_al_choque") } },
       },
     },
+  ],
+  (flags) => [
+    rollOpt(flags, "conducir-disparar", "Conducir cinco metros y disparar", "Ganar espacio y probar", 0.38,
+      ["Te acomodas la pelota y sacas un disparo seco que se cuela por la escuadra. ¡Gol!", "goal"],
+      ["El disparo sale demasiado alto y se pierde por encima del larguero.", "miss"]),
+    rollOpt(flags, "pase-exterior", "Pasar al hueco con el exterior", "Elegancia y riesgo", 0.45,
+      ["El pase con el exterior deja a tu delantero solo y no perdona.", "assist"],
+      ["El pase sale demasiado largo y el portero lo recoge sin apuros.", "miss"]),
+    rollOpt(flags, "proteger-cuerpo", "Proteger la pelota con el cuerpo", "No perder nunca el control", 0.6,
+      ["Aguantas el balón hasta que sube todo el equipo.", "contained"],
+      ["Te quitan el balón por detrás en un descuido.", "beaten"]),
+  ],
+  (flags) => [
+    rollOpt(flags, "balon-largo-palo", "Lanzar el balón largo al segundo palo", "Una apuesta aérea", 0.4,
+      ["El balón cae al segundo palo y tu compañero remata a placer.", "assist"],
+      ["El balón se pasa de largo y sale por la línea de fondo.", "miss"]),
+    rollOpt(flags, "pausa-cabeza", "Hacer una pausa y levantar la cabeza", "Pensar antes de actuar", 0.55,
+      ["La pausa descoloca al rival y el equipo recupera el aire.", "contained"],
+      ["Te quedas pensando demasiado y te roban el balón.", "beaten"]),
+    rollOpt(flags, "pierna-mala", "Disparar con la pierna menos hábil", "Atrevimiento", 0.28,
+      ["Sale una vaselina preciosa que se cuela. ¡Gol, y con la mala!", "goal"],
+      ["El disparo sale blando y el portero lo ataja sin problemas.", "miss"], { fama: 2 }),
+  ],
+  (flags) => [
+    rollOpt(flags, "presionar-perder", "Presionar al rival tras perder el balón", "Recuperar arriba", 0.5,
+      ["Presionas con rabia y recuperas el balón en campo contrario.", "contained"],
+      ["Te superan con un pase y el rival sale a la contra.", "beaten"]),
+    rollOpt(flags, "abrir-banda-interior", "Abrir a banda con el interior", "Ensanchar el campo", 0.5,
+      ["El pase abre el campo y el extremo se planta en el área.", "assist"],
+      ["El pase se queda corto y el lateral rival lo intercepta.", "miss"]),
+    rollOpt(flags, "pase-pie-delantero", "Buscar al delantero con un pase al pie", "Directo y limpio", 0.52,
+      ["El delantero controla, gira y marca. ¡Qué pase!", "assist"],
+      ["El pase llega con demasiada fuerza y el delantero no puede controlar.", "miss"]),
   ],
 ];
 
@@ -2248,6 +2377,61 @@ const ATTACKER_OPTION_SETS: OptionSet[] = [
         fail: { text: "El defensa no se la compra y te cierra el disparo justo a tiempo.", consequences: { flags: flags("miss", "simular_quiebro") } },
       },
     },
+  ] },
+  { mode: "suelo", build: (flags) => [
+    rollOpt(flags, "pica-portero", "Picar el balón por encima del portero", "Delicadeza con riesgo", 0.36,
+      ["La pelota dibuja una parábola preciosa y se cuela por encima del guardameta. ¡Gol!", "goal"],
+      ["El balón se queda corto y el portero lo atrapa sin esfuerzo.", "miss"]),
+    rollOpt(flags, "cruzar-palo-largo", "Cruzar el disparo al palo largo", "Colocación antes que fuerza", 0.45,
+      ["Lo colocas en el palo largo, lejos del alcance del portero. ¡Gol!", "goal"],
+      ["Se te va ajustado, pero por fuera: el balón besa el poste y sale.", "miss"]),
+    rollOpt(flags, "esperar-llegada", "Esperar a que llegue un compañero por detrás", "Un pase en el momento justo", 0.5,
+      ["Esperas el desmarque justo y lo filtras: tu compañero marca sin oposición.", "assist"],
+      ["Esperas demasiado: la defensa cierra y el pase llega tarde.", "miss"]),
+  ] },
+  { mode: "suelo", build: (flags) => [
+    rollOpt(flags, "fingir-disparo", "Fingir el disparo y regatear al portero", "Sangre fría", 0.3,
+      ["Tragas al portero con un amago de cine y empujas el balón a la red. ¡Qué clase!", "wondergoal"],
+      ["El portero no pica y te arrebata el balón de los pies.", "miss_bad"], { fama: 3 }),
+    rollOpt(flags, "zurda-obligada", "Disparar con la pierna que no es la tuya", "Sin tiempo para cambiar", 0.33,
+      ["Sacas un zurdazo seco que el portero ni ve. ¡Gol!", "goal"],
+      ["El golpeo sale flojo y el portero atrapa el balón.", "miss"]),
+    rollOpt(flags, "ceder-derecha", "Ceder al compañero de la derecha", "Mejor posicionado que tú", 0.52,
+      ["Se la cedes sin dudar y él define a placer.", "assist"],
+      ["La cesión llega con retraso y el defensa la corta.", "miss"]),
+  ] },
+  { mode: "suelo", build: (flags) => [
+    rollOpt(flags, "volea-botando", "Rematar de volea el balón botando", "Todo o nada", 0.35,
+      ["La volea sale seca, imparable y se mete por la escuadra. ¡Golazo!", "goal"],
+      ["Golpeas mal el bote y el balón se va muy alto.", "miss"]),
+    rollOpt(flags, "pisar-hueco", "Pisar la pelota y buscar el hueco", "Una pausa que descoloca", 0.4,
+      ["Pisas la pelota, el defensa se queda clavado y defines con calma.", "goal"],
+      ["Pierdes un segundo y el defensa te cierra el ángulo.", "miss"]),
+    rollOpt(flags, "girar-pase-muerte", "Girarte rápido y buscar el pase de la muerte", "Servir en lugar de rematar", 0.48,
+      ["Te giras y pones un pase atrás perfecto; tu compañero no falla.", "assist"],
+      ["El giro te deja sin ángulo y el pase sale mal.", "miss"]),
+  ] },
+  { mode: "suelo", build: (flags) => [
+    rollOpt(flags, "raso-primer-palo", "Disparo raso al primer palo", "Rápido y directo", 0.44,
+      ["Raso, seco y pegado al palo: el portero no llega. ¡Gol!", "goal"],
+      ["El portero cierra el primer palo con el pie y evita el gol.", "miss"]),
+    rollOpt(flags, "pared-compañero", "Hacer una pared con el compañero", "Juego combinado", 0.5,
+      ["La pared sale redonda: te devuelven el balón dentro del área y asistes al segundo.", "assist"],
+      ["La pared sale mal y el rival recupera el balón.", "miss"]),
+    rollOpt(flags, "sombrero-defensa", "Intentar un sombrero al defensa", "Para la galería", 0.26,
+      ["Sombrero perfecto: el defensa se queda mirando al cielo y tú marcas. ¡Genialidad!", "wondergoal"],
+      ["El balón se te va largo y el defensa se queda con él.", "miss_bad"], { fama: 3 }),
+  ] },
+  { mode: "aereo", build: (flags) => [
+    rollOpt(flags, "cabeza-picado", "Cabecear picado hacia el suelo", "Que bote antes del portero", 0.4,
+      ["El cabezazo bota delante del portero y se cuela. ¡Gol!", "goal"],
+      ["El cabezazo sale alto y se va por encima del larguero.", "miss"]),
+    rollOpt(flags, "prolongar-cabeza", "Prolongar de cabeza para el compañero", "Servir en lugar de rematar", 0.5,
+      ["Prolongas con inteligencia y tu compañero marca a placer.", "assist"],
+      ["La prolongación se te va larga y sale por la línea de fondo.", "miss"]),
+    rollOpt(flags, "atacar-balon-cuerpo", "Atacar el balón con todo el cuerpo", "Sin miedo al choque", 0.3,
+      ["Te lanzas con todo, golpeas el balón con la frente y la mandas dentro. ¡Qué valor!", "goal"],
+      ["El choque con el central te frena y el balón se va fuera.", "miss_bad"], { fama: 2 }),
   ] },
 ];
 
