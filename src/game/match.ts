@@ -461,7 +461,7 @@ export function simulateRun(state: GameState, count: number): SimRun {
           run.notable = { kind: "bad", text: `Partido para olvidar ante el ${ctx.opponent}: te cambian antes de la hora.`, opponent: ctx.opponent };
         }
       }
-    } else if (!run.notable && role <= 1 && random() < 0.05) {
+    } else if (!run.notable && i >= injuredFor && role <= 1 && random() < 0.05) {
       run.notable = { kind: "snub", text: `Te quedas fuera de la lista para ir a ${ctx.venueCity}. El míster no da explicaciones.`, opponent: ctx.opponent };
     }
 
