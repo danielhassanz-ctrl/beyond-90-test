@@ -113,6 +113,15 @@ for (const id of CELEBRITY_IDS) RULES[id] = { ...(RULES[id] ?? {}), minFama: 30 
 /** Texto que implica entrenar o jugar: no sale con una lesión larga en curso. */
 const PHYSICAL_TEXT = /\b(entrenamiento|sesión de|calentamiento|sobre el campo|rondo|juegas|jugar el|marcar a portería|el partido de hoy|salir al campo)\b/i;
 
+/**
+ * ¿Puede el jugador jugar un partido ahora mismo? No si está lesionado ni si
+ * el entrenador lo ha apartado. Para escenas que SON partido (gol de
+ * chilena, capítulos de arco que se juegan en el campo).
+ */
+export function canPlayNow(player: Player): boolean {
+  return getInjuryRemaining(player.flags) === 0 && computeRole(player).role !== "apartado";
+}
+
 export function isEventCoherentWithState(
   event: { id: string; category: string; title?: string; description?: string },
   player: Player,

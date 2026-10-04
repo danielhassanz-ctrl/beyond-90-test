@@ -3,6 +3,7 @@ import { MODE_TARGET_WEEKS } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { getPersonName } from "@/lib/narrative/npcs";
+import { canPlayNow } from "@/lib/narrative/state-rules";
 
 /**
  * Arco narrativo de varios capítulos: el compañero con el que debutas en
@@ -47,6 +48,8 @@ export function shouldTriggerArcoReencuentro(player: Player): boolean {
   // Igual que arco-rival: un arco de 4 capítulos necesita margen real
   // entre cada uno, y en modo Express casi nunca llegaría a cerrarse.
   if (player.mode === "express") return false;
+  // Un capítulo es "el gol que os debíais": hay que poder jugar.
+  if (!canPlayNow(player)) return false;
   const fase = getFase(player);
   if (fase >= FASE_MAX) return false;
 

@@ -3,6 +3,7 @@ import { MODE_TARGET_WEEKS } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { getPersonName } from "@/lib/narrative/npcs";
+import { canPlayNow } from "@/lib/narrative/state-rules";
 
 /**
  * Arco narrativo de varios capítulos: el compañero de la misma quinta con
@@ -50,6 +51,8 @@ export function shouldTriggerArcoRival(player: Player): boolean {
   // que la carrera termine (medido: se completa en 1 de cada 50 carreras
   // simuladas) — mejor no arrancarlo que dejarlo siempre a medias.
   if (player.mode === "express") return false;
+  // Los capítulos 2 y 3 son partidos: hay que poder jugarlos.
+  if (!canPlayNow(player)) return false;
   const fase = getFase(player);
   if (fase >= FASE_MAX) return false;
 

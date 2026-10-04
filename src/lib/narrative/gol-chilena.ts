@@ -1,5 +1,6 @@
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
+import { canPlayNow } from "@/lib/narrative/state-rules";
 
 /**
  * Gol de chilena: momento que puede repetirse a lo largo de la carrera
@@ -42,6 +43,8 @@ export function shouldTriggerGolChilena(player: Player): boolean {
   const media = player.media ?? 0;
   const fama = player.fama ?? 0;
   if (media < 55 || fama < 20) return false;
+  // Un gol de chilena no se marca lesionado ni sin convocar.
+  if (!canPlayNow(player)) return false;
 
   const { lastWeek } = getTracker(player);
   const weeksSinceLast = player.week - lastWeek;

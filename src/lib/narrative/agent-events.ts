@@ -2,6 +2,10 @@ import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { randomPersonName } from "@/lib/narrative/npcs";
+import { pickInterestedClub } from "@/lib/narrative/market-window";
+import { pickLowerClub } from "@/lib/narrative/role-events";
+import { computeRole } from "@/lib/narrative/role";
+import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 
 /**
  * Eventos donde el AGENTE/REPRESENTANTE es un personaje activo y conversacional.
@@ -41,6 +45,8 @@ export function markAgentDialogueTriggered(player: Player): void {
  */
 export function shouldTriggerAgentDialogue(player: Player): boolean {
   if (player.club === NO_CLUB_YET) return false;
+  // "Sin representante aún" no llama a nadie (antes salía "Sin representante aún te llama...").
+  if (!player.agent_name || /^Sin /.test(player.agent_name)) return false;
   const { lastWeek } = getTracker(player);
   if (lastWeek > 0 && player.week - lastWeek < 5) return false;
   return Math.random() < 0.22;
@@ -57,6 +63,13 @@ export function pickEligibleAgentTrigger(player: Player): string | null {
   const fama = player.fama ?? 0;
   const media = player.media ?? 0;
   const patrimonio = player.patrimonio ?? 0;
+
+  // El estado manda: lesionado, el representante llama para apoyarte; sin
+  // minutos, para hablar de ellos — antes llamaba "con una oportunidad" fuera
+  // cual fuera tu situación.
+  if (getInjuryRemaining(player.flags) > 0 && Math.random() < 0.5) return AGENT_EVENT_TRIGGERS.INJURY_SUPPORT;
+  const role = computeRole(player).role;
+  if ((role === "suplente" || role === "apartado") && Math.random() < 0.6) return AGENT_EVENT_TRIGGERS.MINUTES_TALK;
 
   const eligible: string[] = [AGENT_EVENT_TRIGGERS.OFFER_FROM_CLUB, AGENT_EVENT_TRIGGERS.WARNING];
   if (fama >= 25) eligible.push(AGENT_EVENT_TRIGGERS.COMPETING_AGENT);
@@ -101,6 +114,9 @@ export const AGENT_EVENT_TRIGGERS = {
   // Lesión larga: el agente te asesora psicológicamente
   INJURY_SUPPORT: "agent-injury-support",
 
+  // Sin minutos (suplente o apartado): el agente habla con el club
+  MINUTES_TALK: "agent-minutes-talk",
+
   // Presión mediática/fama te está afectando
   FAME_PRESSURE: "agent-fame-pressure",
 
@@ -122,12 +138,13 @@ export function buildAgentDialogueEvent(
   agentName: string,
 ): GameEvent | null {
   switch (trigger) {
-    case AGENT_EVENT_TRIGGERS.OFFER_FROM_CLUB:
+    case AGENT_EVENT_TRIGGERS.OFFER_FROM_CLUB: {
+      const interested = pickInterestedClub(player);
       return {
         id: "agent-offer-club-" + Date.now(),
         category: "representante",
         title: "Tu agente te trae una oportunidad",
-        description: `${agentName} te llama: "Tengo algo bueno para ti. Un club de nivel superior está buscando refuerzo en tu posición. No es de los grandes aún, pero es el paso que necesitas para llegar. ¿Hablamos con ellos?"`,
+        description: `${agentName} te llama: "Tengo algo bueno para ti. El ${interested} está buscando refuerzo en tu posición y ha preguntado por ti. ¿Hablamos con ellos?"`,
         options: [
           {
             id: "0",
@@ -143,8 +160,18 @@ export function buildAgentDialogueEvent(
               baseChance: 0.5,
               statModifier: "media",
               success: {
-                text: `La reunión sale bien: el interés era real y ahora hay algo concreto sobre la mesa para valorar en las próximas semanas.`,
-                consequences: { fama: 3, moral: 3 },
+                text: `La reunión sale bien: el interés del ${interested} era real y en las próximas semanas llegará una oferta formal para valorar.`,
+                consequences: {
+                  fama: 3,
+                  moral: 3,
+                  // Encadena con la oferta formal (market-window.ts): antes
+                  // "hay algo concreto" no llegaba a ninguna parte.
+                  flags: {
+                    transfer_interest: interested,
+                    transfer_interest_week: String(player.week),
+                    transfer_interest_source: "agente",
+                  },
+                },
               },
               fail: {
                 text: `Al final era solo ruido de mercado — el club ficha a otro jugador y ${agentName} te lo cuenta con cara de circunstancias. "Pasa constantemente, no te lo tomes a mal."`,
@@ -161,6 +188,7 @@ export function buildAgentDialogueEvent(
         ],
         isMilestone: false,
       };
+    }
 
     case AGENT_EVENT_TRIGGERS.COMPETING_AGENT:
       return {
@@ -259,6 +287,93 @@ export function buildAgentDialogueEvent(
         ],
         isMilestone: false,
       };
+
+    case AGENT_EVENT_TRIGGERS.INJURY_SUPPORT: {
+      const left = getInjuryRemaining(player.flags);
+      return {
+        id: "agent-injury-" + Date.now(),
+        category: "representante",
+        title: `${agentName} te llama durante la baja`,
+        description: `${agentName} no te habla de contratos, solo de cómo estás. Lleva días sin que le contestes con ganas y te lo dice sin rodeos: "Te quedan unos ${left} ${left === 1 ? "mes" : "meses"} de rehabilitación y no quiero que los pases solo con la cabeza dándote vueltas."`,
+        options: [
+          {
+            id: "0",
+            label: "Contarle cómo te sientes de verdad",
+            subtitle: "Abrirte con quien te conoce",
+            consequences: { rel_representante: 4, moral: 4 },
+            outcomeText: `${agentName} te deja hablar sin interrumpir ni una vez. Cuando acabas, solo dice: "Gracias por fiarte de mí."`,
+          },
+          {
+            id: "1",
+            label: "Pedirle que filtre a la prensa y a los clubes mientras estás de baja",
+            subtitle: "Cero ruido hasta volver",
+            consequences: { rel_representante: 2, moral: 2, reputacion: 1 },
+            outcomeText: `${agentName} se encarga de todo: durante las próximas semanas, ningún periodista ni club te molesta.`,
+          },
+          {
+            id: "2",
+            label: "Decirle que estás bien y colgar pronto",
+            subtitle: "No quieres hablar de ello",
+            consequences: { rel_representante: -2, moral: -2 },
+            outcomeText: "Cuelgas con la sensación de haber dicho mucho menos de lo que te pasa por dentro.",
+          },
+        ],
+        isMilestone: false,
+      };
+    }
+
+    case AGENT_EVENT_TRIGGERS.MINUTES_TALK: {
+      const lowerClub = pickLowerClub(player);
+      return {
+        id: "agent-minutes-" + Date.now(),
+        category: "representante",
+        title: `${agentName} quiere hablar de tus minutos`,
+        description: `${agentName} te cita en una cafetería lejos del campo de entrenamiento: "Llevas semanas sin jugar y eso no puede seguir. Tengo tres caminos, y los tres tienen coste."`,
+        options: [
+          {
+            id: "0",
+            label: "Que presione al club para que te den minutos",
+            subtitle: "Arriesgar la relación con el míster",
+            consequences: {},
+            resolve: {
+              baseChance: 0.4,
+              statModifier: "reputacion",
+              success: {
+                text: `${agentName} lo consigue: el club le asegura al míster que te dé una oportunidad real. En el próximo entrenamiento, el míster te mira distinto.`,
+                consequences: { rel_entrenador: 6, moral: 4, flags: { coach_bench: "0", bench_streak: "0" } },
+              },
+              fail: {
+                text: "La presión sienta mal arriba: el míster se entera de quién ha movido el asunto y te lo hace notar en el siguiente entrenamiento.",
+                consequences: { rel_entrenador: -4, moral: -3 },
+              },
+            },
+          },
+          {
+            id: "1",
+            label: `Que busque una salida a un club donde juegues, como el ${lowerClub}`,
+            subtitle: "Salir para volver a jugar",
+            consequences: {
+              rel_representante: 3,
+              moral: 2,
+              flags: {
+                transfer_interest: lowerClub,
+                transfer_interest_week: String(player.week),
+                transfer_interest_source: "agente",
+              },
+            },
+            outcomeText: `${agentName} ya está sacando el móvil antes de que acabes el café. "En unas semanas tendrás algo sobre la mesa."`,
+          },
+          {
+            id: "2",
+            label: "Aguantar y callarte, sin hacer ruido",
+            subtitle: "Esperar tu momento",
+            consequences: { moral: -2, rel_representante: -1 },
+            outcomeText: `${agentName} asiente sin convicción. "Tú sabrás. Pero esta conversación vuelve a salir si esto no cambia."`,
+          },
+        ],
+        isMilestone: false,
+      };
+    }
 
     default:
       return null;

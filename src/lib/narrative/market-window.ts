@@ -4,6 +4,7 @@ import { NO_CLUB_YET } from "@/lib/constants";
 import { randomPersonName } from "@/lib/narrative/npcs";
 import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
 import { computeRole } from "@/lib/narrative/role";
+import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 
 /**
  * Mercado de fichajes: dos ventanas por temporada (verano y enero) y en
@@ -75,7 +76,7 @@ const POOL_HIGH = ["Atlético de Madrid", "FC Barcelona", "Borussia Dortmund", "
 const POOL_ELITE = ["Real Madrid", "Manchester City", "Liverpool FC", "Paris Saint-Germain", "Bayern de Múnich", "Juventus"];
 
 /** Un club de un nivel ligeramente superior al del jugador, nunca el suyo. */
-function pickInterestedClub(player: Player): string {
+export function pickInterestedClub(player: Player): string {
   const media = player.media ?? 50;
   const age = 16 + Math.floor(player.week / 10);
   let pool: string[] = media >= 82 ? POOL_ELITE : media >= 72 ? POOL_HIGH : media >= 58 ? POOL_MID : POOL_LOW;
@@ -95,7 +96,17 @@ type RumorKind = "interes" | "agente" | "competencia" | "bulo" | "capitan" | "cl
 function pickKind(player: Player): RumorKind {
   const last = String(player.flags?.market_last_kind ?? "");
   const weighted: RumorKind[] = ["interes", "interes", "interes", "agente", "agente", "agente", "competencia", "bulo", "capitan", "clausula", "clausula", "familia", "en_venta", "en_venta", "intermediario", "confundido", "asador", "hincha_rico", "agente_doble", "comision"];
-  const options = weighted.filter((k) => k !== last);
+  // El estado manda sobre el mercado: lesionado nadie paga por ti ahora (solo
+  // ruido de fondo); sin minutos, el club empieza a ponerte en el escaparate.
+  if (getInjuryRemaining(player.flags) > 0) {
+    const quiet: RumorKind[] = ["bulo", "confundido", "asador", "hincha_rico", "comision", "familia"];
+    const pool = quiet.filter((k) => k !== last);
+    return pick(pool.length ? pool : quiet);
+  }
+  const role = computeRole(player).role;
+  const extra: RumorKind[] =
+    role === "suplente" || role === "apartado" ? ["en_venta", "en_venta", "en_venta", "en_venta", "agente", "agente"] : [];
+  const options = [...weighted, ...extra].filter((k) => k !== last);
   return pick(options);
 }
 
