@@ -452,7 +452,7 @@ export function simulateRun(state: GameState, count: number): SimRun {
 
       if (!run.notable) {
         if (goals >= 2) {
-          run.notable = { kind: "brace", text: `Firmas ${goals} goles en un partido que nadie esperaba que jugaras entero.`, opponent: ctx.opponent };
+          run.notable = { kind: "brace", text: role === 3 ? `Firmas ${goals} goles ante el ${ctx.opponent} y sales como una de las figuras del partido.` : `Sales desde el banquillo y firmas ${goals} goles ante el ${ctx.opponent}: has cambiado el partido.`, opponent: ctx.opponent };
         } else if (goals === 1 && res === "W" && gf - ga === 1 && random() < 0.7) {
           run.notable = { kind: "winner", text: `Tu gol decide el partido ante el ${ctx.opponent}.`, opponent: ctx.opponent };
         } else if (random() < 0.06) {
