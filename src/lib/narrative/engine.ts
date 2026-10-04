@@ -1011,6 +1011,14 @@ const ATTACKER_DECISION_SITUATIONS: Situation[] = [
   { text: "Recibes un pase al hueco entre el lateral y el central, con solo el portero por delante.", mode: "suelo" },
   { text: "El balón te llega botando en el área, en un ángulo incómodo para rematar.", mode: "suelo" },
   { text: "Te quedas mano a mano con el central que te marca, dentro del área pequeña.", mode: "suelo" },
+  { text: "Controlas un pase largo en carrera, con el central rival pegado a ti a un metro.", mode: "suelo" },
+  { text: "El balón te llega al borde del área con el defensa de espaldas: tienes medio segundo para decidir.", mode: "suelo" },
+  { text: "Un compañero te asiste desde la banda y te quedas solo contra el lateral.", mode: "suelo" },
+  { text: "Recoges un despeje rival en la frontal con toda la defensa descolocada.", mode: "suelo" },
+  { text: "Recibes dentro del área con dos defensas encima y un compañero libre al segundo palo.", mode: "suelo" },
+  { text: "Te quedas con el balón en la esquina del área, con el portero un paso adelantado.", mode: "suelo" },
+  { text: "Un centro desde la derecha te llega a la altura del punto de penalti, con un central saltando contigo.", mode: "aereo" },
+  { text: "Un córner cerrado te cae en la cabeza, rodeado de tres defensas que no te sueltan.", mode: "aereo" },
 ];
 
 const MIDFIELDER_DECISION_SITUATIONS = [
@@ -1026,6 +1034,16 @@ const MIDFIELDER_DECISION_SITUATIONS = [
   "Recibes un balón suelto tras un rechace, a 25 metros de la portería rival.",
   "El equipo lleva minutos sin ocasión y tú tienes que inventar algo desde el centro.",
   "Ganas un balón dividido en el círculo central con el partido apretado.",
+  "Recibes un pase largo en el pico del área con espacio y tiempo para pensar.",
+  "Un compañero te cede el balón en el balcón del área con dos delanteros desmarcándose.",
+  "Cortas un pase rival en tres cuartos de campo y tienes el campo abierto por delante.",
+  "El balón está en tu banda izquierda y el equipo necesita cambiar de lado para respirar.",
+  "El rival se repliega en bloque y te deja un metro de espacio a treinta metros de la portería.",
+  "El míster te grita desde la banda que aceleres: el reloj aprieta y el marcador no ayuda.",
+  "Recibes de cara en el círculo central, pero tus dos compañeros de ataque están muy marcados.",
+  "Un pase atrás te llega con el rival encima y apenas tiempo para decidir qué hacer.",
+  "Un rebote te cae en el pico del área y los dos delanteros te piden el balón a gritos.",
+  "Se para el juego: tienes la pelota en los pies y todo el estadio espera que te la juegues.",
 ];
 
 const DEFENDER_DECISION_SITUATIONS = [
@@ -1041,6 +1059,16 @@ const DEFENDER_DECISION_SITUATIONS = [
   "Un rival se planta en el área pequeña tras un pase filtrado que nadie cortó.",
   "El extremo rival centra desde la línea de fondo con varios compañeros esperando el remate.",
   "Recibes bajo presión en tu propia área, con dos rivales cerrándote las salidas.",
+  "Un delantero rápido se te cuela a la espalda y llega con ventaja hacia tu área.",
+  "El rival lanza un balón largo y tienes que decidir entre cortar o ir al choque.",
+  "Un córner del rival: te toca marcar al mejor rematador de su equipo.",
+  "Un pase al hueco deja a un rival mano a mano contigo por el pasillo interior.",
+  "Tu portero sale a destiempo y deja la meta vacía con un rival a punto de rematar.",
+  "Un rival te encara dentro de tu propia área con un compañero libre al segundo palo.",
+  "Tu equipo gana por la mínima y el rival lo juega todo a un centro lateral en el descuento.",
+  "Un contragolpe veloz te obliga a retroceder veinte metros corriendo con un rival al lado.",
+  "El rival saca una falta lateral peligrosa y tú eres el responsable de la marca.",
+  "El balón sobrevuela tu área y el delantero rival salta contigo con el brazo extendido.",
 ];
 
 const GOALKEEPER_DECISION_SITUATIONS = [
@@ -1055,6 +1083,16 @@ const GOALKEEPER_DECISION_SITUATIONS = [
   "Un rival se queda solo tras un rechace en el área pequeña, con la portería medio vacía.",
   "El balón te llega con efecto en un centro cerrado, difícil de calcular.",
   "Quedan segundos de partido y un córner final pone toda tu área patas arriba.",
+  "Un delantero te encara tras driblar a tu último central, con el estadio entero conteniendo la respiración.",
+  "Un tiro libre directo desde veintidós metros, con la barrera mal colocada.",
+  "Un balón largo te deja mano a mano con el delantero en tu propio campo.",
+  "El rival lanza un contraataque tres contra dos y eres la última línea.",
+  "Un pase atrás mal medido de tu defensa te pone en un compromiso con un rival encima.",
+  "Un cabezazo picado a bocajarro desde el punto de penalti, sin tiempo ni para parpadear.",
+  "Un balón colgado al segundo palo y tu defensa, dormida.",
+  "El rival pisa tu área con el balón controlado y un solo defensa entre vosotros.",
+  "Sale un disparo cruzado desde la banda, esquinado y raso.",
+  "Un rechace cae en la frontal y un rival lo toma de primeras, sin pensarlo.",
 ];
 
 /**
