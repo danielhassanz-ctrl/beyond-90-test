@@ -37,7 +37,7 @@ function Table({ title, stats }: { title: string; stats: CompetitionStats }) {
     <div className="overflow-hidden rounded-2xl border border-panel-border bg-surface">
       <div className="flex items-center justify-between border-b border-panel-border px-4 py-3">
         <p className="text-kicker text-gold">{title}</p>
-        <p className="text-kicker text-muted-foreground">{totalMatches} partidos</p>
+        <p className="text-kicker text-muted-foreground">{totalMatches} partidos clave</p>
       </div>
       <table className="w-full text-sm">
         <thead>
@@ -73,6 +73,9 @@ export function CompetitionStatsCard({ season, career, seasonLabel }: { season: 
     <div className="space-y-4">
       <Table title={`Esta temporada · ${seasonLabel}`} stats={season} />
       <Table title="Toda la carrera" stats={career} />
+      <p className="text-center text-[11px] text-muted-foreground">
+        Cuentan tus partidos clave, los que juegas en tu historia. La clasificación de abajo suma las 38 jornadas del equipo.
+      </p>
     </div>
   );
 }
