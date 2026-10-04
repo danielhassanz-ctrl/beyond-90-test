@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { applyConsequences, nextWeekGap, resolveOption, maybeAddFreeText } from "@/lib/narrative/engine";
+import { applyConsequences, resolveOption, maybeAddFreeText } from "@/lib/narrative/engine";
 import { tickInjury } from "@/lib/narrative/career-dynamics";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { personalizeEvent } from "@/lib/narrative/npcs";
@@ -21,10 +21,9 @@ import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
-import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET, WEEKS_PER_SEASON } from "@/types/career";
-import { getMatchesInWeek, matchKey, parseMatchDone, addMatchDone } from "@/lib/calendar/match-calendar";
+import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET } from "@/types/career";
+import { computeWeekAdvance } from "@/lib/narrative/week-advance";
 import { pickLowerClub } from "@/lib/narrative/role-events";
-import { getSeasonProgress } from "@/lib/calendar/competition-progress";
 import type { Player } from "@/types/player";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { extractStatsFromEvent, applyStatUpdate, recalculateMedia } from "@/lib/player/update-stats";
@@ -122,102 +121,9 @@ export async function resolveEvent(formData: FormData) {
       ? { ...consequences, patrimonio: patch.patrimonio - player.patrimonio }
       : consequences;
 
-  // La secuencia garantizada de arranque (elegir representante, ofertas,
-  // firma del contrato, pretemporada, filial hasta el debut oficial) es
-  // TODA pretemporada narrativamente — no debe adelantar el calendario real,
-  // o la edad (que es una función pura de la semana) sube antes de que el
-  // jugador llegue siquiera a debutar. Solo dos saltos deliberados de una
-  // semana: al cerrar la pretemporada con el amistoso, y al debutar de
-  // verdad, que es cuando entra la temporada real (Liga desde semana 3).
-  const CALENDAR_LOCKED_EVENT_IDS = new Set([
-    "inicio-fichaje-agente",
-    "pretemp-bienvenida",
-    "pretemp-fisico",
-    "pretemp-competencia",
-    "pretemp-tactica",
-    "pretemp-capitan",
-    "pretemp-pasado",
-    "rookie-reserva-introduccion",
-    "rookie-reserva-partido",
-    "rookie-tactica-mister",
-    "rookie-debut-anuncio",
-  ]);
-  const SEASON_CHECKPOINT_EVENT_IDS = new Set(["pretemp-amistoso", "rookie-debut-oficial"]);
-  const isCalendarLocked =
-    CALENDAR_LOCKED_EVENT_IDS.has(event.id) ||
-    event.id.startsWith("first-signing-") ||
-    event.id.startsWith("contrato-debut") ||
-    // El momento decisivo (rematar/pasar/floritura) es parte del MISMO
-    // partido que se resuelve justo después — no puede avanzar la
-    // semana él solo, o el partido en sí saltaría a la jornada
-    // siguiente sin haberse jugado nunca.
-    event.id.startsWith("match-decision-") ||
-    // Rumores de mercado y ofertas formales (market-window.ts): pueden
-    // colarse en una semana de partido, así que no deben avanzarla o el
-    // partido se saltaría sin jugarse.
-    event.id.startsWith("mercado-") ||
-    event.id.startsWith("oferta-") ||
-    // Mensajes por redes (social-dm.ts): tampoco avanzan la semana.
-    event.id.startsWith("social-dm-") ||
-    // Vida de pretemporada (preseason-life.ts): tampoco avanza la semana.
-    event.id.startsWith("preseason-ev-") ||
-    // Arcos narrativos de varios capítulos (arco-*.ts): se comprueban ANTES
-    // que si hay un partido real programado esta semana (ver
-    // pickNextEventDynamic en engine.ts) — sin bloquear el calendario aquí
-    // igual que mercado-/social-dm-/preseason-ev-, un capítulo de arco caído
-    // justo en semana de partido de liga se comería ese partido entero sin
-    // que se llegara a narrar nunca, el mismo bug de fondo ya corregido
-    // antes para el resto de eventos "fuera de calendario".
-    // Torneo de selecciones (torneo.ts): llegada, escenas de concentración y
-    // partidos ocurren "en verano" sin avanzar el calendario — el último
-    // partido tampoco, para que la pretemporada siga arrancando después.
-    event.id.startsWith("sel-mundial-s") ||
-    event.id.startsWith("sel-eurocopa-s") ||
-    event.id.startsWith("sel-copa-america-s") ||
-    event.id.startsWith("torneo-life-") ||
-    // Escenas con el fisio durante una lesión: no adelantan el calendario.
-    event.id.startsWith("fisio-") ||
-    event.id.startsWith("mercado-banquillo-") ||
-    event.id.startsWith("matchday-torneo-") ||
-    event.id.startsWith("arco-rival-") ||
-    event.id.startsWith("arco-hermano-") ||
-    event.id.startsWith("arco-patrocinador-");
-  // Un partido resuelto (matchday-*) TIENE que avanzar la semana siempre:
-  // si se deja al avance probabilístico normal, cuando sale 0 el jugador
-  // vuelve a caer en la misma jornada y el partido se narra dos veces con
-  // el mismo marcador — encontrado jugando una carrera real.
-  const isMatchdayEvent = event.id.startsWith("matchday-");
-  const isSeasonCheckpoint = SEASON_CHECKPOINT_EVENT_IDS.has(event.id) || isMatchdayEvent;
-
-  // Un mes puede traer varios partidos clave (ver buildMatchCalendar): el
-  // mes solo avanza cuando se han jugado todos. Mientras quede alguno por
-  // jugar, ni siquiera una escena de vida normal (la que se cuela entre
-  // dos partidos) puede adelantar la semana — se comería ese partido.
-  const doneMatchKeys = parseMatchDone(player.flags, player.week);
-  let matchDoneFlag: string | undefined;
-  if (isMatchdayEvent && event.matchKey && !doneMatchKeys.includes(event.matchKey)) {
-    matchDoneFlag = addMatchDone(player.flags, player.week, event.matchKey);
-    doneMatchKeys.push(event.matchKey);
-  }
-  const weekMatches = getMatchesInWeek(
-    player.week,
-    player.club,
-    getSeasonProgress(player as Player, Math.floor((player.week - 1) / WEEKS_PER_SEASON)),
-  );
-  const weekHasPendingMatches =
-    (!isMatchdayEvent || Boolean(event.matchKey)) && weekMatches.some((m) => !doneMatchKeys.includes(matchKey(m)));
-
-  const newWeek = isCalendarLocked
-    ? player.week
-    : isMatchdayEvent
-      ? weekHasPendingMatches
-        ? player.week
-        : player.week + 1
-      : weekHasPendingMatches
-        ? player.week
-        : isSeasonCheckpoint
-          ? player.week + 1
-          : player.week + nextWeekGap(player.media, player.mode);
+  // Cuánto avanza el calendario (y qué partido del mes queda marcado como
+  // jugado) lo decide week-advance.ts: misma regla para el motor y las pruebas.
+  const { newWeek, matchDoneFlag } = computeWeekAdvance(player as Player, event);
   const targetWeeks = MODE_TARGET_WEEKS[player.mode];
   const willRetire = !isRetirementDecision && player.mode !== "pro" && newWeek > targetWeeks;
 
