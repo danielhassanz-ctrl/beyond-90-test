@@ -420,7 +420,9 @@ export function simulateRun(state: GameState, count: number): SimRun {
     const ctx = makeContext(state, slot, i);
     const oppDef = CLUB_POOL.find((c) => c.name === ctx.opponent);
     const [gf, ga] = scoreline(state, oppDef?.prestige ?? 3);
-    const played = i >= injuredFor && role >= 2;
+    // A bench role means available for minutes, not an automatic appearance in every fixture.
+    // Use the seeded match RNG so reloads reproduce the same participation pattern.
+    const played = i >= injuredFor && (role === 3 || (role === 2 && random() < 0.72));
     run.matches += 1;
     const res: RecentResult["res"] = gf > ga ? "W" : gf === ga ? "D" : "L";
     if (res === "W") run.wins += 1;
