@@ -158,6 +158,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           label: "Decirle que estás a gusto donde estás",
           subtitle: "Lealtad, por ahora",
           consequences: { rel_entrenador: 3, rel_aficion: 2, rel_representante: -2 },
+          outcomeText: "Tu respuesta llega a oídos del club antes de que acabe el día. En el siguiente entrenamiento, el míster te choca la mano con más fuerza de la habitual.",
         },
         {
           id: "filtrar",
@@ -207,6 +208,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           label: "Entrenar el doble y callar",
           subtitle: "Que hablen tus piernas",
           consequences: { forma: 3, moral: -1, rel_entrenador: 2 },
+          outcomeText: "Eres el primero en llegar y el último en irte. El preparador físico levanta una ceja, apunta algo en su libreta y no dice nada.",
         },
         {
           id: "salidas",
@@ -241,12 +243,14 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           label: "Seguirle el juego en redes con humor",
           subtitle: "Momento viral asegurado",
           consequences: { fama: 4, moral: 2, rel_aficion: -1 },
+          outcomeText: "Tu publicación se llena de memes en minutos y hasta la cuenta oficial del club te responde con un emoji. A algún aficionado, eso sí, no le ha hecho tanta gracia.",
         },
         {
           id: "desmentir",
           label: "Desmentirlo seco y volver al trabajo",
           subtitle: "Corta el ruido",
           consequences: { rel_entrenador: 3, rel_aficion: 3 },
+          outcomeText: "Cuatro líneas secas en tus redes y el bulo se desinfla en una tarde. En la grada, más de uno agradece que no lo hayas alimentado.",
         },
         {
           id: "ni-si-ni-no",
@@ -281,6 +285,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           label: "Apoyar al capitán, salga lo que salga",
           subtitle: "Lealtad de vestuario",
           consequences: { rel_vestuario: 6, rel_entrenador: -2 },
+          outcomeText: "El capitán te abraza en el pasillo sin decir palabra. Más tarde, en el vestuario, oyes a un veterano repetir que contigo se puede contar.",
         },
         {
           id: "brazalete",
@@ -299,6 +304,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           label: "No abrir la boca",
           subtitle: "Que se aclare solo",
           consequences: { moral: 1 },
+          outcomeText: "Te quedas callado mientras todos opinan alrededor. Nadie lo nota hoy, pero el capitán sabe quién estuvo a su lado y quién no.",
         },
       ],
     };
@@ -331,12 +337,14 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           label: "Que pague quien te quiera: tú te dejas querer",
           subtitle: "Poner el foco en la salida",
           consequences: { fama: 3, rel_aficion: -3, flags: interestFlags(club, week, source) },
+          outcomeText: "La noticia corre por el club en una hora. En el vestuario te miran con otros ojos, y desde la grada alguien te grita 'mercenario' al salir del campo.",
         },
         {
           id: "sin-comentar",
           label: "Decir que la cláusula es cosa de tu representante",
           subtitle: "Sin mojarte",
           consequences: { rel_representante: 1 },
+          outcomeText: "'Eso, con mi representante', respondes. El presidente asiente despacio, anota algo y cierra la reunión mucho antes de lo esperado.",
         },
       ],
     };
@@ -358,18 +366,21 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           label: `Escuchar y decirle a ${agent} que se mueva`,
           subtitle: "Abrir la puerta con la familia detrás",
           consequences: { moral: 2, rel_representante: 2, flags: interestFlags(club, week, source) },
+          outcomeText: `${agent} te mira con una sonrisa que no puede disimular: "Ya sabía yo que lo hablarías en casa." Esa misma noche empieza a hacer llamadas.`,
         },
         {
           id: "aqui-feliz",
           label: "Decir que aquí eres feliz y no te mueves",
           subtitle: "Estabilidad ante todo",
           consequences: { moral: 4, rel_aficion: 3 },
+          outcomeText: "Se hace un silencio en la mesa y después alguien sonríe. Esa noche, por primera vez en semanas, cenáis sin hablar de mercado.",
         },
         {
           id: "no-se-metan",
           label: "Pedir que no se metan en tu carrera",
           subtitle: "Marcar distancias, con riesgo",
           consequences: { moral: -2, rel_entrenador: 1 },
+          outcomeText: "Lo dices más seco de lo que querías. Se hace un silencio incómodo y nadie vuelve a tocar el tema en toda la cena.",
         },
       ],
     };
@@ -401,12 +412,14 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           label: `Aprovechar para que ${agent} busque ofertas`,
           subtitle: "Si me venden, que sea a mi favor",
           consequences: { rel_representante: 3, flags: interestFlags(club, week, source) },
+          outcomeText: `${agent} no pierde ni un segundo: "Si te quieren vender, que sea a tu favor." Antes de que acabes el café ya tiene el móvil pegado a la oreja.`,
         },
         {
           id: "demostrar",
           label: "Demostrar en el campo que no debes salir",
           subtitle: "Que hablen tus números",
           consequences: { forma: 3, moral: 1, rel_entrenador: 2 },
+          outcomeText: "Sales al siguiente entrenamiento como si fuera una final. El míster levanta una ceja y el director deportivo lo apunta en su libreta.",
         },
       ],
     };
@@ -462,6 +475,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
           label: "Grabarlo a escondidas y subirlo a redes",
           subtitle: "Contenido gratis",
           consequences: { fama: 5, moral: 2, rel_representante: -1 },
+          outcomeText: "El vídeo supera el millón de visualizaciones en una sola noche. El club te pide explicaciones al día siguiente, aunque más de uno se ríe por lo bajo.",
         },
         { id: "ignorar", label: "Ignorarlo y seguir andando", subtitle: "Cabeza fría", consequences: { moral: 1 } },
       ],
@@ -647,6 +661,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
         label: "Decir que solo piensas en tu club",
         subtitle: "Cero ruido",
         consequences: { rel_aficion: 4, rel_entrenador: 2 },
+        outcomeText: "'Aquí estoy y aquí me quedo', dices ante las cámaras. Los aficionados guardan la frase y el míster te mira con aprobación desde el banquillo.",
       },
     ],
   };
@@ -692,6 +707,7 @@ export function buildTransferOfferEvent(player: Player): GameEvent {
       label: `Aceptar y fichar por ${art(club)}`,
       subtitle: "Nuevo reto, nuevo vestuario",
       consequences: { club, fama: 6, moral: 4, rel_vestuario: -4, rel_aficion: -5, flags: clear },
+      outcomeText: `Firmas el traspaso con la mano temblando. En el vestuario te despiden con abrazos sinceros... y alguna mirada fría que no se molesta en disimular.`,
     },
     {
       id: "negociar",
@@ -716,6 +732,7 @@ export function buildTransferOfferEvent(player: Player): GameEvent {
       label: "Rechazarla: aquí me quedo",
       subtitle: "La grada lo va a agradecer",
       consequences: { rel_aficion: 7, rel_entrenador: 3, moral: 2, flags: clear },
+      outcomeText: "La noticia de que has rechazado la oferta recorre el club en horas. En el siguiente partido, la grada te dedica una ovación larga y cerrada.",
     },
   ];
   return {
@@ -846,6 +863,7 @@ export function buildOwnMoveEvent(player: Player): GameEvent {
         label: "Quedarte y competir sin más",
         subtitle: "Cabeza fría",
         consequences: { moral: 1, forma: 2, rel_entrenador: 2 },
+        outcomeText: "Te quedas, sin aspavientos. En el siguiente entrenamiento nadie comenta nada, pero el míster te sitúa en el primer grupo.",
       },
     ],
   };
@@ -886,6 +904,7 @@ export function buildDeadlineDayEvent(player: Player): GameEvent {
         label: "Firmar ya, contra reloj",
         subtitle: "Ahora o nunca",
         consequences: { club, fama: 6, moral: 3, rel_vestuario: -4, rel_aficion: -5, flags: clear },
+        outcomeText: `Firmas a toda prisa, con ${agent} dictándote por teléfono dónde poner cada rúbrica. A las doce en punto de la noche, el fichaje es oficial.`,
       },
       {
         id: "forzar",
@@ -910,6 +929,7 @@ export function buildDeadlineDayEvent(player: Player): GameEvent {
         label: "Dejarlo pasar: te quedas",
         subtitle: "Sin arrepentimientos",
         consequences: { rel_aficion: 6, moral: 1, flags: clear },
+        outcomeText: "Se cierra el mercado sin que muevas un dedo. A la mañana siguiente, los aficionados que esperaban en la puerta del campo te aplauden.",
       },
     ],
   };

@@ -159,18 +159,21 @@ export function buildLoanEndEvent(player: Player): GameEvent {
         label: `Volver al ${origin}`,
         subtitle: "Otra oportunidad de ganarte el sitio",
         consequences: { club: origin, moral: 2, flags: { loan_returned: true } },
+        outcomeText: `El ${origin} te recibe con un comunicado oficial y un abrazo del míster. En la ciudad, el recuerdo del año fuera ya te da otro peso.`,
       },
       {
         id: "quedarme",
         label: `Quedarte en el ${player.club} de forma definitiva`,
         subtitle: "Ser importante donde ya lo eres",
         consequences: { rel_aficion: 6, moral: 3, flags: { loan_returned: true } },
+        outcomeText: `Firmas con el ${player.club} de forma definitiva. Al día siguiente, en la tienda del club, ya hay camisetas con tu nombre.`,
       },
       {
         id: "esperar",
         label: "Esperar a ver qué otras ofertas llegan",
         subtitle: "Jugar tus cartas con calma",
         consequences: { fama: 2, rel_representante: 2, flags: { loan_returned: true } },
+        outcomeText: "Tu representante te mira con una media sonrisa: 'Paciencia es la palabra'. Dejas que pasen unos días y notas que el teléfono suena más de lo habitual.",
       },
     ],
   };

@@ -85,6 +85,7 @@ export function buildArcoPatrocinadorEvent(player: Player): GameEvent {
           // adelante), pero sí anota la semana para no repetir la misma
           // oferta la semana siguiente.
           consequences: { flags: { arco_patrocinador_last_week: String(week) } },
+          outcomeText: "Lo rechazas con educación. Tu representante asiente sin reproches, aunque en voz baja murmura que 'esas oportunidades no se repiten'.",
         },
       ],
     };

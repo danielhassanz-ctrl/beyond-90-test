@@ -532,6 +532,9 @@ export function buildSocialDmEvent(player: Player): GameEvent {
       subtitle: o.subtitle,
       dmReply: o.reply || undefined,
       dmFollowUp: o.followUp,
+      // La contestación del otro lado ES la reacción a lo que decides: se
+      // enseña también en la pantalla de resultado, no solo en la captura.
+      outcomeText: o.followUp && !o.resolve ? `La respuesta llega enseguida: «${o.followUp}»` : undefined,
       consequences: { ...o.consequences, flags: dmFlags },
       resolve: o.resolve
         ? {

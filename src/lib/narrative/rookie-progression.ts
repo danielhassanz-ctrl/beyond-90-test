@@ -28,12 +28,14 @@ export function buildReservaIntroduccionEvent(): GameEvent {
         label: "Entrenar duro y demostrar que mereces el primer equipo",
         subtitle: "Mentalidad de profesional",
         consequences: { moral: 5, forma: 3, rel_entrenador: 2 },
+        outcomeText: "El míster del filial asiente: 'Eso es lo que quería oír'. En los siguientes entrenamientos, notas que te dan más balones que antes.",
       },
       {
         id: "frustracion",
         label: "Aceptar el plan pero frustrado por no jugar ya con el primero",
         subtitle: "Ambición legítima",
         consequences: { moral: 0, forma: 1, rel_entrenador: -1 },
+        outcomeText: "Dices que sí, pero con la mandíbula apretada. Un compañero veterano te da una palmada: 'A todos nos pasó'.",
       },
     ],
   };
@@ -70,12 +72,14 @@ export function buildReservaPartidoEvent(): GameEvent {
         label: "Ver el empate como aprendizaje positivo",
         subtitle: "Mentalidad de crecimiento",
         consequences: { moral: 4, forma: 2, rel_entrenador: 3 },
+        outcomeText: "Sales del campo con la cabeza alta. El técnico, camino del vestuario, te dice algo en voz baja que te hace sonreír: 'Vas bien'.",
       },
       {
         id: "autocritica",
         label: "Sentir que pudiste haber hecho más",
         subtitle: "Exigencia personal",
         consequences: { moral: 1, forma: 1, rel_entrenador: 2 },
+        outcomeText: "Repasas cada jugada en el autobús de vuelta, con los auriculares puestos y sin hablar. Esa exigencia es tu mayor virtud y tu mayor peso.",
       },
     ],
   };
@@ -96,12 +100,14 @@ export function buildTacticaMisterEvent(position: string): GameEvent {
         label: "Salir motivado: 'Voy a demostrarle que valgo'",
         subtitle: "Confianza en ti mismo",
         consequences: { moral: 6, forma: 2, rel_entrenador: 4 },
+        outcomeText: "Se lo dices al espejo del vestuario antes de salir. Cuando el míster te mira al entrar en el túnel, ve a otro jugador.",
       },
       {
         id: "presion",
         label: "Sentir la presión pero listo para el reto",
         subtitle: "Nerviosismo productivo",
         consequences: { moral: 2, forma: 1, rel_entrenador: 2 },
+        outcomeText: "Notas las manos algo frías, pero respiras hondo y sales al campo. El primer balón que tocas lo despejas sin pensar, y el nudo se afloja.",
       },
     ],
   };
@@ -123,12 +129,14 @@ export function buildDebutAnuncioEvent(): GameEvent {
         label: "Nervioso pero listo. Llevas esperando esto toda la vida",
         subtitle: "Emoción controlada",
         consequences: { moral: 5, forma: -1, rel_entrenador: 2 },
+        outcomeText: "Te tiemblan las piernas en el túnel y el capitán, sin decir nada, te pone la mano en el hombro. Cuando suena el himno, ya solo piensas en jugar.",
       },
       {
         id: "confiado",
         label: "Totalmente confiado. 'Voy a demostrar por qué me ficharon'",
         subtitle: "Seguridad en uno mismo",
         consequences: { moral: 3, forma: 2, rel_entrenador: 1 },
+        outcomeText: "Sales con la barbilla alta y los compañeros veteranos intercambian una mirada: 'Este tiene carácter'. Tu primera acción es un regate que levanta a la grada.",
       },
     ],
   };
@@ -151,12 +159,14 @@ export function buildDebutOficialEvent(club: string, rivalry: string = "rival lo
         label: "Satisfecho: cumpliste tu objetivo sin errores",
         subtitle: "Debut profesional consumado",
         consequences: { media: 1, moral: 5, forma: 1, rel_entrenador: 3 },
+        outcomeText: "El míster te felicita por no haber cometido errores, pero tú notas en su mirada que quiere ver algo más la próxima vez.",
       },
       {
         id: "hambre",
         label: "Empezar a exigirte más minutos. Una entrada no es suficiente",
         subtitle: "Ambición de protagonismo",
         consequences: { media: 0, moral: 4, forma: 2, rel_entrenador: 1 },
+        outcomeText: "Se lo dices al míster sin rodeos. Él arquea una ceja, sonríe a medias y te contesta: 'Pues demuéstramelo'.",
       },
     ],
   };

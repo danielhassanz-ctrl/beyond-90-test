@@ -59,12 +59,14 @@ export function buildEnteringPeakEvent(): GameEvent {
         label: "Ambición máxima: ganar TODO en estos años",
         subtitle: "Pensar en historia",
         consequences: { moral: 8, media: 3, forma: 2 },
+        outcomeText: "Lo dices en voz alta, delante del espejo del vestuario. A partir de esta noche, cada sesión de entrenamiento tiene un objetivo, y tu preparador lo nota enseguida.",
       },
       {
         id: "disfrutar",
         label: "Disfrutar: vivir plenamente, no solo ganar",
         subtitle: "Balance vida-carrera",
         consequences: { moral: 10, media: 1 },
+        outcomeText: "Decides que cada partido va a ser una fiesta. En el siguiente entrenamiento ríes más que nunca, y el vestuario lo agradece más que cualquier gol.",
       },
     ],
   };
@@ -92,12 +94,14 @@ export function buildExitingPeakEvent(age: number): GameEvent {
         label: "Adaptarte: jugar más inteligente",
         subtitle: "Madurez táctica",
         consequences: { media: 1, moral: 5, forma: -2 },
+        outcomeText: "Empiezas a ver el campo de otra forma: menos carreras, más cabeza. El míster te pide que se lo expliques a los jóvenes y tú, casi sin querer, ya estás enseñando.",
       },
       {
         id: "luchar",
         label: "Luchar por mantener el pico",
         subtitle: "Negación",
         consequences: { media: -1, forma: -3, moral: 2 },
+        outcomeText: "Duermes mejor, comes mejor, entrenas mejor. Tu cuerpo responde, aunque sabes que cada mes cuesta un poco más que el anterior.",
       },
     ],
   };
@@ -121,12 +125,14 @@ export function buildEnteringDeclineEvent(): GameEvent {
         label: "Aceptar y disfrutar los últimos años",
         subtitle: "Paz",
         consequences: { moral: 7, forma: 0 },
+        outcomeText: "Te sientas en la grada de un entrenamiento y simplemente miras. Hace años que no veías el fútbol así, sin prisa y con una sonrisa.",
       },
       {
         id: "pelear",
         label: "Pelear contra el tiempo: probar tratamientos, más entrenamiento",
         subtitle: "Desesperación",
         consequences: { moral: 2, forma: -5, media: -2 },
+        outcomeText: "Tu fisio te mira, resopla y te dice: 'Está bien, probemos'. Al día siguiente ya tienes un plan nuevo en el móvil.",
       },
     ],
   };
@@ -228,12 +234,14 @@ export function buildReadyToRetireEvent(player: Player): GameEvent {
         label: "Retirarte ahora: fin digno",
         subtitle: "Leyenda",
         consequences: { moral: 8, status: "retired" },
+        outcomeText: "Se lo dices al club con la voz firme y los ojos húmedos. Esa tarde, el estadio guarda un minuto de silencio... y luego un aplauso que dura casi cinco.",
       },
       {
         id: "continuar",
         label: "Continuar un par de años más",
         subtitle: "Exprimir el final",
         consequences: { moral: 2, forma: -3 },
+        outcomeText: "Decides seguir un tiempo más. El club lo celebra con alivio y tú, en casa, te preguntas cuánto de ese 'un poco más' es ganas y cuánto miedo a parar.",
       },
     ],
   };

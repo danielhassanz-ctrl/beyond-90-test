@@ -95,12 +95,14 @@ export function buildPreseasonBienvenidaEvent(club: string, seed: string): GameE
         label: "Escuchar con humildad: 'Gracias, voy a aprovechar cada momento'",
         subtitle: "Mentalidad de aprendiz",
         consequences: { moral: 4, rel_entrenador: 3, forma: 1 },
+        outcomeText: "Tu respuesta llega rápido a oídos del cuerpo técnico. El preparador físico te lo dice más tarde: 'Con esa cabeza, vas a llegar lejos'.",
       },
       {
         id: "confiado",
         label: "Confiado: 'Estoy listo para competir desde ya'",
         subtitle: "Seguridad en tus capacidades",
         consequences: { moral: 3, rel_entrenador: 1, forma: 2 },
+        outcomeText: "Lo dices alto y claro, con una sonrisa. En el grupo, unos te miran con simpatía y otros con una ceja arqueada: ya te están tomando la medida.",
       },
     ],
   };
@@ -126,12 +128,14 @@ export function buildPreseasonFisicoEvent(seed: string): GameEvent {
         label: "Comprometerte a los entrenamientos extra sin quejar",
         subtitle: "Trabajo silencioso",
         consequences: { forma: 4, moral: 2, rel_entrenador: 2 },
+        outcomeText: "Te quedas una hora más cada tarde sin una queja. El resto del equipo se va, y tú sigues con las cuerdas y los conos.",
       },
       {
         id: "competitivo",
         label: "Presionarte a ti mismo: 'Voy a estar al nivel en una semana'",
         subtitle: "Ambición pero riesgo",
         consequences: { forma: 3, moral: 3, rel_entrenador: 1 },
+        outcomeText: "Te marcas una semana de plazo ante el espejo y entrenas como si cada sesión fuera un partido. Al quinto día, el míster se queda mirándote desde la banda.",
       },
     ],
   };
@@ -157,12 +161,14 @@ export function buildPreseasonCompetenciaEvent(seed: string): GameEvent {
         label: "Respetarlos: 'Tengo mucho que aprender de vosotros'",
         subtitle: "Construir relación",
         consequences: { moral: 2, rel_vestuario: 3, forma: 1 },
+        outcomeText: "El veterano del equipo te mira un segundo y asiente: 'Pregunta lo que quieras'. Desde ese día, te sientas a su lado en la comida.",
       },
       {
         id: "desafiante",
         label: "Ver la competencia como motivación: 'Voy a quitarles el puesto'",
         subtitle: "Actitud de competidor",
         consequences: { moral: 4, rel_vestuario: -1, forma: 2 },
+        outcomeText: "Lo dices bajito, para ti. Pero un compañero que te oye de reojo sonríe: 'Bienvenido a la guerra'.",
       },
     ],
   };
@@ -385,18 +391,21 @@ export function buildPreseasonAmistoso(seed: string): GameEvent {
         label: "Satisfecho: 'Sólido, sin errores. La próxima busco más'",
         subtitle: "Evaluación realista",
         consequences: tramo.consequences,
+        outcomeText: "El míster no te dice nada, pero al pasar a tu lado te da una palmada rápida en el hombro. Para él, eso es un elogio.",
       },
       {
         id: "hambriento",
         label: "Sentir que pudiste haber hecho más y prometer esfuerzo extra",
         subtitle: "Mentalidad ganadora",
         consequences: { moral: tramo.consequences.moral - 1, forma: tramo.consequences.forma + 1, rel_entrenador: tramo.consequences.rel_entrenador + 1 },
+        outcomeText: "Prometes más esfuerzo y lo cumples: al día siguiente llegas antes que nadie. El míster levanta la vista desde su despacho y lo anota.",
       },
       {
         id: "relativizar",
         label: "Quitarle hierro delante de la prensa: 'es solo un amistoso'",
         subtitle: "Gestión de imagen",
         consequences: { fama: 1, rel_aficion: 1, forma: Math.max(0, tramo.consequences.forma - 1) },
+        outcomeText: "'Es solo un amistoso', dices con una sonrisa. En la rueda de prensa, algún periodista asiente, otros no pueden evitar apuntar la frase.",
       },
     ],
   };
