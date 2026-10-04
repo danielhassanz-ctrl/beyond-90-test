@@ -3185,7 +3185,9 @@ export async function pickNextEventDynamic(
   // repetía turno tras turno (visto en vivo: 5 veces seguidas "La noche
   // antes del Getafe", cada una con texto distinto pero la misma premisa
   // — no tiene sentido narrativo vivir varias vísperas del mismo partido).
-  if (!matchesPendingThisWeek && isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club, seasonProgress)) {
+  // La víspera de un partido solo tiene sentido si vas a jugarlo: lesionado o apartado no hay "noche antes".
+  const canPlayNextMatch = injuryMonthsLeft === 0 && roleInfo.role !== "apartado";
+  if (canPlayNextMatch && !matchesPendingThisWeek && isMatchWeekNext(playerWithDynamics.week, playerWithDynamics.club, seasonProgress)) {
     const nextMatch = getNextMatch(playerWithDynamics.week, playerWithDynamics.club, seasonProgress);
     const prematchFlagKey = `prematch_shown_${nextMatch?.week}`;
     if (nextMatch && nextMatch.competition !== "amistoso" && !player.flags?.[prematchFlagKey]) {

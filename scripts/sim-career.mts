@@ -139,6 +139,15 @@ async function career(club: string, media: number, seed: number): Promise<Result
     const { role } = computeRole(player);
     res.roles[role] = (res.roles[role] ?? 0) + 1;
 
+    // coherencia con el estado: lesionado/apartado no juegan ni entrenan
+    const injuredNow = getInjuryRemaining(player.flags) > 0;
+    const allowedWhileInjured = ev.id.startsWith("matchday-baja-") || ev.id.startsWith("fisio-") || ev.id.startsWith("torneo-life-") || ev.id.startsWith("mercado-") || ev.id.startsWith("matchday-torneo-") || ev.id.startsWith("sel-") || ev.id.startsWith("preseason-");
+    if (injuredNow && !allowedWhileInjured && (ev.category === "entrenamiento" || ev.category === "partido")) {
+      res.errors.push(`lesionado con escena de ${ev.category}: ${ev.id} (${ev.title})`);
+    }
+    if (role === "apartado" && ev.id.startsWith("match-decision-") && !ev.ownTeam) {
+      res.errors.push(`apartado con jugada decisiva de club: ${ev.id}`);
+    }
     // sanity del texto
     const txt = `${ev.title} ${ev.description}`;
     if (/undefined|\[object|NaN/.test(txt)) res.errors.push(`texto roto: ${ev.id}`);
