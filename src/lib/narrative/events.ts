@@ -4298,6 +4298,7 @@ export const EVENTS: GameEvent[] = [
     id: "fork-fuera-de-planes",
     category: "representante",
     priority: true,
+    coachStance: "no_cuenta",
     title: "El entrenador ya no cuenta contigo",
     description:
       "Te lo dice sin rodeos en su despacho: no entras en sus planes, ni ahora ni la temporada que viene. El club prefiere que salgas cedido o traspasado antes de que se cumpla tu contrato sin jugar.",
@@ -4316,11 +4317,11 @@ export const EVENTS: GameEvent[] = [
           statModifier: "media",
           success: {
             text: "El cambio de aires te sienta bien: vuelves a disfrutar del fútbol en un club que sí cuenta contigo.",
-            consequences: { moral: 6, media: 3 },
+            consequences: { moral: 6, media: 3, club: "@LOWER", flags: { coach_bench: "0", bench_streak: "0" } },
           },
           fail: {
             text: "El nuevo club tampoco te da lo que buscabas, y la sensación de estancamiento vuelve enseguida.",
-            consequences: { moral: -5, media: -3 },
+            consequences: { moral: -5, media: -3, club: "@LOWER", flags: { coach_bench: "0", bench_streak: "0" } },
           },
         },
       },
@@ -4328,7 +4329,8 @@ export const EVENTS: GameEvent[] = [
         id: "b",
         label: "Quedarte a pelear tu sitio pese a todo",
         subtitle: "Orgullo, riesgo de pudrirte en el banquillo",
-        consequences: { moral: -4, rel_entrenador: -3, media: -3 },
+        consequences: { moral: -4, rel_entrenador: -3, media: -3, flags: { coach_bench: "5" } },
+        outcomeText: "Aguantas la mirada y te quedas. En el club nadie te lo agradece: a partir de ahora te toca ganarte cada minuto desde cero.",
       },
     ],
     minWeek: 30,

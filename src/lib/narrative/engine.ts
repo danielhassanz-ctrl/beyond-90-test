@@ -46,6 +46,7 @@ import {
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
+import { isEventCoherentWithState } from "@/lib/narrative/state-rules";
 import { shouldTriggerPhysioScene, buildPhysioEvent } from "@/lib/narrative/injury-events";
 import { computeRole, roleInstruction, roleMinuteRange, type PlayerRole } from "@/lib/narrative/role";
 import { buildBenchedMatchEvent, shouldTriggerBenchEscape, buildBenchEscapeEvent } from "@/lib/narrative/role-events";
@@ -212,6 +213,7 @@ function pickFameEvent(player: Player, usedEventIds: string[]): GameEvent | null
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
       (!event.requiresExternalAgent || hasExternalAgent(player)) &&
+      isEventCoherentWithState(event, player) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       !usedEventIds.includes(event.id),
@@ -233,6 +235,7 @@ function pickScriptedLifeEvent(player: Player, usedEventIds: string[]): GameEven
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
       (!event.requiresExternalAgent || hasExternalAgent(player)) &&
+      isEventCoherentWithState(event, player) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       !usedEventIds.includes(event.id),
@@ -430,6 +433,7 @@ function pickGrandMomentEvent(player: Player, usedEventIds: string[]): GameEvent
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
       (!event.requiresExternalAgent || hasExternalAgent(player)) &&
+      isEventCoherentWithState(event, player) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       (!event.requiresConfederation ||
@@ -530,6 +534,7 @@ function pickLegacyLifeEvent(player: Player, usedEventIds: string[]): GameEvent 
       (!LEGACY_EARLY_ONLY_IDS.has(event.id) || player.week <= 60) &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
       (!event.requiresExternalAgent || hasExternalAgent(player)) &&
+      isEventCoherentWithState(event, player) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       (!event.modes || event.modes.includes(player.mode)) &&
@@ -553,6 +558,7 @@ function pickMatchSpecialMoment(player: Player, usedEventIds: string[]): GameEve
       (event.minWeek ?? 1) <= player.week &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
       (!event.requiresExternalAgent || hasExternalAgent(player)) &&
+      isEventCoherentWithState(event, player) &&
       (event.minMedia === undefined || player.media >= event.minMedia) &&
       (event.maxMedia === undefined || player.media <= event.maxMedia) &&
       !usedSpecial.includes(event.id) &&
@@ -635,6 +641,7 @@ export async function pickNextEventSmart(
       (!event.modes || event.modes.includes(player.mode)) &&
       (!event.requiresFlag || Boolean(player.flags?.[event.requiresFlag])) &&
       (!event.requiresExternalAgent || hasExternalAgent(player)) &&
+      isEventCoherentWithState(event, player) &&
       (!event.requiresConfederation ||
         (playerConfederation !== null &&
           event.requiresConfederation.includes(playerConfederation))) &&

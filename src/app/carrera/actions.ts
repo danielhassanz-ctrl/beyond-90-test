@@ -23,6 +23,7 @@ import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET, WEEKS_PER_SEASON } from "@/types/career";
 import { getMatchesInWeek, matchKey, parseMatchDone, addMatchDone } from "@/lib/calendar/match-calendar";
+import { pickLowerClub } from "@/lib/narrative/role-events";
 import { getSeasonProgress } from "@/lib/calendar/competition-progress";
 import type { Player } from "@/types/player";
 import { getCurrentUserAndPlayer } from "@/lib/player";
@@ -68,7 +69,7 @@ export async function resolveEvent(formData: FormData) {
   // escenas escritas a mano que ya fijan coach_bench por su cuenta se respetan.
   const stanceBench =
     event.coachStance === "no_cuenta" ? "4" : event.coachStance === "cuenta" ? "0" : undefined;
-  const consequences = event.coachStance
+  const consequencesRaw = event.coachStance
     ? {
         ...baseConsequences,
         rel_entrenador:
@@ -79,6 +80,10 @@ export async function resolveEvent(formData: FormData) {
             : baseConsequences.flags,
       }
     : baseConsequences;
+  // "@LOWER" en una escena escrita a mano = un club de nivel inferior al del
+  // jugador, elegido ahora (la escena no sabe en qué club estás).
+  const consequences =
+    consequencesRaw.club === "@LOWER" ? { ...consequencesRaw, club: pickLowerClub(player) } : consequencesRaw;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.

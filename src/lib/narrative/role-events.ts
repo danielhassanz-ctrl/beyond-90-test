@@ -102,7 +102,7 @@ const LOWER_CLUBS: Record<"grande" | "europeo" | "modesto", string[]> = {
   modesto: ["CD Tenerife", "Real Zaragoza", "Racing de Santander", "Real Oviedo", "UD Almería", "Cádiz CF"],
 };
 
-function pickLowerClub(player: Player): string {
+export function pickLowerClub(player: Player): string {
   const pool = LOWER_CLUBS[getClubLevel(player.club)].filter((c) => c !== player.club);
   return pool[Math.floor(Math.random() * pool.length)];
 }
