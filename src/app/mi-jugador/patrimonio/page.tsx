@@ -7,6 +7,7 @@ import { getGameDateLabel } from "@/lib/calendar/season";
 import { BottomNav } from "@/components/BottomNav";
 import { weeklySalary } from "@/lib/narrative/engine";
 import { findPropertyPrompt } from "@/lib/narrative/events";
+import { readProperties, monthlyPayment, remainingLoan, totalMonthlyPayments } from "@/lib/finance/mortgage";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
 import { NO_CLUB_YET } from "@/lib/constants";
 
@@ -98,17 +99,7 @@ export default async function PatrimonioPage() {
   // buildCasaEvent / buildMansionEvent) — antes no se guardaban en
   // ningún sitio y esta sección estaba siempre vacía, comprases lo que
   // comprases.
-  const propiedadesSinFoto = Object.entries(player.flags ?? {})
-    .filter(([key]) => key.startsWith("propiedad_"))
-    .map(([key, value]) => {
-      try {
-        const parsed = JSON.parse(String(value)) as { name: string; price: number; downPayment: number; photoUrl?: string | null };
-        return { key, ...parsed };
-      } catch {
-        return null;
-      }
-    })
-    .filter((p): p is { key: string; name: string; price: number; downPayment: number; photoUrl?: string | null } => p !== null);
+  const propiedadesSinFoto = readProperties(player.flags);
   // Si la foto no llegó a guardarse al comprar (fallo puntual de generación),
   // se genera ahora UNA sola vez por listado y queda cacheada para siempre
   // (getOrCreatePropertyPhoto mira primero image_templates) — cuesta ~0,003 €.
@@ -127,7 +118,8 @@ export default async function PatrimonioPage() {
   // efectivo, así que comprar una casa de 400.000 € con 80.000 de entrada
   // hacía parecer que habías perdido 80.000 € (y no que tenías una casa).
   const propertyValue = propiedades.reduce((acc, p) => acc + p.price, 0);
-  const mortgageDebt = propiedades.reduce((acc, p) => acc + Math.max(0, p.price - p.downPayment), 0);
+  const mortgageDebt = propiedades.reduce((acc, p) => acc + remainingLoan(p, player.week), 0);
+  const mortgageMonthly = totalMonthlyPayments(player.flags);
   const netWorth = player.patrimonio + propertyValue - mortgageDebt;
 
   const pressure = getFinancialPressure(netWorth);
@@ -196,11 +188,17 @@ export default async function PatrimonioPage() {
                     </div>
                     <div className="rounded-xl bg-surface-2 p-2">
                       <p className="font-num text-sm font-bold text-destructive">
-                        {Math.max(0, p.price - p.downPayment).toLocaleString("es")} €
+                        {remainingLoan(p, player.week).toLocaleString("es")} €
                       </p>
-                      <p className="text-kicker text-[9px]">Hipoteca</p>
+                      <p className="text-kicker text-[9px]">Hipoteca pendiente</p>
                     </div>
                   </div>
+                  {monthlyPayment(p) > 0 && (
+                    <p className="text-center text-xs text-muted-foreground">
+                      Cuota: <span className="font-num font-semibold text-destructive">{monthlyPayment(p).toLocaleString("es")} €</span> al mes,
+                      que se descuenta sola cada turno.
+                    </p>
+                  )}
                 </div>
               </div>
             ))
@@ -222,8 +220,24 @@ export default async function PatrimonioPage() {
                 <p className="text-kicker text-[9px]">Por temporada</p>
               </div>
             </div>
+            {mortgageMonthly > 0 && (
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="rounded-xl bg-surface-2 p-3">
+                  <p className="font-num text-lg font-bold text-destructive">-{mortgageMonthly.toLocaleString("es")} €</p>
+                  <p className="text-kicker text-[9px]">Cuotas de hipotecas al mes</p>
+                </div>
+                <div className="rounded-xl bg-surface-2 p-3">
+                  <p className={`font-num text-lg font-bold ${monthlySalary - mortgageMonthly >= 0 ? "text-pitch" : "text-destructive"}`}>
+                    {monthlySalary - mortgageMonthly >= 0 ? "+" : ""}
+                    {(monthlySalary - mortgageMonthly).toLocaleString("es")} €
+                  </p>
+                  <p className="text-kicker text-[9px]">Balance mensual</p>
+                </div>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               Se ingresa solo en cada turno, sin que hagas nada. Sube con tu media.
+              {mortgageMonthly > monthlySalary && " Ojo: las cuotas ya superan tu sueldo y el dinero de la cuenta se irá agotando."}
             </p>
           </div>
         )}

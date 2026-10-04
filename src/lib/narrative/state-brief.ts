@@ -69,6 +69,10 @@ export function buildStateBrief(player: Player, history: HistoryItem[]): string 
   // una decisión pasada tiene que seguir notándose en lo que es hoy.
   const facts: string[] = [];
   const f = flags as Record<string, string | boolean>;
+  const trayectoria = String(f.clubs_history ?? "").split("|").filter(Boolean);
+  if (trayectoria.length > 0 && player.club !== NO_CLUB_YET) {
+    facts.push(`su trayectoria de clubes: ${[...trayectoria, player.club].join(" → ")}`);
+  }
   if (f.sponsor_botas) facts.push(`viste las botas de ${f.sponsor_botas}`);
   if (f.sponsor_reloj) facts.push("es imagen de una marca de relojes de lujo");
   if (f.sponsor_bebida) facts.push("anuncia una bebida energética");

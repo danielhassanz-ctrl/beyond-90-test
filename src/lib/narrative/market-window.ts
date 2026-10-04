@@ -2,7 +2,7 @@ import type { GameEvent, EventOption } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { randomPersonName } from "@/lib/narrative/npcs";
-import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
+import { getEuropeanCompetitionFor, getClubLevel } from "@/lib/calendar/match-calendar";
 import { computeRole } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 
@@ -75,11 +75,30 @@ const POOL_MID = ["Sevilla FC", "Real Betis", "Villarreal CF", "Real Sociedad", 
 const POOL_HIGH = ["Atlético de Madrid", "FC Barcelona", "Borussia Dortmund", "AS Roma", "Atalanta", "Inter de Milán"];
 const POOL_ELITE = ["Real Madrid", "Manchester City", "Liverpool FC", "Paris Saint-Germain", "Bayern de Múnich", "Juventus"];
 
-/** Un club de un nivel ligeramente superior al del jugador, nunca el suyo. */
+/**
+ * Un club que encaje con el ARCO de su carrera, nunca el suyo: partiendo de
+ * dónde juega hoy (y no solo de su media), el mercado le trae un escalón más
+ * o un club del mismo nivel — y, si no cuenta con minutos, uno donde sí
+ * juegue. Antes un jugador del Real Madrid recibía "interés" del Sevilla o
+ * del Getafe como si fuera un ascenso.
+ */
 export function pickInterestedClub(player: Player): string {
   const media = player.media ?? 50;
   const age = 16 + Math.floor(player.week / 10);
-  let pool: string[] = media >= 82 ? POOL_ELITE : media >= 72 ? POOL_HIGH : media >= 58 ? POOL_MID : POOL_LOW;
+  const level = getClubLevel(player.club);
+  const role = computeRole(player).role;
+  const byMedia: string[] = media >= 82 ? POOL_ELITE : media >= 72 ? POOL_HIGH : media >= 58 ? POOL_MID : POOL_LOW;
+  let pool: string[];
+  if (role === "suplente" || role === "apartado") {
+    // sin minutos: un club de nivel inferior donde pueda jugar
+    pool = level === "grande" ? POOL_MID : level === "europeo" ? POOL_LOW : POOL_LOW;
+  } else if (level === "grande") {
+    pool = POOL_ELITE;
+  } else if (level === "europeo") {
+    pool = media >= 72 ? [...POOL_HIGH, ...POOL_ELITE] : POOL_HIGH;
+  } else {
+    pool = media >= 72 ? POOL_HIGH : media >= 62 ? [...POOL_MID, ...POOL_HIGH] : byMedia;
+  }
   if (media >= 80 && age >= 29) pool = [...pool, "Al-Nassr FC"];
   const filtered = pool.filter((c) => c !== player.club);
   return pick(filtered.length ? filtered : POOL_MID);

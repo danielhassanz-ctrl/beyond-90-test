@@ -47,6 +47,8 @@ import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narra
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
+import { totalMonthlyPayments } from "@/lib/finance/mortgage";
+import { shouldTriggerDebtTrouble, buildDebtTroubleEvent } from "@/lib/finance/finance-events";
 import { isEventCoherentWithState } from "@/lib/narrative/state-rules";
 import { shouldTriggerPhysioScene, buildPhysioEvent } from "@/lib/narrative/injury-events";
 import { computeRole, roleInstruction, roleMinuteRange, type PlayerRole } from "@/lib/narrative/role";
@@ -3029,6 +3031,11 @@ function applyCareerDynamics(player: Player): Player {
   if (player.club !== NO_CLUB_YET) {
     player.patrimonio = (player.patrimonio ?? 0) + weeklySalary(player.media);
   }
+  // Cuotas de las hipotecas (finance/mortgage.ts): se descuentan solas cada
+  // turno, igual que el sueldo se ingresa. Si no hay dinero, se quedan a 0 y
+  // el banco acaba llamando (ver buildDebtTroubleEvent).
+  const mortgagePayments = totalMonthlyPayments(player.flags);
+  if (mortgagePayments > 0) player.patrimonio = Math.max(0, (player.patrimonio ?? 0) - mortgagePayments);
 
   // Aplicar degradación de forma si no ha jugado
   player.forma = naturalFormaDegradation(player);
@@ -3463,6 +3470,12 @@ export async function pickNextEventDynamic(
     console.log(`[pickNextEventDynamic] Triggering gol de chilena for ${player.last_name}`);
     markGolChilenaTriggered(player);
     return maybeAddFreeText(buildGolChilenaEvent(player.club));
+  }
+
+  // Apuros con las cuotas de la hipoteca: el banco llama cuando el dinero no da para unos meses.
+  if (!midMatch && shouldTriggerDebtTrouble(playerWithDynamics)) {
+    console.log("[pickNextEventDynamic] El banco llama por las cuotas.");
+    return maybeAddFreeText(buildDebtTroubleEvent(playerWithDynamics));
   }
 
   // ECO de una decisión pasada (ledger.ts): lo que decidiste hace tiempo vuelve

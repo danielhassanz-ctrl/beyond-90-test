@@ -6,6 +6,7 @@ import { pickStartingClubOffers, type ClubOffer } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
 import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
+import { monthlyPayment } from "@/lib/finance/mortgage";
 
 /**
  * Primer evento de carrera: elegir representante. Ahora es dinámico con 15+ variantes
@@ -807,7 +808,7 @@ export async function buildCasaEvent(player: Player, supabase: SupabaseClient): 
         return {
           id: `casa-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,
-          subtitle: `Entrada: ${downPayment.toLocaleString("es")} €`,
+          subtitle: `Entrada: ${downPayment.toLocaleString("es")} € · Cuota: ${monthlyPayment({ key: "", name: "", price: l.price, downPayment }).toLocaleString("es")} €/mes`,
           imageUrl: photos[i] ?? undefined,
           // Sin este flag, la compra se registraba como un simple gasto en
           // el ledger y desaparecía — "Propiedades e inversiones" en la
@@ -816,7 +817,7 @@ export async function buildCasaEvent(player: Player, supabase: SupabaseClient): 
           consequences: {
             patrimonio: -downPayment,
             moral: 5,
-            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null }) },
+            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null, since: player.week }) },
           },
         };
       }),
@@ -868,13 +869,13 @@ export async function buildMansionEvent(player: Player, supabase: SupabaseClient
         return {
           id: `mansion-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,
-          subtitle: `Entrada: ${downPayment.toLocaleString("es")} €`,
+          subtitle: `Entrada: ${downPayment.toLocaleString("es")} € · Cuota: ${monthlyPayment({ key: "", name: "", price: l.price, downPayment }).toLocaleString("es")} €/mes`,
           imageUrl: photos[i] ?? undefined,
           consequences: {
             patrimonio: -downPayment,
             moral: 8,
             fama: 3,
-            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null }) },
+            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null, since: player.week }) },
           },
         };
       }),
@@ -914,7 +915,7 @@ export async function buildYachtEvent(player: Player, supabase: SupabaseClient):
           patrimonio: -l.price,
           moral: 6,
           fama: 2,
-          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null }) },
+          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null, since: player.week }) },
         },
       })),
       {
@@ -948,7 +949,7 @@ export async function buildJetEvent(player: Player, supabase: SupabaseClient): P
           patrimonio: -l.price,
           moral: 8,
           fama: 4,
-          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null }) },
+          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null, since: player.week }) },
         },
       })),
       {
@@ -988,7 +989,7 @@ export async function buildCarEvent(player: Player, supabase: SupabaseClient): P
           patrimonio: -l.price,
           moral: 6,
           fama: 1,
-          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null }) },
+          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null, since: player.week }) },
         },
       })),
       {

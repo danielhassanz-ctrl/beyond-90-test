@@ -14,7 +14,7 @@ import { composeWarcaCover } from "@/lib/images/newspaper";
 import { addShareBranding } from "@/lib/images/shareBranding";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
-import { buildMatchContext } from "@/lib/constants";
+import { buildMatchContext, NO_CLUB_YET } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
 import { describeLook } from "@/lib/playerLook";
 import { composeDmCard } from "@/lib/images/dmCard";
@@ -288,10 +288,29 @@ export async function resolveEvent(formData: FormData) {
     // ("la prensa repite tu cifra de traspaso", "vuelves al club donde
     // debutaste") y no había forma de saberlo.
     const flagsSoFar = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    // ARCO de carrera: un traspaso reinicia lo que dependía del club anterior. El
+    // nuevo míster, vestuario y afición no te conocen (antes el 98 de relación con
+    // el míster de tu antiguo club viajaba contigo), se apaga cualquier baja
+    // decretada por el entrenador anterior y la competición europea se reevalúa.
+    // La trayectoria (A → B → C) se guarda para que la historia la recuerde.
+    const previousClubs = String(flagsSoFar.clubs_history ?? "").split("|").filter(Boolean);
+    if (player.club && player.club !== NO_CLUB_YET && previousClubs[previousClubs.length - 1] !== player.club) {
+      previousClubs.push(player.club);
+    }
     playerUpdate.flags = {
       ...flagsSoFar,
       club_changes: String((parseInt(String(flagsSoFar.club_changes ?? "0"), 10) || 0) + 1),
+      clubs_history: previousClubs.slice(-12).join("|"),
+      coach_bench: "0",
+      bench_streak: "0",
+      euro_progress: "",
+      capitan_club: false,
     };
+    if (player.club && player.club !== NO_CLUB_YET && player.club !== newClub) {
+      playerUpdate.rel_entrenador = 50;
+      playerUpdate.rel_vestuario = 45;
+      playerUpdate.rel_aficion = 40;
+    }
     const agentName = (playerUpdate.agent_name as string | undefined) ?? player.agent_name ?? "tu representante";
     const aiContractEvent = await generateContractEvent(
       { ...player, club: newClub, agent_name: agentName },

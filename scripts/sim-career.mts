@@ -100,7 +100,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
     rel_representante: 60,
     reputacion: 50,
     agent_name: "Iñaki Zubiaurre",
-    flags: {},
+    flags: { propiedad_sim_0: JSON.stringify({ name: "Villa de prueba", price: 2500000, downPayment: 500000, since: 11 }) },
     pending_event: null,
     stats_matches_played: 20,
     stats_goals: 5,
@@ -198,7 +198,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
     }
 
     // métricas
-    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-"]) {
+    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-", "banco-"]) {
       if (ev.id.startsWith(pre)) prefixCount[pre] = (prefixCount[pre] ?? 0) + 1;
     }
     if (ev.id.startsWith("matchday-") && ev.matchKey) {
