@@ -393,7 +393,11 @@ export interface SimRun {
 export function simulateRun(state: GameState, count: number): SimRun {
   seedMatchRng(state, count + 1000);
   const club = clubDef(state.clubId);
-  const role = computeRole(state);
+  // A background run can span beyond the current injury. Compute the sporting
+  // role from the healthy state, then gate only the fixtures still covered by
+  // matchesOut below. Otherwise an injury at the start incorrectly benches the
+  // player for the entire simulated block even after the layoff has elapsed.
+  const role = state.injury ? computeRole({ ...state, injury: null }) : computeRole(state);
   const run: SimRun = {
     results: [],
     matches: 0,
