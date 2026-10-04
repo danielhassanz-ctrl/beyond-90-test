@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Simulación local (SIN API real) de carreras completas contra el motor: una respuesta
  * falsa sustituye a Claude y el avance de calendario usa la misma regla que resolveEvent
