@@ -11,11 +11,58 @@ import type { HistoryItem } from "@/lib/narrative/ai";
 import { computeRole, ROLE_LABELS, benchRemaining } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { NO_CLUB_YET } from "@/lib/constants";
+import { playerAge } from "@/types/career";
+import { getClubLevel } from "@/lib/calendar/match-calendar";
 import { pendingEchoes } from "@/lib/narrative/ledger";
 
 function level(value: number, labels: [string, string, string, string]): string {
   // <30, <50, <75, resto
   return value < 30 ? labels[0] : value < 50 ? labels[1] : value < 75 ? labels[2] : labels[3];
+}
+
+/**
+ * En qué punto del arco de su carrera está el jugador (promesa → ascenso →
+ * cima → madurez → ocaso), para que las escenas empujen la MISMA historia
+ * y no un cuento distinto cada turno. Sale de la edad, la media, el nivel
+ * del club y lo ganado.
+ */
+export function arcStage(player: Player): { name: string; theme: string; next: string } {
+  const age = playerAge(player.week);
+  const media = player.media ?? 50;
+  const level = getClubLevel(player.club);
+  if (age >= 34 || (age >= 31 && media < 65)) {
+    return {
+      name: "ocaso (la despedida)",
+      theme: "cada partido pesa como si fuera el último; legado, familia, qué viene después del fútbol y cómo quieres que te recuerden.",
+      next: "elegir cómo y dónde acabar la carrera (un último gran contrato, volver a casa o colgar las botas).",
+    };
+  }
+  if (age >= 29) {
+    return {
+      name: "madurez (el referente)",
+      theme: "liderazgo, responsabilidad con los jóvenes, el peso del brazalete y de los años, lo que quieres dejar.",
+      next: "consolidar una leyenda en un club o buscar un último gran reto.",
+    };
+  }
+  if (media >= 78 && level !== "modesto") {
+    return {
+      name: "la cima (la estrella)",
+      theme: "competir por títulos y premios individuales, la presión de ser el referente, decisiones de imagen y dinero con mucho en juego.",
+      next: "ganar el gran título, asentar el estatus o dar un salto a otra liga.",
+    };
+  }
+  if (media >= 62 || age >= 21) {
+    return {
+      name: "el ascenso (la promesa que se hace jugador)",
+      theme: "demostrar que mereces el salto: cada decisión deportiva abre o cierra puertas del mercado y el míster, el vestuario y la afición te miden.",
+      next: "dar el salto a un club de más nivel o consolidarte como indiscutible donde estás.",
+    };
+  }
+  return {
+    name: "la promesa (hacerse un hueco)",
+    theme: "minutos, cantera, primeros contratos, ilusión y dudas; todo es nuevo y cada oportunidad cuenta el doble.",
+    next: "ganarte un sitio real en el primer equipo.",
+  };
 }
 
 export function buildStateBrief(player: Player, history: HistoryItem[]): string {
@@ -33,6 +80,9 @@ export function buildStateBrief(player: Player, history: HistoryItem[]): string 
     };
     lines.push(`- ROL EN EL EQUIPO: ${ROLE_LABELS[role]} — ${roleText[role]}${bench > 0 ? " (por decisión explícita del entrenador, de momento)" : ""}.`);
   }
+
+  const arc = arcStage(player);
+  lines.push(`- ETAPA DE LA HISTORIA: ${arc.name}. Tema de fondo: ${arc.theme} Siguiente paso natural: ${arc.next}`);
 
   const injured = getInjuryRemaining(flags);
   lines.push(
