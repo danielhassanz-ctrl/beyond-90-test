@@ -458,7 +458,7 @@ export function simulateRun(state: GameState, count: number): SimRun {
         } else if (random() < 0.06) {
           run.notable = { kind: "red", text: `Te expulsan en ${ctx.venue} con el partido roto.`, opponent: ctx.opponent };
         } else if (rating < 4.8 && random() < 0.35) {
-          run.notable = { kind: "bad", text: `Partido para olvidar ante el ${ctx.opponent}: te cambian antes de la hora.`, opponent: ctx.opponent };
+          run.notable = { kind: "bad", text: role === 3 ? `Partido para olvidar ante el ${ctx.opponent}: te cambian antes de la hora.` : `Entras desde el banquillo ante el ${ctx.opponent}, pero no consigues cambiar el partido y acabas muy lejos de tu nivel.`, opponent: ctx.opponent };
         }
       }
     } else if (!run.notable && i >= injuredFor && role <= 1 && random() < 0.05) {
