@@ -49,6 +49,7 @@ const { tickInjury, getInjuryRemaining } = await import("../src/lib/narrative/ca
 const { computeRole } = await import("../src/lib/narrative/role");
 const { summarizeEffects } = await import("../src/lib/narrative/state-brief");
 const { getClubLevel } = await import("../src/lib/calendar/match-calendar");
+const { buildLedgerEntry, appendLedger, readLedger } = await import("../src/lib/narrative/ledger");
 
 // Silenciar logs del motor
 const origLog = console.log;
@@ -168,6 +169,8 @@ async function career(club: string, media: number, seed: number): Promise<Result
       player.flags.coach_bench = ev.coachStance === "no_cuenta" ? "4" : "0";
     }
     if (cons.club === "@LOWER") player.club = "Real Zaragoza";
+    const entry = buildLedgerEntry(ev, opt, cons, resolution?.text ?? opt.outcomeText ?? null, null, player.week);
+    if (entry) player.flags.decisiones = appendLedger(player.flags, entry);
     if (newWeek > player.week) {
       const tick = tickInjury(player.flags);
       if (tick) {
@@ -180,7 +183,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
     }
 
     // métricas
-    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-"]) {
+    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-"]) {
       if (ev.id.startsWith(pre)) prefixCount[pre] = (prefixCount[pre] ?? 0) + 1;
     }
     if (ev.id.startsWith("matchday-") && ev.matchKey) {

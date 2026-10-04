@@ -23,6 +23,7 @@ import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
+import { buildLedgerEntry, appendLedger } from "@/lib/narrative/ledger";
 import { pickLowerClub } from "@/lib/narrative/role-events";
 import type { Player } from "@/types/player";
 import { getCurrentUserAndPlayer } from "@/lib/player";
@@ -252,6 +253,14 @@ export async function resolveEvent(formData: FormData) {
     if (consequences.flags?.coach_bench === undefined) {
       playerUpdate.flags = { ...flagsBase, coach_bench: String(remaining) };
     }
+  }
+
+  // Libro de decisiones (ledger.ts): las decisiones con peso se anotan para
+  // que, pasado un tiempo, una escena de eco las cobre.
+  const ledgerEntry = buildLedgerEntry(event, option, consequences, outcomeText, freeText, player.week);
+  if (ledgerEntry) {
+    const flagsBaseL = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    playerUpdate.flags = { ...flagsBaseL, decisiones: appendLedger(flagsBaseL, ledgerEntry) };
   }
 
   if (consequences.agent_name) {

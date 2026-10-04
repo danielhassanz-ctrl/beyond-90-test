@@ -11,6 +11,7 @@ import type { HistoryItem } from "@/lib/narrative/ai";
 import { computeRole, ROLE_LABELS, benchRemaining } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { NO_CLUB_YET } from "@/lib/constants";
+import { pendingEchoes } from "@/lib/narrative/ledger";
 
 function level(value: number, labels: [string, string, string, string]): string {
   // <30, <50, <75, resto
@@ -64,6 +65,38 @@ export function buildStateBrief(player: Player, history: HistoryItem[]): string 
     .slice(-5);
   if (threads.length > 0) lines.push(`- HILOS ABIERTOS (vínculos, promesas, rencores): ${threads.join(" | ")}.`);
 
+  // Hechos que definen su historia (marcas, capitanías, títulos, casas, familia):
+  // una decisión pasada tiene que seguir notándose en lo que es hoy.
+  const facts: string[] = [];
+  const f = flags as Record<string, string | boolean>;
+  if (f.sponsor_botas) facts.push(`viste las botas de ${f.sponsor_botas}`);
+  if (f.sponsor_reloj) facts.push("es imagen de una marca de relojes de lujo");
+  if (f.sponsor_bebida) facts.push("anuncia una bebida energética");
+  if (f.capitan_seleccion) facts.push("es capitán de su selección");
+  if (f.title_liga) facts.push("ha ganado la Liga");
+  if (f.title_champions) facts.push("ha ganado la Champions League");
+  if (f.title_balon_oro) facts.push("tiene un Balón de Oro");
+  for (const [key, value] of Object.entries(f)) {
+    const tr = key.match(/^torneo_result_(.+)_(\d+)$/);
+    if (tr && typeof value === "string" && value) {
+      const names: Record<string, string> = { mundial: "Mundial", eurocopa: "Eurocopa", copa_america: "Copa América" };
+      facts.push(`en el ${names[tr[1]] ?? "torneo"} de ${2026 + Number(tr[2])} terminó: ${value.replace(/_/g, " ")}`);
+    }
+  }
+  const houses = Object.entries(f).filter(([k]) => k.startsWith("propiedad_"));
+  if (houses.length > 0) facts.push(`tiene ${houses.length} propiedad(es) compradas`);
+  if (f.iguana) facts.push("tiene una iguana como mascota que se hizo famosa");
+  if (f.patrocinio_chorizo) facts.push("fue imagen de una línea de chorizo");
+  if (typeof f.pareja === "string") facts.push(`su pareja es ${f.pareja}${f.hijos ? " y ya tienen hijos" : ""}`);
+  if (facts.length > 0) lines.push(`- SU HISTORIA HASTA HOY: ${facts.join("; ")}.`);
+
+  const pendingDecisions = pendingEchoes(player)
+    .slice(0, 3)
+    .map((e) => `"${e.t}" → eligió "${e.c}"`);
+  if (pendingDecisions.length > 0) {
+    lines.push(`- DECISIONES CON PESO AÚN SIN CONSECUENCIA (pueden volver en cualquier momento): ${pendingDecisions.join(" | ")}.`);
+  }
+
   const recent = history
     .slice(0, 4)
     .map((h) => {
@@ -83,27 +116,4 @@ CONTINUIDAD OBLIGATORIA:
 - Los cambios de las opciones tienen que ser coherentes con el estado (con el vestuario roto, una broma no sube de golpe la relación con el vestuario; con el míster en contra, un gesto amable apenas mueve nada).`;
 }
 
-const EFFECT_LABELS: Record<string, string> = {
-  forma: "forma",
-  moral: "ánimo",
-  fama: "fama",
-  media: "media",
-  patrimonio: "dinero",
-  rel_entrenador: "entrenador",
-  rel_vestuario: "vestuario",
-  rel_aficion: "afición",
-  rel_representante: "representante",
-  reputacion: "reputación",
-};
-
-/** "ánimo +5, entrenador −3, club: Sevilla FC" a partir de las consecuencias guardadas de una decisión. */
-export function summarizeEffects(consequences: Record<string, unknown> | null | undefined): string | null {
-  if (!consequences) return null;
-  const parts: string[] = [];
-  for (const [key, label] of Object.entries(EFFECT_LABELS)) {
-    const value = consequences[key];
-    if (typeof value === "number" && value !== 0) parts.push(`${label} ${value > 0 ? "+" : "−"}${Math.abs(value)}`);
-  }
-  if (typeof consequences.club === "string" && consequences.club) parts.push(`nuevo club: ${consequences.club}`);
-  return parts.length > 0 ? parts.join(", ") : null;
-}
+export { summarizeEffects } from "@/lib/narrative/effects";

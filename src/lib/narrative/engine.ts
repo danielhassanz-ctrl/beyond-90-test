@@ -6,7 +6,7 @@ import type {
   GameEvent,
   ResolutionOutcome,
 } from "@/types/career";
-import { generateAiEvent, generateMatchResult, generateNextEventDynamic, callEventTool, COMMON_RULES, type HistoryItem } from "./ai";
+import { generateAiEvent, generateMatchResult, generateNextEventDynamic, generateEchoEvent, callEventTool, COMMON_RULES, type HistoryItem } from "./ai";
 import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
 import { hasMajorTournament } from "@/lib/calendar/season";
@@ -46,6 +46,7 @@ import {
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
+import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
 import { isEventCoherentWithState } from "@/lib/narrative/state-rules";
 import { shouldTriggerPhysioScene, buildPhysioEvent } from "@/lib/narrative/injury-events";
 import { computeRole, roleInstruction, roleMinuteRange, type PlayerRole } from "@/lib/narrative/role";
@@ -3462,6 +3463,22 @@ export async function pickNextEventDynamic(
     console.log(`[pickNextEventDynamic] Triggering gol de chilena for ${player.last_name}`);
     markGolChilenaTriggered(player);
     return maybeAddFreeText(buildGolChilenaEvent(player.club));
+  }
+
+  // ECO de una decisión pasada (ledger.ts): lo que decidiste hace tiempo vuelve
+  // a cobrarse. Sustituye a una escena normal de IA (no suma llamadas).
+  if (!midMatch && injuryMonthsLeft === 0 && !getTorneoProgress(playerWithDynamics) && shouldTriggerEcho(playerWithDynamics)) {
+    const candidate = pickEchoCandidate(playerWithDynamics);
+    if (candidate) {
+      const echo = await generateEchoEvent(playerWithDynamics, candidate, history);
+      if (echo) {
+        console.log(`[pickNextEventDynamic] Eco de "${candidate.t}": "${echo.title}"`);
+        if (!playerWithDynamics.flags) playerWithDynamics.flags = {};
+        playerWithDynamics.flags.echo_last_week = String(playerWithDynamics.week);
+        playerWithDynamics.flags.decisiones = consumeEcho(playerWithDynamics.flags, candidate);
+        return maybeAddFreeText({ ...echo, id: `echo-${Date.now()}` });
+      }
+    }
   }
 
   // Adversidades: momentos difíciles que generan tensión (lesiones, fracasos, descensos)

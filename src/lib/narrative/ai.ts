@@ -13,6 +13,7 @@ import {
 import { NarrativeContent } from "@/lib/narrative/narrative-content";
 import { describeCast } from "@/lib/narrative/npcs";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
+import { describeAgeWeeks } from "@/lib/narrative/ledger";
 
 const MODEL = "claude-sonnet-5";
 
@@ -1194,6 +1195,40 @@ const AGENT_GUIDANCE_TOPICS = [
  * Antes esto no existía: el representante solo hablaba en los momentos
  * mecánicos (fichaje, renovación), nunca llamaba solo para contarte algo.
  */
+/**
+ * ESCENA DE ECO: la consecuencia, tiempo después, de una decisión concreta
+ * del jugador (ver ledger.ts). No añade llamadas a la API: sustituye a una
+ * escena normal generada por la IA.
+ */
+export async function generateEchoEvent(
+  player: Player,
+  entry: { w: number; t: string; c: string; f: string | null; o: string | null; k: string },
+  history: HistoryItem[],
+): Promise<GameEvent | null> {
+  const ago = describeAgeWeeks(player.week - entry.w);
+  const category = (entry.k === "partido" || entry.k === "segunda_vida" ? "vestuario" : entry.k) as EventCategory;
+  const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista profesional.
+
+ESCENA DE ECO — LA CONSECUENCIA DE UNA DECISIÓN PASADA.
+${ago}, en la escena "${entry.t}", el jugador eligió: "${entry.c}".${entry.f ? ` En su momento eso cambió: ${entry.f}.` : ""}${entry.o ? ` Lo que se vio entonces: "${entry.o}".` : ""}
+
+Escribe la escena de AHORA en la que esa decisión pasa factura o da fruto: alguien de aquella historia reaparece (agradecido, resentido, cambiado), una promesa se cumple o se rompe, el rencor o el cariño sembrados salen a la luz. Que el jugador y quien lea reconozcan el vínculo con lo que decidió, sin repetir literalmente la escena original. Si aquella decisión fue valiente o generosa, la consecuencia puede ser buena; si fue egoísta o cobarde, tiene que costar algo — no todo se resuelve bien.
+
+JUGADOR: ${player.last_name}, ${playerAge(player.week)} años, ${player.position}, club ${player.club}, nacionalidad ${player.nation}.
+
+${buildStateBrief(player, history)}
+
+PERSONAJES FIJOS (si mencionas a alguien de su entorno, usa estos nombres exactos):
+${describeCast(player)}
+
+REGLAS CRÍTICAS:
+${COMMON_RULES}
+- La escena tiene que dejar claro (en una frase) de qué decisión pasada viene, de forma natural, sin decir "hace X semanas".
+- Las opciones deben tener peso real y reacciones concretas; no repitas las mismas dos opciones de siempre.
+- is_milestone en true solo si la consecuencia es de verdad memorable (algo que se querría compartir).`;
+  return callEventTool(prompt, category, "echo");
+}
+
 export async function generateAgentGuidanceCall(
   player: Player,
   history: HistoryItem[],
