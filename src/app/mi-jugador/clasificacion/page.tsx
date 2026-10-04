@@ -60,6 +60,7 @@ export default async function ClasificacionPage() {
             <CompetitionStatsCard
               season={competitionStats.season}
               career={competitionStats.career}
+              history={competitionStats.history}
               seasonLabel={seasonLabel(player.week)}
             />
 

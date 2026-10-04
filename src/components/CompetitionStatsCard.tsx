@@ -1,4 +1,4 @@
-import type { CompetitionStats, CompStat } from "@/lib/player/competition-stats";
+import type { CompetitionStats, CompStat, SeasonHistoryRow } from "@/lib/player/competition-stats";
 
 const CLUB_ROWS: { key: "liga" | "champions" | "europa" | "copa"; label: string; icon: string }[] = [
   { key: "liga", label: "LaLiga", icon: "🏆" },
@@ -68,11 +68,54 @@ function Table({ title, stats }: { title: string; stats: CompetitionStats }) {
  * Estadísticas por competición: la temporada en curso y el histórico de
  * carrera, con la selección (y Mundial/Eurocopa/Copa América) aparte.
  */
-export function CompetitionStatsCard({ season, career, seasonLabel }: { season: CompetitionStats; career: CompetitionStats; seasonLabel: string }) {
+function HistoryTable({ rows }: { rows: SeasonHistoryRow[] }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-panel-border bg-surface">
+      <div className="border-b border-panel-border px-4 py-3">
+        <p className="text-kicker text-gold">Historial por temporada</p>
+      </div>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-kicker text-muted-foreground">
+            <th className="py-2 pl-4 text-left">Temporada</th>
+            <th className="w-9 py-2 text-center text-[10px]">PJ</th>
+            <th className="w-9 py-2 text-center text-[10px]">G</th>
+            <th className="w-9 py-2 text-center text-[10px]">A</th>
+            <th className="w-12 py-2 pr-4 text-right text-[10px]">🏆</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[...rows].reverse().map((r) => (
+            <tr key={r.label} className="text-foreground/90">
+              <td className="py-2 pl-4 font-num text-xs">{r.label}</td>
+              <td className="py-2 text-center font-num text-xs">{r.matches}</td>
+              <td className="py-2 text-center font-num text-xs">{r.goals}</td>
+              <td className="py-2 text-center font-num text-xs">{r.assists}</td>
+              <td className="py-2 pr-4 text-right font-num text-xs">{r.titles > 0 ? r.titles : "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function CompetitionStatsCard({
+  season,
+  career,
+  seasonLabel,
+  history = [],
+}: {
+  season: CompetitionStats;
+  career: CompetitionStats;
+  seasonLabel: string;
+  history?: SeasonHistoryRow[];
+}) {
   return (
     <div className="space-y-4">
       <Table title={`Esta temporada · ${seasonLabel}`} stats={season} />
       <Table title="Toda la carrera" stats={career} />
+      {history.length > 0 && <HistoryTable rows={history} />}
       <p className="text-center text-[11px] text-muted-foreground">
         Cuentan tus partidos clave, los que juegas en tu historia. La clasificación de abajo suma las 38 jornadas del equipo.
       </p>

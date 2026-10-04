@@ -10,7 +10,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
-import { WEEKS_PER_SEASON } from "@/types/career";
+import { WEEKS_PER_SEASON, seasonLabel } from "@/types/career";
 import { extractStatsFromEvent } from "@/lib/player/update-stats";
 
 export interface CompStat {
@@ -33,6 +33,16 @@ export interface CompetitionStats {
 }
 
 const empty = (): CompStat => ({ matches: 0, goals: 0, assists: 0, minutes: 0 });
+
+/** Una fila del historial: lo que hiciste en cada temporada. */
+export interface SeasonHistoryRow {
+  label: string;
+  matches: number;
+  goals: number;
+  assists: number;
+  minutes: number;
+  titles: number;
+}
 
 export function emptyCompetitionStats(): CompetitionStats {
   return {
@@ -79,9 +89,10 @@ export async function getCompetitionStats(
   supabase: SupabaseClient,
   player: Pick<Player, "id" | "week">,
   pendingEvent?: GameEvent | null,
-): Promise<{ season: CompetitionStats; career: CompetitionStats }> {
+): Promise<{ season: CompetitionStats; career: CompetitionStats; history: SeasonHistoryRow[] }> {
   const season = emptyCompetitionStats();
   const career = emptyCompetitionStats();
+  const bySeason = new Map<number, SeasonHistoryRow>();
   const seasonStartWeek = Math.floor((player.week - 1) / WEEKS_PER_SEASON) * WEEKS_PER_SEASON + 1;
 
   try {
@@ -91,7 +102,7 @@ export async function getCompetitionStats(
       .eq("player_id", player.id)
       .neq("category", "segunda_vida")
       .lte("week", player.week);
-    if (error || !data) return { season, career };
+    if (error || !data) return { season, career, history: [] };
 
     const rows: { event_id: string; category: string; title: string; description: string; week: number }[] = data.map((r) => ({
       event_id: (r.event_id as string) ?? "",
@@ -121,7 +132,20 @@ export async function getCompetitionStats(
         description: row.description,
         options: [],
       } as GameEvent);
+      if (u.titles) {
+        const idxT = Math.floor((row.week - 1) / WEEKS_PER_SEASON);
+        const rowT = bySeason.get(idxT) ?? { label: seasonLabel(row.week), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
+        rowT.titles += u.titles;
+        bySeason.set(idxT, rowT);
+      }
       if (!u.matches_played) continue;
+      const idx = Math.floor((row.week - 1) / WEEKS_PER_SEASON);
+      const hist = bySeason.get(idx) ?? { label: seasonLabel(row.week), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
+      hist.matches += 1;
+      hist.goals += u.goals ?? 0;
+      hist.assists += u.assists ?? 0;
+      hist.minutes += u.minutes_played ?? 0;
+      bySeason.set(idx, hist);
       const { comp, torneo } = classifyMatch(row.title, row.description);
       const targets = row.week >= seasonStartWeek ? [career, season] : [career];
       for (const t of targets) {
@@ -133,5 +157,6 @@ export async function getCompetitionStats(
     console.error("[getCompetitionStats] threw:", err instanceof Error ? err.message : err);
   }
 
-  return { season, career };
+  const history = [...bySeason.entries()].sort((a, b) => a[0] - b[0]).map(([, row]) => row);
+  return { season, career, history };
 }
