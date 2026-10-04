@@ -11,9 +11,11 @@ import {
   generateSecondaryCharacterName,
 } from "@/lib/narrative/secondary-characters";
 import { NarrativeContent } from "@/lib/narrative/narrative-content";
-import { describeCast } from "@/lib/narrative/npcs";
+import { describeKnownCast as describeCast } from "@/lib/narrative/cast";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { describeAgeWeeks } from "@/lib/narrative/ledger";
+import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
+import { computeRole } from "@/lib/narrative/role";
 
 const MODEL = "claude-sonnet-5";
 
@@ -503,11 +505,15 @@ export async function generateNextEventDynamic(
 
   // Categoría: ~40% vida, ~60% fútbol
   const lifeChance = Math.random();
-  const category: EventCategory = lifeChance < 0.4
+  let category: EventCategory = lifeChance < 0.4
     ? (["vida"] as const)[0] // 40% vida real
     : (["entrenamiento", "partido", "vestuario", "representante", "prensa", "especial"] as const)[
         Math.floor(Math.random() * 6)
       ]; // 60% fútbol
+  // Lesionado o apartado no hay escena de entrenamiento ni de partido.
+  if ((category === "entrenamiento" || category === "partido") && (getInjuryRemaining(player.flags) > 0 || computeRole(player).role === "apartado")) {
+    category = "vida";
+  }
 
   console.log(`[generateNextEventDynamic] Generating for ${player.last_name}, age ${age} (${stage}), category: ${category}`);
 
@@ -696,7 +702,10 @@ export async function generateAiEvent(
   player: Player,
   history: HistoryItem[],
 ): Promise<GameEvent | null> {
-  const category = pickCategory(history);
+  let category = pickCategory(history);
+  if ((category === "entrenamiento" || category === "partido") && (getInjuryRemaining(player.flags) > 0 || computeRole(player).role === "apartado")) {
+    category = "vida";
+  }
   const age = playerAge(player.week);
 
   const historyText = history.length

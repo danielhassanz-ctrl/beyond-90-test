@@ -36,6 +36,7 @@ import { resolveEvent } from "./actions";
 import { personalizeEvent, detectMentionedRoles, NPC_ROLE_LABELS } from "@/lib/narrative/npcs";
 import { getOrCreateNpcFace, hasMetNpc, markNpcSeen, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
 import { getGameDateLabel } from "@/lib/calendar/season";
+import { introduceCast } from "@/lib/narrative/cast";
 import { summarizeEffects } from "@/lib/narrative/state-brief";
 import { computeRole, ROLE_LABELS } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
@@ -308,6 +309,10 @@ export default async function CarreraPage() {
   // Personajes con nombre y apellidos (el míster, el capitán, tu madre...): ver npcs.ts.
   if (event) event = personalizeEvent(event, player);
 
+  // Fichas de los personajes que salen nombrados por primera vez en esta
+  // escena (ver cast.ts): "quién es" antes de que actúe, poco a poco.
+  const castCards = event ? introduceCast(event, player) : [];
+
   // Cara del personaje que aparece en esta escena (entrenador, capitán,
   // agente, madre, padre, pareja — ver npcFaces.ts). Como máximo 2 por
   // turno: rarísima vez habla más de uno en la misma escena, y así
@@ -402,6 +407,19 @@ export default async function CarreraPage() {
             <h2 className="font-display text-xl text-foreground leading-tight">{event.title}</h2>
             {event.dm && <DmPreview dm={event.dm} />}
             <p className="text-sm text-muted-foreground">{event.description}</p>
+            {castCards.length > 0 && (
+              <div className="space-y-2 rounded-xl border border-gold/30 bg-gold/5 p-3">
+                <p className="text-kicker text-gold">Quién es</p>
+                {castCards.map((c) => (
+                  <div key={c.name}>
+                    <p className="text-sm font-semibold text-foreground">
+                      {c.name} <span className="text-xs font-normal text-muted-foreground">· {c.role}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">{c.blurb}</p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {whatIsAtStake(event).length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 pt-0.5">

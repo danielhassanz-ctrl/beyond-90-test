@@ -24,7 +24,7 @@ import { getInjuryRemaining, naturalFormaDegradation, calculateMediaPressure, de
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
 import { EVENTS } from "@/lib/narrative/events";
-import { describeCast } from "@/lib/narrative/npcs";
+import { describeKnownCast as describeCast } from "@/lib/narrative/cast";
 import {
   buildAgentDialogueEvent,
   shouldTriggerAgentDialogue,

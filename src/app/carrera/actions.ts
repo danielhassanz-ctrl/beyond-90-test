@@ -24,6 +24,7 @@ import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
 import { buildLedgerEntry, appendLedger } from "@/lib/narrative/ledger";
+import { introduceCast, markCastMet } from "@/lib/narrative/cast";
 import { pickLowerClub } from "@/lib/narrative/role-events";
 import type { Player } from "@/types/player";
 import { getCurrentUserAndPlayer } from "@/lib/player";
@@ -253,6 +254,14 @@ export async function resolveEvent(formData: FormData) {
     if (consequences.flags?.coach_bench === undefined) {
       playerUpdate.flags = { ...flagsBase, coach_bench: String(remaining) };
     }
+  }
+
+  // Los personajes que esta escena acaba de presentar (ver cast.ts) pasan a
+  // ser conocidos: a partir de ahora ya se les puede nombrar sin ficha.
+  const castCards = introduceCast(event, player as Player);
+  if (castCards.length > 0) {
+    const flagsBaseC = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    playerUpdate.flags = { ...flagsBaseC, cast_met: markCastMet(flagsBaseC, castCards) };
   }
 
   // Libro de decisiones (ledger.ts): las decisiones con peso se anotan para

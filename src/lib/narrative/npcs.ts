@@ -154,15 +154,30 @@ export function randomPersonName(gender: "m" | "f" | "any" = "any"): string {
   return buildName(seed, pickGender(seed, gender));
 }
 
+/**
+ * Personajes episódicos que se han nombrado en esta petición (nombre → pista
+ * de quién es, sacada de la semilla con que se generó). cast.ts los usa para
+ * poder presentar con una ficha a cualquiera que salga nombrado en una escena
+ * sin haber sido presentado. Se acota para no crecer sin límite.
+ */
+export const episodicNames = new Map<string, string>();
+function rememberEpisodic(name: string, hint: string): string {
+  if (episodicNames.size > 600) episodicNames.clear();
+  episodicNames.set(name, hint);
+  return name;
+}
+
 /** Compañeros de equipo: cambian con el club, distintos entre sí según la `salt`. */
 export function getTeammateName(player: Player, salt: string): string {
-  return buildName(`${player.id}:${player.club}:mate:${salt}`, "m", surnameOf(player.last_name));
+  const name = buildName(`${player.id}:${player.club}:mate:${salt}`, "m", surnameOf(player.last_name));
+  return rememberEpisodic(name, `compañero de equipo ${salt}`);
 }
 
 /** Cualquier otra persona que aparece (un veterano, un periodista, un aficionado...). */
 export function getPersonName(player: Player, salt: string, gender: "m" | "f" | "any" = "any"): string {
   const seed = `${player.id}:person:${salt}`;
-  return buildName(seed, pickGender(seed, gender), surnameOf(player.last_name));
+  const name = buildName(seed, pickGender(seed, gender), surnameOf(player.last_name));
+  return rememberEpisodic(name, salt);
 }
 
 /**
@@ -199,7 +214,7 @@ export function getCelebrityName(player: Player, kind: CelebrityKind, salt: stri
   const firstPool = gender === "f" ? STAGE_F : STAGE_M;
   const first = firstPool[mix(seed + ":n") % firstPool.length];
   const last = STAGE_SURNAMES[mix(seed + ":s") % STAGE_SURNAMES.length];
-  return `${first} ${last}`;
+  return rememberEpisodic(`${first} ${last}`, `famoso ${kind}`);
 }
 
 /** Nombres de agentes de arranque escritos a mano (siempre los mismos en toda carrera): se sustituyen por uno del jugador. */

@@ -49,7 +49,9 @@ const { tickInjury, getInjuryRemaining } = await import("../src/lib/narrative/ca
 const { computeRole } = await import("../src/lib/narrative/role");
 const { summarizeEffects } = await import("../src/lib/narrative/state-brief");
 const { getClubLevel } = await import("../src/lib/calendar/match-calendar");
-const { buildLedgerEntry, appendLedger, readLedger } = await import("../src/lib/narrative/ledger");
+const { buildLedgerEntry, appendLedger } = await import("../src/lib/narrative/ledger");
+const { introduceCast, markCastMet } = await import("../src/lib/narrative/cast");
+const { personalizeEvent } = await import("../src/lib/narrative/npcs");
 
 // Silenciar logs del motor
 const origLog = console.log;
@@ -120,6 +122,8 @@ async function career(club: string, media: number, seed: number): Promise<Result
   let torneoLen = 0;
   let injuryStartWeek: number | null = null;
   const seenMatch = new Set<string>();
+  const castSeen = new Set<string>();
+  const castStats = { events: 0, cards: 0, max: 0 };
   const prefixCount: Record<string, number> = {};
 
   for (let i = 0; i < 1800 && player.week < 190; i++) {
@@ -153,6 +157,17 @@ async function career(club: string, media: number, seed: number): Promise<Result
     const txt = `${ev.title} ${ev.description}`;
     if (/undefined|\[object|NaN/.test(txt)) res.errors.push(`texto roto: ${ev.id}`);
 
+    // presentación de personajes (cast.ts): igual que en page/actions
+    const shown = personalizeEvent(ev, player);
+    const cards = introduceCast(shown, player);
+    castStats.events += cards.length > 0 ? 1 : 0;
+    castStats.cards += cards.length;
+    castStats.max = Math.max(castStats.max, cards.length);
+    for (const c of cards) {
+      if (castSeen.has(c.name)) res.errors.push(`ficha repetida: ${c.name}`);
+      castSeen.add(c.name);
+    }
+    if (cards.length) player.flags.cast_met = markCastMet(player.flags, cards);
     const opt = ev.options[Math.floor(Math.random() * ev.options.length)];
     res.withOptions++;
     const resolution = resolveOption(opt, player);
@@ -224,6 +239,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
   }
   res.endWeek = player.week;
   (res as any).prefixCount = prefixCount;
+  (res as any).castStats = castStats;
   return res;
 }
 
@@ -238,7 +254,7 @@ for (const [club, media] of setups) {
     origLog(
       `${club.padEnd(12)} #${seed} eventos=${r.events} semana=${r.endWeek} partidos/temp=${perSeason} torneos=${r.tournaments.started} (partidos ${r.tournaments.matches}, máx ${r.tournaments.maxLen} eventos) lesiones=${r.injuries.count} (máx ${r.injuries.maxWeeks} semanas) sinReacción=${r.noReaction}/${r.withOptions} IA=${aiCalls}`,
     );
-    origLog("   roles:", JSON.stringify(r.roles), "cats:", JSON.stringify(r.cats), "prefijos:", JSON.stringify((r as any).prefixCount));
+    origLog("   roles:", JSON.stringify(r.roles), "cats:", JSON.stringify(r.cats), "prefijos:", JSON.stringify((r as any).prefixCount), "fichas:", JSON.stringify((r as any).castStats));
     if (r.errors.length) origLog("   ERRORES:", r.errors.slice(0, 5));
   }
 }
