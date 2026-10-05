@@ -58,14 +58,47 @@ export function shouldTriggerMarketRumor(player: Player): boolean {
   if (player.week < 12) return false;
   const w = getMarketWindow(player.week);
   if (!w) return false;
-  return !player.flags?.[windowKey(player.week, w)];
+  const key = windowKey(player.week, w);
+  if (!player.flags?.[key]) return true;
+  // La ventana de enero es larga (5 turnos): puede traer un SEGUNDO rumor
+  // hacia el final, el mercado es el salseo del juego y una sola noticia por
+  // ventana se hacía corta.
+  const weekInSeason = ((player.week - 1) % 10) + 1;
+  return w === "enero" && weekInSeason >= 7 && !player.flags?.[`${key}_2`] && Math.random() < 0.5;
 }
 
 export function markMarketRumorShown(player: Player): void {
   const w = getMarketWindow(player.week);
   if (!w) return;
   if (!player.flags) player.flags = {};
-  player.flags[windowKey(player.week, w)] = true;
+  const key = windowKey(player.week, w);
+  if (player.flags[key]) player.flags[`${key}_2`] = true;
+  else player.flags[key] = true;
+}
+
+/**
+ * Garantiza que el mercado te toque de verdad. Antes una oferta formal solo
+ * llegaba si un rumor concreto salía bien, y un jugador que elegía las
+ * opciones prudentes podía pasar tres temporadas sin que ningún club se
+ * interesara por él (visto en una partida real). Ahora, una vez vista la
+ * noticia de la ventana, si hace tiempo que no te llega una oferta, un club
+ * se interesa y la oferta formal llega en los turnos siguientes.
+ */
+export function maybeSeedTransferInterest(player: Player): void {
+  if (player.club === NO_CLUB_YET) return;
+  if (Boolean(player.flags?.loan_active) && !player.flags?.loan_returned) return;
+  const w = getMarketWindow(player.week);
+  if (!w || !player.flags?.[windowKey(player.week, w)]) return; // primero el rumor
+  if (getInjuryRemaining(player.flags) > 0) return;
+  if ((player.media ?? 50) < 55) return;
+  const current = player.flags?.transfer_interest;
+  if (typeof current === "string" && current) return;
+  const lastOffer = parseInt(String(player.flags?.offer_last_week ?? "0"), 10) || 0;
+  if (lastOffer > 0 && player.week - lastOffer < 14) return;
+  if (lastOffer === 0 && player.week < 16) return;
+  if (Math.random() >= 0.5) return;
+  if (!player.flags) player.flags = {};
+  Object.assign(player.flags, interestFlags(pickInterestedClub(player), player.week - 1, "prensa"));
 }
 
 const OUTLETS = ["Mercado Total", "Fichajes Al Día", "Diario del Balón", "Radio Mercado", "Cuenta @FichajesYa"];
@@ -709,6 +742,8 @@ export function clearStaleTransferInterest(player: Player): void {
 
 export function buildTransferOfferEvent(player: Player): GameEvent {
   const club = String(player.flags?.transfer_interest);
+  if (!player.flags) player.flags = {};
+  player.flags.offer_last_week = String(player.week);
   // El rumor puede acabar en nada: un montaje del representante (si el
   // interés vino por él) o un club que se echa atrás sin más.
   const source = String(player.flags?.transfer_interest_source ?? "prensa");

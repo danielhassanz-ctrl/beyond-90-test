@@ -44,7 +44,7 @@ export function shouldTriggerLoanFork(player: Player): boolean {
   if (player.club === NO_CLUB_YET) return false;
   if (player.flags?.loan_fork_seen) return false;
   const age = 16 + Math.floor(player.week / 10);
-  if (age < 17 || age > 21) return false;
+  if (age < 17 || age > 23) return false;
   // Solo tiene sentido si todavía no es indiscutible en su club: una
   // media ya alta significa que ha superado esta etapa sin necesitar
   // salir a jugar a otro sitio.

@@ -33,6 +33,7 @@ import {
 } from "@/lib/narrative/agent-events";
 import {
   shouldTriggerMarketRumor,
+  maybeSeedTransferInterest,
   markMarketRumorShown,
   buildMarketRumorEvent,
   shouldTriggerTransferOffer,
@@ -3178,6 +3179,7 @@ export async function pickNextEventDynamic(
   // carrera/actions.ts), así que no se salta ningún partido. Si un rumor
   // resultó ser real, después llega la oferta formal.
   clearStaleTransferInterest(playerWithDynamics);
+  maybeSeedTransferInterest(playerWithDynamics);
   // No colarse entre la jugada decisiva y la crónica del MISMO partido.
   const matchDoneKeys = parseMatchDone(playerWithDynamics.flags, playerWithDynamics.week);
   const decisionPrefix = `match_decision_${playerWithDynamics.week}_`;
