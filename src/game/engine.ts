@@ -749,7 +749,7 @@ function applyRun(s: GameState, count: number): SimRun {
 
   note(
     s,
-    `${run.matches} jornadas en segundo plano: ${run.wins}V ${run.draws}E ${run.losses}D · ${run.goals}G ${run.assists}A`,
+    `${run.matches} jornadas en segundo plano: ${run.wins}V ${run.draws}E ${run.losses}D · ${run.apps}/${run.matches} apariciones · ${run.goals}G ${run.assists}A`,
     run.wins > run.losses ? "good" : run.losses > run.wins ? "bad" : "neutral",
   );
   return run;
