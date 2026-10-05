@@ -48,6 +48,7 @@ import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
+import { monthlySponsorshipIncome } from "@/lib/finance/sponsorship-income";
 import { shouldTriggerSalto, buildSaltoEvent } from "@/lib/narrative/arco-salto";
 import { buildFallbackMatchReport } from "@/lib/narrative/match-fallback";
 import { shouldTriggerDebtTrouble, buildDebtTroubleEvent } from "@/lib/finance/finance-events";
@@ -3040,6 +3041,9 @@ function applyCareerDynamics(player: Player): Player {
   if (player.club !== NO_CLUB_YET) {
     player.patrimonio = (player.patrimonio ?? 0) + weeklySalary(player.media);
   }
+  // Patrocinios firmados: la marca paga cada turno mientras dura el contrato.
+  const sponsorIncome = monthlySponsorshipIncome(player.flags, player.week);
+  if (sponsorIncome > 0) player.patrimonio = (player.patrimonio ?? 0) + sponsorIncome;
   // Cuotas de las hipotecas (finance/mortgage.ts): se descuentan solas cada
   // turno, igual que el sueldo se ingresa. Si no hay dinero, se quedan a 0 y
   // el banco acaba llamando (ver buildDebtTroubleEvent).

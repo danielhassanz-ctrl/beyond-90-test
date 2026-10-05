@@ -316,7 +316,7 @@ const EVENT_TOOL: Anthropic.Tool = {
               additionalProperties: false,
             },
           },
-          required: ["label", "subtitle", "consequences"],
+          required: ["label", "subtitle", "outcome_text", "consequences"],
         },
       },
     },

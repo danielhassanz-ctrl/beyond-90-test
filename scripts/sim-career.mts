@@ -9,6 +9,7 @@
  */
 process.env.ANTHROPIC_API_KEY = "fake-key-for-local-sim";
 let aiCalls = 0;
+const noReactionIds = new Map<string, number>();
 const realFetch = globalThis.fetch;
 globalThis.fetch = (async (input: any, init?: any) => {
   const url = typeof input === "string" ? input : input?.url ?? String(input);
@@ -44,6 +45,7 @@ globalThis.fetch = (async (input: any, init?: any) => {
 }) as typeof fetch;
 
 const { pickNextEventDynamic, resolveOption, applyConsequences } = await import("../src/lib/narrative/engine");
+const { defaultReaction } = await import("../src/lib/narrative/default-reactions");
 const { computeWeekAdvance } = await import("../src/lib/narrative/week-advance");
 const { tickInjury, getInjuryRemaining } = await import("../src/lib/narrative/career-dynamics");
 const { computeRole } = await import("../src/lib/narrative/role");
@@ -173,7 +175,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
     res.withOptions++;
     const resolution = resolveOption(opt, player);
     const cons = resolution ? resolution.consequences : opt.consequences;
-    if (!resolution && !opt.outcomeText) res.noReaction++;
+    if (!resolution && !opt.outcomeText && !defaultReaction(opt, player)) { res.noReaction++; const k = ev.id.replace(/-?\d{8,}.*$/, ""); { const kk = `${k} :: ${opt.label.replace(/[0-9][0-9.]*/g, "N").slice(0, 70)}`; noReactionIds.set(kk, (noReactionIds.get(kk) ?? 0) + 1); }; }
 
     // consecuencias
     const patch = applyConsequences(player, cons);
@@ -269,3 +271,6 @@ for (const [club, media] of setups) {
 origLog(totalErrors === 0 ? "SIN ERRORES" : `ERRORES TOTALES: ${totalErrors}`);
 console.log = origLog;
 console.error = origErr;
+
+console.log("ESCENAS SIN REACCIÓN (top):");
+for (const [k, n] of [...noReactionIds.entries()].sort((a, b) => b[1] - a[1]).slice(0, 40)) console.log(`  ${n}  ${k}`);

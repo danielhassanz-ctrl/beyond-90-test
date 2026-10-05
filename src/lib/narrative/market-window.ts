@@ -784,6 +784,11 @@ export function shouldTriggerOwnMoveDecision(player: Player): boolean {
   if (!w) return false;
   if (!player.flags?.[windowKey(player.week, w)]) return false; // primero el rumor
   if (player.flags?.[`market_own_${seasonOf(player.week)}_${w}`]) return false;
+  // "¿Te quedas o mueves ficha?" no puede volver a las pocas semanas (en una
+  // partida de prueba salió tres veces en dos temporadas, una justo después
+  // de renovar): mínimo 20 turnos entre una y otra.
+  const lastOwn = parseInt(String(player.flags?.market_own_last_week ?? "0"), 10) || 0;
+  if (lastOwn > 0 && player.week - lastOwn < 20) return false;
   const unhappy = (player.moral ?? 70) < 55 || (player.rel_entrenador ?? 60) < 50 || ["suplente", "apartado"].includes(computeRole(player).role);
   const outgrown = (player.media ?? 50) >= 75 && getEuropeanCompetitionFor(player.club)?.competition !== "champions";
   const chance = Math.min(0.85, 0.4 + (unhappy ? 0.3 : 0) + (outgrown ? 0.15 : 0));
@@ -803,6 +808,7 @@ function cap(text: string): string {
 export function buildOwnMoveEvent(player: Player): GameEvent {
   const w = getMarketWindow(player.week) ?? "verano";
   if (!player.flags) player.flags = {};
+  player.flags.market_own_last_week = String(player.week);
   player.flags[`market_own_${seasonOf(player.week)}_${w}`] = true;
   const media = player.media ?? 50;
   const agent = player.agent_name ?? "Tu representante";

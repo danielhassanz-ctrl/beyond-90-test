@@ -18,8 +18,8 @@ const { personalizeEvent } = await import("../src/lib/narrative/npcs");
 
 
 const origLog = console.log;
-console.log = () => {};
-console.error = () => {};
+if (!process.env.DEBUG_AI) console.log = () => {};
+if (!process.env.DEBUG_AI) console.error = () => {};
 
 const N = Number(process.argv[2] ?? 120);
 const player: any = {

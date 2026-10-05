@@ -1,5 +1,7 @@
 "use server";
 
+import { defaultReaction } from "@/lib/narrative/default-reactions";
+import { sponsorshipFlagFor } from "@/lib/finance/sponsorship-income";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { applyConsequences, resolveOption, maybeAddFreeText } from "@/lib/narrative/engine";
@@ -118,13 +120,26 @@ export async function resolveEvent(formData: FormData) {
   // empieza en un punto neutro.
   const fireMatch = option.label.match(/despedir.*fichar\s+(?:a\s+)?(\p{Lu}[\p{L}'-]+(?:\s+\p{Lu}[\p{L}'-]+)+)/u);
   const newAgent = fireMatch && consequencesWeek.agent_name === undefined ? fireMatch[1] : null;
-  const consequences = newAgent
+  const consequencesAgent = newAgent
     ? { ...consequencesWeek, agent_name: newAgent, rel_representante: 50 - (player.rel_representante ?? 50) }
     : consequencesWeek;
+  // Firmar un patrocinio deja un contrato que paga cada turno durante una
+  // temporada (ver finance/sponsorship-income.ts), además de la prima inicial.
+  const isSponsorDeal = /^(sponsor-|arco-patrocinador)/.test(event.id) && (consequencesAgent.patrimonio ?? 0) > 0;
+  const sponsorName = String(
+    Object.entries(consequencesAgent.flags ?? {}).find(([k, v]) => k.startsWith("sponsor_") && typeof v === "string")?.[1] ??
+      event.title,
+  );
+  const sponsorFlag = isSponsorDeal
+    ? sponsorshipFlagFor(event.id, sponsorName, consequencesAgent.patrimonio ?? 0, player.week)
+    : null;
+  const consequences = sponsorFlag
+    ? { ...consequencesAgent, flags: { ...consequencesAgent.flags, ...sponsorFlag } }
+    : consequencesAgent;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.
-  const outcomeText = resolution ? resolution.text : (option.outcomeText ?? null);
+  const outcomeText = resolution ? resolution.text : (option.outcomeText ?? defaultReaction(option, player));
 
   const isRetirementDecision =
     (event.id === "fork-retiro-pro" && option.id === "retirarse") ||

@@ -9,6 +9,7 @@ import { weeklySalary } from "@/lib/narrative/engine";
 import { findPropertyPrompt, findPropertyInteriorPrompt } from "@/lib/narrative/events";
 import { readProperties, monthlyPayment, remainingLoan, totalMonthlyPayments } from "@/lib/finance/mortgage";
 import { readInvestments, investmentValue } from "@/lib/finance/investments";
+import { activeSponsorships } from "@/lib/finance/sponsorship-income";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
 import { NO_CLUB_YET } from "@/lib/constants";
 
@@ -161,7 +162,9 @@ export default async function PatrimonioPage() {
   const mortgageDebt = propiedades.reduce((acc, p) => acc + remainingLoan(p, player.week), 0);
   const mortgageMonthly = totalMonthlyPayments(player.flags);
   const netWorth = player.patrimonio + propertyValue + investmentsTotal - mortgageDebt;
-  const monthlyBalance = monthlySalary - mortgageMonthly;
+  const sponsors = activeSponsorships(player.flags, player.week);
+  const sponsorMonthly = sponsors.reduce((n, x) => n + x.monthly, 0);
+  const monthlyBalance = monthlySalary + sponsorMonthly - mortgageMonthly;
   const pressure = getFinancialPressure(netWorth);
 
   return (
@@ -212,6 +215,12 @@ export default async function PatrimonioPage() {
                 <span className="text-foreground/90">Entra: sueldo del {player.club}</span>
                 <span className="font-num font-semibold text-pitch">+{monthlySalary.toLocaleString("es")} €</span>
               </div>
+              {sponsors.map((x) => (
+                <div key={x.key} className="flex justify-between">
+                  <span className="text-foreground/90">Entra: patrocinio {x.name} (hasta sem. {x.until})</span>
+                  <span className="font-num font-semibold text-pitch">+{x.monthly.toLocaleString("es")} €</span>
+                </div>
+              ))}
               {mortgageMonthly > 0 && (
                 <div className="flex justify-between">
                   <span className="text-foreground/90">Sale: cuotas de hipoteca</span>
@@ -366,7 +375,16 @@ export default async function PatrimonioPage() {
                 <span className="font-num shrink-0 text-sm font-bold text-pitch">+{monthlySalary.toLocaleString("es")} €</span>
               </li>
             )}
-            {ingresos.length === 0 && monthlySalary === 0 ? (
+            {sponsors.map((x) => (
+              <li key={x.key} className="flex items-start justify-between gap-3 py-2.5">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Patrocinio: {x.name}</p>
+                  <p className="text-xs text-muted-foreground">Cada mes mientras dure el contrato</p>
+                </div>
+                <span className="font-num shrink-0 text-sm font-bold text-pitch">+{x.monthly.toLocaleString("es")} €</span>
+              </li>
+            ))}
+            {ingresos.length === 0 && monthlySalary === 0 && sponsors.length === 0 ? (
               <li className="py-2.5 text-xs text-muted-foreground">Todavía no has cobrado nada.</li>
             ) : (
               ingresos.slice(0, 8).map((m) => <MovimientoRow key={m.id} m={m} sign="+" />)
