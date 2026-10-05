@@ -113,7 +113,9 @@ const interestFlags = (club: string, week: number, source: string = "prensa") =>
 type RumorKind = "interes" | "agente" | "competencia" | "bulo" | "capitan" | "clausula" | "familia" | "en_venta" | "intermediario" | "confundido" | "asador" | "hincha_rico" | "agente_doble" | "comision";
 
 function pickKind(player: Player): RumorKind {
-  const last = String(player.flags?.market_last_kind ?? "");
+  // No repetir ninguno de los dos últimos tipos de rumor (antes solo el último: el mismo título volvía cada ventana).
+  const lastTwo = String(player.flags?.market_last_kind ?? "").split(",").filter(Boolean);
+  const last = lastTwo[lastTwo.length - 1] ?? "";
   const weighted: RumorKind[] = ["interes", "interes", "interes", "agente", "agente", "agente", "competencia", "bulo", "capitan", "clausula", "clausula", "familia", "en_venta", "en_venta", "intermediario", "confundido", "asador", "hincha_rico", "agente_doble", "comision"];
   // El estado manda sobre el mercado: lesionado nadie paga por ti ahora (solo
   // ruido de fondo); sin minutos, el club empieza a ponerte en el escaparate.
@@ -125,7 +127,7 @@ function pickKind(player: Player): RumorKind {
   const role = computeRole(player).role;
   const extra: RumorKind[] =
     role === "suplente" || role === "apartado" ? ["en_venta", "en_venta", "en_venta", "en_venta", "agente", "agente"] : [];
-  const options = [...weighted, ...extra].filter((k) => k !== last);
+  const options = [...weighted, ...extra].filter((k) => !lastTwo.includes(k));
   return pick(options);
 }
 
@@ -134,7 +136,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
   const label = w === "verano" ? "el mercado de verano" : "el mercado de enero";
   const kind = pickKind(player);
   if (!player.flags) player.flags = {};
-  player.flags.market_last_kind = kind;
+  player.flags.market_last_kind = [...String(player.flags.market_last_kind ?? "").split(",").filter(Boolean), kind].slice(-2).join(",");
 
   const club = pickInterestedClub(player);
   const outlet = pick(OUTLETS);

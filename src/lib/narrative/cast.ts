@@ -220,7 +220,14 @@ function allCandidates(player: Player): Map<string, Entry> {
   for (const [name, hint] of episodicNames) {
     if (map.has(name)) continue;
     const spec = EPISODIC_HINTS.find((h) => h.match.test(hint))!;
-    map.set(name, { name, role: spec.role, blurb: `${ageFor(`${name}:age`, 21, 62)} años. ${pick(spec.blurb, name)}`, priority: 4, episodic: true });
+    // La edad tiene que cuadrar con quién es: un compañero de equipo no tiene 55 años.
+    const [minAge, maxAge] =
+      spec.role === "Compañero de equipo" || spec.role === "Compañero de habitación" ? [19, 35]
+      : spec.role === "Veterano del vestuario" ? [32, 39]
+      : spec.role === "Chaval de la cantera" ? [17, 19]
+      : spec.role === "Leyenda retirada" ? [45, 65]
+      : [28, 62];
+    map.set(name, { name, role: spec.role, blurb: `${ageFor(`${name}:age`, minAge, maxAge)} años. ${pick(spec.blurb, name)}`, priority: 4, episodic: true });
   }
   return map;
 }

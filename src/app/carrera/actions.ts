@@ -125,7 +125,7 @@ export async function resolveEvent(formData: FormData) {
 
   // Cuánto avanza el calendario (y qué partido del mes queda marcado como
   // jugado) lo decide week-advance.ts: misma regla para el motor y las pruebas.
-  const { newWeek, matchDoneFlag } = computeWeekAdvance(player as Player, event);
+  const { newWeek, matchDoneFlag, weekCounter } = computeWeekAdvance(player as Player, event);
   const targetWeeks = MODE_TARGET_WEEKS[player.mode];
   const willRetire = !isRetirementDecision && player.mode !== "pro" && newWeek > targetWeeks;
 
@@ -237,10 +237,11 @@ export async function resolveEvent(formData: FormData) {
     playerUpdate.forma = Math.max(0, Math.min(100, Math.round(formaBase + injuryTick.formaDelta)));
   }
 
-  if (matchDoneFlag) {
+  if (matchDoneFlag || weekCounter) {
     playerUpdate.flags = {
       ...((playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {}),
-      match_done_week: matchDoneFlag,
+      ...(matchDoneFlag ? { match_done_week: matchDoneFlag } : {}),
+      wk_count: weekCounter,
     };
   }
 

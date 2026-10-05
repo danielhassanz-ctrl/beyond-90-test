@@ -177,7 +177,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
 
     // consecuencias
     const patch = applyConsequences(player, cons);
-    const { newWeek, matchDoneFlag } = computeWeekAdvance(player, ev);
+    const { newWeek, matchDoneFlag, weekCounter } = computeWeekAdvance(player, ev);
     const oldClub = player.club;
     Object.assign(player, patch);
     if (typeof cons.club === "string" && cons.club && cons.club !== oldClub) {
@@ -187,6 +187,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
     }
     player.flags = { ...player.flags, ...(cons.flags ?? {}) };
     if (matchDoneFlag) player.flags.match_done_week = matchDoneFlag;
+    player.flags.wk_count = weekCounter;
     if (ev.coachStance) {
       player.flags.coach_bench = ev.coachStance === "no_cuenta" ? "4" : "0";
     }

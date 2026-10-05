@@ -49,6 +49,7 @@ import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
 import { shouldTriggerSalto, buildSaltoEvent } from "@/lib/narrative/arco-salto";
+import { buildFallbackMatchReport } from "@/lib/narrative/match-fallback";
 import { shouldTriggerDebtTrouble, buildDebtTroubleEvent } from "@/lib/finance/finance-events";
 import { isEventCoherentWithState } from "@/lib/narrative/state-rules";
 import { shouldTriggerPhysioScene, buildPhysioEvent } from "@/lib/narrative/injury-events";
@@ -2820,8 +2821,15 @@ async function pickTorneoEvent(
     forcedResult,
     lines.join("\n"),
     tName,
-  );
-  if (!event) return null;
+  ) ?? buildFallbackMatchReport({
+    player,
+    match,
+    decisionRaw: decisionOutcome,
+    forcedScoreLine: result.scoreLine,
+    forcedWin: result.kind === "ko" ? result.win : undefined,
+    team: nation,
+    competitionNote: tName,
+  });
 
   if (adv.finished) {
     if (!player.flags) player.flags = {};
@@ -3402,7 +3410,18 @@ export async function pickNextEventDynamic(
       const roleLine = roleInstruction(roleInfo.role, playerWithDynamics.rel_entrenador ?? 50);
       if (roleLine) extraInstruction = [extraInstruction, roleLine].filter(Boolean).join("\n");
     }
-    const matchDayEvent = await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history, decisionOutcome, forcedResult, extraInstruction);
+    // Si la IA falla, el partido se resuelve igual con una crónica escrita en
+    // código (match-fallback.ts): sin esto la semana se quedaba atascada.
+    const matchDayEvent =
+      (await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history, decisionOutcome, forcedResult, extraInstruction)) ??
+      buildFallbackMatchReport({
+        player: playerWithDynamics,
+        match: matchThisWeek,
+        decisionRaw: decisionOutcome,
+        forcedScoreLine: forcedResult?.scoreLine,
+        forcedWin: forcedResult?.win,
+        team: playerWithDynamics.club,
+      });
     if (matchDayEvent) {
       if (forcedResult && matchThisWeek.cupRound) {
         advanceCupProgress(playerWithDynamics, "copa_progress", currentSeason, matchThisWeek.cupRound, forcedResult.win);
@@ -3800,6 +3819,24 @@ REGLAS:
   console.error(
     `[pickNextEventDynamic] CRITICAL: IA generation returned null for ${player.last_name}, returning placeholder fallback`
   );
+  // Antes de caer en el relleno genérico, una escena escrita a mano que no se
+  // haya vivido y encaje con el estado del jugador (siempre hay decenas).
+  const emergencyPool = EVENTS.filter(
+    (e) =>
+      e.category !== "partido" &&
+      !e.priority &&
+      !e.requiresFlag &&
+      !e.requiresMajorTournament &&
+      !usedEventIds.includes(e.id) &&
+      (e.minWeek ?? 1) <= playerWithDynamics.week &&
+      (e.minMedia === undefined || playerWithDynamics.media >= e.minMedia) &&
+      (e.maxMedia === undefined || playerWithDynamics.media <= e.maxMedia) &&
+      !e.requiresExternalAgent &&
+      isEventCoherentWithState(e, playerWithDynamics),
+  );
+  if (emergencyPool.length > 0) {
+    return maybeAddFreeText(emergencyPool[Math.floor(Math.random() * emergencyPool.length)]);
+  }
   const FALLBACK_VARIANTS: GameEvent[] = [
     {
       id: "fallback-reflexion",

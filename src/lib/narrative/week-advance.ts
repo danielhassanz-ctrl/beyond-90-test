@@ -67,7 +67,7 @@ export function isCalendarLockedEvent(eventId: string): boolean {
 export function computeWeekAdvance(
   player: Player,
   event: Pick<GameEvent, "id" | "matchKey">,
-): { newWeek: number; matchDoneFlag?: string } {
+): { newWeek: number; matchDoneFlag?: string; weekCounter: string } {
   const isMatchdayEvent = event.id.startsWith("matchday-");
   const isSeasonCheckpoint = SEASON_CHECKPOINT_EVENT_IDS.has(event.id) || isMatchdayEvent;
 
@@ -95,5 +95,17 @@ export function computeWeekAdvance(
   else if (isSeasonCheckpoint) newWeek = player.week + 1;
   else newWeek = player.week + nextWeekGap(player.media, player.mode);
 
-  return { newWeek, matchDoneFlag };
+  // Red de seguridad: si por cualquier fallo se encadenan demasiadas escenas
+  // sin que la semana avance (una caída de la IA, un partido que no llega a
+  // resolverse), se fuerza el avance en vez de dejar al jugador atascado.
+  const [cw, cn] = String(player.flags?.wk_count ?? "0:0").split(":");
+  const sameWeek = parseInt(cw, 10) === player.week;
+  const count = (sameWeek ? parseInt(cn, 10) || 0 : 0) + 1;
+  // Un mes sin partidos pendientes no debe encadenar más de 6 escenas (antes se vieron 13
+  // seguidas en pretemporada); con partidos por jugar caben más (jugada, crónica, respiros).
+  const limit = weekHasPendingMatches ? 16 : 6;
+  if (newWeek === player.week && count >= limit) newWeek = player.week + 1;
+  const weekCounter = newWeek === player.week ? `${player.week}:${count}` : `${newWeek}:0`;
+
+  return { newWeek, matchDoneFlag, weekCounter };
 }

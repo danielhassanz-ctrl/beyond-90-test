@@ -122,11 +122,24 @@ export function canPlayNow(player: Player): boolean {
   return getInjuryRemaining(player.flags) === 0 && computeRole(player).role !== "apartado";
 }
 
+/** Escenas de "primera vez" / "novato" que solo tienen sentido al principio de la carrera. */
+const MAX_WEEK: Record<string, number> = {
+  "pre-primera-entrevista": 30,
+  "ent-primer-dia": 20,
+  "rep-primera-oferta": 40,
+  "ves-novato": 30,
+  "par-debut": 20,
+  "vid-primer-coche": 60,
+  "vid-nueva-relacion": 90,
+};
+
 export function isEventCoherentWithState(
   event: { id: string; category: string; title?: string; description?: string },
   player: Player,
 ): boolean {
   const rule = RULES[event.id];
+  const maxWeek = MAX_WEEK[event.id];
+  if (maxWeek !== undefined && player.week > maxWeek) return false;
   const injured = getInjuryRemaining(player.flags) > 0;
 
   // Lesionado: ni entrenamientos, ni partidos, ni escenas que lo impliquen.

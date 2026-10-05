@@ -26,7 +26,7 @@ import { getCelebrityName, getNpcName, getPersonName, getTeammateName } from "@/
  * surrealistas hay".
  */
 
-const MAX_PER_SEASON = 7;
+const MAX_PER_SEASON = 5;
 
 export function isPreseasonLifeWindow(week: number): boolean {
   const season = Math.floor((week - 1) / 10);
