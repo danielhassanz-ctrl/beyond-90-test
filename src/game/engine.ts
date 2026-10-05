@@ -747,9 +747,16 @@ function applyRun(s: GameState, count: number): SimRun {
     s.flags["riesgo_recaida"] = 0;
   }
 
+  const participationSummary = s.injury
+    ? `baja por ${s.injury.label}`
+    : run.apps === 0 && s.role === "alternativa"
+      ? "convocado, sin minutos"
+      : run.apps === 0
+        ? "sin participación"
+        : `${run.apps}/${run.matches} apariciones`;
   note(
     s,
-    `${run.matches} jornadas en segundo plano: ${run.wins}V ${run.draws}E ${run.losses}D · ${run.apps}/${run.matches} apariciones · ${run.goals}G ${run.assists}A`,
+    `${run.matches} jornadas en segundo plano: ${run.wins}V ${run.draws}E ${run.losses}D · ${participationSummary} · ${run.goals}G ${run.assists}A`,
     run.wins > run.losses ? "good" : run.losses > run.wins ? "bad" : "neutral",
   );
   return run;
