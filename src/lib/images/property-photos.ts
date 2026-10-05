@@ -85,8 +85,10 @@ export async function getOrCreatePropertyPhoto(
   userId: string,
   listingName: string,
   prompt: string,
+  /** "propiedad" = foto exterior del listado; "interior" = foto de dentro (salón, cabina…). */
+  kind: "propiedad" | "interior" = "propiedad",
 ): Promise<string | null> {
-  const templateKey = `propiedad:${listingName}`;
+  const templateKey = `${kind}:${listingName}`;
 
   const { data: existing } = await supabase
     .from("image_templates")

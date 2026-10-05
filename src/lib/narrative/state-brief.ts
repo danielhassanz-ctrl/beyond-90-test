@@ -6,6 +6,7 @@
  * parecían influir en nada. Aquí se traduce el estado a frases que obligan a
  * que la escena nazca de lo que ha pasado.
  */
+import { readInvestments } from "@/lib/finance/investments";
 import type { Player } from "@/types/player";
 import type { HistoryItem } from "@/lib/narrative/ai";
 import { computeRole, ROLE_LABELS, benchRemaining } from "@/lib/narrative/role";
@@ -139,6 +140,7 @@ export function buildStateBrief(player: Player, history: HistoryItem[]): string 
   }
   const houses = Object.entries(f).filter(([k]) => k.startsWith("propiedad_"));
   if (houses.length > 0) facts.push(`tiene ${houses.length} propiedad(es) compradas`);
+  for (const inv of readInvestments(f)) facts.push(`invirtió ${inv.amount.toLocaleString("es")} € en: ${inv.name}`);
   if (f.iguana) facts.push("tiene una iguana como mascota que se hizo famosa");
   if (f.patrocinio_chorizo) facts.push("fue imagen de una línea de chorizo");
   if (typeof f.pareja === "string") facts.push(`su pareja es ${f.pareja}${f.hijos ? " y ya tienen hijos" : ""}`);

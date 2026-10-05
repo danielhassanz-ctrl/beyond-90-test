@@ -285,7 +285,13 @@ export default async function CarreraPage() {
         forma: player.forma,
         media: player.media,
         moral: player.moral,
+        // El sueldo y las cuotas de hipoteca también se aplican en
+        // applyCareerDynamics: sin guardar el patrimonio aquí se calculaban
+        // cada turno y se tiraban (visto en vivo: 8.190 €/mes de sueldo y
+        // el dinero siempre en 0 €).
+        patrimonio: player.patrimonio,
         rel_entrenador: player.rel_entrenador,
+        rel_vestuario: player.rel_vestuario,
         rel_aficion: player.rel_aficion,
       })
       .eq("id", player.id)

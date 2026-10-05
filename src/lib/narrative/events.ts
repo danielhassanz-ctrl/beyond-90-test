@@ -6,6 +6,7 @@ import { pickStartingClubOffers, type ClubOffer } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
 import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
+import { investmentFlag } from "@/lib/finance/investments";
 import { monthlyPayment } from "@/lib/finance/mortgage";
 
 /**
@@ -771,6 +772,32 @@ const CAR_LISTINGS = [
 export function findPropertyPrompt(name: string): string | null {
   const all = [...HOME_LISTINGS, ...MANSION_LISTINGS, ...YACHT_LISTINGS, ...JET_LISTINGS, ...CAR_LISTINGS] as { name: string; prompt: string }[];
   return all.find((l) => l.name === name)?.prompt ?? null;
+}
+
+/**
+ * Foto del INTERIOR de una propiedad (salón moderno, cabina del jet, salón
+ * del yate, habitáculo del coche) — se enseña en Patrimonio junto a la
+ * exterior. El estilo se deduce del nombre del listado para que un loft no
+ * tenga el mismo salón que una villa junto al mar.
+ */
+export function findPropertyInteriorPrompt(name: string): string | null {
+  const n = name.toLowerCase();
+  if (HOME_LISTINGS.some((l) => l.name === name) || MANSION_LISTINGS.some((l) => l.name === name)) {
+    const mansion = MANSION_LISTINGS.some((l) => l.name === name);
+    let style = "bright modern open-plan living room with a comfortable designer sofa, wooden floor and large windows";
+    if (n.includes("loft") || n.includes("industrial") || n.includes("fábrica") || n.includes("ladrillo")) style = "industrial loft living room with exposed brick, high ceilings, leather sofa and big metal-framed windows";
+    else if (n.includes("ático") || n.includes("atico")) style = "penthouse living room with floor-to-ceiling windows, city skyline view, modern minimalist furniture";
+    else if (n.includes("mar") || n.includes("golfo") || n.includes("mediterr")) style = "luxurious beach-house living room with floor-to-ceiling glass facing the sea, white sofas and natural light";
+    else if (n.includes("clásic") || n.includes("histórica") || n.includes("señorial") || n.includes("biblioteca")) style = "elegant classic living room with original floors, high ceilings, a fireplace and a refined modern sofa";
+    else if (n.includes("toscana") || n.includes("finca")) style = "rustic-chic villa living room with stone walls, wooden beams, a big sofa and vineyard views through the windows";
+    else if (n.includes("minimalista") || n.includes("diseño") || n.includes("acristalada")) style = "ultra-modern minimalist living room with concrete and glass, designer furniture and an infinity-pool view";
+    else if (mansion) style = "grand luxury living room with double-height ceiling, designer sofas, marble details and a view of the pool";
+    return `Interior design photography, ${style}, warm natural light, magazine quality, photorealistic, no people`;
+  }
+  if (YACHT_LISTINGS.some((l) => l.name === name)) return "Interior photography, luxurious yacht main salon with cream leather sofas, wood paneling and large windows facing the sea, photorealistic, no people";
+  if (JET_LISTINGS.some((l) => l.name === name)) return "Interior photography, private jet cabin with cream leather seats, wood details and soft lighting, photorealistic, no people";
+  if (CAR_LISTINGS.some((l) => l.name === name)) return "Automotive interior photography, sports car cockpit with leather seats, carbon-fibre details and a digital dashboard, photorealistic, no people, no visible brand logos";
+  return null;
 }
 
 export async function buildCasaEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
@@ -5509,15 +5536,42 @@ export const EVENTS: GameEvent[] = [
     category: "representante",
     title: "Tu agente te habla de invertir",
     description:
-      "Tu agente te sienta a hablar de números, no de fútbol: 'Estás ganando más de lo que puedes gastar sensatamente. Antes de que se te vaya en tonterías, piensa en meter una parte en algo que trabaje por ti — un fondo, algo seguro.'",
+      "Tu agente te sienta a hablar de números, no de fútbol: 'Estás ganando más de lo que puedes gastar sensatamente. Antes de que se te vaya en tonterías, mete 5.000 € en algo que trabaje por ti. Tengo dos opciones sobre la mesa: un fondo indexado global — una cartera con cientos de empresas del mundo, sin sobresaltos, alrededor de un 6 % al año — o una participación en un local comercial del centro, ya alquilado a una panadería, que rinde un 4 % fijo y no depende de la bolsa.'",
     priority: true,
     options: [
       {
         id: "invertir",
-        label: "Seguir su consejo y apartar una parte para invertir",
-        subtitle: "Pensar a largo plazo",
-        consequences: { patrimonio: -3000, reputacion: 3, rel_representante: 2 },
-        outcomeText: "Apartas una parte cada mes sin discutir. Tu representante lo anota en una libreta: 'Esto te lo agradecerás a los treinta'.",
+        label: "Fondo indexado global — 5.000 €",
+        subtitle: "Cartera de cientos de empresas · ~6 % anual",
+        consequences: {
+          patrimonio: -5000,
+          reputacion: 3,
+          rel_representante: 2,
+          flags: investmentFlag("fondo_indexado", {
+            name: "Fondo indexado global",
+            detail: "Cartera de cientos de empresas de todo el mundo. Sube con la bolsa a largo plazo, ~6 % anual.",
+            amount: 5000,
+            annualRate: 0.06,
+          }),
+        },
+        outcomeText: "Firmas la orden de compra del fondo sin discutir. Tu representante lo anota en una libreta: 'Esto te lo agradecerás a los treinta'.",
+      },
+      {
+        id: "local",
+        label: "Participación en un local alquilado — 5.000 €",
+        subtitle: "Una panadería del centro te paga alquiler · ~4 % anual",
+        consequences: {
+          patrimonio: -5000,
+          reputacion: 2,
+          rel_representante: 2,
+          flags: investmentFlag("local_panaderia", {
+            name: "Local comercial alquilado a una panadería",
+            detail: "Un trocito de un local del centro, alquilado a una panadería. Rinde un alquiler fijo, ~4 % anual.",
+            amount: 5000,
+            annualRate: 0.04,
+          }),
+        },
+        outcomeText: "Firmas ante notario y, por primera vez, eres 'propietario' de algo. El panadero te manda un pan de regalo con una nota: 'Gracias por el local, crack'.",
       },
       {
         id: "gastar",

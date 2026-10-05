@@ -83,8 +83,21 @@ export async function resolveEvent(formData: FormData) {
     : baseConsequences;
   // "@LOWER" en una escena escrita a mano = un club de nivel inferior al del
   // jugador, elegido ahora (la escena no sabe en qué club estás).
-  const consequences =
+  const consequencesClub =
     consequencesRaw.club === "@LOWER" ? { ...consequencesRaw, club: pickLowerClub(player) } : consequencesRaw;
+  // "@WEEK" en un flag = la semana actual (las inversiones escritas a mano
+  // guardan desde cuándo existen, ver finance/investments.ts).
+  const consequences = consequencesClub.flags
+    ? {
+        ...consequencesClub,
+        flags: Object.fromEntries(
+          Object.entries(consequencesClub.flags).map(([k, v]) => [
+            k,
+            typeof v === "string" ? v.replace('"@WEEK"', String(player.week)) : v,
+          ]),
+        ),
+      }
+    : consequencesClub;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.

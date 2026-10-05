@@ -6,6 +6,7 @@ import { pickInterestedClub } from "@/lib/narrative/market-window";
 import { pickLowerClub } from "@/lib/narrative/role-events";
 import { computeRole } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
+import { investmentFlag } from "@/lib/finance/investments";
 
 /**
  * Eventos donde el AGENTE/REPRESENTANTE es un personaje activo y conversacional.
@@ -253,13 +254,22 @@ export function buildAgentDialogueEvent(
         id: "agent-investment-" + Date.now(),
         category: "representante",
         title: `${agentName} te habla sobre tu futuro económico`,
-        description: `"Estás ganando bien ahora. Pero esto no dura para siempre. Tengo un contacto que maneja inversiones inmobiliarias. O metemos 200k en una vivienda para rentarla después, o lo dejas todo en la cuenta. ¿Qué prefieres?"`,
+        description: `"Estás ganando bien ahora. Pero esto no dura para siempre. Tengo un contacto que maneja inversiones inmobiliarias: un piso reformado en un barrio universitario, con inquilinos ya buscando, por 200.000 € al contado. Te rinde un 4 % anual en alquileres y el piso solo se revaloriza. O lo dejas todo en la cuenta. ¿Qué prefieres?"`,
         options: [
           {
             id: "0",
-            label: "Invertir en propiedad",
-            subtitle: "Asegurar patrimonio a largo plazo",
-            consequences: { patrimonio: -200000, fama: 1 },
+            label: "Comprar el piso para alquilarlo — 200.000 €",
+            subtitle: "Piso reformado en barrio universitario · ~4 % anual",
+            consequences: {
+              patrimonio: -200000,
+              fama: 1,
+              flags: investmentFlag("piso_alquiler", {
+                name: "Piso reformado para alquilar",
+                detail: "Un piso en un barrio universitario, con inquilinos. Rinde alquileres y se revaloriza, ~4 % anual.",
+                amount: 200000,
+                annualRate: 0.04,
+              }),
+            },
             outcomeText: "El asesor te enseña los planos de un piso reformado y tú te imaginas viviendo ahí. Firmas con una sonrisa que no sabes si es de orgullo o de nervios.",
           },
           {
