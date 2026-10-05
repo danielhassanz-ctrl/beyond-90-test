@@ -45,6 +45,29 @@ interface Movimiento {
   chosen: string | null;
   monto: number;
   isSecondLife: boolean;
+  /** De dónde viene o a dónde va el dinero (Patrocinio, Redes sociales, Compra…). */
+  concept: string;
+}
+
+/** Clasifica un movimiento por el id de la escena que lo generó. */
+function conceptOf(eventId: string, category: string | null, title: string): string {
+  const id = eventId.toLowerCase();
+  const t = title.toLowerCase();
+  if (category === "segunda_vida") return "Segunda vida";
+  if (/^(sponsor|arco-patrocinador|rep-patrocinio)/.test(id) || /patrocin|marca|embajador|campaña publicitaria|anuncio/.test(t)) return "Patrocinio y marcas";
+  if (/^social/.test(id) || /redes|colaboraci|influencer|stream/.test(t)) return "Redes sociales";
+  if (/inversi|startup|cripto|asesor financiero|negocio/.test(id) || /invert|inversi|negocio|startup/.test(t)) return "Inversión";
+  if (/^vid-(casa|mansion|yate|jet|coche)/.test(id) || /^banco-/.test(id)) return "Propiedades y bancos";
+  if (/fich|contrato|renov|prima|cl[aá]usula/.test(id) || /fichaje|contrato|renovaci|prima/.test(t)) return "Contratos y primas";
+  if (/^(sel-|torneo)/.test(id)) return "Selección";
+  return "Otros";
+}
+
+/** Suma por concepto, de mayor a menor. */
+function byConcept(rows: Movimiento[]): { concept: string; total: number }[] {
+  const acc = new Map<string, number>();
+  for (const m of rows) acc.set(m.concept, (acc.get(m.concept) ?? 0) + Math.abs(m.monto));
+  return [...acc.entries()].map(([concept, total]) => ({ concept, total })).sort((a, b) => b.total - a.total);
 }
 
 const eur = (n: number) => `${Math.abs(n).toLocaleString("es")} €`;
@@ -55,6 +78,7 @@ function MovimientoRow({ m, sign }: { m: Movimiento; sign: "+" | "-" }) {
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">{m.chosen || m.title}</p>
         <p className="text-xs text-muted-foreground">
+          <span className="font-cond uppercase tracking-wide text-gold">{m.concept}</span> ·{" "}
           {m.chosen ? `${m.title} · ` : ""}
           {m.isSecondLife ? `Semana ${m.week} de tu segunda vida` : `${getGameDateLabel(m.week)} · Temp. ${seasonLabel(m.week)}`}
         </p>
@@ -80,7 +104,7 @@ export default async function PatrimonioPage() {
 
   const { data: allEvents } = await supabase
     .from("career_events")
-    .select("id, week, title, category, consequences, chosen_option_label, created_at")
+    .select("id, event_id, week, title, category, consequences, chosen_option_label, created_at")
     .eq("player_id", player.id)
     .order("created_at", { ascending: false });
 
@@ -98,6 +122,7 @@ export default async function PatrimonioPage() {
         chosen: (e.chosen_option_label as string | null) ?? null,
         monto,
         isSecondLife: e.category === "segunda_vida",
+        concept: conceptOf(String(e.event_id ?? ""), (e.category as string | null) ?? null, e.title as string),
       },
     ];
   });
@@ -324,6 +349,13 @@ export default async function PatrimonioPage() {
           <p className="text-xs text-muted-foreground">
             Esta temporada: +{total(ingresos.filter(inSeason)).toLocaleString("es")} € extra, además del sueldo.
           </p>
+          <div className="flex flex-wrap gap-1.5">
+            {byConcept(ingresos).map((c) => (
+              <span key={c.concept} className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] text-foreground/90">
+                {c.concept} <span className="font-num font-semibold text-pitch">+{c.total.toLocaleString("es")} €</span>
+              </span>
+            ))}
+          </div>
           <ul className="divide-y divide-panel-border">
             {monthlySalary > 0 && (
               <li className="flex items-start justify-between gap-3 py-2.5">
@@ -361,6 +393,13 @@ export default async function PatrimonioPage() {
           <p className="text-xs text-muted-foreground">
             Esta temporada: -{total(pagos.filter(inSeason)).toLocaleString("es")} € en compras, inversiones y gastos.
           </p>
+          <div className="flex flex-wrap gap-1.5">
+            {byConcept(pagos).map((c) => (
+              <span key={c.concept} className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] text-foreground/90">
+                {c.concept} <span className="font-num font-semibold text-destructive">-{c.total.toLocaleString("es")} €</span>
+              </span>
+            ))}
+          </div>
           <ul className="divide-y divide-panel-border">
             {propiedades
               .filter((p) => monthlyPayment(p) > 0)
