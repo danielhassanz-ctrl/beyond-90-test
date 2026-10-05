@@ -684,6 +684,7 @@ function applyRun(s: GameState, count: number): SimRun {
   // Preserve the availability state that actually governed this simulated block.
   // Recovery/new-injury processing below must not rewrite the history the player sees.
   const injuryDuringRun = s.injury?.label ?? null;
+  const injuryMatchesOutAtStart = s.injury?.matchesOut ?? 0;
   // A simulated block represents real weeks of calendar, not zero-time glue.
   // Advancing narrative time here lets the Story Director surface life/club
   // beats between sparse key matches instead of producing football-card runs.
@@ -750,7 +751,9 @@ function applyRun(s: GameState, count: number): SimRun {
     s.flags["riesgo_recaida"] = 0;
   }
 
-  const injuryMissed = injuryDuringRun ? Math.min(run.matches, run.missed) : 0;
+  // `run.missed` also includes healthy bench/non-selection fixtures after recovery.
+  // Keep medical absence separate so the story never blames those on the injury.
+  const injuryMissed = injuryDuringRun ? Math.min(run.matches, injuryMatchesOutAtStart) : 0;
   const participationSummary = injuryDuringRun
     ? injuryMissed >= run.matches
       ? `baja por ${injuryDuringRun}`
