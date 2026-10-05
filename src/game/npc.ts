@@ -23,7 +23,16 @@ export function careerSeed(s: GameState): number {
   installPeopleEvents();
   const anyS = s as GameState & { careerSeed?: number };
   if (typeof anyS.careerSeed !== "number" || !Number.isFinite(anyS.careerSeed)) {
-    anyS.careerSeed = Math.floor(Math.random() * 1_000_000) + 1;
+    // Legacy saves may predate persisted careerSeed. Derive a stable fallback from
+    // career identity instead of runtime randomness so reloading the same save cannot
+    // silently recast advisers, coaches, partners or teammates.
+    const legacyIdentity = JSON.stringify([
+      s.player?.name ?? "player",
+      s.clubId ?? "unattached",
+      s.age,
+      s.seasonIndex,
+    ]);
+    anyS.careerSeed = (hash(90, legacyIdentity) % 1_000_000) + 1;
   }
   return anyS.careerSeed;
 }
