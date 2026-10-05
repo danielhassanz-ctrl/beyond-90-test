@@ -57,6 +57,7 @@ const LOCKED_PREFIXES = [
   "arco-rival-",
   "arco-hermano-",
   "arco-patrocinador-",
+  "arco-salto-",
 ];
 
 export function isCalendarLockedEvent(eventId: string): boolean {

@@ -72,6 +72,7 @@ interface Result {
   roles: Record<string, number>;
   cats: Record<string, number>;
   noReaction: number;
+  transfers?: number;
   withOptions: number;
   nulls: number;
 }
@@ -177,7 +178,13 @@ async function career(club: string, media: number, seed: number): Promise<Result
     // consecuencias
     const patch = applyConsequences(player, cons);
     const { newWeek, matchDoneFlag } = computeWeekAdvance(player, ev);
+    const oldClub = player.club;
     Object.assign(player, patch);
+    if (typeof cons.club === "string" && cons.club && cons.club !== oldClub) {
+      player.flags = { ...player.flags, club_since: String(newWeek), coach_bench: "0", bench_streak: "0", euro_progress: "" };
+      player.rel_entrenador = 50; player.rel_vestuario = 45; player.rel_aficion = 40;
+      res.transfers = (res.transfers ?? 0) + 1;
+    }
     player.flags = { ...player.flags, ...(cons.flags ?? {}) };
     if (matchDoneFlag) player.flags.match_done_week = matchDoneFlag;
     if (ev.coachStance) {
@@ -198,7 +205,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
     }
 
     // métricas
-    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-", "banco-"]) {
+    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-", "banco-", "arco-salto-"]) {
       if (ev.id.startsWith(pre)) prefixCount[pre] = (prefixCount[pre] ?? 0) + 1;
     }
     if (ev.id.startsWith("matchday-") && ev.matchKey) {
@@ -252,7 +259,7 @@ for (const [club, media] of setups) {
     const seasons = Object.keys(r.matchBySeason).length;
     const perSeason = seasons ? (r.matchEvents / seasons).toFixed(1) : "0";
     origLog(
-      `${club.padEnd(12)} #${seed} eventos=${r.events} semana=${r.endWeek} partidos/temp=${perSeason} torneos=${r.tournaments.started} (partidos ${r.tournaments.matches}, máx ${r.tournaments.maxLen} eventos) lesiones=${r.injuries.count} (máx ${r.injuries.maxWeeks} semanas) sinReacción=${r.noReaction}/${r.withOptions} IA=${aiCalls}`,
+      `${club.padEnd(12)} #${seed} eventos=${r.events} semana=${r.endWeek} partidos/temp=${perSeason} torneos=${r.tournaments.started} (partidos ${r.tournaments.matches}, máx ${r.tournaments.maxLen} eventos) lesiones=${r.injuries.count} (máx ${r.injuries.maxWeeks} semanas) traspasos=${r.transfers ?? 0} sinReacción=${r.noReaction}/${r.withOptions} IA=${aiCalls}`,
     );
     origLog("   roles:", JSON.stringify(r.roles), "cats:", JSON.stringify(r.cats), "prefijos:", JSON.stringify((r as any).prefixCount), "fichas:", JSON.stringify((r as any).castStats));
     if (r.errors.length) origLog("   ERRORES:", r.errors.slice(0, 5));

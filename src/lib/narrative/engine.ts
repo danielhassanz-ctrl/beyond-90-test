@@ -48,6 +48,7 @@ import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
+import { shouldTriggerSalto, buildSaltoEvent } from "@/lib/narrative/arco-salto";
 import { shouldTriggerDebtTrouble, buildDebtTroubleEvent } from "@/lib/finance/finance-events";
 import { isEventCoherentWithState } from "@/lib/narrative/state-rules";
 import { shouldTriggerPhysioScene, buildPhysioEvent } from "@/lib/narrative/injury-events";
@@ -3203,6 +3204,11 @@ export async function pickNextEventDynamic(
   // comprueban antes que los DM/pretemporada normales porque son más
   // escasos y significativos — cada uno solo avanza un capítulo por vez
   // y guarda su propio progreso en player.flags (ver arco-*.ts).
+  if (!midMatch && shouldTriggerSalto(playerWithDynamics)) {
+    const salto = buildSaltoEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Arco salto: "${salto.title}"`);
+    return maybeAddFreeText(salto);
+  }
   if (!midMatch && shouldTriggerArcoRival(playerWithDynamics)) {
     const arco = buildArcoRivalEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Arco rival: "${arco.title}"`);
