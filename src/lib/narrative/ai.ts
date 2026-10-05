@@ -369,6 +369,7 @@ export async function callEventTool(
   prompt: string,
   category: EventCategory,
   idPrefix: string,
+  attempt = 1,
 ): Promise<GameEvent | null> {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error(`[callEventTool:${idPrefix}] FATAL: no ANTHROPIC_API_KEY set`);
@@ -389,7 +390,14 @@ export async function callEventTool(
     const t0 = Date.now();
     const response = await client.messages.create({
       model: MODEL,
-      max_tokens: 800,
+      // 800 se quedaba corto desde que cada opción lleva su reacción
+      // (outcome_text): el modelo agotaba el límite a mitad de las opciones,
+      // la escena llegaba sin "options" y se descartaba (pagando igualmente
+      // la llamada). En una partida de prueba real fallaban ~3 de cada 4
+      // crónicas de partido y ~1 de cada 3 escenas. Solo se cobra lo que
+      // realmente se genera, así que subir el techo no encarece las escenas
+      // que ya cabían.
+      max_tokens: 2200,
       temperature: 1.0, // Temperatura máxima (0-1) para garantizar variación - cada partida diferente
       tools: [EVENT_TOOL],
       tool_choice: { type: "tool", name: "emit_event" },
@@ -429,6 +437,16 @@ export async function callEventTool(
     // jugador se quedaba con el evento de emergencia genérico
     // ("Momento de reflexión") en vez de reintentar con gracia.
     if (!data.title || !data.description || !Array.isArray(data.options) || data.options.length < 2) {
+      console.error(
+        `[callEventTool:${idPrefix}] stop_reason=${response.stop_reason} output_tokens=${response.usage?.output_tokens} keys=${Object.keys(data).join(",")} optionsSample=${JSON.stringify((data as Record<string, unknown>).options)?.slice(0, 300)}`,
+      );
+      // A veces el modelo mezcla el formato de las opciones (texto con
+      // etiquetas en vez de lista). Es intermitente: un segundo intento casi
+      // siempre sale bien, y es mejor que descartar la escena.
+      if (attempt < 2) {
+        console.error(`[callEventTool:${idPrefix}] opciones mal formadas, reintentando una vez`);
+        return callEventTool(prompt, category, idPrefix, attempt + 1);
+      }
       console.error(
         `[callEventTool:${idPrefix}] FAIL: incomplete tool input. title=${!!data.title}, description=${!!data.description}, options=${Array.isArray(data.options) ? `array(${data.options.length})` : typeof data.options}`
       );

@@ -1,6 +1,7 @@
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
+import { computeRole } from "@/lib/narrative/role";
 
 /**
  * La decisión de la cesión — quedarte a pelear el sitio en tu club o
@@ -48,6 +49,8 @@ export function shouldTriggerLoanFork(player: Player): boolean {
   // media ya alta significa que ha superado esta etapa sin necesitar
   // salir a jugar a otro sitio.
   if (player.media >= 68) return false;
+  // La escena dice "llevas meses sin apenas jugar": con el puesto de titular sería una mentira.
+  if (computeRole(player).role === "titular") return false;
   return Math.random() < 0.3;
 }
 

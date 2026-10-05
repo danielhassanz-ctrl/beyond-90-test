@@ -59,7 +59,20 @@ export async function resolveEvent(formData: FormData) {
   }
 
   const resolution = resolveOption(option, player);
-  const baseConsequences = resolution ? resolution.consequences : option.consequences;
+  // Una opción con tirada de éxito/fracaso puede traer además cambios
+  // estructurales propios (un club nuevo, flags de cesión): el resultado de la
+  // tirada solo describe el DESENLACE, no puede borrar la decisión. Sin esta
+  // fusión, "Aceptar la cesión" contaba la historia de la cesión pero el
+  // jugador seguía en su club (visto en una partida de prueba real).
+  const baseConsequences = resolution
+    ? {
+        ...resolution.consequences,
+        ...(resolution.consequences.club === undefined && option.consequences.club !== undefined
+          ? { club: option.consequences.club }
+          : {}),
+        ...(option.consequences.flags ? { flags: { ...option.consequences.flags, ...resolution.consequences.flags } } : {}),
+      }
+    : option.consequences;
   // Si la escena fija la postura del entrenador ("no cuenta contigo"), la
   // relación se lleva a ese valor y encima se suma lo que cambie la opción
   // — así el entorno ("Opinión del entrenador") nunca contradice la
@@ -87,7 +100,7 @@ export async function resolveEvent(formData: FormData) {
     consequencesRaw.club === "@LOWER" ? { ...consequencesRaw, club: pickLowerClub(player) } : consequencesRaw;
   // "@WEEK" en un flag = la semana actual (las inversiones escritas a mano
   // guardan desde cuándo existen, ver finance/investments.ts).
-  const consequences = consequencesClub.flags
+  const consequencesWeek = consequencesClub.flags
     ? {
         ...consequencesClub,
         flags: Object.fromEntries(
@@ -98,6 +111,16 @@ export async function resolveEvent(formData: FormData) {
         ),
       }
     : consequencesClub;
+  // "Despedirle y fichar a Julia Rovira": las escenas generadas por la IA no
+  // traen el cambio de representante en sus consecuencias, así que se deduce
+  // de la etiqueta. Sin esto, despedías al agente y la partida seguía con el
+  // mismo (visto en una partida de prueba real). La relación con el nuevo
+  // empieza en un punto neutro.
+  const fireMatch = option.label.match(/despedir.*fichar\s+(?:a\s+)?(\p{Lu}[\p{L}'-]+(?:\s+\p{Lu}[\p{L}'-]+)+)/u);
+  const newAgent = fireMatch && consequencesWeek.agent_name === undefined ? fireMatch[1] : null;
+  const consequences = newAgent
+    ? { ...consequencesWeek, agent_name: newAgent, rel_representante: 50 - (player.rel_representante ?? 50) }
+    : consequencesWeek;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.
