@@ -750,8 +750,11 @@ function applyRun(s: GameState, count: number): SimRun {
     s.flags["riesgo_recaida"] = 0;
   }
 
+  const injuryMissed = injuryDuringRun ? Math.min(run.matches, run.missed) : 0;
   const participationSummary = injuryDuringRun
-    ? `baja por ${injuryDuringRun}`
+    ? injuryMissed >= run.matches
+      ? `baja por ${injuryDuringRun}`
+      : `${injuryMissed} jornadas de baja por ${injuryDuringRun}; ${run.apps} apariciones tras recuperarte`
     : run.apps === 0 && s.role === "alternativa"
       ? "convocado, sin minutos"
       : run.apps === 0
