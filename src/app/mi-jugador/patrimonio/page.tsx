@@ -50,15 +50,15 @@ interface Movimiento {
 }
 
 /** Clasifica un movimiento por el id de la escena que lo generó. */
-function conceptOf(eventId: string, category: string | null, title: string): string {
+function conceptOf(eventId: string, category: string | null, title: string, chosen: string | null): string {
   const id = eventId.toLowerCase();
-  const t = title.toLowerCase();
+  const t = `${title} ${chosen ?? ""}`.toLowerCase();
   if (category === "segunda_vida") return "Segunda vida";
   if (/^(sponsor|arco-patrocinador|rep-patrocinio)/.test(id) || /patrocin|marca|embajador|campaña publicitaria|anuncio/.test(t)) return "Patrocinio y marcas";
   if (/^social/.test(id) || /redes|colaboraci|influencer|stream/.test(t)) return "Redes sociales";
   if (/inversi|startup|cripto|asesor financiero|negocio/.test(id) || /invert|inversi|negocio|startup/.test(t)) return "Inversión";
   if (/^vid-(casa|mansion|yate|jet|coche)/.test(id) || /^banco-/.test(id)) return "Propiedades y bancos";
-  if (/fich|contrato|renov|prima|cl[aá]usula/.test(id) || /fichaje|contrato|renovaci|prima/.test(t)) return "Contratos y primas";
+  if (/fich|contrato|renov|prima|cl[aá]usula/.test(id) || /fichaje|contrato|renovaci|prima|ficha|mejoras|sueldo|salario/.test(t)) return "Contratos y primas";
   if (/^(sel-|torneo)/.test(id)) return "Selección";
   return "Otros";
 }
@@ -122,7 +122,7 @@ export default async function PatrimonioPage() {
         chosen: (e.chosen_option_label as string | null) ?? null,
         monto,
         isSecondLife: e.category === "segunda_vida",
-        concept: conceptOf(String(e.event_id ?? ""), (e.category as string | null) ?? null, e.title as string),
+        concept: conceptOf(String(e.event_id ?? ""), (e.category as string | null) ?? null, e.title as string, (e.chosen_option_label as string | null) ?? null),
       },
     ];
   });
@@ -343,11 +343,11 @@ export default async function PatrimonioPage() {
         {/* 5 · Ingresos */}
         <div className="space-y-2 rounded-2xl border border-panel-border bg-surface p-4">
           <div className="flex items-baseline justify-between">
-            <p className="text-kicker text-pitch">⬆ Ingresos</p>
-            <p className="font-num text-sm font-bold text-pitch">+{total(ingresos).toLocaleString("es")} € en total</p>
+            <p className="text-kicker text-pitch">⬆ Ingresos extra de tus decisiones</p>
+            <p className="font-num text-sm font-bold text-pitch">+{total(ingresos).toLocaleString("es")} €</p>
           </div>
           <p className="text-xs text-muted-foreground">
-            Esta temporada: +{total(ingresos.filter(inSeason)).toLocaleString("es")} € extra, además del sueldo.
+            Suma de todo lo de abajo, sin contar el sueldo, que entra solo cada mes. Esta temporada: +{total(ingresos.filter(inSeason)).toLocaleString("es")} €.
           </p>
           <div className="flex flex-wrap gap-1.5">
             {byConcept(ingresos).map((c) => (
@@ -387,11 +387,11 @@ export default async function PatrimonioPage() {
         {/* 6 · Pagos */}
         <div className="space-y-2 rounded-2xl border border-panel-border bg-surface p-4">
           <div className="flex items-baseline justify-between">
-            <p className="text-kicker text-destructive">⬇ Pagos</p>
-            <p className="font-num text-sm font-bold text-destructive">-{total(pagos).toLocaleString("es")} € en total</p>
+            <p className="text-kicker text-destructive">⬇ Pagos y compras de tus decisiones</p>
+            <p className="font-num text-sm font-bold text-destructive">-{total(pagos).toLocaleString("es")} €</p>
           </div>
           <p className="text-xs text-muted-foreground">
-            Esta temporada: -{total(pagos.filter(inSeason)).toLocaleString("es")} € en compras, inversiones y gastos.
+            Suma de las compras, inversiones y gastos que has decidido tú. Esta temporada: -{total(pagos.filter(inSeason)).toLocaleString("es")} €. Las cuotas de hipoteca van aparte, cada mes.
           </p>
           <div className="flex flex-wrap gap-1.5">
             {byConcept(pagos).map((c) => (
