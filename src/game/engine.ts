@@ -681,6 +681,9 @@ function agentCard(s: GameState): Card | null {
 /* ============ Partidos resueltos en SEGUNDO PLANO (sin pantalla) ============ */
 
 function applyRun(s: GameState, count: number): SimRun {
+  // Preserve the availability state that actually governed this simulated block.
+  // Recovery/new-injury processing below must not rewrite the history the player sees.
+  const injuryDuringRun = s.injury?.label ?? null;
   // A simulated block represents real weeks of calendar, not zero-time glue.
   // Advancing narrative time here lets the Story Director surface life/club
   // beats between sparse key matches instead of producing football-card runs.
@@ -747,8 +750,8 @@ function applyRun(s: GameState, count: number): SimRun {
     s.flags["riesgo_recaida"] = 0;
   }
 
-  const participationSummary = s.injury
-    ? `baja por ${s.injury.label}`
+  const participationSummary = injuryDuringRun
+    ? `baja por ${injuryDuringRun}`
     : run.apps === 0 && s.role === "alternativa"
       ? "convocado, sin minutos"
       : run.apps === 0
