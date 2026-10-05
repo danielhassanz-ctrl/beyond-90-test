@@ -126,7 +126,9 @@ export function pickInterestedClub(player: Player): string {
     // sin minutos: un club de nivel inferior donde pueda jugar
     pool = level === "grande" ? POOL_MID : level === "europeo" ? POOL_LOW : POOL_LOW;
   } else if (level === "grande") {
-    pool = POOL_ELITE;
+    // En rotación (juegas, pero no eres fijo) también te quieren los clubes de
+    // nivel medio, que ofrecen el protagonismo que no tienes en un grande.
+    pool = role === "rotacion" ? [...POOL_ELITE, ...POOL_MID, ...POOL_MID] : POOL_ELITE;
   } else if (level === "europeo") {
     pool = media >= 72 ? [...POOL_HIGH, ...POOL_ELITE] : POOL_HIGH;
   } else {
@@ -757,6 +759,63 @@ export function buildTransferOfferEvent(player: Player): GameEvent {
   const agent = player.agent_name ?? "Tu representante";
   const raise = Math.round((8000 + (player.media ?? 50) * 300) / 500) * 500;
   const clear = { transfer_interest: "" };
+
+  // Sin ser titular en un club grande, lo natural es que un club de nivel
+  // medio te pida A PRÉSTAMO para darte los minutos que aquí no tienes — o
+  // que te quiera de forma definitiva. Es la oferta que se esperaba de un
+  // Betis, Villarreal o Sevilla.
+  const origin = player.club;
+  const age = 16 + Math.floor(player.week / 10);
+  const notStarter = computeRole(player).role !== "titular";
+  const loanOngoing = Boolean(player.flags?.loan_active) && !player.flags?.loan_returned;
+  const rank = { grande: 3, europeo: 2, modesto: 1 } as const;
+  const lowerLevel = rank[getClubLevel(club)] < rank[getClubLevel(origin)];
+  if (notStarter && lowerLevel && age <= 27 && !loanOngoing && Math.random() < 0.65) {
+    const loanFlags = { ...clear, loan_active: origin, loan_start_week: String(player.week), loan_returned: false };
+    return {
+      id: `oferta-cesion-${Date.now()}`,
+      category: "representante",
+      title: `${cap(art(club))} te pide a préstamo`,
+      description: `${agent} entra con el móvil en la mano: "${cap(art(club))} te quiere. Su entrenador ha visto vídeos tuyos y te ofrece algo que aquí no tienes: ser importante. Te piden la cesión por una temporada, con opción a que sea definitivo si funciona. Tú decides."`,
+      allowFreeText: true,
+      freeTextPrompt: `¿Qué le dices a ${agent}?`,
+      options: [
+        {
+          id: "cesion",
+          label: `Aceptar la cesión ${de(club)}`,
+          subtitle: `Minutos de verdad · el ${origin} te espera`,
+          consequences: { club, moral: 5, fama: 1, rel_vestuario: -2, rel_aficion: -2, flags: loanFlags },
+          outcomeText: `Firmas la cesión con ganas de jugar. En el vestuario del ${origin} te despiden con un "vuelve cuando seas indispensable", y en ${art(club)} ya hay un dorsal esperándote.`,
+        },
+        {
+          id: "traspaso",
+          label: `Pedir el traspaso definitivo ${de(club)}`,
+          subtitle: "Cortar con el pasado y ser su referencia",
+          consequences: { club, fama: 3, moral: 5, rel_vestuario: -4, rel_aficion: -5, flags: clear },
+          outcomeText: `Dices que prefieres que sea de verdad, sin vuelta atrás. ${cap(art(club))} acepta, y tu antiguo club te desea suerte con una nota fría de comunicación.`,
+        },
+        {
+          id: "pelear",
+          label: `Quedarte y pelear tu sitio en el ${origin}`,
+          subtitle: "Apostar por demostrar que mereces los minutos aquí",
+          consequences: {},
+          resolve: {
+            baseChance: 0.4,
+            statModifier: "media",
+            success: {
+              text: `Rechazas el préstamo y te dejas la piel en los entrenos. El míster lo nota: empiezas a entrar en las convocatorias importantes.`,
+              consequences: { media: 3, forma: 3, moral: 4, rel_entrenador: 3, flags: clear },
+            },
+            fail: {
+              text: `Rechazas el préstamo, pero los minutos no llegan. Con los meses empiezas a preguntarte si debiste aceptar.`,
+              consequences: { moral: -4, rel_entrenador: -2, flags: clear },
+            },
+          },
+        },
+      ],
+    };
+  }
+
   const options: EventOption[] = [
     {
       id: "fichar",
