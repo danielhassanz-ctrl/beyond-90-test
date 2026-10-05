@@ -428,7 +428,9 @@ export function simulateRun(state: GameState, count: number): SimRun {
     if (res === "W") run.wins += 1;
     else if (res === "D") run.draws += 1;
     else run.losses += 1;
-    // `missed` tracks fixtures lost specifically to the active injury. Bench/non-selection\n    // after recovery is already represented by apps and must not inflate the medical layoff.\n    if (i < injuredFor) run.missed += 1;
+    // `missed` tracks fixtures lost specifically to the active injury. Bench/non-selection
+    // after recovery is already represented by apps and must not inflate the medical layoff.
+    if (i < injuredFor) run.missed += 1;
 
     let goals = 0;
     let assists = 0;
