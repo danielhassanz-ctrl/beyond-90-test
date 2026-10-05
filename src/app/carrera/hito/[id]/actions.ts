@@ -148,7 +148,8 @@ export async function regenerateMilestoneImage(formData: FormData) {
       ]);
       const lookUrl = look.status === "fulfilled" ? look.value : null;
       const msUrl = ms.status === "fulfilled" ? ms.value : null;
-      if (lookUrl) await supabase.from("players").update({ current_photo_url: lookUrl }).eq("id", playerId);
+      // La foto de un hito concreto no debe pasar a ser la foto de referencia del jugador (ver resolveEvent).
+      void lookUrl;
       if (msUrl) {
         await supabase.from("milestones").update({ image_url: msUrl, image_status: "ready" }).eq("id", milestoneId);
       } else {

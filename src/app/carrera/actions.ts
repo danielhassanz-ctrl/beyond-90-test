@@ -600,6 +600,8 @@ export async function resolveEvent(formData: FormData) {
       const finalPlayerFlags = player.flags ?? {};
       const finalUserEmail = user.email;
       const finalIsGolChilena = event.id === GOL_CHILENA_EVENT_ID;
+      // Solo las escenas pensadas para cambiar el aspecto (barba, pelo, madurez) actualizan la foto de referencia.
+      const finalEvolvesLook = Boolean(event.lookEvolution);
       const finalClub = newClub;
       const finalMilestoneType = milestoneType;
       // La portada del periódico imprime esto tal cual como titular — un
@@ -678,7 +680,13 @@ export async function resolveEvent(formData: FormData) {
             console.error("[resolveEvent:after] milestone upload rejected unexpectedly:", milestoneResult.reason);
           }
 
-          if (evolvedUrl) {
+          // OJO: current_photo_url es la foto de REFERENCIA del jugador (tarjeta de
+          // cierre de temporada, base de las siguientes generaciones). Antes la
+          // sobrescribía CUALQUIER hito: tras una lesión de rodilla la tarjeta de
+          // fin de temporada salía con el jugador en muletas a la puerta de un
+          // hospital. Ahora solo la cambian las escenas de evolución de aspecto
+          // (lookEvolution) y el retrato de cada 4 temporadas.
+          if (evolvedUrl && finalEvolvesLook) {
             await supabase.from("players").update({ current_photo_url: evolvedUrl }).eq("id", finalPlayerId);
           }
 
