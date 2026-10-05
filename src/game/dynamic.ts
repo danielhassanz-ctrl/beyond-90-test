@@ -268,11 +268,18 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
             : sev === "medium"
               ? `${str(d, "label")}. Entre ${Math.max(2, out - 2)} y ${out + 1} partidos fuera según cómo responda la zona. El fisio ya te ha reservado la piscina.`
               : `${str(d, "label")}. Cosa menor: ${out} partido${out === 1 ? "" : "s"} de precaución si se hace bien.`,
-        choices: [
-          { id: "protocolo", label: "Seguir el protocolo del club", hint: "Plazos reales, cero riesgos" },
-          { id: "arriesgar", label: "Forzar y volver antes de tiempo", hint: "Menos partidos fuera, riesgo de recaída" },
-          { id: "segunda", label: "Pedir una segunda opinión", hint: "Puede cambiar el diagnóstico" },
-        ],
+        choices:
+          (s.flags["injury_decisions"] ?? 0) > 0
+            ? [
+                { id: "protocolo", label: "Esta vez, respetar todos los plazos", hint: "Aprendes de la baja anterior" },
+                { id: "arriesgar", label: "Volver a acelerar la recuperación", hint: "Más urgencia, otra vez riesgo de recaída" },
+                { id: "segunda", label: "Cambiar de especialista", hint: "Buscas una lectura distinta a la anterior" },
+              ]
+            : [
+                { id: "protocolo", label: "Seguir el protocolo del club", hint: "Plazos reales, cero riesgos" },
+                { id: "arriesgar", label: "Forzar y volver antes de tiempo", hint: "Menos partidos fuera, riesgo de recaída" },
+                { id: "segunda", label: "Pedir una segunda opinión", hint: "Puede cambiar el diagnóstico" },
+              ],
       };
     }
     case "return":
@@ -882,6 +889,7 @@ function resolveInjury(s: GameState, card: DynamicCard, choiceId: string): Dynam
   const inj = s.injury;
   if (!inj) return { title: "Recuperado", text: "El parte era mejor de lo que parecía.", tone: "good" };
   inj.treated = true;
+  s.flags["injury_decisions"] = (s.flags["injury_decisions"] ?? 0) + 1;
   switch (choiceId) {
     case "arriesgar":
       inj.matchesOut = Math.max(1, Math.round(inj.matchesOut * 0.55));
