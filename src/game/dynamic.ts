@@ -269,17 +269,23 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
               ? `${str(d, "label")}. Entre ${Math.max(2, out - 2)} y ${out + 1} partidos fuera según cómo responda la zona. El fisio ya te ha reservado la piscina.`
               : `${str(d, "label")}. Cosa menor: ${out} partido${out === 1 ? "" : "s"} de precaución si se hace bien.`,
         choices:
-          (s.flags["injury_decisions"] ?? 0) > 0
+          (s.flags["injury_decisions"] ?? 0) >= 2
             ? [
-                { id: "protocolo", label: "Esta vez, respetar todos los plazos", hint: "Aprendes de la baja anterior" },
-                { id: "arriesgar", label: "Volver a acelerar la recuperación", hint: "Más urgencia, otra vez riesgo de recaída" },
-                { id: "segunda", label: "Cambiar de especialista", hint: "Buscas una lectura distinta a la anterior" },
+                { id: "protocolo", label: "Tratarla como un problema recurrente", hint: "Más paciencia y prevención a largo plazo" },
+                { id: "arriesgar", label: "Asumir otra vez el riesgo para volver antes", hint: "La urgencia deportiva pesa, pero tu historial ya cuenta" },
+                { id: "segunda", label: "Revisar el historial con otro especialista", hint: "Buscas la causa, no solo acortar esta baja" },
               ]
-            : [
-                { id: "protocolo", label: "Seguir el protocolo del club", hint: "Plazos reales, cero riesgos" },
-                { id: "arriesgar", label: "Forzar y volver antes de tiempo", hint: "Menos partidos fuera, riesgo de recaída" },
-                { id: "segunda", label: "Pedir una segunda opinión", hint: "Puede cambiar el diagnóstico" },
-              ],
+            : (s.flags["injury_decisions"] ?? 0) === 1
+              ? [
+                  { id: "protocolo", label: "Esta vez, respetar todos los plazos", hint: "Aprendes de la baja anterior" },
+                  { id: "arriesgar", label: "Volver a acelerar la recuperación", hint: "Más urgencia, otra vez riesgo de recaída" },
+                  { id: "segunda", label: "Cambiar de especialista", hint: "Buscas una lectura distinta a la anterior" },
+                ]
+              : [
+                  { id: "protocolo", label: "Seguir el protocolo del club", hint: "Plazos reales, cero riesgos" },
+                  { id: "arriesgar", label: "Forzar y volver antes de tiempo", hint: "Menos partidos fuera, riesgo de recaída" },
+                  { id: "segunda", label: "Pedir una segunda opinión", hint: "Puede cambiar el diagnóstico" },
+                ],
       };
     }
     case "return":
