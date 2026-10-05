@@ -684,6 +684,11 @@ function applyRun(s: GameState, count: number): SimRun {
   // Preserve the availability state that actually governed this simulated block.
   // Recovery/new-injury processing below must not rewrite the history the player sees.
   const injuryDuringRun = s.injury?.label ?? null;
+  // Snapshot the sporting role that governs this block. GameState intentionally
+  // does not persist a role field; it is derived from form, coach trust and status.
+  // Keeping the snapshot also makes the later participation summary describe the
+  // block that was actually simulated instead of a post-run/recovery state.
+  const roleDuringRun = computeRole(s);
   // A simulated block represents real weeks of calendar, not zero-time glue.
   // Advancing narrative time here lets the Story Director surface life/club
   // beats between sparse key matches instead of producing football-card runs.
@@ -755,7 +760,7 @@ function applyRun(s: GameState, count: number): SimRun {
     ? injuryMissed >= run.matches
       ? `baja por ${injuryDuringRun}`
       : `${injuryMissed} jornadas de baja por ${injuryDuringRun}; ${run.apps} apariciones tras recuperarte`
-    : run.apps === 0 && s.role === "alternativa"
+    : run.apps === 0 && roleDuringRun === 1
       ? "convocado, sin minutos"
       : run.apps === 0
         ? "sin participación"
