@@ -231,15 +231,16 @@ function assertFirst15Quality(seen) {
     expect(snapshot.cast.social, `social contact and partner collapsed at UI decision ${i + 1}`).not.toBe(snapshot.cast.partner);
 
     if (!personalCast) {
-      personalCast = {
-        adviser: snapshot.cast.adviser,
-        social: snapshot.cast.social,
-        partner: snapshot.cast.partner,
-      };
+      personalCast = { adviser: null, social: snapshot.cast.social, partner: snapshot.cast.partner };
     } else {
-      expect(snapshot.cast.adviser, `adviser name drift at UI decision ${i + 1}`).toBe(personalCast.adviser);
       expect(snapshot.cast.social, `social-contact name drift at UI decision ${i + 1}`).toBe(personalCast.social);
       expect(snapshot.cast.partner, `partner name drift at UI decision ${i + 1}`).toBe(personalCast.partner);
+    }
+
+    const adviserSelectionPending = current.pending?.type === "event" && current.pending?.eventId === "opening_adviser_choice";
+    if (!adviserSelectionPending) {
+      if (personalCast.adviser === null) personalCast.adviser = snapshot.cast.adviser;
+      else expect(snapshot.cast.adviser, `adviser name drift at UI decision ${i + 1}`).toBe(personalCast.adviser);
     }
 
     if (snapshot.clubId) {
