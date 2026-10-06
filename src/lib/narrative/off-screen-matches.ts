@@ -15,7 +15,8 @@
 import type { Player } from "@/types/player";
 import { computeRole } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
-import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
+import { getEuropeanCompetitionFor, EURO_GROUP_WEEKS, EURO_KO_WEEKS } from "@/lib/calendar/match-calendar";
+import { getSeasonProgress } from "@/lib/calendar/competition-progress";
 
 export interface SimStat {
   matches: number;
@@ -77,14 +78,24 @@ function poisson(lambda: number): number {
 
 const weekInSeason = (week: number) => ((week - 1) % 10) + 1;
 
-/** A qué competición pertenece un partido estimado de este mes. */
-function pickCompetition(club: string, week: number): SimComp {
+/**
+ * Los partidos de este mes que NO se viven como escena, según el calendario
+ * real: la Liga siempre (unos 3 al mes, de las 38 jornadas), y los europeos
+ * extra de la fase de grupos (semanas 4 y 6: de 6 jornadas solo 2 son clave)
+ * y la vuelta de cada eliminatoria alcanzada. La Copa son partidos únicos,
+ * todos clave: no tiene partidos estimados.
+ */
+function slotsForMonth(player: Player, week: number): SimComp[] {
+  const slots: SimComp[] = Array.from({ length: OFF_SCREEN_PER_TURN }, () => "liga" as SimComp);
+  const euro = getEuropeanCompetitionFor(player.club);
+  if (!euro) return slots;
   const wis = weekInSeason(week);
-  const euro = getEuropeanCompetitionFor(club);
-  const r = Math.random();
-  if (euro && wis >= 3 && r < 0.15) return euro.competition;
-  if (wis >= 5 && r > 0.9) return "copa";
-  return "liga";
+  if (EURO_GROUP_WEEKS.includes(wis)) slots.push(euro.competition, euro.competition);
+  const reached = getSeasonProgress(player, Math.floor((week - 1) / 10)).euro.round;
+  EURO_KO_WEEKS.forEach((w, i) => {
+    if (w === wis && i + 1 <= reached) slots.push(euro.competition);
+  });
+  return slots;
 }
 
 /** Un solo turno (mes) en la semana `week`. */
@@ -97,9 +108,9 @@ function simulateTurn(player: Player, week: number, ignoreInjury: boolean): SimB
 
   const quality = Math.max(0.3, Math.min(1.6, ((player.media ?? 60) - 45) / 35));
   const per90 = goalsPer90(player.position) * quality;
-  for (let i = 0; i < OFF_SCREEN_PER_TURN; i++) {
+  for (const comp of slotsForMonth(player, week)) {
     if (Math.random() >= share.appear) continue;
-    const c = out[pickCompetition(player.club, week)];
+    const c = out[comp];
     c.matches += 1;
     c.minutes += share.minutes;
     c.goals += poisson((per90 * share.minutes) / 90);

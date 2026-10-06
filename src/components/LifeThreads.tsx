@@ -1,3 +1,5 @@
+import { openThreads, THREAD_LABELS as OPEN_THREAD_LABELS } from "@/lib/narrative/threads";
+
 const THREAD_ICONS: Record<string, string> = {
   pareja: "❤️",
   convivencia: "🏠",
@@ -18,7 +20,10 @@ export function LifeThreads({ flags }: { flags: Record<string, string | boolean>
     ([key, v]) => v && key in THREAD_LABELS,
   );
 
+  const pending = openThreads(flags);
+
   return (
+    <>
     <div className="rounded-lg border border-panel-border bg-panel p-4">
       <p className="mb-2 text-xs uppercase tracking-wide text-neutral-400">Familia y pareja</p>
       {entries.length === 0 ? (
@@ -39,5 +44,20 @@ export function LifeThreads({ flags }: { flags: Record<string, string | boolean>
         </div>
       )}
     </div>
+    {pending.length > 0 && (
+      <div className="mt-3 rounded-lg border border-panel-border bg-panel p-4">
+        <p className="mb-2 text-xs uppercase tracking-wide text-neutral-400">Asuntos pendientes</p>
+        <ul className="space-y-2">
+          {pending.map((t) => (
+            <li key={`${t.k}-${t.who}`} className="text-xs text-neutral-200">
+              <span className="font-semibold text-gold">{OPEN_THREAD_LABELS[t.k]}</span> · {t.who}
+              <span className="block text-neutral-400">{t.t}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-[11px] text-neutral-500">Tarde o temprano, alguien volverá a por esto.</p>
+      </div>
+    )}
+    </>
   );
 }

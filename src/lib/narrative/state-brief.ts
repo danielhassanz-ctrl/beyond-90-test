@@ -6,6 +6,7 @@
  * parecían influir en nada. Aquí se traduce el estado a frases que obligan a
  * que la escena nazca de lo que ha pasado.
  */
+import { describeOpenThreads } from "@/lib/narrative/threads";
 import { readInvestments } from "@/lib/finance/investments";
 import type { Player } from "@/types/player";
 import type { HistoryItem } from "@/lib/narrative/ai";
@@ -115,6 +116,10 @@ export function buildStateBrief(player: Player, history: HistoryItem[]): string 
     .map(([, value]) => String(value))
     .slice(-5);
   if (threads.length > 0) lines.push(`- HILOS ABIERTOS (vínculos, promesas, rencores): ${threads.join(" | ")}.`);
+  const pendingThreads = describeOpenThreads(flags as Record<string, string | boolean>, player.week);
+  if (pendingThreads.length > 0) {
+    lines.push(`- ASUNTOS PENDIENTES CON PERSONAS CONCRETAS (pueden reaparecer a cobrarse; si encaja de forma natural, nómbralos o hazlos avanzar): ${pendingThreads.join(" | ")}.`);
+  }
 
   // Hechos que definen su historia (marcas, capitanías, títulos, casas, familia):
   // una decisión pasada tiene que seguir notándose en lo que es hoy.

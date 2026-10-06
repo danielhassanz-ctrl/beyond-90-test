@@ -1,5 +1,7 @@
 "use server";
 
+import { ensureNextEvent } from "@/lib/narrative/ensure-event";
+import { appendThread } from "@/lib/narrative/threads";
 import { simulateOffScreenMatches, backfillOffScreen, addSimSeason, sumSim, emptySim } from "@/lib/narrative/off-screen-matches";
 import { defaultReaction } from "@/lib/narrative/default-reactions";
 import { sponsorshipFlagFor } from "@/lib/finance/sponsorship-income";
@@ -134,9 +136,15 @@ export async function resolveEvent(formData: FormData) {
   const sponsorFlag = isSponsorDeal
     ? sponsorshipFlagFor(event.id, sponsorName, consequencesAgent.patrimonio ?? 0, player.week)
     : null;
-  const consequences = sponsorFlag
+  const consequencesSponsor = sponsorFlag
     ? { ...consequencesAgent, flags: { ...consequencesAgent.flags, ...sponsorFlag } }
     : consequencesAgent;
+  // Hilo abierto que deja esta opción (favor, deuda, rencor, promesa, secreto):
+  // vuelve semanas después a cobrarse (ver narrative/threads.ts).
+  const threadJson = option.thread ? appendThread(player.flags, option.thread, player.week) : null;
+  const consequences = threadJson
+    ? { ...consequencesSponsor, flags: { ...consequencesSponsor.flags, hilos: threadJson } }
+    : consequencesSponsor;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.
@@ -934,6 +942,24 @@ export async function resolveEvent(formData: FormData) {
     if (statsUpdateError) {
       console.error("[resolveEvent] stats update failed (non-blocking):", statsUpdateError.message);
     }
+  }
+
+  // La escena siguiente se prepara en segundo plano MIENTRAS lees la reacción
+  // a tu decisión (misma llamada a la IA que antes se hacía al pulsar
+  // "continuar", sin coste extra): así no hay pantalla en blanco de 7-12 s.
+  // Si ya hay una escena guardada (secuencias guionadas) no hace nada.
+  if (!willRetire && !isRetirementDecision && !isSecondCareerChoice) {
+    const prefetchPlayerId = player.id;
+    after(async () => {
+      try {
+        const { data: fresh } = await supabase.from("players").select("*").eq("id", prefetchPlayerId).maybeSingle();
+        if (fresh && fresh.status === "active" && !fresh.pending_event) {
+          await ensureNextEvent(supabase, fresh as Player);
+        }
+      } catch (err) {
+        console.error("[resolveEvent:prefetch] falló (se generará al abrir /carrera):", err instanceof Error ? err.message : err);
+      }
+    });
   }
 
   if (milestoneId) {

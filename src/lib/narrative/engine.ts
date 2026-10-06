@@ -6,7 +6,7 @@ import type {
   GameEvent,
   ResolutionOutcome,
 } from "@/types/career";
-import { generateAiEvent, generateMatchResult, generateNextEventDynamic, generateEchoEvent, callEventTool, COMMON_RULES, type HistoryItem } from "./ai";
+import { generateAiEvent, generateMatchResult, generateNextEventDynamic, generateEchoEvent, generateThreadPayoffEvent, callEventTool, COMMON_RULES, type HistoryItem } from "./ai";
 import type { Player } from "@/types/player";
 import { getConfederation } from "@/lib/nations";
 import { hasMajorTournament } from "@/lib/calendar/season";
@@ -48,6 +48,7 @@ import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narra
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
+import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
 import { monthlySponsorshipIncome } from "@/lib/finance/sponsorship-income";
 import { shouldTriggerSalto, buildSaltoEvent } from "@/lib/narrative/arco-salto";
@@ -3507,6 +3508,23 @@ export async function pickNextEventDynamic(
   if (!midMatch && shouldTriggerDebtTrouble(playerWithDynamics)) {
     console.log("[pickNextEventDynamic] El banco llama por las cuotas.");
     return maybeAddFreeText(buildDebtTroubleEvent(playerWithDynamics));
+  }
+
+  // COBRO de un hilo abierto (threads.ts): el favor, la deuda, el rencor, la
+  // promesa o el secreto que dejó una decisión vuelve con nombre y apellidos.
+  // Va antes que el eco: es más concreto. Sustituye a una escena de IA normal.
+  if (!midMatch && injuryMonthsLeft === 0 && !getTorneoProgress(playerWithDynamics) && shouldTriggerThreadPayoff(playerWithDynamics)) {
+    const due = pickThreadDue(playerWithDynamics);
+    if (due) {
+      const payoff = await generateThreadPayoffEvent(playerWithDynamics, due, history);
+      if (payoff) {
+        console.log(`[pickNextEventDynamic] Cobro de hilo (${due.k} con ${due.who}): "${payoff.title}"`);
+        if (!playerWithDynamics.flags) playerWithDynamics.flags = {};
+        playerWithDynamics.flags.thread_last_week = String(playerWithDynamics.week);
+        playerWithDynamics.flags.hilos = consumeThread(playerWithDynamics.flags, due);
+        return maybeAddFreeText({ ...payoff, id: `hilo-${Date.now()}` });
+      }
+    }
   }
 
   // ECO de una decisión pasada (ledger.ts): lo que decidiste hace tiempo vuelve

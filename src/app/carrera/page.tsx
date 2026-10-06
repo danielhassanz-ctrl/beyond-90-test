@@ -7,24 +7,9 @@ import { redirect } from "next/navigation";
 // solo — no falla el build por pedir más de lo permitido.
 export const maxDuration = 300;
 import { getCurrentUserAndPlayer } from "@/lib/player";
-import { pickNextEventDynamic, whatIsAtStake } from "@/lib/narrative/engine";
-import {
-  buildEleccionRepresentanteEvent,
-  buildInicioFichajeEvent,
-  buildCasaEvent,
-  buildMansionEvent,
-  buildYachtEvent,
-  buildJetEvent,
-  buildCarEvent,
-  buildOfertaArabiaEvent,
-  attachClubOfferDetails,
-  isInlandClub,
-  getMinHomeDownPayment,
-  getMinMansionDownPayment,
-} from "@/lib/narrative/events";
-import { generateClubOffersEvent } from "@/lib/narrative/ai";
-import { NO_CLUB_YET, pickStartingClubOffers } from "@/lib/constants";
-import { shouldTriggerBusquedaEquipo, buildBusquedaEquipoEvent, hadViralMoment } from "@/lib/narrative/agente-busqueda";
+import { whatIsAtStake } from "@/lib/narrative/engine";
+import { ensureNextEvent } from "@/lib/narrative/ensure-event";
+import { NO_CLUB_YET } from "@/lib/constants";
 import { CONSEQUENCE_LABELS, MODE_TARGET_WEEKS, playerAge, seasonLabel } from "@/types/career";
 import { displayName } from "@/types/player";
 import { BottomNav } from "@/components/BottomNav";
@@ -37,7 +22,6 @@ import { personalizeEvent, detectMentionedRoles, NPC_ROLE_LABELS } from "@/lib/n
 import { getOrCreateNpcFace, hasMetNpc, markNpcSeen, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
 import { getGameDateLabel } from "@/lib/calendar/season";
 import { introduceCast } from "@/lib/narrative/cast";
-import { summarizeEffects } from "@/lib/narrative/state-brief";
 import { computeRole, ROLE_LABELS } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { NpcAvatarRow } from "@/components/NpcAvatarRow";
@@ -97,220 +81,9 @@ export default async function CarreraPage() {
     redirect("/carrera/retiro");
   }
 
-  let event = player.pending_event;
-
-  if (!event && !player.agent_name) {
-    // Usar las 15 variantes narrativas de primera firma (sin generar con IA)
-    event = buildEleccionRepresentanteEvent();
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
-  }
-
-  // Antes de las ofertas de verdad, una búsqueda con tensión real: entre
-  // 0 y 3 turnos de espera (sorteado por carrera) con noticias de tu
-  // agente — nada, un grande que te ha visto, la opción de grabarte y
-  // subir vídeos a redes... en vez de que las ofertas llegasen siempre
-  // en el turno siguiente a elegir representante, sin ninguna
-  // incertidumbre. Ver agente-busqueda.ts.
-  if (!event && player.club === NO_CLUB_YET && shouldTriggerBusquedaEquipo(player)) {
-    event = buildBusquedaEquipoEvent(player);
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
-  }
-
-  if (!event && player.club === NO_CLUB_YET) {
-    const agentName = player.agent_name ?? "Tu representante";
-    // Se sortean los clubes UNA vez y se reparten al mismo sitio: así la
-    // IA escribe el texto (varía cada partida) pero el desglose de
-    // nivel/desarrollo/competencia/minutos/riesgo sale siempre, no solo
-    // cuando la IA falla y se cae al evento de reserva.
-    const offers = pickStartingClubOffers(player.agent_name, hadViralMoment(player));
-    const aiEvent = await generateClubOffersEvent(agentName, offers);
-    event = aiEvent ? attachClubOfferDetails(aiEvent, offers) : buildInicioFichajeEvent(agentName, offers);
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
-  }
-
-  // Para no repetir nunca un evento fijo, se compara contra TODA la
-  // carrera, no solo los últimos turnos.
-  const { data: allHistory } = await supabase
-    .from("career_events")
-    .select("event_id")
-    .eq("player_id", player.id);
-  const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
-
-  // Comprar casa necesita 3 opciones con precios sorteados en el momento,
-  // así que no puede vivir como una entrada estática más del pool normal.
-  // Exige un mínimo de patrimonio ahorrado: sin esto, el evento aparecía
-  // en la semana 8 sin importar cuánto llevara ganado el jugador, ofreciendo
-  // entradas de 20-38k€ a alguien recién debutado con 1-2k€ ahorrados —
-  // el patrimonio se quedaba clavado en 0 (tiene suelo) mientras el
-  // listado de movimientos seguía mostrando el gasto completo, dos
-  // números que no cuadraban entre sí. Encontrado jugando una carrera real.
-  // El umbral se fijó a mano (15.000€) y el catálogo de HOME_LISTINGS
-  // creció después sin volver a comprobrarlo: la vivienda más barata ya
-  // pedía 18.000€ de entrada, por encima del propio umbral — un jugador
-  // con 15-17k€ podía ver tres casas sin poder pagar la entrada de
-  // ninguna. Se deriva ahora del catálogo real en vez de un número suelto.
-  const MIN_PATRIMONIO_FOR_HOME = getMinHomeDownPayment();
-  if (
-    !event &&
-    player.week >= 8 &&
-    player.patrimonio >= MIN_PATRIMONIO_FOR_HOME &&
-    !usedEventIds.includes("vid-casa")
-  ) {
-    event = await buildCasaEvent(player, supabase);
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
-  }
-
-  // El coche deportivo es el primer capricho de verdad, antes que
-  // cualquier otro — solo hace falta el primer sueldo serio, no fama ni
-  // una carrera consolidada. No es garantizado (probabilístico), para que
-  // no le toque a todo el mundo en el mismo momento de la carrera.
-  const MIN_PATRIMONIO_FOR_CAR = 30000;
-  if (
-    !event &&
-    player.week >= 12 &&
-    player.patrimonio >= MIN_PATRIMONIO_FOR_CAR &&
-    !usedEventIds.includes("vid-coche-deportivo") &&
-    Math.random() < 0.3
-  ) {
-    event = await buildCarEvent(player, supabase);
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
-  }
-
-  // Mismo razonamiento que la primera vivienda, derivado igual del
-  // catálogo real: sin esto, se podían ofrecer mansiones de 1,2-3,4M€ a
-  // alguien que no las puede pagar ni de lejos.
-  const MIN_PATRIMONIO_FOR_MANSION = getMinMansionDownPayment();
-  if (
-    !event &&
-    player.week >= 65 &&
-    player.patrimonio >= MIN_PATRIMONIO_FOR_MANSION &&
-    !usedEventIds.includes("vid-mansion-lujo")
-  ) {
-    event = await buildMansionEvent(player, supabase);
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
-  }
-
-  // Caprichos de "crack": yate y jet privado. Solo tienen sentido con
-  // fama y media de estrella de verdad, no solo porque haya pasado el
-  // tiempo — y con dinero de sobra para el capricho. El yate además exige
-  // un club no-de-interior: no tiene coherencia geográfica ofrecerle un
-  // yate a alguien que juega en el Real Madrid o el Atlético.
-  if (
-    !event &&
-    player.week >= 30 &&
-    player.fama >= 55 &&
-    player.media >= 75 &&
-    player.patrimonio >= 100000 &&
-    !isInlandClub(player.club) &&
-    !usedEventIds.includes("vid-yate") &&
-    Math.random() < 0.2
-  ) {
-    event = await buildYachtEvent(player, supabase);
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
-  }
-
-  if (
-    !event &&
-    player.week >= 80 &&
-    player.fama >= 75 &&
-    player.media >= 85 &&
-    player.patrimonio >= 3000000 &&
-    !usedEventIds.includes("vid-jet-privado") &&
-    Math.random() < 0.15
-  ) {
-    event = await buildJetEvent(player, supabase);
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
-  }
-
-  // Igual que la casa: si hay pareja, el texto y las opciones cambian
-  // según su nombre, así que necesita construirse en el momento.
-  // Oferta Arabia: NO garantizada, solo probabilística (~35% de chance)
-  // No todos los jugadores reciben oferta de Arabia — depende de la atracción del mercado
-  if (
-    !event &&
-    player.week >= 155 &&
-    player.media >= 60 &&
-    !usedEventIds.includes("fork-oferta-arabia") &&
-    Math.random() < 0.35  // 35% de probabilidad, no garantizado
-  ) {
-    event = buildOfertaArabiaEvent(player);
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
-  }
-
-  if (!event) {
-    // El contexto que le mandamos a la IA sí se limita a lo reciente, para
-    // no inflar el prompt.
-    const { data: recentHistory } = await supabase
-      .from("career_events")
-      .select("title, chosen_option_label, free_text_response, category, consequences, outcome_text")
-      .eq("player_id", player.id)
-      .order("created_at", { ascending: false })
-      .limit(10);
-    const historyForAi = (recentHistory ?? []).map((h) => ({
-      title: h.title as string,
-      chosen: (h.chosen_option_label as string | null) ?? "",
-      freeText: h.free_text_response as string | null,
-      category: h.category as string | null,
-      effects: summarizeEffects(h.consequences as Record<string, unknown> | null),
-      outcome: (h.outcome_text as string | null) ?? null,
-    }));
-
-    event = await pickNextEventDynamic(player, historyForAi, usedEventIds);
-    // pickNextEventDynamic muta el propio `player` en memoria: no solo
-    // flags (cooldown de adversidades, gol de chilena), sino también
-    // forma/media/moral/relaciones vía applyCareerDynamics (degradación
-    // natural de forma, declive por edad, deterioro de relaciones,
-    // presión mediática). Antes solo se guardaban flags aquí, así que esa
-    // dinámica se calculaba en cada turno y se tiraba a la basura sin
-    // persistirse jamás — un jugador inactivo nunca perdía forma de
-    // verdad. Ver applyCareerDynamics en engine.ts.
-    //
-    // El `.is("pending_event", null)` es crítico: si dos peticiones para
-    // el mismo jugador llegan casi a la vez (una recarga de página de
-    // más, un doble clic, un prefetch), ambas ven pending_event=null y
-    // generan un evento DISTINTO cada una. Sin esta condición, la
-    // segunda escritura pisaba a la primera sin más — y si el jugador ya
-    // había recibido en pantalla el evento de la primera generación, su
-    // "id" ya no coincidía con lo guardado en la base de datos. Al
-    // confirmar su decisión, resolveEvent comprueba ese id exacto y, si
-    // no coincide, la descarta en silencio sin aplicar nada y sin
-    // avisar — la semana nunca avanzaba y el mismo partido podía volver
-    // a aparecer turno tras turno. Visto en vivo jugando (Copa del Rey
-    // repitiéndose contra el mismo rival sin motivo).
-    const { data: updatedRows } = await supabase
-      .from("players")
-      .update({
-        pending_event: event,
-        flags: player.flags,
-        forma: player.forma,
-        media: player.media,
-        moral: player.moral,
-        // El sueldo y las cuotas de hipoteca también se aplican en
-        // applyCareerDynamics: sin guardar el patrimonio aquí se calculaban
-        // cada turno y se tiraban (visto en vivo: 8.190 €/mes de sueldo y
-        // el dinero siempre en 0 €).
-        patrimonio: player.patrimonio,
-        rel_entrenador: player.rel_entrenador,
-        rel_vestuario: player.rel_vestuario,
-        rel_aficion: player.rel_aficion,
-      })
-      .eq("id", player.id)
-      .is("pending_event", null)
-      .select("pending_event");
-
-    // Si no se actualizó ninguna fila, otra petición concurrente ganó la
-    // carrera y ya escribió su propio evento — hay que usar ESE, no el
-    // que acabamos de generar aquí, para que lo que se renderiza
-    // coincida siempre con lo que hay realmente guardado.
-    if (!updatedRows || updatedRows.length === 0) {
-      const { data: currentPlayer } = await supabase
-        .from("players")
-        .select("pending_event")
-        .eq("id", player.id)
-        .maybeSingle();
-      event = (currentPlayer?.pending_event as typeof event) ?? event;
-    }
-  }
+  const ensured = await ensureNextEvent(supabase, player);
+  let event = ensured.event;
+  const usedEventIds = ensured.usedEventIds;
 
   // Personajes con nombre y apellidos (el míster, el capitán, tu madre...): ver npcs.ts.
   if (event) event = personalizeEvent(event, player);

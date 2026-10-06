@@ -296,6 +296,17 @@ const EVENT_TOOL: Anthropic.Tool = {
               description:
                 "La reacción visible a esta decisión, 1-2 frases en castellano de España, concreta y con vida: qué hace o dice la persona implicada (entrenador, capitán, pareja, afición, prensa...) o qué pasa justo después. Ej: 'El míster te mira un segundo de más y asiente: \"Eso es lo que quería ver.\"'. Nada genérico tipo 'tu decisión tiene consecuencias'. Inclúyela en cuanto la decisión afecte a alguien o tenga un resultado; solo puedes omitirla en decisiones puramente internas o triviales.",
             },
+            thread: {
+              type: "object",
+              description:
+                "SOLO si ESTA opción deja un vínculo que debe volver a cobrarse más adelante con una persona concreta: un favor que debes o que te deben, una deuda, un rencor, una promesa o un secreto. Máximo en 1 de cada 4 escenas. Si la opción no deja nada pendiente, NO incluyas este campo.",
+              properties: {
+                kind: { type: "string", enum: ["favor", "deuda", "rencor", "promesa", "secreto"] },
+                who: { type: "string", description: "Nombre y apellidos de la persona (inventada, de la escena)." },
+                text: { type: "string", description: "Qué queda pendiente, en una frase corta en tercera persona." },
+              },
+              required: ["kind", "who", "text"],
+            },
             consequences: {
               type: "object",
               properties: {
@@ -363,7 +374,8 @@ export const COMMON_RULES = `- Escribe en castellano de España (tú, nunca vos/
 - Cualquier persona famosa que aparezca (cantante, influencer, otro futbolista) debe ser CLARAMENTE FICTICIA — nunca un nombre real.
 - PERSONAJES: cualquier persona con nombre propio que aparezca (compañero, rival, periodista, familiar, empresario...) lleva SIEMPRE nombre y apellidos, nunca solo el nombre de pila ni un genérico ("el míster", "un compañero") cuando la escena gira en torno a esa persona. Los del reparto fijo usan exactamente su nombre; los nuevos se inventan una sola vez y se mantienen. Nombres españoles creíbles, sin nombres de futbolistas reales.
 - TONO Y CHICHA (obligatorio): cada escena tiene que traer UN detalle concreto que se recuerde — un nombre propio inventado, una frase textual entre comillas, un objeto o situación absurda pero creíble. Prohibido relleno genérico tipo "el ambiente está tenso", "sientes una mezcla de emociones" o "todo el mundo te mira". Humor de vestuario español (picaresco, socarrón, irónico) mezclado con emoción real: que la misma escena pueda hacer sonreír y, si toca, un nudo en la garganta. Los dilemas tienen que costar algo de verdad. Piensa en lo que de verdad le pasa a un futbolista (mercado, representante, míster, familia, prensa, amigos de siempre), no en una novela.
-- PROHIBIDO ABSOLUTO inventar un partido: ni su resultado, ni el marcador, ni la ronda de un torneo (ej. "cuartos de Copa", "semifinal"), ni si el equipo sigue vivo o eliminado en una competición. El calendario real de partidos (Liga, Copa, Europa) y sus resultados los decide EXCLUSIVAMENTE otro sistema, ajeno a esta escena — si la escena necesita referirse a un partido pasado o futuro, hazlo de forma vaga y sin datos concretos ("el partido del fin de semana", "la próxima eliminatoria"), nunca inventando un rival, un resultado o el nombre de una ronda concretos.`;
+- PROHIBIDO ABSOLUTO inventar un partido: ni su resultado, ni el marcador, ni la ronda de un torneo (ej. "cuartos de Copa", "semifinal"), ni si el equipo sigue vivo o eliminado en una competición. El calendario real de partidos (Liga, Copa, Europa) y sus resultados los decide EXCLUSIVAMENTE otro sistema, ajeno a esta escena — si la escena necesita referirse a un partido pasado o futuro, hazlo de forma vaga y sin datos concretos ("el partido del fin de semana", "la próxima eliminatoria"), nunca inventando un rival, un resultado o el nombre de una ronda concretos.
+- HILOS QUE DURAN: cuando una opción deje un favor, una deuda, un rencor, una promesa o un secreto con una persona concreta (nombre y apellidos), rellena el campo "thread" de ESA opción: más adelante esa persona volverá a cobrarlo. Úsalo solo cuando de verdad quede algo pendiente, en 1 de cada 4 escenas como mucho.`;
 
 export async function callEventTool(
   prompt: string,
@@ -425,7 +437,7 @@ export async function callEventTool(
       rival_club?: string;
       memorable_thread?: string;
       coach_stance?: "no_cuenta" | "neutral" | "cuenta";
-      options?: Array<{ label?: string; subtitle?: string; outcome_text?: string; consequences?: Consequences }>;
+      options?: Array<{ label?: string; subtitle?: string; outcome_text?: string; thread?: { kind?: string; who?: string; text?: string }; consequences?: Consequences }>;
     };
 
     // Comprobar Array.isArray explícitamente, no solo la longitud: si el
@@ -472,6 +484,9 @@ export async function callEventTool(
         // — se resolvía en silencio, saltando directo a la siguiente.
         ...(typeof o.outcome_text === "string" && o.outcome_text.trim()
           ? { outcomeText: stripLeakedToolSyntax(o.outcome_text) }
+          : {}),
+        ...(o.thread && typeof o.thread.kind === "string" && typeof o.thread.who === "string" && typeof o.thread.text === "string" && o.thread.who.trim() && o.thread.text.trim()
+          ? { thread: { kind: o.thread.kind, who: stripLeakedToolSyntax(o.thread.who), text: stripLeakedToolSyntax(o.thread.text) } }
           : {}),
       }));
 
@@ -1254,6 +1269,45 @@ ${COMMON_RULES}
 - Las opciones deben tener peso real y reacciones concretas; no repitas las mismas dos opciones de siempre.
 - is_milestone en true solo si la consecuencia es de verdad memorable (algo que se querría compartir).`;
   return callEventTool(prompt, category, "echo");
+}
+
+/**
+ * ESCENA DE COBRO DE UN HILO ABIERTO (threads.ts): la persona con la que
+ * quedó algo pendiente (un favor, una deuda, un rencor, una promesa, un
+ * secreto) reaparece. Sustituye a una escena normal de IA, sin llamadas extra.
+ */
+export async function generateThreadPayoffEvent(
+  player: Player,
+  thread: { w: number; k: string; who: string; t: string },
+  history: HistoryItem[],
+): Promise<GameEvent | null> {
+  const ago = describeAgeWeeks(player.week - thread.w);
+  const kindText: Record<string, string> = {
+    favor: "un FAVOR pendiente (alguien te lo hizo a ti, o tú se lo hiciste a esa persona)",
+    deuda: "una DEUDA (de dinero o de gratitud)",
+    rencor: "un RENCOR que quedó sin resolver",
+    promesa: "una PROMESA que hiciste",
+    secreto: "un SECRETO compartido",
+  };
+  const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista profesional.
+
+ESCENA DE COBRO — ALGO PENDIENTE VUELVE.
+${ago} quedó ${kindText[thread.k] ?? "algo pendiente"} con ${thread.who}: "${thread.t}".
+
+Escribe la escena de AHORA en la que ${thread.who} reaparece y el asunto pasa factura o da fruto. Usa EXACTAMENTE el nombre y apellidos "${thread.who}". El jugador tiene que poder cumplir, pagar de otra forma, negarse o tirar de ese hilo, y cada opción cuesta o da algo de verdad: no todo se resuelve bien. Que se note el tiempo pasado y cómo ha cambiado esa persona.
+
+JUGADOR: ${player.last_name}, ${playerAge(player.week)} años, ${player.position}, club ${player.club}, nacionalidad ${player.nation}.
+
+${buildStateBrief(player, history)}
+
+PERSONAJES FIJOS (si mencionas a alguien de su entorno, usa estos nombres exactos):
+${describeCast(player)}
+
+REGLAS CRÍTICAS:
+${COMMON_RULES}
+- Deja claro en una frase de qué asunto viene, de forma natural, sin decir "hace X turnos".
+- is_milestone en true solo si el desenlace es de verdad memorable.`;
+  return callEventTool(prompt, "vida", "hilo");
 }
 
 export async function generateAgentGuidanceCall(

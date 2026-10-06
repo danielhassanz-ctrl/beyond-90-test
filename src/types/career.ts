@@ -82,6 +82,11 @@ export interface EventOption {
   dmReply?: string;
   /** Lo que ella contesta después de tu respuesta (segunda burbuja de la captura). */
   dmFollowUp?: string;
+  /**
+   * Hilo abierto que deja esta opción (favor, deuda, rencor, promesa o secreto
+   * con una persona concreta): vuelve semanas después a cobrarse. Ver threads.ts.
+   */
+  thread?: { kind: string; who: string; text: string };
   /** Efecto directo, para opciones sin incertidumbre */
   consequences: Consequences;
   /**
