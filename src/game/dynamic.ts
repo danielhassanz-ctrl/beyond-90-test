@@ -295,11 +295,18 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         image: "training",
         category: "medical",
         text: (s.flags["injury_decisions"] ?? 0) >= 2 ? `${str(d, "label", "La lesión")} ya permite volver, pero esta alta no borra las anteriores. El fisio te recuerda las recaídas y el míster ha reorganizado el equipo sin ti: ahora también importa evitar que tu cuerpo vuelva a marcar la temporada.` : `${str(d, "label", "La lesión")} es pasado. Vuelves al grupo y el balón pesa distinto: todos han seguido sin ti y eso es lo que peor sienta.`,
-        choices: [
-          { id: "prudente", label: "Reaparecer con cabeza", hint: "Físico primero" },
-          { id: "hambre", label: "Salir con hambre desde el primer rondo", hint: "Forma arriba, riesgo físico" },
-          { id: "individual", label: "Pedir una semana extra de trabajo individual", hint: "Pierdes ritmo, reduces el riesgo" },
-        ],
+        choices:
+          (s.flags["injury_decisions"] ?? 0) >= 2
+            ? [
+                { id: "prudente", label: "Volver con un plan de carga limitado", hint: "El historial cambia tu regreso" },
+                { id: "hambre", label: "Pelear por recuperar el puesto desde hoy", hint: "Recuperas terreno antes, con más riesgo deportivo" },
+                { id: "individual", label: "Reconstruir el físico antes de competir", hint: "Cedes más minutos ahora para priorizar el resto de la temporada" },
+              ]
+            : [
+                { id: "prudente", label: "Reaparecer con cabeza", hint: "Físico primero" },
+                { id: "hambre", label: "Salir con hambre desde el primer rondo", hint: "Forma arriba, riesgo físico" },
+                { id: "individual", label: "Pedir una semana extra de trabajo individual", hint: "Pierdes ritmo, reduces el riesgo" },
+              ],
       };
     case "agent_intro":
       return {
