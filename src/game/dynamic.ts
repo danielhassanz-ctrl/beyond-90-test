@@ -294,7 +294,7 @@ export function renderDynamic(s: GameState, card: DynamicCard): DynamicView {
         title: "Alta médica",
         image: "training",
         category: "medical",
-        text: `${str(d, "label", "La lesión")} es pasado. Vuelves al grupo y el balón pesa distinto: todos han seguido sin ti y eso es lo que peor sienta.`,
+        text: (s.flags["injury_decisions"] ?? 0) >= 2 ? `${str(d, "label", "La lesión")} ya permite volver, pero esta alta no borra las anteriores. El fisio te recuerda las recaídas y el míster ha reorganizado el equipo sin ti: ahora también importa evitar que tu cuerpo vuelva a marcar la temporada.` : `${str(d, "label", "La lesión")} es pasado. Vuelves al grupo y el balón pesa distinto: todos han seguido sin ti y eso es lo que peor sienta.`,
         choices: [
           { id: "prudente", label: "Reaparecer con cabeza", hint: "Físico primero" },
           { id: "hambre", label: "Salir con hambre desde el primer rondo", hint: "Forma arriba, riesgo físico" },
