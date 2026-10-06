@@ -101,6 +101,9 @@ export interface SeasonProgress {
   euro?: { round: number; alive: boolean };
 }
 
+/** Rivales con peso suficiente para que repetirlos en otro torneo (Liga y Copa) tenga sentido. */
+const BIG_RIVALS = new Set(["Real Madrid", "FC Barcelona", "Atlético de Madrid"]);
+
 /** Rivales de Copa para la segunda eliminatoria (solo si se sobrevive a la primera): ya no es un equipo modesto, es un rival de Liga hecho y derecho. */
 const COPA_ROUND_2_RIVALS = [
   "Real Sociedad",
@@ -205,6 +208,10 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
     });
   }
 
+  // Rivales de Liga que aparecerán como partido clave esta temporada (los
+  // primeros del sorteo): la Copa los evita, ver más abajo.
+  const ligaPool = generateLaLigaFixture(playerClub, season).slice(0, 8);
+
   // --- Copa del Rey -------------------------------------------------------
   const copaRivals = [
     "CD Mirandés",
@@ -223,7 +230,12 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
   for (let r = 1; r <= copaMaxRound; r++) {
     let rival = copaRound1Rival;
     if (r > 1) {
-      const pool = COPA_LATE_RIVALS.filter((c) => c !== playerClub && !copaUsed.has(c));
+      // Un rival "normal" no se repite en la misma temporada entre Liga y
+      // Copa (salía el mismo equipo en turnos consecutivos); solo los
+      // grandes de verdad, que sí tiene sentido volver a ver en otro torneo.
+      const pool = COPA_LATE_RIVALS.filter(
+        (c) => c !== playerClub && !copaUsed.has(c) && (BIG_RIVALS.has(c) || !ligaPool.includes(c)),
+      );
       const rr = seededRandom(hashString(`${playerClub}:${season}:copa-r${r}`));
       rival = pool[Math.floor(rr() * pool.length)];
       copaUsed.add(rival);
@@ -469,6 +481,8 @@ function hashString(value: string): number {
  * exacto — ni variedad entre partidas ni realismo alguno para un club
  * modesto recién ascendido).
  */
+const LIGA_FIXTURE_CACHE = new Map<string, string[]>();
+
 function generateLaLigaFixture(playerClub: string, season: number): string[] {
   const laLigaTeams = [
     "Real Madrid",
@@ -494,13 +508,30 @@ function generateLaLigaFixture(playerClub: string, season: number): string[] {
   ];
 
   // Remover el club del jugador de la lista
+  const key = `${playerClub}:${season}`;
+  const cached = LIGA_FIXTURE_CACHE.get(key);
+  if (cached) return [...cached];
   const rivals = laLigaTeams.filter((team) => team !== playerClub);
-
   const random = seededRandom(hashString(`${playerClub}:${season}`));
   for (let i = rivals.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [rivals[i], rivals[j]] = [rivals[j], rivals[i]];
   }
+
+  // Cambio de temporada: los rivales con los que acabaste la anterior (sus
+  // partidos clave) no pueden ser los primeros de esta — se veía el mismo
+  // equipo dos veces seguidas con apenas unos meses de por medio. Se parte
+  // del calendario REAL de la temporada anterior (ya con su propio ajuste).
+  if (season > 0) {
+    const justPlayed = new Set(generateLaLigaFixture(playerClub, season - 1).slice(0, 8));
+    for (let i = 0; i < 3; i++) {
+      if (!justPlayed.has(rivals[i])) continue;
+      const swapWith = rivals.findIndex((c, idx) => idx >= 8 && !justPlayed.has(c));
+      if (swapWith === -1) break;
+      [rivals[i], rivals[swapWith]] = [rivals[swapWith], rivals[i]];
+    }
+  }
+  LIGA_FIXTURE_CACHE.set(key, rivals);
   return rivals;
 }
 
