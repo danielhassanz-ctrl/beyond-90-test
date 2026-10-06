@@ -3036,7 +3036,7 @@ export function renderDirector(s: GameState, card: DynamicCard): DirectorView | 
     const text = typeof card.data["text"] === "string" ? card.data["text"] : "Algo que decidiste vuelve";
     return {
       kicker: `${currentMonth(s)} · vuelve una decisión`,
-      title: CALLBACK_TITLES[hash(careerSeed(s), `cbt${s.sceneCount ?? 0}`) % CALLBACK_TITLES.length]!,
+      title: CALLBACK_TITLES[(s.seenEvents ?? []).filter((id) => id.startsWith("cb_scene_")).length % CALLBACK_TITLES.length]!,
       image: "locker",
       category: "story",
       text: `${text}. ${CALLBACK_WRAP[hash(careerSeed(s), `cbw${s.sceneCount ?? 0}`) % CALLBACK_WRAP.length]}`,
