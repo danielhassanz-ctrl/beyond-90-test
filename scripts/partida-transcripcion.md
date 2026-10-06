@@ -1,319 +1,332 @@
-# Partida de prueba (150 eventos, llamadas IA aprox. 10)
+# Partida de prueba (150 eventos, llamadas IA aprox. 16)
 
-### [sem 11 · Julio 2027] (vida) La maleta perdida en el aeropuerto
-Vuelves de la gira y tu maleta se ha perdido en el aeropuerto: botas, ropa y hasta tu amuleto de la suerte, desaparecidos. Tienes que entrenar con lo que te presta Jorge Ibarra, tres tallas más grande.
-   👤 QUIÉN ES — Jorge Ibarra · Compañero de equipo: 29 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
-   ➤ Reírte de la pinta que llevas — Da igual la talla
-   · Ir a comprar equipo nuevo — Solución rápida
-   · Culpar a la aerolínea en redes — Que se enteren todos
-   ⮑ Sales al entreno con una camiseta que te llega a las rodillas. El vestuario entero te aplaude y alguien te saca una foto que llegará a la prensa.
-   Δ ánimo +3, vestuario +4
-   📊 Real Betis · rol titular · media 58 · forma 80 · ánimo 73 · entrenador 55 · vestuario 59 · afición 55 · fama 25 · dinero 20.590€
+### [sem 11 · Julio 2027] (vida) Tu familia visita la concentración
+Tu familia se planta un día en la concentración de pretemporada, sin avisar del todo, solo para verte entrenar de cerca. Verlos ahí, en la grada vacía, te toca algo por dentro.
+   ➤ Presentárselos a todo el vestuario — Que los conozcan
+   · Pasar la tarde entera con ellos — El fútbol puede esperar unas horas
+   · Un saludo rápido entre entrenamientos — El calendario manda
+   ⮑ Tu madre trae una bandeja de empanadillas para todo el grupo. En diez minutos, el vestuario entero la llama 'mamá'.
+   Δ ánimo +5, vestuario +3
+   📊 Real Betis · rol titular · media 58 · forma 80 · ánimo 75 · entrenador 55 · vestuario 58 · afición 55 · fama 25 · dinero 20.590€
 
-### [sem 11 · Julio 2027] (entrenamiento) Verano de 2027: vestuario nuevo, cara nueva
-La temporada pasada cerró con 4 partidos, 1 gol y la foto viral de la camiseta hasta las rodillas como mejor recuerdo: poco rodaje, pero quedaste bien con todos. Cumples 17 años y te citan para el reconocimiento médico de pretemporada, donde el fisio Susana Nieto, Ramón Gálvez, te palpa la tripa y suelta: "Un par de kilos de barbacoa familiar, ¿no, Hassan?". Al entrar al vestuario te encuentras media plantilla cambiada: caras nuevas, taquillas reordenadas, y un canterano llamado Bruno Cienfuegos ya sentado en el sitio que antes era "tuyo" junto a la ventana.
-   👤 QUIÉN ES — Susana Nieto · Fisioterapeuta: 38 años, con manos de hierro y paciencia infinita. Tiene una libreta con la historia clínica de cada jugador desde hace diez años.
-   ➤ Reclamar tu sitio con humor — +Vestuario, riesgo de roce
-   · Cederle el sitio y buscar otra taquilla — Perfil bajo, +paciencia
-   ⮑ Le dices a Bruno Cienfuegos: "esa ventana tiene mis huellas desde hace un año". Él se ríe, se levanta y te deja el sitio: "Toma, pero me debes un café".
-   Δ forma +1, ánimo +2, vestuario +4
-   📊 Real Betis · rol titular · media 58 · forma 81 · ánimo 75 · entrenador 55 · vestuario 63 · afición 55 · fama 25 · dinero 20.590€
+### [sem 11 · Julio 2027] (vida) El nuevo gurú de la preparación física
+El club contrata a un preparador físico "revolucionario" que os hace entrenar descalzos sobre arroz, meditar antes de cada rondo y respirar "como los lobos". Nadie entiende del todo el método, pero el club insiste en darle una oportunidad.
+   ➤ Entregarte al método sin cuestionarlo — Confianza ciega
+   · Seguirlo con escepticismo — Sin creerte del todo el rollo
+   · Pedir en privado volver al método de siempre — Esto no es para ti
+   ⮑ FALLO: Te haces daño en un pie caminando sobre el arroz y el vestuario entero se muere de la risa.
+   Δ forma −3, ánimo −1, vestuario +2
+   📊 Real Betis · rol titular · media 58 · forma 77 · ánimo 74 · entrenador 55 · vestuario 60 · afición 55 · fama 25 · dinero 20.590€
 
-### [sem 11 · Julio 2027] (vestuario) El compañero con el que empezaste todo
-Emilio Olmedo y tú debutáis casi el mismo mes en el primer equipo. Compartís vestuario, viajes y la misma sensación de vértigo — de esas amistades que se forjan rápido porque los dos entendéis exactamente por lo que está pasando el otro.
-   ➤ Volveros inseparables dentro y fuera del campo — Amistad de verdad
-   · Llevaros bien, sin más, cada uno a su ritmo — Compañerismo normal
-   · Verlo también como competencia sana por minutos — Motivación extra
-   ⮑ (sin reacción)
-   Δ ánimo +3, vestuario +3
-   📊 Real Betis · rol titular · media 58 · forma 81 · ánimo 78 · entrenador 55 · vestuario 66 · afición 55 · fama 25 · dinero 20.590€
+### [sem 11 · Julio 2027] (vida) Un sueño demasiado ambicioso
+Sueñas con vestir la camiseta del Paris Saint-Germain y levantar un trofeo bajo confeti dorado. Te despiertas con el corazón acelerado y, durante todo el desayuno, no puedes dejar de pensar en ello.
+   · Contárselo a tu agente Iñaki Zubiaurre entre risas — "Apunta esto, Iñaki Zubiaurre"
+   ➤ Usarlo como motivación en el entreno — Que el sueño empuje
+   · Guardártelo para ti — Algunas cosas mejor no compartirlas
+   ⮑ En el entreno cierras los ojos en cada sprint y ves el trofeo dorado. Esa semana corres como nunca.
+   Δ forma +3, ánimo +3
+   📊 Real Betis · rol titular · media 58 · forma 80 · ánimo 77 · entrenador 55 · vestuario 60 · afición 55 · fama 25 · dinero 20.590€
 
-### [sem 12 · Agosto 2027] (representante) Se filtra tu cláusula de rescisión
-Mercado Total publica la cifra de tu cláusula y dice que la Atalanta estaría dispuesto a pagarla en el mercado de verano. Tu club te cita en el despacho: quieren "hablar de tu futuro".
-   ➤ Pedir renovar con la cláusula más alta — Blindarte y cobrar más
-   · Que pague quien te quiera: tú te dejas querer — Poner el foco en la salida
-   · Decir que la cláusula es cosa de tu representante Iñaki Zubiaurre — Sin mojarte
-   ⮑ ÉXITO: El club cede: renuevas, te suben la cláusula y te mejoran la ficha. Mensaje claro a todo el mercado.
-   Δ ánimo +5, dinero +20500, entrenador +3
-   📊 Real Betis · rol titular · media 58 · forma 83 · ánimo 83 · entrenador 58 · vestuario 66 · afición 55 · fama 25 · dinero 43.680€
+### [sem 11 · Julio 2027] (vida) Nuevo patrocinador de botas
+Una marca de calzado se acerca a ti tras la buena pretemporada. Iñaki Zubiaurre negocia: "Es poco, pero abre puertas".
+   · Firmar el contrato — Botas nuevas y un dinerillo
+   ➤ Esperar una oferta mejor — No regalarte
+   · Rechazar — Ahora mismo, no
+   ⮑ Dices que no tienes prisa. La marca asiente con educación y tu agente te lanza una mirada que mezcla orgullo y nervios.
+   Δ representante +2
+   📊 Real Betis · rol titular · media 58 · forma 80 · ánimo 77 · entrenador 55 · vestuario 60 · afición 55 · fama 25 · dinero 20.590€
 
-### [sem 12 · Agosto 2027] (vida) Una colaboración con gancho
-Valeria Sagasta, con miles de seguidores, quiere sacarte en su contenido. Tu agente Iñaki Zubiaurre diría que lo mires bien.
-   · Aceptar la colaboración — Más fama, menos descanso
-   · Pasarlo por el club antes — Permiso del departamento de comunicación
-   ➤ Rechazarlo con educación — Ahora solo cuenta el campo
-   ⮑ La respuesta llega enseguida: «Total respeto. Mucha suerte, crack»
-   Δ ánimo +1, entrenador +2
-   📊 Real Betis · rol titular · media 58 · forma 83 · ánimo 84 · entrenador 60 · vestuario 66 · afición 55 · fama 25 · dinero 43.680€
-
-### [sem 12 · Agosto 2027] (vida) La afición en la puerta del hotel
-Cientos de hinchas del Real Betis esperan al autobús con bufandas y cánticos. Entre ellos, alguien te grita un ánimo que te llega.
-   ➤ Parar a firmar — Diez minutos que valen oro
-   · Saludar desde la ventanilla — Sin retrasar al equipo
-   · Pasar de largo — Hoy no es el día
-   ⮑ Bajas del autobús y firmas hasta que el entrenador te llama desde la puerta. Algún hincha te lleva en volandas unos metros.
-   Δ fama +2, afición +4
-   📊 Real Betis · rol titular · media 58 · forma 83 · ánimo 84 · entrenador 60 · vestuario 66 · afición 59 · fama 27 · dinero 43.680€
-
-### [sem 12 · Agosto 2027] (vida) El chef se pone experimental
-El nuevo chef de concentración presenta el menú de la semana: "algas fermentadas con proteína de grillo, receta del futuro". Luis Sagasta ya ha puesto cara de circunstancias.
-   👤 QUIÉN ES — Luis Sagasta · Compañero de equipo: 35 años. Compañero de equipo, callado en el vestuario y terrible con el balón en los pies. Sus bromas llegan siempre con retraso.
-   ➤ Probarlo sin rechistar — Confiar en la ciencia
-   · Pedir el menú de siempre — Sin experimentos
-   · Convencer al vestuario de amotinarse — Huelga de tenedores
-   ⮑ FALLO: Pasas la noche entera sin poder dormir por el estómago. El chef promete 'ajustar la receta'.
-   Δ forma −3, ánimo −2
-   📊 Real Betis · rol titular · media 58 · forma 80 · ánimo 82 · entrenador 60 · vestuario 66 · afición 59 · fama 27 · dinero 43.680€
-
-### [sem 12 · Agosto 2027] (vida) La mascota del club se escapa
-En plena sesión de fotos, la persona disfrazada de mascota del Real Betis sale corriendo detrás de una paloma y se cuela en pleno pueblo, con el traje de águila puesto y todo el club detrás intentando explicarlo.
-   👤 QUIÉN ES — Marcos Torreblanca · Utillero: 55 años, siempre con un silbato colgado y una radio vieja. Sabe qué jugador llegará tarde antes de que aparezca.
-   👤 QUIÉN ES — Arturo Santamaría · Compañero de equipo: 25 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
-   ➤ Unirte a la caza — Con Arturo Santamaría a perseguirla
-   · Grabarlo todo — Contenido asegurado
-   · Quedarte al margen — Que se ocupe el utillero Marcos Torreblanca
-   ⮑ Corres detrás de la mascota, que salta una valla con el traje puesto. Os pilla un fotógrafo a los dos, y esa foto da la vuelta al país.
-   Δ forma −1, ánimo +3, vestuario +4
-   📊 Real Betis · rol titular · media 58 · forma 79 · ánimo 85 · entrenador 60 · vestuario 70 · afición 59 · fama 27 · dinero 43.680€
-
-### [sem 12 · Agosto 2027] (vida) El campo del amistoso está fatal
-Llegáis a un amistoso de pretemporada en un campo con más barro que césped. El fisio Susana Nieto avisa: "Con este terreno, mucho ojo con las entradas".
-   · Jugar con cabeza y sin arriesgar — Prioridad: no lesionarte
-   ➤ Darlo todo igualmente — El resultado también importa
-   · Proponer al árbitro suspenderlo — Es solo un amistoso
-   ⮑ FALLO: Un resbalón tonto en el barro te deja unos días tocado.
-   Δ forma −5, ánimo −2
-   📊 Real Betis · rol titular · media 58 · forma 74 · ánimo 83 · entrenador 60 · vestuario 70 · afición 59 · fama 27 · dinero 43.680€
-
-### [sem 13 · Septiembre 2027] (partido) Betis 2-1 Valladolid: la zurda de Hassan en el Villamarín
-Ante Real Valladolid en La Liga, jugaste 82 minutos. Nota: 7.2/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Real Valladolid). Tu gol llegó tras un rechace en el área pequeña que empujaste casi sin mirar; el Villamarín se vino abajo y el míster Paco Pastor te aplaudió desde la banda al cambiarte en el 82. Marcos Torreblanca te esperaba en el túnel con la camiseta guardada: "Esta la enmarco yo, chaval".
+### [sem 11 · Julio 2027] (entrenamiento) Verano de cambios
+La temporada se cerró con 4 partidos, 1 gol y ningún título: poco bagaje, pero suficiente para que en Sevilla empiecen a fijarse en ti. Vuelves a la Ciudad Deportiva ya con 17 años recién cumplidos, un kilo de más por las empanadillas de tu madre Fátima Roig y las ganas intactas. En el primer amistoso de pretemporada rompes el partido: un gol y una asistencia que hacen que el banquillo entero se levante. Al pitido final, el entrenador Paco Pastor te busca entre el grupo, te agarra del brazo y suelta delante de todos: "Este año cuentas, Hassan. No me lo hagas lamentar."
    👤 QUIÉN ES — Fátima Roig · Tu madre: La mujer que te llevó a todos los entrenamientos. Tiene un tupper para cada ocasión y una opinión sobre cada tarjeta amarilla.
    👤 QUIÉN ES — Paco Pastor · Entrenador: 47 años y obsesionado con la presión alta. Dicen que ha visto más vídeo de rivales que cine en toda su vida.
-   ➤ Celebrar con la grada — +Afición
-   · Llamar a tu madre Fátima Roig al vestuario — Presentas a Fátima Roig
-   · Ir con calma en la zona mixta — Discreción con la prensa
-   · Dedicar el gol a un excompañero lesionado — +Vestuario, gesto íntimo
-   ⮑ Te acercas al Fondo y señalas el escudo; un grupo de abonados corea tu nombre durante un buen rato.
-   Δ ánimo +3, fama +4, media +2, afición +6
-   📊 Real Betis · rol titular · media 60 · forma 76 · ánimo 86 · entrenador 60 · vestuario 70 · afición 65 · fama 31 · dinero 46.270€
+   · Responder con calma — +Entrenador, perfil discreto
+   ➤ Prometerle títulos — +Ánimo, +presión
+   ⮑ Le dices que vais a pelear por todo esta temporada. El entrenador se ríe y te da una palmada: "Me gusta esa boca, pero que no se te suba."
+   Δ ánimo +5, fama +2, entrenador +2
+   📊 Real Betis · rol titular · media 58 · forma 80 · ánimo 82 · entrenador 57 · vestuario 60 · afición 55 · fama 27 · dinero 20.590€
 
-### [sem 14 · Octubre 2027] (partido) Betis - Atlético: un pinchazo en el Villamarín
-Ante Atlético de Madrid en La Liga, jugaste 78 minutos. Nota: 5.3/10. Goles: 0. Asistencias: 0. Marcador: 1-2 (Real Betis-Atlético de Madrid). Te comiste un control fácil dentro del área en el 60' con todo a favor, y el Villamarín lo notó: un murmullo que dolió más que un pitido. Paco Pastor te sacó cinco minutos después sin mirarte a la cara.
-   👤 QUIÉN ES — Ismael Hassan · Tu padre: Te ha acompañado desde el primer balón. Tiene un cuaderno donde apunta todos tus partidos desde los ocho años.
-   · Hablar claro en la rueda de prensa — Autocrítica pública
-   ➤ Pedirle consejo a Marcos Torreblanca — Desahogo en el vestuario vacío
-   · Llamar a tu padre Ismael Hassan, Ismael Hassan — Buscar perspectiva en casa
-   · Encerrarte en redes a leer críticas — Jugada de riesgo
-   ⮑ (sin reacción)
-   Δ ánimo +5, vestuario +3
-   📊 Real Betis · rol titular · media 60 · forma 78 · ánimo 90 · entrenador 60 · vestuario 73 · afición 65 · fama 31 · dinero 49.470€
+### [sem 11 · Julio 2027] (vida) Ruido en el despacho
+Se filtra una discusión entre Carlos Segarra y el presidente Fernando Casares sobre el presupuesto de fichajes. La plantilla lo comenta en voz baja: nadie sabe si va a llegar el refuerzo prometido.
+   👤 QUIÉN ES — Carlos Segarra · Director deportivo: 60 años, el de los fichajes imposibles. Dicen que ha firmado a medio equipo en un restaurante.
+   👤 QUIÉN ES — Fernando Casares · Presidente del club: 58 años, abogado, con un discurso para cada ocasión. En el palco se le ve más nervioso que a los aficionados.
+   · No meterte en líos de despacho — A lo tuyo
+   · Preguntar directamente al director — Prefieres saber a qué atenerte
+   ➤ Hablar con el vestuario para calmar ánimos — Liderar en la sombra
+   ⮑ Reúnes al grupo en el vestuario y pides calma. Funciona: esa tarde el ambiente cambia y el míster te lo agradece con un asentimiento.
+   Δ vestuario +3, reputación +2
+   📊 Real Betis · rol titular · media 58 · forma 80 · ánimo 82 · entrenador 57 · vestuario 63 · afición 55 · fama 27 · dinero 20.590€
 
-### [sem 14 · Octubre 2027] (vida) Arturo quiere que le firmes la camiseta "de verdad"
-Llegas a casa después del entrenamiento y te encuentras a tu hermano pequeño Arturo Hassan, Arturo Hassan, plantado en el salón con tu camiseta del primer equipo, que le llega por las rodillas. "Fírmamela. Pero bien, con dedicatoria, que la voy a llevar al cole el lunes y hay uno que dice que tú no juegas, que calientas banquillo." Detrás, tu madre Fátima Roig, Fátima Roig, sonríe negando con la cabeza mientras friega los platos.
-   👤 QUIÉN ES — Arturo Hassan · Tu hermano pequeño: Tu hermano pequeño. Tiene tu camiseta del primer equipo, aunque le queda por las rodillas, y jura que va a superarte.
-   ➤ Firmarla con una dedicatoria currada — +Ánimo, +vínculo familiar
-   · Ir con él al cole el lunes a dar la cara — Jugada de riesgo con el tiempo, +fama local
-   · Quitarle hierro con una broma y firmarla rápido — Gesto menor, sin mucho esfuerzo
-   ⮑ Arturo lee la dedicatoria tres veces y sale corriendo a enseñársela a tu padre, Ismael Hassan, gritando por el pasillo.
-   Δ ánimo +4
-   📊 Real Betis · rol titular · media 60 · forma 78 · ánimo 94 · entrenador 60 · vestuario 73 · afición 65 · fama 31 · dinero 49.470€
+### [sem 12 · Agosto 2027] (representante) Tu club te pone en el escaparate
+Corre la voz de que tu club quiere hacer caja en el mercado de verano y tu nombre está entre los que se venden. Nadie te ha dicho nada a la cara.
+   ➤ Pedirle explicaciones al director deportivo — Cara a cara, sin rodeos
+   · Aprovechar para que Iñaki Zubiaurre busque ofertas — Si me venden, que sea a mi favor
+   · Demostrar en el campo que no debes salir — Que hablen tus números
+   ⮑ FALLO: Sonrisa y palmada en la espalda: no te dice ni sí ni no. Sales peor de lo que entraste.
+   Δ ánimo −4
+   📊 Real Betis · rol titular · media 58 · forma 82 · ánimo 78 · entrenador 57 · vestuario 63 · afición 55 · fama 27 · dinero 23.180€
 
-### [sem 14 · Octubre 2027] (partido) Noche europea
-Europa League - Fase de grupos, ante Rangers FC. Recibes un pase al hueco entre el lateral y el central, con solo el portero por delante. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Disparo raso al primer palo — Rápido y directo
-   · Hacer una pared con el compañero — Juego combinado
-   ➤ Intentar un sombrero al defensa — Para la galería
-   ⮑ FALLO: El balón se te va largo y el defensa se queda con él.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 60 · forma 78 · ánimo 94 · entrenador 60 · vestuario 73 · afición 65 · fama 31 · dinero 49.470€
-
-### [sem 14 · Octubre 2027] (partido) Rangers FC frena al Betis en el descuento
-Ante Rangers FC en Europa League, jugaste 90 minutos. Nota: 5.2/10. Goles: 0. Asistencias: 0. Marcador: 1-2 (Real Betis-Rangers FC). Recibiste un pase al hueco entre el lateral y el central con solo el portero por delante, pero el meta escocés adivinó tus intenciones y sacó un paradón providencial en el minuto 85; en el contraataque siguiente, con el Betis desguarnecido, Rangers FC sentenció. Paco Pastor se queda mirando el césped un buen rato antes de entrar al vestuario.
-   · Dar la cara ante la prensa — Asumir el fallo en público
-   ➤ Hablar primero con Paco Pastor — Explicarte antes de que lo haga él
-   · Quedarte callado y encajarlo dentro — Autocrítica silenciosa
-   · Desahogarte con Iñaki Zubiaurre — Llamar a tu representante Iñaki Zubiaurre
-   ⮑ (sin reacción)
-   Δ ánimo +1, media −1, entrenador +6
-   📊 Real Betis · rol titular · media 59 · forma 78 · ánimo 95 · entrenador 66 · vestuario 73 · afición 65 · fama 31 · dinero 49.470€
-
-### [sem 15 · Noviembre 2027] (representante) Un tipo de gabardina te ofrece un club
-Un desconocido que se presenta como "intermediario" te para a la salida del entrenamiento y jura que puede colocarte en el Atlético de Madrid en el mercado de enero. Solo pide un adelanto "para gastos" y que no se lo cuentes a nadie. Huele raro, pero habla muy bien.
-   · Pagarle el adelanto (3200 €) — Fiarte de un desconocido
-   ➤ Pasarle el marrón a Iñaki Zubiaurre — Que lo compruebe él
-   · Grabarlo a escondidas y subirlo a redes — Contenido gratis
-   · Ignorarlo y seguir andando — Cabeza fría
-   ⮑ ÉXITO: Tu agente Iñaki Zubiaurre lo conoce de sobra: es un pelagatos de la zona. Te lo quita de encima y te agradece el aviso.
-   Δ ánimo +2, representante +3
-   📊 Real Betis · rol titular · media 59 · forma 80 · ánimo 96 · entrenador 66 · vestuario 73 · afición 65 · fama 31 · dinero 52.360€
-
-### [sem 15 · Noviembre 2027] (representante) Tu decisión: ¿te quedas o mueves ficha?
+### [sem 12 · Agosto 2027] (representante) Tu decisión: ¿te quedas o mueves ficha?
 Con el mercado abierto, te toca decidir qué quieres de verdad. Iñaki Zubiaurre lo deja claro: "Si quieres moverte, es ahora. Esto lo decides tú."
    · Pedir salir del club y apostar por la Atalanta — Un paso adelante, con riesgo de portazo
    · Buscar un club donde juegues de verdad: el Osasuna — Menos brillo, más minutos
    ➤ Pedir renovación con mejoras y quedarte — Apostar por este proyecto
    · Quedarte y competir sin más — Cabeza fría
    ⮑ ÉXITO: El club te renueva y te sube la ficha. Ganas peso en el vestuario y la afición te lo agradece.
-   Δ ánimo +4, dinero +23500, entrenador +3, afición +5
-   📊 Real Betis · rol titular · media 59 · forma 80 · ánimo 100 · entrenador 69 · vestuario 73 · afición 70 · fama 31 · dinero 75.860€
+   Δ ánimo +4, dinero +23000, entrenador +3, afición +5
+   📊 Real Betis · rol titular · media 58 · forma 82 · ánimo 82 · entrenador 60 · vestuario 63 · afición 60 · fama 27 · dinero 46.180€
 
-### [sem 15 · Noviembre 2027] (partido) Eliminatoria de Copa, a partido único
-Copa del Rey - Dieciseisavos, a vida o muerte, ante Cultural Leonesa. Un centro desde la derecha te llega a la altura del punto de penalti, con un central saltando contigo. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Dani Galindo · Compañero de equipo: 32 años. Compañero de equipo, callado en el vestuario y terrible con el balón en los pies. Sus bromas llegan siempre con retraso.
-   ➤ Rematar en palomita, estirándote al máximo — Todo o nada por llegar al balón
-   · Bajar a por el balón y servirlo de espaldas al área — Sacrificar tu ocasión por la de un compañero llamado Dani Galindo
-   ⮑ ÉXITO: Te estiras al límite y conectas el remate. ¡Gol de palomita!
-   Δ fama +2
-   📊 Real Betis · rol titular · media 59 · forma 80 · ánimo 100 · entrenador 69 · vestuario 73 · afición 70 · fama 33 · dinero 75.860€
+### [sem 12 · Agosto 2027] (entrenamiento) La noche antes del Valladolid
+Faltan dos días para el partido y tu padre Ismael Hassan, Ismael Hassan, te llama después del entreno. Es el que te ha acompañado desde el primer balón que tocaste, el que lleva un cuaderno donde apunta todos tus partidos desde que tenías ocho años. Te dice que ya tiene la página de mañana preparada, en blanco, esperando. "Titular otra vez, hijo. Eso ya no es casualidad." Tú sonríes, pero por dentro notas ese cosquilleo raro: la renovación recién firmada pesa, la gente del barrio ya habla de ti como "el fijo", y una parte de ti todavía no se cree que esto sea normal. Esta noche, antes de dormir, necesitas decidir qué hacer con esa mezcla de ilusión y vértigo.
+   👤 QUIÉN ES — Ismael Hassan · Tu padre: Te ha acompañado desde el primer balón. Tiene un cuaderno donde apunta todos tus partidos desde los ocho años.
+   ➤ Llamar a tu padre y pedirle que te lea anotaciones de partidos anteriores — Buscar calma en lo conocido
+   · Quedarte solo viendo vídeos del rival hasta tarde, memorizando cada jugador — Exceso de estudio, poco descanso
+   · Salir a dar una vuelta con un par de compañeros del vestuario para desconectar — Soltar tensión entre risas
+   · Escribir en el teléfono cómo te sientes realmente, sin enseñárselo a nadie — Vaciar la cabeza antes de dormir
+   ⮑ Ismael Hassan se emociona al otro lado del teléfono y te lee, con su letra torpe, el resumen de tu primer gol con doce años. Te acuestas con una sonrisa tonta y la cabeza más ligera.
+   Δ forma +2, ánimo +5
+   📊 Real Betis · rol titular · media 58 · forma 84 · ánimo 87 · entrenador 60 · vestuario 63 · afición 60 · fama 27 · dinero 46.180€
 
-### [sem 15 · Noviembre 2027] (partido) Eliminados en casa
-Ante Cultural Leonesa en Copa del Rey, jugaste 78 minutos. Nota: 6.0/10. Goles: 1. Asistencias: 0. Marcador: 0-2 (Real Betis-Cultural Leonesa).
+### [sem 13 · Septiembre 2027] (partido) Betis 1 - 1 Valladolid: punto que sabe a poco
+Ante Real Valladolid en La Liga, jugaste 78 minutos. Nota: 6.1/10. Goles: 0. Asistencias: 1. Marcador: 1-1 (Real Betis-Real Valladolid). Tu pase entre líneas puso el gol en bandeja, pero fallaste un mano a mano antes del descanso que te sigue pesando. El Villamarín se queda con sensación agridulce y Paco Pastor, serio, solo dice "nos falta pegada" al pasar por tu lado en el túnel.
+   ➤ Asumirlo ante la prensa — +Afición, posible -Media si suena a excusa
+   · Buscar a tu hermano al salir — Presenta a Arturo
+   · Hablar con el entrenador Paco Pastor en caliente — Riesgo con Pastor
+   · Quedarte callado y repasar la jugada tú solo — Autocrítica interna
+   ⮑ Rubén Cano, un periodista local que te sigue desde juveniles, anota tu frase: "la fallé yo, no hay más". La grada lo agradece en redes.
+   Δ ánimo +2, fama +3, afición +5
+   📊 Real Betis · rol titular · media 58 · forma 86 · ánimo 89 · entrenador 60 · vestuario 63 · afición 65 · fama 30 · dinero 48.770€
 
-Minuto 16: centro desde la derecha, llegas al punto de penalti saltando con un central y la clavas dentro. Pero la Cultural Leonesa remonta y os elimina en vuestro propio estadio; el Villamarín se queda mudo al pitido final. Paco Pastor se queda plantado en el centro del campo mirando al césped antes de entrar al túnel.
+### [sem 14 · Octubre 2027] (partido) Betis - Atlético: noche de barro en el Villamarín
+Ante Atlético de Madrid en La Liga, jugaste 78 minutos. Nota: 6.1/10. Goles: 0. Asistencias: 1. Marcador: 1-1 (Real Betis-Atlético de Madrid). Peleaste cada balón dividido y pusiste el centro que cabeceó tu compañero para el empate; Paco Pastor te sacó entre aplausos cuando las piernas ya no respondían. El punto sabe a poco pero el vestuario respira.
+   👤 QUIÉN ES — Fernando Roca · Compañero de equipo: 31 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
+   · Celebrarlo con la familia — +Moral, momento con Arturo
+   · Reconocer en redes que faltó gol — Autocrítica pública
+   ➤ Pedir feedback a Paco Pastor — Jugada de riesgo
+   · Salir de fiesta con un compañero llamado Fernando Roca — -Forma, +Vestuario
+   ⮑ El entrenador te suelta sin rodeos: "La asistencia está bien, pero quiero que esa pierna izquierda también dispare, no solo centre." Un toque de atención que te deja pensando.
+   Δ ánimo −2, entrenador +3
+   📊 Real Betis · rol titular · media 58 · forma 88 · ánimo 86 · entrenador 63 · vestuario 63 · afición 65 · fama 30 · dinero 51.360€
+
+### [sem 14 · Octubre 2027] (vida) El sabio de la sobremesa
+Domingo en casa de tus padres. Tu tío Rodrigo, hermano de tu madre Fátima Roig, aparta el plato de arroz y sentencia con el dedo en alto: "A ti lo que te pasa es que corres poco por la banda, eso lo arreglo yo en dos entrenos." Tu hermano pequeño Arturo Hassan, Arturo Hassan, con tu camiseta del primer equipo colgándole hasta las rodillas, se parte de risa y te mira esperando que le sigas el rollo.
+   👤 QUIÉN ES — Arturo Hassan · Tu hermano pequeño: Tu hermano pequeño. Tiene tu camiseta del primer equipo, aunque le queda por las rodillas, y jura que va a superarte.
+   · Seguirle la corriente entre risas — Paz familiar
+   · Picarle con datos reales del partido — Jugada de riesgo
+   ➤ Pedirle a Arturo que te defienda — Momento con tu hermano
+   ⮑ Arturo se pone de pie como si fuera a declarar en un juicio: "¡Mi hermano sabe más que todos los de la tele juntos!". Tu madre casi llora de risa y tú le revuelves el pelo, orgulloso.
+   Δ ánimo +5
+   📊 Real Betis · rol titular · media 58 · forma 88 · ánimo 91 · entrenador 63 · vestuario 63 · afición 65 · fama 30 · dinero 51.360€
+
+### [sem 14 · Octubre 2027] (vida) La madre de un canterano llamado Leandro Casares
+Te escribe Noelia Verdejo, madre de un chaval de la cantera que te tiene de ídolo.
+   · Grabar un audio con cariño — Diez segundos que él no olvidará
+   ➤ Ir a verlo al partido — Un sorpresón de los buenos
+   · Mandarle una foto firmada — Rápido y con detalle
+   ⮑ La respuesta llega enseguida: «Voy a llorar. Va a ser el día de su vida»
+   Δ forma −2, ánimo +5, fama +4, afición +5
+   📊 Real Betis · rol titular · media 58 · forma 86 · ánimo 96 · entrenador 63 · vestuario 63 · afición 70 · fama 34 · dinero 51.360€
+
+### [sem 14 · Octubre 2027] (partido) Noche europea
+Europa League - Fase de grupos, ante Rangers FC. Un compañero llamado Eduardo Torreblanca te deja un balón de tacón en plena área pequeña. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Eduardo Torreblanca · Compañero de equipo: 30 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
+   · Fingir el disparo y regatear al portero — Sangre fría
+   · Disparar con la pierna que no es la tuya — Sin tiempo para cambiar
+   ➤ Ceder al compañero de la derecha — Mejor posicionado que tú
+   ⮑ ÉXITO: Se la cedes sin dudar y él define a placer.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 58 · forma 86 · ánimo 96 · entrenador 63 · vestuario 63 · afición 70 · fama 34 · dinero 51.360€
+
+### [sem 14 · Octubre 2027] (partido) Betis 2-1 Rangers: la asistencia de Dani Hassan en el Villamarín
+Ante Rangers FC en Europa League, jugaste 78 minutos. Nota: 7.2/10. Goles: 0. Asistencias: 1. Marcador: 2-1 (Real Betis-Rangers FC). En el 47, un compañero llamado Enrique Beltrán te deja un balón de tacón en plena área pequeña y tú se la devuelves de primeras para que remate a placer. El Villamarín, con el campo casi lleno un día entre semana, ruge cada vez que tocas balón; Paco Pastor te aplaude desde la banda al cambiarte.
+   👤 QUIÉN ES — Enrique Beltrán · Compañero de equipo: 23 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
+   ➤ Buscar al que marcó — +Vestuario
+   · Declaraciones comedidas — Perfil bajo
+   · Llamar a tu padre Ismael Hassan nada más pisar el vestuario — Familia primero
+   · Subir el vídeo de la jugada a tus redes — +Fama, riesgo foco
+   ⮑ El autor del gol te abraza en el túnel de vestuarios: "Esa pared la llevamos ensayando dos semanas, macho." El vestuario celebra la complicidad con silbidos y aplausos.
+   Δ ánimo +4, media +2, vestuario +6
+   📊 Real Betis · rol titular · media 60 · forma 86 · ánimo 100 · entrenador 63 · vestuario 69 · afición 70 · fama 34 · dinero 51.360€
+
+### [sem 15 · Noviembre 2027] (prensa) Un bulo de mercado que se te va de las manos
+Una cuenta anónima jura que el Inter de Milán ya te ha fichado, con foto tuya en el aeropuerto que no eres tú. Tiene 40.000 retuits, tu madre Fátima Roig te ha llamado preguntando y hasta tu compañero de taquilla te llama "el traidor".
+   · Seguirle el juego en redes con humor — Momento viral asegurado
+   ➤ Desmentirlo seco y volver al trabajo — Corta el ruido
+   · Ni confirmarlo ni desmentirlo — Que especulen
+   ⮑ Cuatro líneas secas en tus redes y el bulo se desinfla en una tarde. En la grada, más de uno agradece que no lo hayas alimentado.
+   Δ entrenador +3, afición +3
+   📊 Real Betis · rol titular · media 60 · forma 88 · ánimo 99 · entrenador 66 · vestuario 69 · afición 73 · fama 34 · dinero 54.560€
+
+### [sem 15 · Noviembre 2027] (partido) Solo ante el portero
+Recibes el pase filtrado y quedas mano a mano con el portero. El estadio contiene la respiración.
+   ➤ Rematar fuerte al primer palo — Todo o nada
+   · Amagar y definir cruzado — Más elegante, más riesgo de resbalar
+   · Pasarla al compañero mejor posicionado — Menos gloria, más seguro
+   ⮑ ÉXITO: ¡GOOOL! El balón entra pegado al palo. El estadio explota con tu nombre.
+   Δ ánimo +6, fama +8, media +4, afición +10
+   📊 Real Betis · rol titular · media 64 · forma 88 · ánimo 100 · entrenador 66 · vestuario 69 · afición 83 · fama 42 · dinero 54.560€
+
+### [sem 16 · Diciembre 2027] (partido) Betis 1-1 Mallorca: punto agrio en casa
+Ante Mallorca en La Liga, jugaste 80 minutos. Nota: 6.0/10. Goles: 0. Asistencias: 0. Marcador: 1-1 (Real Betis-Mallorca). Perdonaste un mano a mano antes del descanso y el empate llegó en el 88'; Paco Pastor se queda plantado en el césped mirando al cielo mientras la grada pita el gesto, no tanto el resultado.
    👤 QUIÉN ES — Javier Aguirre · Capitán: 36 años y a punto de despedirse. Lleva diez años en el club y lo trata como si fuera su casa.
-   · Aplaudir a la grada — +Afición, duele igual
-   ➤ Buscar a Javier Aguirre en el vestuario — El capitán Javier Aguirre, diez años en el club
-   · Callar y ducharte rápido — Autocrítica en silencio
-   · Hablar con la prensa — Dar la cara pese a la derrota
-   ⮑ Javier Aguirre, el capitán que lleva diez años aquí y está a punto de irse, te agarra del cuello con fuerza: "Ese gol es lo único bueno de esta noche, chaval. No lo olvides tú tampoco."
-   Δ ánimo +4, media +1, vestuario +7
-   📊 Real Betis · rol titular · media 60 · forma 80 · ánimo 100 · entrenador 69 · vestuario 80 · afición 70 · fama 33 · dinero 75.860€
+   · Hablar claro en zona mixta — Autocrítica pública
+   · Ir al vestuario del rival — Gesto con un ex compañero
+   ➤ Quedarte a analizar la jugada con Javier Aguirre — El capitán Javier Aguirre te corta de raíz
+   · Llamar a Iñaki Zubiaurre — Gestionar el bajón a solas
+   ⮑ Javier Aguirre, el capitán, 36 años y a un paso de colgar las botas, te pone la mano en el hombro: "Diez años aquí y te digo una cosa: ese balón lo meto la próxima". Te quedas con eso.
+   Δ ánimo +4, vestuario +5
+   📊 Real Betis · rol titular · media 64 · forma 90 · ánimo 100 · entrenador 66 · vestuario 74 · afición 83 · fama 42 · dinero 59.170€
 
-### [sem 16 · Diciembre 2027] (partido) Real Betis 1-1 Mallorca: punto agridulce
-Ante Mallorca en La Liga, jugaste 78 minutos. Nota: 6.2/10. Goles: 0. Asistencias: 1. Marcador: 1-1 (Real Betis-Mallorca). Tu pase entre líneas puso el gol a Javier Aguirre en el 34', pero un despiste defensivo rival y la mala suerte en el VAR dejaron escapar los tres puntos. Paco Pastor, en la banda, se llevó las manos a la cabeza cuando el árbitro anuló el segundo tanto por fuera de juego milimétrico.
-   👤 QUIÉN ES — Fernando Ferreiro · Compañero que compite por tu puesto: 23 años, fichado hace un año con mucha prensa. Se nota que quiere tu sitio, aunque lo disimula con educación.
-   ➤ Reírte del palo — El vestuario se relaja con humor negro
-   · Quejarte del VAR en zona mixta — Foco mediático, riesgo de polémica
-   · Hablar con Fernando Ferreiro — El suplente que quiere tu sitio
-   · Llamar a Fátima Roig — Necesitas oír a tu madre Fátima Roig
-   ⮑ Javier Aguirre suelta: "Dani, con ese pase hasta yo parezco Balón de Oro", y la carcajada general rebaja la tensión del empate.
-   Δ ánimo +3, media +1, vestuario +5
-   📊 Real Betis · rol titular · media 61 · forma 82 · ánimo 100 · entrenador 69 · vestuario 85 · afición 70 · fama 33 · dinero 79.060€
-
-### [sem 16 · Diciembre 2027] (representante) Tu agente te sugiere dónde vivir
-'Deberías dejar de vivir como si esto fuera temporal', te dice tu agente Iñaki Zubiaurre. 'Con lo que ganas ya, plantéate algo tuyo — una casa es patrimonio real, no un alquiler que no te devuelve nada.'
-   ➤ Empezar a mirar opciones en serio — Hacerle caso
-   · Preferir esperar a estar más asentado en un club — Todavía no toca
-   ⮑ Empiezas a mirar pisos con tu representante, entre risas y cálculos. Un agente inmobiliario te enseña una terraza con vistas que te quita el aire.
-   Δ ánimo +2, representante +2
-   📊 Real Betis · rol titular · media 61 · forma 82 · ánimo 100 · entrenador 69 · vestuario 85 · afición 70 · fama 33 · dinero 79.060€
+### [sem 16 · Diciembre 2027] (vida) Navidad en el barrio
+Diciembre, Copa de por medio, y tu padre Ismael Hassan insiste en que vayas a la cena de la peña del barrio antes del próximo partido. Allí sigue Mohamed "Momo" Larbi, tu compañero de fútbol sala con el que te criaste y que dejó el fútbol a los 16 para trabajar en el taller de su tío. Te abraza fuerte: "Mírate, cabrón, ¡saliste en la tele el otro día!" y te pide, medio en broma medio en serio, dos entradas para el Villamarín que ya no puede pagarse.
+   · Conseguirle las entradas y quedarte un rato más — +Vida, -tiempo de descanso
+   ➤ Darle dinero en lugar de entradas — Gesto rápido, menos cercanía
+   · Prometerle las entradas para otro partido y despedirte pronto — Cuidar el descanso antes de Copa
+   ⮑ Momo coge el billete incómodo, lo guarda rápido y cambia de tema. Algo se queda raro entre los dos, como si hubieras resuelto mal una pregunta sencilla.
+   Δ ánimo −2, dinero −100
+   📊 Real Betis · rol titular · media 64 · forma 90 · ánimo 98 · entrenador 66 · vestuario 74 · afición 83 · fama 42 · dinero 59.070€
 
 ### [sem 16 · Diciembre 2027] (partido) Noche europea
-Europa League - Fase de grupos, ante Olympiacos. Un rechace te cae a los pies dentro del área, con la portería a tiro. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Asier Olmedo · Compañero de equipo: 31 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
-   ➤ Disparar a puerta — Vas a por el gol directo
-   · Pasar a un compañero llamado Asier Olmedo mejor colocado — Menos gloria, más seguro
-   · Intentar una jugada de calidad (regate, túnel, sombrero...) — Todo o nada, para la galería
-   ⮑ FALLO: El portero saca una mano providencial. No hay gol.
+Europa League - Fase de grupos, ante Olympiacos. El balón te llega al borde del área con el defensa de espaldas: tienes medio segundo para decidir. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   ➤ Definir raso, pegado al palo contrario — Buscar la precisión antes que la potencia
+   · Controlarla con calma antes de decidir — Ganar un segundo extra pensando la jugada
+   · Amagar el centro y quedarte con el balón — Sorprender a la defensa con un cambio de idea
+   ⮑ FALLO: El portero llega justo para desviar el disparo a córner.
    Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 61 · forma 82 · ánimo 100 · entrenador 69 · vestuario 85 · afición 70 · fama 33 · dinero 79.060€
+   📊 Real Betis · rol titular · media 64 · forma 90 · ánimo 98 · entrenador 66 · vestuario 74 · afición 83 · fama 42 · dinero 59.070€
 
-### [sem 16 · Diciembre 2027] (partido) Clasificados: Betis - Olympiacos 2-1
-Ante Olympiacos en Europa League, jugaste 84 minutos. Nota: 6.8/10. Goles: 0. Asistencias: 0. Marcador: 2-1 (Real Betis-Olympiacos).
+### [sem 16 · Diciembre 2027] (partido) Clasificación en casa
+Ante Olympiacos en Europa League, jugaste 82 minutos. Nota: 6.8/10. Goles: 0. Asistencias: 1. Marcador: 2-1 (Real Betis-Olympiacos). En el 19' te llegó el balón al borde del área con el defensa de espaldas; el disparo salió cruzado y se marchó rozando el poste, pero reaccionaste a tiempo y tu pase al hueco en la segunda parte puso el 2-1. El Benito Villamarín se vació en la última jugada: el Betis cierra primero de grupo y pasa a octavos.
+   · Prensa: hablar del fallo — Autocrítica pública
+   ➤ Vestuario: celebrar con Javier Aguirre — +Vestuario
+   · Llamar a Ismael y Fátima — Familia primero
+   · Mensaje a Iñaki Zubiaurre — Mirar al futuro
+   ⮑ El capitán te abraza nada más pitar el final: "Esa pelota que le has puesto a Carvajal vale más que un gol, chaval." Te la juegas en redes esa misma noche con una foto del abrazo.
+   Δ ánimo +4, media +1, vestuario +6
+   📊 Real Betis · rol titular · media 65 · forma 90 · ánimo 100 · entrenador 66 · vestuario 80 · afición 83 · fama 42 · dinero 59.070€
 
-En el 25', un rechace te cae a los pies dentro del área, portería a tiro, y el meta griego saca una mano providencial que te deja con las manos en la cabeza. El Villamarín ruge igual al pitido final: el Betis se mete en octavos. Paco Pastor te saca en el 84' entre aplausos, aunque Fernando Ferreiro, que calienta en la banda, te mira de reojo con ganas de sitio.
-   · Asumirlo ante la prensa — Autocrítica pública
-   ➤ Reírte en el vestuario — +Vestuario, quitar hierro
-   · Pedir vídeo del fallo a Marcos Torreblanca — Autocrítica interna
-   · Llamar a tu padre Ismael Hassan al salir del túnel — Apoyo familiar
-   ⮑ Javier Aguirre te lanza una toalla a la cara entre risas: 'Como falles esa en el barrio te destierran, pero aquí te la perdonamos... una vez'.
-   Δ ánimo +3, fama −1, media +1, vestuario +5
-   📊 Real Betis · rol titular · media 62 · forma 82 · ánimo 100 · entrenador 69 · vestuario 90 · afición 70 · fama 32 · dinero 79.060€
-
-### [sem 17 · Enero 2028] (partido) Jornada 24: Real Betis - Cádiz CF
-Ante Cádiz CF en La Liga, jugaste 78 minutos. Nota: 6.8/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Cádiz CF). Empujaste a placer un rechace tras un córner y Paco Pastor te sacó entre aplausos del Villamarín visitante; Javier Aguirre te revolvió el pelo al pitido final.
-   · Dedicar el gol a la familia — +Moral, +Fama
-   ➤ Ir directo a abrazar a Fernando Ferreiro — +Vestuario
-   · Responder a la prensa con cautela — Perfil bajo
-   · Presumir del gol en redes — Riesgo de postureo
-   ⮑ Fernando Ferreiro, que se queda sin minutos, te aprieta fuerte y te suelta entre dientes: "Ese gol también es mío, no te lo creas tanto." Lo dice en broma, pero algo hay de verdad.
-   Δ ánimo +3, media +1, vestuario +7
-   📊 Real Betis · rol titular · media 63 · forma 84 · ánimo 100 · entrenador 69 · vestuario 97 · afición 70 · fama 32 · dinero 82.930€
+### [sem 17 · Enero 2028] (partido) Betis 1 - 1 Cádiz: punto agridulce en Heliópolis
+Ante Cádiz CF en La Liga, jugaste 78 minutos. Nota: 6.3/10. Goles: 0. Asistencias: 1. Marcador: 1-1 (Real Betis-Cádiz CF). Tu pase entre líneas puso a Javier Aguirre solo ante el portero para el empate, pero fallaste un mano a mano clarísimo en el 60' que Paco Pastor masculló desde la banda. Fernando Ferreiro, el delantero que fichó hace un año entre focos y que no disimula sus ganas de quitarte el sitio, calentó los últimos 12 minutos mirando al banquillo cada vez que tocabas mal un balón.
+   👤 QUIÉN ES — Fernando Ferreiro · Compañero que compite por tu puesto: 23 años, fichado hace un año con mucha prensa. Se nota que quiere tu sitio, aunque lo disimula con educación.
+   · Asumirlo en la mixta — Autocrítica ante la prensa
+   ➤ Quedarte con la asistencia — Mensaje directo a Aguirre
+   · Pedir explicaciones a Ferreiro — Cara a cara en el vestuario
+   · Ignorar el ruido y entrenar aparte — Encierro personal
+   ⮑ Javier Aguirre te responde con un audio de diez segundos: "Ese pase vale más que el gol, tío, tranquilo". Te quita un peso de encima.
+   Δ ánimo +4, media +1, vestuario +5
+   📊 Real Betis · rol titular · media 66 · forma 92 · ánimo 100 · entrenador 66 · vestuario 85 · afición 83 · fama 42 · dinero 64.070€
 
 ### [sem 18 · Febrero 2028] (partido) Noche europea
-Europa League - Octavos de final, ante AS Roma. Te quedas con el balón en la esquina del área, con el portero un paso adelantado. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   ➤ Fingir el disparo y regatear al portero — Sangre fría
-   · Disparar con la pierna que no es la tuya — Sin tiempo para cambiar
-   · Ceder al compañero de la derecha — Mejor posicionado que tú
-   ⮑ ÉXITO: Tragas al portero con un amago de cine y empujas el balón a la red. ¡Qué clase!
-   Δ fama +3
-   📊 Real Betis · rol titular · media 63 · forma 86 · ánimo 99 · entrenador 69 · vestuario 97 · afición 70 · fama 35 · dinero 87.160€
+Europa League - Octavos de final, ante AS Roma. Un córner cerrado te cae en la cabeza, rodeado de tres defensas que no te sueltan. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Rematar de cabeza al primer palo — Anticiparte al central en el salto
+   ➤ Abrir el balón para el lateral que sube por banda — Ceder el protagonismo, buscar el centro después
+   · Recortar hacia dentro buscando el ángulo de disparo — Todo o nada, sin pasar el balón
+   ⮑ ÉXITO: El balón llega perfecto a la carrera del lateral, que centra para el segundo palo.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 66 · forma 94 · ánimo 99 · entrenador 66 · vestuario 85 · afición 83 · fama 42 · dinero 69.480€
 
-### [sem 18 · Febrero 2028] (partido) Eliminados en casa: Betis 1-2 AS Roma
-Ante AS Roma en Europa League, jugaste 82 minutos. Nota: 6.8/10. Goles: 1. Asistencias: 0. Marcador: 1-2 (Real Betis-AS Roma). En el minuto 10 te quedaste con el balón en la esquina del área, el portero un paso adelantado, y te la jugaste con un sombrero que se coló por toda la escuadra: el Villamarín rugió. La Roma remontó en la segunda parte y el Betis queda eliminado. Paco Pastor, serio en la rueda de prensa: "Un gol de mérito no basta si regalamos dos atrás."
-   👤 QUIÉN ES — Marcos Bassa · Preparador físico: 41 años, preparador físico. Cronómetro al cuello y una sonrisa que da miedo cuando dice "último esfuerzo".
-   · Hablar con la prensa — Asumir el golpe con cara seria
-   · Ir al vestuario de la Roma — Cambiar la camiseta con un rival llamado Tomás Almenara
-   ➤ Encerrarte con el preparador físico Marcos Bassa — Descargar la rabia en el gimnasio
-   · Llamar a tu madre Fátima Roig — Buscar consuelo en casa
-   ⮑ Marcos Bassa, el preparador físico del club, te espera con el cronómetro y esa sonrisa que da miedo: "Último esfuerzo, Hassan, que la rabia hay que sudarla." Sales reventado pero más ligero.
-   Δ forma +5, ánimo +3, media +2
-   📊 Real Betis · rol titular · media 65 · forma 91 · ánimo 100 · entrenador 69 · vestuario 97 · afición 70 · fama 35 · dinero 87.160€
+### [sem 18 · Febrero 2028] (partido) Noche europea en el Villamarín: Betis 3-1 a la Roma
+Ante AS Roma en Europa League, jugaste 79 minutos. Nota: 7.8/10. Goles: 1. Asistencias: 1. Marcador: 3-1 (Real Betis-AS Roma).
 
-### [sem 19 · Abril 2028] (partido) Jornada 34: Real Betis - Rayo Vallecano
-Ante Rayo Vallecano en La Liga, jugaste 82 minutos. Nota: 7.2/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Rayo Vallecano). Remataste de primeras un centro de Javier Aguirre tras un córnel mal despejado, y el Benito Villamarín se vino abajo. Paco Pastor te sacó al borde del 90' entre aplausos.
-   ➤ Dedicar el gol a la grada — +Afición
-   · Ir directo al vestuario, sin show — +Vestuario, discreto con la prensa
-   · Buscar a Javier Aguirre y señalar el pase — +Capitán
-   · Llamar a Ismael Hassan nada más pitar el final — Momento familiar
-   ⮑ (sin reacción)
-   Δ ánimo +3, fama +4, media +3, afición +7
-   📊 Real Betis · rol titular · media 68 · forma 93 · ánimo 100 · entrenador 69 · vestuario 97 · afición 77 · fama 39 · dinero 92.160€
+Un córner cerrado te cae en la cabeza, rodeado de tres defensas que no te sueltan: en vez de forzar el remate, la dejas atrás para Javier Aguirre, que la cuelga dentro. Tu gol llega después, un zurdazo cruzado que hace enloquecer al fondo sur. Paco Pastor te saca entre aplausos y el Villamarín canta tu nombre.
+   · Dedícaselo a la grada — +Afición
+   · Buscar a Javier Aguirre en el túnel — +Vestuario
+   ➤ Hablar con la prensa sin venirte arriba — Perfil bajo
+   · Llamar a Fátima Roig nada más pisar el vestuario — Familia primero
+   ⮑ Dices que "el mérito es de todos, yo solo rematé". Un periodista insiste en el golazo pero tú no muerdes el anzuelo, y Paco Pastor te lo agradece con un gesto desde la grada de prensa.
+   Δ ánimo +1, fama +2, media +2, entrenador +5
+   📊 Real Betis · rol titular · media 68 · forma 94 · ánimo 100 · entrenador 71 · vestuario 85 · afición 83 · fama 44 · dinero 69.480€
 
-### [sem 20 · Mayo 2028] (especial) Alguien te está mirando
-Llevas semanas viendo al mismo señor en la misma esquina de la grada: abrigo largo, libreta y cero reacciones, ni siquiera cuando marcáis. Iñaki Zubiaurre te lo confirma por teléfono: es ojeador del AS Roma, que ha pedido cuatro de tus partidos. "Todavía no hay nada. Pero conviene que lo sepas."
-   ➤ Rendir como si no supieras nada — Que hablen los números
-   · Contárselo a Paco Pastor antes de que se entere por otro — Lealtad, aunque cueste
-   · Dejar caer un par de gestos para el ojeador — Que te vea en tu mejor versión
-   ⮑ Juegas el siguiente partido sin mirar hacia la esquina ni una sola vez. Nadie sabe lo que te cuesta.
-   Δ forma +2, ánimo +2
-   📊 Real Betis · rol titular · media 68 · forma 97 · ánimo 100 · entrenador 69 · vestuario 97 · afición 77 · fama 39 · dinero 98.430€
+### [sem 19 · Abril 2028] (partido) Betis 2-2 Rayo: punto agridulce en el Villamarín
+Ante Rayo Vallecano en La Liga, jugaste 82 minutos. Nota: 6.8/10. Goles: 1. Asistencias: 0. Marcador: 2-2 (Real Betis-Rayo Vallecano). Empatas con un remate de cabeza en el 61', pero el Rayo iguala a falta de seis minutos y el Villamarín se queda con la miel en los labios. Paco Pastor sale al césped y te da una palmada seca en la nuca: "Ese gol vale, pero el segundo nos lo han comido a la contra."
+   👤 QUIÉN ES — Susana Nieto · Fisioterapeuta: 38 años, con manos de hierro y paciencia infinita. Tiene una libreta con la historia clínica de cada jugador desde hace diez años.
+   👤 QUIÉN ES — Iker Roig · Compañero de equipo: 31 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
+   · Asumirlo en la zona mixta — Autocrítica pública
+   ➤ Celebrarlo con la grada del fondo — +Afición, cero autocrítica
+   · Reprochar la marca a un compañero llamado Iker Roig — Jugada de riesgo
+   · Quedarte con el fisio Susana Nieto tras el pitido — Cuidar el cuerpo
+   ⮑ Te acercas a la grada y señalas el escudo; un grupo de abuelos con bufanda bética te corean el nombre durante un buen rato.
+   Δ ánimo +3, fama +5, media +1, afición +6
+   📊 Real Betis · rol titular · media 69 · forma 96 · ánimo 100 · entrenador 71 · vestuario 85 · afición 89 · fama 49 · dinero 75.750€
 
-### [sem 20 · Mayo 2028] (vida) La hermana de tu compañero
-Te escribe Isabel Molina Nieto, hermana de tu compañero Mateo Gallego, con ganas de vengarse de él.
-   ➤ Invitar a todo el equipo a cenar — Que se le corte el hilo
-   · Devolvérsela con humor — Tu hermano tiene más morro que espalda
-   · Confesarlo todo — Ahora no hay marcha atrás
-   ⮑ La respuesta llega enseguida: «JAJAJA le voy a enseñar este chat. Eres un crack»
-   Δ ánimo +3, dinero −1500, vestuario +6
-   📊 Real Betis · rol titular · media 68 · forma 97 · ánimo 100 · entrenador 69 · vestuario 100 · afición 77 · fama 39 · dinero 96.930€
+### [sem 19 · Abril 2028] (vida) La invitación de Rubén
+Terminas el entreno y en la puerta de El Rosal te espera un chaval con la camiseta del Betis firmada en el pecho. Es Rubén Castaño, el canterano al que fuiste a ver jugar aquella tarde: te tiende un sobre arrugado. "Es la invitación de mi puesta de largo en el filial, el sábado. Mi madre dice que si no vienes no hace la foto de familia."
+   ➤ Ir al acto del sábado — +Afición, +Ánimo, resta tiempo de descanso
+   · Mandarle una camiseta firmada con una nota — Gesto cómodo, menos calor humano
+   · Decirle que ese día tienes planes y no puede ser — Prioridad a tu descanso, él se lo toma mal
+   ⮑ Rubén te presenta a todo el filial como "el que me hizo creer que valía". Su madre llora otra vez, pero esta vez de la buena manera, y te hace prometer que repetirás si sube al primer equipo.
+   Δ forma −1, ánimo +3, fama +4, afición +4
+   📊 Real Betis · rol titular · media 69 · forma 95 · ánimo 100 · entrenador 71 · vestuario 85 · afición 93 · fama 53 · dinero 75.750€
 
-### [sem 20 · Mayo 2028] (partido) El momento decisivo
-Partido importante en marcha, ante Las Palmas. Te llega un centro raso al segundo palo, sin marca encima. No hay tiempo para pensar demasiado — tienes que decidir ya.
+### [sem 19 · Abril 2028] (partido) Noche europea
+Europa League - Cuartos de final, ante Feyenoord. El portero rival sale mal y te queda la portería medio vacía desde fuera del área. No hay tiempo para pensar demasiado — tienes que decidir ya.
    ➤ Disparo raso al primer palo — Rápido y directo
    · Hacer una pared con el compañero — Juego combinado
    · Intentar un sombrero al defensa — Para la galería
-   ⮑ FALLO: El portero cierra el primer palo con el pie y evita el gol.
+   ⮑ ÉXITO: Raso, seco y pegado al palo: el portero no llega. ¡Gol!
    Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 68 · forma 97 · ánimo 100 · entrenador 69 · vestuario 100 · afición 77 · fama 39 · dinero 96.930€
+   📊 Real Betis · rol titular · media 69 · forma 95 · ánimo 100 · entrenador 71 · vestuario 85 · afición 93 · fama 53 · dinero 75.750€
 
-### [sem 20 · Mayo 2028] (partido) Betis - Las Palmas: ocasión fallada y empate con sabor agridulce
-Ante Las Palmas en La Liga, jugaste 83 minutos. Nota: 6.2/10. Goles: 0. Asistencias: 0. Marcador: 1-1 (Real Betis-Las Palmas). En el 49' te llega un centro raso al segundo palo, sin marca encima, y el disparo se te va rozando el poste. Paco Pastor aprieta la mandíbula desde la banda; la grada del Villamarín suelta un "¡ufff!" colectivo que se te queda clavado.
-   · Asumirlo ante los medios — +Prensa, -Moral leve
-   ➤ Reírte de ello con Javier Aguirre — +Vestuario
-   · Llamar a tu padre Ismael al salir del estadio — +Familia, introspectivo
-   · Quedarte entrenando el remate a puerta — Autocrítica, +Forma
-   ⮑ Javier Aguirre te da una palmada en la nuca en la ducha: "Esa te la voy a recordar hasta que te retires, chaval." Todo el vestuario se parte de risa.
-   Δ ánimo +4, media +1, vestuario +6
-   📊 Real Betis · rol titular · media 69 · forma 97 · ánimo 100 · entrenador 69 · vestuario 100 · afición 77 · fama 39 · dinero 96.930€
+### [sem 19 · Abril 2028] (partido) Eliminados en casa: 1-3 ante el Feyenoord
+Ante Feyenoord en Europa League, jugaste 85 minutos. Nota: 6.5/10. Goles: 1. Asistencias: 0. Marcador: 1-3 (Real Betis-Feyenoord). En el minuto 4, el portero rival sale mal y te deja la portería medio vacía desde fuera del área: la mandas dentro y el Villamarín estalla. Pero el Feyenoord remonta con dos goles en la segunda parte y un tercero en el 88', y Paco Pastor sale del campo con la mandíbula apretada, sin mirar al palco. Eliminados.
+   · Dar la cara en zona mixta — Prensa, sin esconderte
+   ➤ Consolar a Fernando Ferreiro — +Vestuario
+   · Encerrarte y repasar el partido tú solo — Autocrítica
+   · Llamar a tu padre Ismael Hassan al salir del vestuario — Familia
+   ⮑ Ferreiro entró en el 70' y no tocó bola en condiciones; le dices que la próxima entra él desde el inicio y te mira sorprendido, como si no se lo esperara de ti.
+   Δ ánimo +2, media +1, vestuario +6
+   📊 Real Betis · rol titular · media 70 · forma 95 · ánimo 100 · entrenador 71 · vestuario 91 · afición 93 · fama 53 · dinero 75.750€
 
-### [sem 21 · Julio 2028] (entrenamiento) Renovación sobre la mesa
-La temporada se cerró con 4 partidos y ese gol que aún recuerdas con una sonrisa: poco en el papel, pero suficiente para que el Betis cuente contigo. España se quedó a las puertas en la Eurocopa, eliminada por Bélgica en semifinales, y tú la viviste desde el sofá de tu casa, convencido de que el año que viene quieres estar ahí dentro. Antes de que empiece la pretemporada oficial, Ramón Esquivel, tu representante Iñaki Zubiaurre, te llama: el Betis quiere renovarte y mejorar tu ficha, pero el club pone un plazo de una semana para cerrarlo antes de que arranquen los entrenamientos. "Dani, esto es un espaldarazo. Pero negociemos bien, que esta firma marca tu valor de mercado para los próximos años", te dice por teléfono.
-   ➤ Firmar rápido y sin dramas — +Tranquilidad, -margen económico
-   · Apretar la negociación — +Dinero, tensión con el club
-   ⮑ Ramón Esquivel suspira al teléfono: "Vale, lo cerramos así, pero te dejas dinero en la mesa, Dani." El club comunica la renovación esa misma tarde y la afición lo celebra en redes.
-   Δ ánimo +4, dinero +3000, representante −2
-   📊 Real Betis · rol titular · media 69 · forma 99 · ánimo 100 · entrenador 69 · vestuario 100 · afición 77 · fama 39 · dinero 106.660€
+### [sem 20 · Mayo 2028] (partido) El momento decisivo
+Partido importante en marcha, ante Las Palmas. Un centro desde la derecha te llega a la altura del punto de penalti, con un central saltando contigo. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Cabecear picado hacia el suelo — Que bote antes del portero
+   · Prolongar de cabeza para el compañero — Servir en lugar de rematar
+   ➤ Atacar el balón con todo el cuerpo — Sin miedo al choque
+   ⮑ ÉXITO: Te lanzas con todo, golpeas el balón con la frente y la mandas dentro. ¡Qué valor!
+   Δ fama +2
+   📊 Real Betis · rol titular · media 70 · forma 97 · ánimo 99 · entrenador 71 · vestuario 91 · afición 93 · fama 55 · dinero 82.950€
 
-### [sem 21 · Julio 2028] (vida) Día de piña en la playa
-El cuerpo técnico organiza una tarde libre en la playa como premio tras una semana dura: fútbol descalzo en la arena, bañador y cero tácticas por unas horas.
-   👤 QUIÉN ES — Asier Quiroga · Compañero de equipo: 23 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
-   ➤ Organizar un partidillo en la arena — Contigo y Asier Quiroga de capitanes
-   · Desconectar del todo — Sin balón ni pantallas
-   · Aprovechar para hablar con el míster Paco Pastor — Fuera del contexto formal
-   ⮑ Dividís la playa en dos campos y el partido acaba con diez goles absurdos, un bañador roto y un balón en el mar.
-   Δ ánimo +4, vestuario +5
-   📊 Real Betis · rol titular · media 69 · forma 99 · ánimo 100 · entrenador 69 · vestuario 100 · afición 77 · fama 39 · dinero 106.660€
+### [sem 20 · Mayo 2028] (partido) Betis - Las Palmas: gol en el Benito Villamarín
+Ante Las Palmas en La Liga, jugaste 90 minutos. Nota: 7.8/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Las Palmas).
+
+En el minuto 19, un centro desde la derecha te llega a la altura del punto de penalti, con un central saltando contigo: cabeceas de primeras y la clavas abajo. El Villamarín ruge, Paco Pastor celebra puño en alto desde la banda, y aguantas el 2-1 hasta el final entre nervios en la grada.
+   👤 QUIÉN ES — Marcos Bassa · Preparador físico: 41 años, preparador físico. Cronómetro al cuello y una sonrisa que da miedo cuando dice "último esfuerzo".
+   · Dedica el gol a tu familia en redes — +Fama, +Moral familiar
+   ➤ Vas directo a abrazar a Javier Aguirre — +Vestuario
+   · Hablas con la prensa sin dar titulares — Perfil bajo, +Serenidad
+   · Buscas a Marcos Bassa para revisar la carga del partido — Físico ante todo
+   ⮑ El capitán te revuelve el pelo delante de todos: "Este crío nos va a sacar de más de un lío este año."
+   Δ ánimo +3, media +2, vestuario +6
+   📊 Real Betis · rol titular · media 72 · forma 97 · ánimo 100 · entrenador 71 · vestuario 97 · afición 93 · fama 55 · dinero 82.950€
+
+### [sem 21 · Julio 2028] (especial) Alguien te está mirando
+Llevas semanas viendo al mismo señor en la misma esquina de la grada: abrigo largo, libreta y cero reacciones, ni siquiera cuando marcáis. Iñaki Zubiaurre te lo confirma por teléfono: es ojeador del Borussia Dortmund, que ha pedido cuatro de tus partidos. "Todavía no hay nada. Pero conviene que lo sepas."
+   · Rendir como si no supieras nada — Que hablen los números
+   ➤ Contárselo a Paco Pastor antes de que se entere por otro — Lealtad, aunque cueste
+   · Dejar caer un par de gestos para el ojeador — Que te vea en tu mejor versión
+   ⮑ Paco Pastor te escucha sin interrumpirte, asiente despacio y, al terminar, solo dice: "Gracias por decírmelo tú." Es más de lo que esperabas.
+   Δ ánimo +1, entrenador +3, vestuario −1
+   📊 Real Betis · rol titular · media 72 · forma 99 · ánimo 100 · entrenador 74 · vestuario 96 · afición 93 · fama 55 · dinero 91.140€
+
+### [sem 21 · Julio 2028] (vida) Clases de inglés obligatorias
+El club ficha a un profesor de inglés para toda la plantilla, de cara a la gira internacional. Jon Bassa confunde "boots" con "boats" delante de todo el grupo y el profesor no sabe si reírse.
+   👤 QUIÉN ES — Jon Bassa · Compañero de equipo: 21 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
+   ➤ Tomártelo en serio — Te puede servir en el futuro
+   · Reíros juntos del desastre — Ambiente relajado
+   · Saltarte la clase — Ya te las apañarás con gestos
+   ⮑ Haces los deberes y tomas apuntes. El profesor te pone de ejemplo y tú, de reojo, ves cómo el resto te mira con una mezcla de envidia y respeto.
+   Δ media +2, reputación +1
+   📊 Real Betis · rol titular · media 74 · forma 99 · ánimo 100 · entrenador 74 · vestuario 96 · afición 93 · fama 55 · dinero 91.140€
+
+### [sem 21 · Julio 2028] (vida) Gira de pretemporada
+El Real Betis viaja de gira a Australia: vuelos largos, estadios enormes y mucho calor. Paco Pastor avisa de que allí también se gana el puesto.
+   👤 QUIÉN ES — Nico Uranga · Compañero de equipo: 32 años. Compañero de equipo, callado en el vestuario y terrible con el balón en los pies. Sus bromas llegan siempre con retraso.
+   · Centrarte en cada entreno — Que el míster Paco Pastor te vea
+   · Aprovechar para dejarte ver — Fotos, fans y camisetas
+   ➤ Salir de noche con los compañeros — Con Nico Uranga y compañía
+   ⮑ FALLO: Paco Pastor os pilla llegando de madrugada. Multa, bronca y titulares.
+   Δ ánimo −3, dinero −800, entrenador −4
+   📊 Real Betis · rol titular · media 74 · forma 99 · ánimo 97 · entrenador 70 · vestuario 96 · afición 93 · fama 55 · dinero 90.340€
 
 ### [sem 21 · Julio 2028] (vida) Evento con el patrocinador principal
 El club te lleva a un evento con el patrocinador de la camiseta: cóctel, ejecutivos de traje y un directivo llamado Pablo Quintana que insiste en enseñarte fotos de su hijo, que "también juega muy bien".
@@ -322,705 +335,748 @@ El club te lleva a un evento con el patrocinador de la camiseta: cóctel, ejecut
    ➤ Invitar al hijo del directivo a un entreno — Un gesto que se agradece
    ⮑ El chaval se pasa la tarde con una sonrisa radiante, firmando balones con tu equipo. Su padre te lo agradecerá durante meses.
    Δ ánimo +2, fama +1, reputación +3
-   📊 Real Betis · rol titular · media 69 · forma 99 · ánimo 100 · entrenador 69 · vestuario 100 · afición 77 · fama 40 · dinero 106.660€
+   📊 Real Betis · rol titular · media 74 · forma 99 · ánimo 99 · entrenador 70 · vestuario 96 · afición 93 · fama 56 · dinero 90.340€
 
-### [sem 21 · Julio 2028] (entrenamiento) Temporada cerrada, cuenta nueva
-La temporada pasada se queda en 4 partidos y 1 gol: poco más que un asomo, pero suficiente para que el Betis ya no te vea como un chaval de cantera. La Eurocopa la has visto desde el sofá de casa, con tus padres, viendo cómo una Alemania reinventada se proclamaba campeona sin que tu nombre sonara en ninguna quiniela. Vuelves a la Ciudad Deportiva diez días antes que el grueso del grupo porque Javier Aguirre te avisó: "El primer amistoso lo juegas tú de titular, demuéstrale al nuevo año quién eres." Lo haces: dos goles y una asistencia en Sanlúcar, y el entrenador Paco Pastor te busca en el túnel de vestuarios. "Esta temporada cuentas para mí desde el minuto uno, Dani. No me falles."
-   ➤ Responder con gesto serio — +Entrenador, presión
-   · Quitarle hierro con una broma — +Vestuario, relaja el ambiente
-   ⮑ Asientes y le sostienes la mirada: "Cuente conmigo, míster." Aguirre sonríe por primera vez en todo el verano y apunta algo en su libreta delante de ti.
-   Δ forma +2, entrenador +6
-   📊 Real Betis · rol titular · media 69 · forma 100 · ánimo 100 · entrenador 75 · vestuario 100 · afición 77 · fama 40 · dinero 106.660€
-
-### [sem 22 · Agosto 2028] (representante) Un cargo que no recuerdas haber pedido
-En tu extracto aparece un cargo de 7700 € de Iñaki Zubiaurre por "gestiones de mercado". No recuerdas haberle encargado nada. Cuando se lo preguntas, habla de "esfuerzos que no se ven".
-   · Exigir factura y desglose — Quien no debe, no teme
-   ➤ Despedirle y fichar a Ramón Rovira — Aquí se acaba la confianza
-   · Dejarlo pasar por esta vez — Elegir tus batallas
-   ⮑ (sin reacción)
-   Δ ánimo +2, dinero −7700, representante +10
-   📊 Real Betis · rol titular · media 69 · forma 100 · ánimo 100 · entrenador 75 · vestuario 100 · afición 77 · fama 40 · dinero 105.690€
-
-### [sem 22 · Agosto 2028] (representante) Tu decisión: ¿te quedas o mueves ficha?
-Con el mercado abierto, te toca decidir qué quieres de verdad. Iñaki Zubiaurre lo deja claro: "Si quieres moverte, es ahora. Esto lo decides tú."
-   · Pedir salir del club y apostar por la Roma — Un paso adelante, con riesgo de portazo
-   · Buscar un club donde juegues de verdad: el Girona FC — Menos brillo, más minutos
-   ➤ Pedir renovación con mejoras y quedarte — Apostar por este proyecto
-   · Quedarte y competir sin más — Cabeza fría
-   ⮑ ÉXITO: El club te renueva y te sube la ficha. Ganas peso en el vestuario y la afición te lo agradece.
-   Δ ánimo +4, dinero +26500, entrenador +3, afición +5
-   📊 Real Betis · rol titular · media 69 · forma 100 · ánimo 100 · entrenador 78 · vestuario 100 · afición 82 · fama 40 · dinero 132.190€
-
-### [sem 22 · Agosto 2028] (vida) Nuevo patrocinador de botas
-Una marca de calzado se acerca a ti tras la buena pretemporada. Iñaki Zubiaurre negocia: "Es poco, pero abre puertas".
-   · Firmar el contrato — Botas nuevas y un dinerillo
-   · Esperar una oferta mejor — No regalarte
-   ➤ Rechazar — Ahora mismo, no
-   ⮑ Rechazas con educación. La marca se despide cordial, y tu agente anota que 'esa puerta queda entreabierta'.
-   Δ reputación +1
-   📊 Real Betis · rol titular · media 69 · forma 100 · ánimo 100 · entrenador 78 · vestuario 100 · afición 82 · fama 40 · dinero 132.190€
-
-### [sem 22 · Agosto 2028] (vida) Llega una estrella
-El Real Betis presenta a Emilio Vidal, un fichaje bomba para la temporada. Estadio lleno, camisetas por todos lados y el vestuario en modo expectación.
-   👤 QUIÉN ES — Emilio Vidal · Compañero de equipo: 26 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
-   · Ir a saludarle el primero — Buen rollo y cercanía
-   · Aprender todo lo que puedas — Mirar a Emilio Vidal entrenar
-   ➤ Sentirte en peligro — Tu puesto se complica
-   ⮑ Se te encoge el estómago en cada pase suyo. Esa noche entrenas con rabia, aunque notas que también eso es energía.
-   Δ forma +2, ánimo −3
-   📊 Real Betis · rol titular · media 69 · forma 100 · ánimo 97 · entrenador 78 · vestuario 100 · afición 82 · fama 40 · dinero 132.190€
-
-### [sem 22 · Agosto 2028] (vida) El nuevo gurú de la preparación física
-El club contrata a un preparador físico "revolucionario" que os hace entrenar descalzos sobre arroz, meditar antes de cada rondo y respirar "como los lobos". Nadie entiende del todo el método, pero el club insiste en darle una oportunidad.
-   ➤ Entregarte al método sin cuestionarlo — Confianza ciega
-   · Seguirlo con escepticismo — Sin creerte del todo el rollo
-   · Pedir en privado volver al método de siempre — Esto no es para ti
-   ⮑ FALLO: Te haces daño en un pie caminando sobre el arroz y el vestuario entero se muere de la risa.
-   Δ forma −3, ánimo −1, vestuario +2
-   📊 Real Betis · rol titular · media 69 · forma 97 · ánimo 96 · entrenador 78 · vestuario 100 · afición 82 · fama 40 · dinero 132.190€
-
-### [sem 22 · Agosto 2028] (vida) Tu hermano también quiere intentarlo
-Arturo Hassan te para en la cocina, nervioso, como si llevara días ensayando la frase: "Yo también quiero ser futbolista. Y quiero que me ayudes." Te mira esperando algo más que una respuesta educada.
-   · Prometerle todo tu apoyo — Estar ahí de verdad
-   ➤ Avisarle de lo dura que es esta vida — Realismo antes que ilusión
-   · Reaccionar con cierta frialdad — Ya tienes bastante con lo tuyo
-   ⮑ (sin reacción)
-   Δ ánimo +1
-   📊 Real Betis · rol titular · media 69 · forma 97 · ánimo 97 · entrenador 78 · vestuario 100 · afición 82 · fama 40 · dinero 132.190€
-
-### [sem 23 · Septiembre 2028] (partido) Solo ante el portero
-Recibes el pase filtrado y quedas mano a mano con el portero. El estadio contiene la respiración.
-   · Rematar fuerte al primer palo — Todo o nada
-   ➤ Amagar y definir cruzado — Más elegante, más riesgo de resbalar
-   · Pasarla al compañero mejor posicionado — Menos gloria, más seguro
-   ⮑ ÉXITO: El amague deja al portero tirado. Definición cruzada, gol de categoría.
-   Δ ánimo +7, fama +10, media +5, afición +8
-   📊 Real Betis · rol titular · media 74 · forma 99 · ánimo 100 · entrenador 78 · vestuario 100 · afición 90 · fama 50 · dinero 138.920€
-
-### [sem 24 · Octubre 2028] (representante) El club se huele algo
-Carlos Segarra te cita sin dar explicaciones. Sabe que el AS Roma te sigue y quiere saber hacia dónde miras: "No te voy a preguntar nada. Solo quiero que sepas que aquí cuentas con nosotros." Al salir, Iñaki Zubiaurre te espera con el móvil en la mano: el AS Roma ha vuelto a preguntar.
-   👤 QUIÉN ES — Carlos Segarra · Director deportivo: 60 años, el de los fichajes imposibles. Dicen que ha firmado a medio equipo en un restaurante.
-   ➤ Pedir una mejora de contrato para quedarte — Usar el interés para ganar peso
-   · Decirle la verdad: si llega una oferta grande, querrás escucharla — Honestidad sin rodeos
-   · Callar y dejar que Iñaki Zubiaurre lo gestione — Cero ruido
-   ⮑ FALLO: El club se enfría y te dice que 'ahora no es el momento'. Entiendes que tu carta no pesaba tanto como creías.
-   Δ ánimo −4, entrenador −2
-   📊 Real Betis · rol titular · media 74 · forma 100 · ánimo 95 · entrenador 76 · vestuario 100 · afición 90 · fama 50 · dinero 148.170€
-
-### [sem 24 · Octubre 2028] (partido) Girona FC 2 - 2 (fuera, pero de los tuyos)
-Ante Girona FC en La Liga, jugaste 82 minutos. Nota: 7.2/10. Goles: 1. Asistencias: 0. Marcador: 2-2 (Real Betis-Girona FC). Empatas en el 71' con un remate de cabeza que celebras con un grito que se oye hasta en el banquillo; Paco Pastor te aplaude desde la línea. El Girona empató después, pero la grada visitante corea tu nombre al pitido final como si hubierais ganado.
-   ➤ Dedica el gol a tu hermano — +Familia, +Afición
-   · Vas directo al vestuario, serio — Autocrítica, -Fama
-   · Declaraciones comedidas a la prensa — Perfil bajo, +Entrenador
-   · Lo celebras a tope en redes — +Fama, riesgo vestuario
-   ⮑ Arturo Hassan te manda quince audios seguidos gritando que lo ha visto por la tele con todo el barrio. Tu madre, Fátima Roig, te llama llorando de risa.
-   Δ ánimo +5, fama +4, media +3
-   📊 Real Betis · rol titular · media 77 · forma 100 · ánimo 100 · entrenador 76 · vestuario 100 · afición 90 · fama 54 · dinero 148.170€
-
-### [sem 24 · Octubre 2028] (vida) Un fan club se organiza sin tu permiso
-Un grupo de aficionados crea una cuenta "oficial" en tu nombre con miles de seguidores, sin haberte preguntado nunca. Empiezan a vender merchandising con tu cara.
-   ➤ Contactarles y darles tu bendición — +Afición, gesto generoso
-   · Pedir que lo cierren por temas legales — Jugada fría
-   · Ignorarlo, no le das importancia
-   ⮑ Los fans se quedan sin palabras cuando les escribes en persona. Te mandan una caja con pancartas y una carta de agradecimiento escrita a mano.
-   Δ ánimo +3, afición +8
-   📊 Real Betis · rol titular · media 77 · forma 100 · ánimo 100 · entrenador 76 · vestuario 100 · afición 98 · fama 54 · dinero 148.170€
-
-### [sem 24 · Octubre 2028] (partido) Noche europea
-Europa League - Fase de grupos, ante Fenerbahçe. Un córner cerrado te cae en la cabeza, rodeado de tres defensas que no te sueltan. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Cabecear picado hacia el suelo — Que bote antes del portero
-   · Prolongar de cabeza para el compañero — Servir en lugar de rematar
-   ➤ Atacar el balón con todo el cuerpo — Sin miedo al choque
-   ⮑ ÉXITO: Te lanzas con todo, golpeas el balón con la frente y la mandas dentro. ¡Qué valor!
-   Δ fama +2
-   📊 Real Betis · rol titular · media 77 · forma 100 · ánimo 100 · entrenador 76 · vestuario 100 · afición 98 · fama 56 · dinero 148.170€
-
-### [sem 24 · Octubre 2028] (partido) Gol en el Villamarín ante el Fenerbahçe
-Ante Fenerbahçe en Europa League, jugaste 85 minutos. Nota: 7.8/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Fenerbahçe). Minuto 2: un córner cerrado te cae en la cabeza, rodeado de tres defensas que no te sueltan, y la clavas dentro. El Villamarín se vuelve loco y Paco Pastor, desde la banda, se lleva las dos manos a la cabeza entre risas.
-   · Celebra con la grada — +Afición
-   ➤ Dedícaselo a tu familia — Momento íntimo
-   · Vuelve corriendo a tu sitio sin más — Perfil bajo
-   · Búscale la mirada a Fernando Ferreiro — Mensaje interno
-   ⮑ Señalas al palco donde están Fátima Roig e Ismael Hassan; tu madre llora sin disimulo y tu padre levanta el puño como si hubiera metido el gol él mismo.
-   Δ ánimo +6, fama +2, media +3
-   📊 Real Betis · rol titular · media 80 · forma 100 · ánimo 100 · entrenador 76 · vestuario 100 · afición 98 · fama 58 · dinero 148.170€
-
-### [sem 25 · Noviembre 2028] (representante) Iñaki Zubiaurre te llama con un secreto
-"Hay dos clubes preguntando por ti para el mercado de enero. No te digo cuáles por teléfono, pero uno te va a sonar." Te deja con la miel en los labios y cuelga.
-   · Exigirle los nombres ahora mismo — O se hace el interesante o suelta prenda
-   ➤ Decirle que estás a gusto donde estás — Lealtad, por ahora
-   · Pedirle que lo filtre a la prensa para subir tu caché — Jugada de riesgo
-   ⮑ Tu respuesta llega a oídos del club antes de que acabe el día. En el siguiente entrenamiento, el míster te choca la mano con más fuerza de la habitual.
-   Δ entrenador +3, afición +2, representante −2
-   📊 Real Betis · rol titular · media 80 · forma 100 · ánimo 97 · entrenador 79 · vestuario 100 · afición 100 · fama 58 · dinero 160.970€
-
-### [sem 25 · Noviembre 2028] (representante) Tu decisión: ¿te quedas o mueves ficha?
-Sientes que el club se te está quedando pequeño. Iñaki Zubiaurre lo deja claro: "Si quieres moverte, es ahora. Esto lo decides tú."
-   · Pedir salir del club y apostar por la Juventus — Un paso adelante, con riesgo de portazo
-   · Buscar un club donde juegues de verdad: el Villarreal CF — Menos brillo, más minutos
-   ➤ Pedir renovación con mejoras y quedarte — Apostar por este proyecto
-   · Quedarte y competir sin más — Cabeza fría
-   ⮑ ÉXITO: El club te renueva y te sube la ficha. Ganas peso en el vestuario y la afición te lo agradece.
-   Δ ánimo +4, dinero +29500, entrenador +3, afición +5
-   📊 Real Betis · rol titular · media 80 · forma 100 · ánimo 100 · entrenador 82 · vestuario 100 · afición 100 · fama 58 · dinero 190.470€
-
-### [sem 25 · Noviembre 2028] (vida) El compañero que se marchó a probar suerte
-Te llega la noticia por un grupo de wasap de la cantera: Pol Mendoza, con quien creciste dando patadas al mismo balón en el mismo campo de tierra, acaba de firmar su primer contrato profesional. Nadie de aquel grupo pensó que sería él el primero.
-   ➤ Alegrarte de verdad por él — Sin sombra de envidia
-   · Sentir una punzada de envidia — Humano, aunque no te guste
-   · Usarlo como motivación pura — Que sea la última vez que va por delante
-   ⮑ (sin reacción)
-   Δ ánimo +2
-   📊 Real Betis · rol titular · media 80 · forma 100 · ánimo 100 · entrenador 82 · vestuario 100 · afición 100 · fama 58 · dinero 190.470€
-
-### [sem 25 · Noviembre 2028] (partido) Eliminatoria de Copa, a partido único
-Copa del Rey - Dieciseisavos, a vida o muerte, ante CD Tenerife. Recibes de espaldas a la portería, con un defensa pegado a ti. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   ➤ Quedarte cerca esperando un posible rebote — Paciencia: estar en el sitio correcto
-   · Amagar el cuerpo hacia un lado y salir por el otro — Ganarte medio metro con un solo gesto
-   ⮑ ÉXITO: El rechace te cae perfecto y no perdonas desde cerca. ¡Gol!
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 80 · forma 100 · ánimo 100 · entrenador 82 · vestuario 100 · afición 100 · fama 58 · dinero 190.470€
-
-### [sem 25 · Noviembre 2028] (partido) Noche redonda en el Villamarín: pasa la eliminatoria
-Ante CD Tenerife en Copa del Rey, jugaste 84 minutos. Nota: 8.2/10. Goles: 1. Asistencias: 0. Marcador: 3-0 (Real Betis-CD Tenerife). En el 28' recibes de espaldas a la portería, con un defensa pegado a ti, giras y la clavas a la escuadra: el Villamarín se viene abajo. Paco Pastor te saca con una ovación en pie cuando te cambia en el 84'.
-   · Dedica el gol a la grada — +Afición
-   ➤ En zona mixta, pones en valor el trabajo colectivo — +Vestuario
-   · Llamas a tu padre Ismael Hassan nada más pisar el túnel de vestuarios — Momento personal
-   · Vas a buscar a Fernando Ferreiro para chocarla — Gesto con el rival por el puesto
-   ⮑ (sin reacción)
-   Δ media +3, entrenador +3, vestuario +7
-   📊 Real Betis · rol titular · media 83 · forma 100 · ánimo 100 · entrenador 85 · vestuario 100 · afición 100 · fama 58 · dinero 190.470€
-
-### [sem 26 · Diciembre 2028] (partido) Victoria agónica ante el Rayo
-Ante Rayo Vallecano en La Liga, jugaste 84 minutos. Nota: 8.3/10. Goles: 1. Asistencias: 1. Marcador: 2-1 (Real Betis-Rayo Vallecano). Empatabais a uno cuando recibiste de Javier Aguirre y definiste con la zurda al minuto 71; diez minutos después asististe a Fernando Ferreiro, que entró desde el banquillo y remató el partido. El Benito Villamarín se vació contigo al salir sustituido, coreando tu nombre.
-   · Sala de prensa — Reparte el mérito con Ferreiro
-   · Dedicar el gol a tu familia — Llamada a casa desde el túnel
-   ➤ Ir directo a abrazar a Ferreiro — Gesto con el rival por el puesto
-   · Quedarte serio, mirando ya al siguiente partido — Autocrítica ante el míster Paco Pastor
-   ⮑ Fernando Ferreiro te da dos palmadas en la nuca y suelta, medio en broma: "Como sigas así me jubilas, cabrón."
-   Δ ánimo +3, fama +1, media +2, vestuario +8
-   📊 Real Betis · rol titular · media 85 · forma 100 · ánimo 100 · entrenador 85 · vestuario 100 · afición 100 · fama 59 · dinero 205.260€
-
-### [sem 26 · Diciembre 2028] (vestuario) El inseparable vuelve a llamar
-Fernando Ferreiro te espera después del entreno, serio, con el móvil en la mano. "Mi hermano tiene un problema con una empresa de apuestas, usó mi nombre y el tuyo para promocionarse sin permiso. Dice que como somos uña y carne, nadie se va a quejar." Te enseña el anuncio: tu cara y la suya, abrazados en una foto vieja de cuando erais inseparables, vendiendo una app de apuestas deportivas.
-   · Cubrirle y dejarlo pasar — +Vestuario, riesgo de imagen
-   · Exigir que lo retiren ya, sin dramas — Protege tu imagen, pone a prueba la amistad
-   ➤ Llamar tú mismo al hermano de Ferreiro — Jugada personal, resultado incierto
-   ⮑ El hermano te suelta un rollo de disculpas nervioso y promete borrarlo "en cinco minutos". Ferreiro te observa toda la conversación sin decir nada, y al colgar solo murmura: "No hacía falta que te metieras tú."
-   Δ ánimo +3, fama +1, vestuario +3
-   📊 Real Betis · rol titular · media 85 · forma 100 · ánimo 100 · entrenador 85 · vestuario 100 · afición 100 · fama 60 · dinero 205.260€
-
-### [sem 26 · Diciembre 2028] (partido) Penalti a favor en el último minuto
-El árbitro señala el punto de penalti. El resultado del partido depende de este balón. ¿Lo tiras tú?
-   ➤ Pedirlo y tirarlo — Te la juegas
-   · Cedérsela al pateador habitual — No arriesgas tu momento
-   ⮑ ÉXITO: ¡GOL! Lo clavas en la escuadra. Eres el héroe de la noche.
-   Δ ánimo +8, fama +10, media +4, afición +12
-   📊 Real Betis · rol titular · media 89 · forma 100 · ánimo 100 · entrenador 85 · vestuario 100 · afición 100 · fama 70 · dinero 205.260€
-
-### [sem 27 · Enero 2029] (partido) Betis 3-1 Celta: Dani Hassan rompe el partido
-Ante Celta de Vigo en La Liga, jugaste 84 minutos. Nota: 8.3/10. Goles: 1. Asistencias: 1. Marcador: 3-1 (Real Betis-Celta de Vigo). Ganaste la espalda a dos centrales en el gol del 2-0 y casi te comes la cal del Balaídos al rematar; Paco Pastor te aplaude desde la banda antes de cambiarte. Javier Aguirre te revuelve el pelo en la celebración: "Esto es de niño de la calle, eh".
-   · Dedicar el gol a tu hermano — +Familia, gesto en redes
-   · Ir a saludar a la grada visitante — Riesgo con la afición local
-   ➤ Rueda de prensa: elogiar a Fernando Ferreiro — +Vestuario, gesto de clase
-   · Quedarte callado y pedir el balón de recuerdo — Gesto discreto, para ti
-   ⮑ Dices que la asistencia nace de un desmarque que ensayasteis con Ferreiro en un rondo cualquiera; él lo escucha desde el fondo de la sala y te suelta un "para la próxima el gol es mío" entre risas.
-   Δ forma +2, ánimo +3, fama +2, media +3, vestuario +7
-   📊 Real Betis · rol titular · media 92 · forma 100 · ánimo 100 · entrenador 85 · vestuario 100 · afición 100 · fama 72 · dinero 224.470€
-
-### [sem 27 · Enero 2029] (representante) Iñaki Zubiaurre te advierte
-"Hay un club que quiere ficharte, pero me llegó información: crisis financiera, vestuario tóxico, entrenador que sale en junio. La pasta es buena, pero el proyecto es un desastre. Mi consejo: pasa. ¿Confías en mí o quieres verlo tú?"
-   · Confiar en Iñaki Zubiaurre — Rechazar la oferta
-   ➤ Quiero escucharlos igual — Tomar mi propia decisión
-   ⮑ Sales de la cita con una propuesta nueva sobre la mesa. Tu representante te mira de reojo: 'Cuidado con a quién escuchas'.
-   Δ fama +1, representante −2
-   📊 Real Betis · rol titular · media 92 · forma 100 · ánimo 100 · entrenador 85 · vestuario 100 · afición 100 · fama 73 · dinero 224.470€
-
-### [sem 27 · Enero 2029] (partido) Expulsión injusta
-El árbitro te enseña la roja directa tras una entrada que ni siquiera tocó al rival. Te quedas mirando la tarjeta sin poder creerlo, con diez compañeros que ahora tienen que remar sin ti.
-   · Protestar la decisión con todo — Riesgo de sanción extra
-   ➤ Salir del campo en silencio, tragándotelo — +Relación entrenador
-   ⮑ Te vas sin decir una palabra, apretando los puños. Desde la banda, el entrenador asiente: sabe que no era fácil callarse.
-   Δ ánimo −5, media −1, entrenador +5
-   📊 Real Betis · rol titular · media 91 · forma 100 · ánimo 95 · entrenador 90 · vestuario 100 · afición 100 · fama 73 · dinero 224.470€
-
-### [sem 28 · Febrero 2029] (representante) La oferta del AS Roma
-Ya no es un rumor. Iñaki Zubiaurre entra con papeles y la voz temblando: el AS Roma ha puesto una oferta formal, con contrato, ficha y proyecto. "Esto es lo que llevabas esperando. Pero tienes que decidir ya."
-   · Fichar por el AS Roma — El salto que llevabas esperando
-   ➤ Usar la oferta para negociar quedarte — Jugar tus cartas
-   · Rechazarla: aquí hay una historia por terminar — La grada lo va a agradecer
-   ⮑ FALLO: El AS Roma se cansa de esperar y retira la oferta. Tu club, que ya sabe que querías irte, te trata con una frialdad educada.
-   Δ ánimo −6, entrenador −3, afición −2
-   📊 Real Betis · rol titular · media 91 · forma 100 · ánimo 86 · entrenador 87 · vestuario 100 · afición 98 · fama 73 · dinero 245.280€
-
-### [sem 28 · Febrero 2029] (entrenamiento) La previa tranquila
-Jueves por la tarde, el último entrenamiento antes del Elche. El ambiente es relajado: estáis en racha, el vestuario funciona y la afición te adora. Paco Pastor te llama aparte un momento, sin dramatismo, casi de pasada: "Sé que esto parece un trámite, pero son los partidos como este los que se te escapan por confiarte." Javier Aguirre, que pasa por detrás cargando un petate de balones, te guiña el ojo: "El míster Paco Pastor tiene razón, pero tú solo piensa en disfrutar." Tienes que decidir con qué cabeza entras en el partido.
-   · Prometerte salir a comerte el partido desde el primer minuto — Confianza total, sin medias tintas
-   · Centrarte en el plan táctico y no regalar nada — Cautela, partido de puntos sin heroicidades
-   ➤ Reunir a los más jóvenes del equipo para hablarles antes del partido — Liderazgo silencioso, dar ejemplo
-   ⮑ Un par de canteranos te escuchan con los ojos como platos; Javier Aguirre te choca la mano al pasar: 'Esto es lo que hace falta aquí'.
-   Δ ánimo +3, fama +1, vestuario +5
-   📊 Real Betis · rol titular · media 91 · forma 100 · ánimo 89 · entrenador 87 · vestuario 100 · afición 98 · fama 74 · dinero 245.280€
-
-### [sem 29 · Abril 2029] (partido) El momento decisivo
-Partido en marcha ante Elche CF. Un centro desde la derecha te llega a la altura del punto de penalti, con un central saltando contigo. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Cabecear picado hacia el suelo — Que bote antes del portero
-   ➤ Prolongar de cabeza para el compañero — Servir en lugar de rematar
-   · Atacar el balón con todo el cuerpo — Sin miedo al choque
-   ⮑ ÉXITO: Prolongas con inteligencia y tu compañero marca a placer.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 91 · forma 100 · ánimo 86 · entrenador 87 · vestuario 100 · afición 98 · fama 74 · dinero 266.090€
-
-### [sem 29 · Abril 2029] (partido) Betis 2-1 Elche: la asistencia que valió tres puntos
-Ante Elche CF en La Liga, jugaste 87 minutos. Nota: 7.8/10. Goles: 0. Asistencias: 1. Marcador: 2-1 (Real Betis-Elche CF).
-
-En el 41', un centro desde la derecha te llega a la altura del punto de penalti con un central saltando contigo; en vez de forzar el cabezazo, la bajas de un toque para que Javier Aguirre remate a placer. El Villamarín se vuelve loco y Paco Pastor te aplaude desde la banda antes de darte el pulgar arriba al cambiarte en el 87'.
-   ➤ Dedica el gesto a Aguirre en la rueda de prensa — +Vestuario, +Capitán
-   · Reivindica en redes que mereciste el gol — +Fama, riesgo vestuario
-   · Resta importancia ante los periodistas — Perfil bajo
-   · Llama a tu padre Ismael Hassan nada más pisar el vestuario — Vida personal
-   ⮑ Javier Aguirre te busca en el túnel de vestuarios y te suelta, con media sonrisa: "Para eso están los novatos con buena cabeza."
-   Δ ánimo +3, media +2, vestuario +6, afición +2
-   📊 Real Betis · rol titular · media 93 · forma 100 · ánimo 89 · entrenador 87 · vestuario 100 · afición 100 · fama 74 · dinero 266.090€
-
-### [sem 30 · Mayo 2029] (partido) El momento decisivo
-Partido importante en marcha, ante Getafe CF. Ganas la posición en el área pequeña tras un córner en el último minuto. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Rematar de cabeza al primer palo — Anticiparte al central en el salto
-   · Abrir el balón para el lateral que sube por banda — Ceder el protagonismo, buscar el centro después
-   ➤ Recortar hacia dentro buscando el ángulo de disparo — Todo o nada, sin pasar el balón
-   ⮑ FALLO: El recorte no sale limpio y pierdes el balón en el intento.
-   Δ forma −1
-   📊 Real Betis · rol titular · media 93 · forma 99 · ánimo 86 · entrenador 87 · vestuario 100 · afición 100 · fama 74 · dinero 288.560€
-
-### [sem 30 · Mayo 2029] (partido) Punto final en el descuento
-Ante Getafe CF en La Liga, jugaste 93 minutos. Nota: 5.8/10. Goles: 0. Asistencias: 0. Marcador: 1-2 (Real Betis-Getafe CF). En el 49' ganaste la posición en el área pequeña tras un córner, pero el portero del Getafe adivinó tu intención y se tiró a tiempo, sacando el balón casi en la línea; en el contragolpe siguiente, con el Betis volcado, el Getafe sentenció. Paco Pastor se queda mirando la pizarra táctica un buen rato antes de entrar al vestuario.
-   · Dar la cara — Hablas con la prensa tú solo
-   ➤ Vestuario cerrado — Solo entre compañeros
-   · Autocrítica en el campo de entrenamiento — Pides sesión extra con Marcos Bassa
-   · Llamar a casa — Necesitas oír a tu madre Fátima Roig
-   ⮑ Javier Aguirre te pone la mano en el hombro: "Esa jugada la vas a meter nueve de cada diez veces. Hoy tocó la décima."
-   Δ ánimo +3, media +1, vestuario +5
-   📊 Real Betis · rol titular · media 94 · forma 99 · ánimo 89 · entrenador 87 · vestuario 100 · afición 100 · fama 74 · dinero 288.560€
-
-### [sem 31 · Julio 2029] (vida) Un amistoso que se calienta más de la cuenta
-Lo que iba a ser un amistoso tranquilo se convierte en un partido de codazos y protestas contra un rival llamado Jon Roig histórico. El árbitro, de mutuo acuerdo entre clubes, pierde el control del choque.
-   ➤ Mantener la cabeza fría — No entrar al trapo
-   · Responder a las provocaciones — Que no se confundan
-   · Calmar a tus propios compañeros — Liderazgo silencioso
-   ⮑ Respiras hondo, ignoras los codazos y sigues jugando. Al acabar, el míster te dice al oído: 'Eso es madurez'.
-   Δ entrenador +2, reputación +2
-   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 86 · entrenador 89 · vestuario 100 · afición 100 · fama 74 · dinero 311.890€
-
-### [sem 31 · Julio 2029] (vida) Concentración en altura
-El Real Betis se concentra diez días en la montaña. Aire limpio, móviles sin cobertura y noches de cartas y bromas en la habitación.
-   👤 QUIÉN ES — Gabriel Toledo · Compañero de equipo: 21 años. Compañero de equipo, callado en el vestuario y terrible con el balón en los pies. Sus bromas llegan siempre con retraso.
-   ➤ Ser el alma de las cartas — Con Gabriel Toledo y Samuel Yebra
-   · Dormir y recuperar — El cuerpo lo agradece
-   · Grabar la concentración para tus redes — Contenido diferente
-   ⮑ Montas un torneo con premios absurdos y reglas inventadas. A la tercera noche, hasta el míster se sienta a perder dinero contigo.
-   Δ ánimo +2, vestuario +4
-   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 88 · entrenador 89 · vestuario 100 · afición 100 · fama 74 · dinero 311.890€
-
-### [sem 31 · Julio 2029] (vida) El autobús se avería en mitad de la nada
-Volviendo de un amistoso, el autobús del Real Betis se avería en un pueblo de trescientos habitantes. Los vecinos, que no tienen ni idea de fútbol, os confunden con los invitados de una boda que se celebra esa misma tarde.
-   👤 QUIÉN ES — Luis Uranga · Compañero de equipo: 26 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
-   ➤ Seguirles la corriente — Colarse en la boda
-   · Aclarar el malentendido — Explicar quiénes sois
-   · Aprovechar para entrenar en la plaza — Con Luis Uranga de balón
-   ⮑ En diez minutos estáis brindando con vecinos que os llaman 'primos de la novia'. Acabáis bailando, y el entrenador os saca de la fiesta arrastrando a los últimos.
-   Δ ánimo +4, fama +2, vestuario +5
-   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 92 · entrenador 89 · vestuario 100 · afición 100 · fama 76 · dinero 311.890€
-
-### [sem 31 · Julio 2029] (vida) Te dejas las botas en casa
-Llegas al aeropuerto para la gira y te das cuenta: las botas se han quedado en casa. El avión sale en cuarenta minutos y Miguel Lozano no para de reírse.
-   👤 QUIÉN ES — Miguel Lozano · Compañero de equipo: 28 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
+### [sem 21 · Julio 2028] (vida) Te dejas las botas en casa
+Llegas al aeropuerto para la gira y te das cuenta: las botas se han quedado en casa. El avión sale en cuarenta minutos y Luis Yebra no para de reírse.
+   👤 QUIÉN ES — Luis Yebra · Compañero de equipo: 25 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
    ➤ Pedir prestadas unas de tu talla al club — Solución de emergencia
    · Comprar unas nuevas en destino — Sin dramas
-   · Pedirle a Miguel Lozano que se ría menos y ayude — Menos risa y más soluciones
+   · Pedirle a Luis Yebra que se ría menos y ayude — Menos risa y más soluciones
    ⮑ El utillero te trae unas botas de tu talla y tú las agradeces con un abrazo. Resultan ser muy cómodas, para tu sorpresa.
    Δ ánimo +1, vestuario +2
-   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 93 · entrenador 89 · vestuario 100 · afición 100 · fama 76 · dinero 311.890€
+   📊 Real Betis · rol titular · media 74 · forma 99 · ánimo 100 · entrenador 70 · vestuario 98 · afición 93 · fama 56 · dinero 90.340€
 
-### [sem 31 · Julio 2029] (vida) Pica-pica en las botas
-Toni Solera ha metido pica-pica dentro de tus botas de entrenamiento como venganza por una broma que ni recordabas. Todo el vestuario espera, en silencio, a que te las pongas.
-   👤 QUIÉN ES — Toni Solera · Compañero de equipo: 27 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
-   ➤ Ponerte las botas igualmente — Aguantar el tirón
-   · Revisarlas antes — No fías de nadie
-   · Devolverle la broma a Toni Solera — Ojo por ojo
-   ⮑ FALLO: Duras cinco segundos antes de salir dando saltos por el vestuario entero. Vídeo garantizado para el resto de la temporada.
-   Δ ánimo −1, fama +2, vestuario +2
-   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 92 · entrenador 89 · vestuario 100 · afición 100 · fama 78 · dinero 311.890€
+### [sem 21 · Julio 2028] (vida) El hijo del entrenador te tiene manía
+El hijo pequeño de Paco Pastor, que anda siempre por la ciudad deportiva, ha decidido que tú eres su jugador favorito y te sigue a todas partes con un balón bajo el brazo.
+   ➤ Entrenar un rato con él — Diez minutos que valen mucho
+   · Regalarle una camiseta firmada — Un detalle bonito
+   · Pedirle a otro compañero que se ocupe — Ahora mismo no puedes
+   ⮑ Le haces un rondo de diez minutos. El niño casi llora de alegría, y su padre te mira desde la banda con un gesto de agradecimiento.
+   Δ ánimo +3, entrenador +4
+   📊 Real Betis · rol titular · media 74 · forma 99 · ánimo 100 · entrenador 74 · vestuario 98 · afición 93 · fama 56 · dinero 90.340€
 
-### [sem 31 · Julio 2029] (vida) Un mensaje demasiado generoso
-Carmen Navarro te escribe con una propuesta que huele a chamusquina desde el primer renglón.
-   ➤ Pasar los datos al agente — Que él lo revise todo
-   · Darle el IBAN por si acaso — 5.000 € son 5.000 €
-   · Denunciar la cuenta — Que no lo intente con otro
-   ⮑ La respuesta llega enseguida: «Este usuario ha restringido los mensajes»
-   Δ representante +3, reputación +1
-   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 92 · entrenador 89 · vestuario 100 · afición 100 · fama 78 · dinero 311.890€
+### [sem 22 · Agosto 2028] (prensa) Suena tu nombre para el verano
+Fichajes Al Día asegura que el Real Madrid te sigue "muy de cerca". Nadie del club ha llamado... todavía. En la puerta del entrenamiento hay más micrófonos de lo normal.
+   · Llamar a Iñaki Zubiaurre y preguntar si hay algo de verdad — Salir de dudas
+   · Dejar la puerta entreabierta en rueda de prensa — Ganas fama, pierdes grada
+   ➤ Decir que solo piensas en tu club — Cero ruido
+   ⮑ 'Aquí estoy y aquí me quedo', dices ante las cámaras. Los aficionados guardan la frase y el míster te mira con aprobación desde el banquillo.
+   Δ entrenador +2, afición +4
+   📊 Real Betis · rol titular · media 74 · forma 100 · ánimo 99 · entrenador 76 · vestuario 98 · afición 97 · fama 56 · dinero 99.590€
 
-### [sem 32 · Agosto 2029] (representante) Tu agente Iñaki Zubiaurre también lleva a tu competencia
-Te enteras por casualidad de que Iñaki Zubiaurre también representa a tu rival directo por el puesto y de que, cuando llegue una buena oferta, "ya veremos a cuál de los dos va". Nadie te lo había contado.
-   · Pedir explicaciones ahora mismo — Sin rodeos
-   ➤ Cambiar de representante: Lourdes Barragán — Romper y empezar de cero
-   · No decir nada y vigilarlo de cerca — Ojos abiertos
+### [sem 22 · Agosto 2028] (entrenamiento) Víspera ante el Osasuna
+Jueves por la tarde, entreno de puertas cerradas antes del Osasuna. Paco Pastor termina la charla táctica y, al pasar junto a ti, baja la voz: "Después de lo del verano, la gente del club te mira distinto. No la cagues con la cabeza en otro sitio, céntrate en esto." No es un reproche, es casi una confidencia. Mientras recoges los conos, Marcos Torreblanca, el utillero de 55 años que siempre lleva un silbato colgado y una radio vieja encima, se te acerca silbando bajito: "Chaval, llevo treinta años viendo caras antes de un partido. La tuya hoy es rara. ¿Qué te pasa?" Sabe leer a los jugadores antes de que ellos mismos lo sepan.
+   👤 QUIÉN ES — Marcos Torreblanca · Utillero: 55 años, siempre con un silbato colgado y una radio vieja. Sabe qué jugador llegará tarde antes de que aparezca.
+   · Abrirte a Marcos Torreblanca — Le cuentas que la frase del verano aún pesa sobre ti
+   · Quitarle hierro y centrarte solo en lo táctico — Le dices que todo va bien y repasas mentalmente la jugada de estrategia
+   ➤ Buscar a Paco Pastor para que te lo diga a la cara — Vuelves al vestuario y le preguntas directamente si cuenta contigo al cien por cien
+   ⮑ Paco se detiene, te mira fijo y responde sin rodeos: "Mañana sales de inicio. Lo demás es ruido que tú mismo te metes." Te lo dice con la seguridad de quien no tiene dudas.
+   Δ ánimo +2, entrenador +4
+   📊 Real Betis · rol titular · media 74 · forma 100 · ánimo 100 · entrenador 80 · vestuario 98 · afición 97 · fama 56 · dinero 99.590€
+
+### [sem 22 · Agosto 2028] (entrenamiento) El mister propone una sesión extra
+Después del entrenamiento oficial, el entrenador Paco Pastor se queda a trabajar remates contigo. Nadie más está invitado.
+   ➤ Quedarte — +Relación con el entrenador, -Forma
+   · Agradecer pero descansar — Cuidas el cuerpo
+   ⮑ El entrenador no suelta ni un elogio durante la sesión, pero al terminar te da una palmada en la espalda que dice más que cualquier frase.
+   Δ forma −3, ánimo +2, entrenador +8
+   📊 Real Betis · rol titular · media 74 · forma 97 · ánimo 100 · entrenador 88 · vestuario 98 · afición 97 · fama 56 · dinero 99.590€
+
+### [sem 22 · Agosto 2028] (vida) Una boda de hace diez años
+Tu primo Rayco se casa el sábado en Las Palmas, el mismo pueblo donde diste tus primeras patadas al balón. Es tu último día libre antes de que arranque la pretemporada fuerte, y tu padre Ismael ya ha reservado billetes para toda la familia.
+   ➤ Ir y quedarte hasta el final — +Familia, -Forma
+   · Ir a la ceremonia y volver pronto — Término medio
+   · Mandar un regalo y quedarte entrenando — +Forma, -Familia
+   ⮑ Bailas hasta las tantas con tus tíos y tu madre Fátima te graba brindando con el novio. Marcos Bassa te manda un audio al día siguiente: "Espero que al menos hayas estirado entre copa y copa."
+   Δ forma −4, ánimo +6, afición +1
+   📊 Real Betis · rol titular · media 74 · forma 93 · ánimo 100 · entrenador 88 · vestuario 98 · afición 98 · fama 56 · dinero 99.590€
+
+### [sem 22 · Agosto 2028] (entrenamiento) El nuevo técnico no cuenta contigo
+Cambia el entrenador Paco Pastor. Con el anterior eras fijo; con este ni calientas. No te ha dado ninguna explicación todavía.
+   ➤ Pedirle una charla cara a cara — Ir directo al grano
+   · Callar y trabajar el doble en cada entrenamiento — Convencer con hechos
+   · Pedirle a tu representante Iñaki Zubiaurre que mueva un traspaso ya — Salir cuanto antes
+   ⮑ FALLO: La charla es fría y genérica. Sigues sin saber por qué no cuenta contigo, y no te convoca en los próximos partidos.
+   Δ ánimo −4
+   📊 Real Betis · rol apartado · media 74 · forma 93 · ánimo 96 · entrenador 88 · vestuario 98 · afición 98 · fama 56 · dinero 99.590€
+
+### [sem 22 · Agosto 2028] (representante) Tu agente te habla de invertir
+Tu agente Iñaki Zubiaurre te sienta a hablar de números, no de fútbol: 'Estás ganando más de lo que puedes gastar sensatamente. Antes de que se te vaya en tonterías, mete 5.000 € en algo que trabaje por ti. Tengo dos opciones sobre la mesa: un fondo indexado global — una cartera con cientos de empresas del mundo, sin sobresaltos, alrededor de un 6 % al año — o una participación en un local comercial del centro, ya alquilado a una panadería, que rinde un 4 % fijo y no depende de la bolsa.'
+   · Fondo indexado global — 5.000 € — Cartera de cientos de empresas · ~6 % anual
+   ➤ Participación en un local alquilado — 5.000 € — Una panadería del centro te paga alquiler · ~4 % anual
+   · Preferir disfrutar el dinero ahora — Ya invertirás cuando ganes más
+   · Pedirle que te lo explique bien antes de decidir nada — No firmar nada a ciegas
+   ⮑ Firmas ante notario y, por primera vez, eres 'propietario' de algo. El panadero te manda un pan de regalo con una nota: 'Gracias por el local, crack'.
+   Δ dinero −5000, representante +2, reputación +2
+   📊 Real Betis · rol suplente · media 74 · forma 93 · ánimo 96 · entrenador 88 · vestuario 98 · afición 98 · fama 56 · dinero 94.590€
+
+### [sem 23 · Septiembre 2028] (partido) Chispa desde el banquillo
+Ante Osasuna en La Liga, jugaste 22 minutos. Nota: 7.2/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Osasuna). Entraste en el 68' con el partido atascado y en el 81' cazaste un rechace para meterla a bocajarro. El Benito Villamarín se vino abajo y Paco Pastor te sacudió el pelo al sentarte, sin decir nada, con esa sonrisa que ya conoces.
+   · Dedicar el gol a la grada — +Afición
+   · Ir primero a abrazar a Fernando Ferreiro — +Vestuario
+   ➤ Mandar un mensaje a Iñaki Zubiaurre nada más llegar al vestuario — Mover ficha
+   · Quitarle hierro en la zona mixta — Perfil bajo
+   ⮑ Tu representante te contesta en segundos: "Esto hay que capitalizarlo ya, dame dos días". Te deja con la sensación de que algo se mueve detrás del teléfono.
+   Δ fama +2, representante +5
+   📊 Real Betis · rol suplente · media 74 · forma 95 · ánimo 95 · entrenador 88 · vestuario 98 · afición 98 · fama 58 · dinero 103.840€
+
+### [sem 24 · Octubre 2028] (vida) El compañero que se marchó a probar suerte
+Te llega la noticia por un grupo de wasap de la cantera: Pol Mendoza, con quien creciste dando patadas al mismo balón en el mismo campo de tierra, acaba de firmar su primer contrato profesional. Nadie de aquel grupo pensó que sería él el primero.
+   · Alegrarte de verdad por él — Sin sombra de envidia
+   · Sentir una punzada de envidia — Humano, aunque no te guste
+   ➤ Usarlo como motivación pura — Que sea la última vez que va por delante
    ⮑ (sin reacción)
-   Δ ánimo +2, representante +10
-   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 91 · entrenador 89 · vestuario 100 · afición 100 · fama 78 · dinero 335.220€
+   Δ forma +3, ánimo +1
+   📊 Real Betis · rol suplente · media 74 · forma 100 · ánimo 95 · entrenador 88 · vestuario 98 · afición 98 · fama 58 · dinero 113.090€
 
-### [sem 32 · Agosto 2029] (entrenamiento) La víspera tranquila
-Jueves por la tarde, entrenamiento ya terminado. Paco Pastor te retiene un momento en el césped vacío mientras el resto del equipo entra en vestuarios. "La Real viene bien armada, con paciencia y buen pase. Vamos a necesitar que aparezcas entre líneas, que seas tú quien rompa el partido cuando se cierre." Te lo dice sin tensión, casi como quien comenta algo obvio entre dos personas que se entienden. Detrás, en la grada vacía, un par de operarios montan una pancarta nueva con tu cara en ella. Llevas semanas siendo el nombre que todos repiten. Esta noche, antes de dormir, el partido te ronda la cabeza de una forma distinta a otras veces.
-   · Visualizar jugadas de riesgo, atreverte desde el primer minuto — Confías en tu momento de forma y quieres marcar el partido desde el arranque
-   · Llamar a tu madre Fátima Roig, Fátima Roig, para hablar de cosas que no sean fútbol — Necesitas desconectar antes de la tensión del partido
-   ➤ Repasar el plan táctico con cautela, sin prometerte nada — Prefieres ceñirte estrictamente a lo que pide Paco Pastor
-   ⮑ Paco Pastor asiente al verte repasar notas en el vestuario: 'Así me gusta, con los pies en el suelo'. Duermes bien, sin sobresaltos, pero sin esa chispa extra.
-   Δ ánimo +1, entrenador +3
-   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 92 · entrenador 92 · vestuario 100 · afición 100 · fama 78 · dinero 335.220€
+### [sem 24 · Octubre 2028] (partido) Chispa de banquillo en Montilivi
+Ante Girona FC en La Liga, jugaste 19 minutos. Nota: 7.2/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Girona FC). Entraste con el partido trabado, recibiste de espaldas en el área pequeña y la metiste con el exterior antes de que el central reaccionara. Paco Pastor te abraza en la banda gritando "¡eso es lo que pedía, animal!" mientras La Cartuja ruge tu nombre.
+   · Celebrar corriendo hacia la grada — +Afición
+   ➤ Ir primero a abrazar a Javier Aguirre — +Vestuario
+   · Buscar a Fernando Ferreiro, que se quedó en el banquillo — Gesto arriesgado
+   · Mirar al banquillo rival y guardarte la celebración — Perfil bajo
+   ⮑ El capitán te revuelve el pelo y suelta: "Para ser un crío tienes sangre fría de veterano". El vestuario entero te lo recuerda en la ducha.
+   Δ ánimo +3, media +4, vestuario +8
+   📊 Real Betis · rol suplente · media 78 · forma 100 · ánimo 98 · entrenador 88 · vestuario 100 · afición 98 · fama 58 · dinero 113.090€
 
-### [sem 33 · Septiembre 2029] (partido) El momento decisivo
-Partido en marcha ante Real Sociedad. Te quedas mano a mano con el central que te marca, dentro del área pequeña. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Paco Domínguez · Compañero de equipo: 25 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
-   · Picar el balón por encima del portero — Delicadeza con riesgo
-   · Cruzar el disparo al palo largo — Colocación antes que fuerza
-   ➤ Esperar a que llegue un compañero llamado Paco Domínguez por detrás — Un pase en el momento justo
-   ⮑ ÉXITO: Esperas el desmarque justo y lo filtras: tu compañero marca sin oposición.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 89 · entrenador 92 · vestuario 100 · afición 100 · fama 78 · dinero 358.550€
-
-### [sem 33 · Septiembre 2029] (partido) Betis 2-1 Real Sociedad: la asistencia que no fue gol
-Ante Real Sociedad en La Liga, jugaste 90 minutos. Nota: 7.8/10. Goles: 0. Asistencias: 1. Marcador: 2-1 (Real Betis-Real Sociedad). En el 85' te quedaste mano a mano con el central dentro del área pequeña y, en vez de rematar, le diste el pase a un compañero llamado Hugo Quiroga que no perdonó. El Villamarín se vino abajo y Paco Pastor, desde la banda, se llevó las manos a la cabeza antes de aplaudirte.
-   👤 QUIÉN ES — Hugo Quiroga · Compañero de equipo: 35 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
-   · Lo cuentas tal cual en zona mixta — Prensa local, honestidad
-   ➤ Vas a buscar a tu compañero en el vestuario — +Vestuario
-   · Llamas a tu padre Ismael Hassan nada más pisar el túnel — Familia primero
-   · Dejas que las imágenes hablen en redes — Silencio calculado
-   ⮑ Javier Aguirre te da un golpe en la nuca de broma: "El gol es mío, pero el mérito es tuyo, cabrón."
-   Δ ánimo +3, media +3, vestuario +6
-   📊 Real Betis · rol titular · media 97 · forma 100 · ánimo 92 · entrenador 92 · vestuario 100 · afición 100 · fama 78 · dinero 358.550€
-
-### [sem 34 · Octubre 2029] (partido) El mejor sobre el campo
-Terminas el partido más importante de la temporada como la gran figura: decisivo de principio a fin. Al pitido final, el speaker del estadio anuncia tu nombre como el mejor jugador del partido.
-   ➤ Dedicar el premio a la afición — +Relación con la afición
-   · Dedicarlo al vestuario, fue un trabajo de equipo — +Vestuario
-   ⮑ Levantas el premio hacia la grada y el estadio entero se pone en pie. Un aficionado llora abrazado a su padre con tu camiseta puesta.
-   Δ ánimo +6, fama +6, afición +8
-   📊 Real Betis · rol titular · media 97 · forma 100 · ánimo 95 · entrenador 92 · vestuario 100 · afición 100 · fama 84 · dinero 384.540€
-
-### [sem 34 · Octubre 2029] (especial) 😂 El Hombre Mariposa
-Minuto 63 contra el Girona, estás presionando en la medular cuando una mariposa blanca decide aterrizar en plena cara, justo sobre la nariz. Tú no la ves, solo sientes un cosquilleo, y en pleno sprint empiezas a sacudir la cabeza como si te hubiera picado una avispa mientras sigues corriendo a toda velocidad detrás del balón. El Benito Villamarín entero se parte de risa, hasta el árbitro tiene que pararse un segundo. En el banquillo, el cuerpo técnico se dobla sobre sí mismo. El clip ya se está grabando desde seis ángulos distintos.
-   · Reírte de ti mismo en redes — Subes el vídeo con un emoji de mariposa y un chiste
-   · Hacer como si no hubiera pasado nada — Evitas el tema en la rueda de prensa y en redes
-   ➤ Montar un numerito en el siguiente gol — Si marcas, celebras imitando el aleteo de mariposa
-   ⮑ Marcas en el minuto 80 y celebras aleteando los brazos como mariposa; el estadio entero se levanta a corear 'mariposa, mariposa'. Hasta el entrenador rival se ríe desde la banda.
-   Δ ánimo +6, fama +9, vestuario +2, afición +6
-   📊 Real Betis · rol titular · media 97 · forma 100 · ánimo 100 · entrenador 92 · vestuario 100 · afición 100 · fama 93 · dinero 384.540€
-
-### [sem 34 · Octubre 2029] (partido) Noche europea
-Europa League - Fase de grupos, ante Ajax. El balón te llega botando en el área, en un ángulo incómodo para rematar. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Rematar de primeras sin controlar — No le das tiempo al portero a colocarse
-   ➤ Ganar la línea de fondo y centrar atrás — Buscar el pase de la muerte en vez del gol propio
-   · Aguantar el balón de espaldas y pedir apoyo — Sin riesgo: dar tiempo a que suba el equipo
-   ⮑ ÉXITO: Te vas de tu marcador y pones un centro atrás perfecto que remata un compañero llamado Rubén Galindo.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 97 · forma 100 · ánimo 100 · entrenador 92 · vestuario 100 · afición 100 · fama 93 · dinero 384.540€
-
-### [sem 34 · Octubre 2029] (partido) Noche europea en el Villamarín
-Ante Ajax en Europa League, jugaste 87 minutos. Nota: 7.8/10. Goles: 0. Asistencias: 1. Marcador: 2-1 (Real Betis-Ajax). En el minuto 13, el balón te llegó botando en el área, en ángulo imposible para rematar, y la cedistes a Javier Aguirre, que la clavó. El Villamarín rugió y Paco Pastor te aplaudió desde la banda al cambiarte en el 87.
-   · Dedica el gol del equipo a la grada — +Afición
-   ➤ En zona mixta, pones el foco en Aguirre — +Vestuario
-   · Llama a tu padre Ismael Hassan nada más pisar el vestuario — Momento familiar
-   · Autocrítica: pudiste rematar tú mismo — Exigencia propia
-   ⮑ Javier Aguirre te da un golpe en el pecho con el puño y suelta: "Esa asistencia vale más que mil goles míos, chaval."
-   Δ media +2, entrenador +2, vestuario +7
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 94 · vestuario 100 · afición 100 · fama 93 · dinero 384.540€
-
-### [sem 35 · Noviembre 2029] (prensa) Te quieren fichar... por error
-El Real Madrid llama a tu club para cerrar tu fichaje. Solo hay un problema: quieren a otro jugador que se apellida igual que tú. Tu club se parte de risa; Iñaki Zubiaurre, no tanto.
-   ➤ Aprovechar el malentendido para negociar — Ya que llaman...
-   · Reírte y subirlo a redes — Momento viral
-   · Pedirle a Iñaki Zubiaurre que se entere de todo antes que nadie — Que no vuelva a pasar
-   ⮑ ÉXITO: Al otro lado dicen que, ya que estás, te echan un vistazo. Empieza un interés de verdad.
-   Δ ánimo +3, fama +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 94 · vestuario 100 · afición 100 · fama 96 · dinero 412.390€
-
-### [sem 35 · Noviembre 2029] (representante) Tu decisión: ¿te quedas o mueves ficha?
-Sientes que el club se te está quedando pequeño. Iñaki Zubiaurre lo deja claro: "Si quieres moverte, es ahora. Esto lo decides tú."
-   · Pedir salir del club y apostar por el Manchester City — Un paso adelante, con riesgo de portazo
-   · Buscar un club donde juegues de verdad: el Valencia CF — Menos brillo, más minutos
-   ➤ Pedir renovación con mejoras y quedarte — Apostar por este proyecto
-   · Quedarte y competir sin más — Cabeza fría
-   ⮑ ÉXITO: El club te renueva y te sube la ficha. Ganas peso en el vestuario y la afición te lo agradece.
-   Δ ánimo +4, dinero +34500, entrenador +3, afición +5
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 97 · vestuario 100 · afición 100 · fama 96 · dinero 446.890€
-
-### [sem 35 · Noviembre 2029] (partido) Eliminatoria de Copa, a partido único
-Copa del Rey - Dieciseisavos, a vida o muerte, ante CD Eldense. Recibes dentro del área con dos defensas encima y un compañero llamado Raúl Quiroga libre al segundo palo. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Raúl Quiroga · Compañero de equipo: 32 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
-   · Disparo raso al primer palo — Rápido y directo
-   · Hacer una pared con el compañero — Juego combinado
-   ➤ Intentar un sombrero al defensa — Para la galería
-   ⮑ ÉXITO: Sombrero perfecto: el defensa se queda mirando al cielo y tú marcas. ¡Genialidad!
-   Δ fama +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 97 · vestuario 100 · afición 100 · fama 99 · dinero 446.890€
-
-### [sem 35 · Noviembre 2029] (partido) Gol de mérito y billete a la siguiente ronda
-Ante CD Eldense en Copa del Rey, jugaste 86 minutos. Nota: 8.3/10. Goles: 1. Asistencias: 0. Marcador: 2-0 (Real Betis-CD Eldense). En el minuto 33, con dos defensas encima dentro del área y un compañero llamado Bruno Escudero libre al segundo palo, decidiste ir por libre: túnel incluido y gol que hizo enloquecer tu grada. Paco Pastor te aplaudió desde la banda y el Benito Villamarín coreó tu nombre; el Betis avanza de ronda con autoridad.
-   👤 QUIÉN ES — Bruno Escudero · Compañero de equipo: 33 años. Compañero de equipo, callado en el vestuario y terrible con el balón en los pies. Sus bromas llegan siempre con retraso.
-   · Dedica el gol a tu familia — +Moral, +Familia
-   · Atiende a la prensa sin dárselas de figura — +Afición, +Fama moderada
-   ➤ Reparte el mérito con el vestuario — +Vestuario, -algo de fama
-   · Llama a Iñaki Zubiaurre para hablar del momento — +Representante, mirada al futuro
-   ⮑ En la ducha dices en voz alta que sin el desmarque de tu compañero esa jugada no existe. Javier Aguirre te da una palmada en la nuca: 'Así se habla, novato con cabeza.'
-   Δ forma +2, fama −2, media +2, vestuario +8
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 97 · vestuario 100 · afición 100 · fama 97 · dinero 446.890€
-
-### [sem 36 · Diciembre 2029] (partido) Un derbi de los que pesan
-Ante Atlético de Madrid en La Liga, jugaste 82 minutos. Nota: 8.4/10. Goles: 2. Asistencias: 0. Marcador: 3-1 (Real Betis-Atlético de Madrid). El Benito Villamarín se cae a pedazos con el segundo, un derechazo cruzado que Javier Aguirre celebra agarrándote de la cara como si fueras un hermano pequeño. Paco Pastor, en la rueda de cambios, solo asiente mirando al banquillo: no hace falta decir nada más.
-   · Rueda de prensa con calma — +Fama, mensaje humilde
-   · Celebrar con la grada del fondo — +Afición, puede sonar a postureo
-   ➤ Buscar a Fernando Ferreiro en el vestuario — +Vestuario, gesto de compañero
-   · Llamar a Ismael Hassan nada más pisar el túnel — Momento personal, +Moral
-   ⮑ Fernando Ferreiro, que se quedó en el banquillo todo el partido, te choca la mano sin mucho entusiasmo pero dice "bien jugado, de verdad" antes de meterse en la ducha.
-   Δ ánimo +2, fama +1, media +3, vestuario +6
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 97 · vestuario 100 · afición 100 · fama 98 · dinero 474.740€
-
-### [sem 36 · Diciembre 2029] (representante) Oferta formal del Real Madrid
-Iñaki Zubiaurre entra con papeles en la mano: "Ya no es un rumor. El Real Madrid ha puesto una oferta por escrito y quiere una respuesta rápida."
-   · Aceptar y fichar por el Real Madrid — Nuevo reto, nuevo vestuario
-   · Usar la oferta para negociar mejoras en tu club — Jugar tus cartas
-   ➤ Rechazarla: aquí me quedo — La grada lo va a agradecer
-   ⮑ La noticia de que has rechazado la oferta recorre el club en horas. En el siguiente partido, la grada te dedica una ovación larga y cerrada.
-   Δ ánimo +2, entrenador +3, afición +7
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 98 · dinero 474.740€
-
-### [sem 36 · Diciembre 2029] (vida) La marca de la gratitud
-En la puerta de las instalaciones te espera un chaval con una sudadera de una marca que no reconoces. Es Bruno Salcedo, el diseñador que te propuso aquella colaboración con su ropa cuando nadie le hacía caso, y a quien rechazaste con educación. "Quería que lo vieras tú primero", dice, sacando una caja: su marca ya viste a un equipo de Primera y lleva tu nombre en la etiqueta de agradecimientos, "el primero que me trató como a una persona y no como a un mendigo".
-   · Aceptar la camiseta y hacerte una foto con él — +Fama, +Representante
-   · Proponerle una colaboración real esta vez — +Patrimonio, riesgo de imagen
-   ➤ Agradecerle el detalle y seguir tu camino — Gesto breve, sin más
-   ⮑ Bruno asiente, algo decepcionado pero agradecido igual: "lo entiendo, tienes entrenamiento. Gracias por aquel día, de verdad".
-   Δ ánimo +1, fama +1
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 99 · dinero 474.740€
-
-### [sem 36 · Diciembre 2029] (partido) Noche europea
-Europa League - Fase de grupos, ante Fenerbahçe. El balón te llega al borde del área con el defensa de espaldas: tienes medio segundo para decidir. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Picar al hueco entre los dos centrales — Buscar el desmarque justo antes del pase
-   · Intentar la chilena si el balón te queda en el aire — Todo o nada, jugada para el recuerdo
-   ➤ Tocar atrás para reiniciar antes de atacar de nuevo — Sin riesgo: guardar la posesión del equipo
-   ⮑ ÉXITO: El toque atrás es sencillo y el equipo reorganiza el ataque con calma.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 99 · dinero 474.740€
-
-### [sem 36 · Diciembre 2029] (partido) Noche europea en el Villamarín
-Ante Fenerbahçe en Europa League, jugaste 90+5 minutos. Nota: 8.5/10. Goles: 0. Asistencias: 0. Marcador: 2-1 (Real Betis-Fenerbahçe). En el descuento, con el defensa de espaldas al borde del área, decidiste frenar y dar la posesión atrás en vez de forzar: jugada limpia, sin sobresaltos, y el Villamarín estalla al pitido final. El Betis cierra la fase de grupos con billete directo a octavos.
-   ➤ Celebra con la grada — +Afición, el gesto se hace viral
-   · Reparte el mérito en zona mixta — +Vestuario, cero protagonismo
-   · Llama a tu familia nada más entrar al vestuario — Momento personal
-   · Declaraciones comedidas a la prensa — Perfil bajo, +Entrenador
-   ⮑ Te plantas frente al Fondo Norte y señalas el escudo. Un aficionado graba el momento y el vídeo corre por redes con el pie: 'Este chaval ya siente los colores'.
-   Δ ánimo +4, fama +6, media +3, afición +8
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 474.740€
-
-### [sem 37 · Enero 2030] (partido) El momento decisivo
-Partido en marcha ante Almería. Te llega un centro raso al segundo palo, sin marca encima. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   ➤ Fingir el disparo y regatear al portero — Sangre fría
-   · Disparar con la pierna que no es la tuya — Sin tiempo para cambiar
-   · Ceder al compañero de la derecha — Mejor posicionado que tú
-   ⮑ FALLO: El portero no pica y te arrebata el balón de los pies.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 502.590€
-
-### [sem 37 · Enero 2030] (partido) Almería - La jugada que se perdió
-Ante Almería en La Liga, jugaste 90 minutos. Nota: 6.2/10. Goles: 0. Asistencias: 1. Marcador: 1-2 (Real Betis-Almería). En el 66' te llegó un centro raso al segundo palo, sin marca encima, y la mandaste a las gradas con el remate cruzado; dos minutos después Almería adelantó el contraataque y el 1-2 ya no se movió. Paco Pastor se queda con el palmo de la cara pegado al banquillo todo el segundo tiempo.
-   · Dar la cara en la zona mixta — Autocrítica pública
-   ➤ Hablar con Javier Aguirre en el vestuario — Pedir perdón al capitán
-   · Llamar a Iñaki Zubiaurre — Calmar el ruido mediático
-   · Quedarte entrenando solo con Marcos Bassa — Trabajar el gesto técnico
-   ⮑ Javier Aguirre te da una palmada en la nuca: "Esa la fallamos todos alguna vez, tío. Lo que no se vale es esconderse." Te quita peso de encima.
-   Δ ánimo +4, media +1, vestuario +5
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 502.590€
-
-### [sem 37 · Enero 2030] (representante) Firmas con una marca que empieza a crecer
-Vantia, una marca deportiva pequeña pero con ambición, te ofrece un acuerdo modesto: ropa, algo de dinero y la promesa de "crecer juntos". No es nada espectacular, pero es tuyo.
-   · Firmar el acuerdo — Empezar la relación
-   ➤ Pedir que tu representante Iñaki Zubiaurre lo revise antes — Prudencia
-   · Rechazarlo, prefieres esperar algo mejor — No tener prisa
+### [sem 24 · Octubre 2028] (vestuario) El compañero con el que empezaste todo
+Emilio Olmedo y tú debutáis casi el mismo mes en el primer equipo. Compartís vestuario, viajes y la misma sensación de vértigo — de esas amistades que se forjan rápido porque los dos entendéis exactamente por lo que está pasando el otro.
+   ➤ Volveros inseparables dentro y fuera del campo — Amistad de verdad
+   · Llevaros bien, sin más, cada uno a su ritmo — Compañerismo normal
+   · Verlo también como competencia sana por minutos — Motivación extra
    ⮑ (sin reacción)
+   Δ ánimo +3, vestuario +3
+   📊 Real Betis · rol suplente · media 78 · forma 100 · ánimo 100 · entrenador 88 · vestuario 100 · afición 98 · fama 58 · dinero 113.090€
+
+### [sem 24 · Octubre 2028] (representante) Tu agente te sugiere dónde vivir
+'Deberías dejar de vivir como si esto fuera temporal', te dice tu agente Iñaki Zubiaurre. 'Con lo que ganas ya, plantéate algo tuyo — una casa es patrimonio real, no un alquiler que no te devuelve nada.'
+   ➤ Empezar a mirar opciones en serio — Hacerle caso
+   · Preferir esperar a estar más asentado en un club — Todavía no toca
+   ⮑ Empiezas a mirar pisos con tu representante, entre risas y cálculos. Un agente inmobiliario te enseña una terraza con vistas que te quita el aire.
+   Δ ánimo +2, representante +2
+   📊 Real Betis · rol suplente · media 78 · forma 100 · ánimo 100 · entrenador 88 · vestuario 100 · afición 98 · fama 58 · dinero 113.090€
+
+### [sem 24 · Octubre 2028] (vida) Tu hermano también quiere intentarlo
+Arturo Hassan te para en la cocina, nervioso, como si llevara días ensayando la frase: "Yo también quiero ser futbolista. Y quiero que me ayudes." Te mira esperando algo más que una respuesta educada.
+   ➤ Prometerle todo tu apoyo — Estar ahí de verdad
+   · Avisarle de lo dura que es esta vida — Realismo antes que ilusión
+   · Reaccionar con cierta frialdad — Ya tienes bastante con lo tuyo
+   ⮑ (sin reacción)
+   Δ ánimo +4
+   📊 Real Betis · rol suplente · media 78 · forma 100 · ánimo 100 · entrenador 88 · vestuario 100 · afición 98 · fama 58 · dinero 113.090€
+
+### [sem 24 · Octubre 2028] (partido) Noche europea
+Europa League - Fase de grupos, ante Fenerbahçe. Un rebote en el larguero te cae de nuevo a los pies, con todo el mundo caído. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Kike Robledo · Compañero de equipo: 24 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
+   ➤ Rematar en palomita, estirándote al máximo — Todo o nada por llegar al balón
+   · Bajar a por el balón y servirlo de espaldas al área — Sacrificar tu ocasión por la de un compañero llamado Kike Robledo
+   ⮑ ÉXITO: Te estiras al límite y conectas el remate. ¡Gol de palomita!
+   Δ fama +2
+   📊 Real Betis · rol suplente · media 78 · forma 100 · ánimo 100 · entrenador 88 · vestuario 100 · afición 98 · fama 60 · dinero 113.090€
+
+### [sem 24 · Octubre 2028] (partido) Betis 2 - Fenerbahçe 1: el rebote que no perdonaste
+Ante Fenerbahçe en Europa League, jugaste 24 minutos tras saltar desde el banquillo. Nota: 7.8/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Fenerbahçe). En el minuto 72, un disparo tuyo se estrelló en el larguero y el rebote te cayó de nuevo a los pies, con todo el mundo caído: no perdonaste. El Benito Villamarín se vino abajo y Paco Pastor, desde la banda, se llevó las dos manos a la cabeza antes de aplaudir.
+   · Celebrar corriendo hacia la grada — +Afición
+   ➤ Señalar a Paco Pastor al celebrar — +Entrenador
+   · Buscar a Javier Aguirre para compartir el momento — +Vestuario
+   · Dedicar el gol a la familia en redes — +Fama, menos vestuario
+   ⮑ El míster te señala de vuelta y luego, en el vestuario, suelta: "Eso es confiar en el banquillo, no en la suerte."
+   Δ ánimo +3, media +3, entrenador +7
+   📊 Real Betis · rol suplente · media 81 · forma 100 · ánimo 100 · entrenador 95 · vestuario 100 · afición 98 · fama 60 · dinero 113.090€
+
+### [sem 25 · Noviembre 2028] (representante) Un cargo que no recuerdas haber pedido
+En tu extracto aparece un cargo de 8800 € de Iñaki Zubiaurre por "gestiones de mercado". No recuerdas haberle encargado nada. Cuando se lo preguntas, habla de "esfuerzos que no se ven".
+   · Exigir factura y desglose — Quien no debe, no teme
+   ➤ Despedirle y fichar a Pilar Hidalgo — Aquí se acaba la confianza
+   · Dejarlo pasar por esta vez — Elegir tus batallas
+   ⮑ (sin reacción)
+   Δ ánimo +2, dinero −8800, representante +10
+   📊 Real Betis · rol suplente · media 81 · forma 100 · ánimo 99 · entrenador 95 · vestuario 100 · afición 98 · fama 60 · dinero 117.740€
+
+### [sem 25 · Noviembre 2028] (representante) El club se huele algo
+Carlos Segarra te cita en su despacho con una sonrisa que no es de compromiso: sabe que fuiste honesto con el míster Paco Pastor y quiere "ponerte las cosas fáciles". Te adelanta que, si hay oferta de fuera, el club "se lo pensará dos veces" antes de dejarte marchar. Al salir, Iñaki Zubiaurre te espera con el móvil en la mano: el Borussia Dortmund ha vuelto a preguntar.
+   · Pedir una mejora de contrato para quedarte — Usar el interés para ganar peso
+   · Decirle la verdad: si llega una oferta grande, querrás escucharla — Honestidad sin rodeos
+   ➤ Callar y dejar que Iñaki Zubiaurre lo gestione — Cero ruido
+   ⮑ Iñaki Zubiaurre toma el relevo con una calma que da envidia. Tú sigues entrenando como si nada, mientras el teléfono vibra en tu taquilla.
    Δ representante +2
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 502.590€
+   📊 Real Betis · rol suplente · media 81 · forma 100 · ánimo 99 · entrenador 95 · vestuario 100 · afición 98 · fama 60 · dinero 117.740€
 
-### [sem 37 · Enero 2030] (entrenamiento) El rondo que se te resiste
-Marcos Bassa monta un ejercicio nuevo: definición bajo fatiga, diez disparos seguidos tras sprints, cronómetro delante de todo el equipo. Fallas los tres primeros y Fernando Ferreiro, a tu lado, empieza a contar en voz alta cada fallo con una sonrisa de medio lado.
-   · Pedir repetir la serie hasta clavarla — +Forma, cansancio extra
-   · Reírte del marcador de Ferreiro y seguir — +Vestuario, ego intacto
-   · Pedir a Bassa cambiar el ejercicio — Orgullo protegido, imagen de líder en duda
-   ➤ Apostar una cena si fallas la última — Jugada de riesgo, +gancho con el grupo
-   ⮑ (sin reacción)
-   Δ ánimo +4, dinero −200, vestuario +6
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 502.390€
+### [sem 25 · Noviembre 2028] (partido) Entrada estelar ante el Tenerife
+Ante CD Tenerife en Copa del Rey, jugaste 22 minutos. Nota: 8.2/10. Goles: 1. Asistencias: 0. Marcador: 1-0 (Real Betis-CD Tenerife). Entras a la hora de juego, el Benito Villamarín pide gol a gritos y en el 78' rematas un centro de Javier Aguirre para desatar la locura. El Betis avanza de ronda y Paco Pastor te abraza nada más pitar el final.
+   ➤ Dedicar el gol a la grada — +Afición
+   · Ir primero a abrazar a Aguirre — +Vestuario
+   · Buscar a Paco Pastor en el banquillo — +Entrenador
+   · Llamar a tu madre Fátima Roig nada más pitar el final — Vida personal
+   ⮑ Te giras hacia el fondo sur y señalas el escudo; la grada responde coreando tu nombre durante un buen rato.
+   Δ ánimo +4, fama +6, media +4, afición +8
+   📊 Real Betis · rol titular · media 85 · forma 100 · ánimo 100 · entrenador 95 · vestuario 100 · afición 100 · fama 66 · dinero 117.740€
 
-### [sem 37 · Enero 2030] (partido) La sorpresa que nadie quiere ser
-Copa del Rey - Octavos, a vida o muerte, ante Athletic Club. Recibes un pase al hueco entre el lateral y el central, con solo el portero por delante. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Probar la vaselina por encima del portero adelantado — Todo o nada, para la galería
-   · Cederla atrás para el que llega desde segunda línea — Confiar en que remate mejor colocado
-   ➤ Proteger el balón pegado a la banda hasta ganar la falta — Sin riesgo: buscar los segundos, no el gol
-   ⮑ ÉXITO: Proteges el balón con el cuerpo hasta que el rival comete falta. Buena gestión del tiempo.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 502.390€
+### [sem 26 · Diciembre 2028] (partido) Betis 3 - Rayo Vallecano 1: doblete en el Villamarín
+Ante Rayo Vallecano en La Liga, jugaste 84 minutos. Nota: 8.7/10. Goles: 2. Asistencias: 0. Marcador: 3-1 (Real Betis-Rayo Vallecano). El segundo lo rematas de volea tras un centro de Javier Aguirre, y el Villamarín se cae encima. Paco Pastor te saca entre aplausos cuando te cambia, dándote dos palmadas secas en el pecho: "Así, sin más líos."
+   · Dedica el gol a la grada del gol sur — +Afición
+   ➤ En zona mixta, repartes el mérito al equipo — +Vestuario
+   · Llama a tu padre Ismael Hassan nada más pisar el vestuario — Momento personal
+   · Dejas que Iñaki Zubiaurre gestione el aluvión de prensa — Perfil bajo
+   ⮑ Javier Aguirre te escucha desde el banco de madera y te guiña un ojo: "Ese centro te lo cobro con una cena", te dice luego riendo.
+   Δ fama +2, media +3, entrenador +3, vestuario +7
+   📊 Real Betis · rol titular · media 88 · forma 100 · ánimo 97 · entrenador 98 · vestuario 100 · afición 100 · fama 68 · dinero 133.940€
 
-### [sem 37 · Enero 2030] (partido) Octavos de Copa: el Betis pasa de ronda
-Ante Athletic Club en Copa del Rey, jugaste 86 minutos. Nota: 8.3/10. Goles: 2. Asistencias: 0. Marcador: 2-0 (Real Betis-Athletic Club). En el minuto 49 recibiste un pase al hueco entre el lateral y el central, solo ante el portero, y resolviste con calma sin forzar nada, manteniendo el orden del equipo en ese tramo. El Benito Villamarín se vació contigo y Paco Pastor te sacó al cambio aplaudiendo de pie.
-   👤 QUIÉN ES — Fernando Casares · Presidente del club: 58 años, abogado, con un discurso para cada ocasión. En el palco se le ve más nervioso que a los aficionados.
-   · Dedica el doblete a tu familia — +Moral, +Familia
-   · Sal al palco a saludar al presidente — Presenta a Fernando Casares
-   ➤ Reparte el mérito con el vestuario — +Vestuario
-   · Atiende a la prensa con medias tintas — Discreción calculada
-   ⮑ Javier Aguirre te revuelve el pelo en la ducha: 'Sin el gol de Fernando contra el muro que montaron no llegas ni al descanso, listillo'. Fernando Ferreiro sonríe desde la otra punta del vestuario, menos tenso que otros días.
-   Δ ánimo +3, media +2, vestuario +7
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 502.390€
+### [sem 26 · Diciembre 2028] (vida) Un mensaje con mala idea
+Yolanda Barragán dice ser fan… del equipo rival. Tu bandeja de entrada huele a provocación.
+   ➤ Contestar con humor — Reírse de todo es ganar
+   · Devolver la provocación — Si me buscan, me encuentran
+   · No entrar al trapo — El campo hablará
+   ⮑ La respuesta llega enseguida: «Jajaja ok, tienes mi respeto. Pero no te pienso animar»
+   Δ ánimo +2, fama +3, afición +1
+   📊 Real Betis · rol titular · media 88 · forma 100 · ánimo 99 · entrenador 98 · vestuario 100 · afición 100 · fama 71 · dinero 133.940€
 
-### [sem 38 · Febrero 2030] (partido) La sorpresa que nadie quiere ser
-Copa del Rey - Cuartos, a vida o muerte, ante Villarreal CF. Un rechace te cae a los pies dentro del área, con la portería a tiro. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Rematar de primeras sin controlar — No le das tiempo al portero a colocarse
-   ➤ Ganar la línea de fondo y centrar atrás — Buscar el pase de la muerte en vez del gol propio
-   · Aguantar el balón de espaldas y pedir apoyo — Sin riesgo: dar tiempo a que suba el equipo
-   ⮑ ÉXITO: Te vas de tu marcador y pones un centro atrás perfecto que remata un compañero llamado Ernesto Palacios.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 530.240€
-
-### [sem 38 · Febrero 2030] (partido) Betis 1-0 Villarreal: a semifinales de Copa
-Ante Villarreal CF en Copa del Rey, jugaste 90 minutos. Nota: 7.8/10. Goles: 0. Asistencias: 1. Marcador: 1-0 (Real Betis-Villarreal CF). En el 85, un rechace te cayó a los pies dentro del área y, con la portería a tiro, se la cediste a Javier Aguirre, que no perdonó. El Benito Villamarín se vino abajo y Paco Pastor celebró el pase más que el propio gol.
-   · Señalar al capitán ante la prensa — +Vestuario, +Afición
-   · Reivindicar tu generosidad en el área — +Fama, riesgo de polémica
-   ➤ Quitarle importancia y pensar en semifinales — Perfil bajo
-   · Llamar a tu padre Ismael Hassan nada más pisar el túnel de vestuarios — Vida personal
-   ⮑ Paco Pastor asiente satisfecho en el vestuario: "Esa cabeza fría es la que necesito en marzo."
-   Δ ánimo +4, media +3, entrenador +7, vestuario +2
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 530.240€
-
-### [sem 38 · Febrero 2030] (vida) La pregunta de mamá
-Fátima Roig te pilla a solas en la cocina, mientras rebañas un bocadillo de pie como cuando tenías quince años. Te mira fijo y suelta: "Dani, llevas semanas con esa cara rara. ¿Esto te está pesando más de lo que cuentas?" No es un reproche, es la mirada de siempre.
-   ➤ Abrirte del todo — +vínculo, vulnerabilidad real
-   · Quitarle hierro con una broma — proteges la distancia
-   · Reconocer solo una parte — término medio, a medias sincero
-   ⮑ (sin reacción)
-   Δ ánimo +6
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 530.240€
-
-### [sem 38 · Febrero 2030] (partido) Noche europea
-Europa League - Octavos de final, ante Feyenoord. Roban el balón: contragolpe, dos contra uno, la pelota es tuya. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Disparo raso al primer palo — Rápido y directo
-   · Hacer una pared con el compañero — Juego combinado
-   ➤ Intentar un sombrero al defensa — Para la galería
-   ⮑ FALLO: El balón se te va largo y el defensa se queda con él.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 530.240€
-
-### [sem 38 · Febrero 2030] (partido) Octavos de Europa League: Betis 2-0 Feyenoord
-Ante Feyenoord en Europa League, jugaste 85 minutos. Nota: 7.8/10. Goles: 1. Asistencias: 0. Marcador: 2-0 (Real Betis-Feyenoord). En el 31' perdiste un dos contra uno tras robo del Feyenoord, pero el Betis resistió y, en la segunda parte, enganchaste un zurdazo que hizo explotar el Benito Villamarín. Paco Pastor te sacó en el 85' con el partido ya resuelto y una palmada en la espalda. El Betis avanza de ronda.
-   ➤ Celebra con la grada — +Afición
-   · Reconoce el fallo del minuto 31 en zona mixta — Autocrítica pública
-   · Dedica el gol a Javier Aguirre por su confianza — +Vestuario
-   · Llama a tu familia nada más pisar el vestuario — Momento personal
-   ⮑ Te acercas al fondo y señalas el escudo; un grupo de aficionados corea tu nombre durante un buen rato.
-   Δ forma +2, ánimo +4, fama +4, media +3, afición +6
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 530.240€
-
-### [sem 39 · Abril 2030] (partido) La sorpresa que nadie quiere ser
-Copa del Rey - Semifinal, a vida o muerte, ante Osasuna. Recibes un balón filtrado y te plantas solo ante el portero. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   ➤ Fingir el disparo y regatear al portero — Sangre fría
-   · Disparar con la pierna que no es la tuya — Sin tiempo para cambiar
-   · Ceder al compañero de la derecha — Mejor posicionado que tú
-   ⮑ FALLO: El portero no pica y te arrebata el balón de los pies.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 558.090€
-
-### [sem 39 · Abril 2030] (partido) Semifinal de Copa: noche grande en el Villamarín
-Ante Osasuna en Copa del Rey, jugaste 90+2 minutos. Nota: 7.8/10. Goles: 1. Asistencias: 1. Marcador: 3-1 (Real Betis-Osasuna). El Villamarín se vació en gritos cuando marcaste tras un pase de Javier Aguirre, pero en el 90+1 quisiste rematar la faena tú solo: recibiste un balón filtrado, te plantaste ante el portero y el meta navarro te adivinó el disparo, despejando con el pie. Osasuna llegó a marcar en el contragolpe siguiente, aunque ya no alcanzó para evitar el pase a la final. Paco Pastor, igualmente, te abrazó al pitido final: "Hoy has tirado del equipo."
-   · Reírte de tu propio fallo — Humor en zona mixta
-   · Pedir perdón al vestuario por el susto — Autocrítica con los tuyos
-   · Dedicar el gol a tu familia en redes — Momento personal
-   ➤ Avisar a Paco Pastor de que quieres aprender de ese fallo — Autoexigencia ante el entrenador Paco Pastor
-   ⮑ Paco Pastor asiente serio: "Eso que dices es lo que te va a llevar arriba. Mañana lo trabajamos."
-   Δ forma +3, ánimo +2, media +2, entrenador +7
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 558.090€
-
-### [sem 39 · Abril 2030] (representante) Iñaki Zubiaurre te advierte
+### [sem 26 · Diciembre 2028] (representante) Iñaki Zubiaurre te advierte
 "Hay un club que quiere ficharte, pero me llegó información: crisis financiera, vestuario tóxico, entrenador que sale en junio. La pasta es buena, pero el proyecto es un desastre. Mi consejo: pasa. ¿Confías en mí o quieres verlo tú?"
    ➤ Confiar en Iñaki Zubiaurre — Rechazar la oferta
    · Quiero escucharlos igual — Tomar mi propia decisión
    ⮑ Iñaki Zubiaurre sonríe aliviado: "Gracias por fiarte. No te voy a fallar."
    Δ representante +5
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 558.090€
+   📊 Real Betis · rol titular · media 88 · forma 100 · ánimo 99 · entrenador 98 · vestuario 100 · afición 100 · fama 71 · dinero 133.940€
 
-### [sem 39 · Abril 2030] (partido) Noche europea
-Europa League - Cuartos de final, ante Rangers FC. Recibes dentro del área con dos defensas encima y un compañero llamado Ignacio Sagasta libre al segundo palo. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Ignacio Sagasta · Compañero de equipo: 20 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
-   ➤ Probar la vaselina por encima del portero adelantado — Todo o nada, para la galería
-   · Cederla atrás para el que llega desde segunda línea — Confiar en que remate mejor colocado
-   · Proteger el balón pegado a la banda hasta ganar la falta — Sin riesgo: buscar los segundos, no el gol
-   ⮑ ÉXITO: La vaselina sale perfecta y el balón cae justo bajo el larguero. ¡Golazo!
+### [sem 26 · Diciembre 2028] (partido) Noche europea
+Europa League - Fase de grupos, ante Ajax. Te quedas con el balón en la esquina del área, con el portero un paso adelantado. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Quedarte cerca esperando un posible rebote — Paciencia: estar en el sitio correcto
+   ➤ Amagar el cuerpo hacia un lado y salir por el otro — Ganarte medio metro con un solo gesto
+   ⮑ ÉXITO: El quiebro deja completamente sentado al defensa. Definición con toda tranquilidad. ¡Gol!
+   Δ fama +2
+   📊 Real Betis · rol titular · media 88 · forma 100 · ánimo 99 · entrenador 98 · vestuario 100 · afición 100 · fama 73 · dinero 133.940€
+
+### [sem 26 · Diciembre 2028] (partido) Noche de Europa: Betis - Ajax
+Ante Ajax en Europa League, jugaste 90 minutos. Nota: 8.3/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Ajax). Minuto 22: te quedas con el balón en la esquina del área, el portero adelantado, y la clavas a la red. El Benito Villamarín se viene abajo y el Betis certifica el pase a octavos.
+   · Dedica el gol a tu familia — +Moral, momento íntimo
+   ➤ Reparte el mérito en la rueda de prensa — +Vestuario
+   · Presume en redes con un vídeo del gol — +Fama, -discreción
+   · Vas directo a felicitar a Paco Pastor — +Entrenador
+   ⮑ Dices que el gol 'es de todos' y Javier Aguirre te da un golpe en el hombro al pasar: 'Así se habla, chaval'.
+   Δ media +3, entrenador +4, vestuario +7
+   📊 Real Betis · rol titular · media 91 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 73 · dinero 133.940€
+
+### [sem 27 · Enero 2029] (partido) Betis - Celta: noche redonda en el Villamarín... jugando fuera
+Ante Celta de Vigo en La Liga, jugaste 82 minutos. Nota: 8.2/10. Goles: 1. Asistencias: 1. Marcador: 3-1 (Real Betis-Celta de Vigo). Rematas de volea el centro de Javier Aguirre en el 34' y el campo entero grita tu nombre; Paco Pastor te aplaude desde la banda cuando sales cambiado. Fernando Ferreiro, que empezó en el banquillo, te choca la mano al llegar al vestuario.
+   · Dedica el gol a tu familia en redes — +Afición, +Familia
+   · Vacila a Fernando Ferreiro en el vestuario — Pique sano, +Vestuario
+   · Minimízalo ante la prensa — Perfil bajo, +Entrenador
+   ➤ Llama a Iñaki Zubiaurre para hablar de un posible patrocinio — Jugada de negocio
+   ⮑ Zubiaurre no tarda ni diez minutos en escribirte: "Con esta actuación, mañana me llueven ofertas. Déjame mover ficha".
+   Δ fama +2, media +3, dinero +8000
+   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 96 · entrenador 100 · vestuario 100 · afición 100 · fama 75 · dinero 162.750€
+
+### [sem 27 · Enero 2029] (vida) 500.000 razones
+Entra la notificación del banco: el bono de fichaje, 500.000 €, ya está en tu cuenta. Te quedas mirando la pantalla del móvil sin decir nada, hasta que tu padre Ismael Hassan, Ismael Hassan, te pregunta desde la cocina si va todo bien.
+   · Enseñarles la cifra en el salón, ya — Momento familiar, en caliente
+   · Llamar primero a Iñaki Zubiaurre para cuadrarlo todo — Cabeza antes que corazón
+   ➤ Guardar silencio y repartirlo tú mismo, sin avisar a nadie — Un gesto a solas
+   ⮑ Haces una transferencia a la cuenta de tus padres sin decir una palabra. Tres días después tu madre te llama llorando: "¿Esto qué es, Dani?"
+   Δ ánimo +7, dinero +40000
+   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 75 · dinero 202.750€
+
+### [sem 27 · Enero 2029] (partido) La sorpresa que nadie quiere ser
+Copa del Rey - Octavos, a vida o muerte, ante Valencia CF. Recibes un balón filtrado y te plantas solo ante el portero. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Definir raso, pegado al palo contrario — Buscar la precisión antes que la potencia
+   ➤ Controlarla con calma antes de decidir — Ganar un segundo extra pensando la jugada
+   · Amagar el centro y quedarte con el balón — Sorprender a la defensa con un cambio de idea
+   ⮑ ÉXITO: Controlas con calma y sirves un pase preciso a un compañero llamado Dani Barragán mejor colocado.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 94 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 75 · dinero 202.750€
+
+### [sem 27 · Enero 2029] (partido) Octavos de Copa: Real Betis 1-0 Valencia CF
+Ante Valencia CF en Copa del Rey, jugaste 84 minutos. Nota: 7.8/10. Goles: 0. Asistencias: 1. Marcador: 1-0 (Real Betis-Valencia CF). En el minuto 27 recibiste un balón filtrado y, con el portero ya batido en tu carrera, preferiste poner el balón atrás para que Fernando Ferreiro empujara a gol. El Benito Villamarín se vino abajo y el Betis sella su pase a cuartos. Paco Pastor, en la rueda de prensa, dice que esa asistencia "vale más que un gol".
+   · Reivindica la jugada — +Fama, roce con Ferreiro
+   ➤ Cede todo el mérito a Ferreiro — +Vestuario
+   · Lo celebras con tu familia por videollamada — Momento personal
+   · Vas directo a hablar con Paco Pastor — +Entrenador
+   ⮑ En zona mixta repites tres veces que el gol es suyo, que tú solo "hiciste lo fácil". Ferreiro te da un abrazo de esos que duran de más y te dice al oído: "Te debo una, chaval".
+   Δ ánimo +3, fama −1, media +3, vestuario +7
+   📊 Real Betis · rol titular · media 97 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 74 · dinero 202.750€
+
+### [sem 28 · Febrero 2029] (partido) La sorpresa que nadie quiere ser
+Copa del Rey - Cuartos, a vida o muerte, ante Celta de Vigo. Recibes dentro del área con dos defensas encima y un compañero llamado Tomás Ferrer libre al segundo palo. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Tomás Ferrer · Compañero de equipo: 35 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
+   · Rematar de volea el balón botando — Todo o nada
+   · Pisar la pelota y buscar el hueco — Una pausa que descoloca
+   ➤ Girarte rápido y buscar el pase de la muerte — Servir en lugar de rematar
+   ⮑ ÉXITO: Te giras y pones un pase atrás perfecto; tu compañero no falla.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 97 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 74 · dinero 228.740€
+
+### [sem 28 · Febrero 2029] (partido) Betis 2-1 Celta: cuartos superados y asistencia de oro
+Ante Celta de Vigo en Copa del Rey, jugaste 84 minutos. Nota: 7.8/10. Goles: 0. Asistencias: 1. Marcador: 2-1 (Real Betis-Celta de Vigo). En el minuto 8 recibiste dentro del área con dos centrales encima y, en vez de forzar el disparo, pusiste el balón al segundo palo para que Fernando Ferreiro empujara a gol; el Benito Villamarín se vino arriba y Paco Pastor no paró de aplaudir desde la banda. El Betis sufrió en la segunda mitad pero resistió para meterse en semifinales.
+   ➤ Destaca la asistencia en zona mixta — +Vestuario, +Prensa
+   · Habla de que pudiste chutar tú — Autocrítica, +Entrenador
+   · Celebra con la grada antes de entrar al túnel — +Afición, riesgo vestuario
+   · Llama a tu padre Ismael Hassan nada más pisar el vestuario — Momento personal
+   ⮑ Un periodista local, Rubén Cano, que sigue al filial desde hace años, sonríe y anota: "Eso no se ve todos los días, dar esa asistencia con 18 años." Fernando Ferreiro te da un abrazo de oso al pasar.
+   Δ ánimo +3, fama +4, media +2, vestuario +5
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 78 · dinero 228.740€
+
+### [sem 28 · Febrero 2029] (especial) Gracias por decírmelo tú
+Paco Pastor te pide quedarte un momento después del entrenamiento, cuando ya todos se han ido a los vestuarios. "Aquella vez que viniste a contármelo tú, sin que nadie te obligara... no se me ha olvidado", dice mientras guarda la carpeta de ejercicios. Te cuenta que hay una decisión importante sobre minutos y renovaciones donde quiere tu opinión antes de hablarlo con el club.
+   · Hablar con total franqueza — +Entrenador, compromiso real
+   ➤ Medir tus palabras por si acaso — Jugar seguro
+   · Recordarle aquel momento y pedirle lo mismo a cambio — Cobrar el favor
+   ⮑ Paco Pastor te escucha pero frunce el ceño un segundo. "Pensaba que conmigo no tenías que cuidarte las espaldas", suelta, algo decepcionado.
+   Δ ánimo −1, entrenador −2
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 98 · vestuario 100 · afición 100 · fama 78 · dinero 228.740€
+
+### [sem 28 · Febrero 2029] (partido) Noche europea
+Europa League - Octavos de final, ante Olympiacos. Un rechace te cae a los pies dentro del área, con la portería a tiro. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   ➤ Fingir el disparo y regatear al portero — Sangre fría
+   · Disparar con la pierna que no es la tuya — Sin tiempo para cambiar
+   · Ceder al compañero de la derecha — Mejor posicionado que tú
+   ⮑ ÉXITO: Tragas al portero con un amago de cine y empujas el balón a la red. ¡Qué clase!
    Δ fama +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 558.090€
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 98 · vestuario 100 · afición 100 · fama 81 · dinero 228.740€
 
-### [sem 39 · Abril 2030] (partido) Eliminados en los penaltis
-Ante Rangers FC en Europa League, jugaste 90 minutos. Nota: 6.8/10. Goles: 1. Asistencias: 0. Marcador: 1-1 (3-4 en penaltis) (Real Betis-Rangers FC). En el minuto 17 recibiste dentro del área con dos defensas encima y, en vez de centrar al compañero que pedía el segundo palo, te la jugaste con un sombrero que acabó en gol: el Villamarín se vino abajo. Rangers empató antes del descanso y ya no hubo manera; en la tanda, Paco Pastor te miró desde la banda sin decir nada mientras caías eliminado de Europa.
-   ➤ Dar la cara en sala de prensa — +Afición, foco mediático
-   · Encerrarte en el vestuario — Autocrítica dura, sin palabras
-   · Hablar con Paco Pastor en el túnel — Pedir explicaciones, riesgo de roce
-   · Llamar a tu madre Fátima Roig al salir del estadio — Desahogo familiar, lejos de focos
-   ⮑ Un periodista con gafas de pasta, Ramón Istúriz, te suelta: "¿El sombrero fue necesidad o postureo?". Respondes sin esquivar la pregunta y la grada lo valora.
-   Δ ánimo −1, fama +4, afición +5
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 98 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 558.090€
+### [sem 28 · Febrero 2029] (partido) Eliminados en el Villamarín
+Ante Olympiacos en Europa League, jugaste 82 minutos. Nota: 6.5/10. Goles: 1. Asistencias: 0. Marcador: 0-2 (Real Betis-Olympiacos). En el 28' recibiste un rechace dentro del área y la clavaste con un sombrero al portero que hizo enloquecer al Villamarín, pero el Olympiacos remató mejor y el Real Betis cae eliminado. Paco Pastor, serio en la rueda de prensa, repite: "Hoy no ha sido suficiente, y lo sabemos."
+   · Asumirlo en la rueda de prensa — Autocrítica pública
+   ➤ Consolar al vestuario — +Vestuario, -foco personal
+   · Celebrar el gol en redes igualmente — Polémica, +seguidores
+   · Llamar a tu padre Ismael Hassan al volver al vestuario — Desahogo familiar
+   ⮑ Javier Aguirre te palmea la espalda: "Ese gol vale, aunque hoy no sirva de nada. Sigue así."
+   Δ ánimo +3, fama −1, media +2, vestuario +6
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 98 · vestuario 100 · afición 100 · fama 80 · dinero 228.740€
 
-### [sem 40 · Mayo 2030] (partido) El momento decisivo
-Partido importante en marcha, ante Real Valladolid. Controlas un pase largo en carrera, con el central rival pegado a ti a un metro. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Raúl Mendoza · Compañero de equipo: 24 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
+### [sem 29 · Abril 2029] (partido) El momento decisivo
+Partido en marcha ante Elche CF. Roban el balón: contragolpe, dos contra uno, la pelota es tuya. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Rematar de primeras sin controlar — No le das tiempo al portero a colocarse
+   · Ganar la línea de fondo y centrar atrás — Buscar el pase de la muerte en vez del gol propio
+   ➤ Aguantar el balón de espaldas y pedir apoyo — Sin riesgo: dar tiempo a que suba el equipo
+   ⮑ ÉXITO: Proteges el balón de espaldas hasta que llega apoyo y reinicias la jugada con calma.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 98 · vestuario 100 · afición 100 · fama 80 · dinero 256.590€
+
+### [sem 29 · Abril 2029] (partido) Real Betis 2-1 Elche CF — Jornada 34
+Ante Elche CF en La Liga, jugaste 85 minutos. Nota: 6.8/10. Goles: 0. Asistencias: 0. Marcador: 2-1 (Real Betis-Elche CF). En el 41', robaste y lanzaste el contragolpe en dos contra uno, pero el pase final no llegó a buen puerto. El Villamarín respiró tranquilo con el gol de Javier Aguirre, y Paco Pastor te sacó aplaudiendo el esfuerzo en el 85'.
+   · Reconócelo en la mixta — Autocrítica pública
+   ➤ Bromea con Aguirre — +Vestuario
+   · Llama a tu padre Ismael Hassan — Desahogo familiar
+   · Revisa la jugada tú solo — Autoexigencia
+   ⮑ Javier Aguirre te revuelve el pelo en la ducha: "Menos mal que marqué yo, que si llega a depender de tu pase seguimos empatados". Risas generales, el vestuario respira ligero tras los tres puntos.
+   Δ ánimo +2, media +1, vestuario +4
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 98 · vestuario 100 · afición 100 · fama 80 · dinero 256.590€
+
+### [sem 29 · Abril 2029] (especial) La rodilla que lo para todo
+Rotura parcial de ligamento en un apoyo mal hecho, sin contacto. Unos 3 meses de baja (menos si todo va bien) y la pregunta que nadie dice en voz alta: ¿volverás al mismo nivel?
+   ➤ Rehabilitación agresiva, sin saltarte nada — Disciplina total · baja de unos 3 meses
+   · Volver antes de lo recomendado — Riesgo de recaída · de 2 a 3 meses de baja
+   ⮑ Fisioterapeutas, gimnasio y paciencia: tres meses de baja contados día a día, sin atajos.
+   Δ forma −8, ánimo +2, entrenador +3
+   📊 Real Betis · rol titular · media 99 · forma 92 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 80 · dinero 256.590€
+
+### [sem 29 · Abril 2029] (vida) Susana Nieto te presenta el plan de recuperación
+Susana Nieto, el fisio del club, te sienta en la camilla con un calendario impreso: 3 meses por delante, sesiones diarias y un último día marcado en rojo. "Esto depende de ti tanto como de mí", te dice sin sonreír.
+   · Seguir el protocolo al pie de la letra — Sin atajos, con paciencia
+   ➤ Pedirle acelerar con un tratamiento intensivo — Arriesgar para volver antes
+   · Tomártelo con calma, sin forzar nada — Cuidar la cabeza también
+   ⮑ ÉXITO: El cuerpo responde mejor de lo previsto. Susana Nieto cambia el calendario: ganas casi un mes.
+   Δ ánimo +3
+   📊 Real Betis · rol titular · media 99 · forma 92 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 80 · dinero 256.590€
+
+### [sem 29 · Abril 2029] (vida) Vas por delante del plan
+Susana Nieto revisa los números de la semana y levanta la vista, medio sorprendido: tu pierna responde mejor de lo que esperaba. "Si sigues así, tendremos que mover la fecha del alta."
+   · Pedirle adelantar el alta — Aprovechar el buen momento
+   · Mantener el calendario, sin arriesgar — Volver al cien por cien
+   ➤ Volver a tocar balón con el grupo (sin contacto) — Un empujón de moral
+   ⮑ El primer pase con tus compañeros, aunque sea suave, te devuelve una sensación que ya habías olvidado.
+   Δ ánimo +5, vestuario +3
+   📊 Real Betis · rol titular · media 99 · forma 92 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 80 · dinero 256.590€
+
+### [sem 29 · Abril 2029] (representante) La oferta del Borussia Dortmund
+Ya no es un rumor. Iñaki Zubiaurre entra con papeles y la voz temblando: el Borussia Dortmund ha puesto una oferta formal, con contrato, ficha y proyecto. "Esto es lo que llevabas esperando. Pero tienes que decidir ya."
+   · Fichar por el Borussia Dortmund — El salto que llevabas esperando
+   · Usar la oferta para negociar quedarte — Jugar tus cartas
+   ➤ Rechazarla: aquí hay una historia por terminar — La grada lo va a agradecer
+   ⮑ Lo anuncias en la zona mixta con una frase corta. En el estadio, el domingo siguiente, hay una pancarta nueva con tu nombre y la palabra "gracias".
+   Δ ánimo +1, entrenador +3, afición +7
+   📊 Real Betis · rol titular · media 99 · forma 92 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 80 · dinero 256.590€
+
+### [sem 29 · Abril 2029] (partido) Desde la grada: Real Betis gana ante Villarreal CF
+Copa del Rey ante Villarreal CF. No juegas: sigues de baja (te quedan unos 2 meses). Marcador: 2-0 (Real Betis-Villarreal CF). Lo ves desde fuera, con la rodilla vendada y el partido pasando sin ti.
+   ➤ Animar al equipo desde la grada — Estar presente aunque no juegues
+   · Verlo en casa y centrarte en la rehabilitación — Cabeza fría, sin distracciones
+   · Escribir un mensaje de ánimo al vestuario — Liderar sin pisar el campo
+   ⮑ Los compañeros te buscan con la mirada al acabar. Un abrazo rápido: se nota que cuentan contigo.
+   Δ ánimo +2, vestuario +3
+   📊 Real Betis · rol titular · media 99 · forma 89 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 80 · dinero 256.590€
+
+### [sem 30 · Mayo 2029] (vida) La prueba de esfuerzo: ¿alta médica?
+Último día marcado en rojo. Susana Nieto te prepara la prueba final: saltos, cambios de ritmo, cargas completas. Medio equipo mira por la ventana del gimnasio. Todo depende de cómo salga hoy.
+   ➤ Pedir el alta hoy mismo — Estás listo, lo sientes
+   · Esperar unos días más por seguridad — Cero riesgos
+   · Preguntar al míster si te quiere ya en la convocatoria — Que decida el club
+   ⮑ ÉXITO: Susana Nieto cierra el informe y firma el alta. "Ve a por ello, campeón." El gimnasio te aplaude.
+   Δ forma +3, ánimo +8, vestuario +3
+   📊 Real Betis · rol titular · media 99 · forma 94 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 80 · dinero 284.440€
+
+### [sem 30 · Mayo 2029] (representante) Firmas con una marca que empieza a crecer
+Vantia, una marca deportiva pequeña pero con ambición, te ofrece un acuerdo modesto: ropa, algo de dinero y la promesa de "crecer juntos". No es nada espectacular, pero es tuyo.
+   · Firmar el acuerdo — Empezar la relación
+   · Pedir que tu representante Iñaki Zubiaurre lo revise antes — Prudencia
+   ➤ Rechazarlo, prefieres esperar algo mejor — No tener prisa
+   ⮑ Lo rechazas con educación. Tu representante asiente sin reproches, aunque en voz baja murmura que 'esas oportunidades no se repiten'.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 94 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 80 · dinero 284.440€
+
+### [sem 30 · Mayo 2029] (partido) Desde la grada: Real Betis empata ante Getafe CF
+La Liga ante Getafe CF. No juegas: sigues de baja (te quedan unos 1 mes). Marcador: 1-1 (Real Betis-Getafe CF). Lo ves desde fuera, con la rodilla vendada y el partido pasando sin ti.
+   · Animar al equipo desde la grada — Estar presente aunque no juegues
+   · Verlo en casa y centrarte en la rehabilitación — Cabeza fría, sin distracciones
+   ➤ Escribir un mensaje de ánimo al vestuario — Liderar sin pisar el campo
+   ⮑ El mensaje llega al grupo en segundos. Alguien lo comparte en redes y la afición lo aplaude.
+   Δ fama +1, vestuario +4
+   📊 Real Betis · rol titular · media 99 · forma 94 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 81 · dinero 284.440€
+
+### [sem 31 · Julio 2029] (vida) Un pinchazo en el entreno
+Sientes un tirón en el muslo durante el rondo. El fisio Susana Nieto te mira: "Para si quieres llegar sano al domingo".
+   · Parar y hacer caso — Un par de días en el gimnasio
+   ➤ Seguir como si nada — No quieres perder sitio
+   ⮑ FALLO: El tirón se convierte en molestia y pierdes varios días de trabajo.
+   Δ forma −6, ánimo −3
+   📊 Real Betis · rol titular · media 99 · forma 90 · ánimo 94 · entrenador 100 · vestuario 100 · afición 100 · fama 81 · dinero 312.290€
+
+### [sem 31 · Julio 2029] (vida) Vuelves de vacaciones
+El vestuario del Real Betis vuelve del verano: bronceados, anécdotas y algún kilo de más. Paco Pastor os pesa uno a uno con el cronómetro en la mano.
+   ➤ Presentarte en forma — Trabajaste en la playa
+   · Ir despacio y ponerte a punto — Con calma
+   ⮑ ÉXITO: Diez sobre diez en la báscula. El míster Paco Pastor te pone de ejemplo delante de todos.
+   Δ forma +4, ánimo +3, entrenador +3
+   📊 Real Betis · rol titular · media 99 · forma 94 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 81 · dinero 312.290€
+
+### [sem 31 · Julio 2029] (vida) Un amistoso que se calienta más de la cuenta
+Lo que iba a ser un amistoso tranquilo se convierte en un partido de codazos y protestas contra un rival llamado Jon Roig histórico. El árbitro, de mutuo acuerdo entre clubes, pierde el control del choque.
+   · Mantener la cabeza fría — No entrar al trapo
+   · Responder a las provocaciones — Que no se confundan
+   ➤ Calmar a tus propios compañeros — Liderazgo silencioso
+   ⮑ Vas de uno en uno, hablando bajito. Al final, el equipo vuelve a jugar con cabeza, y el míster te lo agradece con una palmada.
+   Δ entrenador +2, vestuario +3
+   📊 Real Betis · rol titular · media 99 · forma 94 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 81 · dinero 312.290€
+
+### [sem 31 · Julio 2029] (vida) Retraso eterno en el aeropuerto
+El vuelo de vuelta de la gira se retrasa seis horas. La plantilla entera acampa en la sala de espera, entre partidas de cartas, siestas en el suelo y quejas al de la aerolínea.
+   👤 QUIÉN ES — Ismael Fuentes · Compañero de equipo: 26 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
+   ➤ Organizar juegos para matar el tiempo — Con Ismael Fuentes de árbitro
+   · Aprovechar para dormir — Recuperar horas de sueño
+   · Quejarte en redes de la aerolínea — Que se enteren
+   ⮑ Montas un torneo de piedra-papel-tijera con eliminatorias y premios absurdos. Seis horas pasan volando, y ni se nota el retraso.
+   Δ ánimo +3, vestuario +4
+   📊 Real Betis · rol titular · media 99 · forma 94 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 81 · dinero 312.290€
+
+### [sem 31 · Julio 2029] (vida) Cena de equipo y novatada
+El vestuario del Real Betis organiza la cena de inicio de temporada y Javier Aguirre te señala: "Al nuevo le toca cantar".
+   ➤ Cantar sin vergüenza — Lo que salga
+   · Negociar: pagar la ronda — La salida comprada
+   · Escaquearte al baño — Arriesgado
+   ⮑ ÉXITO: Cantas fatal, pero con tanta gracia que te ovacionan de pie. Ya eres uno más.
+   Δ ánimo +4, vestuario +6
+   📊 Real Betis · rol titular · media 99 · forma 94 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 81 · dinero 312.290€
+
+### [sem 31 · Julio 2029] (entrenamiento) Vuelta al Benito Villamarín
+La temporada pasada se cerró con solo 4 partidos y 1 gol, pero fue suficiente para que todo el Villamarín aprenda tu nombre y el vestuario te adopte como uno de los suyos. Ahora vuelves al estadio para el reconocimiento médico de pretemporada: el doctor Fermín Casals te mira la báscula y suelta una carcajada: "Dos kilos menos que en mayo, Hassan, ¿qué has hecho, correr detrás del Dortmund para decirles que no otra vez?". El césped recién cortado huele a nuevo curso, y Paco Pastor te espera en la puerta del túnel con los brazos cruzados y una sonrisa que ya anticipa lo que viene.
+   · Bromear con el doctor — +Ánimo, +Vestuario
+   ➤ Ir directo a hablar con Paco Pastor — +Entrenador, presión real
+   ⮑ Pastor te pone la mano en el hombro: "Este año el peso lo llevas tú, Hassan. Sin excusas." No suena a amenaza, suena a confianza con hipoteca.
+   Δ ánimo +2, fama +3, entrenador +5
+   📊 Real Betis · rol titular · media 99 · forma 94 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 84 · dinero 312.290€
+
+### [sem 32 · Agosto 2029] (representante) Iñaki Zubiaurre te llama con un secreto
+"Hay dos clubes preguntando por ti para el mercado de verano. No te digo cuáles por teléfono, pero uno te va a sonar." Te deja con la miel en los labios y cuelga.
+   · Exigirle los nombres ahora mismo — O se hace el interesante o suelta prenda
+   · Decirle que estás a gusto donde estás — Lealtad, por ahora
+   ➤ Pedirle que lo filtre a la prensa para subir tu caché — Jugada de riesgo
+   ⮑ FALLO: Se descontrola: te acusan de forzar la salida. La grada te mira raro en el siguiente entrenamiento.
+   Δ ánimo −3, vestuario −3, afición −6
+   📊 Real Betis · rol titular · media 99 · forma 96 · ánimo 94 · entrenador 100 · vestuario 97 · afición 94 · fama 84 · dinero 340.140€
+
+### [sem 32 · Agosto 2029] (entrenamiento) La prensa recuerda tu racha reciente
+Jueves por la tarde, sesión de prensa previa al Real Sociedad. Un periodista llamado Adrián Barragán saca a relucir lo de Iñaki Zubiaurre: "Dani, ¿cómo llevas que la grada aún comente lo del secreto filtrado?" El silencio en la sala se alarga un segundo de más. Notas las miradas de Javier Aguirre y Fernando Ferreiro desde el fondo, esperando cómo respondes antes de meterte de lleno en la cabeza del partido.
+   ➤ Responder con una broma y desviar el tema hacia el partido — Quitarle hierro en público, centrarte en la Real Sociedad
+   · Ser sincero: admitir que te equivocaste con la filtración — Dar la cara, aunque incomode
+   · Cortar en seco: "Hoy solo pienso en el partido" — No dar más cuerda al tema
+   ⮑ La sala se ríe, el periodista lo deja estar. Javier Aguirre te guiña un ojo desde el fondo: "Bien jugado".
+   Δ ánimo +3, fama +1, vestuario +2
+   📊 Real Betis · rol titular · media 99 · forma 96 · ánimo 97 · entrenador 100 · vestuario 99 · afición 94 · fama 85 · dinero 340.140€
+
+### [sem 33 · Septiembre 2029] (partido) El momento decisivo
+Partido en marcha ante Real Sociedad. Recibes en carrera por banda, con el lateral rival ya tarde para cubrirte. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Picar al hueco entre los dos centrales — Buscar el desmarque justo antes del pase
+   · Intentar la chilena si el balón te queda en el aire — Todo o nada, jugada para el recuerdo
+   ➤ Tocar atrás para reiniciar antes de atacar de nuevo — Sin riesgo: guardar la posesión del equipo
+   ⮑ FALLO: El pase atrás sale mal y el rival roba el balón en una zona peligrosa.
+   Δ forma −1
+   📊 Real Betis · rol titular · media 99 · forma 97 · ánimo 94 · entrenador 100 · vestuario 99 · afición 94 · fama 85 · dinero 367.990€
+
+### [sem 33 · Septiembre 2029] (partido) Betis - Real Sociedad: puñalada en el minuto 4
+Ante Real Sociedad en La Liga, jugaste 85 minutos. Nota: 7.2/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Real Sociedad). En el minuto 4 recibes en carrera por banda, el lateral llega tarde y la metes cruzada, pero el guardameta saca una mano providencial y la manda a córner. El Benito Villamarín ruge igualmente el gol que llega después, y Paco Pastor te aplaude desde la banda al cambiarte en el 85.
+   · Sé sincero en zona mixta — Hablas del fallo inicial
+   · Dedica el gol a tu hermano — Gesto familiar en redes
+   ➤ Vacila con Javier Aguirre en el vestuario — Humor tras el susto inicial
+   · Vete directo a hablar con Marcos Bassa — Cuidar la forma física
+   ⮑ El capitán te revuelve el pelo: "Como falles esa otra vez, te pongo a calentar yo mismo."
+   Δ ánimo +3, media +2, vestuario +6
+   📊 Real Betis · rol titular · media 99 · forma 97 · ánimo 97 · entrenador 100 · vestuario 100 · afición 94 · fama 85 · dinero 367.990€
+
+### [sem 34 · Octubre 2029] (partido) El momento decisivo
+Partido en marcha ante Celta de Vigo. Te llega un centro raso al segundo palo, sin marca encima. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Rematar de volea el balón botando — Todo o nada
+   ➤ Pisar la pelota y buscar el hueco — Una pausa que descoloca
+   · Girarte rápido y buscar el pase de la muerte — Servir en lugar de rematar
+   ⮑ ÉXITO: Pisas la pelota, el defensa se queda clavado y defines con calma.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 94 · entrenador 100 · vestuario 100 · afición 94 · fama 85 · dinero 395.840€
+
+### [sem 34 · Octubre 2029] (partido) Betis 3 - 1 Celta: zarpazo tempranero de Dani Hassan
+Ante Celta de Vigo en La Liga, jugaste 85 minutos. Nota: 7.8/10. Goles: 1. Asistencias: 0. Marcador: 3-1 (Real Betis-Celta de Vigo). En el minuto 3 te llega un centro raso al segundo palo, sin marca encima, y la metes a la primera: el Benito Villamarín explota antes de que acabes de celebrarlo. Paco Pastor te aplaude desde la banda y Javier Aguirre te abraza como si llevarais diez años juntos.
+   ➤ Rueda de prensa con calma — +Imagen pública
+   · Dedicárselo a tu hermano — +Familia
+   · Bromear con Fernando Ferreiro — Riesgo vestuario
+   · Entrenar extra con Marcos Bassa — +Forma, discreto
+   ⮑ El periodista Rubén Cano, de la radio local que te sigue desde los juveniles, sonríe: "Ese gol tempranero mata partidos, ¿no crees?". Tú asientes y la grada que te escucha por megafonía aplaude.
+   Δ fama +4, media +3, afición +5
+   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 94 · entrenador 100 · vestuario 100 · afición 99 · fama 89 · dinero 395.840€
+
+### [sem 34 · Octubre 2029] (vida) Demasiado bonito para ser verdad
+Alicia Cabrera tiene una foto de perfil de revista, 312 seguidores y una insistencia sospechosa.
+   · Bajar a ver — Curiosidad, nada más
+   ➤ Enseñar el chat al mister — Por si acaso
+   · Bloquear y seguir con lo tuyo — Cero riesgo
+   ⮑ La respuesta llega enseguida: «Este usuario ha restringido los mensajes»
+   Δ entrenador +3, reputación +2
+   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 94 · entrenador 100 · vestuario 100 · afición 99 · fama 89 · dinero 395.840€
+
+### [sem 34 · Octubre 2029] (representante) El pan de cada día
+Marcos Torreblanca, el utillero Marcos Torreblanca, te pasa el móvil en el vestuario: "Te busca un tal Benigno, dice que es tu socio". Es el panadero del local que alquilaste, y por su voz entrecortada algo no va bien. "Dani, perdona que te moleste... el banco me aprieta con la reforma del horno, y había pensado... ¿podrías esperar un par de meses sin cobrarme la renta?"
+   · Perdonarle dos meses de renta — -Dinero, +Reputación
+   ➤ Ofrecerle un préstamo a devolver sin intereses — Arriesgas dinero, +vínculo
+   · Explicarle que el contrato es el contrato — Frialdad, pero sin pérdidas
+   · Pedirle a Iñaki Zubiaurre que negocie en tu nombre — Delegas, resultado incierto
+   ⮑ Benigno casi se pone a llorar: "No hace falta que seas tan buena persona, de verdad". Te manda un pan recién hecho con tu dorsal dibujado con semillas de sésamo.
+   Δ ánimo +4, fama +5, dinero −2000
+   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 98 · entrenador 100 · vestuario 100 · afición 99 · fama 94 · dinero 393.840€
+
+### [sem 34 · Octubre 2029] (partido) Noche europea
+Europa League - Fase de grupos, ante Ajax. Un córner cerrado te cae en la cabeza, rodeado de tres defensas que no te sueltan. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Rubén Arroyo · Compañero de equipo: 24 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
+   · Rematar en palomita, estirándote al máximo — Todo o nada por llegar al balón
+   ➤ Bajar a por el balón y servirlo de espaldas al área — Sacrificar tu ocasión por la de un compañero llamado Rubén Arroyo
+   ⮑ ÉXITO: El taco de espaldas sale perfecto y un compañero llamado Borja Robledo remata solo. Asistencia de lujo.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 98 · entrenador 100 · vestuario 100 · afición 99 · fama 94 · dinero 393.840€
+
+### [sem 34 · Octubre 2029] (partido) Noche europea en el Villamarín
+Ante Ajax en Europa League, jugaste 90 minutos. Nota: 8.2/10. Goles: 0. Asistencias: 1. Marcador: 2-1 (Real Betis-Ajax). En el minuto 35, un córner cerrado te cae en la cabeza rodeado de tres defensas que no te sueltan: cedes a Javier Aguirre, que la clava a placer. El Villamarín ruge y Paco Pastor te aplaude desde la banda mientras sales agotado en el 90.
+   · Dedica el gol a la grada — +Afición
+   ➤ Reivindica el gesto de Aguirre en la rueda de prensa — +Vestuario
+   · Mensaje a tu familia nada más pisar el vestuario — +Vida personal
+   · Pides a Iñaki Zubiaurre que no hable de cifras todavía — Pies en el suelo
+   ⮑ Dices que el gol es tan tuyo como de Javier Aguirre por la cesión. El capitán te da una palmada en la nuca: 'Así se juega, chaval'.
+   Δ ánimo +2, media +3, entrenador +2, vestuario +7
+   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 99 · fama 94 · dinero 393.840€
+
+### [sem 35 · Noviembre 2029] (prensa) Suena tu nombre para el enero
+Cuenta @FichajesYa asegura que el Atlético de Madrid te sigue "muy de cerca". Nadie del club ha llamado... todavía. En la puerta del entrenamiento hay más micrófonos de lo normal.
+   ➤ Llamar a Iñaki Zubiaurre y preguntar si hay algo de verdad — Salir de dudas
+   · Dejar la puerta entreabierta en rueda de prensa — Ganas fama, pierdes grada
+   · Decir que solo piensas en tu club — Cero ruido
+   ⮑ ÉXITO: Hay contacto real: el Atlético de Madrid ha preguntado por tu situación y tus condiciones. Ahora hay que ver si dan el paso.
+   Δ ánimo +3, fama +2
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 99 · fama 96 · dinero 421.690€
+
+### [sem 35 · Noviembre 2029] (representante) Tu decisión: ¿te quedas o mueves ficha?
+Sientes que el club se te está quedando pequeño. Iñaki Zubiaurre lo deja claro: "Si quieres moverte, es ahora. Esto lo decides tú."
+   · Pedir salir del club y apostar por la Roma — Un paso adelante, con riesgo de portazo
+   · Buscar un club donde juegues de verdad: la Real Sociedad — Menos brillo, más minutos
+   ➤ Pedir renovación con mejoras y quedarte — Apostar por este proyecto
+   · Quedarte y competir sin más — Cabeza fría
+   ⮑ ÉXITO: El club te renueva y te sube la ficha. Ganas peso en el vestuario y la afición te lo agradece.
+   Δ ánimo +4, dinero +34500, entrenador +3, afición +5
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 96 · dinero 456.190€
+
+### [sem 35 · Noviembre 2029] (partido) Eliminatoria de Copa, a partido único
+Copa del Rey - Dieciseisavos, a vida o muerte, ante CD Eldense. Un compañero llamado Iván Nieto te deja un balón de tacón en plena área pequeña. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Iván Nieto · Compañero de equipo: 22 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
+   ➤ Disparo raso al primer palo — Rápido y directo
+   · Hacer una pared con el compañero — Juego combinado
+   · Intentar un sombrero al defensa — Para la galería
+   ⮑ FALLO: El portero cierra el primer palo con el pie y evita el gol.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 96 · dinero 456.190€
+
+### [sem 35 · Noviembre 2029] (partido) Pasas de ronda en la Copa
+Ante CD Eldense en Copa del Rey, jugaste 90 minutos. Nota: 6.8/10. Goles: 0. Asistencias: 0. Marcador: 1-0 (Real Betis-CD Eldense). En el minuto 79, Fernando Ferreiro te dejó un taconazo en la media vuelta dentro del área pequeña y tu remate salió desviado por poco, pero el gol ya estaba hecho y el Benito Villamarín respira con el pase a dieciseisavos cerrado.
+   · Ríete del fallo en zona mixta — +Afición, -algo de orgullo
+   ➤ Vas a buscar a Ferreiro — +Vestuario
+   · Autocrítica seria con Paco Pastor — +Entrenador, -Moral
+   · Llama a tu padre Ismael Hassan al salir del túnel — Vida personal
+   ⮑ Le das la mano a Fernando Ferreiro: "El taconazo era de gol seguro, la tuve que meter yo." Él se ríe: "Para la próxima no falles, que no tengo más tacones."
+   Δ ánimo +3, media +1, vestuario +5
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 96 · dinero 456.190€
+
+### [sem 36 · Diciembre 2029] (representante) Oferta formal del Atlético de Madrid
+Iñaki Zubiaurre entra con papeles en la mano: "Ya no es un rumor. El Atlético de Madrid ha puesto una oferta por escrito y quiere una respuesta rápida."
+   · Aceptar y fichar por el Atlético de Madrid — Nuevo reto, nuevo vestuario
+   · Usar la oferta para negociar mejoras en tu club — Jugar tus cartas
+   ➤ Rechazarla: aquí me quedo — La grada lo va a agradecer
+   ⮑ La noticia de que has rechazado la oferta recorre el club en horas. En el siguiente partido, la grada te dedica una ovación larga y cerrada.
+   Δ ánimo +2, entrenador +3, afición +7
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 96 · dinero 484.040€
+
+### [sem 36 · Diciembre 2029] (partido) Betis 3 - Atlético de Madrid 1: noche redonda en el Villamarín
+Ante Atlético de Madrid en La Liga, jugaste 84 minutos. Nota: 8.7/10. Goles: 2. Asistencias: 1. Marcador: 3-1 (Real Betis-Atlético de Madrid). Abres la lata con un zurdazo al 23', asistes a Javier Aguirre después del descanso y rematas la faena en el 70'. Paco Pastor te saca entre aplausos y el Villamarín corea tu nombre.
+   ➤ Buscar a Javier Aguirre — +Vestuario
+   · Dedicar el partido a tu familia en la zona mixta — Momento personal
+   · Atender a la prensa con prudencia — Perfil bajo
+   · Llamar a Iñaki Zubiaurre nada más pisar el vestuario — Mirar al futuro
+   ⮑ El capitán te agarra la cara con las dos manos y te grita, entre risas, "¡esto es solo el principio, chaval!". El vestuario entero lo jalea.
+   Δ ánimo +4, media +4, vestuario +8
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 96 · dinero 484.040€
+
+### [sem 36 · Diciembre 2029] (prensa) Un influencer llamado Otto Escarlata te etiqueta sin avisar
+Marta Diass sube un vídeo abriendo una caja de regalos "de tu parte" que tú nunca le mandaste, etiquetándote como si fuerais íntimos.
+   ➤ Seguirle el rollo en los comentarios — +Fama, algo surrealista
+   · Pedirle en privado que lo quite — Prudente
+   · Ignorarlo del todo — No alimentar el ruido
+   ⮑ Comentas el vídeo con una broma y Marta Diass te responde al instante con cinco emojis de corazón. Sus seguidores enloquecen pensando que sois amigos de toda la vida.
+   Δ ánimo +2, fama +5
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 484.040€
+
+### [sem 36 · Diciembre 2029] (partido) Penalti a favor en el último minuto
+El árbitro señala el punto de penalti. El resultado del partido depende de este balón. ¿Lo tiras tú?
+   ➤ Pedirlo y tirarlo — Te la juegas
+   · Cedérsela al pateador habitual — No arriesgas tu momento
+   ⮑ ÉXITO: ¡GOL! Lo clavas en la escuadra. Eres el héroe de la noche.
+   Δ ánimo +8, fama +10, media +4, afición +12
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 484.040€
+
+### [sem 37 · Enero 2030] (partido) El momento decisivo
+Partido en marcha ante Almería. Te quedas con el balón en la esquina del área, con el portero un paso adelantado. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   ➤ Fingir el disparo y regatear al portero — Sangre fría
+   · Disparar con la pierna que no es la tuya — Sin tiempo para cambiar
+   · Ceder al compañero de la derecha — Mejor posicionado que tú
+   ⮑ ÉXITO: Tragas al portero con un amago de cine y empujas el balón a la red. ¡Qué clase!
+   Δ fama +3
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 511.890€
+
+### [sem 37 · Enero 2030] (partido) Gol de mérito, pero no basta
+Ante Almería en La Liga, jugaste 90 minutos. Nota: 7.8/10. Goles: 1. Asistencias: 0. Marcador: 1-2 (Real Betis-Almería). En el 17' te quedaste con el balón en la esquina del área, con el portero adelantado, y la picaste por encima para el 1-0; el Carlos Pizjuán rugió, pero Almería remontó en la segunda parte. Paco Pastor sale al césped serio, sin mirar a nadie en concreto.
+   · Hablar claro en zona mixta — Autocrítica pública
+   ➤ Felicitar a Javier Aguirre por tirar del equipo — +Vestuario
+   · Encerrarte y no decir nada — Silencio incómodo
+   · Subir el gol a tus redes sin más — +Fama, -vestuario
+   ⮑ El capitán te da un abrazo en el túnel: "Ese gol vale, aunque hoy no sirviera de nada. La próxima la ganamos."
+   Δ ánimo +3, media +3, vestuario +6
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 511.890€
+
+### [sem 37 · Enero 2030] (entrenamiento) Diez contra uno en la Luz Verde
+Marcos Bassa monta un ejercicio nuevo: definición bajo fatiga, diez disparos seguidos tras sprints, cronómetro y bote lleno de pelotas. Fernando Ferreiro pide salir a la vez que tú, "a ver quién aguanta más", y Paco Pastor se queda mirando desde la banda con los brazos cruzados.
+   ➤ Aceptar el pulso con Ferreiro — +Forma, riesgo físico
+   · Ir a tu ritmo, sin piques — Constancia, cero drama
+   · Proponer hacerlo en equipo, sumando series — +Vestuario, -protagonismo
+   ⮑ Terminas los diez disparos con el pulso acelerado y nueve de diez dentro. Ferreiro se acerca y, resoplando, suelta: "Vale, vale... esta la ganas tú."
+   Δ forma +6, media +2, vestuario +3
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 511.890€
+
+### [sem 37 · Enero 2030] (partido) La sorpresa que nadie quiere ser
+Copa del Rey - Octavos, a vida o muerte, ante Athletic Club. Roban el balón: contragolpe, dos contra uno, la pelota es tuya. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Toni Fuentes · Compañero de equipo: 30 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
    · Picar el balón por encima del portero — Delicadeza con riesgo
    · Cruzar el disparo al palo largo — Colocación antes que fuerza
-   ➤ Esperar a que llegue un compañero llamado Raúl Mendoza por detrás — Un pase en el momento justo
+   ➤ Esperar a que llegue un compañero llamado Toni Fuentes por detrás — Un pase en el momento justo
    ⮑ FALLO: Esperas demasiado: la defensa cierra y el pase llega tarde.
    Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 95 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 585.940€
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 511.890€
 
-### [sem 40 · Mayo 2030] (partido) Betis - Valladolid: tarde de nervios en el Villamarín
-Ante Real Valladolid en La Liga, jugaste 90 minutos. Nota: 6.8/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Real Valladolid). En el minuto 22 controlaste un pase largo en carrera, con el central pegado a ti a un metro, y tu disparo se marchó rozando el poste. Te resarciste en la segunda parte con un remate dentro del área que decantó el partido, mientras Paco Pastor celebraba puños apretados desde la banda y el Villamarín coreaba tu nombre entero.
-   · Dedicar el gol a la grada — +Afición, +Fama
-   ➤ Recordar en zona mixta la ocasión fallada — Autocrítica, +Vestuario
-   · Llamar a tu padre Ismael Hassan al salir del túnel — Momento personal
-   · Provocar un poco a la prensa sobre Europa — Riesgo mediático
-   ⮑ (sin reacción)
-   Δ ánimo +2, media +2, entrenador +3, vestuario +5
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 585.940€
+### [sem 37 · Enero 2030] (partido) Octavos de Copa: Betis 1-0 Athletic
+Ante Athletic Club en Copa del Rey, jugaste 84 minutos. Nota: 7.2/10. Goles: 0. Asistencias: 1. Marcador: 1-0 (Real Betis-Athletic Club). En el 33' robas y sales dos contra uno, pero tu remate se estrella en el larguero; en el 61' pones el centro que Javier Aguirre cabecea a gol. El Villamarín ruge y Paco Pastor te aplaude desde la banda al cambiarte.
+   · Sala de prensa: hablar del palo — Autocrítica pública
+   ➤ Dedicar la asistencia a Javier Aguirre — +Vestuario
+   · Llamar a casa antes de hablar con nadie — Familia primero
+   · Quedarte entrenando el remate tú solo — Autoexigencia
+   ⮑ Se lo dices delante de todos en el vestuario: "El gol es tuyo, el centro te lo debía." Aguirre te da un golpe en la nuca, de esos que significan más que un abrazo.
+   Δ ánimo +3, media +2, vestuario +6
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 511.890€
 
-### [sem 40 · Mayo 2030] (vida) La cena que no se olvida
-Fernando Ferreiro te espera a la salida de Luis del Sol con el móvil en alto: es el chat de aquella cena, el día que invitaste a todo el equipo cuando su hermana lo pasaba mal. "Mi hermana Celia quiere conocerte en persona, Dani. Lleva un año diciendo que gracias a esa noche volvió a reírse en casa." Te lo pide con una mezcla de vergüenza y cariño que no es fácil de fingir.
-   ➤ Quedar con Celia y su familia — +Vestuario, +Fama, tiempo invertido
-   · Mandarle una camiseta firmada y prometer verla pronto — Gesto rápido, menos impacto
-   · Decir que ahora mismo no tienes tiempo para eso — Prioridad: tu agenda
-   ⮑ Fernando Ferreiro te abraza en el pasillo delante de todos: "Tío, esto no se me va a olvidar en la vida." Javier Aguirre te mira de reojo y sonríe sin decir nada, como si ya contara con ello.
-   Δ ánimo +3, fama +4, vestuario +6
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 585.940€
+### [sem 38 · Febrero 2030] (partido) La sorpresa que nadie quiere ser
+Copa del Rey - Cuartos, a vida o muerte, ante Villarreal CF. Recibes en carrera por banda, con el lateral rival ya tarde para cubrirte. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Rematar de volea el balón botando — Todo o nada
+   ➤ Pisar la pelota y buscar el hueco — Una pausa que descoloca
+   · Girarte rápido y buscar el pase de la muerte — Servir en lugar de rematar
+   ⮑ ÉXITO: Pisas la pelota, el defensa se queda clavado y defines con calma.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 539.740€
 
-### [sem 40 · Mayo 2030] (partido) La sorpresa que nadie quiere ser
-Copa del Rey - Final, a vida o muerte, ante Atlético de Madrid. Recibes en carrera por banda, con el lateral rival ya tarde para cubrirte. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Disparo raso al primer palo — Rápido y directo
-   · Hacer una pared con el compañero — Juego combinado
-   ➤ Intentar un sombrero al defensa — Para la galería
-   ⮑ ÉXITO: Sombrero perfecto: el defensa se queda mirando al cielo y tú marcas. ¡Genialidad!
-   Δ fama +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 585.940€
+### [sem 38 · Febrero 2030] (partido) Cuartos de Copa: sudor, penaltis y un gol para el recuerdo
+Ante Villarreal CF en Copa del Rey, jugaste 90 minutos. Nota: 8.5/10. Goles: 1. Asistencias: 0. Marcador: 0-0 (4-3 en penaltis) (Real Betis-Villarreal CF). Minuto 90: recibes en carrera por banda, el lateral rival llega tarde y la clavas a la red; el gol no cuenta en el marcador final pero enciende el Benito Villamarín. En la tanda de penaltis anotas el tuyo sin pestañear mientras Paco Pastor se muerde las uñas en la banda. El pitido final desata la locura: el Betis sigue vivo en la Copa.
+   ➤ Al túnel entre abrazos — +Vestuario
+   · Dedicárselo a tu familia ante la grada — +Emocional
+   · Rueda de prensa con calma — Perfil bajo
+   · Llamar a Iñaki Zubiaurre nada más pisar el vestuario — Mirar al futuro
+   ⮑ Javier Aguirre te agarra del cuello y grita por encima del ruido: "¡Ese penalti vale un contrato nuevo, chaval!". Fernando Ferreiro, que se quedó en el banquillo, te da la mano sin mucha gana.
+   Δ forma +2, ánimo +5, media +3, entrenador +3, vestuario +6
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 539.740€
 
-### [sem 40 · Mayo 2030] (partido) Campeones de Copa: el Betis levanta el título en el Villamarín
-Ante Atlético de Madrid en Copa del Rey, jugaste 90 minutos. Nota: 9.2/10. Goles: 1. Asistencias: 0. Marcador: 1-0 (Real Betis-Atlético de Madrid). En el minuto 47 recibiste en carrera por banda, con el lateral rival ya tarde para cubrirte, y la clavaste a la escuadra tras un túnel que hizo enloquecer al Villamarín. Paco Pastor salta del banquillo gritando tu nombre; Javier Aguirre te levanta en volandas nada más pitar el final. Eres campeón de Copa con 19 años, en tu propio estadio.
-   · Grita el himno con la grada — +Afición
-   · Busca a tu familia en la grada — +Vínculo personal
-   ➤ Dedica el título al vestuario — +Vestuario
-   · Mantén la cabeza fría ante la prensa — +Imagen serena
-   ⮑ En la pizarra del vestuario escribes 'esto es de los 25', y Fernando Ferreiro, que apenas jugó minutos esta Copa, es el primero en abrazarte.
-   Δ ánimo +5, media +3, entrenador +4, vestuario +9
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 585.940€
+### [sem 39 · Abril 2030] (partido) Expulsión injusta
+El árbitro te enseña la roja directa tras una entrada que ni siquiera tocó al rival. Te quedas mirando la tarjeta sin poder creerlo, con diez compañeros que ahora tienen que remar sin ti.
+   · Protestar la decisión con todo — Riesgo de sanción extra
+   ➤ Salir del campo en silencio, tragándotelo — +Relación entrenador
+   ⮑ Te vas sin decir una palabra, apretando los puños. Desde la banda, el entrenador asiente: sabe que no era fácil callarse.
+   Δ ánimo −5, media −1, entrenador +5
+   📊 Real Betis · rol titular · media 98 · forma 100 · ánimo 92 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 567.590€
+
+### [sem 39 · Abril 2030] (especial) Te dejan fuera de la convocatoria
+Pese a tu buen momento, el seleccionador hace pública la lista y tu nombre no aparece. Los medios se preguntan por qué en directo; tú lo primero que sientes es rabia.
+   ➤ Pedir explicaciones directamente — Cara a cara
+   · Convertirlo en motivación silenciosa — Que hablen los números
+   · Quejarte públicamente — Que se sepa cómo te sientes
+   ⮑ FALLO: La conversación no aclara nada y te quedas con más dudas que antes.
+   Δ ánimo −3
+   📊 Real Betis · rol titular · media 98 · forma 100 · ánimo 89 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 567.590€
+
+### [sem 39 · Abril 2030] (partido) La sorpresa que nadie quiere ser
+Copa del Rey - Semifinal, a vida o muerte, ante Osasuna. El portero rival sale mal y te queda la portería medio vacía desde fuera del área. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Aitor Ferrer · Compañero de equipo: 23 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
+   ➤ Disparar a puerta — Vas a por el gol directo
+   · Pasar a un compañero llamado Aitor Ferrer mejor colocado — Menos gloria, más seguro
+   · Intentar una jugada de calidad (regate, túnel, sombrero...) — Todo o nada, para la galería
+   ⮑ ÉXITO: El balón entra pegado al palo. ¡Gol!
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 98 · forma 100 · ánimo 89 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 567.590€
+
+### [sem 39 · Abril 2030] (partido) Eliminados en casa: 0-1 ante Osasuna
+Ante Osasuna en Copa del Rey, jugaste 79 minutos. Nota: 6.5/10. Goles: 1. Asistencias: 0. Marcador: 0-1 (Real Betis-Osasuna). En el minuto 10, el portero rival sale mal y te deja la portería medio vacía: tú no perdonas desde fuera del área. Osasuna remonta en la segunda parte y el Benito Villamarín se queda mudo al pitido final. Paco Pastor sale directo al túnel de vestuarios sin mirar a nadie.
+   · Dar la cara ante la prensa — +Afición, expone tu autocrítica
+   · Encerrarte en el vestuario sin hablar — Silencio, autocrítica interna
+   · Defender al equipo en redes — +Vestuario, -Prensa crítica
+   ➤ Buscar a Paco Pastor para hablar a solas — Jugada de riesgo con el entrenador Paco Pastor
+   ⮑ Paco Pastor te escucha con los brazos cruzados y al final suelta: "El gol estuvo bien. Lo de después, hay que mejorarlo." Ni más ni menos.
+   Δ forma +2, ánimo +1, media +2, entrenador +5
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 90 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 567.590€
+
+### [sem 40 · Mayo 2030] (partido) El momento decisivo
+Partido importante en marcha, ante Valencia CF. El balón te llega al borde del área con el defensa de espaldas: tienes medio segundo para decidir. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   ➤ Rematar de primeras sin controlar — No le das tiempo al portero a colocarse
+   · Ganar la línea de fondo y centrar atrás — Buscar el pase de la muerte en vez del gol propio
+   · Aguantar el balón de espaldas y pedir apoyo — Sin riesgo: dar tiempo a que suba el equipo
+   ⮑ ÉXITO: El remate de primeras sale ajustado, sin que el portero pueda reaccionar. ¡Gol!
+   Δ fama +2
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 87 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 595.440€
+
+### [sem 40 · Mayo 2030] (partido) Real Betis 2-1 Valencia CF: gol y victoria europea
+Ante Valencia CF en La Liga, jugaste 90 minutos. Nota: 8.3/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Valencia CF). En el minuto 44, el balón te llegó al borde del área con el defensa de espaldas: medio segundo para decidir, y la clavaste a la escuadra. Paco Pastor se levantó del banquillo gritando, y el Benito Villamarín tembló entero.
+   ➤ Dedícaselo a la grada — +Afición
+   · Dáselo a Javier Aguirre en la rueda de prensa — +Vestuario
+   · Reivindícate tú solo ante los micrófonos — Jugada de riesgo
+   · Llama a Ismael Hassan nada más pisar el vestuario — Momento familiar
+   ⮑ Señalas el escudo y te señalas los oídos hacia el Fondo Norte; la grada responde coreando tu nombre durante un minuto entero.
+   Δ ánimo +4, fama +6, media +3, afición +8
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 91 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 595.440€
 
 ### [sem 41 · Julio 2030] (especial) Arranca el Mundial
 Se abre el Mundial y tu nombre está en la lista final. Maletas, concentración, la camiseta, el himno: todo lo que has construido se mide ahora también aquí. Cada partido va a contar, y el país entero está pendiente.
@@ -1029,7 +1085,7 @@ Se abre el Mundial y tu nombre está en la lista final. Maletas, concentración,
    ➤ Asumir el papel de líder del vestuario — Sostener al grupo, no solo a ti mismo
    ⮑ Hablas del grupo antes que de ti. En el vestuario, esa misma tarde, alguien repite tus palabras en voz alta.
    Δ ánimo +2, vestuario +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 613.790€
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 90 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 623.290€
 
 ### [sem 41 · Julio 2030] (vida) Tu nombre en la camiseta del torneo
 El utillero Marcos Torreblanca te entrega la camiseta de el Mundial con tu apellido y tu dorsal ya estampados, doblada con un cuidado casi religioso. Nunca habías sentido tanto peso en un trozo de tela. Xavi Pastor te mira desde su taquilla y sonríe sin decir nada: él también pasó por esto.
@@ -1039,204 +1095,174 @@ El utillero Marcos Torreblanca te entrega la camiseta de el Mundial con tu apell
    ➤ Pedirle a Xavi Pastor un consejo para el primer día — Aprender del que ya estuvo
    ⮑ "Disfrútalo, que pasa volando", te dice. Y por primera vez en semanas, se te afloja el nudo del estómago.
    Δ ánimo +3, vestuario +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 613.790€
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 93 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 623.290€
 
 ### [sem 41 · Julio 2030] (partido) Con la selección
-Mundial 2030 - Fase de grupos · Jornada 1, con la camiseta de tu país, ante Argentina. Un compañero llamado Pablo Domínguez te deja un balón de tacón en plena área pequeña. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Pablo Domínguez · Compañero de equipo: 24 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
+Mundial 2030 - Fase de grupos · Jornada 1, con la camiseta de tu país, ante Argentina. Te quedas mano a mano con el central que te marca, dentro del área pequeña. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Definir raso, pegado al palo contrario — Buscar la precisión antes que la potencia
+   · Controlarla con calma antes de decidir — Ganar un segundo extra pensando la jugada
+   ➤ Amagar el centro y quedarte con el balón — Sorprender a la defensa con un cambio de idea
+   ⮑ FALLO: Nadie se la compra y el rival corta la jugada sin problema.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 93 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 623.290€
+
+### [sem 41 · Julio 2030] (partido) España 3-0 Argentina: primera piedra en el camino
+Ante Argentina en Partido internacional (Mundial 2030), jugaste 90 minutos. Nota: 8.3/10. Goles: 2. Asistencias: 1. Marcador: 3-0 (España-Argentina).
+
+En el minuto 17 te quedaste mano a mano con el central dentro del área pequeña e intentaste un regate que perdiste, dejando a España corta atrás en la jugada siguiente — Argentina no llegó a hacer daño. Te rehiciste con dos goles y una asistencia, liderando al grupo con el brazalete moral que te diste tú solo. Paco Pastor, desde la banda de la selección, te señaló el pecho al pitido final: "Esto es lo que pedíamos."
+   ➤ Dedica el gol a tu familia — +Moral, +Fama
+   · Reconoce el fallo del minuto 17 en zona mixta — Autocrítica, +Vestuario
+   · Reivindica el papel de líder en el vestuario — +Vestuario, riesgo de ego
+   · Llama a Iñaki Zubiaurre para hablar del impacto mediático — +Patrimonio, frialdad
+   ⮑ Buscas la cámara y señalas al cielo pensando en Fátima Roig e Ismael Hassan; en el grupo de familia, Arturo Hassan manda un audio gritando que no se entiende nada.
+   Δ ánimo +6, fama +5, media +3
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 623.290€
+
+### [sem 41 · Julio 2030] (vida) El compañero de habitación ronca como una moto
+Te toca compartir habitación con Nacho Sáez durante toda la fase de grupos, y descubres la primera noche que ronca tan fuerte que se oye desde el pasillo. Llevas dos noches durmiendo fatal y el torneo apenas empieza.
+   👤 QUIÉN ES — Nacho Sáez · Compañero de habitación: 20 años. Compañero de habitación en las concentraciones. Ronca, comenta cada partido en voz alta y es buenísima persona.
+   · Pedir un cambio de habitación al cuerpo técnico — Prioridad: descansar bien
+   · Aguantar con tapones y no decir nada — No hacer drama
+   ➤ Grabarlo roncando y enseñárselo al grupo — Venganza en broma
+   ⮑ Pones el vídeo en la pantalla del comedor. Todo el grupo estalla en una carcajada mientras el protagonista se tapa la cara con la servilleta.
+   Δ ánimo +2, vestuario +3
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 623.290€
+
+### [sem 41 · Julio 2030] (partido) Con la selección
+Mundial 2030 - Fase de grupos · Jornada 2, con la camiseta de tu país, ante Italia. Recibes un balón filtrado y te plantas solo ante el portero. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Félix Sagasta · Compañero de equipo: 33 años. Compañero de equipo, callado en el vestuario y terrible con el balón en los pies. Sus bromas llegan siempre con retraso.
+   · Picar el balón por encima del portero — Delicadeza con riesgo
+   · Cruzar el disparo al palo largo — Colocación antes que fuerza
+   ➤ Esperar a que llegue un compañero llamado Félix Sagasta por detrás — Un pase en el momento justo
+   ⮑ FALLO: Esperas demasiado: la defensa cierra y el pase llega tarde.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 623.290€
+
+### [sem 42 · Agosto 2030] (partido) Con la selección
+Mundial 2030 - Fase de grupos · Jornada 2, con la camiseta de tu país, ante Italia. Recibes de espaldas a la portería, con un defensa pegado a ti. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   · Probar la vaselina por encima del portero adelantado — Todo o nada, para la galería
+   · Cederla atrás para el que llega desde segunda línea — Confiar en que remate mejor colocado
+   ➤ Proteger el balón pegado a la banda hasta ganar la falta — Sin riesgo: buscar los segundos, no el gol
+   ⮑ ÉXITO: Proteges el balón con el cuerpo hasta que el rival comete falta. Buena gestión del tiempo.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 651.140€
+
+### [sem 42 · Agosto 2030] (partido) España 1 - 0 Italia: triunfo de hierro en el Mundial
+Ante Italia en Partido internacional (Mundial 2030), jugaste 90 minutos. Nota: 6.8/10. Goles: 0. Asistencias: 0. Marcador: 1-0 (España-Italia).
+En el 89', recibiste de espaldas con un defensa pegado y la resolviste con un control limpio que calmó el partido. El gol llegó antes, de otro compañero; tú trabajaste, sufriste y sostuviste el resultado hasta el pitido final. Paco Pastor sale corriendo a abrazar al banquillo entero; la grada entona el himno a pleno pulmón.
+   · Habla con la prensa — Mensaje de equipo
+   ➤ Celebra con el vestuario — +Vestuario
+   · Llama a tu familia — Momento personal
+   · Autocrítica en silencio — Revisar el partido a solas
+   ⮑ Javier Aguirre te agarra del cuello y grita delante de todos: "¡Este chaval no suelta un balón ni loco!". El vestuario entero se ríe y te tira al bote de agua.
+   Δ ánimo +5, media +1, vestuario +6
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 651.140€
+
+### [sem 42 · Agosto 2030] (vida) Videollamada con casa entre partido y partido
+Un rato libre entre sesión y sesión, haces videollamada a casa. Te preguntan más por cómo es el hotel y qué comes que por el propio torneo — una tontería que, en medio de tanta presión, te sienta mejor que cualquier otra cosa.
+   ➤ Alargar la llamada todo lo que puedas — Necesitabas ese respiro
+   · Colgar pronto para seguir centrado en el torneo — Cabeza en lo importante
+   ⮑ Hablas con tu familia durante una hora entera, entre risas y noticias del barrio. Al colgar, sientes que respiras mejor.
+   Δ ánimo +4
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 651.140€
+
+### [sem 42 · Agosto 2030] (partido) Con la selección, en el partido que lo decide todo
+Mundial 2030 - Fase de grupos · Jornada 3, con la camiseta de tu país, ante Uruguay. Recoges un despeje rival en la frontal con toda la defensa descolocada. No hay tiempo para pensar demasiado — tienes que decidir ya.
    ➤ Fingir el disparo y regatear al portero — Sangre fría
    · Disparar con la pierna que no es la tuya — Sin tiempo para cambiar
    · Ceder al compañero de la derecha — Mejor posicionado que tú
    ⮑ FALLO: El portero no pica y te arrebata el balón de los pies.
    Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 613.790€
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 651.140€
 
-### [sem 41 · Julio 2030] (partido) España 2-2 Argentina: empate con sabor agridulce
-Ante Argentina en Partido internacional (Mundial 2030), jugaste 90 minutos. Nota: 6.8/10. Goles: 1. Asistencias: 0. Marcador: 2-2 (España-Argentina). En el minuto 25, un compañero llamado Ramón Serrano te dejó un balón de tacón en plena área pequeña y el portero argentino sacó un paradón providencial que hizo retumbar la grada; empatarías tú mismo después con un zurdazo cruzado. Paco Pastor, al pitido final, te abraza: "Nos falta un gol, Dani, pero hoy has tirado del grupo."
-   👤 QUIÉN ES — Ramón Serrano · Compañero de equipo: 32 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
-   · Asumir el fallo en prensa — Autocrítica pública
-   ➤ Reivindicar el gol del empate — Mensaje de orgullo
-   · Llamar a tu familia nada más pitar el final — El hogar antes que nada
-   · Pedirle explicaciones al compañero de la jugada fallida — Cuentas claras en el vestuario
-   ⮑ Javier Aguirre te pasa el brazo por el hombro en la zona mixta: "Ese gol vale una final, pichichi." El vestuario se ríe con el mote nuevo.
+### [sem 42 · Agosto 2030] (partido) España 3-1 Uruguay: ¡A octavos del Mundial!
+Ante Uruguay en Partido internacional (Mundial 2030), jugaste 90 minutos. Nota: 7.2/10. Goles: 0. Asistencias: 1. Marcador: 3-1 (España-Uruguay). En el 21', perdiste un balón recogido en la frontal con la defensa descolocada y Uruguay empató al contragolpe, pero España reaccionó con dos goles más y certifica el billete a octavos. Paco Pastor te abraza en el túnel: "Hoy se te vio al mando, eso no se entrena."
+   · Autocrítica en zona mixta — +Prensa, -Moral leve
+   ➤ Reivindicar el liderazgo del vestuario — +Vestuario, +Capitán
+   · Dedicar la clasificación a tu familia — +Fama, momento personal
+   · Pedir perdón al equipo por el balón perdido — Humildad, riesgo de sobreexplicarlo
+   ⮑ Javier Aguirre te da un golpe en el pecho: "Por eso te quiero cerca en los líos, Dani."
    Δ ánimo +4, fama +2, media +2, vestuario +6
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 613.790€
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 651.140€
 
-### [sem 41 · Julio 2030] (vida) La noche del vestuario
-Volvéis al hotel y nadie quiere acostarse. Samuel Urbano saca un altavoz, alguien apaga las luces del pasillo y, de repente, medio equipo está bailando en calcetines. El cuerpo técnico mira desde el fondo, fingiendo que no ha visto nada.
-   👤 QUIÉN ES — Samuel Urbano · Compañero de equipo: 21 años. Compañero de equipo. Siempre tiene hambre, siempre llega tarde y siempre te saca una sonrisa.
-   ➤ Unirte y bailar como si nadie mirase — Soltarte
-   · Dar una vuelta y acostarte antes de medianoche — Responsabilidad
-   ⮑ Alguien te graba. El vídeo del baile dará más de que hablar que el propio gol.
-   Δ forma −1, ánimo +4, vestuario +5
-   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 613.790€
-
-### [sem 41 · Julio 2030] (partido) Con la selección
-Mundial 2030 - Fase de grupos · Jornada 2, con la camiseta de tu país, ante Italia. El balón te llega botando en el área, en un ángulo incómodo para rematar. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   ➤ Rematar de volea el balón botando — Todo o nada
-   · Pisar la pelota y buscar el hueco — Una pausa que descoloca
-   · Girarte rápido y buscar el pase de la muerte — Servir en lugar de rematar
-   ⮑ FALLO: Golpeas mal el bote y el balón se va muy alto.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 613.790€
-
-### [sem 42 · Agosto 2030] (partido) Con la selección
-Mundial 2030 - Fase de grupos · Jornada 2, con la camiseta de tu país, ante Italia. Recoges un despeje rival en la frontal con toda la defensa descolocada. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   ➤ Definir raso, pegado al palo contrario — Buscar la precisión antes que la potencia
-   · Controlarla con calma antes de decidir — Ganar un segundo extra pensando la jugada
-   · Amagar el centro y quedarte con el balón — Sorprender a la defensa con un cambio de idea
-   ⮑ FALLO: El portero llega justo para desviar el disparo a córner.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 641.640€
-
-### [sem 42 · Agosto 2030] (partido) España 2-2 Italia · Mundial 2030
-Ante Italia en Partido internacional (Mundial 2030), jugaste 90 minutos. Nota: 6.5/10. Goles: 0. Asistencias: 0. Marcador: 2-2 (España-Italia).
-
-En el 17' recoges un despeje rival en la frontal con toda la defensa descolocada, pero tu disparo se estrella en el larguero. Paco Pastor te sostiene la mirada en el túnel: "Esa pelota era nuestra, Dani." El himno sonó distinto esta vez, con España empatando un partido que pudo caer de cualquier lado.
-   · Reconócelo en zona mixta — +Prensa, -Autoestima
-   ➤ Búscate a Javier Aguirre en el vestuario — +Vestuario
-   · Llama a Ismael Hassan esa noche — +Familia, -Exposición pública
-   · Cuélgalo en redes sin filtro — +Fama, riesgo con el míster Paco Pastor
-   ⮑ El capitán te da un golpe en el pecho: "Esa falla la vas a meter cien veces más de las que la vas a fallar. Sigue tirando." El vestuario asiente con él.
-   Δ ánimo +5, media +1, vestuario +6
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 641.640€
-
-### [sem 42 · Agosto 2030] (vida) Las botas desaparecidas
-Llegas al entrenamiento y no encuentras tus botas por ningún lado — alguien las ha escondido como novatada. Todo el vestuario finge no saber nada con una cara de circunstancias que los delata a todos por igual.
-   👤 QUIÉN ES — Eduardo Prats · Compañero de equipo: 30 años. Compañero de equipo, callado en el vestuario y terrible con el balón en los pies. Sus bromas llegan siempre con retraso.
-   · Entrar en el juego y fingir un ataque de pánico exagerado — Darles el show que quieren
-   ➤ Entrenar con botas prestadas sin darle más importancia — No morder el anzuelo
-   · Sospechar en voz alta de Eduardo Prats — Señalar al primer sospechoso
-   ⮑ Entrenas con unas botas prestadas dos tallas grandes. Al acabar, alguien te las devuelve en una caja con un lazo y una nota: 'Perdón'.
-   Δ forma −1, ánimo +1
-   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 641.640€
-
-### [sem 42 · Agosto 2030] (partido) Con la selección, en el partido que lo decide todo
-Mundial 2030 - Fase de grupos · Jornada 3, con la camiseta de tu país, ante Uruguay. Recibes dentro del área con dos defensas encima y un compañero llamado Miguel Arroyo libre al segundo palo. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Miguel Arroyo · Compañero de equipo: 26 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
-   · Picar al hueco entre los dos centrales — Buscar el desmarque justo antes del pase
-   · Intentar la chilena si el balón te queda en el aire — Todo o nada, jugada para el recuerdo
-   ➤ Tocar atrás para reiniciar antes de atacar de nuevo — Sin riesgo: guardar la posesión del equipo
-   ⮑ ÉXITO: El toque atrás es sencillo y el equipo reorganiza el ataque con calma.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 641.640€
-
-### [sem 42 · Agosto 2030] (partido) España - Uruguay: billete a octavos
-Ante Uruguay en Partido internacional (Mundial 2030), jugaste 90 minutos. Nota: 6.8/10. Goles: 0. Asistencias: 0. Marcador: 0-0 (España-Uruguay).
-
-En el minuto 87 recibiste dentro del área con dos defensas encima y un compañero llamado Roberto Cabrera libre al segundo palo; resolviste con calma, sin sobresaltos, manteniendo el orden del equipo. Empate sin goles, pero España se clasifica para octavos de final con 3 puntos. Paco Pastor, al pitido final, te agarra del cuello: "Esto también se gana así, cabeza."
-   👤 QUIÉN ES — Roberto Cabrera · Compañero de equipo: 33 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
-   ➤ Celebrar la clasificación con el grupo — +Vestuario, +Afición
-   · Pedir perdón por no marcar en el descuento — Autocrítica pública
-   · Llamar a tu familia nada más llegar al vestuario — +Moral personal
-   · Analizar en frío con Marcos Bassa el desgaste acumulado — Cuidar el cuerpo de cara a octavos
-   ⮑ Javier Aguirre levanta la camiseta hacia la grada y grita "¡A por octavos!"; el vestuario entero canta desafinando el himno en la ducha.
-   Δ ánimo +5, media +1, vestuario +6, afición +4
-   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 641.640€
-
-### [sem 42 · Agosto 2030] (vida) El capitán te cede el brazalete
-Lorenzo Toledo, el capitán Javier Aguirre, se te acerca en pleno calentamiento, se quita el brazalete y te lo coloca en el brazo durante unos segundos: "Para que lo sientas", te dice. Medio vestuario lo ve y nadie dice nada. Es solo un gesto, pero ya lo has entendido todo.
-   👤 QUIÉN ES — Lorenzo Toledo · Veterano del vestuario: 34 años. Uno de los pesos pesados del equipo. Habla poco, pero cuando lo hace, todos escuchan.
-   ➤ Devolvérselo con un abrazo — Respeto total
-   · Guardar el recuerdo en la cabeza y salir a jugar — Combustible emocional
-   ⮑ Te da una palmada en la espalda con más fuerza de la necesaria. Es su forma de decirte que cuenta contigo.
-   Δ ánimo +4, vestuario +5
-   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 641.640€
-
-### [sem 43 · Septiembre 2030] (partido) Con la selección, en el partido que lo decide todo
-Mundial 2030 - Octavos de final, con la camiseta de tu país, ante Inglaterra. Un rechace te cae a los pies dentro del área, con la portería a tiro. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Antonio Jiménez · Compañero de equipo: 28 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
-   · Disparar a puerta — Vas a por el gol directo
-   · Pasar a un compañero llamado Antonio Jiménez mejor colocado — Menos gloria, más seguro
-   ➤ Intentar una jugada de calidad (regate, túnel, sombrero...) — Todo o nada, para la galería
-   ⮑ ÉXITO: Sale perfecta. El estadio entero se levanta de sus asientos.
-   Δ fama +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 669.490€
-
-### [sem 43 · Septiembre 2030] (partido) España, a cuartos: tanda de infarto ante Inglaterra
-Ante Inglaterra en Partido internacional (Mundial 2030), jugaste 120 minutos. Nota: 8.3/10. Goles: 1. Asistencias: 0. Marcador: 2-2 (6-5 en penaltis) (España-Inglaterra). En el 54' un rechace te cayó a los pies dentro del área y la clavaste a la escuadra; luego sufriste hasta la tanda, donde transformaste tu penalti mientras Javier Aguirre te abrazaba el cuello gritando "¡esto no se acaba hoy, niño!". Paco Pastor salió corriendo del banquillo como si tuviera veinte años menos.
-   · Zona mixta con la prensa — +Fama, foco mediático
-   · Buscar a tu familia en la grada — +Vínculo personal
-   ➤ Celebrar con el vestuario — +Vestuario, liderazgo
-   · Llamar a Iñaki Zubiaurre — Mirar al futuro, clubes llaman
-   ⮑ Javier Aguirre pone la música a tope y te saca a bailar en medio del vestuario, empapado de cava. 'El crío del rechace nos ha llevado a cuartos', grita a quien quiera oírlo.
-   Δ ánimo +5, vestuario +7
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 669.490€
-
-### [sem 43 · Septiembre 2030] (vida) Una camiseta, una firma y una foto que lo cambia todo
-Estás firmando camisetas a la salida del hotel cuando una aficionada te alarga la suya, te dice que lleva dos días esperándote y, en el segundo exacto en que te inclinas a firmar, te planta un beso en la mejilla. Un fotógrafo dispara justo ahí. La imagen ya está en tres cuentas de fútbol antes de que llegues a tu habitación.
-   👤 QUIÉN ES — Ricardo Salcedo · Compañero de equipo: 24 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
-   · Tomártelo con humor y compartir tú la foto — Dar la vuelta a la historia
-   · Pedirle al fotógrafo que no la publique — Cuidar tu imagen
-   ➤ Enseñarle la foto a Ricardo Salcedo antes de que lo haga la prensa — Que lo sepa por ti
-   ⮑ Ricardo Salcedo se pasa la cena entera imitando tu cara de susto. Ya sois leyenda del grupo.
+### [sem 42 · Agosto 2030] (vida) El vuelo de la vergüenza
+El vuelo a la siguiente ciudad del torneo se llena de turbulencias justo después de comer. No lo aguantas: vomitas delante de media expedición, incluido Gonzalo Sagasta, que no deja de reírse el resto del vuelo cada vez que te mira.
+   👤 QUIÉN ES — Gonzalo Sagasta · Veterano del vestuario: 35 años. Uno de los pesos pesados del equipo. Habla poco, pero cuando lo hace, todos escuchan.
+   ➤ Reírte de ti mismo antes que nadie — Quitarle hierro
+   · Pasar el resto del vuelo escondido tras los auriculares — Que se olvide rápido
+   · Retar a Gonzalo Sagasta a aguantar el próximo vuelo igual de mal — Venganza con humor
+   ⮑ Haces el chiste antes de que lo haga nadie y todo el avión te aplaude. El veterano se limpia las lágrimas de risa.
    Δ ánimo +2, vestuario +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 669.490€
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 651.140€
 
 ### [sem 43 · Septiembre 2030] (partido) Con la selección, en el partido que lo decide todo
-Mundial 2030 - Cuartos de final, con la camiseta de tu país, ante Portugal. Recibes un pase al hueco entre el lateral y el central, con solo el portero por delante. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Quedarte cerca esperando un posible rebote — Paciencia: estar en el sitio correcto
-   ➤ Amagar el cuerpo hacia un lado y salir por el otro — Ganarte medio metro con un solo gesto
-   ⮑ FALLO: El defensa no se la compra y te cierra el disparo justo a tiempo.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 669.490€
+Mundial 2030 - Octavos de final, con la camiseta de tu país, ante Inglaterra. Un compañero llamado Saúl Prats te asiste desde la banda y te quedas solo contra el lateral. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Saúl Prats · Compañero de equipo: 25 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
+   · Definir raso, pegado al palo contrario — Buscar la precisión antes que la potencia
+   · Controlarla con calma antes de decidir — Ganar un segundo extra pensando la jugada
+   ➤ Amagar el centro y quedarte con el balón — Sorprender a la defensa con un cambio de idea
+   ⮑ ÉXITO: El amago desconcierta a toda la defensa y te deja mano a mano con el portero. ¡Gol!
+   Δ fama +2
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
-### [sem 43 · Septiembre 2030] (partido) Eliminados en cuartos: España cae 1-3 ante Portugal
-Ante Portugal en Partido internacional (Mundial 2030), jugaste 90+5 minutos. Nota: 6.0/10. Goles: 0. Asistencias: 0. Marcador: 1-3 (España-Portugal). En el 90+4, con el partido ya roto, recibes al hueco entre lateral y central, solo ante el portero, y el guardameta luso adivina tu intención y bloquea el disparo con las piernas. Pitido final: eliminación, y el himno suena en la grada portuguesa. Paco Pastor te abraza en el túnel: "Has tirado del grupo hasta el último minuto."
-   · Dar la cara ante la prensa — Autocrítica pública, +Afición
-   ➤ Encerrarte con el capitán Javier Aguirre — Vestuario roto, +Javier Aguirre
-   · Llamar a tu padre Ismael Hassan nada más pisar el vestuario — Desahogo familiar, +Moral
-   · Culpar en silencio solo a tu fallo del descuento — Autoexigencia, riesgo de hundirte
-   ⮑ Javier Aguirre te sienta a su lado, todavía con la camiseta empapada: "Esto se paga entrenando, no llorando." Te quedas con él hasta que el vestuario se vacía.
-   Δ forma −1, ánimo +2, media +1, vestuario +7
-   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 669.490€
+### [sem 43 · Septiembre 2030] (partido) Eliminados en octavos: España 1-2 Inglaterra
+Ante Inglaterra en Partido internacional (Mundial 2030), jugaste 90 minutos. Nota: 6.8/10. Goles: 1. Asistencias: 0. Marcador: 1-2 (España-Inglaterra).
 
-### [sem 43 · Septiembre 2030] (representante) Un cargo que no recuerdas haber pedido
-En tu extracto aparece un cargo de 10.400 € de Iñaki Zubiaurre por "gestiones de mercado". No recuerdas haberle encargado nada. Cuando se lo preguntas, habla de "esfuerzos que no se ven".
-   ➤ Exigir factura y desglose — Quien no debe, no teme
-   · Despedirle y fichar a Samuel Rovira — Aquí se acaba la confianza
-   · Dejarlo pasar por esta vez — Elegir tus batallas
-   ⮑ ÉXITO: No tiene factura que enseñar y devuelve el dinero de golpe, con mala cara.
-   Δ ánimo +3, representante −3
-   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 669.490€
+En el 71' tu compañero te asiste desde la banda, te quedas solo contra el lateral y le haces un túnel antes de definir: el gol que iguala el partido y enciende el banquillo. Pero Inglaterra responde diez minutos después y España cae eliminada del Mundial 2030. Paco Pastor te abraza en el túnel de vestuarios: "Ese gol lo vamos a ver mil veces. Ojalá hubiera bastado."
+   ➤ Habla alto en el vestuario — +Vestuario, riesgo de sonar hueco
+   · Sal a la mixta y asume el palo — Prensa, autocrítica pública
+   · Llama a tu familia nada más entrar al hotel — Desahógate con los tuyos
+   · Te quedas solo en el vestuario vacío — Silencio, sin palabras para nadie
+   ⮑ Javier Aguirre te mira sorprendido y asiente despacio: "Eso es justo lo que necesitábamos oír, aunque llegue tarde." Algunos compañeros lloran en silencio mientras hablas.
+   Δ ánimo +3, fama +2, media +3, vestuario +7
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
-### [sem 43 · Septiembre 2030] (representante) Tu decisión: ¿te quedas o mueves ficha?
-Sientes que el club se te está quedando pequeño. Iñaki Zubiaurre lo deja claro: "Si quieres moverte, es ahora. Esto lo decides tú."
-   · Pedir salir del club y apostar por la Juventus — Un paso adelante, con riesgo de portazo
-   · Buscar un club donde juegues de verdad: el Valencia CF — Menos brillo, más minutos
-   ➤ Pedir renovación con mejoras y quedarte — Apostar por este proyecto
-   · Quedarte y competir sin más — Cabeza fría
-   ⮑ ÉXITO: El club te renueva y te sube la ficha. Ganas peso en el vestuario y la afición te lo agradece.
-   Δ ánimo +4, dinero +34500, entrenador +3, afición +5
-   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 703.990€
+### [sem 43 · Septiembre 2030] (representante) Tu agente Iñaki Zubiaurre también lleva a tu competencia
+Te enteras por casualidad de que Iñaki Zubiaurre también representa a tu rival directo por el puesto y de que, cuando llegue una buena oferta, "ya veremos a cuál de los dos va". Nadie te lo había contado.
+   · Pedir explicaciones ahora mismo — Sin rodeos
+   ➤ Cambiar de representante: Raúl Salcedo — Romper y empezar de cero
+   · No decir nada y vigilarlo de cerca — Ojos abiertos
+   ⮑ (sin reacción)
+   Δ ánimo +2, representante +10
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
-### [sem 43 · Septiembre 2030] (vida) Sesión con la psicóloga del club
-El departamento médico incorpora este año a Andrea Santamaría, psicóloga deportiva. En tu primera sesión te hace una pregunta que no esperabas: "¿Qué es lo que más miedo te da de esta temporada?".
-   ➤ Contestar con total sinceridad — Abrirte de verdad
-   · Responder con evasivas — No es tu terreno
-   · Pedir sesiones regulares — Cuidar la cabeza también
-   ⮑ Dices en voz alta algo que nunca habías dicho. La psicóloga asiente sin juzgar y tú notas que algo se afloja dentro.
-   Δ forma +1, ánimo +4
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 703.990€
+### [sem 43 · Septiembre 2030] (vida) Tu golazo en el amistoso se hace viral
+Un gol de otro planeta en un amistoso del Real Betis da la vuelta a las redes. Las cuentas de fútbol lo suben con un "¿Quién es este?".
+   ➤ Compartirlo con humildad — Gracias al equipo
+   · Subirte al carro — Mensaje a los rivales
+   · No decir nada — Solo fútbol
+   ⮑ Subes el gol con un 'gracias al equipo'. Los compañeros comentan el vídeo con emojis y cinco aficionados lo comparten con tu nombre.
+   Δ fama +4, vestuario +2, reputación +2
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
-### [sem 43 · Septiembre 2030] (vida) Balón de Oro
-El Teatro del Châtelet, París, luces y esmoquin. Cuando el presentador abre el sobre y dice "Dani Hassan", el mundo se queda en silencio medio segundo antes de estallar. Subes al escenario con las piernas temblando como si fuera tu primer partido en el Betis.
-   ➤ Dedicárselo a tu familia — Nombrar a Ismael y Fátima desde el escenario
-   · Mencionar al Betis y a Paco Pastor — +Entrenador, +Vestuario
-   · Quedarte en lo tuyo, sin grandes discursos — Humildad calculada
-   · Llamar a Arturo en directo desde el backstage — Un momento solo para tu hermano
-   ⮑ Buscas con la mirada entre el público y encuentras a tu padre Ismael llorando sin disimulo, con tu madre Fátima agarrándole el brazo como si se fuera a caer. Dices su nombre y el teatro entero aplaude a dos personas que nunca pisaron un plató así.
-   Δ fama +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 703.990€
+### [sem 43 · Septiembre 2030] (vida) El hincha que se viste exactamente igual que tú
+Llevas semanas viendo, siempre en la misma esquina fuera del campo de entrenamiento, a Inés Castilla: mismo corte de pelo, mismas botas, hasta el mismo gesto al calentar. Empieza a resultar un poco inquietante.
+   ➤ Acercarte a preguntar qué pasa — Salir de dudas
+   · Hacerte una foto juntos — Convertirlo en broma
+   · Avisar a seguridad del club — Por si acaso
+   ⮑ Te acercas y le preguntas con tacto. Resulta ser un chaval tímido que admira tu juego; al despedirse, te regala una carta escrita a mano.
+   Δ ánimo +2, afición +2
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
-### [sem 43 · Septiembre 2030] (vida) Test físico de pretemporada
-El preparador físico Marcos Bassa te cronometra en el test de resistencia. Ignacio Gallego y tú lleváis apuesta sobre quién llega más lejos.
-   👤 QUIÉN ES — Ignacio Gallego · Compañero de equipo: 28 años. Compañero de equipo, callado en el vestuario y terrible con el balón en los pies. Sus bromas llegan siempre con retraso.
-   ➤ Darlo todo — Hasta vaciarte
-   · Gestionar el esfuerzo — Llegar entero a agosto
-   ⮑ ÉXITO: Marca personal: el preparador lo apunta con una sonrisa y el míster Paco Pastor te felicita.
-   Δ forma +5, ánimo +3, entrenador +2
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 703.990€
+### [sem 43 · Septiembre 2030] (vida) La maleta perdida en el aeropuerto
+Vuelves de la gira y tu maleta se ha perdido en el aeropuerto: botas, ropa y hasta tu amuleto de la suerte, desaparecidos. Tienes que entrenar con lo que te presta Emilio Lozano, tres tallas más grande.
+   👤 QUIÉN ES — Emilio Lozano · Compañero de equipo: 32 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
+   ➤ Reírte de la pinta que llevas — Da igual la talla
+   · Ir a comprar equipo nuevo — Solución rápida
+   · Culpar a la aerolínea en redes — Que se enteren todos
+   ⮑ Sales al entreno con una camiseta que te llega a las rodillas. El vestuario entero te aplaude y alguien te saca una foto que llegará a la prensa.
+   Δ ánimo +3, vestuario +4
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
+
+### [sem 43 · Septiembre 2030] (vida) Clases de inglés obligatorias
+El club ficha a un profesor de inglés para toda la plantilla, de cara a la gira internacional. Manuel Carrasco confunde "boots" con "boats" delante de todo el grupo y el profesor no sabe si reírse.
+   👤 QUIÉN ES — Manuel Carrasco · Compañero de equipo: 20 años. Compañero de equipo, callado en el vestuario y terrible con el balón en los pies. Sus bromas llegan siempre con retraso.
+   ➤ Tomártelo en serio — Te puede servir en el futuro
+   · Reíros juntos del desastre — Ambiente relajado
+   · Saltarte la clase — Ya te las apañarás con gestos
+   ⮑ Haces los deberes y tomas apuntes. El profesor te pone de ejemplo y tú, de reojo, ves cómo el resto te mira con una mezcla de envidia y respeto.
+   Δ media +2, reputación +1
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
 ### [sem 43 · Septiembre 2030] (vida) La afición en la puerta del hotel
 Cientos de hinchas del Real Betis esperan al autobús con bufandas y cánticos. Entre ellos, alguien te grita un ánimo que te llega.
@@ -1245,193 +1271,154 @@ Cientos de hinchas del Real Betis esperan al autobús con bufandas y cánticos. 
    · Pasar de largo — Hoy no es el día
    ⮑ Bajas del autobús y firmas hasta que el entrenador te llama desde la puerta. Algún hincha te lleva en volandas unos metros.
    Δ fama +2, afición +4
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 703.990€
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
-### [sem 43 · Septiembre 2030] (vida) El fan que jura ser tu primo perdido
-Belén Fuentes se presenta en la puerta de entrenamientos con un árbol genealógico dibujado a mano y fotos borrosas de una boda de los años 90, jurando que sois primos separados al nacer.
-   ➤ Escuchar la historia entera — Por curiosidad
-   · Hacerte una foto y seguirle la broma — "Primo, cuánto tiempo"
-   · Pedir amablemente que se vaya — Esto empieza a dar miedo
-   ⮑ Te sientas en el bordillo y escuchas una hora de apellidos, bodas y primos segundos. Al final, te regala una copia del árbol genealógico dibujada a mano.
-   Δ ánimo +2, afición +2
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 703.990€
+### [sem 43 · Septiembre 2030] (vida) El sobre de la panadería
+Tu padre Ismael Hassan, Ismael Hassan, te llama con un tono raro: el panadero del local que alquilaste, un tal Gonzalo Sagasta, quiere vender el edificio entero y te ofrece entrar de socio mayoritario antes que a nadie. Hay que decidir rápido, antes de pretemporada apretada.
+   · Ampliar la inversión — Dinero en juego, posible ganancia a futuro
+   · Mantenerlo como está — Seguro, sin sorpresas
+   ➤ Pasárselo a Iñaki Zubiaurre — Que decida el profesional
+   ⮑ Iñaki Zubiaurre revisa los papeles en media hora y te manda un audio: "Esto huele bien, pero dame una semana antes de mover nada."
+   Δ ánimo +1, representante +3
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
-### [sem 43 · Septiembre 2030] (partido) Real Betis 3-1 Mallorca: recital en el Villamarín
-Ante Mallorca en La Liga, jugaste 85 minutos. Nota: 8.7/10. Goles: 2. Asistencias: 1. Marcador: 3-1 (Real Betis-Mallorca). Tu doblete en diez minutos del primer tiempo deja el partido sentenciado y el Villamarín corea tu nombre. Paco Pastor te saca entre aplausos en el 85' y te da una palmada en la nuca: "Así me gusta, Dani."
-   · Dedica el doblete a tu familia — +Moral, +Patrimonio emocional
-   ➤ Corre a abrazar a Fernando Ferreiro — +Vestuario, gesto de compañerismo
-   · Habla claro en zona mixta — Rueda de prensa, +Fama
-   · Te vas directo al vestuario, sin show — Bajo perfil, +Respeto interno
-   ⮑ Vas a celebrarlo con Fernando Ferreiro, que se queda en el banquillo toda la segunda parte; él te da un abrazo sincero y te dice: "Métele el tercero por los dos, campeón."
-   Δ ánimo +5, media +3, vestuario +9
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 703.990€
+### [sem 43 · Septiembre 2030] (vida) Tu mayor fan escribe
+Te llega un mensaje larguísimo de Marina Valverde, con muchos signos de exclamación.
+   ➤ Confirmar y añadir una broma — La apuesta es sagrada
+   · Contestar con la verdad — Fue con la derecha
+   · Mandar un audio y ya — Cinco segundos de voz
+   ⮑ La respuesta llega enseguida: «JAJAJA GANÉ! Te debo una cerveza. Eres un mito»
+   Δ ánimo +3, fama +3, afición +2
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
-### [sem 44 · Octubre 2030] (vida) Amistoso contra un gigante
-La pretemporada trae un amistoso de gala contra el Liverpool FC. Estadio a reventar y cámaras de medio mundo para un partido que, sobre el papel, "no vale nada".
-   · Salir a disfrutarlo — Sin presión, sin miedo
-   ➤ Pedirle la camiseta a un rival llamado Gaspar Cabrera — Para el recuerdo
-   · Tomártelo como una final — Demostrar que puedes competir ahí
-   ⮑ Al pitido final le pides la camiseta a un rival del otro lado. Él sonríe y te la intercambia: ya tienes un recuerdo para siempre.
-   Δ ánimo +2, fama +2
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 731.840€
+### [sem 43 · Septiembre 2030] (partido) Real Betis 3-1 Mallorca: recital en casa
+Ante Mallorca en La Liga, jugaste 84 minutos. Nota: 8.2/10. Goles: 2. Asistencias: 1. Marcador: 3-1 (Real Betis-Mallorca). Te adelantaste al central en el primer palo para el 1-0, dejaste solo a Fernando Ferreiro para el segundo y remataste el córner que cerró la goleada. Paco Pastor, desde la banda, no paraba de aplaudir hacia ti, y el estadio coreó tu nombre al cambio.
+   · Dedicar el partido a tu familia — +Fama, +Familia
+   ➤ Repartir el mérito en rueda de prensa — +Vestuario
+   · Provocar un poco a la grada rival — Jugada de riesgo, +Afición local
+   · Llamar a Iñaki Zubiaurre nada más pisar el vestuario — +Representante
+   ⮑ Hablas del pase de Javier Aguirre antes que de tus goles. El capitán te da una palmada en la nuca al pasar: "Así me gusta, crack, pero invita luego."
+   Δ media +3, vestuario +6, afición +2
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 678.990€
 
 ### [sem 44 · Octubre 2030] (partido) El momento decisivo
-Partido en marcha ante Celta de Vigo. Roban el balón: contragolpe, dos contra uno, la pelota es tuya. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Disparo raso al primer palo — Rápido y directo
-   ➤ Hacer una pared con el compañero — Juego combinado
-   · Intentar un sombrero al defensa — Para la galería
-   ⮑ ÉXITO: La pared sale redonda: te devuelven el balón dentro del área y asistes al segundo.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 731.840€
-
-### [sem 44 · Octubre 2030] (partido) Betis - Celta: contragolpe y sociedad con Ferreiro
-Ante Celta de Vigo en La Liga, jugaste 90 minutos. Nota: 7.8/10. Goles: 0. Asistencias: 1. Marcador: 2-1 (Real Betis-Celta de Vigo). En el minuto 45, tras robar el balón, encaraste la contra en dos contra uno y cediste a Fernando Ferreiro, que no perdonó. Paco Pastor te aplaudió desde la banda al pitido final mientras el Benito Villamarín coreaba el nombre del equipo entero.
-   ➤ Reconocer la asistencia en zona mixta — +Vestuario, +Prensa
-   · Reivindicar tu decisión en el 1-contra-2 — +Confianza propia, riesgo de ego
-   · Llamar a tu madre Fátima Roig al salir del campo — +Familia
-   · Quedarte en el campo celebrando con la grada — +Afición, -tiempo con el equipo
-   ⮑ Un periodista, Álvaro Nieves, de un diario deportivo local, apunta tu frase: "El gol es de Fernando, yo solo elegí bien el pase". Ferreiro te da una palmada en la nuca al pasar: "Así me gusta, crack".
-   Δ fama +2, media +3, vestuario +6, afición +3
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 731.840€
-
-### [sem 44 · Octubre 2030] (especial) El periodista que no se olvidó
-En la zona mixta te espera un hombre que no es Álvaro Nieves. Se presenta: "Raúl Monzón, del digital Verdiblanco Total. Hace un año te saqué en portada por algo que hiciste... o que no hiciste, mejor dicho." Sonríe: te recuerda aquel partido en el que todos esperaban verte buscar con la mirada a alguien en la grada, y tú no lo hiciste ni una vez. "Escribí un artículo sobre tu cabeza fría. Me preguntaron de dónde salió el chaval que no se vendió a la presión. Hoy quiero cerrar aquella historia: ¿qué pasó de verdad esa noche?"
-   ➤ Contarle la verdad completa — Honestidad, +fama a largo plazo
-   · Mantener la versión oficial de siempre — Seguro, sin sorpresas
-   · Pedirle que no publique nada — Proteger el pasado, coste en confianza
-   · Darle la exclusiva completa, con nombres — Jugada de riesgo, foco total
-   ⮑ Raúl Monzón baja la grabadora un segundo, impresionado: "Esto es mejor historia que la que imaginé. Gracias por confiar en mí." Promete no sacarlo hasta que tú lo autorices.
-   Δ ánimo +5, fama +4, representante +2
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 731.840€
-
-### [sem 44 · Octubre 2030] (vida) Cada uno tira para un lado
-Emilio Olmedo firma por otro club: la primera gran decisión que os separa después de tanto tiempo juntos. La despedida es sincera, sin dramas, con la promesa hueca de "seguimos hablando" que casi nunca se cumple del todo.
-   ➤ Prometerle que seguiréis en contacto, y cumplirlo — Cuidar la amistad
-   · Despedida cordial, sabiendo que la vida sigue — Sin forzar nada
-   · Sentir que se rompe algo, aunque no lo digas — Nostalgia real
-   ⮑ (sin reacción)
-   Δ ánimo +2, reputación +1
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 731.840€
-
-### [sem 44 · Octubre 2030] (partido) Noche europea
-Europa League - Fase de grupos, ante Fenerbahçe. Controlas un pase largo en carrera, con el central rival pegado a ti a un metro. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Gonzalo Casares · Compañero de equipo: 35 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
-   ➤ Picar el balón por encima del portero — Delicadeza con riesgo
+Partido en marcha ante Celta de Vigo. Controlas un pase largo en carrera, con el central rival pegado a ti a un metro. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   👤 QUIÉN ES — Unai Cazorla · Compañero de equipo: 31 años. Compañero de vestuario. Es de los que siempre tienen un chiste preparado y llegan los primeros al entrenamiento.
+   · Picar el balón por encima del portero — Delicadeza con riesgo
    · Cruzar el disparo al palo largo — Colocación antes que fuerza
-   · Esperar a que llegue un compañero llamado Gonzalo Casares por detrás — Un pase en el momento justo
-   ⮑ ÉXITO: La pelota dibuja una parábola preciosa y se cuela por encima del guardameta. ¡Gol!
+   ➤ Esperar a que llegue un compañero llamado Unai Cazorla por detrás — Un pase en el momento justo
+   ⮑ ÉXITO: Esperas el desmarque justo y lo filtras: tu compañero marca sin oposición.
    Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 731.840€
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 706.840€
 
-### [sem 44 · Octubre 2030] (partido) Noche europea en el Villamarín
-Ante Fenerbahçe en Europa League, jugaste 90 minutos. Nota: 8.5/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Fenerbahçe). En el minuto 41 controlas un pase largo en carrera, con el central rival pegado a ti a un metro, y la clavas de disparo directo: el Villamarín se cae del asiento. Paco Pastor, puño cerrado desde la banda, te grita algo que ni escuchas entre el rugido de la grada.
-   ➤ Dedica el gol a la grada — +Afición
-   · Vas directo a abrazar a Javier Aguirre — +Vestuario
-   · Celebración discreta, mirando al banquillo — Gesto hacia el entrenador Paco Pastor
-   · Llamas a tu familia nada más pitar el final — Momento personal
-   ⮑ Te señalas el escudo mirando al fondo norte y la grada responde coreando tu nombre durante un minuto entero.
-   Δ ánimo +4, fama +6, media +3, afición +8
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 731.840€
+### [sem 44 · Octubre 2030] (partido) Betis 3 - Celta 1: asistencia de oro en el Benito Villamarín
+Ante Celta de Vigo en La Liga, jugaste 90 minutos. Nota: 8.2/10. Goles: 0. Asistencias: 1. Marcador: 3-1 (Real Betis-Celta de Vigo). En el 45', controlaste un pase largo en carrera con el central pegado a un metro y, en vez de forzar el disparo, sacaste un pase al hueco que Javier Aguirre empujó a gol. El Villamarín se vino arriba y Paco Pastor te sacó del campo con un aplauso cerrado.
+   ➤ Dedicar la asistencia a Aguirre en la zona mixta — +Vestuario
+   · Reivindicar en sala de prensa que también sabes rematar — Jugada de riesgo
+   · Llamar a tu padre Ismael Hassan nada más pisar el vestuario — +Familia
+   · Quedarte a estirar a solas con Marcos Bassa — Rutina profesional
+   ⮑ Javier Aguirre te revuelve el pelo delante de las cámaras: "Este chaval ve pasillos que yo ni sabía que existían." El vestuario se ríe y te da un par de collejas de cariño.
+   Δ ánimo +3, fama +3, media +3, vestuario +6, afición +4
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 706.840€
 
-### [sem 45 · Noviembre 2030] (representante) Un tipo de gabardina te ofrece un club
-Un desconocido que se presenta como "intermediario" te para a la salida del entrenamiento y jura que puede colocarte en el Atlético de Madrid en el mercado de enero. Solo pide un adelanto "para gastos" y que no se lo cuentes a nadie. Huele raro, pero habla muy bien.
-   · Pagarle el adelanto (4800 €) — Fiarte de un desconocido
-   · Pasarle el marrón a Iñaki Zubiaurre — Que lo compruebe él
-   ➤ Grabarlo a escondidas y subirlo a redes — Contenido gratis
-   · Ignorarlo y seguir andando — Cabeza fría
-   ⮑ El vídeo supera el millón de visualizaciones en una sola noche. El club te pide explicaciones al día siguiente, aunque más de uno se ríe por lo bajo.
-   Δ ánimo +2, fama +5, representante −1
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 759.690€
-
-### [sem 45 · Noviembre 2030] (vida) Alguien sabe algo
-Rosa Serrano dice tener información sobre tu vestuario. Ojo con esto.
-   · Pedirle las capturas — Mejor saberlo todo
-   · Decirle que hable con él en persona — Las cosas, a la cara
-   ➤ Bloquear y avisar al capitán — Que lo controle él
-   ⮑ La respuesta llega enseguida: «Este usuario ha restringido los mensajes»
-   Δ vestuario +3, reputación +2
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 759.690€
-
-### [sem 45 · Noviembre 2030] (partido) Eliminatoria de Copa, a partido único
-Copa del Rey - Dieciseisavos, a vida o muerte, ante CD Mirandés. Recibes de espaldas a la portería, con un defensa pegado a ti. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   ➤ Probar la vaselina por encima del portero adelantado — Todo o nada, para la galería
-   · Cederla atrás para el que llega desde segunda línea — Confiar en que remate mejor colocado
-   · Proteger el balón pegado a la banda hasta ganar la falta — Sin riesgo: buscar los segundos, no el gol
-   ⮑ FALLO: Se te va larga, por encima del larguero. Ocasión desperdiciada.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 759.690€
-
-### [sem 45 · Noviembre 2030] (partido) Pleno al 17 en el Villamarín
-Ante CD Mirandés en Copa del Rey, jugaste 84 minutos. Nota: 7.8/10. Goles: 1. Asistencias: 1. Marcador: 2-0 (Real Betis-CD Mirandés). El Betis avanza de ronda con autoridad: tu gol llegó tras el error del 41', cuando perdiste el balón de espaldas con el defensa pegado y el Mirandés estuvo a punto de hacer daño en la contra. Diez minutos después te resarciste con un zurdazo cruzado que hizo enloquecer al Villamarín, y Paco Pastor te aplaudió desde la banda al cambiarte en el 84'.
-   ➤ Dedica el gol a la grada — +Afición
-   · Reconoce el fallo del 41' en la rueda de prensa — Autocrítica pública
-   · Bromea en el vestuario sobre tu propio error — +Vestuario
-   · Llama a tu madre Fátima Roig nada más salir del campo — Momento personal
-   ⮑ Señalas el escudo y la grada responde con un cántico espontáneo con tu nombre; un chaval con tu camiseta llora de la emoción en primera fila.
-   Δ ánimo +3, fama +4, media +3, afición +7
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 759.690€
-
-### [sem 46 · Diciembre 2030] (partido) Betis 3 - Villarreal 1: noche redonda en el Benito Villamarín
-Ante Villarreal CF en La Liga, jugaste 84 minutos. Nota: 8.5/10. Goles: 2. Asistencias: 1. Marcador: 3-1 (Real Betis-Villarreal CF). Tu doblete en la primera parte desató el Villamarín, y antes de pedir el cambio diste la asistencia del tercero a Javier Aguirre. Paco Pastor te sacó aplaudiendo mientras la grada coreaba tu nombre.
-   · Dedicar la victoria a la grada — +Afición
-   ➤ Resaltar la asistencia de Aguirre en la entrevista — +Vestuario, discreto en prensa
-   · Llamar a tu padre Ismael Hassan nada más pisar el vestuario — Momento personal
-   · Mensaje a Iñaki Zubiaurre sobre la repercusión — Mirar al futuro
-   ⮑ El capitán te da un cabezazo cariñoso en el túnel: 'Así se hacen las cosas, chaval'.
-   Δ ánimo +2, fama +1, media +4, vestuario +7
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 787.540€
-
-### [sem 46 · Diciembre 2030] (representante) Iñaki Zubiaurre te habla sobre tu futuro económico
-"Estás ganando bien ahora. Pero esto no dura para siempre. Tengo un contacto que maneja inversiones inmobiliarias: un piso reformado en un barrio universitario, con inquilinos ya buscando, por 200.000 € al contado. Te rinde un 4 % anual en alquileres y el piso solo se revaloriza. O lo dejas todo en la cuenta. ¿Qué prefieres?"
-   ➤ Comprar el piso para alquilarlo — 200.000 € — Piso reformado en barrio universitario · ~4 % anual
-   · Guardar el dinero — Mantenerlo accesible
-   ⮑ El asesor te enseña los planos de un piso reformado y tú te imaginas viviendo ahí. Firmas con una sonrisa que no sabes si es de orgullo o de nervios.
-   Δ fama +1, dinero −200000
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 587.540€
-
-### [sem 46 · Diciembre 2030] (partido) Noche europea
-Europa League - Fase de grupos, ante Sporting CP. Un córner cerrado te cae en la cabeza, rodeado de tres defensas que no te sueltan. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   · Cabecear picado hacia el suelo — Que bote antes del portero
-   ➤ Prolongar de cabeza para el compañero — Servir en lugar de rematar
-   · Atacar el balón con todo el cuerpo — Sin miedo al choque
-   ⮑ ÉXITO: Prolongas con inteligencia y tu compañero marca a placer.
-   Δ sin cambios numéricos
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 99 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 587.540€
-
-### [sem 46 · Diciembre 2030] (partido) Eliminación europea con sabor amargo
-Ante Sporting CP en Europa League, jugaste 90 minutos. Nota: 7.0/10. Goles: 0. Asistencias: 1. Marcador: 1-2 (Real Betis-Sporting CP). En el minuto 89, un córner cerrado te cayó en la cabeza rodeado de tres defensas que no te soltaban; no pudiste rematar y cedistes el balón atrás, donde Javier Aguirre empujó el gol del honor demasiado tarde. El Benito Villamarín se queda mudo: Real Betis queda eliminado de la fase de grupos.
-   · Da la cara ante la prensa — +Afición, expones el vestuario
-   · Habla primero con el vestuario — +Vestuario, discreción total
-   · Llama a tu representante Iñaki Zubiaurre — Piensas en lo que viene
-   ➤ Te encierras a repasar el córner fallado — Autocrítica dura, -Moral
-   ⮑ (sin reacción)
-   Δ forma +3, ánimo −4, media +2, entrenador +2
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 95 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 587.540€
-
-### [sem 47 · Enero 2031] (partido) El momento decisivo
-Partido en marcha ante Getafe CF. Un compañero llamado Ismael Nieto te deja un balón de tacón en plena área pequeña. No hay tiempo para pensar demasiado — tienes que decidir ya.
-   👤 QUIÉN ES — Ismael Nieto · Compañero de equipo: 27 años. Compañero de equipo. Lleva años en el club y conoce todas las historias del vestuario, aunque se las guarda.
-   · Picar al hueco entre los dos centrales — Buscar el desmarque justo antes del pase
-   ➤ Intentar la chilena si el balón te queda en el aire — Todo o nada, jugada para el recuerdo
-   · Tocar atrás para reiniciar antes de atacar de nuevo — Sin riesgo: guardar la posesión del equipo
-   ⮑ ÉXITO: La chilena sale perfecta. El estadio entero enmudece antes de explotar en gritos. ¡Golazo histórico!
-   Δ fama +4
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 92 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 615.390€
-
-### [sem 47 · Enero 2031] (partido) Betis 2-1 Getafe: la media punta de tacón
-Ante Getafe CF en La Liga, jugaste 90 minutos. Nota: 8.3/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Getafe CF). En el minuto 74, Fernando Ferreiro te dejó un balón de tacón en plena área pequeña y tú, sin pensarlo, la empujaste al fondo de la red. El Coliseum enmudeció y Paco Pastor, desde la banda, se llevó las dos manos a la cabeza antes de aplaudir.
-   ➤ Dedícaselo a Fernando — +Vestuario
-   · Habla claro en zona mixta — +Prensa
-   · Llama a tu padre Ismael Hassan nada más pisar el vestuario — +Familia
-   · Quítale hierro delante de los veteranos — Humildad calculada
-   ⮑ Fernando Ferreiro te abraza en el centro del campo y te grita al oído: "Esa asistencia me la debes de por vida, crack". El vestuario entero lo celebra como si el gol fuera de los dos.
-   Δ ánimo +5, fama +3, media +3, vestuario +8
-   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 97 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 615.390€
-
-### [sem 47 · Enero 2031] (partido) Se decide la Liga
+### [sem 44 · Octubre 2030] (partido) Se decide la Liga
 Última jornada. Vuestro equipo depende de sí mismo: ganar y sois campeones. El estadio lleva toda la semana sin hablar de otra cosa.
    ➤ Pedir el balón en cada jugada decisiva — Quieres cargar con la responsabilidad
    · Confiar en el plan del entrenador, sin forzar de más — Menos protagonismo, más disciplina táctica
    ⮑ FALLO: El título se escapa en los últimos minutos. El vestuario queda en silencio bajo la ducha.
    Δ ánimo −10, media −2, afición −3
-   📊 Real Betis · rol titular · media 97 · forma 100 · ánimo 87 · entrenador 100 · vestuario 100 · afición 97 · fama 100 · dinero 615.390€
+   📊 Real Betis · rol titular · media 97 · forma 100 · ánimo 90 · entrenador 100 · vestuario 100 · afición 97 · fama 100 · dinero 706.840€
+
+### [sem 44 · Octubre 2030] (partido) Noche europea
+Europa League - Fase de grupos, ante Fenerbahçe. Recibes en carrera por banda, con el lateral rival ya tarde para cubrirte. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   ➤ Quedarte cerca esperando un posible rebote — Paciencia: estar en el sitio correcto
+   · Amagar el cuerpo hacia un lado y salir por el otro — Ganarte medio metro con un solo gesto
+   ⮑ FALLO: El rechace se va lejos de ti, hacia un defensa rival.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 97 · forma 100 · ánimo 90 · entrenador 100 · vestuario 100 · afición 97 · fama 100 · dinero 706.840€
+
+### [sem 44 · Octubre 2030] (partido) Noche europea en el Villamarín
+Ante Fenerbahçe en Europa League, jugaste 90 minutos. Nota: 7.2/10. Goles: 1. Asistencias: 0. Marcador: 2-1 (Real Betis-Fenerbahçe). En el 26' recibiste en carrera por banda, con el lateral rival ya tarde para cubrirte, y tu disparo cruzado se estrelló en el poste; el Villamarín se llevó las manos a la cabeza. Lo tuyo llegó en el 68', un zurdazo que desató el delirio de la grada, y Paco Pastor celebró en la banda con el puño cerrado.
+   · Dedicar el gol a la grada — +Afición
+   ➤ Ir primero a buscar a Javier Aguirre — +Vestuario
+   · Hablar del poste en zona mixta — Autocrítica pública
+   · Mandar un mensaje a Iñaki Zubiaurre — Mirar al futuro
+   ⮑ El capitán te abraza y te grita al oído: "Esto es lo que necesitábamos, chaval", antes de que te trague el resto del equipo.
+   Δ ánimo +3, media +3, vestuario +7
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 93 · entrenador 100 · vestuario 100 · afición 97 · fama 100 · dinero 706.840€
+
+### [sem 45 · Noviembre 2030] (representante) El presidente que ficha en un asador
+El presidente del Manchester City te cita en un asador de carretera. Te pone delante un cochinillo, un contrato escrito en una servilleta y una cifra que no cuadra con nada. "Aquí los fichajes se cierran comiendo", te dice con la boca llena.
+   ➤ Firmar la servilleta — Palabra de presidente
+   · Seguirle la corriente y pedir el postre — Cena gratis, sin compromiso
+   · Decirle que hable con Iñaki Zubiaurre — Profesional hasta con el cochinillo
+   ⮑ FALLO: A la mañana siguiente el presidente Fernando Casares ni se acuerda de la cena, y la servilleta no vale ni para limpiarte las manos.
+   Δ forma −1, ánimo −2
+   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 88 · entrenador 100 · vestuario 100 · afición 97 · fama 100 · dinero 734.690€
+
+### [sem 45 · Noviembre 2030] (partido) Eliminatoria de Copa, a partido único
+Copa del Rey - Dieciseisavos, a vida o muerte, ante CD Mirandés. El portero rival sale mal y te queda la portería medio vacía desde fuera del área. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   ➤ Disparo raso al primer palo — Rápido y directo
+   · Hacer una pared con el compañero — Juego combinado
+   · Intentar un sombrero al defensa — Para la galería
+   ⮑ FALLO: El portero cierra el primer palo con el pie y evita el gol.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 88 · entrenador 100 · vestuario 100 · afición 97 · fama 100 · dinero 734.690€
+
+### [sem 45 · Noviembre 2030] (partido) Copa del Rey: Real Betis 2-0 CD Mirandés
+Ante CD Mirandés en Copa del Rey, jugaste 84 minutos. Nota: 7.2/10. Goles: 1. Asistencias: 0. Marcador: 2-0 (Real Betis-CD Mirandés). En el 9' el portero rival sale mal y te deja la portería medio vacía desde fuera del área, pero el disparo se estrella en el poste. Te rehaces y en la segunda parte firmas el 2-0 con un remate raso. El Benito Villamarín se vuelca y Paco Pastor te aplaude desde la banda al cambiarte.
+   · Mención al fallo en la rueda de prensa — Autocrítica ante los medios
+   ➤ Celebrar el gol con la grada — +Afición
+   · Bromear con Fernando Ferreiro en el vestuario — Picar al compañero de puesto
+   · Llamar a tu madre Fátima Roig al salir del túnel — Momento personal
+   ⮑ Corres hacia el fondo y la grada corea tu nombre; un veterano grita "¡este se queda!" y te señala con el dedo.
+   Δ ánimo +3, fama +6, media +3, afición +7
+   📊 Real Betis · rol titular · media 99 · forma 99 · ánimo 91 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 734.690€
+
+### [sem 46 · Diciembre 2030] (partido) Betis 3 - Villarreal CF 1: doblete en el Benito Villamarín
+Ante Villarreal CF en La Liga, jugaste 84 minutos. Nota: 8.3/10. Goles: 2. Asistencias: 0. Marcador: 3-1 (Real Betis-Villarreal CF). El segundo lo clavaste de volea tras un centro de Javier Aguirre, y el Villamarín se vino abajo. Paco Pastor te sacó al minuto 84 entre aplausos, dándote un par de palmadas en la nuca.
+   · Dedicar el doblete a la familia — +Moral, +rel. familiar implícita
+   ➤ Ir directo al vestuario, sin gestos — +Vestuario, discreción
+   · Dar rueda de prensa cargada de confianza — +Fama, riesgo de arrogancia
+   · Buscar a Fernando Ferreiro en el vestuario — Gesto con el compañero que compite por tu puesto
+   ⮑ Javier Aguirre te frena en el túnel: "Así me gusta, sin circo. Dos goles y a casa." El resto del equipo asiente con la cabeza.
+   Δ ánimo +2, media +4, vestuario +5
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 90 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 762.540€
+
+### [sem 46 · Diciembre 2030] (entrenamiento) La sesión extra que nadie olvidó
+Paco Pastor te para en el pasillo de la ciudad deportiva, serio, con una carpeta bajo el brazo. "Me acuerdo de aquella tarde que te quedaste a currar cuando podías haberte ido a casa. Por eso quiero que seas tú el que hable con los juveniles mañana, no Fernando Ferreiro." Te está pidiendo que cedas tu hueco de protagonismo en la charla de la cantera para dárselo a quien se lo ganó entonces.
+   · Aceptar encantado — +Entrenador, +Vestuario
+   ➤ Pedir compartir la charla con Fernando Ferreiro — Gesto generoso, riesgo de imagen
+   · Decir que prefieres descansar ese día — Prioriza tu agenda
+   ⮑ Paco Pastor levanta las cejas, sorprendido: "Mira tú, el killer con corazón." Fernando Ferreiro, al enterarse, te busca después para darte las gracias sin mirarte a los ojos del todo.
+   Δ ánimo +4, fama +2, entrenador +7, vestuario +6
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 94 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 762.540€
+
+### [sem 46 · Diciembre 2030] (partido) Noche europea
+Europa League - Fase de grupos, ante Sporting CP. El balón te llega al borde del área con el defensa de espaldas: tienes medio segundo para decidir. No hay tiempo para pensar demasiado — tienes que decidir ya.
+   ➤ Fingir el disparo y regatear al portero — Sangre fría
+   · Disparar con la pierna que no es la tuya — Sin tiempo para cambiar
+   · Ceder al compañero de la derecha — Mejor posicionado que tú
+   ⮑ FALLO: El portero no pica y te arrebata el balón de los pies.
+   Δ sin cambios numéricos
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 94 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 762.540€
+
+### [sem 46 · Diciembre 2030] (partido) Pleno europeo en el Villamarín
+Ante Sporting CP en Europa League, jugaste 90 minutos. Nota: 8.7/10. Goles: 2. Asistencias: 1. Marcador: 3-1 (Real Betis-Sporting CP).
+
+El Betis cierra la fase de grupos como primero y vuela a octavos. En el 71', con el defensa de espaldas en el borde del área, te la jugaste y la perdiste, y el Sporting empató al contragolpe un minuto después; respondiste con dos zarpazos que desataron el Benito Villamarín. Paco Pastor te abraza en el túnel: "Hoy has sido un animal, Dani."
+   ➤ Dedicar el pase al vestuario — +Vestuario
+   · Reconocer el error en zona mixta — Autocrítica pública
+   · Llamar a tu padre Ismael Hassan nada más pisar el vestuario — Familia primero
+   · Dejar que Iñaki Zubiaurre gestione el ruido mediático — Perfil bajo
+   ⮑ Javier Aguirre te revuelve el pelo en la ducha: "Por eso perdonamos la del 71', macho." El vestuario se ríe contigo, no de ti.
+   Δ ánimo +4, media +3, vestuario +6
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 98 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 762.540€
+
+### [sem 47 · Enero 2031] (partido) El mejor sobre el campo
+Terminas el partido más importante de la temporada como la gran figura: decisivo de principio a fin. Al pitido final, el speaker del estadio anuncia tu nombre como el mejor jugador del partido.
+   ➤ Dedicar el premio a la afición — +Relación con la afición
+   · Dedicarlo al vestuario, fue un trabajo de equipo — +Vestuario
+   ⮑ Levantas el premio hacia la grada y el estadio entero se pone en pie. Un aficionado llora abrazado a su padre con tu camiseta puesta.
+   Δ ánimo +6, fama +6, afición +8
+   📊 Real Betis · rol titular · media 99 · forma 100 · ánimo 100 · entrenador 100 · vestuario 100 · afición 100 · fama 100 · dinero 790.390€

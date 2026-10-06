@@ -60,7 +60,7 @@ export default async function ResultadoPage({
   // player.week ya ha avanzado a la temporada siguiente para cuando se ve
   // esta pantalla, así que hay que pedir las stats con la semana de cierre.
   const seasonStats = isSeasonRecap
-    ? await getCurrentSeasonStats(supabase, { id: player.id, week: closedSeasonWeek })
+    ? await getCurrentSeasonStats(supabase, { id: player.id, week: closedSeasonWeek }, null, player.flags)
     : null;
 
   return (

@@ -122,6 +122,53 @@ const RULES: Rule[] = [
     ],
   },
   {
+    test: /despedir.*fichar/i,
+    lines: [
+      "Se lo dices a la cara, sin dramas. Recoge su maletín despacio y, ya en la puerta, suelta: «Vas a echar de menos mis llamadas». Esa tarde ya estás cenando con tu nuevo representante.",
+      "Cortas la relación con una llamada corta y firme. Al otro lado se hace un silencio largo antes de un «como quieras». Hay amistades de negocio que no sobreviven a una factura rara.",
+    ],
+  },
+  {
+    test: /dejarlo pasar por esta vez/i,
+    lines: [
+      "Lo dejas pasar, esta vez. Pero apuntas la cifra en una libreta: la próxima, no habrá próxima.",
+      "Decides no montar una escena. Te quedas con una sensación incómoda que no se va tan fácilmente como el cargo.",
+    ],
+  },
+  {
+    test: /ponerte serio|esta vez vamos a aprovecharlo/i,
+    lines: [
+      "Lo dices con una seriedad que no es tuya. Él asiente despacio: sabe que, si esto sale bien, será porque los dos quisieron.",
+    ],
+  },
+  {
+    test: /presentarle a tu representante|pagarle los estudios|pagarle una preparación/i,
+    lines: [
+      "Se lo ofreces sin hacer ruido. Él te mira un segundo, intentando no emocionarse, y asiente: «Te lo devolveré, de una manera u otra».",
+    ],
+  },
+  {
+    test: /mensaje sincero|buscarlo antes del partido|saludarlo/i,
+    lines: [
+      "Das el primer paso. Sea cual sea la respuesta, te quitas un peso: a veces el rival más duro es el silencio.",
+      "Escribes sin florituras, tal como lo piensas. La respuesta tarda, y cuando llega es más corta y más humana de lo que esperabas.",
+    ],
+  },
+  {
+    test: /se rompe algo|dejar que la comparación te pique|llevaros bien, sin más/i,
+    lines: [
+      "Lo guardas dentro. No es un drama, pero hay cosas que cambian de sitio sin que nadie se dé cuenta del momento exacto.",
+      "Te lo tomas como viene: sin heroicidades y sin rencores. Con el tiempo, estas cosas se colocan solas.",
+    ],
+  },
+  {
+    test: /pedir que tu representante lo revise|pedir explicaciones directas|frenar el crecimiento del acuerdo/i,
+    lines: [
+      "Pides tiempo y que lo revisen con lupa. La marca no se ofende, pero se nota que esperaban un sí rápido. Mejor prudente que arrepentido.",
+      "Dejas claro que no firmas a ciegas. Al otro lado cambian el tono: ahora te hablan como a alguien con quien hay que negociar de verdad.",
+    ],
+  },
+  {
     test: /descansar de verdad|aprovechar el rato libre/i,
     lines: [
       "Te tumbas, apagas el móvil y por una vez no piensas en nada. Mañana el cuerpo te lo agradecerá.",

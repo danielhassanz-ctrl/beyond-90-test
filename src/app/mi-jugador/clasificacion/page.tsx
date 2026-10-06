@@ -32,7 +32,7 @@ export default async function ClasificacionPage() {
   });
 
   const { primary, secondary, copa, euro } = getActiveStandings(player, usedEventIds, matchRecord);
-  const seasonStats = await getCurrentSeasonStats(supabase, player, player.pending_event);
+  const seasonStats = await getCurrentSeasonStats(supabase, player, player.pending_event, player.flags);
   const competitionStats = await getCompetitionStats(supabase, player, player.pending_event);
 
   return (

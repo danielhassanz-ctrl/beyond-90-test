@@ -3,6 +3,7 @@
  * Se llama después de resolver un evento para registrar logros.
  */
 
+import { readSimSeasonStats } from "@/lib/narrative/off-screen-matches";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
@@ -164,11 +165,21 @@ export async function getCurrentSeasonStats(
   supabase: SupabaseClient,
   player: Pick<Player, "id" | "week">,
   pendingEvent?: GameEvent | null,
+  /** flags del jugador: traen los partidos estimados que no se viven como escena (off-screen-matches.ts). */
+  flags?: Record<string, string | boolean> | null,
 ): Promise<SeasonStats> {
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const seasonStartWeek = season * WEEKS_PER_SEASON + 1;
 
-  const totals: SeasonStats = { matches_played: 0, goals: 0, assists: 0, minutes_played: 0, yellow_cards: 0, red_cards: 0 };
+  const sim = readSimSeasonStats(flags, season);
+  const totals: SeasonStats = {
+    matches_played: sim.matches,
+    goals: sim.goals,
+    assists: sim.assists,
+    minutes_played: sim.minutes,
+    yellow_cards: 0,
+    red_cards: 0,
+  };
 
   try {
     const { data, error } = await supabase

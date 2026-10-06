@@ -1,5 +1,6 @@
 "use server";
 
+import { simulateOffScreenMatches, addSimSeasonStats } from "@/lib/narrative/off-screen-matches";
 import { defaultReaction } from "@/lib/narrative/default-reactions";
 import { sponsorshipFlagFor } from "@/lib/finance/sponsorship-income";
 import { redirect } from "next/navigation";
@@ -23,7 +24,7 @@ import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt, withSceneGuards } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
-import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET } from "@/types/career";
+import { MODE_TARGET_WEEKS, WEEKS_PER_SEASON, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
 import { buildLedgerEntry, appendLedger } from "@/lib/narrative/ledger";
 import { introduceCast, markCastMet } from "@/lib/narrative/cast";
@@ -294,6 +295,30 @@ export async function resolveEvent(formData: FormData) {
       ...(matchDoneFlag ? { match_done_week: matchDoneFlag } : {}),
       wk_count: weekCounter,
     };
+  }
+
+  // Partidos que no se viven como escena: sus apariciones, goles y minutos se
+  // estiman al avanzar el mes (ver off-screen-matches.ts) y suman a los
+  // totales de carrera y a la tarjeta de temporada.
+  if (newWeek > player.week && player.status === "active") {
+    const off = simulateOffScreenMatches(player as Player, newWeek - player.week);
+    if (off.matches > 0) {
+      const flagsNow = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+      playerUpdate.flags = addSimSeasonStats(flagsNow, Math.floor((player.week - 1) / WEEKS_PER_SEASON), off);
+      const base = statsPatch ?? {
+        stats_matches_played: player.stats_matches_played ?? 0,
+        stats_goals: player.stats_goals ?? 0,
+        stats_assists: player.stats_assists ?? 0,
+        stats_minutes_played: player.stats_minutes_played ?? 0,
+      };
+      statsPatch = {
+        ...base,
+        stats_matches_played: Number(base.stats_matches_played ?? 0) + off.matches,
+        stats_goals: Number(base.stats_goals ?? 0) + off.goals,
+        stats_assists: Number(base.stats_assists ?? 0) + off.assists,
+        stats_minutes_played: Number(base.stats_minutes_played ?? 0) + off.minutes,
+      };
+    }
   }
 
   // El entrenador te mantiene fuera durante unos turnos tras una decisión
