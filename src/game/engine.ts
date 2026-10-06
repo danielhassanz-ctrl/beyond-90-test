@@ -570,6 +570,19 @@ export function advance(state: GameState): GameState {
         applyRun(s, 3);
         continue;
       }
+      // Two playable matches in a row is enough. If an authored narrative beat
+      // is currently eligible, surface it before a third match instead of
+      // turning the career into a stack of match cards. Keep the key match in
+      // the queue so sporting chronology is preserved; if no meaningful story
+      // beat exists we still allow the match rather than fabricate filler.
+      if ((s.flags["playable_match_streak"] ?? 0) >= 2) {
+        const separator = directorCard(s);
+        if (separator) {
+          s.queue.unshift(slot);
+          s.pending = separator;
+          return touch(s);
+        }
+      }
       // Slots marked as key matches are already sparse and separated by
       // narrative/simulation slots in makeSeasonPlan. Do not silently erase
       // them just because an optional narrative slot failed to surface a card.
@@ -787,6 +800,7 @@ export function resolveEvent(state: GameState, eventId: string, choiceId: string
   ensureRuntime(s);
   const event = eventById(eventId);
   if (!event) return advance(s);
+  s.flags["playable_match_streak"] = 0;
   const choice = event.choices.find((c) => c.id === choiceId) ?? event.choices[0]!;
   const before = snapshot(s);
   const outcomeText = typeof choice.outcome === "function" ? choice.outcome(s) : choice.outcome;
@@ -806,6 +820,7 @@ export function resolveEventFree(state: GameState, eventId: string, text: string
   ensureRuntime(s);
   const event = eventById(eventId);
   if (!event) return advance(s);
+  s.flags["playable_match_streak"] = 0;
   const before = snapshot(s);
   const interp = interpretFree(text ?? "");
   const reaction = event.freeform?.reactions?.[interp.intent] ?? INTENT_FEEDBACK[interp.intent];
@@ -830,6 +845,7 @@ export function resolveDynamicCard(
   const s = clone(state);
   ensureRuntime(s);
   const before = snapshot(s);
+  s.flags["playable_match_streak"] = 0;
   let result;
   try {
     result = resolveDynamic(s, card, choiceId, freeText);
@@ -884,6 +900,7 @@ function finishScene(s: GameState, title: string, text: string, before: ReturnTy
 export function resolveMatch(state: GameState, match: MatchData, keyChoiceId?: string): GameState {
   const s = clone(state);
   const before = snapshot(s);
+  s.flags["playable_match_streak"] = (s.flags["playable_match_streak"] ?? 0) + 1;
   const m: MatchData = clone(match);
   let keyText = "";
   let keyOk: boolean | null = null;
