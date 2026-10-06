@@ -3,7 +3,7 @@
  * Se llama después de resolver un evento para registrar logros.
  */
 
-import { readSimSeasonStats } from "@/lib/narrative/off-screen-matches";
+import { readSimSeason, sumSim } from "@/lib/narrative/off-screen-matches";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
@@ -171,7 +171,7 @@ export async function getCurrentSeasonStats(
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const seasonStartWeek = season * WEEKS_PER_SEASON + 1;
 
-  const sim = readSimSeasonStats(flags, season);
+  const sim = sumSim(readSimSeason(flags, season));
   const totals: SeasonStats = {
     matches_played: sim.matches,
     goals: sim.goals,

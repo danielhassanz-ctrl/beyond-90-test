@@ -37,7 +37,7 @@ function Table({ title, stats }: { title: string; stats: CompetitionStats }) {
     <div className="overflow-hidden rounded-2xl border border-panel-border bg-surface">
       <div className="flex items-center justify-between border-b border-panel-border px-4 py-3">
         <p className="text-kicker text-gold">{title}</p>
-        <p className="text-kicker text-muted-foreground">{totalMatches} partidos clave</p>
+        <p className="text-kicker text-muted-foreground">{totalMatches} partidos jugados</p>
       </div>
       <table className="w-full text-sm">
         <thead>
@@ -117,7 +117,7 @@ export function CompetitionStatsCard({
       <Table title="Toda la carrera" stats={career} />
       {history.length > 0 && <HistoryTable rows={history} />}
       <p className="text-center text-[11px] text-muted-foreground">
-        Cuentan tus partidos clave, los que juegas en tu historia. La clasificación de abajo suma las 38 jornadas del equipo.
+        Suman todos tus partidos: los que juegas como escena y los que se disputan entre medias, estimados según tu rol, tu posición y tu nivel. La clasificación de abajo es la del equipo entero (todas las jornadas), así que ahí salen más partidos que a ti.
       </p>
     </div>
   );

@@ -33,7 +33,7 @@ export default async function ClasificacionPage() {
 
   const { primary, secondary, copa, euro } = getActiveStandings(player, usedEventIds, matchRecord);
   const seasonStats = await getCurrentSeasonStats(supabase, player, player.pending_event, player.flags);
-  const competitionStats = await getCompetitionStats(supabase, player, player.pending_event);
+  const competitionStats = await getCompetitionStats(supabase, player, player.pending_event, player.flags);
 
   return (
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">

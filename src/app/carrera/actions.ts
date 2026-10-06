@@ -1,6 +1,6 @@
 "use server";
 
-import { simulateOffScreenMatches, addSimSeasonStats } from "@/lib/narrative/off-screen-matches";
+import { simulateOffScreenMatches, backfillOffScreen, addSimSeason, sumSim, emptySim } from "@/lib/narrative/off-screen-matches";
 import { defaultReaction } from "@/lib/narrative/default-reactions";
 import { sponsorshipFlagFor } from "@/lib/finance/sponsorship-income";
 import { redirect } from "next/navigation";
@@ -300,11 +300,35 @@ export async function resolveEvent(formData: FormData) {
   // Partidos que no se viven como escena: sus apariciones, goles y minutos se
   // estiman al avanzar el mes (ver off-screen-matches.ts) y suman a los
   // totales de carrera y a la tarjeta de temporada.
-  if (newWeek > player.week && player.status === "active") {
-    const off = simulateOffScreenMatches(player as Player, newWeek - player.week);
+  if (player.status === "active" && player.week >= 11) {
+    let flagsNow = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    const added = emptySim();
+    // Una sola vez: rellena lo ya jugado antes de que existiera esta cuenta.
+    if (!flagsNow.sim_backfill) {
+      for (const [s, sim] of backfillOffScreen(player as Player)) {
+        flagsNow = addSimSeason(flagsNow, s, sim);
+        for (const k of Object.keys(added) as (keyof typeof added)[]) {
+          added[k].matches += sim[k].matches;
+          added[k].goals += sim[k].goals;
+          added[k].assists += sim[k].assists;
+          added[k].minutes += sim[k].minutes;
+        }
+      }
+      flagsNow = { ...flagsNow, sim_backfill: "1" };
+    }
+    if (newWeek > player.week) {
+      const live = simulateOffScreenMatches(player as Player, newWeek - player.week);
+      flagsNow = addSimSeason(flagsNow, Math.floor((player.week - 1) / WEEKS_PER_SEASON), live);
+      for (const k of Object.keys(added) as (keyof typeof added)[]) {
+        added[k].matches += live[k].matches;
+        added[k].goals += live[k].goals;
+        added[k].assists += live[k].assists;
+        added[k].minutes += live[k].minutes;
+      }
+    }
+    playerUpdate.flags = flagsNow;
+    const off = sumSim(added);
     if (off.matches > 0) {
-      const flagsNow = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
-      playerUpdate.flags = addSimSeasonStats(flagsNow, Math.floor((player.week - 1) / WEEKS_PER_SEASON), off);
       const base = statsPatch ?? {
         stats_matches_played: player.stats_matches_played ?? 0,
         stats_goals: player.stats_goals ?? 0,

@@ -12,6 +12,7 @@ import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
 import { WEEKS_PER_SEASON, seasonLabel } from "@/types/career";
 import { extractStatsFromEvent } from "@/lib/player/update-stats";
+import { readAllSim, sumSim, type SimComp } from "@/lib/narrative/off-screen-matches";
 
 export interface CompStat {
   matches: number;
@@ -89,6 +90,8 @@ export async function getCompetitionStats(
   supabase: SupabaseClient,
   player: Pick<Player, "id" | "week">,
   pendingEvent?: GameEvent | null,
+  /** flags del jugador: traen los partidos estimados que no se viven como escena (off-screen-matches.ts). */
+  flags?: Record<string, string | boolean> | null,
 ): Promise<{ season: CompetitionStats; career: CompetitionStats; history: SeasonHistoryRow[] }> {
   const season = emptyCompetitionStats();
   const career = emptyCompetitionStats();
@@ -155,6 +158,33 @@ export async function getCompetitionStats(
     }
   } catch (err) {
     console.error("[getCompetitionStats] threw:", err instanceof Error ? err.message : err);
+  }
+
+  // Partidos estimados (los que no se viven como escena): misma cuenta que la
+  // cabecera de la tarjeta, así que todo suma lo mismo.
+  const currentSeasonIdx = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  for (const [idx, sim] of readAllSim(flags)) {
+    const total = sumSim(sim);
+    if (total.matches === 0) continue;
+    for (const k of Object.keys(sim) as SimComp[]) {
+      const c = sim[k];
+      career[k].matches += c.matches;
+      career[k].goals += c.goals;
+      career[k].assists += c.assists;
+      career[k].minutes += c.minutes;
+      if (idx === currentSeasonIdx) {
+        season[k].matches += c.matches;
+        season[k].goals += c.goals;
+        season[k].assists += c.assists;
+        season[k].minutes += c.minutes;
+      }
+    }
+    const hist = bySeason.get(idx) ?? { label: seasonLabel(idx * WEEKS_PER_SEASON + 1), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
+    hist.matches += total.matches;
+    hist.goals += total.goals;
+    hist.assists += total.assists;
+    hist.minutes += total.minutes;
+    bySeason.set(idx, hist);
   }
 
   const history = [...bySeason.entries()].sort((a, b) => a[0] - b[0]).map(([, row]) => row);
