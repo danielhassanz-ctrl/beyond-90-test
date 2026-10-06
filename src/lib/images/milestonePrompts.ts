@@ -138,3 +138,22 @@ export function getMilestoneImagePrompt(
   //    IA ya genera específico para ese evento — mejor que un genérico.
   return null;
 }
+
+
+/**
+ * Las escenas de foto que escribe la IA (event.imageScene) no sabían nada de
+ * la camiseta real del club, de la edad del jugador ni de que el modelo de
+ * imagen inventa texto: salió un chico de 19 años con pinta de 35, de azul
+ * jugando con el Real Madrid, y un marcador con "HAT-TRICK" en un 1-2. Estas
+ * cláusulas se añaden al final de cualquier escena de IA.
+ */
+export function withSceneGuards(scene: string, opts: { club?: string; age: number; nationalTeam?: boolean }): string {
+  const ageText =
+    opts.age < 18
+      ? "a 16-17 year old teenager"
+      : opts.age < 23
+        ? `a ${opts.age}-year-old young man with a youthful, clean-shaven or lightly stubbled face, no wrinkles, no grey hair`
+        : `a ${opts.age}-year-old man`;
+  const kit = opts.club && !opts.nationalTeam ? ` If he wears a football kit, it is: ${describeKit(opts.club)}.` : "";
+  return `${scene} Requirements: the man is ${ageText}.${kit} No readable text anywhere in the image: no scoreboard numbers, no captions, no player names, no banners with words.`;
+}

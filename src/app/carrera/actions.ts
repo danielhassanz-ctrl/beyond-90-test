@@ -20,7 +20,7 @@ import { buildMatchContext, NO_CLUB_YET } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
 import { describeLook } from "@/lib/playerLook";
 import { composeDmCard } from "@/lib/images/dmCard";
-import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
+import { getMilestoneImagePrompt, withSceneGuards } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, playerAge, COACH_STANCE_TARGET } from "@/types/career";
@@ -517,7 +517,15 @@ export async function resolveEvent(formData: FormData) {
         overrideMilestoneType ?? event.milestoneType,
         currentAgentName,
       );
-      milestoneImagePrompt = contextualPrompt ?? event.imageScene ?? null;
+      milestoneImagePrompt =
+        contextualPrompt ??
+        (event.imageScene
+          ? withSceneGuards(event.imageScene, {
+              club: newClub,
+              age: currentAge,
+              nationalTeam: /^(sel-|torneo|matchday-torneo)/.test(event.id),
+            })
+          : null);
     }
 
     // Los momentos garantizados de toda carrera (firma con el primer
