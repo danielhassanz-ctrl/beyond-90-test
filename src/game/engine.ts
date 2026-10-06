@@ -576,7 +576,7 @@ export function advance(state: GameState): GameState {
       // the queue so sporting chronology is preserved; if no meaningful story
       // beat exists we still allow the match rather than fabricate filler.
       if ((s.flags["playable_match_streak"] ?? 0) >= 2) {
-        const separator = directorCard(s);
+        const separator = directorCard(s) ?? agentCard(s) ?? moneyCard(s);
         if (separator) {
           s.queue.unshift(slot);
           s.pending = separator;
