@@ -2996,6 +2996,14 @@ const CALLBACK_WRAP = [
   "Llega por teléfono, tarde, y te quita el sueño esa noche.",
 ];
 
+const CALLBACK_CHOICES = [
+  [["afrontar", "Afrontarlo de frente"], ["esquivar", "Esquivarlo por ahora"], ["consultar", "Hablar con alguien implicado antes de cerrar"]],
+  [["afrontar", "Cerrar la conversación hoy"], ["esquivar", "Ganar tiempo y no responder todavía"], ["consultar", "Contrastar primero la otra versión"]],
+  [["afrontar", "Dar la cara y asumir lo que dijiste"], ["esquivar", "Dejar que se enfríe unos días"], ["consultar", "Llamar a quien estuvo allí contigo"]],
+  [["afrontar", "Responder sin esconderte"], ["esquivar", "No entrar ahora en ese conflicto"], ["consultar", "Escuchar antes a tu entorno"]],
+  [["afrontar", "Sentarte y resolverlo de una vez"], ["esquivar", "Aplazar la respuesta hasta tener margen"], ["consultar", "Pedir una segunda opinión antes de decidir"]],
+] as const;
+
 /* ============================== Render ============================== */
 
 export interface DirectorView {
@@ -3040,11 +3048,8 @@ export function renderDirector(s: GameState, card: DynamicCard): DirectorView | 
       image: "locker",
       category: "story",
       text: `${text}. ${CALLBACK_WRAP[hash(careerSeed(s), `cbw${s.sceneCount ?? 0}`) % CALLBACK_WRAP.length]}`,
-      choices: [
-        { id: "afrontar", label: "Afrontarlo de frente" },
-        { id: "esquivar", label: "Esquivarlo por ahora", hint: "Puede volver peor" },
-        { id: "consultar", label: "Hablar con alguien implicado antes de cerrar", hint: "Menos impulso, más contexto" },
-      ],
+      choices: CALLBACK_CHOICES[(s.seenEvents ?? []).filter((id) => id.startsWith("cb_scene_")).length % CALLBACK_CHOICES.length]!
+        .map(([id, label]) => ({ id, label })),
     };
   }
   if (card.kind !== "arc") return null;
