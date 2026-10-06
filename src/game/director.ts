@@ -2991,7 +2991,7 @@ const CALLBACK_TITLES = [
 const CALLBACK_WRAP = [
   "En este oficio las decisiones vuelven con retraso y con intereses.",
   "Nadie lo había olvidado, solo estaban esperando el momento.",
-  "Aparece un martes cualquiera, cuando ya no lo esperabas.",
+  "Aparece un día cualquiera, cuando ya no lo esperabas.",
   "Te lo sueltan sin aviso, entre dos ejercicios de entrenamiento.",
   "Llega por teléfono, tarde, y te quita el sueño esa noche.",
 ];
