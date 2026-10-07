@@ -18,9 +18,15 @@ import { NEGOCIOS } from "./negocios";
 import { VETERANOS } from "./veteranos";
 import { JUVENTUD } from "./juventud";
 import { AFICION } from "./aficion";
+import { VESTUARIO2 } from "./vestuario2";
+import { REDES } from "./redes";
+import { FAMILIA } from "./familia";
+import { LESIONES } from "./lesiones";
+import { SELECCION2 } from "./seleccion2";
+import { MISTER2 } from "./mister2";
 
 /** Todas las escenas del banco, en un solo sitio. Añadir una familia nueva = importarla aquí. */
-export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS, ...CAMBIOS, ...PAREJA, ...RIVALES, ...SURREALISMO, ...NEGOCIOS, ...VETERANOS, ...JUVENTUD, ...AFICION];
+export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS, ...CAMBIOS, ...PAREJA, ...RIVALES, ...SURREALISMO, ...NEGOCIOS, ...VETERANOS, ...JUVENTUD, ...AFICION, ...VESTUARIO2, ...REDES, ...FAMILIA, ...LESIONES, ...SELECCION2, ...MISTER2];
 
 /**
  * Banderas que dejan las escenas del banco y que cuentan algo de la historia
@@ -45,4 +51,23 @@ export const BANK_FACTS: Record<string, string> = {
   golden_boy: "ganó el Golden Boy, el premio al mejor joven de Europa",
   gb_finalista: "fue finalista del Golden Boy pero no lo ganó",
   olimpico_convocado: "fue convocado con la selección sub-23 a unos Juegos Olímpicos",
+  loro_leyenda: "el loro del utillero, Evaristo, se convirtió en leyenda del vestuario y acudió a su despedida",
+  restaurante_exito: "su primo Quique y él abrieron un restaurante, Bar el Crack, que triunfó; hay un plato con su nombre",
+  campo_inaugurado: "pagó el césped del campo de tierra de su barrio, que hoy lleva su apellido",
+  fundacion: "creó o apoyó una fundación con su nombre",
+  ahorrador: "ahorró con cabeza durante su carrera siguiendo el consejo de un veterano",
+  doble_anuncio: "rodó un anuncio junto a su doble, un chaval idéntico a él",
+  padrino_ismael: "fue padrino de boda de Ismael, su compañero de habitación de la residencia",
+  hugo_debuta: "el niño que le pidió su primer autógrafo, Hugo, acabó debutando en el primer equipo",
+  nino_cantera: "un niño que le esperaba cada tarde a la puerta del campo entró en la cantera",
+  concha_recuerdo: "Concha, la abuela más ultra del estadio, le dejó un bocadillo de despedida",
+  medico_futuro: "un niño al que visitó en el hospital se hizo médico",
+  gol_hijo: "le dedicó un gol a su hijo desde el césped",
+  madre_casa: "le prometió una casa a su madre",
+  padre_caja: "su padre guardó durante años una caja con todos los recortes de su carrera",
+  vt_dorsal: "su club retiró su dorsal",
+  titulado: "acabó la carrera universitaria mientras jugaba",
+  capitan_futuro: "un capitán de la selección le dijo que sería su relevo",
+  mi_credito: "su entrenador le reconoció públicamente una idea táctica",
+  perro_adios: "su perro Míster fue mascota del vestuario hasta el final",
 };
