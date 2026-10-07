@@ -7,7 +7,7 @@ import { describeKit } from "@/lib/clubColors";
 import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
 import { investmentFlag } from "@/lib/finance/investments";
-import { monthlyPayment } from "@/lib/finance/mortgage";
+import { monthlyPayment, vehicleFinancing } from "@/lib/finance/mortgage";
 
 /**
  * Primer evento de carrera: elegir representante. Ahora es dinámico con 15+ variantes
@@ -133,6 +133,61 @@ function randomPrice(min: number, max: number, roundTo: number): number {
 
 function pickRandom<T>(items: T[], n: number): T[] {
   return [...items].sort(() => Math.random() - 0.5).slice(0, n);
+}
+
+/**
+ * Elige n opciones del catálogo que el jugador PUEDE pagar (la entrada del
+ * préstamo cabe en su cuenta). Antes los coches, yates y jets se ofrecían sin
+ * comprobar el dinero: con 40.000 € se podía "comprar" un superdeportivo de
+ * 375.000 € pagando solo lo que había en la cuenta, y el resto desaparecía.
+ * Si no hay suficientes asequibles, se completa con los más baratos.
+ */
+function pickAffordable<T extends { min: number; max: number }>(
+  catalog: T[],
+  n: number,
+  kind: "coche" | "yate" | "jet",
+  player: Player,
+  roundTo: number,
+): (T & { price: number })[] {
+  const downFor = (price: number) => vehicleFinancing(kind, price).down;
+  const affordable = catalog.filter((l) => downFor(l.min) <= player.patrimonio);
+  const pool = affordable.length >= n ? affordable : [...catalog].sort((a, b) => a.min - b.min).slice(0, Math.max(n, affordable.length));
+  return pickRandom(pool, n).map((l) => {
+    let price = randomPrice(l.min, l.max, roundTo);
+    // Tampoco se sortea un precio cuya entrada no puedas pagar si el mínimo sí.
+    if (downFor(price) > player.patrimonio && downFor(l.min) <= player.patrimonio) {
+      price = Math.max(l.min, Math.floor(player.patrimonio / (downFor(1000000) / 1000000) / roundTo) * roundTo);
+    }
+    return { ...l, price };
+  });
+}
+
+/** Una opción de compra financiada: entrada ahora, cuota cada mes, deuda que cuenta en tu patrimonio. */
+function financedPurchase(
+  kind: "coche" | "yate" | "jet",
+  l: { name: string; price: number },
+  photoUrl: string | null | undefined,
+  week: number,
+  i: number,
+) {
+  const f = vehicleFinancing(kind, l.price);
+  const monthly = monthlyPayment({ key: "", name: "", price: l.price, downPayment: f.down, termMonths: f.termMonths, rate: f.rate });
+  return {
+    down: f.down,
+    monthly,
+    flag: {
+      [`propiedad_${Date.now()}_${i}`]: JSON.stringify({
+        name: l.name,
+        price: l.price,
+        downPayment: f.down,
+        termMonths: f.termMonths,
+        rate: f.rate,
+        kind: f.kind,
+        photoUrl: photoUrl ?? null,
+        since: week,
+      }),
+    },
+  };
 }
 
 /**
@@ -800,6 +855,14 @@ export function findPropertyInteriorPrompt(name: string): string | null {
   return null;
 }
 
+/** Qué tipo de capricho es una propiedad por su nombre (coche, yate o jet), o null si es una casa. */
+export function findVehicleKind(name: string): "coche" | "yate" | "jet" | null {
+  if (CAR_LISTINGS.some((l) => l.name === name)) return "coche";
+  if (YACHT_LISTINGS.some((l) => l.name === name)) return "yate";
+  if (JET_LISTINGS.some((l) => l.name === name)) return "jet";
+  return null;
+}
+
 export async function buildCasaEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
   // El umbral de patrimonio que dispara este evento solo garantiza que
   // la vivienda MÁS BARATA de todo el catálogo sea pagable — pero los 3
@@ -923,7 +986,7 @@ export async function buildMansionEvent(player: Player, supabase: SupabaseClient
  * salga solo porque ha pasado el tiempo, como si acabara de debutar.
  */
 export async function buildYachtEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
-  const listings = pickRandom(YACHT_LISTINGS, 3).map((l) => ({ ...l, price: randomPrice(l.min, l.max, 10000) }));
+  const listings = pickAffordable(YACHT_LISTINGS, 3, "yate", player, 10000);
   const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
 
   return {
@@ -931,20 +994,23 @@ export async function buildYachtEvent(player: Player, supabase: SupabaseClient):
     category: "vida",
     title: "Un capricho de crack",
     description:
-      "Tu nombre ya suena en cualquier lado. Un amigo del gremio te comenta que se ha comprado un barco y que 'no hay nada como desconectar en el agua'. Tu representante te manda un par de opciones, por si te apetece.",
+      "Tu nombre ya suena en cualquier lado. Un amigo del gremio te comenta que se ha comprado un barco y que 'no hay nada como desconectar en el agua'. Tu representante te manda un par de opciones, por si te apetece. Se paga una entrada y el resto se financia con cuota mensual.",
     options: [
-      ...listings.map((l, i) => ({
-        id: `yate-${i}`,
-        label: `${l.name} — ${l.price.toLocaleString("es")} €`,
-        subtitle: "Capricho de crack",
-        imageUrl: photos[i] ?? undefined,
-        consequences: {
-          patrimonio: -l.price,
-          moral: 6,
-          fama: 2,
-          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null, since: player.week }) },
-        },
-      })),
+      ...listings.map((l, i) => {
+        const buy = financedPurchase("yate", l, photos[i], player.week, i);
+        return {
+          id: `yate-${i}`,
+          label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+          subtitle: `Entrada: ${buy.down.toLocaleString("es")} € · Cuota: ${buy.monthly.toLocaleString("es")} €/mes`,
+          imageUrl: photos[i] ?? undefined,
+          consequences: {
+            patrimonio: -buy.down,
+            moral: 6,
+            fama: 2,
+            flags: buy.flag,
+          },
+        };
+      }),
       {
         id: "pasar",
         label: "Pasar, no es tu estilo",
@@ -957,7 +1023,7 @@ export async function buildYachtEvent(player: Player, supabase: SupabaseClient):
 }
 
 export async function buildJetEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
-  const listings = pickRandom(JET_LISTINGS, 2).map((l) => ({ ...l, price: randomPrice(l.min, l.max, 100000) }));
+  const listings = pickAffordable(JET_LISTINGS, 2, "jet", player, 100000);
   const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
 
   return {
@@ -967,18 +1033,21 @@ export async function buildJetEvent(player: Player, supabase: SupabaseClient): P
     description:
       "Entre viajes de selección, publicidad y vacaciones, tu representante hace cuentas: 'A este ritmo, un jet privado se paga solo en comodidad. Es una pasada de dinero, pero míralo tú mismo.'",
     options: [
-      ...listings.map((l, i) => ({
-        id: `jet-${i}`,
-        label: `${l.name} — ${l.price.toLocaleString("es")} €`,
-        subtitle: "El lujo definitivo",
-        imageUrl: photos[i] ?? undefined,
-        consequences: {
-          patrimonio: -l.price,
-          moral: 8,
-          fama: 4,
-          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null, since: player.week }) },
-        },
-      })),
+      ...listings.map((l, i) => {
+        const buy = financedPurchase("jet", l, photos[i], player.week, i);
+        return {
+          id: `jet-${i}`,
+          label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+          subtitle: `Entrada: ${buy.down.toLocaleString("es")} € · Cuota: ${buy.monthly.toLocaleString("es")} €/mes`,
+          imageUrl: photos[i] ?? undefined,
+          consequences: {
+            patrimonio: -buy.down,
+            moral: 8,
+            fama: 4,
+            flags: buy.flag,
+          },
+        };
+      }),
       {
         id: "pasar",
         label: "Seguir volando en primera clase, sin más",
@@ -997,7 +1066,7 @@ export async function buildJetEvent(player: Player, supabase: SupabaseClient): P
  * superdeportivo de coleccionista.
  */
 export async function buildCarEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
-  const listings = pickRandom(CAR_LISTINGS, 3).map((l) => ({ ...l, price: randomPrice(l.min, l.max, 5000) }));
+  const listings = pickAffordable(CAR_LISTINGS, 3, "coche", player, 5000);
   const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
 
   return {
@@ -1007,18 +1076,21 @@ export async function buildCarEvent(player: Player, supabase: SupabaseClient): P
     description:
       "Con el sueldo ya entrando de verdad, un compañero de vestuario te comenta que se acaba de comprar un coche que 'no necesita, pero se lo merece'. Tu representante te manda un par de opciones, por si te apetece darte el capricho.",
     options: [
-      ...listings.map((l, i) => ({
-        id: `coche-${i}`,
-        label: `${l.name} — ${l.price.toLocaleString("es")} €`,
-        subtitle: "Capricho sobre ruedas",
-        imageUrl: photos[i] ?? undefined,
-        consequences: {
-          patrimonio: -l.price,
-          moral: 6,
-          fama: 1,
-          flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment: l.price, photoUrl: photos[i] ?? null, since: player.week }) },
-        },
-      })),
+      ...listings.map((l, i) => {
+        const buy = financedPurchase("coche", l, photos[i], player.week, i);
+        return {
+          id: `coche-${i}`,
+          label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+          subtitle: `Entrada: ${buy.down.toLocaleString("es")} € · Cuota: ${buy.monthly.toLocaleString("es")} €/mes`,
+          imageUrl: photos[i] ?? undefined,
+          consequences: {
+            patrimonio: -buy.down,
+            moral: 6,
+            fama: 1,
+            flags: buy.flag,
+          },
+        };
+      }),
       {
         id: "pasar",
         label: "Pasar, el coche que tienes te vale",

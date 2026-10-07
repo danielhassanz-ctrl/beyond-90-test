@@ -12,6 +12,7 @@ import { readInvestments, investmentValue } from "@/lib/finance/investments";
 import { activeSponsorships } from "@/lib/finance/sponsorship-income";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
 import { NO_CLUB_YET } from "@/lib/constants";
+import { repairCashPurchases } from "@/lib/finance/repair";
 
 /** Cómo va la economía, en una frase honesta, según el patrimonio neto. */
 function getFinancialPressure(patrimonio: number): { label: string; tone: string; description: string } {
@@ -102,6 +103,9 @@ export default async function PatrimonioPage() {
   if (!player) {
     redirect("/crear-jugador");
   }
+
+  // Compras antiguas que no se pagaron enteras: se recalculan una sola vez.
+  await repairCashPurchases(supabase, player);
 
   const { data: allEvents } = await supabase
     .from("career_events")
@@ -223,7 +227,7 @@ export default async function PatrimonioPage() {
               ))}
               {mortgageMonthly > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-foreground/90">Sale: cuotas de hipoteca</span>
+                  <span className="text-foreground/90">Sale: cuotas de hipotecas y préstamos</span>
                   <span className="font-num font-semibold text-destructive">-{mortgageMonthly.toLocaleString("es")} €</span>
                 </div>
               )}
@@ -424,7 +428,7 @@ export default async function PatrimonioPage() {
               .map((p) => (
                 <li key={p.key} className="flex items-start justify-between gap-3 py-2.5">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Hipoteca: {p.name}</p>
+                    <p className="text-sm font-medium text-foreground">{p.kind === "coche" || p.kind === "yate" || p.kind === "jet" ? "Préstamo" : "Hipoteca"}: {p.name}</p>
                     <p className="text-xs text-muted-foreground">Cada mes, automático</p>
                   </div>
                   <span className="font-num shrink-0 text-sm font-bold text-destructive">-{monthlyPayment(p).toLocaleString("es")} €</span>

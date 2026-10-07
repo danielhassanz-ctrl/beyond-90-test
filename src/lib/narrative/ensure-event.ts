@@ -33,6 +33,7 @@ import { generateClubOffersEvent } from "@/lib/narrative/ai";
 import { NO_CLUB_YET, pickStartingClubOffers } from "@/lib/constants";
 import { shouldTriggerBusquedaEquipo, buildBusquedaEquipoEvent, hadViralMoment } from "@/lib/narrative/agente-busqueda";
 import { summarizeEffects } from "@/lib/narrative/state-brief";
+import { repairCashPurchases } from "@/lib/finance/repair";
 import { runWithAiBudget, careerBudgetTotal, currentAiUsed } from "@/lib/narrative/ai-budget";
 import { MODE_TARGET_WEEKS } from "@/types/career";
 
@@ -102,6 +103,8 @@ async function ensureNextEventInner(
   supabase: SupabaseClient,
   player: Player,
 ): Promise<{ event: GameEvent; usedEventIds: string[] }> {
+  // Corrige compras antiguas de coche/yate/jet que no se pagaron enteras (finance/repair.ts).
+  await repairCashPurchases(supabase, player);
   let event: GameEvent | null = player.pending_event;
   // Si otra petición está generando la escena de este turno, se espera a que acabe.
   if (isGenLock(event)) event = await waitForPendingEvent(supabase, player.id);
