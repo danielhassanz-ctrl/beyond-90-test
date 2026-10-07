@@ -6,9 +6,11 @@ import { PRENSA } from "./prensa";
 import { MENTE } from "./mente";
 import { AFICION_FAMILIA } from "./aficion-familia";
 import { SUELTAS } from "./sueltas";
+import { CACHONDEO_VESTUARIO } from "./cachondeo-vestuario";
+import { TRASPASOS } from "./traspasos";
 
 /** Todas las escenas del banco, en un solo sitio. Añadir una familia nueva = importarla aquí. */
-export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS];
+export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS];
 
 /**
  * Banderas que dejan las escenas del banco y que cuentan algo de la historia

@@ -1,5 +1,6 @@
 "use server";
 
+import { pickInterestedClub } from "@/lib/narrative/market-window";
 import { ensureNextEvent } from "@/lib/narrative/ensure-event";
 import { appendThread } from "@/lib/narrative/threads";
 import { bankFlagKey } from "@/lib/narrative/bank/types";
@@ -110,10 +111,18 @@ export async function resolveEvent(formData: FormData) {
     ? {
         ...consequencesClub,
         flags: Object.fromEntries(
-          Object.entries(consequencesClub.flags).map(([k, v]) => [
-            k,
-            typeof v === "string" ? v.replace('"@WEEK"', String(player.week)) : v,
-          ]),
+          Object.entries(consequencesClub.flags).flatMap(([k, v]): [string, string | boolean][] => {
+            // "@interest": un club se interesa por ti ahora (la oferta formal llega después).
+            // Lo usan las escenas del banco sobre rumores de fichajes.
+            if (k === "@interest") {
+              return [
+                ["transfer_interest", pickInterestedClub(player)],
+                ["transfer_interest_week", String(player.week)],
+                ["transfer_interest_source", typeof v === "string" ? v : "prensa"],
+              ];
+            }
+            return [[k, typeof v === "string" ? v.replace('"@WEEK"', String(player.week)) : v]];
+          }),
         ),
       }
     : consequencesClub;

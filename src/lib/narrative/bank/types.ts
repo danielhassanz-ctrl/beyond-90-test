@@ -51,6 +51,16 @@ export interface BankWhen {
   hasThread?: "favor" | "deuda" | "rencor" | "promesa" | "secreto";
   /** Posición en el campo. */
   positions?: string[];
+  /** Resultado de un torneo de selecciones ya jugado ESTA temporada (mundial/eurocopa/copa_america/any) y, opcional, cómo acabó. */
+  torneo?: { type: "mundial" | "eurocopa" | "copa_america" | "any"; outcomes?: ("fase_de_grupos" | "octavos" | "cuartos" | "semifinal" | "subcampeon" | "campeon")[] };
+  /** La próxima temporada hay torneo de selecciones (solo en los últimos turnos de la anterior): escenas de antesala. */
+  torneoProx?: "mundial" | "eurocopa" | "copa_america" | "any";
+  /** Ventana de fichajes abierta ahora (verano, enero o cualquiera). */
+  market?: "verano" | "enero" | "abierta";
+  /** Mes de la temporada (1 = pretemporada/julio ... 10 = mayo). */
+  turn?: Range;
+  /** Turnos que llevas en el club actual (para escenas de llegada o de arraigo). */
+  clubTurns?: Range;
 }
 
 export interface BankScene {

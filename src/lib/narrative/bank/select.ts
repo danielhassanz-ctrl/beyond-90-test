@@ -8,6 +8,8 @@ import type { Player } from "@/types/player";
 import { playerAge } from "@/types/career";
 import { computeRole } from "@/lib/narrative/role";
 import { getClubLevel } from "@/lib/calendar/match-calendar";
+import { hasMajorTournament } from "@/lib/calendar/season";
+import { getMarketWindow } from "@/lib/narrative/market-window";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { openThreads } from "@/lib/narrative/threads";
 import { NO_CLUB_YET } from "@/lib/constants";
@@ -58,6 +60,32 @@ function fits(player: Player, when: BankWhen): { ok: boolean; chained: boolean }
   for (const f of when.notFlags ?? []) if (flags[f]) return { ok: false, chained: false };
   if (when.hasThread && !openThreads(player.flags).some((t) => t.k === when.hasThread)) return { ok: false, chained: false };
 
+  if (when.turn || when.clubTurns) {
+    const t = ((player.week - 1) % 10) + 1;
+    if (!inRange(t, when.turn)) return { ok: false, chained: false };
+    const since = parseInt(String(flags.club_since ?? "0"), 10) || 10;
+    if (!inRange(player.week - since, when.clubTurns)) return { ok: false, chained: false };
+  }
+  if (when.market) {
+    const w = getMarketWindow(player.week);
+    if (!w || (when.market !== "abierta" && when.market !== w)) return { ok: false, chained: false };
+  }
+  const season = Math.floor((player.week - 1) / 10);
+  const turn = ((player.week - 1) % 10) + 1;
+  if (when.torneo) {
+    const types = when.torneo.type === "any" ? ["mundial", "eurocopa", "copa_america"] : [when.torneo.type];
+    const hit = types.some((t) => {
+      const v = flags[`torneo_result_${t}_${season}`];
+      return typeof v === "string" && v !== "" && (!when.torneo!.outcomes || (when.torneo!.outcomes as string[]).includes(v));
+    });
+    if (!hit) return { ok: false, chained: false };
+  }
+  if (when.torneoProx) {
+    if (turn < 7) return { ok: false, chained: false };
+    const next = hasMajorTournament(season + 1, age, player.nation ?? "");
+    if (!next.has || (when.torneoProx !== "any" && next.type !== when.torneoProx)) return { ok: false, chained: false };
+  }
+
   let chained = false;
   for (const a of when.after ?? []) {
     const choice = readBankChoice(flags, a.scene);
@@ -85,10 +113,21 @@ export function clubWithArticle(club: string): string {
 /** Sustituye los marcadores {club}, {el_club} y {apellido} en todos los textos de la escena. */
 export function fillBankEvent<T extends Omit<GameEvent, "id">>(event: T, player: Player): T {
   const club = player.club && player.club !== NO_CLUB_YET ? player.club : "tu club";
+  const f = (player.flags ?? {}) as Flags;
+  const interes = typeof f.transfer_interest === "string" && f.transfer_interest ? f.transfer_interest : "un club importante";
+  const history = String(f.clubs_history ?? "").split("|").filter(Boolean);
+  const exClub = history.length > 0 ? history[history.length - 1] : "tu antiguo club";
+  const withArt = (c: string, fallback: string) => (c === fallback ? c : clubWithArticle(c));
   const fill = (t: string) =>
     t
       .replace(/\{el_club\}/g, club === "tu club" ? "tu club" : clubWithArticle(club))
       .replace(/\{club\}/g, club)
+      .replace(/\{el_interes\}/g, withArt(interes, "un club importante"))
+      .replace(/\{interes\}/g, interes)
+      .replace(/\{el_ex_club\}/g, withArt(exClub, "tu antiguo club"))
+      .replace(/\{ex_club\}/g, exClub)
+      .replace(/\{pareja\}/g, typeof f.pareja === "string" && f.pareja ? f.pareja : "tu pareja")
+      .replace(/\{nacion\}/g, player.nation ?? "tu país")
       .replace(/\{apellido\}/g, player.last_name ?? "");
   const text = (t: string | undefined) => (t === undefined ? t : fill(t));
   return {
@@ -141,15 +180,22 @@ export function pickBankScene(player: Player, usedIds: string[], scenes: BankSce
   const flags = (player.flags ??= {}) as Flags;
   const lastWeek = parseInt(String(flags.bank_last_week ?? "0"), 10) || 0;
   const lastFamily = String(flags.bank_last_family ?? "");
+  // Registro de familias recientes ("familia:semana,..."): un mismo tema no vuelve en menos de 6 turnos salvo encadenado.
+  const famLog = String(flags.bank_fam_log ?? "").split(",").filter(Boolean).map((e) => {
+    const [fam, wk] = e.split(":");
+    return { fam, wk: parseInt(wk, 10) || 0 };
+  });
+  const recentFams = new Set(famLog.filter((e) => player.week - e.wk < 6).map((e) => e.fam));
 
   let pool = eligibleBankScenes(player, usedIds, scenes);
   if (pool.length === 0) return null;
   const anyChained = pool.some((c) => c.chained);
   // No encadenar dos escenas sueltas seguidas del mismo tema.
-  const noSameFamily = pool.filter((c) => c.chained || c.scene.family !== lastFamily);
+  const noSameFamily = pool.filter((c) => c.chained || (c.scene.family !== lastFamily && !recentFams.has(c.scene.family)));
   if (noSameFamily.length > 0) pool = noSameFamily;
+  else if (!anyChained) return null;
   if (!anyChained && lastWeek > 0 && player.week - lastWeek < 2) return null;
-  if (Math.random() >= (anyChained ? 0.85 : 0.4)) return null;
+  if (Math.random() >= (anyChained ? 0.85 : 0.5)) return null;
 
   // Los encadenados que ya tocan compiten solo entre sí.
   const chainedPool = pool.filter((c) => c.chained);
@@ -166,5 +212,6 @@ export function pickBankScene(player: Player, usedIds: string[], scenes: BankSce
   }
   flags.bank_last_week = String(player.week);
   flags.bank_last_family = chosen.scene.family;
+  flags.bank_fam_log = [...famLog.filter((e) => player.week - e.wk < 12), { fam: chosen.scene.family, wk: player.week }].map((e) => `${e.fam}:${e.wk}`).join(",");
   return { ...fillBankEvent(chosen.scene.event, player), id: chosen.scene.id } as GameEvent;
 }

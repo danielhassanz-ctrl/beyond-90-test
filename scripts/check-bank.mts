@@ -15,7 +15,7 @@ const err = (id: string, msg: string) => errors.push(`✗ ${id}: ${msg}`);
 
 const VOSEO = /(?<![\p{L}])(vos|tenés|querés|sos|podés|andá|contame|mirá|fijate|sabés|decime|dale che|plata|computadora|celular|auto)(?![\p{L}])/iu;
 const BROKEN = /undefined|\[object|NaN|\{\w+\}(?<!\{club\}|\{el_club\}|\{apellido\})/;
-const KNOWN_PLACEHOLDERS = new Set(["{club}", "{el_club}", "{apellido}"]);
+const KNOWN_PLACEHOLDERS = new Set(["{club}", "{el_club}", "{apellido}", "{interes}", "{el_interes}", "{ex_club}", "{el_ex_club}", "{pareja}", "{nacion}"]);
 
 const ids = new Set<string>();
 const optionsByScene = new Map<string, Set<string>>();
@@ -66,7 +66,7 @@ for (const s of BANK_SCENES) {
     if (a.minGap !== undefined && a.maxGap !== undefined && a.minGap > a.maxGap) err(s.id, "minGap > maxGap");
     if (a.scene === s.id) err(s.id, "after apunta a sí misma");
   }
-  for (const f of s.when.flags ?? []) if (!flagsSet.has(f) && !/^(title_|capitan_seleccion|sponsor_|pareja|hijos)/.test(f)) warn.push(`! ${s.id}: exige la bandera "${f}" que ninguna escena del banco activa`);
+  for (const f of s.when.flags ?? []) if (!flagsSet.has(f) && !/^(title_|capitan_seleccion|sponsor_|pareja|hijos|transfer_interest|clubs_history|torneo_|loan_)/.test(f)) warn.push(`! ${s.id}: exige la bandera "${f}" que ninguna escena del banco activa`);
   const w = s.when;
   if (w.minAge !== undefined && w.maxAge !== undefined && w.minAge > w.maxAge) err(s.id, "minAge > maxAge");
   if (w.minWeek !== undefined && w.maxWeek !== undefined && w.minWeek > w.maxWeek) err(s.id, "minWeek > maxWeek");
