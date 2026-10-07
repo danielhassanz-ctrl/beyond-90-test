@@ -41,7 +41,7 @@ export const NEGOCIOS: BankScene[] = [
   // ───── Criptos del vestuario ─────
   S("dn-cripto", "negocios", { minAge: 19, patrimonio: [2500, 100000000], clubTurns: [2, 400], notFlags: ["cripto"] }, "vestuario",
     "Un compañero te vende una moneda que «va a la luna»",
-    "Se llama MoneyMessi, o DogeGol, o algo así. Tu compañero de la taquilla de al lado te enseña su móvil con los ojos brillantes: «He puesto mi paga extra y mira cómo sube». Hay una gráfica que baja, pero él la mira al revés. Tres compañeros más lo escuchan embobados. Alguien ya ha pedido un préstamo.",
+    "Se llama MoneyCrack, o DogeGol, o algo así. Tu compañero de la taquilla de al lado te enseña su móvil con los ojos brillantes: «He puesto mi paga extra y mira cómo sube». Hay una gráfica que baja, pero él la mira al revés. Tres compañeros más lo escuchan embobados. Alguien ya ha pedido un préstamo.",
     [
       r("a", "Invertir una cantidad pequeña, por si acaso", "Jugártela un poco", 0.4, "La moneda sube un 300 % el primer mes y la sacas justo a tiempo. Te sale una paga extra y te llamarán «el listo del vestuario» una temporada.", { patrimonio: 2200, moral: 3, rel_vestuario: 2, flags: { cripto: "gano" } }, "La moneda se hunde en tres semanas. Alguien dice que el creador ha desaparecido en un yate. Pierdes lo que pusiste, y dos compañeros pierden mucho más y te miran con cara de funeral.", { patrimonio: -1200, moral: -3, flags: { cripto: "pierdo" } }, "fama"),
       o("b", "Escuchar con una sonrisa y no poner ni un euro", "Mantener la cabeza fría", { reputacion: 2, rel_vestuario: 0, flags: { cripto: "paso" } }, "Dices que prefieres ladrillos. Se ríen de ti durante un mes… hasta que la moneda se desploma y los mismos que se burlaban te piden consejo con la cara pálida."),

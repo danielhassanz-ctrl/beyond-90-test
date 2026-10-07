@@ -24,9 +24,14 @@ import { FAMILIA } from "./familia";
 import { LESIONES } from "./lesiones";
 import { SELECCION2 } from "./seleccion2";
 import { MISTER2 } from "./mister2";
+import { SUELTAS2 } from "./sueltas2";
+import { MERCADO2 } from "./mercado2";
+import { TORNEOS2 } from "./torneos2";
+import { DIA_A_DIA } from "./dia-a-dia";
+import { SURREALISMO2 } from "./surrealismo2";
 
 /** Todas las escenas del banco, en un solo sitio. Añadir una familia nueva = importarla aquí. */
-export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS, ...CAMBIOS, ...PAREJA, ...RIVALES, ...SURREALISMO, ...NEGOCIOS, ...VETERANOS, ...JUVENTUD, ...AFICION, ...VESTUARIO2, ...REDES, ...FAMILIA, ...LESIONES, ...SELECCION2, ...MISTER2];
+export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS, ...CAMBIOS, ...PAREJA, ...RIVALES, ...SURREALISMO, ...NEGOCIOS, ...VETERANOS, ...JUVENTUD, ...AFICION, ...VESTUARIO2, ...REDES, ...FAMILIA, ...LESIONES, ...SELECCION2, ...MISTER2, ...SUELTAS2, ...MERCADO2, ...TORNEOS2, ...DIA_A_DIA, ...SURREALISMO2];
 
 /**
  * Banderas que dejan las escenas del banco y que cuentan algo de la historia
