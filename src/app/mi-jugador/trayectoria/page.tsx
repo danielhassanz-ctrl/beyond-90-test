@@ -4,8 +4,9 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { ClubCrest } from "@/components/ClubCrest";
 import { BottomNav } from "@/components/BottomNav";
 import { CompetitionStatsCard } from "@/components/CompetitionStatsCard";
+import { TrophyIcon } from "@/components/TrophyIcon";
 import { getCompetitionStats, type SeasonHistoryRow } from "@/lib/player/competition-stats";
-import { allTrofeos, INDIVIDUAL, TROFEO_ICON, TROFEO_LABEL, type Trofeo, type TrofeoKind } from "@/lib/honours";
+import { allTrofeos, INDIVIDUAL, TROFEO_LABEL, type Trofeo, type TrofeoKind } from "@/lib/honours";
 import { repairTrophies } from "@/lib/honours-repair";
 import { NO_CLUB_YET } from "@/lib/constants";
 
@@ -34,21 +35,23 @@ function ColumnHeads({ first }: { first: string }) {
   return (
     <div className="flex items-center gap-1 border-b border-panel-border bg-black/20 px-4 py-2 text-kicker text-muted-foreground">
       <span className="flex-1">{first}</span>
-      <span className="w-10 text-center">PJ</span>
-      <span className="w-10 text-center">G</span>
-      <span className="w-10 text-center">A</span>
-      <span className="w-12 text-right">🏆</span>
+      <span className="w-9 text-center">PJ</span>
+      <span className="w-11 text-center">Goles</span>
+      <span className="w-11 text-center">Asist.</span>
+      <span className="w-16 text-right">Títulos</span>
     </div>
   );
 }
 
-function NumCells({ pj, g, a, trophies }: { pj: number; g: number; a: number; trophies: string }) {
+function NumCells({ pj, g, a, trophies }: { pj: number; g: number; a: number; trophies: TrofeoKind[] }) {
   return (
     <>
-      <span className="font-num w-10 text-center text-sm text-foreground">{pj}</span>
-      <span className="font-num w-10 text-center text-sm text-foreground">{g}</span>
-      <span className="font-num w-10 text-center text-sm text-foreground">{a}</span>
-      <span className="w-12 text-right text-base leading-none">{trophies || <span className="text-muted-foreground">—</span>}</span>
+      <span className="font-num w-9 text-center text-sm text-foreground">{pj}</span>
+      <span className="font-num w-11 text-center text-sm text-foreground">{g}</span>
+      <span className="font-num w-11 text-center text-sm text-foreground">{a}</span>
+      <span className="flex w-16 items-center justify-end gap-0.5">
+        {trophies.length > 0 ? trophies.map((k, i) => <TrophyIcon key={`${k}-${i}`} kind={k} size={26} />) : <span className="text-muted-foreground">—</span>}
+      </span>
     </>
   );
 }
@@ -66,7 +69,7 @@ function StintCard({ stint, ligaPos, accent }: { stint: Stint; ligaPos: (idx: nu
           <p className="truncate font-display text-lg leading-tight text-foreground">{stint.club || "Sin club"}</p>
           <p className="text-xs text-muted-foreground">{accent ? `${accent} · ` : ""}{years}</p>
         </div>
-        {titles > 0 && <span className="font-cond rounded-full border border-gold/50 bg-gold/10 px-2.5 py-1 text-xs font-bold text-gold">🏆 {titles}</span>}
+        {titles > 0 && <span className="font-cond rounded-full border border-gold/50 bg-gold/10 px-2.5 py-1 text-xs font-bold text-gold">{titles} {titles === 1 ? "título" : "títulos"}</span>}
       </div>
       <ColumnHeads first="Temporada" />
       <ul className="divide-y divide-panel-border">
@@ -78,16 +81,16 @@ function StintCard({ stint, ligaPos, accent }: { stint: Stint; ligaPos: (idx: nu
                 <span className="font-num block text-sm text-foreground">{r.label}</span>
                 {pos && r.team === "club" && <span className="block text-[11px] text-muted-foreground">{pos}º en Liga</span>}
               </span>
-              <NumCells pj={r.matches} g={r.goals} a={r.assists} trophies={r.trophies.map((k) => TROFEO_ICON[k]).join("")} />
+              <NumCells pj={r.matches} g={r.goals} a={r.assists} trophies={r.trophies} />
             </li>
           );
         })}
         <li className="flex items-center gap-1 bg-gold/5 px-4 py-2.5">
           <span className="font-cond flex-1 text-xs font-bold uppercase tracking-wide text-gold">Total</span>
-          <span className="font-num w-10 text-center text-sm font-bold text-gold">{sum(stint.rows, "matches")}</span>
-          <span className="font-num w-10 text-center text-sm font-bold text-gold">{sum(stint.rows, "goals")}</span>
-          <span className="font-num w-10 text-center text-sm font-bold text-gold">{sum(stint.rows, "assists")}</span>
-          <span className="font-num w-12 text-right text-sm font-bold text-gold">{titles || "—"}</span>
+          <span className="font-num w-9 text-center text-sm font-bold text-gold">{sum(stint.rows, "matches")}</span>
+          <span className="font-num w-11 text-center text-sm font-bold text-gold">{sum(stint.rows, "goals")}</span>
+          <span className="font-num w-11 text-center text-sm font-bold text-gold">{sum(stint.rows, "assists")}</span>
+          <span className="font-num w-16 text-right text-sm font-bold text-gold">{titles || "—"}</span>
         </li>
       </ul>
     </div>
@@ -96,12 +99,12 @@ function StintCard({ stint, ligaPos, accent }: { stint: Stint; ligaPos: (idx: nu
 
 function KindCard({ kind, list }: { kind: TrofeoKind; list: Trofeo[] }) {
   return (
-    <div className="rounded-2xl border border-gold/40 bg-gradient-to-b from-amber-900/20 to-surface px-4 py-4">
-      <div className="flex items-center justify-between">
-        <span className="text-3xl">{TROFEO_ICON[kind]}</span>
-        <span className="font-display text-3xl text-gold">×{list.length}</span>
+    <div className="rounded-2xl border border-gold/40 bg-gradient-to-b from-amber-900/25 via-surface to-surface px-4 py-4">
+      <div className="flex items-end justify-between">
+        <TrophyIcon kind={kind} size={78} />
+        <span className="font-display text-4xl leading-none text-gold">×{list.length}</span>
       </div>
-      <p className="mt-2 font-display text-lg leading-tight text-foreground">{TROFEO_LABEL[kind]}</p>
+      <p className="mt-3 font-display text-lg leading-tight text-foreground">{TROFEO_LABEL[kind]}</p>
       <p className="mt-1 text-xs text-muted-foreground">{list.map((t) => seasonName(t.s)).join(" · ")}</p>
     </div>
   );

@@ -23,7 +23,7 @@ const WIN_RE = /te proclamas|levantas|campe[oó]n(?:es)? de|tu equipo gana|gana 
 const LOSS_RE = /pierde|derrota|subcampe|cae (?:ante|en)|eliminad/;
 
 export async function repairTrophies(supabase: SupabaseClient, player: Player): Promise<boolean> {
-  if (player.flags?.fix_trofeos_v2) return false;
+  if (player.flags?.fix_trofeos_v3) return false;
   let list: Trofeo[] = allTrofeos(player);
   let changed = false;
   try {
@@ -35,6 +35,27 @@ export async function repairTrophies(supabase: SupabaseClient, player: Player): 
     const rows = ((data ?? []) as Row[]).map((r) => ({ ...r, text: `${r.title} ${r.description}`.toLowerCase() }));
     const byWeek = new Map<number, typeof rows>();
     for (const r of rows) byWeek.set(r.week, [...(byWeek.get(r.week) ?? []), r]);
+
+    // Trofeos recuperados de banderas antiguas (sin club): se colocan en la temporada en que se vivió
+    // el evento que los dio; si no se encuentra, en la temporada actual (no en la primera).
+    const legacyEvents: Partial<Record<TrofeoKind, string>> = { liga: "fork-titulo-liga", champions: "fork-champions", balon_oro: "premio-balon-oro" };
+    // Al arrancar una temporada (turnos 1-2, p. ej. el verano del Mundial) lo último que se jugó es la anterior.
+    const seasonNow = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+    const currentSeason = ((player.week - 1) % WEEKS_PER_SEASON) + 1 <= 2 ? Math.max(0, seasonNow - 1) : seasonNow;
+    const relocated: Trofeo[] = [];
+    for (const tr of list) {
+      if (tr.c !== "") {
+        relocated.push(tr);
+        continue;
+      }
+      const evId = legacyEvents[tr.k];
+      const evWeek = evId ? rows.find((r) => r.event_id === evId)?.week : undefined;
+      const s = evWeek ? Math.floor((evWeek - 1) / WEEKS_PER_SEASON) : currentSeason;
+      const next = withTrofeo(relocated, { s, k: tr.k, c: INDIVIDUAL.has(tr.k) ? "" : player.club });
+      if (next) relocated.splice(0, relocated.length, ...next);
+      changed = true;
+    }
+    list = relocated;
 
     for (const [week, group] of byWeek) {
       const finalRow = group.find((r) => FINAL_RE.test(r.text));
@@ -59,7 +80,7 @@ export async function repairTrophies(supabase: SupabaseClient, player: Player): 
   } catch (err) {
     console.error("[repairTrophies] falló:", err instanceof Error ? err.message : err);
   }
-  const flags = { ...(player.flags ?? {}), fix_trofeos_v2: "1", ...(list.length > 0 ? { trofeos: writeTrofeos(list) } : {}) };
+  const flags = { ...(player.flags ?? {}), fix_trofeos_v3: "1", ...(list.length > 0 ? { trofeos: writeTrofeos(list) } : {}) };
   const titles = list.filter((t) => !INDIVIDUAL.has(t.k)).length;
   const patch: Record<string, unknown> = { flags };
   if (titles > (player.stats_titles ?? 0)) patch.stats_titles = titles;

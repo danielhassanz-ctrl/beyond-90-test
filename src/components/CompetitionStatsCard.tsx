@@ -44,8 +44,8 @@ function Table({ title, stats }: { title: string; stats: CompetitionStats }) {
           <tr className="text-kicker text-muted-foreground">
             <th className="py-2 pl-4 text-left">Competición</th>
             <th className="w-9 py-2 text-center text-[10px]">PJ</th>
-            <th className="w-9 py-2 text-center text-[10px]">G</th>
-            <th className="w-9 py-2 text-center text-[10px]">A</th>
+            <th className="w-11 py-2 text-center text-[10px]">Goles</th>
+            <th className="w-11 py-2 text-center text-[10px]">Asist.</th>
             <th className="w-14 py-2 pr-4 text-right text-[10px]">Min</th>
           </tr>
         </thead>
