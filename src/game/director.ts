@@ -3103,9 +3103,15 @@ export function resolveDirector(s: GameState, card: DynamicCard, choiceId: strin
       return { title: "Buscas contexto", text: "Antes de responder, hablas con quien estuvo dentro de aquella historia. Cambia el tono, no borra lo ocurrido.", tone: "neutral" };
     }
     if (choiceId === "esquivar") {
-      d.callbacks.push({ id: `${id}_bis`, text: typeof card.data["text"] === "string" ? card.data["text"] : "Sigue pendiente", dueScene: (s.sceneCount ?? 0) + 6 });
-      stat(s, "morale", -3);
-      return { title: "Lo dejas para después", text: "Lo esquivas hoy. Volverá, y no mejor.", tone: "neutral" };
+      const alreadyDeferred = id.endsWith("_bis");
+      if (!alreadyDeferred) {
+        d.callbacks.push({ id: `${id}_bis`, text: typeof card.data["text"] === "string" ? card.data["text"] : "Sigue pendiente", dueScene: (s.sceneCount ?? 0) + 6 });
+        stat(s, "morale", -3);
+        return { title: "Lo dejas para después", text: "Lo esquivas hoy. Volverá, y no mejor.", tone: "neutral" };
+      }
+      stat(s, "morale", -6);
+      stat(s, "discipline", -2);
+      return { title: "Ya no puedes seguir aplazándolo", text: "Es la segunda vez que evitas la misma conversación. Esta vez no queda simplemente pendiente: tu silencio desgasta tu credibilidad y cierra esa salida.", tone: "bad" };
     }
     stat(s, "morale", 4);
     rel(s, "family", 3);
