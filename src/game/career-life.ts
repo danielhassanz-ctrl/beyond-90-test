@@ -47,6 +47,43 @@ const CLUB_SCOPED_NARRATIVE_FLAGS = [
   "injury_rehab_informed",
 ] as const;
 
+function preserveOpeningAdviserChoice(s: GameState, cast: CareerCast): void {
+  // Once the player has explicitly chosen who represents them in the mandatory
+  // opening, that decision is stronger than any provisional/migrated cast seed.
+  // Re-hydration and runtime normalization must never silently recast the adviser.
+  const choice = s.flags["opening_adviser_choice"];
+  const expectedKind: AdviserKind | null =
+    choice === 1 ? "agent" : choice === 2 ? "father" : choice === 3 ? "friend" : null;
+  if (!expectedKind) return;
+
+  cast.adviserKind = expectedKind;
+  if (expectedKind === "father") {
+    cast.adviser.name = "Papá";
+    cast.adviser.role = "Padre y asesor";
+    s.agent.commission = 0;
+  } else if (expectedKind === "friend") {
+    cast.adviser.name = "Álex Romero";
+    cast.adviser.role = "Amigo y asesor";
+    s.agent.commission = 0;
+  } else {
+    if (cast.adviser.name === "Papá" || cast.adviser.name === "Álex Romero") {
+      cast.adviser.name = PROFESSIONAL_ADVISER_NAMES[
+        hash(careerSeed(s), "professional-adviser-opening") % PROFESSIONAL_ADVISER_NAMES.length
+      ]!;
+    }
+    cast.adviser.role = "Representante";
+    s.agent.commission = Math.max(7, s.agent.commission || 8);
+  }
+
+  s.agent.name = cast.adviser.name;
+  s.agentName = cast.adviser.name;
+  const adviserMemory = s.memory.npcs?.["adviser"];
+  if (adviserMemory) {
+    adviserMemory.name = cast.adviser.name;
+    adviserMemory.role = cast.adviser.role;
+  }
+}
+
 function repairProfessionalAdviserIdentity(s: GameState, cast: CareerCast): void {
   if (cast.adviserKind !== "agent") return;
   if (cast.adviser.name !== "Papá" && cast.adviser.name !== "Álex Romero") return;
@@ -88,6 +125,7 @@ function resetClubScopedNarrativeIfNeeded(s: GameState): void {
  */
 export function ensureCareerCast(s: GameState): CareerCast {
   const cast = ensureCast(s);
+  preserveOpeningAdviserChoice(s, cast);
   resetClubScopedNarrativeIfNeeded(s);
   // Opening adviser selection can deliberately replace a provisional father or
   // family-friend adviser with a professional. Old code reused the already
