@@ -48,6 +48,7 @@ import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narra
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
+import { pickBankScene } from "@/lib/narrative/bank/select";
 import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
 import { monthlySponsorshipIncome } from "@/lib/finance/sponsorship-income";
@@ -3619,6 +3620,18 @@ export async function pickNextEventDynamic(
     console.log(`[pickNextEventDynamic] Loan fork event for ${player.last_name}`);
     markLoanForkTriggered(player);
     return maybeAddFreeText(buildLoanForkEvent(player));
+  }
+
+  // BANCO DE ESCENAS ENCADENADAS (narrative/bank): escenas escritas a mano que
+  // solo salen si encajan con el estado real del jugador y que se desbloquean
+  // unas a otras según lo que decidió (corto, medio y largo plazo). Cero coste
+  // de IA y la fuente preferida de escenas de vida antes de recurrir a la IA.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics)) {
+    const banked = pickBankScene(playerWithDynamics, usedEventIds);
+    if (banked) {
+      console.log(`[pickNextEventDynamic] Banco de escenas: "${banked.title}"`);
+      return maybeAddFreeText(banked);
+    }
   }
 
   // Llamadas del representante: ofertas de otros clubes, otro agente

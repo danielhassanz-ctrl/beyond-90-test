@@ -6,6 +6,7 @@
  * parecían influir en nada. Aquí se traduce el estado a frases que obligan a
  * que la escena nazca de lo que ha pasado.
  */
+import { BANK_FACTS } from "@/lib/narrative/bank/scenes";
 import { describeOpenThreads } from "@/lib/narrative/threads";
 import { readInvestments } from "@/lib/finance/investments";
 import type { Player } from "@/types/player";
@@ -180,6 +181,7 @@ export function describeLifeFacts(player: Player): string[] {
   if (f.iguana) facts.push("tiene una iguana como mascota que se hizo famosa");
   if (f.patrocinio_chorizo) facts.push("fue imagen de una línea de chorizo");
   if (typeof f.pareja === "string") facts.push(`su pareja es ${f.pareja}${f.hijos ? " y ya tienen hijos" : ""}`);
+  for (const [flag, phrase] of Object.entries(BANK_FACTS)) if (f[flag]) facts.push(phrase);
   return facts;
 }
 

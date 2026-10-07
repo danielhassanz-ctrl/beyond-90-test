@@ -2,6 +2,7 @@
 
 import { ensureNextEvent } from "@/lib/narrative/ensure-event";
 import { appendThread } from "@/lib/narrative/threads";
+import { bankFlagKey } from "@/lib/narrative/bank/types";
 import { simulateOffScreenMatches, backfillOffScreen, addSimSeason, sumSim, emptySim } from "@/lib/narrative/off-screen-matches";
 import { defaultReaction } from "@/lib/narrative/default-reactions";
 import { sponsorshipFlagFor } from "@/lib/finance/sponsorship-income";
@@ -142,9 +143,14 @@ export async function resolveEvent(formData: FormData) {
   // Hilo abierto que deja esta opción (favor, deuda, rencor, promesa, secreto):
   // vuelve semanas después a cobrarse (ver narrative/threads.ts).
   const threadJson = option.thread ? appendThread(player.flags, option.thread, player.week) : null;
-  const consequences = threadJson
+  const consequencesThread = threadJson
     ? { ...consequencesSponsor, flags: { ...consequencesSponsor.flags, hilos: threadJson } }
     : consequencesSponsor;
+  // Una escena del banco deja anotado qué opción elegiste y cuándo: así otras
+  // escenas del banco pueden encadenarse a esa decisión (narrative/bank).
+  const consequences = event.id.startsWith("bank-")
+    ? { ...consequencesThread, flags: { ...consequencesThread.flags, [bankFlagKey(event.id)]: `${option.id}:${player.week}` } }
+    : consequencesThread;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.

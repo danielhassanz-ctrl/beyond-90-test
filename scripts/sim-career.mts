@@ -10,6 +10,7 @@
 process.env.ANTHROPIC_API_KEY = "fake-key-for-local-sim";
 let aiCalls = 0;
 const noReactionIds = new Map<string, number>();
+const bankSeen: string[] = [];
 const titleStats = { nonMatch: 0, filler: 0, titles: new Map<string, number>() };
 const realFetch = globalThis.fetch;
 globalThis.fetch = (async (input: any, init?: any) => {
@@ -47,6 +48,8 @@ globalThis.fetch = (async (input: any, init?: any) => {
 
 const { pickNextEventDynamic, resolveOption, applyConsequences } = await import("../src/lib/narrative/engine");
 const { defaultReaction } = await import("../src/lib/narrative/default-reactions");
+const { bankFlagKey } = await import("../src/lib/narrative/bank/types");
+const { BANK_SCENES } = await import("../src/lib/narrative/bank/scenes");
 const { computeWeekAdvance } = await import("../src/lib/narrative/week-advance");
 const { tickInjury, getInjuryRemaining } = await import("../src/lib/narrative/career-dynamics");
 const { computeRole } = await import("../src/lib/narrative/role");
@@ -182,6 +185,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
     const cons = resolution ? resolution.consequences : opt.consequences;
     if (!resolution && !opt.outcomeText && !defaultReaction(opt, player)) { res.noReaction++; const k = ev.id.replace(/-?\d{8,}.*$/, ""); { const kk = `${k} :: ${opt.label.replace(/[0-9][0-9.]*/g, "N").slice(0, 70)}`; noReactionIds.set(kk, (noReactionIds.get(kk) ?? 0) + 1); }; }
 
+    if (String(ev.id).startsWith("bank-")) { player.flags[bankFlagKey(ev.id)] = `${opt.id}:${player.week}`; bankSeen.push(ev.id); }
     // consecuencias
     const patch = applyConsequences(player, cons);
     const { newWeek, matchDoneFlag, weekCounter } = computeWeekAdvance(player, ev);
@@ -287,3 +291,12 @@ SIN IA (6 carreras): ${titleStats.nonMatch} escenas no-partido · ${titleStats.t
 for (const [t, n] of [...titleStats.titles.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)) console.log(`   x${n}  ${t}`);
 
 for (const c of perCareer) console.log(`   carrera: ${c.total} escenas no-partido, ${c.distinct} distintas (${Math.round((1 - c.distinct / c.total) * 100)}% repetidas)`);
+
+{
+  const chainedIds = new Set(BANK_SCENES.filter((x: any) => (x.when.after ?? []).length > 0).map((x: any) => x.id));
+  const seenSet = new Set(bankSeen);
+  const fam = new Map<string, number>();
+  for (const id of seenSet) { const sc: any = BANK_SCENES.find((x: any) => x.id === id); if (sc) fam.set(sc.family, (fam.get(sc.family) ?? 0) + 1); }
+  console.log(`BANCO en ${perCareer.length} carreras: ${bankSeen.length} escenas vistas (${seenSet.size} distintas de ${BANK_SCENES.length}), ${bankSeen.filter((id) => chainedIds.has(id)).length} encadenadas`);
+  console.log('   por familia (distintas):', [...fam.entries()].map(([f, n]) => `${f}:${n}`).join(' '));
+}
