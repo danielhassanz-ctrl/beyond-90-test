@@ -34,7 +34,7 @@ async function savedState(page) {
 }
 
 async function reachPlayableChoice(page, mode, seed, decision) {
-  for (let transition = 0; transition < 8; transition += 1) {
+  for (let transition = 0; transition < 12; transition += 1) {
     if (page.url().includes("/cantera")) {
       const offers = page.locator("ul > li > button");
       await expect(offers.first()).toBeVisible();
