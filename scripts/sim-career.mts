@@ -10,6 +10,7 @@
 process.env.ANTHROPIC_API_KEY = "fake-key-for-local-sim";
 let aiCalls = 0;
 const noReactionIds = new Map<string, number>();
+const titleStats = { nonMatch: 0, filler: 0, titles: new Map<string, number>() };
 const realFetch = globalThis.fetch;
 globalThis.fetch = (async (input: any, init?: any) => {
   const url = typeof input === "string" ? input : input?.url ?? String(input);
@@ -79,7 +80,10 @@ interface Result {
   nulls: number;
 }
 
+const perCareer: { total: number; distinct: number }[] = [];
 async function career(club: string, media: number, seed: number): Promise<Result> {
+  const myTitles = new Map<string, number>();
+  let myTotal = 0;
   const player: any = {
     id: `sim-${club}-${seed}`,
     user_id: "u",
@@ -171,6 +175,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
       castSeen.add(c.name);
     }
     if (cards.length) player.flags.cast_met = markCastMet(player.flags, cards);
+    if (ev.category !== "partido") { titleStats.nonMatch++; myTotal++; myTitles.set(ev.title, (myTitles.get(ev.title) ?? 0) + 1); titleStats.titles.set(ev.title, (titleStats.titles.get(ev.title) ?? 0) + 1); if (String(ev.id).startsWith("fallback-")) titleStats.filler++; }
     const opt = ev.options[Math.floor(Math.random() * ev.options.length)];
     res.withOptions++;
     const resolution = resolveOption(opt, player);
@@ -250,6 +255,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
   res.endWeek = player.week;
   (res as any).prefixCount = prefixCount;
   (res as any).castStats = castStats;
+  perCareer.push({ total: myTotal, distinct: myTitles.size });
   return res;
 }
 
@@ -274,3 +280,10 @@ console.error = origErr;
 
 console.log("ESCENAS SIN REACCIÓN (top):");
 for (const [k, n] of [...noReactionIds.entries()].sort((a, b) => b[1] - a[1]).slice(0, 40)) console.log(`  ${n}  ${k}`);
+
+const repeated = [...titleStats.titles.entries()].filter(([, n]) => n > 1).reduce((a, [, n]) => a + n - 1, 0);
+console.log(`
+SIN IA (6 carreras): ${titleStats.nonMatch} escenas no-partido · ${titleStats.titles.size} títulos distintos · ${repeated} repeticiones · ${titleStats.filler} escenas de relleno de emergencia`);
+for (const [t, n] of [...titleStats.titles.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)) console.log(`   x${n}  ${t}`);
+
+for (const c of perCareer) console.log(`   carrera: ${c.total} escenas no-partido, ${c.distinct} distintas (${Math.round((1 - c.distinct / c.total) * 100)}% repetidas)`);
