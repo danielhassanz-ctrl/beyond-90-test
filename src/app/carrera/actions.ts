@@ -112,6 +112,10 @@ export async function resolveEvent(formData: FormData) {
         ...consequencesClub,
         flags: Object.fromEntries(
           Object.entries(consequencesClub.flags).flatMap(([k, v]): [string, string | boolean][] => {
+            // "@set_<estadística>": deja esa relación/estado en un valor absoluto (se aplica abajo).
+            if (k.startsWith("@set_")) return [];
+            // "@+1": suma uno al contador actual (cambios de entrenador, capitán...).
+            if (v === "@+1") return [[k, String((parseInt(String(player.flags?.[k] ?? "0"), 10) || 0) + 1)]];
             // "@interest": un club se interesa por ti ahora (la oferta formal llega después).
             // Lo usan las escenas del banco sobre rumores de fichajes.
             if (k === "@interest") {
@@ -126,16 +130,26 @@ export async function resolveEvent(formData: FormData) {
         ),
       }
     : consequencesClub;
+  // Estados que se fijan a un valor absoluto, p. ej. con un entrenador nuevo la relación empieza en 50.
+  const setStats: Record<string, number> = {};
+  for (const [k, v] of Object.entries(consequencesClub.flags ?? {})) {
+    if (!k.startsWith("@set_")) continue;
+    const stat = k.slice(5) as "rel_entrenador" | "rel_vestuario" | "rel_aficion" | "rel_representante" | "moral";
+    const target = parseInt(String(v), 10);
+    const current = (player as unknown as Record<string, number>)[stat];
+    if (Number.isFinite(target) && typeof current === "number") setStats[stat] = target - current;
+  }
   // "Despedirle y fichar a Julia Rovira": las escenas generadas por la IA no
   // traen el cambio de representante en sus consecuencias, así que se deduce
   // de la etiqueta. Sin esto, despedías al agente y la partida seguía con el
   // mismo (visto en una partida de prueba real). La relación con el nuevo
   // empieza en un punto neutro.
   const fireMatch = option.label.match(/despedir.*fichar\s+(?:a\s+)?(\p{Lu}[\p{L}'-]+(?:\s+\p{Lu}[\p{L}'-]+)+)/u);
-  const newAgent = fireMatch && consequencesWeek.agent_name === undefined ? fireMatch[1] : null;
+  const consequencesSet = Object.keys(setStats).length > 0 ? { ...consequencesWeek, ...setStats } : consequencesWeek;
+  const newAgent = fireMatch && consequencesSet.agent_name === undefined ? fireMatch[1] : null;
   const consequencesAgent = newAgent
-    ? { ...consequencesWeek, agent_name: newAgent, rel_representante: 50 - (player.rel_representante ?? 50) }
-    : consequencesWeek;
+    ? { ...consequencesSet, agent_name: newAgent, rel_representante: 50 - (player.rel_representante ?? 50) }
+    : consequencesSet;
   // Firmar un patrocinio deja un contrato que paga cada turno durante una
   // temporada (ver finance/sponsorship-income.ts), además de la prima inicial.
   const isSponsorDeal = /^(sponsor-|arco-patrocinador)/.test(event.id) && (consequencesAgent.patrimonio ?? 0) > 0;
@@ -819,6 +833,14 @@ export async function resolveEvent(formData: FormData) {
           // (lookEvolution) y el retrato de cada 4 temporadas.
           if (evolvedUrl && finalEvolvesLook) {
             await supabase.from("players").update({ current_photo_url: evolvedUrl }).eq("id", finalPlayerId);
+          }
+
+          // La cabecera enseña la última foto de hito (también las de lesión): se
+          // guarda aparte de la foto de referencia (ver player/header-photo.ts).
+          if (milestoneImageUrl) {
+            const { data: cur } = await supabase.from("players").select("flags").eq("id", finalPlayerId).maybeSingle();
+            const curFlags = ((cur?.flags as Record<string, string | boolean> | null) ?? {}) as Record<string, string | boolean>;
+            await supabase.from("players").update({ flags: { ...curFlags, header_photo: milestoneImageUrl } }).eq("id", finalPlayerId);
           }
 
           if (milestoneImageUrl) {

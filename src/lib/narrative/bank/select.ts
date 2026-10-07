@@ -72,6 +72,14 @@ function fits(player: Player, when: BankWhen): { ok: boolean; chained: boolean }
   }
   const season = Math.floor((player.week - 1) / 10);
   const turn = ((player.week - 1) % 10) + 1;
+  if (when.olimpicos) {
+    const startYear = 2026 + season;
+    if (when.olimpicos === "ano") {
+      if (startYear % 4 !== 0 || flags[`torneo_started_${season}`]) return { ok: false, chained: false };
+    } else if ((startYear + 1) % 4 !== 0) {
+      return { ok: false, chained: false };
+    }
+  }
   if (when.torneo) {
     const types = when.torneo.type === "any" ? ["mundial", "eurocopa", "copa_america"] : [when.torneo.type];
     const hit = types.some((t) => {

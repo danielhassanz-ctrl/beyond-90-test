@@ -137,7 +137,11 @@ function pickGender(seed: string, gender: "m" | "f" | "any"): "m" | "f" {
 }
 
 export function getNpcName(player: Player, role: NpcRole): string {
-  const seed = CLUB_BOUND.has(role) ? `${player.id}:${role}:${player.club}` : `${player.id}:${role}`;
+  // Cambios de cara en el entorno: cada vez que el entrenador, el capitán... del club
+  // cambia (flag gen_<rol>), el personaje es otro, con otro nombre, no el mismo para siempre.
+  const gen = parseInt(String(player.flags?.[`gen_${role}`] ?? "0"), 10) || 0;
+  const genSuffix = gen > 0 ? `:g${gen}` : "";
+  const seed = (CLUB_BOUND.has(role) ? `${player.id}:${role}:${player.club}` : `${player.id}:${role}`) + genSuffix;
   const gender = pickGender(seed, ROLE_GENDER[role]);
   // Tu padre y tu hermano comparten tu apellido — no hace falta generar uno propio.
   if ((role === "padre" || role === "hermano") && player.last_name) {

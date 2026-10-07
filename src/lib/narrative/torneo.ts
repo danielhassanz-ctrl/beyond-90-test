@@ -50,7 +50,7 @@ export const TORNEO_STAGE_LABELS = [
 ];
 export const TORNEO_STAGES = TORNEO_STAGE_LABELS.length;
 
-const POOLS: Record<TorneoType, string[]> = {
+export const TORNEO_POOLS: Record<TorneoType, string[]> = {
   mundial: ["Brasil", "Francia", "Argentina", "Inglaterra", "Alemania", "Portugal", "Países Bajos", "Italia", "Bélgica", "Croacia", "Uruguay", "Marruecos", "España"],
   eurocopa: ["Alemania", "Francia", "Inglaterra", "Italia", "Portugal", "Países Bajos", "Bélgica", "Croacia", "Dinamarca", "Suiza", "Polonia", "España"],
   copa_america: ["Brasil", "Argentina", "Uruguay", "Colombia", "Chile", "Ecuador", "Perú", "Paraguay", "Venezuela", "Bolivia", "México", "Estados Unidos"],
@@ -131,7 +131,7 @@ export function startTorneoProgress(player: Player, type: TorneoType): TorneoPro
 
 /** El partido del torneo `stage` como un MatchWeek (rival distinto en cada ronda). */
 export function buildTorneoMatch(player: Player, progress: TorneoProgress): MatchWeek {
-  const pool = POOLS[progress.type].filter((n) => n !== player.nation);
+  const pool = TORNEO_POOLS[progress.type].filter((n) => n !== player.nation);
   const ordered = [...pool].sort((a, b) => hash(`${player.id}:${progress.season}:${progress.type}:${a}`) - hash(`${player.id}:${progress.season}:${progress.type}:${b}`));
   const rival = ordered[progress.stage % ordered.length];
   const name = `${TORNEO_NAMES[progress.type]} ${torneoYear(progress.season)}`;

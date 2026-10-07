@@ -145,3 +145,39 @@ export function decideKnockoutResult(
   const scores = ["0-1", "1-2", "0-2", "1-3"];
   return { win: false, scoreLine: scores[Math.floor(Math.random() * scores.length)], wentToPenalties: false };
 }
+
+/**
+ * Eliminatoria a doble partido: la IDA ya está decidida (ver firstLegFor) y aquí
+ * se decide la VUELTA y, con ello, el global. Devuelve el marcador de la vuelta
+ * (con penaltis si el global queda empatado), el global y si pasas de ronda.
+ */
+export function decideTwoLegResult(
+  playerMedia: number,
+  firstLeg: { own: number; rival: number },
+  levelBonus = 0,
+): { win: boolean; scoreLine: string; wentToPenalties: boolean; aggregate: string } {
+  const poisson = (lambda: number) => {
+    const limit = Math.exp(-lambda);
+    let n = 0;
+    let prod = Math.random();
+    while (prod > limit && n < 5) {
+      n++;
+      prod *= Math.random();
+    }
+    return n;
+  };
+  const lambdaOwn = Math.max(0.6, 1.35 + (playerMedia - 70) / 70 + levelBonus * 2);
+  const lambdaRival = 1.15 - levelBonus;
+  const own = poisson(lambdaOwn);
+  const rival = poisson(lambdaRival);
+  const totalOwn = firstLeg.own + own;
+  const totalRival = firstLeg.rival + rival;
+  const aggregate = `${totalOwn}-${totalRival}`;
+  if (totalOwn !== totalRival) {
+    return { win: totalOwn > totalRival, scoreLine: `${own}-${rival}`, wentToPenalties: false, aggregate };
+  }
+  // Global empatado: penaltis
+  const win = Math.random() < 0.5 + Math.min(0.12, Math.max(-0.12, (playerMedia - 70) / 150)) + levelBonus / 2;
+  const pens = win ? ["5-4", "4-3", "6-5", "4-2"] : ["3-4", "2-4", "4-5", "3-5"];
+  return { win, scoreLine: `${own}-${rival} (${pens[Math.floor(Math.random() * pens.length)]} en penaltis)`, wentToPenalties: true, aggregate };
+}

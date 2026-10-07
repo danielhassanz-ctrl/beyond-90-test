@@ -1,3 +1,4 @@
+import { headerPhotoUrl } from "@/lib/player/header-photo";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -56,7 +57,7 @@ export default async function MiJugadorPage() {
         <div className="w-full max-w-md space-y-4">
           <div className="rounded-2xl border border-panel-border bg-surface p-4">
             <PlayerHeaderCard
-              photoUrl={player.current_photo_url ?? player.photo_url}
+              photoUrl={headerPhotoUrl(player)}
               name={displayName(player)}
               age={playerAge(player.week)}
               club={player.club}

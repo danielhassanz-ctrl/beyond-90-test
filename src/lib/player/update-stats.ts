@@ -3,6 +3,7 @@
  * Se llama después de resolver un evento para registrar logros.
  */
 
+import { maxMediaForAge } from "@/lib/narrative/media-cap";
 import { readSimSeason, sumSim } from "@/lib/narrative/off-screen-matches";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
@@ -256,5 +257,6 @@ export function recalculateMedia(player: Player, statUpdate: StatUpdate): number
   // La forma empuja un poco la dirección: buena forma acelera la progresión
   delta += ((player.forma ?? 50) - 50) / 50;
 
-  return Math.max(40, Math.min(99, Math.round(currentMedia + delta)));
+  const grown = Math.round(currentMedia + delta);
+  return Math.max(40, Math.min(99, delta > 0 ? Math.min(grown, Math.max(currentMedia, maxMediaForAge(player.week, player.fama ?? 0))) : grown));
 }

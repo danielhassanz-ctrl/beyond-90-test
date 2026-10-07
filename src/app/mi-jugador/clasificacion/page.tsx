@@ -1,3 +1,4 @@
+import { headerPhotoUrl } from "@/lib/player/header-photo";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { BottomNav } from "@/components/BottomNav";
@@ -51,7 +52,7 @@ export default async function ClasificacionPage() {
         ) : (
           <>
             <SeasonStatsCard
-              photoUrl={player.current_photo_url ?? player.photo_url}
+              photoUrl={headerPhotoUrl(player)}
               name={displayName(player)}
               seasonLabel={seasonLabel(player.week)}
               stats={seasonStats}

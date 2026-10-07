@@ -51,6 +51,8 @@ const LOCKED_PREFIXES = [
   "sel-copa-america-s",
   "torneo-life-",
   "matchday-torneo-",
+  // Partidos con la selección entre torneos (Nations League, clasificatorias).
+  "matchday-sel-",
   // Escenas con el fisio durante una lesión.
   "fisio-",
   // Arcos de varios capítulos.

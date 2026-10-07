@@ -1,3 +1,4 @@
+import { headerPhotoUrl } from "@/lib/player/header-photo";
 import { redirect } from "next/navigation";
 
 // Necesario para que la generación de imagen en segundo plano (after() en
@@ -150,7 +151,7 @@ export default async function CarreraPage() {
           )}
         <div className="rounded-2xl border border-panel-border bg-surface p-4">
           <PlayerHeaderCard
-            photoUrl={player.current_photo_url ?? player.photo_url}
+            photoUrl={headerPhotoUrl(player)}
             name={displayName(player)}
             age={playerAge(player.week)}
             club={player.club}

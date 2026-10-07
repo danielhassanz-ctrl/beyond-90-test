@@ -208,6 +208,8 @@ export function buildFallbackMatchReport(args: {
   team: string;
   /** Texto de competición extra, ej. "Mundial 2030". */
   competitionNote?: string;
+  /** Eliminatoria a doble partido: "Ida: ... Global: ... Pasa de ronda." */
+  tieNote?: string;
 }): GameEvent {
   const { player, match, team } = args;
   let decision: Decision = {};
@@ -285,7 +287,7 @@ export function buildFallbackMatchReport(args: {
   const description =
     `Ante ${match.rivalClub} en ${comp}, jugaste ${minutes} minutos. Nota: ${nota}/10. Goles: ${goals}. Asistencias: ${assists}. ` +
     `Marcador: ${own}-${rival} (${team}-${match.rivalClub}). Tu equipo ${verdict} ${match.rivalClub}. ` +
-    [stakesText, ambience, play, coachLine(coach, result, rating, goals)].filter(Boolean).join(" ");
+    [args.tieNote, stakesText, ambience, play, coachLine(coach, result, rating, goals)].filter(Boolean).join(" ");
 
   const ctx: Ctx = { coach, mate, rival: match.rivalClub, result, goals, bad, rating };
   // Tres reacciones distintas sorteadas del surtido; una siempre es la del míster o el vestuario.

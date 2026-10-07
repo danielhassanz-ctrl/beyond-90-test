@@ -19,7 +19,7 @@ import { shouldBeeFunnyMoment, pickRandomFunnyMoment, isSurrealMoment } from "@/
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
 import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, getClubLevel, matchKey, parseMatchDone, type MatchWeek } from "@/lib/calendar/match-calendar";
-import { getSeasonProgress, advanceCupProgress, decideKnockoutResult, resolveEuroGroupStage } from "@/lib/calendar/competition-progress";
+import { getSeasonProgress, advanceCupProgress, decideKnockoutResult, decideTwoLegResult, resolveEuroGroupStage } from "@/lib/calendar/competition-progress";
 import { getInjuryRemaining, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
@@ -48,7 +48,12 @@ import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narra
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
+import { maxMediaForAge } from "@/lib/narrative/media-cap";
+import { firstLegFor } from "@/lib/calendar/match-calendar";
 import { pickNewDecision, pushRecentNew, decisionCloser } from "@/lib/narrative/match-decisions";
+import { selWindowPlan, buildSelMatch, decideSelResult, selWindowKey } from "@/lib/narrative/seleccion";
+import { BANK_SCENES } from "@/lib/narrative/bank/scenes";
+import { fillBankEvent } from "@/lib/narrative/bank/select";
 import { pickBankScene } from "@/lib/narrative/bank/select";
 import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
@@ -808,7 +813,9 @@ export function applyConsequences(
   }
 
   if (consequences.media !== undefined) {
-    patch.media = clampMedia(state.media + consequences.media);
+    // Tope por edad: solo frena las subidas (ver media-cap.ts).
+    const grown = clampMedia(state.media + consequences.media);
+    patch.media = consequences.media > 0 ? Math.min(grown, Math.max(state.media, maxMediaForAge(state.week, state.fama))) : grown;
   }
 
   if (consequences.patrimonio !== undefined) {
@@ -2751,6 +2758,63 @@ function buildDecisionInstruction(decisionRaw?: string): string {
  * jugando una carrera real de principio a fin.
  */
 /**
+ * Partido con la selección entre torneos (ver seleccion.ts): primero, la primera
+ * vez, la escena de la convocatoria; después la jugada decisiva y la crónica.
+ * No avanza el calendario (ids "match-decision-" y "matchday-sel-").
+ */
+async function pickSeleccionWindowEvent(
+  player: Player,
+  history: HistoryItem[],
+  weekInSeason: number,
+  injured: boolean,
+): Promise<GameEvent | null> {
+  const plan = selWindowPlan(player, weekInSeason, injured, Boolean(getTorneoProgress(player)));
+  if (!plan) return null;
+  if (!player.flags) player.flags = {};
+
+  // La primera vez, la escena de la primera convocatoria (banco de escenas).
+  if (!player.flags.sel_debut) {
+    const callUp = BANK_SCENES.find((b) => b.id === "bank-sel-amistoso-convocatoria");
+    if (callUp) return maybeAddFreeText({ ...fillBankEvent(callUp.event, player), id: callUp.id });
+  }
+
+  const match = buildSelMatch(player, plan);
+  const key = selWindowKey(plan.season, plan.idx);
+  const decisionOutcome = player.flags[`match_decision_${match.week}_${key}`] as string | undefined;
+  if (!decisionOutcome) {
+    console.log(`[pickNextEventDynamic] Selección (${plan.label}): momento decisivo.`);
+    return { ...maybeAddFreeText(buildMatchDecisionMoment(player, match)), ownTeam: player.nation, matchKey: key };
+  }
+
+  const result = decideSelResult(player, match.rivalClub);
+  const nation = player.nation;
+  const verdict = result.win ? "victoria" : result.draw ? "empate" : "derrota";
+  const lines = [
+    `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES: "${result.scoreLine}" en formato ${nation}-${match.rivalClub} (${verdict} de ${nation}).`,
+    `- Es un partido de ${plan.label} con la camiseta de ${nation}. Es un partido oficial entre torneos, no una fase final: sin títulos ni eliminatorias. NUNCA nombres el club (${player.club}) como tu equipo en este partido.`,
+    `- is_milestone solo si hay un gol o una actuación realmente histórica; si no, false.`,
+  ];
+  const event =
+    (await generateMatchDayEvent(player, match, history, decisionOutcome, undefined, lines.join("\n"), plan.label)) ??
+    buildFallbackMatchReport({
+      player,
+      match,
+      decisionRaw: decisionOutcome,
+      forcedScoreLine: result.scoreLine,
+      team: nation,
+      competitionNote: plan.label,
+    });
+  player.flags[`sel_win_${plan.season}_${plan.idx}`] = true;
+  return {
+    ...event,
+    id: `matchday-sel-${match.week}-${plan.idx}-${Date.now()}`,
+    ownTeam: nation,
+    rivalClub: match.rivalClub,
+    matchKey: key,
+  };
+}
+
+/**
  * Torneo de selecciones (Mundial, Eurocopa, Copa América) partido a partido.
  * Orden de cada vuelta: llegada → escena de concentración → jugada decisiva
  * → crónica → escena de concentración → … hasta eliminación o final. Todo
@@ -3099,7 +3163,7 @@ function applyCareerDynamics(player: Player): Player {
   // en todo el resto del juego). Este clamp repara ese valor corrupto en
   // cuanto la carrera vuelve a pasar por aquí, sin necesitar tocar la
   // base de datos a mano.
-  player.media = Math.max(40, Math.min(99, player.media));
+  player.media = Math.max(40, Math.min(99, Math.min(player.media, maxMediaForAge(player.week, player.fama ?? 0))));
 
   // Aplicar deterioro de relaciones
   const relChanges = deteriorateRelationships(player);
@@ -3199,6 +3263,15 @@ export async function pickNextEventDynamic(
     getInjuryRemaining(playerWithDynamics.flags) > 0,
   );
   if (torneoEvent) return torneoEvent;
+
+  // Selección entre torneos: Nations League, clasificatorias, amistosos.
+  const selEvent = await pickSeleccionWindowEvent(
+    playerWithDynamics,
+    history,
+    weekInSeason,
+    getInjuryRemaining(playerWithDynamics.flags) > 0,
+  );
+  if (selEvent) return selEvent;
 
   // Lesión en curso: el fisio va tratándote y la cosa se complica o mejora
   // (injury-events.ts) — escenas que cambian los meses de baja que quedan.
@@ -3428,9 +3501,20 @@ export async function pickNextEventDynamic(
     const level = getClubLevel(playerWithDynamics.club);
     const levelBonus = level === "grande" ? 0.1 : level === "europeo" ? 0.04 : -0.06;
     const koRound = matchThisWeek.cupRound ?? (matchThisWeek.euroKoRound ? matchThisWeek.euroKoRound + 1 : 0);
-    const forcedResult = koRound
-      ? decideKnockoutResult(playerWithDynamics.media, koRound, levelBonus)
-      : undefined;
+    // Octavos, cuartos y semifinal europeos son a doble partido: aquí se juega la
+    // VUELTA y el pase se decide por el global, con la ida ya conocida.
+    const twoLegRound = matchThisWeek.euroKoRound && matchThisWeek.euroKoRound <= 3 ? matchThisWeek.euroKoRound : 0;
+    const leg1 = twoLegRound ? firstLegFor(playerWithDynamics.club, currentSeason, twoLegRound) : null;
+    const twoLeg = leg1 ? decideTwoLegResult(playerWithDynamics.media, leg1, levelBonus) : null;
+    const forcedResult = twoLeg
+      ? { win: twoLeg.win, scoreLine: twoLeg.scoreLine }
+      : koRound
+        ? decideKnockoutResult(playerWithDynamics.media, koRound, levelBonus)
+        : undefined;
+    const tieNote =
+      leg1 && twoLeg
+        ? `Ida: ${leg1.text}. Global: ${twoLeg.aggregate}${twoLeg.wentToPenalties ? " (a penaltis)" : ""}. ${twoLeg.win ? "Tu equipo pasa de ronda." : "Tu equipo queda eliminado."}`
+        : undefined;
     // Último partido de la fase de grupos europea: se decide aquí si pasas
     // de fase, y la crónica tiene que cuadrar con ello.
     let extraInstruction: string | undefined;
@@ -3440,6 +3524,14 @@ export async function pickNextEventDynamic(
       extraInstruction = groupQualified
         ? `- Era el ÚLTIMO partido de la fase de grupos de la ${compName}: con este resultado tu equipo SE CLASIFICA para las eliminatorias (octavos de final). Que la crónica lo deje claro.`
         : `- Era el ÚLTIMO partido de la fase de grupos de la ${compName}: con este resultado tu equipo QUEDA ELIMINADO de la competición europea. Que la crónica lo deje claro.`;
+    }
+    if (leg1 && twoLeg) {
+      extraInstruction = [
+        extraInstruction,
+        `- Es la VUELTA de una eliminatoria a doble partido. En la IDA (${leg1.text}) el resultado fue ${leg1.own}-${leg1.rival} para tu equipo. Esta vuelta termina ${twoLeg.scoreLine} y el GLOBAL es ${twoLeg.aggregate}: tu equipo ${twoLeg.win ? "PASA DE RONDA" : "QUEDA ELIMINADO"}. Cuéntalo con claridad (menciona la ida y el global) aunque el resultado de esta vuelta, por sí solo, parezca decir otra cosa.`,
+      ]
+        .filter(Boolean)
+        .join("\n");
     }
     // Finales (Copa o europea): ganar es un TÍTULO — el contador de títulos lo
     // detecta por el texto, así que se pide expresarlo claramente.
@@ -3464,6 +3556,7 @@ export async function pickNextEventDynamic(
         forcedScoreLine: forcedResult?.scoreLine,
         forcedWin: forcedResult?.win,
         team: playerWithDynamics.club,
+        tieNote,
       });
     if (matchDayEvent) {
       if (forcedResult && matchThisWeek.cupRound) {

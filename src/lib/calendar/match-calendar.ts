@@ -95,6 +95,8 @@ export interface MatchWeek {
   euroGroupIndex?: number;
   /** Solo torneos de selecciones: partido 0-6 (3 de grupos, octavos, cuartos, semifinal, final). */
   torneoStage?: number;
+  /** Solo ventanas de selección entre torneos (Nations League, clasificatorias): su clave estable. */
+  selKey?: string;
 }
 
 /** Progreso de competiciones de eliminación, para poder generar la SIGUIENTE ronda si el jugador sigue vivo. */
@@ -123,7 +125,8 @@ const COPA_ROUND_2_RIVALS = [
  * en player.flags al jugarlo (match_done_week) para saber cuáles quedan, aunque
  * el calendario se recalcule con otro progreso de eliminatorias.
  */
-export function matchKey(m: Pick<MatchWeek, "competition" | "jornada" | "cupRound" | "euroKoRound" | "euroGroupIndex" | "torneoStage">): string {
+export function matchKey(m: Pick<MatchWeek, "competition" | "jornada" | "cupRound" | "euroKoRound" | "euroGroupIndex" | "torneoStage"> & { selKey?: string }): string {
+  if (m.selKey) return m.selKey;
   if (m.torneoStage !== undefined) return `torneo.${m.torneoStage}`;
   if (m.competition === "liga") return `liga.${m.jornada ?? 0}`;
   if (m.competition === "copa") return `copa.${m.cupRound ?? 0}`;
@@ -159,6 +162,21 @@ export function getClubLevel(club: string): ClubLevel {
 
 /** Rivales para las rondas finales de Copa: ya no hay sorpresas de categoría inferior. */
 const COPA_LATE_RIVALS = [...COPA_ROUND_2_RIVALS, "FC Barcelona", "Atlético de Madrid", "Real Madrid"];
+
+/**
+ * Ida de una eliminatoria europea a doble partido. La ida no se vive como escena
+ * (el partido que se juega es la VUELTA), pero su resultado existe, es estable
+ * para esa temporada y ronda, y se enseña en la vuelta: "ida: en casa 2-1".
+ */
+export function firstLegFor(club: string, season: number, round: number): { own: number; rival: number; home: boolean; text: string } {
+  const rand = seededRandom(hashString(`${club}:${season}:leg1:${round}`));
+  const r = rand();
+  const pick = (arr: [number, number][]) => arr[Math.floor(rand() * arr.length)];
+  const [own, rival] =
+    r < 0.45 ? pick([[1, 0], [2, 0], [2, 1], [3, 1], [3, 0]]) : r < 0.7 ? pick([[0, 0], [1, 1], [2, 2]]) : pick([[0, 1], [1, 2], [0, 2], [1, 3]]);
+  const home = rand() < 0.5;
+  return { own, rival, home, text: `${home ? "en casa" : "a domicilio"} ${own}-${rival}` };
+}
 
 /**
  * Calendario de partidos clave de una temporada (10 turnos/meses):
@@ -251,7 +269,7 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
       awayTeam: rival,
       rivalClub: rival,
       mandatory: false,
-      description: `Copa del Rey - ${COPA_ROUND_LABELS[r - 1]} ante ${rival}`,
+      description: `Copa del Rey - ${COPA_ROUND_LABELS[r - 1]} · Partido único ante ${rival}`,
       stakes: r === 1 ? "importante" : "decisivo",
       cupRound: r,
     });
@@ -283,7 +301,7 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
         awayTeam: rival,
         rivalClub: rival,
         mandatory: false,
-        description: `${europeanCompetition.label} ante ${rival}`,
+        description: `${europeanCompetition.label} · Jornada ${EURO_GROUP_JORNADAS[g]} de 6 ante ${rival}`,
         stakes: europeanStakes,
         euroGroupIndex: g + 1,
       });
@@ -293,16 +311,21 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
     const compName = europeanCompetition.competition === "champions" ? "Champions League" : "Europa League";
     for (let r = 1; r <= koMaxRound; r++) {
       const rival = pickEuroRival(seededRandom(hashString(`${playerClub}:${season}:euro-ko${r}`)));
+      // Octavos, cuartos y semifinal son a doble partido: el que se juega aquí es
+      // la VUELTA (la ida ya está decidida y se enseña). La final es partido único.
+      const twoLegs = r <= 3;
+      const leg = twoLegs ? firstLegFor(playerClub, season, r) : null;
+      const legLabel = leg ? ` · Vuelta (ida: ${leg.text})` : " · Partido único";
       entries.push({
         week: baseWeek + EURO_KO_WEEKS[r - 1],
         season,
         matchday: 2 + r,
         competition: europeanCompetition.competition,
-        homeTeam: playerClub,
-        awayTeam: rival,
+        homeTeam: leg && leg.home ? rival : playerClub,
+        awayTeam: leg && leg.home ? playerClub : rival,
         rivalClub: rival,
         mandatory: false,
-        description: `${compName} - ${EURO_KO_LABELS[r - 1]} ante ${rival}`,
+        description: `${compName} - ${EURO_KO_LABELS[r - 1]}${legLabel} ante ${rival}`,
         stakes: "decisivo",
         euroKoRound: r,
       });

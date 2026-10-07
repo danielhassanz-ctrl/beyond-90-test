@@ -57,6 +57,8 @@ export interface BankWhen {
   torneoProx?: "mundial" | "eurocopa" | "copa_america" | "any";
   /** Ventana de fichajes abierta ahora (verano, enero o cualquiera). */
   market?: "verano" | "enero" | "abierta";
+  /** Juegos Olímpicos: "antesala" = la temporada siguiente hay Juegos; "ano" = esta temporada hay Juegos y no juegas un torneo senior. */
+  olimpicos?: "antesala" | "ano";
   /** Mes de la temporada (1 = pretemporada/julio ... 10 = mayo). */
   turn?: Range;
   /** Turnos que llevas en el club actual (para escenas de llegada o de arraigo). */

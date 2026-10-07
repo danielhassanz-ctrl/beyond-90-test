@@ -9,9 +9,12 @@ import { SUELTAS } from "./sueltas";
 import { CACHONDEO_VESTUARIO } from "./cachondeo-vestuario";
 import { TRASPASOS } from "./traspasos";
 import { SELECCION } from "./seleccion";
+import { PREMIOS } from "./premios";
+import { CAMBIOS } from "./cambios";
+import { PAREJA } from "./pareja";
 
 /** Todas las escenas del banco, en un solo sitio. Añadir una familia nueva = importarla aquí. */
-export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION];
+export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS, ...CAMBIOS, ...PAREJA];
 
 /**
  * Banderas que dejan las escenas del banco y que cuentan algo de la historia
@@ -33,4 +36,7 @@ export const BANK_FACTS: Record<string, string> = {
   mister_confidente: "su entrenador y él compartieron un secreto que nunca contaron",
   tuit_polemico: "un tuit polémico le persiguió durante meses",
   polivalente: "aceptó jugar fuera de su posición cuando el equipo lo necesitó",
+  golden_boy: "ganó el Golden Boy, el premio al mejor joven de Europa",
+  gb_finalista: "fue finalista del Golden Boy pero no lo ganó",
+  olimpico_convocado: "fue convocado con la selección sub-23 a unos Juegos Olímpicos",
 };
