@@ -222,6 +222,18 @@ export function ensureCast(s: GameState): CareerCast {
   }
 
   rotateClubScopeIfNeeded(s, cast);
+  const openingAdviserChoice = s.flags["opening_adviser_choice"];
+  if (openingAdviserChoice === 2) {
+    cast.adviserKind = "father";
+    cast.adviser.name = "Papá";
+    cast.adviser.role = adviserRole("father");
+    s.agent.commission = 0;
+  } else if (openingAdviserChoice === 3) {
+    cast.adviserKind = "friend";
+    cast.adviser.name = "Álex Romero";
+    cast.adviser.role = adviserRole("friend");
+    s.agent.commission = 0;
+  }
   syncNpc(s, "adviser", cast.adviser, adviserRole(cast.adviserKind));
   syncNpc(s, "coach", cast.coach);
   syncNpc(s, "physio", cast.physio);
