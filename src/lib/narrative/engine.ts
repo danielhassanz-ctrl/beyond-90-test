@@ -48,6 +48,7 @@ import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narra
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
+import { pickNewDecision, pushRecentNew, decisionCloser } from "@/lib/narrative/match-decisions";
 import { pickBankScene } from "@/lib/narrative/bank/select";
 import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
@@ -2511,6 +2512,8 @@ function competitionFraming(match: MatchWeek): { title: string; lead: string } {
         lead: `${roundLabel(match.description)}, con la camiseta de tu país, `,
       };
     default:
+      if (/Clásico/.test(match.description)) return { title: "El Clásico: la jugada que lo decide", lead: "Clásico en marcha, " };
+      if (/Derbi/.test(match.description)) return { title: "Derbi: la jugada que lo decide", lead: "Derbi en marcha, " };
       return {
         title: decisivo ? "El momento que lo decide todo" : "El momento decisivo",
         lead: decisivo ? "Partido decisivo de la temporada en marcha, " : match.stakes === "importante" ? "Partido importante en marcha, " : "Partido en marcha ",
@@ -2590,6 +2593,27 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
 
   const { title: decisionTitle, lead: stakesLead } = competitionFraming(match);
 
+  // Jugadas nuevas escritas a mano (match-decisions/): mayoría de las veces,
+  // para que la jugada, las opciones y la frase final casi nunca se repitan.
+  if (Math.random() < 0.8) {
+    const picked = pickNewDecision(player.position, player.flags?.match_recent_new);
+    const newFlags: DecisionFlagsFn = (outcome, style) => ({
+      [decisionFlagKey]: JSON.stringify({ outcome, style, sit: picked.decision.text, min: pickMatchMinute(minuteRole) }),
+      match_miss_streak: NEGATIVE_DECISION_OUTCOMES.has(outcome) ? String(missStreak + 1) : "0",
+      match_recent_new: pushRecentNew(player.flags?.match_recent_new, picked.index, picked.keep),
+    });
+    return {
+      id: `match-decision-${match.week}-${Date.now()}`,
+      category: "partido",
+      rivalClub: match.rivalClub,
+      title: decisionTitle,
+      description: `${stakesLead}ante ${match.rivalClub}. ${picked.decision.text}${decisionCloser()}`,
+      allowFreeText: true,
+      freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
+      options: picked.decision.options(newFlags),
+    };
+  }
+
   if (player.position === "Portero") {
     const sitKeep = keepFor(GOALKEEPER_DECISION_SITUATIONS.length, 5);
     const setKeep = keepFor(GOALKEEPER_OPTION_SETS.length, 3);
@@ -2602,7 +2626,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
       category: "partido",
       rivalClub: match.rivalClub,
       title: decisionTitle,
-      description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+      description: `${stakesLead}ante ${match.rivalClub}. ${situation}${decisionCloser()}`,
       allowFreeText: true,
       freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
       options: optionSet,
@@ -2621,7 +2645,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
       category: "partido",
       rivalClub: match.rivalClub,
       title: decisionTitle,
-      description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+      description: `${stakesLead}ante ${match.rivalClub}. ${situation}${decisionCloser()}`,
       allowFreeText: true,
       freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
       options: optionSet,
@@ -2640,7 +2664,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
       category: "partido",
       rivalClub: match.rivalClub,
       title: decisionTitle,
-      description: `${stakesLead}ante ${match.rivalClub}. ${situation} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+      description: `${stakesLead}ante ${match.rivalClub}. ${situation}${decisionCloser()}`,
       allowFreeText: true,
       freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
       options: optionSet,
@@ -2664,7 +2688,7 @@ export function buildMatchDecisionMoment(player: Player, match: MatchWeek): Game
     category: "partido",
     rivalClub: match.rivalClub,
     title: decisionTitle,
-    description: `${stakesLead}ante ${match.rivalClub}. ${situation.text} No hay tiempo para pensar demasiado — tienes que decidir ya.`,
+    description: `${stakesLead}ante ${match.rivalClub}. ${situation.text}${decisionCloser()}`,
     allowFreeText: true,
     freeTextPrompt: "¿Qué piensas en el segundo antes de decidir?",
     options: optionSet,
@@ -3353,8 +3377,10 @@ export async function pickNextEventDynamic(
     let routineParity = 0;
     for (const ch of `${playerWithDynamics.id}:${matchThisWeek.week}:${matchKey(matchThisWeek)}`) routineParity = (routineParity * 31 + ch.charCodeAt(0)) % 1000003;
     // Un suplente solo vive la jugada decisiva en la minoría de partidos en que entra con peso.
+    // Las jornadas de rutina NO llevan jugada decisiva: solo los partidos clave
+    // (un grande, un derbi, Copa, Europa, finales) piden una decisión.
     const skipDecisiveMoment =
-      (matchThisWeek.stakes === "rutina" && routineParity % 2 === 1) ||
+      matchThisWeek.stakes === "rutina" ||
       (firstTeam && roleInfo.role === "suplente" && matchThisWeek.stakes !== "decisivo" && routineParity % 5 < 3);
 
     if (!decisionOutcome && !skipDecisiveMoment) {

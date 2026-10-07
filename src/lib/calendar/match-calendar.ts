@@ -56,6 +56,8 @@ const LIGA_WEEKS_BY_TIER: Record<ClubLevel, number[]> = {
   europeo: [3, 4, 6, 7, 9, 10],
   modesto: [3, 5, 7, 9, 10],
 };
+/** Rivales de Liga que, por sí solos, hacen que un partido sea importante. */
+const BIG_LIGA_RIVALS = new Set(["Real Madrid", "FC Barcelona", "Atlético de Madrid"]);
 /** Fase de grupos europea: dos partidos clave que representan las jornadas 3 y 6 de 6. */
 export const EURO_GROUP_WEEKS = [4, 6];
 export const EURO_GROUP_JORNADAS = [3, 6];
@@ -316,6 +318,16 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
     nonLigaPerWeek.set(e.week, (nonLigaPerWeek.get(e.week) ?? 0) + 1);
   }
   let ligaIndex = 0;
+  const rivalImportance = (rival: string): { stakes: MatchStakes; angle: string } | null => {
+    const pair = (a: string, b: string) => (playerClub === a && rival === b) || (playerClub === b && rival === a);
+    if (pair("Real Madrid", "FC Barcelona")) return { stakes: "decisivo", angle: " · El Clásico" };
+    if (
+      pair("Real Madrid", "Atlético de Madrid") || pair("FC Barcelona", "Atlético de Madrid") || pair("Sevilla FC", "Real Betis") ||
+      pair("Athletic Club", "Real Sociedad") || pair("Valencia CF", "Villarreal CF")
+    ) return { stakes: "importante", angle: " · Derbi" };
+    if (BIG_LIGA_RIVALS.has(rival)) return { stakes: "importante", angle: " · Un grande de la Liga" };
+    return null;
+  };
   for (const w of ligaWeeks) {
     if ((nonLigaPerWeek.get(baseWeek + w) ?? 0) >= MAX_MATCHES_PER_WEEK) continue;
     const rival = laLigaRivals[ligaIndex % laLigaRivals.length];
@@ -333,6 +345,15 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
       } else {
         stakes = "importante";
         angle = " · Batalla directa por la permanencia";
+      }
+    }
+    // Los partidos contra un grande, un derbi o el Clásico son los que de verdad
+    // importan: llevan su jugada decisiva. Las jornadas de rutina, no.
+    if (stakes === "rutina") {
+      const imp = rivalImportance(rival);
+      if (imp) {
+        stakes = imp.stakes;
+        angle = imp.angle;
       }
     }
     const jornada = LIGA_JORNADA_BY_WEEK[w];
