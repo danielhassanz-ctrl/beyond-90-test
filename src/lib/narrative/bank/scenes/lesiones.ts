@@ -6,7 +6,7 @@ import { S, o, r } from "../dsl";
 import type { BankScene } from "../types";
 
 export const LESIONES: BankScene[] = [
-  S("ls-piscina", "lesion", { injured: true, minAge: 16, notFlags: ["ls_piscina"] }, "entrenamiento",
+  S("ls-piscina", "lesion", { injured: true, minAge: 16, notFlags: ["ls_piscina"] }, "vida",
     "Rehabilitación en la piscina con un preparador muy peculiar",
     "Tu nuevo preparador de recuperación se llama Eugenio, lleva un bañador de los años ochenta y un silbato colgado al cuello que usa cada vez que haces una cosa bien. «¡Una brazada de campeón!», grita. Te hace nadar con una pelota entre las rodillas, hacer el muerto durante cinco minutos y cantar mientras pedaleas bajo el agua. Dice que «es científico». No lo es.",
     [
@@ -61,7 +61,7 @@ export const LESIONES: BankScene[] = [
       o("a", "Escucharle con atención y anotar sus consejos", "Aprender", { moral: 5, forma: 2, rel_vestuario: 3, flags: { ls_veterano: "escucho" } }, "Te cuenta que lo peor no fue el dolor, sino la soledad. Que se agarró a una rutina: levantarse a la misma hora, caminar, leer. «Ponte metas pequeñas», dice. Tiene razón. Lo notas en cada semana siguiente."),
       o("b", "Preguntarle si algún día dejará de doler", "Ser sincero", { moral: 3, rel_vestuario: 2, flags: { ls_veterano: "pregunto" } }, "El veterano guarda silencio. «Duele menos —dice—. Y luego aprendes a vivir con ese dolor». Te mira. «Pero nunca estarás peor que ahora». No sabes por qué, pero te reconforta."),
     ]),
-  S("ls-adelantar", "lesion", { injured: true, minAge: 17, fama: [20, 100], notFlags: ["ls_adelantar"] }, "entrenamiento",
+  S("ls-adelantar", "lesion", { injured: true, minAge: 17, fama: [20, 100], notFlags: ["ls_adelantar"] }, "vida",
     "Te sientes bien y quieres volver antes de lo previsto",
     "Hoy has caminado sin dolor, has subido las escaleras de dos en dos y has hecho tres sentadillas bajo la mirada atónita del fisio. El calendario te dice que te quedan dos semanas de baja; tu cuerpo, que ya está listo. El equipo juega un partido importante el sábado y el míster te mira desde la banda con una sonrisa que dice: «Ya veremos».",
     [
