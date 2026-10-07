@@ -15,7 +15,7 @@ import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { playerAge } from "@/types/career";
 import { getClubLevel } from "@/lib/calendar/match-calendar";
-import { pendingEchoes } from "@/lib/narrative/ledger";
+import { pendingEchoes, readLedger } from "@/lib/narrative/ledger";
 
 function level(value: number, labels: [string, string, string, string]): string {
   // <30, <50, <75, resto
@@ -121,34 +121,7 @@ export function buildStateBrief(player: Player, history: HistoryItem[]): string 
     lines.push(`- ASUNTOS PENDIENTES CON PERSONAS CONCRETAS (pueden reaparecer a cobrarse; si encaja de forma natural, nómbralos o hazlos avanzar): ${pendingThreads.join(" | ")}.`);
   }
 
-  // Hechos que definen su historia (marcas, capitanías, títulos, casas, familia):
-  // una decisión pasada tiene que seguir notándose en lo que es hoy.
-  const facts: string[] = [];
-  const f = flags as Record<string, string | boolean>;
-  const trayectoria = String(f.clubs_history ?? "").split("|").filter(Boolean);
-  if (trayectoria.length > 0 && player.club !== NO_CLUB_YET) {
-    facts.push(`su trayectoria de clubes: ${[...trayectoria, player.club].join(" → ")}`);
-  }
-  if (f.sponsor_botas) facts.push(`viste las botas de ${f.sponsor_botas}`);
-  if (f.sponsor_reloj) facts.push("es imagen de una marca de relojes de lujo");
-  if (f.sponsor_bebida) facts.push("anuncia una bebida energética");
-  if (f.capitan_seleccion) facts.push("es capitán de su selección");
-  if (f.title_liga) facts.push("ha ganado la Liga");
-  if (f.title_champions) facts.push("ha ganado la Champions League");
-  if (f.title_balon_oro) facts.push("tiene un Balón de Oro");
-  for (const [key, value] of Object.entries(f)) {
-    const tr = key.match(/^torneo_result_(.+)_(\d+)$/);
-    if (tr && typeof value === "string" && value) {
-      const names: Record<string, string> = { mundial: "Mundial", eurocopa: "Eurocopa", copa_america: "Copa América" };
-      facts.push(`en el ${names[tr[1]] ?? "torneo"} de ${2026 + Number(tr[2])} terminó: ${value.replace(/_/g, " ")}`);
-    }
-  }
-  const houses = Object.entries(f).filter(([k]) => k.startsWith("propiedad_"));
-  if (houses.length > 0) facts.push(`tiene ${houses.length} propiedad(es) compradas`);
-  for (const inv of readInvestments(f)) facts.push(`invirtió ${inv.amount.toLocaleString("es")} € en: ${inv.name}`);
-  if (f.iguana) facts.push("tiene una iguana como mascota que se hizo famosa");
-  if (f.patrocinio_chorizo) facts.push("fue imagen de una línea de chorizo");
-  if (typeof f.pareja === "string") facts.push(`su pareja es ${f.pareja}${f.hijos ? " y ya tienen hijos" : ""}`);
+  const facts = describeLifeFacts(player);
   if (facts.length > 0) lines.push(`- SU HISTORIA HASTA HOY: ${facts.join("; ")}.`);
 
   const pendingDecisions = pendingEchoes(player)
@@ -175,6 +148,64 @@ CONTINUIDAD OBLIGATORIA:
 - La escena debe nacer de la ÚLTIMA decisión o del estado de arriba, no de la nada: si la última decisión dejó algo pendiente (una promesa, un enfado, una oferta en marcha, un rencor), toca eso o a quien lo sufre antes que inventar un tema nuevo.
 - NUNCA contradigas el estado: no escribas que el entrenador confía si la relación está rota, ni que juega si está lesionado o apartado, ni que le adora la grada si la afición le pita.
 - Los cambios de las opciones tienen que ser coherentes con el estado (con el vestuario roto, una broma no sube de golpe la relación con el vestuario; con el míster en contra, un gesto amable apenas mueve nada).`;
+}
+
+/** Hechos que definen la historia del jugador (marcas, títulos, casas, familia, trayectoria). */
+export function describeLifeFacts(player: Player): string[] {
+  // Hechos que definen su historia (marcas, capitanías, títulos, casas, familia):
+  // una decisión pasada tiene que seguir notándose en lo que es hoy.
+  const f = (player.flags ?? {}) as Record<string, string | boolean>;
+  const facts: string[] = [];
+  const trayectoria = String(f.clubs_history ?? "").split("|").filter(Boolean);
+  if (trayectoria.length > 0 && player.club !== NO_CLUB_YET) {
+    facts.push(`su trayectoria de clubes: ${[...trayectoria, player.club].join(" → ")}`);
+  }
+  if (f.sponsor_botas) facts.push(`viste las botas de ${f.sponsor_botas}`);
+  if (f.sponsor_reloj) facts.push("es imagen de una marca de relojes de lujo");
+  if (f.sponsor_bebida) facts.push("anuncia una bebida energética");
+  if (f.capitan_seleccion) facts.push("es capitán de su selección");
+  if (f.title_liga) facts.push("ha ganado la Liga");
+  if (f.title_champions) facts.push("ha ganado la Champions League");
+  if (f.title_balon_oro) facts.push("tiene un Balón de Oro");
+  for (const [key, value] of Object.entries(f)) {
+    const tr = key.match(/^torneo_result_(.+)_(\d+)$/);
+    if (tr && typeof value === "string" && value) {
+      const names: Record<string, string> = { mundial: "Mundial", eurocopa: "Eurocopa", copa_america: "Copa América" };
+      facts.push(`en el ${names[tr[1]] ?? "torneo"} de ${2026 + Number(tr[2])} terminó: ${value.replace(/_/g, " ")}`);
+    }
+  }
+  const houses = Object.entries(f).filter(([k]) => k.startsWith("propiedad_"));
+  if (houses.length > 0) facts.push(`tiene ${houses.length} propiedad(es) compradas`);
+  for (const inv of readInvestments(f)) facts.push(`invirtió ${inv.amount.toLocaleString("es")} € en: ${inv.name}`);
+  if (f.iguana) facts.push("tiene una iguana como mascota que se hizo famosa");
+  if (f.patrocinio_chorizo) facts.push("fue imagen de una línea de chorizo");
+  if (typeof f.pareja === "string") facts.push(`su pareja es ${f.pareja}${f.hijos ? " y ya tienen hijos" : ""}`);
+  return facts;
+}
+
+/**
+ * RESUMEN DE TODA LA CARRERA para la segunda vida (entrenador, presidente...):
+ * sin esto la IA solo conocía el apellido y el club, y lo que se decidió en
+ * cien escenas anteriores —títulos, rivales, favores, rencores, la familia—
+ * no volvía a aparecer jamás.
+ */
+export function buildLegacyBrief(player: Player): string {
+  const lines: string[] = [];
+  const f = (player.flags ?? {}) as Record<string, string | boolean>;
+  lines.push(
+    `- Como futbolista: ${player.stats_matches_played ?? 0} partidos, ${player.stats_goals ?? 0} goles, ${player.stats_assists ?? 0} asistencias y ${player.stats_titles ?? 0} títulos; terminó en el ${player.club} con ${player.fama ?? 0}/100 de fama.`,
+  );
+  const facts = describeLifeFacts(player);
+  if (facts.length > 0) lines.push(`- Su historia: ${facts.join('; ')}.`);
+  const weighty = readLedger(f)
+    .filter((e) => e.k !== 'partido')
+    .slice(-8)
+    .map((e) => `"${e.t}" → eligió "${e.c}"`);
+  if (weighty.length > 0) lines.push(`- Decisiones que le marcaron: ${weighty.join(' | ')}.`);
+  const pending = describeOpenThreads(f, player.week);
+  if (pending.length > 0) lines.push(`- Asuntos que nunca cerró (pueden volver a por él): ${pending.join(' | ')}.`);
+  return `HISTORIA DE SU CARRERA COMO FUTBOLISTA (la segunda vida tiene que NOTAR este pasado: personas, clubes, títulos, rivales, favores, rencores y promesas pueden reaparecer):
+${lines.join("\n")}`;
 }
 
 export { summarizeEffects } from "@/lib/narrative/effects";

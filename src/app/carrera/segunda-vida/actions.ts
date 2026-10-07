@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { appendThread } from "@/lib/narrative/threads";
 import { after } from "next/server";
 import { applyConsequences, nextWeekGap, resolveOption } from "@/lib/narrative/engine";
 import { SECOND_LIFE_TARGET_WEEKS } from "@/types/career";
@@ -41,6 +42,9 @@ export async function resolveSecondLifeEvent(formData: FormData) {
   if (event.memorableThread) {
     patch.flags = { ...player.flags, [`hilo_${Date.now()}`]: event.memorableThread };
   }
+  // Hilo abierto que deja la decisión (ver narrative/threads.ts)
+  const newThread = option.thread ? appendThread((patch.flags as Record<string, string | boolean> | undefined) ?? player.flags, option.thread, player.week) : null;
+  if (newThread) patch.flags = { ...((patch.flags as Record<string, string | boolean> | undefined) ?? player.flags), hilos: newThread };
   const newSecondWeek = player.second_week + nextWeekGap(player.media, player.mode);
   const willFinish = newSecondWeek > SECOND_LIFE_TARGET_WEEKS;
 

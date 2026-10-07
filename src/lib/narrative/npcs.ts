@@ -444,8 +444,16 @@ function nameFirstMentions(texts: string[], player: Player, done: Set<string>, s
  * "un compañero" es alguien distinto en cada escena, pero el mismo si se
  * recarga la página.
  */
+/** Las escenas de la IA llevan id "<prefijo>-<timestamp>-<aleatorio>": ya traen sus propios nombres con apellidos. */
+const AI_EVENT_ID = /-\d{10,}-[a-z0-9]{4,}$/;
+
 export function personalizeEvent<T extends GameEvent>(rawEvent: T, player: Player): T {
   const event = replaceFixedNames(rawEvent, player);
+  // Una escena de IA ya nombró a sus personajes (COMMON_RULES): ponerles además
+  // "llamado X" daba dos nombres distintos para la misma persona en el título y
+  // en el texto (visto en una partida de prueba: "Un veterano llamado Ismael
+  // Roca..." cuyo texto hablaba de Gaspar Espinosa).
+  if (AI_EVENT_ID.test(event.id)) return event;
   const salt = event.id;
   const done = alreadyNamedKeys(JSON.stringify(event));
 

@@ -12,7 +12,7 @@ import {
 } from "@/lib/narrative/secondary-characters";
 import { NarrativeContent } from "@/lib/narrative/narrative-content";
 import { describeKnownCast as describeCast } from "@/lib/narrative/cast";
-import { buildStateBrief } from "@/lib/narrative/state-brief";
+import { buildStateBrief, buildLegacyBrief } from "@/lib/narrative/state-brief";
 import { describeAgeWeeks } from "@/lib/narrative/ledger";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { computeRole } from "@/lib/narrative/role";
@@ -209,6 +209,8 @@ export interface HistoryItem {
   outcome?: string | null;
   /** Lo que el jugador escribió con sus propias palabras en la opción libre, si la usó. */
   freeText?: string | null;
+  /** Texto de la escena (segunda vida): para que los personajes mantengan el mismo nombre. */
+  scene?: string | null;
   /** Categoría del evento (entrenamiento/vestuario/representante/prensa/vida/especial/partido...) — usado por pickCategory para no repetir la misma categoría turno tras turno. */
   category?: string | null;
 }
@@ -401,7 +403,8 @@ export async function callEventTool(
     // logs, la próxima vez hay una cifra real en vez de una sospecha.
     const t0 = Date.now();
     const response = await client.messages.create({
-      model: MODEL,
+      // AI_MODEL solo lo usan los scripts de prueba para abaratar partidas largas.
+      model: process.env.AI_MODEL || MODEL,
       // 800 se quedaba corto desde que cada opción lleva su reacción
       // (outcome_text): el modelo agotaba el límite a mitad de las opciones,
       // la escena llegaba sin "options" y se descartaba (pagando igualmente
@@ -416,6 +419,14 @@ export async function callEventTool(
       messages: [{ role: "user", content: prompt }],
     });
     console.log(`[callEventTool:${idPrefix}] Claude respondió en ${Date.now() - t0}ms`);
+    // Medición opcional del gasto (scripts de prueba con IA real): TRACK_USAGE=1.
+    if (process.env.TRACK_USAGE) {
+      const g = globalThis as unknown as { __usage?: { calls: number; input: number; output: number } };
+      const u = (g.__usage ??= { calls: 0, input: 0, output: 0 });
+      u.calls += 1;
+      u.input += response.usage?.input_tokens ?? 0;
+      u.output += response.usage?.output_tokens ?? 0;
+    }
 
     console.log(`[callEventTool:${idPrefix}] API response received, analyzing...`);
 
@@ -744,9 +755,10 @@ export async function generateAiEvent(
   const historyText = history.length
     ? history
         .map(
-          (h) =>
+          (h, i) =>
             `- "${h.title}" → eligió: "${h.chosen}"` +
-            (h.freeText ? ` — y escribió con sus propias palabras: "${h.freeText}"` : ""),
+            (h.freeText ? ` — y escribió con sus propias palabras: "${h.freeText}"` : "") +
+            (h.scene && i < 3 ? ` (escena: "${h.scene.slice(0, 260)}")` : ""),
         )
         .join("\n")
     : "(todavía no vivió ningún evento)";
@@ -1493,6 +1505,44 @@ const SECOND_LIFE_STYLE: Record<SecondCareerRole, string> = {
  * que el resto de la carrera, se generan con IA para que no sea siempre el
  * mismo puñado de escenas fijas, con el pool escrito a mano como reserva.
  */
+/**
+ * COBRO DE UN HILO DE LA CARRERA en la segunda vida: alguien con quien quedó
+ * algo pendiente cuando jugaba reaparece ahora que es entrenador, presidente,
+ * etc. Las consecuencias solo tocan patrimonio y reputación.
+ */
+export async function generateSecondLifeThreadPayoff(
+  player: Player,
+  role: SecondCareerRole,
+  thread: { w: number; k: string; who: string; t: string },
+  history: HistoryItem[],
+): Promise<GameEvent | null> {
+  const historyText = history.length ? history.map((h) => `- "${h.title}" → eligió: "${h.chosen}"`).join("\n") : "(todavía nada)";
+  const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista.
+El jugador ya se retiró y vive su segunda vida como ${SECOND_CAREER_LABELS[role]}${player.second_club ? ` del ${player.second_club}` : ""}: ${SECOND_LIFE_CONTEXT[role]}.
+
+ESCENA DE COBRO — ALGO PENDIENTE DE SU CARRERA COMO FUTBOLISTA VUELVE.
+Cuando jugaba quedó (${thread.k}) con ${thread.who}: "${thread.t}". Ahora ${thread.who} reaparece en su nueva vida y el asunto pasa factura o da fruto. Usa EXACTAMENTE el nombre y apellidos "${thread.who}". Cada opción cuesta o da algo de verdad.
+
+${buildLegacyBrief(player)}
+
+ÚLTIMOS EVENTOS DE ESTA SEGUNDA VIDA:
+${historyText}
+
+REGLAS:
+${COMMON_RULES}
+- Las consecuencias numéricas solo pueden tocar patrimonio y reputacion.
+- Nada de jugar partidos como futbolista: eso ya se acabó.`;
+  const event = await callEventTool(prompt, "segunda_vida", "segunda-vida-hilo");
+  if (!event) return null;
+  return {
+    ...event,
+    options: event.options.map((option) => ({
+      ...option,
+      consequences: { patrimonio: option.consequences.patrimonio, reputacion: option.consequences.reputacion },
+    })),
+  };
+}
+
 export async function generateSecondLifeEvent(
   player: Player,
   role: SecondCareerRole,
@@ -1518,6 +1568,8 @@ PERSONAJE:
 ${role === "agente" && player.flags?.agente_especialidad ? `- Especialización como agente: ${player.flags.agente_especialidad}\n` : ""}- Reputación en este nuevo rol: ${player.reputacion}/100
 - Patrimonio: ${player.patrimonio} €
 
+${buildLegacyBrief(player)}
+
 ÚLTIMOS EVENTOS DE ESTA SEGUNDA VIDA (no repitas el tema ni la premisa):
 ${historyText}
 
@@ -1528,6 +1580,8 @@ ${COMMON_RULES}
 - Las consecuencias numéricas solo pueden tocar patrimonio y reputacion (no forma, moral, fama ni relaciones — esas ya no aplican en la segunda vida).
 - Si el evento amerita una respuesta propia del personaje, marca allow_free_text en true y escribe free_text_prompt.
 - Si en el historial alguna entrada incluye algo que el personaje escribió con sus propias palabras, léelo de verdad y dale continuidad cuando encaje, sin citarlo literalmente.
+- PERSONAS RECURRENTES: si una persona (director deportivo, presidente, jugador, periodista, rival) ya salió en las escenas recientes de arriba, usa EXACTAMENTE el mismo nombre y apellidos; nunca la sustituyas por otra distinta.
+- La HISTORIA DE SU CARRERA es real: de vez en cuando (no en todas las escenas) alguien de su pasado, un club en el que jugó, un título, un rival o un asunto pendiente tiene que reaparecer de forma natural en su nueva vida.
 - Marca is_milestone en true solo si es un momento memorable (más o menos 1 de cada 4-5 eventos), y en ese caso escribe image_scene en inglés, fotorrealista, mostrando al personaje en su nuevo rol (traje de entrenador, despacho, palco directivo...), nunca con equipación de jugador.`;
 
   const event = await callEventTool(prompt, "segunda_vida", "segunda-vida");

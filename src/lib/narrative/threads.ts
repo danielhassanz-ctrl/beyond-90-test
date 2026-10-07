@@ -99,3 +99,11 @@ export function consumeThread(flags: Record<string, string | boolean> | null | u
 export function describeOpenThreads(flags: Record<string, string | boolean> | null | undefined, week: number): string[] {
   return openThreads(flags).map((t) => `${THREAD_LABELS[t.k]} con ${t.who} (hace ${Math.max(1, week - t.w)} turnos): ${t.t}`);
 }
+
+/** En la segunda vida: ¿toca que reaparezca un asunto pendiente de la carrera? (cada 3 turnos como mínimo) */
+export function shouldTriggerSecondLifePayoff(player: Pick<Player, "flags" | "second_week">): boolean {
+  if (openThreads(player.flags).length === 0) return false;
+  const last = parseInt(String(player.flags?.thread_last_second_week ?? "0"), 10) || 0;
+  if (player.second_week < 2 || player.second_week - last < 3) return false;
+  return Math.random() < 0.5;
+}

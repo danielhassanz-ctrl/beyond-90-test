@@ -11,7 +11,8 @@ export const maxDuration = 300;
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { pickNextEvent, maybeAddFreeText, whatIsAtStake } from "@/lib/narrative/engine";
 import { getSecondLifeEvents } from "@/lib/narrative/segundaVida";
-import { generateSecondLifeEvent } from "@/lib/narrative/ai";
+import { generateSecondLifeEvent, generateSecondLifeThreadPayoff } from "@/lib/narrative/ai";
+import { openThreads, consumeThread, shouldTriggerSecondLifePayoff } from "@/lib/narrative/threads";
 import { SECOND_CAREER_LABELS, CONSEQUENCE_LABELS } from "@/types/career";
 import { displayName } from "@/types/player";
 import { EventScene } from "@/components/EventScene";
@@ -45,7 +46,7 @@ export default async function SegundaVidaPage() {
   if (!event) {
     const { data: history } = await supabase
       .from("career_events")
-      .select("title, chosen_option_label, free_text_response")
+      .select("title, chosen_option_label, free_text_response, description")
       .eq("player_id", player.id)
       .order("created_at", { ascending: false })
       .limit(10);
@@ -53,6 +54,7 @@ export default async function SegundaVidaPage() {
       title: h.title as string,
       chosen: (h.chosen_option_label as string | null) ?? "",
       freeText: h.free_text_response as string | null,
+      scene: h.description as string | null,
     }));
 
     const { data: allHistory } = await supabase
@@ -61,7 +63,24 @@ export default async function SegundaVidaPage() {
       .eq("player_id", player.id);
     const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
+    // Un asunto pendiente de su carrera como futbolista vuelve a cobrarse
+    // (hilos abiertos, ver narrative/threads.ts): ahora lo trae su nueva vida.
+    const dueThread = openThreads(player.flags)[0];
+    let payoff: Awaited<ReturnType<typeof generateSecondLifeThreadPayoff>> = null;
+    let flagsAfterPayoff: Record<string, string | boolean> | null = null;
+    if (dueThread && shouldTriggerSecondLifePayoff(player)) {
+      payoff = await generateSecondLifeThreadPayoff(player, player.second_career, dueThread, historyForAi);
+      if (payoff) {
+        flagsAfterPayoff = {
+          ...(player.flags ?? {}),
+          hilos: consumeThread(player.flags, dueThread),
+          thread_last_second_week: String(player.second_week),
+        };
+      }
+    }
+
     event = maybeAddFreeText(
+      payoff ??
       (await generateSecondLifeEvent(player, player.second_career, historyForAi)) ??
         pickNextEvent(
           getSecondLifeEvents(player.second_career, player.second_club),
@@ -69,7 +88,10 @@ export default async function SegundaVidaPage() {
           usedEventIds,
         ),
     );
-    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+    await supabase
+      .from("players")
+      .update(flagsAfterPayoff ? { pending_event: event, flags: flagsAfterPayoff } : { pending_event: event })
+      .eq("id", player.id);
   }
 
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
