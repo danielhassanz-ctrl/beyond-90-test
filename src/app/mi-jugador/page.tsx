@@ -13,6 +13,7 @@ import { PlayerHeaderCard } from "@/components/PlayerHeaderCard";
 import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
 import { withShareLink, getAppUrlLine, NO_CLUB_YET } from "@/lib/constants";
 import { logout, shareAndCompare } from "./actions";
+import { repairTrophies } from "@/lib/honours-repair";
 
 export default async function MiJugadorPage() {
   const supabase = await createClient();
@@ -32,6 +33,7 @@ export default async function MiJugadorPage() {
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle<Player>();
+  if (player) await repairTrophies(supabase, player);
 
   return (
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">

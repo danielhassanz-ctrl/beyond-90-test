@@ -101,6 +101,10 @@ function coachLine(coach: string, result: Result, rating: number, goals: number)
 
 interface ReactionKit {
   id: string;
+  /** Solo se ofrece si encaja con cómo fue el partido (por defecto, siempre). */
+  when?: (ctx: Ctx) => boolean;
+  /** Peso al sortear (por defecto 1). */
+  weight?: number;
   label: string;
   subtitle: string;
   consequences: (ctx: Ctx) => Record<string, number>;
@@ -115,6 +119,8 @@ interface Ctx {
   goals: number;
   bad: boolean;
   rating: number;
+  intl: boolean;
+  minutes: number;
 }
 
 const mediaFor = (ctx: Ctx) => (ctx.rating >= 8 ? 3 : ctx.rating >= 7 ? 1 : ctx.rating < 5.2 ? -2 : ctx.rating < 5.8 ? -1 : 0);
@@ -192,6 +198,202 @@ const REACTIONS: ReactionKit[] = [
     text: (c) => [
       `Cuando el estadio se vacía, sigues tú solo con un cubo de balones. ${c.coach} te mira desde la banda y no dice nada.`,
       "Veinte remates más con las luces a medio apagar. Nadie te lo ha pedido, y ese es el punto.",
+    ],
+  },
+  {
+    id: "video",
+    label: "Ver el partido entero a solas en vídeo",
+    subtitle: "Los detalles que no se ven en directo",
+    consequences: (c) => ({ media: mediaFor(c), forma: 1, moral: c.bad ? -1 : 1 }),
+    text: (c) => [
+      `Con el portátil en las rodillas, encuentras lo que no viste en el campo: un desmarque que ${c.mate} te pidió dos veces y que no hiciste. Lo apuntas.`,
+      "Cuarenta minutos de vídeo, cero distracciones. Descubres que tu mejor jugada de la noche ni siquiera fue la que sale en los resúmenes.",
+    ],
+  },
+  {
+    id: "camiseta",
+    label: "Cambiar la camiseta con un rival",
+    subtitle: "Un gesto entre jugadores",
+    when: (c) => c.result !== "loss" || c.rating >= 6.5,
+    consequences: (c) => ({ media: mediaFor(c), reputacion: 2, fama: 1 }),
+    text: (c) => [
+      `Un jugador de ${c.rival} te busca en el túnel y te tiende la suya. «Me has dado trabajo», dice. Te la llevas doblada con cuidado, como un trofeo pequeño.`,
+      "Os intercambiáis las camisetas sudadas al pie de la escalera de vestuarios. Algún día se la enseñarás a alguien.",
+    ],
+  },
+  {
+    id: "grada",
+    label: "Acercarte a la grada a firmar",
+    subtitle: "Cinco minutos con los de siempre",
+    when: (c) => c.result === "win" || c.goals > 0,
+    consequences: (c) => ({ media: mediaFor(c), rel_aficion: 3, fama: 1 }),
+    text: () => [
+      "Te acercas a la valla y firmas lo que te pasan: bufandas, un balón, la camiseta de un crío que lleva tu nombre. Un hombre mayor te aprieta el brazo y dice «gracias» sin más.",
+      "Una niña te pide una foto y te cuenta que va a ser como tú. No le dices que el camino es largo: le dices que sí.",
+    ],
+  },
+  {
+    id: "hielo",
+    label: "Baño de hielo y recuperación en serio",
+    subtitle: "Cuidar el cuerpo",
+    when: (c) => c.minutes >= 70,
+    consequences: (c) => ({ media: mediaFor(c), forma: 3 }),
+    text: (c) => [
+      `Veinte minutos metido en un barreño helado con la mirada perdida. El fisio no se separa de ti: «Mañana me lo agradeces». Y ${c.coach} pide que se lo cuenten.`,
+      "Cuerpo envuelto en hielo, auriculares puestos y la sensación de que, cuidándote hoy, te estás regalando medio partido del domingo.",
+    ],
+  },
+  {
+    id: "capitan",
+    label: "Charlar con el capitán a la salida",
+    subtitle: "Una conversación corta de vestuario",
+    consequences: (c) => ({ media: mediaFor(c), rel_vestuario: 2, moral: c.bad ? 2 : 1 }),
+    text: () => [
+      "El capitán te espera apoyado en la pared del túnel. «Hoy has dado un paso más», dice. No hace falta que añada nada: lo dice quien lleva el brazalete.",
+      "Os quedáis solos cinco minutos, con la ropa de calle a medio poner. Te cuenta cómo era su primer año aquí. Te lo guardas.",
+    ],
+  },
+  {
+    id: "amigo",
+    label: "Escribir a tu amigo de toda la vida",
+    subtitle: "El que sigue llamándote por tu nombre de pila",
+    consequences: (c) => ({ media: mediaFor(c), moral: c.bad ? 3 : 2 }),
+    text: () => [
+      "«¿Has visto la jugada?», te escribe él antes de que puedas decirle nada. Te sale una carcajada sola. En un mensaje te devuelve al barrio.",
+      "Hablas con él veinte minutos de nada: de la pachanga del domingo, de un chico que os debe una cerveza. Ya está. Vuelves a ser tú.",
+    ],
+  },
+  {
+    id: "dormir",
+    label: "Irte directo a casa y dormir",
+    subtitle: "Silencio y descanso",
+    when: (c) => c.bad || c.result === "loss",
+    weight: 1.4,
+    consequences: (c) => ({ media: mediaFor(c), forma: 2, moral: 1 }),
+    text: () => [
+      "Nada de móvil, nada de redes. Ocho horas seguidas. Cuando te despiertas, el partido pesa un poco menos y el domingo ya parece posible.",
+      "Apagas la luz sin cenar. A veces el mejor análisis es una buena noche de sueño.",
+    ],
+  },
+  {
+    id: "paseo",
+    label: "Dar un paseo largo sin el móvil",
+    subtitle: "Soltarlo todo",
+    when: (c) => c.result === "loss" || c.rating < 6,
+    consequences: (c) => ({ media: mediaFor(c), moral: 3 }),
+    text: () => [
+      "Caminas por calles que no conoces, con las manos en los bolsillos, hasta que dejas de repetir la jugada. Al final del paseo, te das cuenta de que sonríes un poco.",
+      "Una hora a paso lento por el paseo marítimo. Nadie te reconoce. Es lo mejor que te ha pasado en toda la semana.",
+    ],
+  },
+  {
+    id: "fisio",
+    label: "Pasar por el fisio un rato",
+    subtitle: "Cuidar esa molestia que no se va",
+    when: (c) => c.minutes >= 60,
+    consequences: (c) => ({ media: mediaFor(c), forma: 2, rel_entrenador: 1 }),
+    text: (c) => [
+      `El fisio te masajea el gemelo con cara de pocos amigos. «Tú tienes más carga de la que dices». Al salir, ${c.coach} ya lo sabe.`,
+      "Media hora en la camilla con música baja. Sales con las piernas nuevas y una nota en el móvil: «No te pases en el gimnasio».",
+    ],
+  },
+  {
+    id: "veterano",
+    label: "Hablar de táctica con un veterano",
+    subtitle: "Aprender del que ya lo ha vivido todo",
+    consequences: (c) => ({ media: mediaFor(c), rel_vestuario: 1, forma: 1 }),
+    text: (c) => [
+      `Un veterano del equipo te dibuja en una servilleta cómo habría resuelto ${c.mate} tu jugada. Te quedas con la servilleta.`,
+      "Una hora hablando de pausa, de cuándo acelerar y cuándo esconderse. Hay cosas que solo se aprenden hablando con quien ya se ha equivocado.",
+    ],
+  },
+  {
+    id: "reto",
+    label: "Proponer un reto de penaltis al vestuario",
+    subtitle: "Para quitarle hierro a la semana",
+    consequences: (c) => ({ media: mediaFor(c), rel_vestuario: 2, moral: 2 }),
+    text: (c) => [
+      `El que falla paga el café de toda la semana. Falla ${c.mate}, que jura que el balón estaba mal puesto. El vestuario no se ríe tanto desde pretemporada.`,
+      "Diez tiros cada uno, con el portero suplente como juez. Pierdes tú, pagas tú, y el grupo te adora un poco más.",
+    ],
+  },
+  {
+    id: "felicitar",
+    label: "Escribir al rival que mejor te marcó",
+    subtitle: "Reconocer a quien te ha ganado la partida",
+    when: (c) => c.bad || c.result === "loss",
+    consequences: (c) => ({ media: mediaFor(c), reputacion: 2, moral: 1 }),
+    text: (c) => [
+      `Un mensaje corto a tu marcador de ${c.rival}: «Hoy has estado mejor que yo». Te contesta en cinco minutos: «Mañana al revés». Os caéis bien.`,
+      "No es un gesto habitual. Alguien lo cuenta en una tertulia y te hace ganar más de lo que imaginabas.",
+    ],
+  },
+  {
+    id: "canterano",
+    label: "Quedarte a echar una mano a un canterano",
+    subtitle: "Devolver lo que te dieron",
+    consequences: (c) => ({ media: mediaFor(c), reputacion: 2, rel_vestuario: 2 }),
+    text: () => [
+      "Un chaval de dieciséis años se queda en la banda sin atreverse a decir nada. Le haces una seña y practicáis el control orientado durante veinte minutos.",
+      "«¿Y tú cómo lo hacías cuando empezaste?», pregunta. Le cuentas la verdad: con miedo. Se le abren los ojos.",
+    ],
+  },
+  {
+    id: "tertulia",
+    label: "Ver qué dicen de ti en la tele esta noche",
+    subtitle: "Las tertulias no perdonan",
+    when: (c) => c.goals > 0 || c.rating < 5.8,
+    consequences: (c) => ({ media: mediaFor(c), fama: c.goals > 0 ? 2 : -1, rel_aficion: c.goals > 0 ? 1 : -1 }),
+    text: (c) =>
+      c.goals > 0
+        ? ["Tres tertulianos hablan de ti durante diez minutos seguidos. Uno dice que «hay chico para rato». Te acuestas con una sonrisa tonta.", "Un exjugador pide más minutos para ti. Es la primera vez que alguien lo dice en directo."]
+        : ["Alguien te pone un cuatro con la frase «se le vio sobrepasado». Te duele más de lo que quieres reconocer. Apagas la tele.", "Un tertuliano te defiende, otro te machaca, y el tercero ni te menciona. Es lo peor de todo."],
+  },
+  {
+    id: "premio",
+    label: "Recoger el premio al mejor del partido",
+    subtitle: "Con tu gente en la grada",
+    when: (c) => c.rating >= 7.8,
+    weight: 1.6,
+    consequences: (c) => ({ media: mediaFor(c), fama: 2, moral: 3, rel_aficion: 1 }),
+    text: () => [
+      "Un patrocinador te entrega un trofeo de cristal que pesa más de lo que parece. Lo levantas ante tu gente y, por un momento, el mundo sale en cámara lenta.",
+      "Te lo dan en mitad del césped, entre flashes. Tu madre lo ve por televisión y te manda tres audios seguidos que no abres hasta la noche.",
+    ],
+  },
+  {
+    id: "espejo",
+    label: "Ser tu crítico más duro esta noche",
+    subtitle: "Sin excusas, sin dramas",
+    when: (c) => c.bad || c.rating < 6,
+    consequences: (c) => ({ media: mediaFor(c), forma: 2, moral: -1 }),
+    text: () => [
+      "Te sientas con una libreta y apuntas tres cosas que han salido mal y una que ha salido bien. La libreta, en la mesilla, dice «mañana».",
+      "No te perdonas el error, pero tampoco lo agrandas. Es una forma de querer a tu fútbol.",
+    ],
+  },
+  {
+    id: "himno",
+    label: "Cantar con los tuyos en el vestuario",
+    subtitle: "Cuando el país se te queda dentro",
+    when: (c) => c.intl,
+    weight: 2.5,
+    consequences: (c) => ({ media: mediaFor(c), moral: 3, rel_vestuario: 2, rel_aficion: 1 }),
+    text: () => [
+      "Alguien pone el himno en un altavoz y todos acabáis cantándolo con la camiseta a medio quitar. Un veterano llora sin disimulo. Nadie dice nada.",
+      "Os quedáis más rato del necesario, sin ganas de salir. Con la selección, hasta el vestuario huele a algo que no tiene nombre.",
+    ],
+  },
+  {
+    id: "seleccionador",
+    label: "Hablar con el seleccionador a solas",
+    subtitle: "Saber qué piensa de ti",
+    when: (c) => c.intl,
+    weight: 2,
+    consequences: (c) => ({ media: mediaFor(c), reputacion: 2, rel_entrenador: 1 }),
+    text: (c) => [
+      `${c.coach} no es el seleccionador, pero la conversación la tiene alguien que lo conoce: «Cuenta contigo. Solo quiere ver cuánto aguantas bajo presión».`,
+      "Cinco minutos, voz baja, sin cámaras. «No es un examen —dice—. Es una invitación». Te quedas con esa frase.",
     ],
   },
 ];
@@ -289,12 +491,30 @@ export function buildFallbackMatchReport(args: {
     `Marcador: ${own}-${rival} (${team}-${match.rivalClub}). Tu equipo ${verdict} ${match.rivalClub}. ` +
     [args.tieNote, stakesText, ambience, play, coachLine(coach, result, rating, goals)].filter(Boolean).join(" ");
 
-  const ctx: Ctx = { coach, mate, rival: match.rivalClub, result, goals, bad, rating };
-  // Tres reacciones distintas sorteadas del surtido; una siempre es la del míster o el vestuario.
-  const pool = shuffled(REACTIONS);
-  const chosen = [pool.find((k) => k.id === "mister" || k.id === "vestuario") ?? pool[0], ...pool.filter((k) => k.id !== "mister" && k.id !== "vestuario")]
-    .filter((k, i, arr) => arr.indexOf(k) === i)
-    .slice(0, 3);
+  const ctx: Ctx = { coach, mate, rival: match.rivalClub, result, goals, bad, rating, intl: match.competition === "internacional", minutes };
+  // Tres reacciones que encajan con cómo ha ido el partido, sorteadas del surtido y sin repetir las
+  // de los últimos partidos (si no, siempre salían las mismas tres).
+  if (!player.flags) player.flags = {};
+  const recent = String(player.flags.react_log ?? "").split(",").filter(Boolean);
+  let candidates = REACTIONS.filter((k) => (k.when ? k.when(ctx) : true));
+  const fresh = candidates.filter((k) => !recent.includes(k.id));
+  if (fresh.length >= 3) candidates = fresh;
+  const chosen: ReactionKit[] = [];
+  const bag = [...candidates];
+  while (chosen.length < 3 && bag.length > 0) {
+    const total = bag.reduce((n, k) => n + (k.weight ?? 1), 0);
+    let roll = Math.random() * total;
+    let idx = bag.length - 1;
+    for (let i = 0; i < bag.length; i++) {
+      roll -= bag[i].weight ?? 1;
+      if (roll <= 0) {
+        idx = i;
+        break;
+      }
+    }
+    chosen.push(bag.splice(idx, 1)[0]);
+  }
+  player.flags.react_log = [...recent, ...chosen.map((k) => k.id)].slice(-12).join(",");
   const options = chosen.map((k, i) => ({
     id: String.fromCharCode(97 + i),
     label: k.label,

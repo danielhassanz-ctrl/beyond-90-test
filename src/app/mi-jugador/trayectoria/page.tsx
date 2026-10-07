@@ -3,19 +3,20 @@ import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { ClubCrest } from "@/components/ClubCrest";
 import { BottomNav } from "@/components/BottomNav";
+import { CompetitionStatsCard } from "@/components/CompetitionStatsCard";
 import { getCompetitionStats, type SeasonHistoryRow } from "@/lib/player/competition-stats";
 import { allTrofeos, INDIVIDUAL, TROFEO_ICON, TROFEO_LABEL, type Trofeo, type TrofeoKind } from "@/lib/honours";
 import { repairTrophies } from "@/lib/honours-repair";
 import { NO_CLUB_YET } from "@/lib/constants";
 
-interface ClubStint {
+interface Stint {
   club: string;
   rows: SeasonHistoryRow[];
 }
 
-/** Agrupa las temporadas consecutivas en un mismo club (volver a un club antiguo abre otra etapa). */
-function groupByClub(rows: SeasonHistoryRow[], fallback: string): ClubStint[] {
-  const stints: ClubStint[] = [];
+/** Agrupa temporadas consecutivas en el mismo equipo (volver a un club antiguo abre otra etapa). */
+function groupByTeam(rows: SeasonHistoryRow[], fallback: string): Stint[] {
+  const stints: Stint[] = [];
   for (const row of rows) {
     const club = row.club || fallback;
     const last = stints[stints.length - 1];
@@ -28,6 +29,71 @@ function groupByClub(rows: SeasonHistoryRow[], fallback: string): ClubStint[] {
 const sum = (rows: SeasonHistoryRow[], k: "matches" | "goals" | "assists" | "titles") => rows.reduce((n, r) => n + r[k], 0);
 const seasonName = (s: number) => `${2026 + s}/${String(2027 + s).slice(2)}`;
 
+/** Cabecera de las columnas de números, siempre a la derecha y con el mismo ancho en todas las tablas. */
+function ColumnHeads({ first }: { first: string }) {
+  return (
+    <div className="flex items-center gap-1 border-b border-panel-border bg-black/20 px-4 py-2 text-kicker text-muted-foreground">
+      <span className="flex-1">{first}</span>
+      <span className="w-10 text-center">PJ</span>
+      <span className="w-10 text-center">G</span>
+      <span className="w-10 text-center">A</span>
+      <span className="w-12 text-right">🏆</span>
+    </div>
+  );
+}
+
+function NumCells({ pj, g, a, trophies }: { pj: number; g: number; a: number; trophies: string }) {
+  return (
+    <>
+      <span className="font-num w-10 text-center text-sm text-foreground">{pj}</span>
+      <span className="font-num w-10 text-center text-sm text-foreground">{g}</span>
+      <span className="font-num w-10 text-center text-sm text-foreground">{a}</span>
+      <span className="w-12 text-right text-base leading-none">{trophies || <span className="text-muted-foreground">—</span>}</span>
+    </>
+  );
+}
+
+function StintCard({ stint, ligaPos, accent }: { stint: Stint; ligaPos: (idx: number) => string | null; accent?: string }) {
+  const first = stint.rows[0];
+  const last = stint.rows[stint.rows.length - 1];
+  const years = first.idx === last.idx ? first.label : `${first.label.split("/")[0]} – ${last.label}`;
+  const titles = sum(stint.rows, "titles");
+  return (
+    <div className="overflow-hidden rounded-2xl border border-panel-border bg-surface">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <ClubCrest club={stint.club.replace(/ B$/, "")} size={38} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-lg leading-tight text-foreground">{stint.club || "Sin club"}</p>
+          <p className="text-xs text-muted-foreground">{accent ? `${accent} · ` : ""}{years}</p>
+        </div>
+        {titles > 0 && <span className="font-cond rounded-full border border-gold/50 bg-gold/10 px-2.5 py-1 text-xs font-bold text-gold">🏆 {titles}</span>}
+      </div>
+      <ColumnHeads first="Temporada" />
+      <ul className="divide-y divide-panel-border">
+        {stint.rows.map((r) => {
+          const pos = ligaPos(r.idx);
+          return (
+            <li key={`${r.idx}-${r.team}`} className="flex items-center gap-1 px-4 py-2.5">
+              <span className="flex-1">
+                <span className="font-num block text-sm text-foreground">{r.label}</span>
+                {pos && r.team === "club" && <span className="block text-[11px] text-muted-foreground">{pos}º en Liga</span>}
+              </span>
+              <NumCells pj={r.matches} g={r.goals} a={r.assists} trophies={r.trophies.map((k) => TROFEO_ICON[k]).join("")} />
+            </li>
+          );
+        })}
+        <li className="flex items-center gap-1 bg-gold/5 px-4 py-2.5">
+          <span className="font-cond flex-1 text-xs font-bold uppercase tracking-wide text-gold">Total</span>
+          <span className="font-num w-10 text-center text-sm font-bold text-gold">{sum(stint.rows, "matches")}</span>
+          <span className="font-num w-10 text-center text-sm font-bold text-gold">{sum(stint.rows, "goals")}</span>
+          <span className="font-num w-10 text-center text-sm font-bold text-gold">{sum(stint.rows, "assists")}</span>
+          <span className="font-num w-12 text-right text-sm font-bold text-gold">{titles || "—"}</span>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 function KindCard({ kind, list }: { kind: TrofeoKind; list: Trofeo[] }) {
   return (
     <div className="rounded-2xl border border-gold/40 bg-gradient-to-b from-amber-900/20 to-surface px-4 py-4">
@@ -35,8 +101,8 @@ function KindCard({ kind, list }: { kind: TrofeoKind; list: Trofeo[] }) {
         <span className="text-3xl">{TROFEO_ICON[kind]}</span>
         <span className="font-display text-3xl text-gold">×{list.length}</span>
       </div>
-      <p className="mt-2 font-display text-lg text-foreground">{TROFEO_LABEL[kind]}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{list.map((t) => `${seasonName(t.s)}${t.c ? ` · ${t.c}` : ""}`).join(" · ")}</p>
+      <p className="mt-2 font-display text-lg leading-tight text-foreground">{TROFEO_LABEL[kind]}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{list.map((t) => seasonName(t.s)).join(" · ")}</p>
     </div>
   );
 }
@@ -47,15 +113,26 @@ export default async function TrayectoriaPage() {
   if (!player) redirect("/crear-jugador");
 
   await repairTrophies(supabase, player);
-  const { history } = await getCompetitionStats(supabase, player, player.pending_event, player.flags);
+  const { season, career, history } = await getCompetitionStats(supabase, player, player.pending_event, player.flags);
   const trofeos = allTrofeos(player);
-  const stints = groupByClub(history, player.club === NO_CLUB_YET ? "" : player.club);
   const titleCount = trofeos.filter((t) => !INDIVIDUAL.has(t.k)).length;
+  const fallbackClub = player.club === NO_CLUB_YET ? "" : player.club;
+
+  const filialRows = history.filter((r) => r.team === "filial");
+  const clubRows = history.filter((r) => r.team === "club");
+  const selRows = history.filter((r) => r.team === "seleccion");
+  const filialStints = groupByTeam(filialRows, "Filial");
+  const clubStints = groupByTeam(clubRows, fallbackClub);
+  const ligaPos = (idx: number) => {
+    const [rank] = String(player.flags?.[`liga_pos_${idx}`] ?? "").split("|");
+    return rank || null;
+  };
 
   const byKind = new Map<TrofeoKind, Trofeo[]>();
   for (const t of trofeos) byKind.set(t.k, [...(byKind.get(t.k) ?? []), t]);
   const teamKinds = [...byKind.keys()].filter((k) => !INDIVIDUAL.has(k));
   const individualKinds = [...byKind.keys()].filter((k) => INDIVIDUAL.has(k));
+
 
   return (
     <main className="flex flex-1 justify-center p-6 pb-24">
@@ -69,6 +146,24 @@ export default async function TrayectoriaPage() {
           </Link>
         </div>
 
+        {/* Resumen de carrera */}
+        <section className="grid grid-cols-4 overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-b from-amber-900/20 to-surface py-4 text-center">
+          {(
+            [
+              ["Partidos", player.stats_matches_played ?? 0],
+              ["Goles", player.stats_goals ?? 0],
+              ["Asist.", player.stats_assists ?? 0],
+              ["Títulos", titleCount],
+            ] as [string, number][]
+          ).map(([label, value]) => (
+            <div key={label}>
+              <p className="gold-text font-display text-3xl">{value}</p>
+              <p className="text-kicker text-muted-foreground">{label}</p>
+            </div>
+          ))}
+        </section>
+
+        {/* Palmarés */}
         <section className="space-y-3">
           <p className="text-kicker text-gold">Palmarés</p>
           {trofeos.length === 0 ? (
@@ -79,10 +174,6 @@ export default async function TrayectoriaPage() {
             </div>
           ) : (
             <>
-              <div className="rounded-2xl border border-panel-border bg-surface px-4 py-3 text-center">
-                <p className="text-kicker">Títulos de equipo</p>
-                <p className="gold-text font-display text-4xl">{titleCount}</p>
-              </div>
               <div className="grid grid-cols-2 gap-3">
                 {teamKinds.map((k) => (
                   <KindCard key={k} kind={k} list={byKind.get(k)!} />
@@ -102,82 +193,38 @@ export default async function TrayectoriaPage() {
           )}
         </section>
 
+        {/* Club a club */}
         <section className="space-y-3">
-          <p className="text-kicker text-gold">Tu camino, club a club</p>
-          {stints.length === 0 ? (
+          <p className="text-kicker text-gold">Tu camino, equipo a equipo</p>
+          {filialStints.length + clubStints.length === 0 ? (
             <p className="rounded-2xl border border-panel-border bg-surface px-4 py-5 text-center text-sm text-muted-foreground">
               Aún no hay temporadas que contar. Cuando juegues, tu camino aparecerá aquí.
             </p>
           ) : (
-            stints.map((st, i) => {
-              const first = st.rows[0];
-              const last = st.rows[st.rows.length - 1];
-              const years = first.idx === last.idx ? first.label : `${first.label.split("/")[0]} – ${last.label}`;
-              const titles = sum(st.rows, "titles");
-              return (
-                <div key={`${st.club}-${i}`} className="overflow-hidden rounded-2xl border border-panel-border bg-surface">
-                  <div className="flex items-center gap-3 border-b border-panel-border px-4 py-3">
-                    <ClubCrest club={st.club} size={36} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-display text-lg text-foreground">{st.club || "Sin club"}</p>
-                      <p className="text-xs text-muted-foreground">{years}</p>
-                    </div>
-                    {titles > 0 && (
-                      <span className="font-cond rounded-full border border-gold/50 bg-gold/10 px-2.5 py-1 text-xs font-bold text-gold">🏆 {titles}</span>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-3 divide-x divide-panel-border text-center">
-                    {(
-                      [
-                        ["Partidos", sum(st.rows, "matches")],
-                        ["Goles", sum(st.rows, "goals")],
-                        ["Asist.", sum(st.rows, "assists")],
-                      ] as [string, number][]
-                    ).map(([label, value]) => (
-                      <div key={label} className="py-3">
-                        <p className="font-num text-2xl font-bold text-foreground">{value}</p>
-                        <p className="text-kicker text-muted-foreground">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <ul className="divide-y divide-panel-border border-t border-panel-border text-sm">
-                    {st.rows.map((r) => {
-                      const [rank] = String(player.flags?.[`liga_pos_${r.idx}`] ?? "").split("|");
-                      return (
-                        <li key={r.idx} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                          <span className="font-num text-xs text-muted-foreground">{r.label}</span>
-                          <span className="font-num flex-1 text-xs text-foreground/90">
-                            {r.matches} PJ · {r.goals} G · {r.assists} A{rank ? ` · ${rank}º en Liga` : ""}
-                          </span>
-                          <span className="text-base">{r.trophies.map((k) => TROFEO_ICON[k]).join(" ")}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })
+            <>
+              {filialStints.map((st, i) => (
+                <StintCard key={`f-${i}`} stint={st} ligaPos={ligaPos} accent="Filial" />
+              ))}
+              {clubStints.map((st, i) => (
+                <StintCard key={`c-${i}`} stint={st} ligaPos={ligaPos} />
+              ))}
+            </>
           )}
         </section>
 
-        <section className="rounded-2xl border border-panel-border bg-surface px-4 py-4">
-          <p className="text-kicker text-gold">Toda tu carrera</p>
-          <div className="mt-2 grid grid-cols-4 text-center">
-            {(
-              [
-                ["PJ", player.stats_matches_played ?? 0],
-                ["Goles", player.stats_goals ?? 0],
-                ["Asist.", player.stats_assists ?? 0],
-                ["Títulos", titleCount],
-              ] as [string, number][]
-            ).map(([label, value]) => (
-              <div key={label}>
-                <p className="font-num text-2xl font-bold text-foreground">{value}</p>
-                <p className="text-kicker text-muted-foreground">{label}</p>
-              </div>
-            ))}
-          </div>
+        {/* Toda la carrera, competición a competición */}
+        <section className="space-y-3">
+          <p className="text-kicker text-gold">Por competición</p>
+          <CompetitionStatsCard season={season} career={career} seasonLabel="" view="career" />
         </section>
+
+        {/* Selección: aparte, con la camiseta de tu país */}
+        {selRows.length > 0 && (
+          <section className="space-y-3">
+            <p className="text-kicker text-gold">Con tu selección</p>
+            {selRows.length > 0 && <StintCard stint={{ club: player.nation, rows: selRows }} ligaPos={() => null} accent="Selección" />}
+          </section>
+        )}
       </div>
       <BottomNav active="jugador" />
     </main>

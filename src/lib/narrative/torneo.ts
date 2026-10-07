@@ -27,6 +27,8 @@ export interface TorneoProgress {
   alive: boolean;
   /** Puntos en la fase de grupos. */
   groupPts: number;
+  /** Resultado de cada partido de grupo, en orden: "W", "D" o "L" (p. ej. "WD"). */
+  res?: string;
   /** Toca una escena de concentración antes del siguiente partido. */
   lifeDue: boolean;
   /** Escenas de concentración ya vividas (para no agotar las plantillas). */
@@ -196,6 +198,7 @@ export function advanceTorneo(
   const next: TorneoProgress = { ...progress, lifeDue: true };
   if (result.kind === "group") {
     next.groupPts += result.points;
+    next.res = (progress.res ?? "") + (result.win ? "W" : result.draw ? "D" : "L");
     next.stage = progress.stage + 1;
     if (progress.stage === 2) {
       const qualified = next.groupPts >= 4 || (next.groupPts === 3 && Math.random() < 0.45);

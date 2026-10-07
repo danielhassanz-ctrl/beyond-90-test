@@ -5,6 +5,7 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { seasonLabel } from "@/types/career";
 import { ClubCrest } from "@/components/ClubCrest";
 import { BottomNav } from "@/components/BottomNav";
+import { repairTrophies } from "@/lib/honours-repair";
 
 const SECOND_LIFE_MILESTONE_TYPES = new Set([
   "ascenso_entrenador", "canterano", "seleccion", "final_champions",
@@ -51,9 +52,12 @@ function buildAchievements(
       // de segunda vida sin relación con haber sido internacional). El
       // logro real es "seleccion", el único milestoneType que de verdad
       // se guarda para la primera convocatoria.
-      done: milestoneTypes.has("seleccion"),
+      done:
+        milestoneTypes.has("seleccion") ||
+        Boolean(player.flags?.sel_debut) ||
+        Object.keys(player.flags ?? {}).some((k) => k.startsWith("torneo_started_") || k.startsWith("sel_win_") || k.startsWith("torneo_result_")),
     },
-    { title: "Capitán", description: "Llevar el brazalete de tu equipo.", done: milestoneTypes.has("capitania") },
+    { title: "Capitán", description: "Llevar el brazalete de tu equipo.", done: milestoneTypes.has("capitania") || Boolean(player.flags?.capitan_equipo) || Boolean(player.flags?.capitan_seleccion) },
     {
       title: "Primer título",
       description: "Ganar tu primer título colectivo.",
@@ -93,6 +97,7 @@ export default async function LegadoPage() {
   if (!player) {
     redirect("/crear-jugador");
   }
+  await repairTrophies(supabase, player);
 
   const { data: milestones } = await supabase
     .from("milestones")

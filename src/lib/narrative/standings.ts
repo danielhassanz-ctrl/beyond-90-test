@@ -408,17 +408,46 @@ export function getActiveStandings(
     const name = `${TORNEO_NAMES[type]} ${torneoYear(progress.season)}`;
     const rivals = torneoGroupRivals(player, type, progress.season);
     const playedGroup = Math.min(progress.stage, 3);
-    // Tu fila sale de tus puntos reales: 3 por victoria, 1 por empate (nunca más puntos que partidos).
-    const won = Math.min(playedGroup, Math.floor(progress.groupPts / 3));
-    const drawn = Math.min(playedGroup - won, progress.groupPts - won * 3);
-    const lost = Math.max(0, playedGroup - won - drawn);
-    const rows: StandingsRow[] = [
-      { club: player.nation, points: won * 3 + drawn, played: playedGroup, won, drawn, lost, isPlayer: true },
-      ...rivals.map((club) => {
-        const sim = simulateRecord(`${seed}:${type}:${club}`, clubTier(club), playedGroup);
-        return { club, points: sim.points, played: playedGroup, won: sim.won, drawn: sim.drawn, lost: sim.lost, isPlayer: false };
-      }),
-    ].sort((a, b) => b.points - a.points || b.won - a.won);
+    // Tus resultados reales de grupo. En partidas anteriores a guardarlos se reconstruyen desde los puntos.
+    let mine = (progress.res ?? "").split("").filter((c) => c === "W" || c === "D" || c === "L").slice(0, playedGroup);
+    if (mine.length < playedGroup) {
+      const w = Math.min(playedGroup, Math.floor(progress.groupPts / 3));
+      const d = Math.min(playedGroup - w, progress.groupPts - w * 3);
+      mine = [...Array(w).fill("W"), ...Array(d).fill("D"), ...Array(Math.max(0, playedGroup - w - d)).fill("L")];
+    }
+    // Grupo de 4 con partidos de verdad: en cada jornada juegas contra un rival y los otros dos se enfrentan entre sí.
+    const teams = [player.nation, ...rivals];
+    const tally = new Map<string, { won: number; drawn: number; lost: number }>(teams.map((c) => [c, { won: 0, drawn: 0, lost: 0 }]));
+    const book = (club: string, r: "W" | "D" | "L") => {
+      const row = tally.get(club)!;
+      if (r === "W") row.won++;
+      else if (r === "D") row.drawn++;
+      else row.lost++;
+    };
+    const pairings: [string, string, string, string][] = [
+      // [tu rival, otro A, otro B] por jornada
+      [rivals[0], rivals[1], rivals[2], ""],
+      [rivals[1], rivals[0], rivals[2], ""],
+      [rivals[2], rivals[0], rivals[1], ""],
+    ];
+    for (let j = 0; j < playedGroup; j++) {
+      const [opp, x, y] = pairings[j];
+      const r = mine[j] as "W" | "D" | "L";
+      book(player.nation, r);
+      book(opp, r === "W" ? "L" : r === "L" ? "W" : "D");
+      // Los otros dos: resultado estable según su nivel.
+      const pX = Math.max(0.15, Math.min(0.7, 0.4 + (clubTier(x) - clubTier(y)) * 0.1));
+      const roll = (mixSeed(`${seed}:${type}:${x}:${y}:j${j}`) % 10000) / 10000;
+      const rx: "W" | "D" | "L" = roll < pX ? "W" : roll < pX + 0.24 ? "D" : "L";
+      book(x, rx);
+      book(y, rx === "W" ? "L" : rx === "L" ? "W" : "D");
+    }
+    const rows: StandingsRow[] = teams
+      .map((club) => {
+        const s = tally.get(club)!;
+        return { club, points: s.won * 3 + s.drawn, played: playedGroup, won: s.won, drawn: s.drawn, lost: s.lost, isPlayer: club === player.nation };
+      })
+      .sort((p, q) => q.points - p.points || q.won - p.won);
     const letter = "ABCDEFGH"[mixSeed(`${seed}:${type}:grupo`) % 8];
     const table: TableStandings = { type: "table", label: `${name} · Grupo ${letter}`, rows };
     if (progress.stage < 3) return { primary: table, secondary: null, copa: null, euro: null };

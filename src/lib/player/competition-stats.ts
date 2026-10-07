@@ -40,7 +40,9 @@ const empty = (): CompStat => ({ matches: 0, goals: 0, assists: 0, minutes: 0 })
 export interface SeasonHistoryRow {
   /** Número de temporada (0 = la primera). */
   idx: number;
-  /** Club de esa temporada, si se conoce. */
+  /** Con qué camiseta: tu club, el filial de tus inicios o la selección. */
+  team: "club" | "filial" | "seleccion";
+  /** Club (o selección) de esa fila, si se conoce. */
   club?: string;
   /** Trofeos ganados esa temporada. */
   trophies: TrofeoKind[];
@@ -52,8 +54,8 @@ export interface SeasonHistoryRow {
   titles: number;
 }
 
-function newRow(idx: number): SeasonHistoryRow {
-  return { idx, trophies: [], label: seasonLabel(idx * WEEKS_PER_SEASON + 1), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
+function newRow(idx: number, team: SeasonHistoryRow["team"] = "club"): SeasonHistoryRow {
+  return { idx, team, trophies: [], label: seasonLabel(idx * WEEKS_PER_SEASON + 1), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
 }
 
 export function emptyCompetitionStats(): CompetitionStats {
@@ -99,14 +101,14 @@ function add(stat: CompStat, u: { goals?: number; assists?: number; minutes_play
 
 export async function getCompetitionStats(
   supabase: SupabaseClient,
-  player: Pick<Player, "id" | "week">,
+  player: Pick<Player, "id" | "week"> & { nation?: string },
   pendingEvent?: GameEvent | null,
   /** flags del jugador: traen los partidos estimados que no se viven como escena (off-screen-matches.ts). */
   flags?: Record<string, string | boolean> | null,
 ): Promise<{ season: CompetitionStats; career: CompetitionStats; history: SeasonHistoryRow[] }> {
   const season = emptyCompetitionStats();
   const career = emptyCompetitionStats();
-  const bySeason = new Map<number, SeasonHistoryRow>();
+  const bySeason = new Map<string, SeasonHistoryRow>();
   const seasonStartWeek = Math.floor((player.week - 1) / WEEKS_PER_SEASON) * WEEKS_PER_SEASON + 1;
 
   try {
@@ -138,6 +140,8 @@ export async function getCompetitionStats(
       });
     }
 
+    // Los partidos de la cadena de debut (antes de "rookie-debut-oficial") son del filial.
+    const filialUntil = rows.find((r) => r.event_id === "rookie-debut-oficial")?.week ?? 0;
     for (const row of rows) {
       const u = extractStatsFromEvent({
         id: row.event_id,
@@ -148,13 +152,15 @@ export async function getCompetitionStats(
       } as GameEvent);
       if (!u.matches_played) continue;
       const idx = Math.floor((row.week - 1) / WEEKS_PER_SEASON);
-      const hist = bySeason.get(idx) ?? newRow(idx);
+      const { comp, torneo } = classifyMatch(row.title, row.description);
+      const teamOf: SeasonHistoryRow["team"] = comp === "seleccion" ? "seleccion" : filialUntil > 0 && row.week <= filialUntil ? "filial" : "club";
+      const hKey = `${idx}:${teamOf}`;
+      const hist = bySeason.get(hKey) ?? newRow(idx, teamOf);
       hist.matches += 1;
       hist.goals += u.goals ?? 0;
       hist.assists += u.assists ?? 0;
       hist.minutes += u.minutes_played ?? 0;
-      bySeason.set(idx, hist);
-      const { comp, torneo } = classifyMatch(row.title, row.description);
+      bySeason.set(hKey, hist);
       const targets = row.week >= seasonStartWeek ? [career, season] : [career];
       for (const t of targets) {
         add(t[comp], u);
@@ -184,29 +190,33 @@ export async function getCompetitionStats(
         season[k].minutes += c.minutes;
       }
     }
-    const hist = bySeason.get(idx) ?? newRow(idx);
+    const hist = bySeason.get(`${idx}:club`) ?? newRow(idx, "club");
     hist.matches += total.matches;
     hist.goals += total.goals;
     hist.assists += total.assists;
     hist.minutes += total.minutes;
-    bySeason.set(idx, hist);
+    bySeason.set(`${idx}:club`, hist);
   }
 
   // Palmarés real: los trofeos los decide el código (ver honours.ts), no el texto de las crónicas.
   const trofeos = allTrofeos({ flags: flags ?? {} });
   for (const tr of trofeos) {
-    const row = bySeason.get(tr.s) ?? newRow(tr.s);
+    // Mundial, Eurocopa, Copa América y Juegos son de la selección; el resto, del club.
+    const team: SeasonHistoryRow["team"] = ["mundial", "eurocopa", "copa_america", "olimpico"].includes(tr.k) ? "seleccion" : "club";
+    const row = bySeason.get(`${tr.s}:${team}`) ?? newRow(tr.s, team);
     row.trophies.push(tr.k);
     if (!INDIVIDUAL.has(tr.k)) row.titles += 1;
-    bySeason.set(tr.s, row);
+    bySeason.set(`${tr.s}:${team}`, row);
   }
   // Club de cada temporada: el que quedó anotado al jugarla; las anteriores a ese registro, el primero conocido.
-  const knownClubs = [...bySeason.keys()].map((i) => String(flags?.[`club_s${i}`] ?? ""));
+  const clubIdxs = [...bySeason.values()].filter((r) => r.team === "club").map((r) => r.idx);
+  const knownClubs = clubIdxs.map((i) => String(flags?.[`club_s${i}`] ?? ""));
   const firstKnown = knownClubs.find(Boolean) || String(flags?.clubs_history ?? "").split("|").filter(Boolean)[0] || undefined;
-  for (const [i, row] of bySeason) {
-    const c = String(flags?.[`club_s${i}`] ?? "");
-    row.club = c || firstKnown;
+  for (const row of bySeason.values()) {
+    const c = String(flags?.[`club_s${row.idx}`] ?? "") || firstKnown;
+    row.club = row.team === "seleccion" ? player.nation : row.team === "filial" ? (c ? `${c} B` : "Filial") : c;
   }
-  const history = [...bySeason.entries()].sort((a, b) => a[0] - b[0]).map(([, row]) => row);
+  const order = { filial: 0, club: 1, seleccion: 2 } as const;
+  const history = [...bySeason.values()].sort((x, y) => x.idx - y.idx || order[x.team] - order[y.team]);
   return { season, career, history };
 }
