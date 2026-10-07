@@ -14,8 +14,16 @@ export function memoryReturnCard(s: GameState): DynamicCard | null {
 
   const promises = Array.isArray(s.memory.promises) ? s.memory.promises : [];
   const conflicts = Array.isArray(s.memory.conflicts) ? s.memory.conflicts : [];
+  const alreadyReturned = new Set(
+    (s.seenEvents ?? [])
+      .filter((id) => id.startsWith("memory_return:"))
+      .map((id) => id.slice("memory_return:".length)),
+  );
   const pool = [...promises, ...conflicts].filter(
-    (entry): entry is string => typeof entry === "string" && entry.trim().length >= 12,
+    (entry): entry is string =>
+      typeof entry === "string" &&
+      entry.trim().length >= 12 &&
+      !alreadyReturned.has(entry.trim()),
   );
   if (pool.length === 0) return null;
 
@@ -25,8 +33,11 @@ export function memoryReturnCard(s: GameState): DynamicCard | null {
   if (scene - lastConsequence < 4) return null;
 
   const index = Math.abs((s.careerSeed ?? 1) + s.seasonIndex * 17 + scene * 7) % pool.length;
-  const remembered = pool[index]!;
+  const remembered = pool[index]!.trim();
   s.flags["memory_return_season"] = s.seasonIndex;
+  // A specific old decision gets one deliberate comeback, not an annual rerun.
+  if (!Array.isArray(s.seenEvents)) s.seenEvents = [];
+  s.seenEvents.push(`memory_return:${remembered}`);
 
   return {
     type: "dynamic",
