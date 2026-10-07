@@ -30,6 +30,8 @@ import { generateContractEvent } from "@/lib/narrative/ai";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, WEEKS_PER_SEASON, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
+import { getSeasonMatchRecord, leagueFinish } from "@/lib/narrative/standings";
+import { allTrofeos, withTrofeo, writeTrofeos, INDIVIDUAL, type Trofeo, type TrofeoKind } from "@/lib/honours";
 import { buildLedgerEntry, appendLedger } from "@/lib/narrative/ledger";
 import { introduceCast, markCastMet } from "@/lib/narrative/cast";
 import { pickLowerClub } from "@/lib/narrative/role-events";
@@ -189,9 +191,33 @@ export async function resolveEvent(formData: FormData) {
   // las estadísticas reales del jugador, así siempre generan su momento
   // especial pase lo que pase con el resto del evento.
   const statUpdate = extractStatsFromEvent(event);
+  // Los títulos ya no se deducen del texto ("campeón" en una crónica contaba hasta una semifinal):
+  // los decide el código y viajan en el evento (event.trophy) o en las banderas de la escena.
+  delete statUpdate.titles;
+  const seasonNow = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  let trophyList: Trofeo[] = allTrofeos(player as Player);
+  const newTrophies: Trofeo[] = [];
+  const addTrophy = (kind: string, detail?: string, forSeason?: number) => {
+    const k = kind as TrofeoKind;
+    const holder = k === "mundial" || k === "eurocopa" || k === "copa_america" || k === "olimpico" ? player.nation : player.club;
+    const s = forSeason ?? seasonNow;
+    const next = withTrofeo(trophyList, { s, k, c: holder, ...(detail ? { d: detail } : {}) });
+    if (next) {
+      trophyList = next;
+      newTrophies.push({ s, k, c: holder, d: detail });
+    }
+  };
+  if (event.trophy) addTrophy(event.trophy.kind, event.trophy.detail, event.trophy.season);
+  const cf = consequences.flags ?? {};
+  if (cf.title_liga) addTrophy("liga");
+  if (cf.title_champions) addTrophy("champions");
+  if (cf.title_balon_oro) addTrophy("balon_oro");
+  if (cf.golden_boy) addTrophy("golden_boy");
+  const newTitleCount = newTrophies.filter((x) => !INDIVIDUAL.has(x.k)).length;
+  if (newTitleCount > 0) statUpdate.titles = newTitleCount;
   const isFirstGoalEver = (player.stats_goals ?? 0) === 0 && (statUpdate.goals ?? 0) > 0;
   const isFirstHatTrickDebut = isFirstGoalEver && (statUpdate.goals ?? 0) >= 3;
-  const isFirstTitleEver = (player.stats_titles ?? 0) === 0 && (statUpdate.titles ?? 0) > 0;
+  const isFirstTitleEver = (player.stats_titles ?? 0) === 0 && newTitleCount > 0;
 
   const milestoneAchieved =
     (event.isMilestone && (!resolution || resolution.success)) ||
@@ -215,6 +241,21 @@ export async function resolveEvent(formData: FormData) {
   // Cuánto avanza el calendario (y qué partido del mes queda marcado como
   // jugado) lo decide week-advance.ts: misma regla para el motor y las pruebas.
   const { newWeek, matchDoneFlag, weekCounter } = computeWeekAdvance(player as Player, event);
+  // Cierre de temporada: puesto final de Liga con la misma tabla que ve el jugador. Campeón = trofeo
+  // (se anota al ver la escena de celebración del mes siguiente); el puesto queda para la trayectoria.
+  let ligaFinishFlags: Record<string, string> = {};
+  if (player.status === "active" && Math.floor((newWeek - 1) / WEEKS_PER_SEASON) > seasonNow) {
+    try {
+      const rec = await getSeasonMatchRecord(supabase, player as Player, { pendingEvent: event });
+      const fin = leagueFinish(player as Player, rec);
+      if (fin) {
+        ligaFinishFlags[`liga_pos_${seasonNow}`] = `${fin.rank}|${fin.points}`;
+        if (fin.rank === 1) ligaFinishFlags.liga_campeon_pendiente = `${seasonNow}|${fin.points}|${fin.secondPoints}`;
+      }
+    } catch (err) {
+      console.error("[resolveEvent] cierre de Liga falló:", err instanceof Error ? err.message : err);
+    }
+  }
   const targetWeeks = MODE_TARGET_WEEKS[player.mode];
   const willRetire = !isRetirementDecision && player.mode !== "pro" && newWeek > targetWeeks;
 
@@ -311,6 +352,20 @@ export async function resolveEvent(formData: FormData) {
   // La baja se cuenta en meses de calendario: solo baja cuando el calendario
   // avanza de verdad (antes descontaba en CADA evento resuelto, y una
   // lesión se evaporaba en un par de partidos).
+  if (newTrophies.length > 0 || Object.keys(ligaFinishFlags).length > 0) {
+    playerUpdate.flags = {
+      ...((playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {}),
+      ...(newTrophies.length > 0 ? { trofeos: writeTrofeos(trophyList) } : {}),
+      ...ligaFinishFlags,
+    };
+  }
+  // Club de cada temporada (para la trayectoria): el club con el que se termina de resolver este turno.
+  {
+    const clubNow = typeof consequences.club === "string" && consequences.club ? consequences.club : player.club;
+    const key = `club_s${seasonNow}`;
+    const flagsBaseC = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    if (clubNow && clubNow !== NO_CLUB_YET && flagsBaseC[key] !== clubNow) playerUpdate.flags = { ...flagsBaseC, [key]: clubNow };
+  }
   const injuryTick = newWeek > player.week ? tickInjury(player.flags) : null;
   if (injuryTick) {
     const flagsBase = {

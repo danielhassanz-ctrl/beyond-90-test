@@ -12,6 +12,7 @@ import { hasMajorTournament } from "@/lib/calendar/season";
 import { getMarketWindow } from "@/lib/narrative/market-window";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { openThreads } from "@/lib/narrative/threads";
+import { getRivals } from "@/lib/narrative/rivals";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { BANK_SCENES } from "./scenes";
 import { bankFlagKey, type BankScene, type BankWhen, type Range } from "./types";
@@ -126,8 +127,17 @@ export function fillBankEvent<T extends Omit<GameEvent, "id">>(event: T, player:
   const history = String(f.clubs_history ?? "").split("|").filter(Boolean);
   const exClub = history.length > 0 ? history[history.length - 1] : "tu antiguo club";
   const withArt = (c: string, fallback: string) => (c === fallback ? c : clubWithArticle(c));
+  const rivals = getRivals(player);
+  const fillRivals = (s: string) => {
+    if (!s.includes("{peer") && !s.includes("{mega")) return s;
+    let out = s;
+    for (const r of rivals) {
+      out = out.split(`{${r.key}_club}`).join(r.club).split(`{${r.key}_pos}`).join(r.position.toLowerCase()).split(`{${r.key}}`).join(r.name);
+    }
+    return out;
+  };
   const fill = (t: string) =>
-    t
+    fillRivals(t)
       .replace(/\{el_club\}/g, club === "tu club" ? "tu club" : clubWithArticle(club))
       .replace(/\{club\}/g, club)
       .replace(/\{el_interes\}/g, withArt(interes, "un club importante"))

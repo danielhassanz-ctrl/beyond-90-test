@@ -51,10 +51,17 @@ export function KnockoutBox({ knockout }: { knockout: KnockoutStandings }) {
       <div>
         <p className="text-kicker text-gold">{knockout.label}</p>
         <p className="mt-1 font-display text-lg text-foreground">{knockout.roundLabel}</p>
+        {knockout.result && <p className="mt-0.5 text-sm text-muted-foreground">{knockout.result}</p>}
       </div>
-      <span className="font-cond rounded-full border border-pitch/50 bg-pitch/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-pitch">
-        Sigues vivo
-      </span>
+      {knockout.alive ? (
+        <span className="font-cond rounded-full border border-pitch/50 bg-pitch/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-pitch">
+          {knockout.badge ?? "Sigues vivo"}
+        </span>
+      ) : (
+        <span className="font-cond rounded-full border border-red-500/50 bg-red-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-red-400">
+          {knockout.badge ?? "Eliminado"}
+        </span>
+      )}
     </div>
   );
 }

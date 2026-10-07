@@ -11,8 +11,15 @@ const POSITION_ABBR: Record<string, string> = {
 
 const TITLE_ICONS: Record<string, string> = {
   Liga: "🏆",
-  "Champions League": "🏆",
-  "Balón de Oro": "🥇",
+  "Copa del Rey": "🥇",
+  "Champions League": "👑",
+  "Europa League": "🌟",
+  Mundial: "🌍",
+  Eurocopa: "🇪🇺",
+  "Copa América": "🌎",
+  "Juegos Olímpicos": "🏅",
+  "Balón de Oro": "⚽",
+  "Golden Boy": "✨",
 };
 
 const NATION_FLAGS: Record<string, string> = {

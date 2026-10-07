@@ -508,3 +508,13 @@ export function detectMentionedRoles(event: Pick<GameEvent, "title" | "descripti
   if (parejaName && text.includes(parejaName)) found.add("pareja");
   return [...found];
 }
+
+/**
+ * Nombre completo inventado a partir de una semilla (misma semilla = mismo
+ * nombre), sin dejar rastro en la memoria episódica. Sirve para listas largas
+ * (convocatorias, finalistas de un premio) donde nadie debe parecerse a un
+ * jugador real. `avoid` es un apellido que no debe salir (el del jugador).
+ */
+export function fictionalFullName(seed: string, avoid = ""): string {
+  return buildName(seed, "m", surnameOf(avoid));
+}

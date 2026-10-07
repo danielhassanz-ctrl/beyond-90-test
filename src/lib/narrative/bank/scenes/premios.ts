@@ -17,7 +17,7 @@ export const PREMIOS: BankScene[] = [
       o("b", "Quitarle importancia: «Es un premio de periodistas»", "Mantener los pies en el suelo", { reputacion: 3, moral: 2, flags: { gb_nominado: true } }, "Dices que lo importante es el equipo. Tu entrenador asiente con aprobación desde la banda, y tu madre te dice por teléfono, bajito: «Qué bien hablas, hijo»."),
       o("c", "Pedirle a tu agente que mueva el nombre entre los votantes", "Una pequeña campaña", { fama: 4, rel_representante: 3, reputacion: -2, flags: { gb_nominado: true } }, "Tu agente hace tres llamadas y una cena. Funciona, y se nota: la prensa hablará de «campaña discreta». Pero no deja de ser un premio al que optas con ventaja ajena."),
     ], { weight: 1.5 }),
-  S("gb-gala", "premios", { after: [after("gb-nominacion", undefined, 1, 4)], minAge: 17, maxAge: 21 }, "especial",
+  S("gb-gala", "premios", { after: [after("gb-nominacion", undefined, 1, 4)], minAge: 17, maxAge: 20 }, "especial",
     "La noche del Golden Boy",
     "Una sala de Turín con mil quinientas personas y una alfombra roja que huele a laca. Los cinco finalistas esperáis sentados en la primera fila con la corbata un poco torcida. Cuando el presentador sube al escenario, el sobre pesa más que cualquier trofeo. Se hace un silencio de estadio antes de un penalti. «And the Golden Boy is…».",
     [

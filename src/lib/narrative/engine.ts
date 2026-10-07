@@ -49,6 +49,7 @@ import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
 import { maxMediaForAge } from "@/lib/narrative/media-cap";
+import { TROFEO_LABEL, type TrofeoKind } from "@/lib/honours";
 import { firstLegFor } from "@/lib/calendar/match-calendar";
 import { pickNewDecision, pushRecentNew, decisionCloser } from "@/lib/narrative/match-decisions";
 import { selWindowPlan, buildSelMatch, decideSelResult, selWindowKey } from "@/lib/narrative/seleccion";
@@ -276,11 +277,8 @@ const GRAND_MOMENT_EVENT_IDS = new Set([
   "sel-clasificacion-mundial",
   "sel-clasificacion-eurocopa",
   "sel-clasificacion-copa-america",
-  "premio-balon-oro",
   "premio-pichichi",
   "premio-mvp-torneo",
-  "fork-titulo-liga",
-  "fork-champions",
   "especial-lesion-grave",
   // Añadidos por la skill narrativas-futbol: patrones reales de carrera
   // (fichaje caro que no cuaja, choque cultural, lesión de rodilla,
@@ -794,6 +792,64 @@ function clampPercent(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+/**
+ * Un título ganado: el evento lleva el trofeo (el palmarés lo registra al resolverse),
+ * se cuenta con claridad en el texto y pasa a ser un hito compartible.
+ */
+function withTrophy(event: GameEvent, kind: TrofeoKind, team: string, detail?: string, scene?: string): GameEvent {
+  const label = TROFEO_LABEL[kind];
+  const already = /campe[oó]n|levantw+ (el|la) (trofeo|copa)/i.test(event.description);
+  return {
+    ...event,
+    trophy: { kind, detail },
+    isMilestone: true,
+    milestoneType: "titulo",
+    imageScene:
+      event.imageScene ??
+      scene ??
+      `Photorealistic photo of a footballer lifting the ${label} trophy with teammates after winning the final, confetti, fireworks, packed stadium at night, emotional celebration, no logos or readable text`,
+    description: already ? event.description : `${event.description} ¡Te proclamas campeón de ${label} con ${team}! Levantas el trofeo mientras el estadio entero se viene abajo.`,
+  };
+}
+
+/** La celebración de la Liga ganada: sale al empezar la temporada siguiente, con el puesto ya decidido en código. */
+function pickLigaChampionEvent(player: Player): GameEvent | null {
+  const raw = player.flags?.liga_campeon_pendiente;
+  if (typeof raw !== "string" || !raw) return null;
+  const [seasonStr, ptsStr, secondStr] = raw.split("|");
+  const season = parseInt(seasonStr, 10);
+  const pts = parseInt(ptsStr, 10);
+  const second = parseInt(secondStr, 10);
+  if (!Number.isFinite(season)) return null;
+  player.flags.liga_campeon_pendiente = "";
+  const gap = pts - (Number.isFinite(second) ? second : pts);
+  const role = computeRole(player).role;
+  const yearLabel = `${2026 + season}/${String(2027 + season).slice(2)}`;
+  const gapText = gap > 0 ? `${gap} puntos más que el segundo` : "los mismos que el segundo, pero con ventaja en los desempates";
+  const roleText =
+    role === "titular"
+      ? "Has sido pieza clave en cada tramo de la temporada, y el vestuario te lo dice con abrazos y con cerveza."
+      : role === "rotacion"
+        ? "No has sido imprescindible todos los meses, pero cada minuto tuyo ha sumado, y todos lo saben."
+        : "Desde un segundo plano has empujado cada semana, y el vestuario no se olvida de quién aguanta cuando no juega.";
+  const club = player.club;
+  return {
+    id: `liga-campeon-${season}`,
+    category: "especial",
+    title: "¡Campeones de Liga!",
+    description: `Tras treinta y ocho jornadas, ${club} termina la Liga ${yearLabel} con ${pts} puntos: ${gapText}. La ciudad entera se echa a la calle; hay bufandas, bocinas y gente llorando en los balcones. ${roleText}`,
+    isMilestone: true,
+    milestoneType: "titulo",
+    trophy: { kind: "liga", season },
+    imageScene: "Photorealistic photo of a footballer celebrating a league title on the pitch with teammates, trophy raised, confetti and fireworks, packed stadium, emotional smile, no logos or readable text",
+    options: [
+      { id: "a", label: "Celebrarlo con la afición en la plaza", subtitle: "Compartir el título con la ciudad", consequences: { fama: 6, rel_aficion: 6, moral: 8, rel_vestuario: 2 }, outcomeText: "Subes al autobús descubierto con el trofeo entre las manos. La gente canta tu nombre durante horas. Cuando bajas, tienes la voz rota y la sensación de que nada volverá a ser tan grande." },
+      { id: "b", label: "Una cena íntima con tu familia y tus amigos de siempre", subtitle: "Volver a casa", consequences: { moral: 9, reputacion: 3, rel_aficion: 2 }, outcomeText: "Reservas una mesa pequeña en el bar del barrio. Tu madre llora, tu padre brinda con un vaso de plástico, y alguien trae una camiseta firmada por todos. Esa es tu foto favorita del año." },
+      { id: "c", label: "Entrenar ya mañana: esto es solo el primer título", subtitle: "Hambre de más", consequences: { forma: 3, rel_entrenador: 3, moral: 4, media: 1 }, outcomeText: "Al día siguiente apareces el primero en el campo. El míster te mira, sonríe y dice solo: «Pareces tonto». Los dos sabéis que te ha encantado." },
+    ],
+  };
+}
+
 /** La media futbolística usa una escala de videojuego de fútbol: suelo 40, techo 99. */
 function clampMedia(value: number) {
   return Math.max(40, Math.min(99, Math.round(value)));
@@ -808,7 +864,10 @@ export function applyConsequences(
   for (const field of PERCENT_FIELDS) {
     const delta = consequences[field];
     if (delta !== undefined) {
-      patch[field] = clampPercent(state[field] + delta);
+      // Rendimientos decrecientes: subir de 55 a 70 es fácil, de 90 a 100 casi imposible.
+      // Sin esto todas las barras acababan clavadas en 100 y dejaban de significar nada.
+      const gain = delta > 0 ? delta * Math.max(0.12, Math.min(1, (100 - state[field]) / 45)) * (field === "fama" ? 0.6 : 1) : delta;
+      patch[field] = clampPercent(state[field] + gain);
     }
   }
 
@@ -2930,13 +2989,14 @@ async function pickTorneoEvent(
   } else {
     saveTorneoProgress(player, adv.next);
   }
-  return {
+  const torneoEvent: GameEvent = {
     ...event,
     id: `matchday-torneo-${match.week}-${progress.stage}-${Date.now()}`,
     ownTeam: nation,
     rivalClub: match.rivalClub,
     matchKey: stageKey,
   };
+  return adv.champion ? withTrophy(torneoEvent, progress.type, nation, `${tName}`) : torneoEvent;
 }
 
 /**
@@ -3253,6 +3313,10 @@ export async function pickNextEventDynamic(
     }
   }
 
+  // Liga ganada: la celebración llega en cuanto empieza la temporada siguiente.
+  const ligaTitle = pickLigaChampionEvent(playerWithDynamics);
+  if (ligaTitle) return ligaTitle;
+
   // Torneo de selecciones (Mundial/Eurocopa/Copa América) al arrancar la
   // temporada de un año de torneo: llega ANTES que la pretemporada, que solo
   // empieza cuando el torneo termina.
@@ -3560,11 +3624,19 @@ export async function pickNextEventDynamic(
       });
     if (matchDayEvent) {
       if (forcedResult && matchThisWeek.cupRound) {
-        advanceCupProgress(playerWithDynamics, "copa_progress", currentSeason, matchThisWeek.cupRound, forcedResult.win);
+        advanceCupProgress(playerWithDynamics, "copa_progress", currentSeason, matchThisWeek.cupRound, forcedResult.win, { opp: matchThisWeek.rivalClub, score: forcedResult.scoreLine });
       } else if (forcedResult && matchThisWeek.euroKoRound) {
-        advanceCupProgress(playerWithDynamics, "euro_progress", currentSeason, matchThisWeek.euroKoRound, forcedResult.win);
+        advanceCupProgress(playerWithDynamics, "euro_progress", currentSeason, matchThisWeek.euroKoRound, forcedResult.win, {
+          opp: matchThisWeek.rivalClub,
+          score: twoLeg ? `${forcedResult.scoreLine} (global ${twoLeg.aggregate})` : forcedResult.scoreLine,
+        });
       }
-      return maybeAddFreeText(addMatchContext({ ...matchDayEvent, matchKey: matchKey(matchThisWeek) }, playerWithDynamics));
+      let finalEvent: GameEvent = { ...matchDayEvent, matchKey: matchKey(matchThisWeek) };
+      if (isFinal && forcedResult?.win) {
+        const kind: TrofeoKind = matchThisWeek.cupRound === 5 ? "copa" : matchThisWeek.competition === "champions" ? "champions" : "europa";
+        finalEvent = withTrophy(finalEvent, kind, playerWithDynamics.club, `${forcedResult.scoreLine} a ${matchThisWeek.rivalClub}`);
+      }
+      return maybeAddFreeText(addMatchContext(finalEvent, playerWithDynamics));
     }
   }
 

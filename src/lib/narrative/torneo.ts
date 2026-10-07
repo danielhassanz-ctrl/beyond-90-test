@@ -130,6 +130,14 @@ export function startTorneoProgress(player: Player, type: TorneoType): TorneoPro
 }
 
 /** El partido del torneo `stage` como un MatchWeek (rival distinto en cada ronda). */
+/** Los tres rivales de tu grupo (de 4 selecciones), estables para este torneo. */
+export function torneoGroupRivals(player: Player, type: TorneoType, season: number): string[] {
+  const pool = TORNEO_POOLS[type].filter((n) => n !== player.nation);
+  return [...pool]
+    .sort((a, b) => hash(`${player.id}:${season}:${type}:${a}`) - hash(`${player.id}:${season}:${type}:${b}`))
+    .slice(0, 3);
+}
+
 export function buildTorneoMatch(player: Player, progress: TorneoProgress): MatchWeek {
   const pool = TORNEO_POOLS[progress.type].filter((n) => n !== player.nation);
   const ordered = [...pool].sort((a, b) => hash(`${player.id}:${progress.season}:${progress.type}:${a}`) - hash(`${player.id}:${progress.season}:${progress.type}:${b}`));

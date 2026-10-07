@@ -18,6 +18,8 @@ export interface CupProgress {
   season: number;
   round: number; // 1 = primera eliminatoria de la temporada, 2 = segunda...
   alive: boolean;
+  /** Cómo caíste (solo si alive es false): rival y marcador, para mostrarlo en la clasificación. */
+  elim?: { opp: string; score: string; club: string };
 }
 
 const COPA_ROUND_NAMES = [
@@ -99,9 +101,11 @@ export function advanceCupProgress(
   season: number,
   round: number,
   won: boolean,
+  elim?: { opp: string; score: string },
 ): void {
   if (!player.flags) player.flags = {};
   const next: CupProgress = { season, round: won ? round + 1 : round, alive: won };
+  if (!won && elim) next.elim = { ...elim, club: player.club };
   player.flags[key] = JSON.stringify(next);
 }
 

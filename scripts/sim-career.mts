@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { playerAge } from "../src/types/career";
 /**
  * Simulación local (SIN API real) de carreras completas contra el motor: una respuesta
  * falsa sustituye a Claude y el avance de calendario usa la misma regla que resolveEvent
@@ -127,7 +128,8 @@ async function career(club: string, media: number, seed: number): Promise<Result
     tournaments: { started: 0, matches: 0, maxLen: 0 }, injuries: { count: 0, maxWeeks: 0 },
     roles: {}, cats: {}, noReaction: 0, withOptions: 0, nulls: 0,
   };
-  let sameWeek = 0;
+  let sameWeek = 0; let _p30 = false;
+  let parejaFirst: number | null = null;
   let lastWeek = player.week;
   let torneoLen = 0;
   let injuryStartWeek: number | null = null;
@@ -188,15 +190,19 @@ async function career(club: string, media: number, seed: number): Promise<Result
     if (String(ev.id).startsWith("bank-")) { player.flags[bankFlagKey(ev.id)] = `${opt.id}:${player.week}`; bankSeen.push(ev.id); }
     // consecuencias
     const patch = applyConsequences(player, cons);
+    if (!_p30 && player.week >= 30) { _p30 = true; process.stdout.write(`S30: edad ${playerAge(player.week)} media ${player.media} forma ${player.forma} moral ${player.moral} fama ${player.fama} entr ${player.rel_entrenador} afic ${player.rel_aficion} vest ${player.rel_vestuario} rep ${player.reputacion}
+`); }
     const { newWeek, matchDoneFlag, weekCounter } = computeWeekAdvance(player, ev);
     const oldClub = player.club;
-    Object.assign(player, patch);
+    { const _f = player.fama; Object.assign(player, patch); if (player.fama - _f > 4 && process.env.DBG) process.stdout.write(`FAMA +${player.fama - _f} ${ev.id} cons=${JSON.stringify(cons.fama)}
+`); }
     if (typeof cons.club === "string" && cons.club && cons.club !== oldClub) {
       player.flags = { ...player.flags, club_since: String(newWeek), coach_bench: "0", bench_streak: "0", euro_progress: "" };
       player.rel_entrenador = 50; player.rel_vestuario = 45; player.rel_aficion = 40;
       res.transfers = (res.transfers ?? 0) + 1;
     }
     player.flags = { ...player.flags, ...(cons.flags ?? {}) };
+    if (typeof player.flags.pareja === "string" && player.flags.pareja && parejaFirst === null) parejaFirst = player.week;
     if (matchDoneFlag) player.flags.match_done_week = matchDoneFlag;
     player.flags.wk_count = weekCounter;
     if (ev.coachStance) {
@@ -257,6 +263,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
     if (history.length > 10) history.pop();
   }
   res.endWeek = player.week;
+  process.stdout.write(`PAREJA: primera semana con pareja = ${parejaFirst ?? "nunca"} · final: ${String(player.flags.pareja || "sin pareja")} · media final ${player.media}, moral ${player.moral}, fama ${player.fama}, entrenador ${player.rel_entrenador}, afición ${player.rel_aficion}, vestuario ${player.rel_vestuario}\n`);
   (res as any).prefixCount = prefixCount;
   (res as any).castStats = castStats;
   perCareer.push({ total: myTotal, distinct: myTitles.size });
@@ -298,5 +305,6 @@ for (const c of perCareer) console.log(`   carrera: ${c.total} escenas no-partid
   const fam = new Map<string, number>();
   for (const id of seenSet) { const sc: any = BANK_SCENES.find((x: any) => x.id === id); if (sc) fam.set(sc.family, (fam.get(sc.family) ?? 0) + 1); }
   console.log(`BANCO en ${perCareer.length} carreras: ${bankSeen.length} escenas vistas (${seenSet.size} distintas de ${BANK_SCENES.length}), ${bankSeen.filter((id) => chainedIds.has(id)).length} encadenadas`);
+  console.log('   romance vistas:', bankSeen.filter((id) => /bank-(ro|pa)-/.test(id)).join(' '));
   console.log('   por familia (distintas):', [...fam.entries()].map(([f, n]) => `${f}:${n}`).join(' '));
 }

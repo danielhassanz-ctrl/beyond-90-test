@@ -13,6 +13,7 @@ import type { GameEvent } from "@/types/career";
 import { WEEKS_PER_SEASON, seasonLabel } from "@/types/career";
 import { extractStatsFromEvent } from "@/lib/player/update-stats";
 import { readAllSim, sumSim, type SimComp } from "@/lib/narrative/off-screen-matches";
+import { allTrofeos, INDIVIDUAL, type TrofeoKind } from "@/lib/honours";
 
 export interface CompStat {
   matches: number;
@@ -37,12 +38,22 @@ const empty = (): CompStat => ({ matches: 0, goals: 0, assists: 0, minutes: 0 })
 
 /** Una fila del historial: lo que hiciste en cada temporada. */
 export interface SeasonHistoryRow {
+  /** Número de temporada (0 = la primera). */
+  idx: number;
+  /** Club de esa temporada, si se conoce. */
+  club?: string;
+  /** Trofeos ganados esa temporada. */
+  trophies: TrofeoKind[];
   label: string;
   matches: number;
   goals: number;
   assists: number;
   minutes: number;
   titles: number;
+}
+
+function newRow(idx: number): SeasonHistoryRow {
+  return { idx, trophies: [], label: seasonLabel(idx * WEEKS_PER_SEASON + 1), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
 }
 
 export function emptyCompetitionStats(): CompetitionStats {
@@ -135,15 +146,9 @@ export async function getCompetitionStats(
         description: row.description,
         options: [],
       } as GameEvent);
-      if (u.titles) {
-        const idxT = Math.floor((row.week - 1) / WEEKS_PER_SEASON);
-        const rowT = bySeason.get(idxT) ?? { label: seasonLabel(row.week), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
-        rowT.titles += u.titles;
-        bySeason.set(idxT, rowT);
-      }
       if (!u.matches_played) continue;
       const idx = Math.floor((row.week - 1) / WEEKS_PER_SEASON);
-      const hist = bySeason.get(idx) ?? { label: seasonLabel(row.week), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
+      const hist = bySeason.get(idx) ?? newRow(idx);
       hist.matches += 1;
       hist.goals += u.goals ?? 0;
       hist.assists += u.assists ?? 0;
@@ -179,7 +184,7 @@ export async function getCompetitionStats(
         season[k].minutes += c.minutes;
       }
     }
-    const hist = bySeason.get(idx) ?? { label: seasonLabel(idx * WEEKS_PER_SEASON + 1), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
+    const hist = bySeason.get(idx) ?? newRow(idx);
     hist.matches += total.matches;
     hist.goals += total.goals;
     hist.assists += total.assists;
@@ -187,6 +192,21 @@ export async function getCompetitionStats(
     bySeason.set(idx, hist);
   }
 
+  // Palmarés real: los trofeos los decide el código (ver honours.ts), no el texto de las crónicas.
+  const trofeos = allTrofeos({ flags: flags ?? {} });
+  for (const tr of trofeos) {
+    const row = bySeason.get(tr.s) ?? newRow(tr.s);
+    row.trophies.push(tr.k);
+    if (!INDIVIDUAL.has(tr.k)) row.titles += 1;
+    bySeason.set(tr.s, row);
+  }
+  // Club de cada temporada: el que quedó anotado al jugarla; las anteriores a ese registro, el primero conocido.
+  const knownClubs = [...bySeason.keys()].map((i) => String(flags?.[`club_s${i}`] ?? ""));
+  const firstKnown = knownClubs.find(Boolean) || String(flags?.clubs_history ?? "").split("|").filter(Boolean)[0] || undefined;
+  for (const [i, row] of bySeason) {
+    const c = String(flags?.[`club_s${i}`] ?? "");
+    row.club = c || firstKnown;
+  }
   const history = [...bySeason.entries()].sort((a, b) => a[0] - b[0]).map(([, row]) => row);
   return { season, career, history };
 }

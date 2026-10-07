@@ -1,4 +1,5 @@
 import type { Player } from "@/types/player";
+import { allTrofeos, TROFEO_LABEL } from "@/lib/honours";
 
 export interface CareerStats {
   ovr: number;
@@ -39,10 +40,7 @@ export function computeCareerStats(player: Player): CareerStats {
   const qualityValue = Math.max(0, player.media - 40) ** 2.2 / 90;
   const valueM = Math.round(Math.max(0.3, qualityValue + player.fama * 0.15) * 10) / 10;
 
-  const titles: string[] = [];
-  if (player.flags?.title_liga) titles.push("Liga");
-  if (player.flags?.title_champions) titles.push("Champions League");
-  if (player.flags?.title_balon_oro) titles.push("Balón de Oro");
+  const titles: string[] = allTrofeos(player).map((x) => TROFEO_LABEL[x.k]);
 
   return { ovr, valueM, games, goals, assists, titles };
 }

@@ -124,6 +124,8 @@ export interface GameEvent {
   freeTextPrompt?: string;
   isMilestone?: boolean;
   milestoneType?: string;
+  /** Si resolver este evento significa ganar un trofeo (decidido en código, no por el texto). */
+  trophy?: { kind: string; detail?: string; /** Temporada a la que pertenece, si no es la actual (la Liga se celebra ya en la siguiente). */ season?: number };
   /** Solo aparece a partir de esta semana (para dar progresión) */
   minWeek?: number;
   /** Marca un evento de fichaje: si se resuelve con éxito, cambia de club */

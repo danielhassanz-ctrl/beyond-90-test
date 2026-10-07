@@ -11,31 +11,31 @@ import type { BankScene, BankWhen } from "../types";
 
 const SOLO: BankWhen = { notFlags: ["pareja"], minAge: 18, maxAge: 40 };
 
-export const PAREJA: BankScene[] = [
-  // ───── Conocer a alguien: Carla (un mensaje) ─────
-  S("ro-carla-mensaje", "pareja", { ...SOLO, fama: [20, 100], notFlags: ["pareja", "ro_carla_no"] }, "vida",
+const PAREJA_BASE: BankScene[] = [
+  // ───── Conocer a alguien: Marta (un mensaje) ─────
+  S("ro-marta-mensaje", "pareja", { ...SOLO, fama: [20, 100], notFlags: ["pareja", "ro_marta_no"] }, "vida",
     "Una desconocida con buen gusto te escribe",
-    "Llega un mensaje privado de una chica llamada Carla: no pide un autógrafo, ni una foto, ni una camiseta. Te dice que vio tu partido del domingo, que no entiende de fútbol pero que se rio con tu forma de reaccionar a la tarjeta amarilla. Hay un emoji de un perro. Y una última frase: «Si algún día te apetece un café, lo pagas tú».",
+    "Llega un mensaje privado de una chica llamada Marta: no pide un autógrafo, ni una foto, ni una camiseta. Te dice que vio tu partido del domingo, que no entiende de fútbol pero que se rio con tu forma de reaccionar a la tarjeta amarilla. Hay un emoji de un perro. Y una última frase: «Si algún día te apetece un café, lo pagas tú».",
     [
       o("a", "Contestarle con un chiste y quedar a tomar algo", "Dar el paso", { moral: 4, fama: 1 }, "Le escribes tres líneas con un chiste sobre tu amarilla. Contesta en dos minutos. En cuatro, ya tenéis cita: un café de barrio, el sábado a las once."),
-      o("b", "Contestarle educadamente y dejarlo ahí", "Ser prudente", { moral: 0 }, "Le agradeces el mensaje con una frase amable. Carla responde con un emoji de pulgar y un «cuando quieras». No vuelve a escribirte."),
+      o("b", "Contestarle educadamente y dejarlo ahí", "Ser prudente", { moral: 0 }, "Le agradeces el mensaje con una frase amable. Marta responde con un emoji de pulgar y un «cuando quieras». No vuelve a escribirte."),
       o("c", "Ignorar el mensaje: no es el momento", "Mantener el foco", { forma: 1, moral: -1 }, "Dejas el mensaje sin contestar. A los tres días, sin querer, lo vuelves a abrir y lo cierras otra vez. Algo, muy dentro, se queda en pausa."),
     ]),
-  S("ro-carla-cafe", "pareja", { after: [after("ro-carla-mensaje", "a", 1, 8)], ...SOLO }, "vida",
-    "El café con Carla",
-    "Carla lleva una gorra, un jersey enorme y el pelo recogido sin cuidado. Pide un cortado con azúcar y una tostada con tomate, y mientras la prepara el camarero te mira con cara de ver un fantasma. Hablan de todo menos de fútbol: de su trabajo en una editorial, de su abuela con el móvil, de un viaje a Lisboa que hizo con dos euros. A los veinte minutos, has olvidado quién eres.",
+  S("ro-marta-cafe", "pareja", { after: [after("ro-marta-mensaje", "a", 1, 8)], ...SOLO }, "vida",
+    "El café con Marta",
+    "Marta lleva una gorra, un jersey enorme y el pelo recogido sin cuidado. Pide un cortado con azúcar y una tostada con tomate, y mientras la prepara el camarero te mira con cara de ver un fantasma. Hablan de todo menos de fútbol: de su trabajo en una editorial, de su abuela con el móvil, de un viaje a Lisboa que hizo con dos euros. A los veinte minutos, has olvidado quién eres.",
     [
-      o("a", "Proponerle otra cita esa misma tarde", "Lanzarte", { moral: 5, fama: 1, flags: { ro_carla: "cita" } }, "Le propones ir a ver el atardecer a un mirador. Carla sonríe. «Dos euros», dice, tendiéndote la mano. «Es lo que tengo para el autobús». Y se ríe de tu cara."),
-      o("b", "Dejar que lo proponga ella y esperar", "Ir despacio", { moral: 2, flags: { ro_carla: "cita" } }, "Terminas el café con calma. Cuando te levantas, Carla te mira y dice: «Mañana hay un mercadillo». Y ya está: has sido invitado."),
-      o("c", "Quedar en escribiros y dejarlo en el aire", "Sin presión", { moral: -1, flags: { ro_carla_no: true } }, "Os despedís con un abrazo cordial. Los mensajes se van espaciando, hasta que un día dejáis de escribiros sin que nadie lo decida."),
+      o("a", "Proponerle otra cita esa misma tarde", "Lanzarte", { moral: 5, fama: 1, flags: { ro_marta: "cita" } }, "Le propones ir a ver el atardecer a un mirador. Marta sonríe. «Dos euros», dice, tendiéndote la mano. «Es lo que tengo para el autobús». Y se ríe de tu cara."),
+      o("b", "Dejar que lo proponga ella y esperar", "Ir despacio", { moral: 2, flags: { ro_marta: "cita" } }, "Terminas el café con calma. Cuando te levantas, Marta te mira y dice: «Mañana hay un mercadillo». Y ya está: has sido invitado."),
+      o("c", "Quedar en escribiros y dejarlo en el aire", "Sin presión", { moral: -1, flags: { ro_marta_no: true } }, "Os despedís con un abrazo cordial. Los mensajes se van espaciando, hasta que un día dejáis de escribiros sin que nadie lo decida."),
     ]),
-  S("ro-carla-formal", "pareja", { after: [after("ro-carla-cafe", undefined, 4, 24)], flags: ["ro_carla"], ...SOLO }, "vida",
-    "Carla quiere saber qué sois",
-    "Lleváis un par de meses viéndoos sin etiqueta. Hoy, en la terraza de siempre, Carla deja la taza sobre el plato con mucha delicadeza y dice: «Necesito saber una cosa. Lo digo ya y luego pedimos otra tostada». Se cruza de brazos. No hay nada más importante en el mundo ahora mismo que esa pregunta.",
+  S("ro-marta-formal", "pareja", { after: [after("ro-marta-cafe", undefined, 4, 24)], flags: ["ro_marta"], ...SOLO }, "vida",
+    "Marta quiere saber qué sois",
+    "Lleváis un par de meses viéndoos sin etiqueta. Hoy, en la terraza de siempre, Marta deja la taza sobre el plato con mucha delicadeza y dice: «Necesito saber una cosa. Lo digo ya y luego pedimos otra tostada». Se cruza de brazos. No hay nada más importante en el mundo ahora mismo que esa pregunta.",
     [
-      o("a", "Decirle que sí, que quieres estar con ella", "Dar el paso definitivo", { moral: 9, fama: 1, rel_vestuario: 1, flags: { pareja: "Carla" } }, "Se lo dices sin florituras, con la voz un poco rota. Carla se ríe, llora un poco y dice: «Qué bobo». Pide otra tostada. Esa noche, el móvil no deja de vibrar con mensajes suyos."),
-      o("b", "Pedirle un poco más de tiempo", "Ser sincero", { moral: -1 }, "Se lo dices con cariño. Carla lo entiende, pero sus ojos se apagan un poco. Los mensajes continúan, aunque menos. Algo se ha enfriado."),
-      o("c", "Decirle que ahora no puedes comprometerte", "Cortar con elegancia", { moral: -3, flags: { ro_carla_no: true } }, "Se lo dices con respeto. Carla asiente muy despacio, paga su parte del café y se va sin dramas. Hay despedidas que duelen más cuanto más limpias son."),
+      o("a", "Decirle que sí, que quieres estar con ella", "Dar el paso definitivo", { moral: 9, fama: 1, rel_vestuario: 1, flags: { pareja: "Marta" } }, "Se lo dices sin florituras, con la voz un poco rota. Marta se ríe, llora un poco y dice: «Qué bobo». Pide otra tostada. Esa noche, el móvil no deja de vibrar con mensajes suyos."),
+      o("b", "Pedirle un poco más de tiempo", "Ser sincero", { moral: -1 }, "Se lo dices con cariño. Marta lo entiende, pero sus ojos se apagan un poco. Los mensajes continúan, aunque menos. Algo se ha enfriado."),
+      o("c", "Decirle que ahora no puedes comprometerte", "Cortar con elegancia", { moral: -3, flags: { ro_marta_no: true } }, "Se lo dices con respeto. Marta asiente muy despacio, paga su parte del café y se va sin dramas. Hay despedidas que duelen más cuanto más limpias son."),
     ]),
   // ───── Irene (una cita a ciegas) ─────
   S("ro-irene-ciegas", "pareja", { ...SOLO, notFlags: ["pareja", "ro_irene_no"] }, "vida",
@@ -186,3 +186,13 @@ export const PAREJA: BankScene[] = [
       o("c", "Aislarte unos días con el móvil apagado", "Dejarte llevar", { moral: -4, forma: -2, flags: { pa_duelo: true } }, "Pasas tres días en el sofá con series que ni sigues. Al cuarto, el míster llama a la puerta con una bolsa de comida y la frase «hoy sales de aquí»."),
     ]),
 ];
+
+/**
+ * Peso: las puertas de entrada al amor y la vida en pareja pesan mucho más que
+ * una escena suelta cualquiera. Sin esto, con ~100 escenas sueltas compitiendo,
+ * una carrera podía pasar dos temporadas sin que apareciera nadie.
+ */
+const ENTRADAS = new Set(["ro-marta-mensaje", "ro-irene-ciegas", "ro-paula-nutri", "ro-sofia-playa"]);
+export const PAREJA: BankScene[] = PAREJA_BASE.map((s) =>
+  ENTRADAS.has(s.id) ? { ...s, weight: 8 } : s.id.startsWith("pa-") ? { ...s, weight: 3 } : s,
+);

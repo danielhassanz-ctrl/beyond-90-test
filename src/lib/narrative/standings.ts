@@ -10,6 +10,7 @@ import {
 } from "@/lib/calendar/match-calendar";
 import { getCopaProgress, getEuroProgress, copaRoundName, euroRoundName } from "@/lib/calendar/competition-progress";
 import { WEEKS_PER_SEASON } from "@/types/career";
+import { getTorneoProgress, torneoGroupRivals, TORNEO_NAMES, TORNEO_STAGE_LABELS, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
 
 /**
  * Mini clasificación con tu club señalado, y el cuadro de "eliminatoria"
@@ -51,6 +52,10 @@ export interface KnockoutStandings {
   label: string;
   roundLabel: string;
   alive: boolean;
+  /** Si caíste: cómo (ronda, rival y marcador) para dejarlo visible el resto de la temporada. */
+  result?: string;
+  /** Texto de la etiqueta (por defecto "Sigues vivo" / "Eliminado"). */
+  badge?: string;
 }
 
 export type Standings = TableStandings | KnockoutStandings;
@@ -397,10 +402,33 @@ export function getActiveStandings(
   const matchdayGuess = inSeasonWeek;
 
   const torneo = player.flags?.torneo_activo;
-  if (typeof torneo === "string" && torneo) {
-    const pool = torneo === "mundial" ? MUNDIAL_POOL : torneo === "eurocopa" ? EUROCOPA_POOL : COPA_AMERICA_POOL;
-    const label = torneo === "mundial" ? "Mundial · Fase de grupos" : torneo === "eurocopa" ? "Eurocopa · Fase de grupos" : "Copa América · Fase de grupos";
-    return { primary: buildTable(`${seed}:${torneo}`, player.nation, pool, matchdayGuess, label, record), secondary: null, copa: null, euro: null };
+  const progress = getTorneoProgress(player);
+  if (typeof torneo === "string" && torneo && progress) {
+    const type = progress.type;
+    const name = `${TORNEO_NAMES[type]} ${torneoYear(progress.season)}`;
+    const rivals = torneoGroupRivals(player, type, progress.season);
+    const playedGroup = Math.min(progress.stage, 3);
+    // Tu fila sale de tus puntos reales: 3 por victoria, 1 por empate (nunca más puntos que partidos).
+    const won = Math.min(playedGroup, Math.floor(progress.groupPts / 3));
+    const drawn = Math.min(playedGroup - won, progress.groupPts - won * 3);
+    const lost = Math.max(0, playedGroup - won - drawn);
+    const rows: StandingsRow[] = [
+      { club: player.nation, points: won * 3 + drawn, played: playedGroup, won, drawn, lost, isPlayer: true },
+      ...rivals.map((club) => {
+        const sim = simulateRecord(`${seed}:${type}:${club}`, clubTier(club), playedGroup);
+        return { club, points: sim.points, played: playedGroup, won: sim.won, drawn: sim.drawn, lost: sim.lost, isPlayer: false };
+      }),
+    ].sort((a, b) => b.points - a.points || b.won - a.won);
+    const letter = "ABCDEFGH"[mixSeed(`${seed}:${type}:grupo`) % 8];
+    const table: TableStandings = { type: "table", label: `${name} · Grupo ${letter}`, rows };
+    if (progress.stage < 3) return { primary: table, secondary: null, copa: null, euro: null };
+    const ko: KnockoutStandings = {
+      type: "knockout",
+      label: name,
+      roundLabel: TORNEO_STAGE_LABELS[Math.min(progress.stage, TORNEO_STAGE_LABELS.length - 1)],
+      alive: progress.alive,
+    };
+    return { primary: table, secondary: null, copa: null, euro: ko };
   }
 
   const rookieChainStarted = usedEventIds.includes("pretemp-amistoso");
@@ -424,16 +452,78 @@ export function getActiveStandings(
     : null;
 
   const copaProgress = getCopaProgress(player, season);
+  const eliminatedText = (roundName: string, p: { elim?: { opp: string; score: string; club: string } }) =>
+    p.elim ? `${p.elim.club} ${p.elim.score} ${p.elim.opp}` : roundName;
   const copa: KnockoutStandings | null =
     copaProgress.round > 0 && copaProgress.alive
       ? { type: "knockout", label: "Copa del Rey", roundLabel: copaRoundName(copaProgress.round), alive: true }
-      : null;
+      : copaProgress.round > 0
+        ? { type: "knockout", label: "Copa del Rey", roundLabel: `Eliminado en ${shortRound(copaRoundName(copaProgress.round))}`, alive: false, result: eliminatedText("", copaProgress) || undefined }
+        : null;
 
   const euroProgress = getEuroProgress(player, season);
-  const euro: KnockoutStandings | null =
-    european && euroProgress.round > 0 && euroProgress.alive
-      ? { type: "knockout", label: european.competition === "champions" ? "Champions League" : "Europa League", roundLabel: euroRoundName(euroProgress.round), alive: true }
-      : null;
+  const euroLabel = european ? (european.competition === "champions" ? "Champions League" : "Europa League") : "";
+  const euro: KnockoutStandings | null = !european
+    ? null
+    : euroProgress.round > 0 && euroProgress.alive
+      ? { type: "knockout", label: euroLabel, roundLabel: euroRoundName(euroProgress.round), alive: true }
+      : euroProgress.round > 0
+        ? { type: "knockout", label: euroLabel, roundLabel: `Eliminado en ${shortRound(euroRoundName(euroProgress.round))}`, alive: false, result: eliminatedText("", euroProgress) || undefined }
+        : !euroProgress.alive && euroGroupsPlayed >= 2
+          ? { type: "knockout", label: euroLabel, roundLabel: "Eliminado en la fase de grupos", alive: false }
+          : null;
 
-  return { primary, secondary, copa, euro };
+  const torneoDone = lastTorneoResult(player, season);
+  return { primary, secondary, copa, euro: torneoDone ?? euro };
+}
+
+const TORNEO_RESULT_TEXT: Record<string, string> = {
+  fase_de_grupos: "Eliminado en la fase de grupos",
+  octavos: "Eliminado en octavos de final",
+  cuartos: "Eliminado en cuartos de final",
+  semifinal: "Eliminado en semifinales",
+  subcampeon: "Subcampeón, a un paso de la gloria",
+  campeon: "¡Campeón!",
+};
+
+/** Cómo acabó el torneo de selecciones de esta temporada, si ya se jugó. */
+function lastTorneoResult(player: Player, season: number): KnockoutStandings | null {
+  for (const type of ["mundial", "eurocopa", "copa_america"] as TorneoType[]) {
+    const v = player.flags?.[`torneo_result_${type}_${season}`];
+    if (typeof v === "string" && TORNEO_RESULT_TEXT[v]) {
+      return { type: "knockout", label: `${TORNEO_NAMES[type]} ${torneoYear(season)}`, roundLabel: TORNEO_RESULT_TEXT[v], alive: v === "campeon" || v === "subcampeon", badge: v === "campeon" ? "Campeón" : v === "subcampeon" ? "Subcampeón" : "Eliminado" };
+    }
+  }
+  return null;
+}
+
+/** "Octavos de Copa del Rey" → "octavos"; "Final" → "la final". */
+function shortRound(name: string): string {
+  const n = name.toLowerCase();
+  if (n.startsWith("dieciseisavos")) return "dieciseisavos";
+  if (n.startsWith("octavos")) return "octavos";
+  if (n.startsWith("cuartos")) return "cuartos";
+  if (n.startsWith("semifinal")) return "semifinales";
+  if (n.startsWith("final")) return "la final";
+  return n;
+}
+
+/**
+ * Cómo ha acabado la Liga esta temporada para tu club: puesto y puntos de la MISMA tabla
+ * que ves en Clasificación (tus resultados reales + los demás simulados). null si no hay
+ * una temporada completa que juzgar (club fuera de LaLiga o menos de 30 jornadas).
+ */
+export function leagueFinish(
+  player: Pick<Player, "id" | "club" | "week">,
+  record: SeasonMatchRecord,
+): { rank: number; points: number; secondPoints: number; leaderPoints: number } | null {
+  if (!LIGA_FULL_POOL.includes(player.club)) return null;
+  const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  const table = buildLigaTable(`${player.id}:${season}:liga`, player.club, record);
+  const played = table.rows[0]?.played ?? 0;
+  if (played < 30) return null;
+  const idx = table.rows.findIndex((r) => r.isPlayer);
+  if (idx < 0) return null;
+  const other = table.rows.filter((r) => !r.isPlayer).sort((a, b) => b.points - a.points)[0];
+  return { rank: idx + 1, points: table.rows[idx].points, secondPoints: other?.points ?? 0, leaderPoints: table.rows[0].points };
 }

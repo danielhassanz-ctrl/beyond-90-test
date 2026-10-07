@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import { displayName } from "@/types/player";
 import { playerAge } from "@/types/career";
+import { allTrofeos, teamTitleCount } from "@/lib/honours";
 
 /**
  * Tarjeta pública de comparación — pedido explícito tras una auditoría
@@ -52,7 +53,7 @@ export async function ensurePublicCareerCard(
       stats_matches_played: player.stats_matches_played ?? 0,
       stats_goals: player.stats_goals ?? 0,
       stats_assists: player.stats_assists ?? 0,
-      stats_titles: player.stats_titles ?? 0,
+      stats_titles: Math.max(player.stats_titles ?? 0, teamTitleCount(allTrofeos(player))),
       photo_url: player.current_photo_url ?? player.photo_url,
       updated_at: new Date().toISOString(),
     };
