@@ -50,6 +50,10 @@ const LOCKED_PREFIXES = [
   "sel-eurocopa-s",
   "sel-copa-america-s",
   "torneo-life-",
+  // Convocatoria, celebración de Liga y premios: escenas de gala que no gastan un mes.
+  "sel-convocatoria-",
+  "liga-campeon-",
+  "award-",
   "matchday-torneo-",
   // Partidos con la selección entre torneos (Nations League, clasificatorias).
   "matchday-sel-",

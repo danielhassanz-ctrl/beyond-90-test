@@ -7,7 +7,7 @@
 import { S, o, r, after } from "../dsl";
 import type { BankScene } from "../types";
 
-export const PREMIOS: BankScene[] = [
+const PREMIOS_BASE: BankScene[] = [
   // ───────────── GOLDEN BOY ─────────────
   S("gb-nominacion", "premios", { minAge: 17, maxAge: 20, media: [68, 99], fama: [32, 100], turn: [4, 6], notFlags: ["golden_boy", "gb_nominado"], minWeek: 15 }, "prensa",
     "Estás en la lista del Golden Boy",
@@ -78,3 +78,12 @@ export const PREMIOS: BankScene[] = [
       o("b", "Dar la cara ante la prensa antes del partido", "Un mensaje al país", { fama: 3, reputacion: 3, moral: 3, flags: { olimpico_medalla: "bronce" } }, "Dices ante las cámaras que no hay medalla pequeña. Esa noche, el bronce es un hecho: ganáis 2-0, y tu frase es la más compartida del día."),
     ]),
 ];
+
+/**
+ * El Golden Boy y el Balón de Oro ya no son escenas del banco: tienen su propio evento con la lista de
+ * los diez finalistas y el puesto decidido en código (ver awards.ts). Aquí solo queda lo que viene después.
+ */
+const SUSTITUIDAS = new Set(["bank-gb-nominacion", "bank-gb-gala", "bank-gb-otra-vez"]);
+export const PREMIOS: BankScene[] = PREMIOS_BASE.filter((s) => !SUSTITUIDAS.has(s.id)).map((s) =>
+  s.id === "bank-gb-vitrina" ? { ...s, when: { flags: ["golden_boy"] } } : s,
+);

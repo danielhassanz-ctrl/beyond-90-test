@@ -412,6 +412,8 @@ export function buildFallbackMatchReport(args: {
   competitionNote?: string;
   /** Eliminatoria a doble partido: "Ida: ... Global: ... Pasa de ronda." */
   tieNote?: string;
+  /** Primer partido oficial con la selección: el jugador (si no es portero) marca. */
+  debut?: boolean;
 }): GameEvent {
   const { player, match, team } = args;
   let decision: Decision = {};
@@ -443,6 +445,8 @@ export function buildFallbackMatchReport(args: {
   // Goles y asistencias coherentes con la jugada decisiva ya vivida
   let goals = outcome === "goal" || outcome === "wondergoal" ? 1 : 0;
   const assists = outcome === "assist" ? 1 : 0;
+  const isKeeper = (player.position ?? "").toLowerCase().includes("portero");
+  if (args.debut && !isKeeper && goals === 0) goals = 1;
   if (goals === 1 && Math.random() < 0.12) goals = 2;
   if (outcome === "concede" || outcome === "penalty_conceded") rival = Math.max(rival, 1);
   own = Math.max(own, goals + assists);
@@ -466,7 +470,7 @@ export function buildFallbackMatchReport(args: {
     : result === "win" ? "gana a" : result === "draw" ? "empata con" : "pierde ante";
   const compBase = COMP_LABEL[match.competition] ?? "partido oficial";
   const comp = args.competitionNote ? `${compBase} (${args.competitionNote})` : compBase;
-  const headline = rnd(HEADLINES[outcome] ?? HEADLINES.contained);
+  const headline = rnd(HEADLINES[args.debut && goals > 0 && outcome !== "wondergoal" ? "goal" : outcome] ?? HEADLINES.contained);
 
   const coach = getNpcName(player, "entrenador");
   const mate = getTeammateName(player, `${match.week}:${match.rivalClub}`);
@@ -489,7 +493,16 @@ export function buildFallbackMatchReport(args: {
   const description =
     `Ante ${match.rivalClub} en ${comp}, jugaste ${minutes} minutos. Nota: ${nota}/10. Goles: ${goals}. Asistencias: ${assists}. ` +
     `Marcador: ${own}-${rival} (${team}-${match.rivalClub}). Tu equipo ${verdict} ${match.rivalClub}. ` +
-    [args.tieNote, stakesText, ambience, play, coachLine(coach, result, rating, goals)].filter(Boolean).join(" ");
+    [
+      args.debut ? `Es tu debut oficial con ${team}${goals > 0 ? " y lo estrenas con gol: la grada se pone en pie y tu familia, en casa, rompe a llorar" : ", con el himno todavía en la garganta"}.` : "",
+      args.tieNote,
+      stakesText,
+      ambience,
+      play,
+      coachLine(coach, result, rating, goals),
+    ]
+      .filter(Boolean)
+      .join(" ");
 
   const ctx: Ctx = { coach, mate, rival: match.rivalClub, result, goals, bad, rating, intl: match.competition === "internacional", minutes };
   // Tres reacciones que encajan con cómo ha ido el partido, sorteadas del surtido y sin repetir las
@@ -530,5 +543,12 @@ export function buildFallbackMatchReport(args: {
     description,
     rivalClub: match.rivalClub,
     options,
+    ...(args.debut
+      ? {
+          isMilestone: true,
+          milestoneType: "seleccion",
+          imageScene: `Photorealistic photo of a young footballer celebrating his goal on his national team debut, wearing the ${team} national team kit, arms wide open, packed stadium roaring behind him, tears of joy, no logos or readable text`,
+        }
+      : {}),
   };
 }

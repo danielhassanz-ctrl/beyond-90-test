@@ -49,6 +49,7 @@ import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
 import { maxMediaForAge } from "@/lib/narrative/media-cap";
+import { awardDue, buildAwardEvent, buildConvocatoriaEvent } from "@/lib/narrative/awards";
 import { TROFEO_LABEL, type TrofeoKind } from "@/lib/honours";
 import { firstLegFor } from "@/lib/calendar/match-calendar";
 import { pickNewDecision, pushRecentNew, decisionCloser } from "@/lib/narrative/match-decisions";
@@ -2821,6 +2822,23 @@ function buildDecisionInstruction(decisionRaw?: string): string {
  * vez, la escena de la convocatoria; después la jugada decisiva y la crónica.
  * No avanza el calendario (ids "match-decision-" y "matchday-sel-").
  */
+/** ¿Es el primer partido oficial del jugador con su selección? (partidas anteriores: si ya jugó un torneo o una ventana, no). */
+function isSelDebut(player: Player): boolean {
+  const f = player.flags ?? {};
+  if (f.sel_debut_played) return false;
+  return !Object.keys(f).some((k) => k.startsWith("torneo_started_") || k.startsWith("sel_win_") || k.startsWith("torneo_result_"));
+}
+
+function debutLine(player: Player): string {
+  const keeper = (player.position ?? "").toLowerCase().includes("portero");
+  return keeper
+    ? `- ES TU DEBUT OFICIAL CON ${player.nation}: haces una parada decisiva que la grada recordará. Es un HITO COMPARTIBLE: is_milestone true y image_scene del jugador con la camiseta de ${player.nation} celebrando (sin logos).`
+    : `- ES TU DEBUT OFICIAL CON ${player.nation} Y MARCAS UN GOL (Goles: 1 como mínimo, aunque el equipo pierda): cuéntalo con emoción, el himno, la familia en casa. Es un HITO COMPARTIBLE: is_milestone true y image_scene del jugador celebrando su gol con la camiseta de ${player.nation} (sin logos).`;
+}
+
+const DEBUT_IMAGE = (nation: string) =>
+  `Photorealistic photo of a young footballer celebrating his goal on his national team debut, wearing the ${nation} national team kit, arms wide open, packed stadium roaring behind him, tears of joy, no logos or readable text`;
+
 async function pickSeleccionWindowEvent(
   player: Player,
   history: HistoryItem[],
@@ -2848,7 +2866,9 @@ async function pickSeleccionWindowEvent(
   const result = decideSelResult(player, match.rivalClub);
   const nation = player.nation;
   const verdict = result.win ? "victoria" : result.draw ? "empate" : "derrota";
+  const debut = isSelDebut(player);
   const lines = [
+    ...(debut ? [debutLine(player)] : []),
     `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES: "${result.scoreLine}" en formato ${nation}-${match.rivalClub} (${verdict} de ${nation}).`,
     `- Es un partido de ${plan.label} con la camiseta de ${nation}. Es un partido oficial entre torneos, no una fase final: sin títulos ni eliminatorias. NUNCA nombres el club (${player.club}) como tu equipo en este partido.`,
     `- is_milestone solo si hay un gol o una actuación realmente histórica; si no, false.`,
@@ -2862,10 +2882,13 @@ async function pickSeleccionWindowEvent(
       forcedScoreLine: result.scoreLine,
       team: nation,
       competitionNote: plan.label,
+      debut,
     });
   player.flags[`sel_win_${plan.season}_${plan.idx}`] = true;
+  if (debut) player.flags.sel_debut_played = true;
   return {
     ...event,
+    ...(debut ? { isMilestone: true, milestoneType: "seleccion", imageScene: DEBUT_IMAGE(nation) } : {}),
     id: `matchday-sel-${match.week}-${plan.idx}-${Date.now()}`,
     ownTeam: nation,
     rivalClub: match.rivalClub,
@@ -2891,6 +2914,12 @@ async function pickTorneoEvent(
   if (!progress) {
     const type = shouldStartTorneo(player, weekInSeason, injured);
     if (!type) return null;
+    // Primero la lista de convocados (hito); el torneo arranca en cuanto se resuelve.
+    const seasonT = Math.floor((player.week - 1) / 10);
+    if (!player.flags?.[`conv_${type}_${seasonT}`]) {
+      console.log(`[pickNextEventDynamic] Convocatoria ${type}.`);
+      return buildConvocatoriaEvent(player, type, seasonT);
+    }
     startTorneoProgress(player, type);
     const base = EVENTS.find((e) => e.id === `sel-${type === "copa_america" ? "copa-america" : type}`);
     if (!base) return null;
@@ -2954,6 +2983,8 @@ async function pickTorneoEvent(
       ? `- Este partido es un HITO COMPARTIBLE: is_milestone debe ser true y image_scene una foto realista del jugador con la camiseta de la selección de ${nation} en ${tName} (sin logos ni nombres reales, escena concreta de este partido: ${progress.stage === 0 ? "su debut en el torneo" : adv.finished && !adv.champion ? "la eliminación, con el vestuario roto o consolándose" : result.win && progress.stage === 6 ? "levantando el trofeo" : "un momento clave del partido"}).`
       : `- is_milestone solo si hay un gol o una actuación realmente histórica; si no, false.`,
   );
+  const debutT = progress.stage === 0 && isSelDebut(player);
+  if (debutT) lines.unshift(debutLine(player));
   const styleByKey: Record<string, string> = {
     riesgo: "salió dispuesto a arriesgarlo todo en cada partido",
     cabeza: "juega con la cabeza, priorizando no arriesgar de más",
@@ -2980,7 +3011,12 @@ async function pickTorneoEvent(
     forcedWin: result.kind === "ko" ? result.win : undefined,
     team: nation,
     competitionNote: tName,
+    debut: debutT,
   });
+  if (debutT) {
+    if (!player.flags) player.flags = {};
+    player.flags.sel_debut_played = true;
+  }
 
   if (adv.finished) {
     if (!player.flags) player.flags = {};
@@ -2991,6 +3027,7 @@ async function pickTorneoEvent(
   }
   const torneoEvent: GameEvent = {
     ...event,
+    ...(debutT ? { isMilestone: true, milestoneType: "seleccion", imageScene: DEBUT_IMAGE(nation) } : {}),
     id: `matchday-torneo-${match.week}-${progress.stage}-${Date.now()}`,
     ownTeam: nation,
     rivalClub: match.rivalClub,
@@ -3316,6 +3353,15 @@ export async function pickNextEventDynamic(
   // Liga ganada: la celebración llega en cuanto empieza la temporada siguiente.
   const ligaTitle = pickLigaChampionEvent(playerWithDynamics);
   if (ligaTitle) return ligaTitle;
+
+  // Golden Boy (menores de 21) y Balón de Oro: la gala de invierno, con la lista de diez finalistas.
+  const awardKind = awardDue(playerWithDynamics, weekInSeason);
+  if (awardKind) {
+    const seasonA = Math.floor((playerWithDynamics.week - 1) / 10);
+    if (!playerWithDynamics.flags) playerWithDynamics.flags = {};
+    playerWithDynamics.flags[`award_${awardKind === "golden_boy" ? "gb" : "bo"}_${seasonA}`] = true;
+    return buildAwardEvent(playerWithDynamics, awardKind);
+  }
 
   // Torneo de selecciones (Mundial/Eurocopa/Copa América) al arrancar la
   // temporada de un año de torneo: llega ANTES que la pretemporada, que solo
