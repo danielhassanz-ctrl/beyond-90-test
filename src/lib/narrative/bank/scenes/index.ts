@@ -13,9 +13,14 @@ import { PREMIOS } from "./premios";
 import { CAMBIOS } from "./cambios";
 import { PAREJA } from "./pareja";
 import { RIVALES } from "./rivales";
+import { SURREALISMO } from "./surrealismo";
+import { NEGOCIOS } from "./negocios";
+import { VETERANOS } from "./veteranos";
+import { JUVENTUD } from "./juventud";
+import { AFICION } from "./aficion";
 
 /** Todas las escenas del banco, en un solo sitio. Añadir una familia nueva = importarla aquí. */
-export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS, ...CAMBIOS, ...PAREJA, ...RIVALES];
+export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS, ...CAMBIOS, ...PAREJA, ...RIVALES, ...SURREALISMO, ...NEGOCIOS, ...VETERANOS, ...JUVENTUD, ...AFICION];
 
 /**
  * Banderas que dejan las escenas del banco y que cuentan algo de la historia

@@ -203,7 +203,7 @@ export function pickBankScene(player: Player, usedIds: string[], scenes: BankSce
     const [fam, wk] = e.split(":");
     return { fam, wk: parseInt(wk, 10) || 0 };
   });
-  const recentFams = new Set(famLog.filter((e) => player.week - e.wk < 6).map((e) => e.fam));
+  const recentFams = new Set(famLog.filter((e) => player.week - e.wk < 5).map((e) => e.fam));
 
   let pool = eligibleBankScenes(player, usedIds, scenes);
   if (pool.length === 0) return null;
@@ -212,8 +212,8 @@ export function pickBankScene(player: Player, usedIds: string[], scenes: BankSce
   const noSameFamily = pool.filter((c) => c.chained || (c.scene.family !== lastFamily && !recentFams.has(c.scene.family)));
   if (noSameFamily.length > 0) pool = noSameFamily;
   else if (!anyChained) return null;
-  if (!anyChained && lastWeek > 0 && player.week - lastWeek < 2) return null;
-  if (Math.random() >= (anyChained ? 0.85 : 0.5)) return null;
+  if (!anyChained && lastWeek > 0 && player.week - lastWeek < 1) return null;
+  if (Math.random() >= (anyChained ? 0.9 : 0.8)) return null;
 
   // Los encadenados que ya tocan compiten solo entre sí.
   const chainedPool = pool.filter((c) => c.chained);
