@@ -2984,7 +2984,16 @@ ${stakesInstruction}
 - OBLIGATORIO: cada opción lleva el MISMO cambio de media en consequences (el partido ya ocurrió, no depende de la opción elegida). Nota 8+/gol decisivo → +2 a +5. Nota <6 → -1 a -3. Discreto → 0 a +1.
 - is_milestone true SOLO si fue excepcional (hat-trick, gol decisivo en el descuento, debut soñado, lesión grave) — no en partidos normales. Si true, escribe image_scene específico de esa acción.`;
 
-  const event = await callEventTool(prompt, "partido", `matchday-${match.week}`);
+  // Solo los partidos que de verdad lo merecen gastan IA (final, ronda decisiva,
+  // eliminatoria avanzada, una jugada memorable): el resto se cuenta con la
+  // crónica generada en código. Ver ai-budget.ts.
+  const importantMatch =
+    match.stakes === "decisivo" ||
+    (match.cupRound ?? 0) >= 4 ||
+    (match.euroKoRound ?? 0) >= 3 ||
+    /wondergoal|penalty_conceded|red_card/.test(decisionRaw ?? "") ||
+    (match.competition === "internacional" && /FINAL|SEMIFINAL|campe/i.test(extraInstruction ?? ""));
+  const event = await callEventTool(prompt, "partido", `matchday-${match.week}`, 1, importantMatch ? "high" : "low");
   if (!event) return null;
 
   // No confiar en que la IA respete el rival/competición del prompt: se

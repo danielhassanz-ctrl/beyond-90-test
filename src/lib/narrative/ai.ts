@@ -12,12 +12,14 @@ import {
 } from "@/lib/narrative/secondary-characters";
 import { NarrativeContent } from "@/lib/narrative/narrative-content";
 import { describeKnownCast as describeCast } from "@/lib/narrative/cast";
+import { aiBudgetAllows, priorityFor, recordAiCall, type AiPriority } from "@/lib/narrative/ai-budget";
 import { buildStateBrief, buildLegacyBrief } from "@/lib/narrative/state-brief";
 import { describeAgeWeeks } from "@/lib/narrative/ledger";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { computeRole } from "@/lib/narrative/role";
 
-const MODEL = "claude-sonnet-5";
+// Haiku por defecto: el texto de IA tiene que costar poco por jugador (ver ai-budget.ts). AI_MODEL lo sustituye en pruebas.
+const MODEL = "claude-haiku-4-5-20251001";
 
 /**
  * Genera ideas narrativas para inyectar en prompts según contexto del jugador.
@@ -384,7 +386,13 @@ export async function callEventTool(
   category: EventCategory,
   idPrefix: string,
   attempt = 1,
+  priority?: AiPriority,
 ): Promise<GameEvent | null> {
+  // Sin presupuesto de IA, no se llama: el llamador cae a su alternativa sin IA.
+  if (attempt === 1 && !aiBudgetAllows(priorityFor(idPrefix, priority))) {
+    console.log(`[callEventTool:${idPrefix}] sin presupuesto de IA (${priorityFor(idPrefix, priority)}): se usa la alternativa sin IA`);
+    return null;
+  }
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error(`[callEventTool:${idPrefix}] FATAL: no ANTHROPIC_API_KEY set`);
     return null;
@@ -419,6 +427,7 @@ export async function callEventTool(
       messages: [{ role: "user", content: prompt }],
     });
     console.log(`[callEventTool:${idPrefix}] Claude respondió en ${Date.now() - t0}ms`);
+    recordAiCall();
     // Medición opcional del gasto (scripts de prueba con IA real): TRACK_USAGE=1.
     if (process.env.TRACK_USAGE) {
       const g = globalThis as unknown as { __usage?: { calls: number; input: number; output: number } };
@@ -468,7 +477,7 @@ export async function callEventTool(
       // siempre sale bien, y es mejor que descartar la escena.
       if (attempt < 2) {
         console.error(`[callEventTool:${idPrefix}] opciones mal formadas, reintentando una vez`);
-        return callEventTool(prompt, category, idPrefix, attempt + 1);
+        return callEventTool(prompt, category, idPrefix, attempt + 1, priority);
       }
       console.error(
         `[callEventTool:${idPrefix}] FAIL: incomplete tool input. title=${!!data.title}, description=${!!data.description}, options=${Array.isArray(data.options) ? `array(${data.options.length})` : typeof data.options}`

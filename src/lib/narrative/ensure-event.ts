@@ -33,6 +33,8 @@ import { generateClubOffersEvent } from "@/lib/narrative/ai";
 import { NO_CLUB_YET, pickStartingClubOffers } from "@/lib/constants";
 import { shouldTriggerBusquedaEquipo, buildBusquedaEquipoEvent, hadViralMoment } from "@/lib/narrative/agente-busqueda";
 import { summarizeEffects } from "@/lib/narrative/state-brief";
+import { runWithAiBudget, careerBudgetTotal, currentAiUsed } from "@/lib/narrative/ai-budget";
+import { MODE_TARGET_WEEKS } from "@/types/career";
 
 export const GEN_LOCK_ID = "gen-lock";
 const LOCK_TTL_MS = 90_000;
@@ -76,7 +78,27 @@ async function waitForPendingEvent(supabase: SupabaseClient, playerId: string): 
   return null;
 }
 
+/**
+ * Prepara la escena del turno con el presupuesto de IA de la carrera (ver
+ * ai-budget.ts): las llamadas que gaste quedan anotadas en flags.ai_used.
+ */
 export async function ensureNextEvent(
+  supabase: SupabaseClient,
+  player: Player,
+): Promise<{ event: GameEvent; usedEventIds: string[] }> {
+  const { result } = await runWithAiBudget(
+    {
+      used: parseInt(String(player.flags?.ai_used ?? "0"), 10) || 0,
+      total: careerBudgetTotal(player.mode),
+      week: player.week,
+      targetWeeks: MODE_TARGET_WEEKS[player.mode] ?? 200,
+    },
+    () => ensureNextEventInner(supabase, player),
+  );
+  return result;
+}
+
+async function ensureNextEventInner(
   supabase: SupabaseClient,
   player: Player,
 ): Promise<{ event: GameEvent; usedEventIds: string[] }> {
@@ -252,6 +274,9 @@ export async function ensureNextEvent(
 
     try {
       event = await pickNextEventDynamic(player, historyForAi, usedEventIds);
+      if (!player.flags) player.flags = {};
+      const spent = currentAiUsed();
+      if (spent !== null) player.flags.ai_used = String(spent);
     } catch (err) {
       if (holdsLock) await releaseGenLock(supabase, player.id);
       throw err;

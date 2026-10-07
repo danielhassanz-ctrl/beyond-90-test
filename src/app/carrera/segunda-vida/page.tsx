@@ -13,7 +13,8 @@ import { pickNextEvent, maybeAddFreeText, whatIsAtStake } from "@/lib/narrative/
 import { getSecondLifeEvents } from "@/lib/narrative/segundaVida";
 import { generateSecondLifeEvent, generateSecondLifeThreadPayoff } from "@/lib/narrative/ai";
 import { openThreads, consumeThread, shouldTriggerSecondLifePayoff } from "@/lib/narrative/threads";
-import { SECOND_CAREER_LABELS, CONSEQUENCE_LABELS } from "@/types/career";
+import { runWithAiBudget, SECOND_LIFE_BUDGET } from "@/lib/narrative/ai-budget";
+import { SECOND_CAREER_LABELS, CONSEQUENCE_LABELS, SECOND_LIFE_TARGET_WEEKS } from "@/types/career";
 import { displayName } from "@/types/player";
 import { EventScene } from "@/components/EventScene";
 import { resolveSecondLifeEvent } from "./actions";
@@ -65,33 +66,39 @@ export default async function SegundaVidaPage() {
 
     // Un asunto pendiente de su carrera como futbolista vuelve a cobrarse
     // (hilos abiertos, ver narrative/threads.ts): ahora lo trae su nueva vida.
+    // Con presupuesto de IA propio y pequeño (ai-budget.ts); sin él, escenas escritas a mano.
     const dueThread = openThreads(player.flags)[0];
-    let payoff: Awaited<ReturnType<typeof generateSecondLifeThreadPayoff>> = null;
-    let flagsAfterPayoff: Record<string, string | boolean> | null = null;
-    if (dueThread && shouldTriggerSecondLifePayoff(player)) {
-      payoff = await generateSecondLifeThreadPayoff(player, player.second_career, dueThread, historyForAi);
-      if (payoff) {
-        flagsAfterPayoff = {
-          ...(player.flags ?? {}),
-          hilos: consumeThread(player.flags, dueThread),
-          thread_last_second_week: String(player.second_week),
-        };
-      }
-    }
+    const { result: ai, used: slUsed } = await runWithAiBudget(
+      {
+        used: parseInt(String(player.flags?.ai_used_sl ?? "0"), 10) || 0,
+        total: SECOND_LIFE_BUDGET,
+        week: player.second_week,
+        targetWeeks: SECOND_LIFE_TARGET_WEEKS,
+      },
+      async () => {
+        let payoff: Awaited<ReturnType<typeof generateSecondLifeThreadPayoff>> = null;
+        let consumedThread = false;
+        if (dueThread && shouldTriggerSecondLifePayoff(player)) {
+          payoff = await generateSecondLifeThreadPayoff(player, player.second_career!, dueThread, historyForAi);
+          consumedThread = Boolean(payoff);
+        }
+        const generated = payoff ?? (await generateSecondLifeEvent(player, player.second_career!, historyForAi));
+        return { generated, consumedThread };
+      },
+    );
 
     event = maybeAddFreeText(
-      payoff ??
-      (await generateSecondLifeEvent(player, player.second_career, historyForAi)) ??
-        pickNextEvent(
-          getSecondLifeEvents(player.second_career, player.second_club),
-          player.second_week,
-          usedEventIds,
-        ),
+      ai.generated ??
+        pickNextEvent(getSecondLifeEvents(player.second_career, player.second_club), player.second_week, usedEventIds),
     );
-    await supabase
-      .from("players")
-      .update(flagsAfterPayoff ? { pending_event: event, flags: flagsAfterPayoff } : { pending_event: event })
-      .eq("id", player.id);
+    const flagsAfter: Record<string, string | boolean> = {
+      ...(player.flags ?? {}),
+      ai_used_sl: String(slUsed),
+      ...(ai.consumedThread && dueThread
+        ? { hilos: consumeThread(player.flags, dueThread), thread_last_second_week: String(player.second_week) }
+        : {}),
+    };
+    await supabase.from("players").update({ pending_event: event, flags: flagsAfter }).eq("id", player.id);
   }
 
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
