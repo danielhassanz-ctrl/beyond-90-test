@@ -1,12 +1,5 @@
 import { describeKit } from "@/lib/clubColors";
 
-/**
- * Para poder compartir las fotos en público sin problemas de marca ni de imagen:
- * nada de logos de patrocinadores o marcas reales, ni estadios o carteles reales,
- * y ninguna persona que se parezca a alguien real (presidentes, entrenadores...).
- */
-export const SAFE_IMAGE_CLAUSE =
-  " IMPORTANT: no real sponsor logos or brand names anywhere (kit, boards, ads) — use plain blank shirts and generic unbranded signage; no real stadium names or readable signs; every secondary person (officials, coaches, fans) must be a generic invented person who does not resemble any real public figure.";
 import { describeLook } from "@/lib/playerLook";
 import { getContextualImagePrompt } from "@/lib/narrative/contextual-image-prompts";
 
@@ -129,19 +122,17 @@ export function getMilestoneImagePrompt(
     if (club && prompt.includes("[CLUB_KIT]")) {
       prompt = prompt.replace("[CLUB_KIT]", describeKit(club));
     }
-    return prompt + SAFE_IMAGE_CLAUSE;
+    return prompt;
   }
 
   // 2) Sin ID exacto: mapea el milestoneType a un tipo de escena contextual
   //    real (agente, camiseta, gol, trofeo...), nunca al eventId crudo.
   const mappedType = milestoneType ? MILESTONE_TYPE_TO_CONTEXT_TYPE[milestoneType] : undefined;
   if (mappedType) {
-    return (
-      getContextualImagePrompt(mappedType, safePlayerName, age, {
-        clubName: club || "",
-        agentName: agentName || "su representante",
-      }) + SAFE_IMAGE_CLAUSE
-    );
+    return getContextualImagePrompt(mappedType, safePlayerName, age, {
+      clubName: club || "",
+      agentName: agentName || "su representante",
+    });
   }
 
   // 3) Sin match conocido: deja que el caller use event.imageScene, que la
@@ -165,5 +156,5 @@ export function withSceneGuards(scene: string, opts: { club?: string; age: numbe
         ? `a ${opts.age}-year-old young man with a youthful, clean-shaven or lightly stubbled face, no wrinkles, no grey hair`
         : `a ${opts.age}-year-old man`;
   const kit = opts.club && !opts.nationalTeam ? ` If he wears a football kit, it is: ${describeKit(opts.club)}.` : "";
-  return `${scene} Requirements: the man is ${ageText}.${kit} No readable text anywhere in the image: no scoreboard numbers, no captions, no player names, no banners with words.${SAFE_IMAGE_CLAUSE}`;
+  return `${scene} Requirements: the man is ${ageText}.${kit} No readable text anywhere in the image: no scoreboard numbers, no captions, no player names, no banners with words.`;
 }

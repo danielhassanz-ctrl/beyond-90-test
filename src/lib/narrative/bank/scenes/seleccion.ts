@@ -1,0 +1,172 @@
+/**
+ * La selección: antesala de los grandes torneos (Mundial, Eurocopa, Copa
+ * América), lo que pasa DESPUÉS según cómo acabó el torneo (campeón,
+ * subcampeón, eliminación temprana) y las convocatorias de entre torneos.
+ * Lee el resultado real guardado en las banderas del torneo, así que el
+ * eco coincide con lo que de verdad ocurrió.
+ */
+import { S, o, r, th, after } from "../dsl";
+import type { BankScene } from "../types";
+
+export const SELECCION: BankScene[] = [
+  // ───── Antesala del torneo (últimos turnos de la temporada anterior) ─────
+  S("sel-prelista", "seleccion", { torneoProx: "any", media: [66, 99], minAge: 19, fama: [28, 100] }, "prensa",
+    "La prelista de {nacion}",
+    "El seleccionador ha filtrado una prelista de cuarenta nombres. El tuyo está el treinta y dos, justo debajo de uno que no ha jugado ni un partido este año y encima de un lateral que se lesionó en octubre. En la radio han hecho un debate entero sobre si «mereces» o «no mereces». Tu madre ha encendido una vela. Tu padre ha apagado la radio.",
+    [
+      o("a", "Entrenar con el doble de intensidad en las próximas semanas", "Ganarte el sitio", { forma: 3, media: 1, moral: 2, rel_entrenador: 1 }, "Te presentas a entrenar una hora antes. El míster lo nota y te dice: «Si lo haces por la selección, bien. Pero cuídate». Tres semanas después, la prelista baja a treinta nombres y el tuyo sigue ahí."),
+      o("b", "Ignorar el ruido y dejar que decida el seleccionador", "Cabeza fría", { moral: 1, reputacion: 1 }, "Haces como si nada. Pero el día que sale la lista de treinta, te descubres mirando el móvil cada cinco minutos, con una disciplina que no sabías que tenías."),
+      o("c", "Escribirle un mensaje al seleccionador", "Una jugada arriesgada", { rel_representante: -1, reputacion: -2, moral: 2 }, "Le escribes tres líneas respetuosas. El seleccionador, que nunca contesta, deja el mensaje en visto. Tu agente, al enterarse, se lleva las manos a la cabeza."),
+    ]),
+  S("sel-llamada-seleccionador", "seleccion", { torneoProx: "any", media: [72, 99], minAge: 20, fama: [35, 100] }, "vida",
+    "El seleccionador te llama en persona",
+    "Es una llamada de las que no se improvisan. «¿Tienes un minuto?», te dice el seleccionador con voz de abuelo cariñoso. Te cuenta que está pensando en ti como titular, que te ve en una posición que no sueles jugar, y que quiere que lo hables con tu entrenador. Tras la llamada, te quedas mirando el móvil como si hubiera sido un fantasma.",
+    [
+      o("a", "Decirle que juegas donde haga falta", "Ofrecerte sin condiciones", { rel_entrenador: 1, reputacion: 3, moral: 4, flags: { sel_confianza: true } }, "Le dices que sí, que sin dudar. Se hace un silencio emocionado. «Eso es lo que quería oír», dice. Cuelgas con las piernas temblando y un grito ahogado contra la almohada."),
+      o("b", "Decirle que prefieres tu posición de siempre", "Ser sincero", { reputacion: 1, moral: 1 }, "Se lo explicas con educación. El seleccionador lo entiende con una paciencia de roble. «Lo pensaremos», dice. No suena a que lo vaya a pensar."),
+      o("c", "Pedirle que hable con tu club primero", "Ir con formalidad", { rel_entrenador: 2, reputacion: 2 }, "Le cuentas que lo hables con tu club. Lo hace al día siguiente. Tu entrenador, orgulloso por dentro y distante por fuera, te dice solo: «Ya era hora»."),
+    ]),
+  S("sel-camiseta-nueva", "seleccion", { torneoProx: "any", minAge: 18, fama: [30, 100] }, "vida",
+    "Presentan la camiseta del torneo",
+    "La federación presenta la camiseta del próximo torneo con un acto de luces, música épica y una modelo de pelo larguísimo al que le queda mejor que a ti. El diseñador explica que el estampado del cuello «representa la valentía del país». Tu hermano pequeño dice que parece un mantel. El presidente de la federación te pide que te hagas una foto con ella.",
+    [
+      o("a", "Posar con la camiseta con orgullo y una sonrisa", "Cumplir con el protocolo", { fama: 3, moral: 4, rel_aficion: 2 }, "La foto sale en todas las portadas. Tu madre la imprime y la coloca en el salón junto a tu foto de la comunión. Tu hermano te la manda con un pie: «Mantelito»."),
+      o("b", "Hacer una broma sobre el cuello", "Reírte de ti mismo", { fama: 4, rel_aficion: 3, rel_entrenador: -1 }, "Dices que el cuello da calor y que ojalá ganen con la camiseta de los entrenamientos. El presidente de la federación se ríe con cara rígida. Los aficionados te aman por ello."),
+      o("c", "Declinar la foto y dejarla para otro", "Evitar el circo", { moral: -1, reputacion: 1 }, "Dices que prefieres que la foto la haga el delantero titular. El presidente asiente con tensión, mientras el delantero, desde el fondo, se pone la camiseta con una emoción desbordada."),
+    ]),
+  S("sel-madre-viaje", "seleccion", { torneoProx: "any", minAge: 18, flags: [] }, "vida",
+    "Tu madre quiere ir al torneo",
+    "Te lo suelta una tarde, mientras te prepara la merienda, como quien dice que se va a comprar el pan: «He mirado vuelos para el torneo». Tiene una carpeta, con fotocopias de los hoteles. Nunca ha cogido un avión. Tu padre, desde el sofá, murmura que él no va, que «tiene que cuidar el huerto». Se oye cómo sonríe.",
+    [
+      o("a", "Pagarle el viaje para los dos, con hotel", "El regalo de su vida", { patrimonio: -3500, moral: 8, reputacion: 2 }, "Les pagas el viaje y el hotel. Tu padre, que no iba a ir, aparece en el aeropuerto con una maleta y una gorra de visera con el escudo de la selección. «Por si acaso», dice.", { thread: th("promesa", "tu madre", "Le pagaste su primer viaje en avión para verte jugar un torneo") }),
+      o("b", "Ofrecerte a reservarle una entrada y que ella se organice", "Un gesto práctico", { moral: 4, patrimonio: -300 }, "Le consigues una entrada y le dices que se organice. Ella te sorprende organizando todo con tres primas, dos vecinas y una agencia de viajes de barrio. Viajan en grupo, cantando."),
+      o("c", "Decirle que mejor lo vea por televisión con la familia", "Evitar el lío", { moral: -3 }, "Se lo dices con tacto. Ella asiente, sonríe un poco menos y se pone a cortar tomate. Luego, en la cena, te sirve la ración más pequeña. No dice nada. No hace falta."),
+    ]),
+  S("sel-lesion-paranoia", "seleccion", { torneoProx: "any", media: [70, 99], minAge: 19, roles: ["titular", "rotacion"] }, "entrenamiento",
+    "La paranoia de no lesionarte antes del torneo",
+    "Desde que sabes que estás entre los candidatos, vives con el miedo a lesionarte con un respeto casi religioso. No entras fuerte a una disputa. Evitas bajar escaleras. Hoy has llegado a pedir que te lleven la bandeja del comedor. El fisio te mira con una mezcla de ternura y alarma: «Un esguince no se pilla por mirar una escalera».",
+    [
+      o("a", "Seguir jugando con intensidad, sin pensar en ello", "Confiar en tu cuerpo", { forma: 2, moral: 2, rel_entrenador: 2 }, "Sales a entrenar con la cabeza limpia y te comes el campo. El míster lo nota: «Eso es». A los dos días, la prelista baja y te quedas dentro."),
+      o("b", "Cuidarte con extremo cuidado hasta que se confirme todo", "Prevención total", { forma: -1, moral: 1, rel_entrenador: -1 }, "Entrenas al ochenta por ciento. El míster lo sabe y no dice nada, pero en el siguiente partido te deja en el banquillo «para que descanses»."),
+      o("c", "Hacerte un seguro extra y pagar una revisión médica privada", "Cubrir todos los frentes", { patrimonio: -900, moral: 3, forma: 1 }, "Te haces un chequeo completo en una clínica con paredes de cristal. Sales con un papel que dice «perfecto» y una factura que dice lo contrario."),
+    ]),
+  S("sel-fuera-lista", "seleccion", { torneoProx: "any", media: [62, 76], minAge: 19, fama: [20, 80] }, "prensa",
+    "No estás en la lista final",
+    "Lo ves en la tele, en la cocina de tu casa, mientras te preparas una tostada. El presentador lee los veintiséis nombres con una calma insoportable. El tuyo no aparece. Se queda un hueco en el aire, como cuando una canción termina y no sabes cómo. Tu madre te mira desde la puerta. Tu padre apaga la tele con cuidado, como si estuviera a punto de romperse.",
+    [
+      o("a", "Escribir a los elegidos para desearles suerte", "Dar la talla", { reputacion: 4, moral: 2, rel_vestuario: 2 }, "Mandas veintiséis mensajes cortos. Algunos contestan con un emoji; uno, el portero, con una nota de voz de un minuto que te hace llorar de gratitud.", { thread: th("favor", "el portero de la selección", "Te escribió una nota de voz cuando te quedaste fuera de la lista final") }),
+      o("b", "Entrenar más duro: estarás en la próxima", "Convertir la herida en combustible", { forma: 3, moral: -2, media: 1 }, "Esa tarde entrenas dos horas más. Al final, te sientas en el césped con la botella de agua. Hay estrellas que salen en el cielo con una nitidez impropia de la ciudad."),
+      o("c", "Desconectar un par de días con tu familia", "Pasar página con cariño", { moral: 5, forma: -1 }, "Os vais al pueblo. Tu padre te enseña el huerto con un orgullo que no entiendes. Ves cómo crecen los tomates, que no tienen ni idea de selecciones."),
+    ]),
+  S("sel-apuesta-amigos", "seleccion", { torneoProx: "any", minAge: 18, fama: [25, 100] }, "vida",
+    "Tus amigos montan una porra con tu futuro en la selección",
+    "En el grupo del barrio, Nacho ha lanzado una encuesta: «¿Entra o no entra el crack en la lista?». Hay setenta votos, cuarenta y cuatro a favor y veintiséis que prefieren ver cómo te hundes. Además, hay una quiniela de cuánto tiempo le tocará jugar y de si llorará en el himno. Te la reenvía tu hermano con un «mira lo que dicen».",
+    [
+      o("a", "Votar en contra de ti mismo, por provocar", "Entrar en el juego", { moral: 3, rel_vestuario: 0, fama: 1 }, "Votas «no entra». Nacho te llama en directo, ofendidísimo. Pasáis media hora discutiendo por tu propio voto. «Eres un desagradecido», dice, riéndose."),
+      o("b", "Callar y ver cómo se resuelve", "Dejar que decida el destino", { moral: 1 }, "Lees los comentarios en silencio y los guardas como quien guarda las cartas de amor. La encuesta llega a los trescientos votos. Ganará el sí. Pero no lo sabes aún."),
+      o("c", "Subir tú una encuesta falsa con tu madre como seleccionadora", "Ironía total", { fama: 3, moral: 4, rel_aficion: 2 }, "Publicas: «¿Mi madre como seleccionadora?». Tiene diez mil votos en una hora. Tu madre, al enterarse, te llama furiosa… y emocionada. «Qué barbaridad», dice. Y se ríe."),
+    ]),
+  // ───── Después del torneo, según cómo acabó ─────
+  S("sel-campeon-bus", "seleccion", { torneo: { type: "any", outcomes: ["campeon"] }, minAge: 18 }, "especial",
+    "El autobús descubierto",
+    "Aterrizáis de madrugada y a las diez de la mañana, el autobús de los campeones recorre la ciudad entre dos millones de personas con banderas, bufandas y lágrimas. Alguien te lanza un bocadillo, que coges al vuelo. Otros te pasan niños. En la cabina de enfrente, el capitán, con la copa en brazos, se ha puesto a cantar con voz de tenor.",
+    [
+      o("a", "Subirte al techo y celebrar con todos", "Vivirlo sin filtros", { moral: 10, fama: 8, rel_aficion: 8, forma: -2 }, "Subes a lo más alto del autobús y levantas los brazos. Un mar de gente corea tu nombre. Es el momento más grande de tu vida. Lo sabes ya mientras lo vives, y por eso no quieres que se acabe.", { }),
+      o("b", "Quedarte abajo con tu familia y vivirlo en silencio", "Un momento íntimo", { moral: 9, fama: 4, rel_aficion: 4 }, "Mientras la ciudad grita, tú te sientas al fondo con tus padres y les coges la mano. Tu madre llora sin parar. Tu padre mira la ciudad con una expresión de asombro que ya no verás nunca más."),
+      o("c", "Dar la copa a un niño y fotografiarlo", "Un gesto que se hace viral", { moral: 8, fama: 9, rel_aficion: 9, reputacion: 3 }, "Le pasas la copa a un crío de siete años que no cree lo que ve. El niño la aprieta como si fuera de cristal. La foto da la vuelta al mundo."),
+    ], { isMilestone: true, milestoneType: "carrera", imageScene: "Photorealistic photo of a national football team celebrating on an open-top bus through a city street packed with fans waving flags, confetti, golden afternoon light, joyful and emotional documentary photography, no logos" }),
+  S("sel-campeon-palacio", "seleccion", { torneo: { type: "any", outcomes: ["campeon"] }, after: [after("sel-campeon-bus", undefined, 1, 8)], minAge: 18 }, "especial",
+    "El presidente del Gobierno os recibe",
+    "Os reciben en un salón con lámparas de araña y una moqueta que te traga los zapatos. El presidente os da la mano uno a uno y tú, que has marcado goles en tres continentes, te quedas en blanco cuando te pregunta por tu familia. El protocolo exige una foto de grupo. El fotógrafo grita «¡un poco más cerca!». La copa se tambalea.",
+    [
+      o("a", "Contestar con una broma que le haga reír", "Romper el hielo", { fama: 4, moral: 4, reputacion: 2 }, "Le dices que tu madre quiere que «le arregle el tema de las pensiones». El presidente se ríe y se lo apunta. Tu madre, al enterarse, se muere de vergüenza y orgullo."),
+      o("b", "Responder con respeto y brevedad", "Cumplir el trámite", { reputacion: 3, moral: 2 }, "Contestas con educación y sin florituras. El presidente asiente con una sonrisa cansada. Sales del palacio con una medalla en el bolsillo y el estómago vacío."),
+      o("c", "Aprovechar para pedir apoyo al fútbol base de tu barrio", "Una petición con corazón", { reputacion: 5, rel_aficion: 4, moral: 5 }, "Le hablas del campo de tierra de tu barrio y de lo que costaría ponerle césped. El presidente toma nota. Seis meses después, llega una carta con una subvención para el campo."),
+    ]),
+  S("sel-campeon-pueblo", "seleccion", { torneo: { type: "any", outcomes: ["campeon"] }, minAge: 18 }, "vida",
+    "Tu pueblo te hace hijo predilecto",
+    "La alcaldesa te llama con la voz de quien ha ensayado tres días. «Queremos nombrarte hijo predilecto. Y poner una calle con tu nombre». Hay un acto en la plaza, con orquesta, discursos de los vecinos y una paella para quinientas personas. En la primera fila, tu primera entrenadora, de ochenta años, lleva una pancarta que dice «ÉL JUGABA DE PORTERO». Es mentira. Siempre jugaste de delantero.",
+    [
+      o("a", "Agradecérselo con un discurso improvisado en la plaza", "Hablar con el corazón", { rel_aficion: 6, moral: 9, reputacion: 4, flags: { hijo_predilecto: true } }, "Subes al escenario y dices tres cosas: de dónde vienes, a quién se lo debes y que ojalá algún niño de la plaza juegue en el Mundial. Medio pueblo llora. La otra mitad le pide a la abuela que baje la pancarta."),
+      o("b", "Preferir una ceremonia íntima con la familia", "Hacerlo en privado", { moral: 6, rel_aficion: 2, flags: { hijo_predilecto: true } }, "Te recibe la alcaldesa en el ayuntamiento, con tu familia y cuatro vecinos. Os lleváis el cartel de la calle a casa. Tu padre lo coloca en el garaje, orgulloso."),
+      o("c", "Donar el premio económico al campo de tu infancia", "Un gesto con pie", { patrimonio: -4000, rel_aficion: 8, reputacion: 6, moral: 8, flags: { hijo_predilecto: true } }, "Pones dinero para arreglar el campo. El día de la inauguración, un niño de siete años te pide la camiseta. Se la das. Es la mejor camiseta que has regalado en tu vida."),
+    ]),
+  S("sel-campeon-resaca", "seleccion", { torneo: { type: "any", outcomes: ["campeon"] }, minAge: 18, roles: ["titular", "rotacion"], turn: [2, 5] }, "entrenamiento",
+    "La resaca de ser campeón",
+    "Vuelves al club con el mundo a tus pies y el míster te recibe con una frase: «Hoy no eres campeón de nada. Hoy corres veinte vueltas». Tienes el estómago aún en las nubes, los ojos hinchados de sueño y el móvil sin batería de tanta felicitación. En el campo, tus compañeros te hacen un pasillo y te ovacionan. Luego, el preparador te grita: «¡A correr!».",
+    [
+      o("a", "Correr las veinte vueltas con una sonrisa", "Humildad y orgullo", { forma: 1, rel_entrenador: 4, rel_vestuario: 4, moral: 5 }, "Corres las veinte vueltas sin protestar. A la décima, todo el vestuario corre contigo. A la quince, el míster aparece con una botella de agua y la cara más amable que le has visto."),
+      o("b", "Pedir un día de descanso por agotamiento", "Cuidarte", { rel_entrenador: -2, forma: 2, moral: 1 }, "Le pides con educación un día más. El míster te lo concede con un gruñido que quiere decir «tu primera semana va a ser larga». Lo es."),
+      o("c", "Sacar la copa en el vestuario y compartirla", "Hacer del título un regalo", { rel_vestuario: 6, moral: 7, fama: 2 }, "Traes una réplica de la copa y la pasas de mano en mano. El portero la besa. El lateral se la pone de sombrero. El míster, en la puerta, pone los ojos en blanco y luego sonríe."),
+    ]),
+  S("sel-sub-herida", "seleccion", { torneo: { type: "any", outcomes: ["subcampeon"] }, minAge: 18 }, "especial",
+    "La final que se te escapa",
+    "El árbitro pita el final y el estadio se vuelve negro. Ves a los rivales abrazarse con la copa. Ves a tu portero sentado en el césped, con la cabeza entre las rodillas. Ves a tu padre en la grada, de pie, con las manos en la cara. No sabes cuánto tiempo pasas mirando el cielo. Un joven del cuerpo técnico te toca el hombro: «Hay que ir a recoger las medallas».",
+    [
+      o("a", "Ir y aplaudir a los campeones con dignidad", "Perder con elegancia", { reputacion: 5, moral: -2, rel_aficion: 4 }, "Estrechas la mano a cada rival, uno por uno. Un jugador de ellos, al que no conoces, te susurra al oído: «Jugasteis mejor, pero así es esto». Esa frase no te la quitas de encima en tres semanas."),
+      o("b", "Quedarte en el césped, solo, un buen rato", "Vivir el duelo", { moral: -4, reputacion: 2 }, "Te quedas sentado mucho rato. El utillero se acerca, te deja una toalla sobre los hombros y se queda en silencio a tu lado. Es la mejor compañía que has tenido."),
+      o("c", "Consolar a tus compañeros uno a uno", "Liderar en la derrota", { rel_vestuario: 6, reputacion: 4, moral: -1 }, "Recorres el vestuario con un abrazo para cada uno. A los más jóvenes les dices que «esto se repite». A los más viejos, que «lo habéis dado todo». A ti mismo no te dices nada."),
+    ]),
+  S("sel-sub-aeropuerto", "seleccion", { torneo: { type: "any", outcomes: ["subcampeon", "semifinal"] }, after: [], minAge: 18 }, "prensa",
+    "El aeropuerto tras la derrota",
+    "Aterrizáis y no sabéis qué os espera. Hay cámaras, hay periodistas, hay un grupo de aficionados que no se sabe si vienen a aplaudir o a gritar. Cuando se abren las puertas, suena un cántico: «¡Campeones, campeones!». Dos segundos después, alguien grita «¡Fuera!». Un niño rompe el silencio con un cartel torcido: «Gracias por llegar tan lejos».",
+    [
+      o("a", "Parar a firmar autógrafos con todos, también con los que gritan", "Dar la cara", { rel_aficion: 6, reputacion: 4, moral: 2 }, "Firmas un balón, un cartel, una bufanda y una servilleta. Uno de los que gritaban te mira con un poco de vergüenza y te pide una foto. «Perdona», murmura."),
+      o("b", "Salir directo al coche, sin pararte", "Evitar el trago", { moral: -2, rel_aficion: -2 }, "Sales sin mirar a nadie. Dentro del coche, te das cuenta de que te tiemblan las manos. En el espejo, ves al niño del cartel guardándoselo bajo el brazo, sin haberte visto."),
+      o("c", "Responder al niño con un abrazo y la camiseta", "Un gesto que lo cambia todo", { moral: 5, rel_aficion: 8, fama: 3 }, "Te agachas, abrazas al niño y le das la camiseta. La foto aparece en todos los medios con el título «Los campeones de verdad». Sonríes, aunque duele."),
+    ]),
+  S("sel-eliminado-penalti", "seleccion", { torneo: { type: "any", outcomes: ["octavos", "cuartos", "semifinal"] }, minAge: 18 }, "especial",
+    "El compañero que falló el penalti",
+    "Lo ves sentado en el último asiento del autobús, con la cabeza gacha y la camiseta aún puesta. Ha fallado el penalti decisivo de una tanda que os ha dejado fuera. Nadie le habla. Los periodistas ya hablan del «villano». Un compañero te susurra al pasar: «Déjalo. Que lo piense». Pero a ti te cuesta dejarlo.",
+    [
+      o("a", "Sentarte a su lado sin decir nada", "Acompañar en silencio", { rel_vestuario: 6, moral: 3, reputacion: 3 }, "Te sientas junto a él y miras por la ventana. No habláis. A media hora, él te da una palmada seca en la rodilla. Es lo más parecido a un «gracias».", { thread: th("favor", "el compañero del penalti", "Te sentaste a su lado en el autobús tras fallar el penalti decisivo") }),
+      o("b", "Contarle que tú también has fallado alguno decisivo", "Compartir tu historia", { rel_vestuario: 5, moral: 2, reputacion: 2 }, "Le cuentas la vez que fallaste un penalti con los quince años y tu padre no te habló en dos días. Él te mira con los ojos muy abiertos: «¿En serio?». «En serio.» Se ríe, por primera vez desde el partido."),
+      o("c", "Dejarlo tranquilo, como te pidieron", "Respetar su espacio", { rel_vestuario: 1, moral: 0 }, "Dejas el asiento libre. Al llegar al hotel, le ves salir solo, hacia el jardín, con las manos en los bolsillos. No sabes si has hecho bien."),
+    ]),
+  S("sel-eliminado-tertulia", "seleccion", { torneo: { type: "any", outcomes: ["fase_de_grupos", "octavos", "cuartos"] }, minAge: 18, fama: [30, 100] }, "prensa",
+    "Te señalan en las tertulias",
+    "Cada mañana, una tertulia distinta te dedica doce minutos de análisis. Un exjugador dice que «le faltó carácter». Un periodista, que «ya no es lo que era». Otro, que «el problema no es él, pero tampoco es la solución». Tu madre ha prohibido la radio en casa. Tu padre la tiene en el garaje, a bajo volumen, para saber qué dicen.",
+    [
+      o("a", "Responder en rueda de prensa con serenidad", "Dar la cara con calma", { reputacion: 4, rel_aficion: 3, fama: 2 }, "Hablas diez minutos sin una palabra de más. Alguien, desde el fondo, dice «bien dicho». Al día siguiente, el titular es «El crack responde con clase»."),
+      o("b", "No hablar: ya hablarás en el campo", "Silencio de acero", { forma: 1, moral: -2, reputacion: 1 }, "No das ninguna entrevista. En el siguiente partido de club, haces el mejor encuentro de tu temporada. Las tertulias lo olvidan en una mañana."),
+      o("c", "Contestar con una frase irónica en redes", "Un dardo bien dirigido", { fama: 4, rel_aficion: -1, moral: 2 }, "Subes una frase con doble sentido que va directamente a uno de los tertulianos. Le salen tres columnas respondiendo. Tu agente te pide que no lo repitas."),
+    ]),
+  S("sel-grupos-avion", "seleccion", { torneo: { type: "any", outcomes: ["fase_de_grupos"] }, minAge: 18 }, "especial",
+    "El avión de vuelta tras caer en la fase de grupos",
+    "Nadie habla en el avión. Los auxiliares de vuelo caminan de puntillas, como en un velatorio. El seleccionador mira el suelo. El portero se ha puesto auriculares y mira por la ventana. Al aterrizar, habrá cámaras, preguntas y gente que ha viajado hasta el aeropuerto para gritarte. Tú solo quieres llegar a casa y dormir doce horas.",
+    [
+      o("a", "Levantarte y decir unas palabras al grupo", "Un último abrazo colectivo", { rel_vestuario: 7, reputacion: 3, moral: 1 }, "Te levantas y dices tres frases torpes: que lo habéis dado todo, que esto os va a hacer más fuertes, que hay que volver. El avión se queda en silencio. Después, el capitán te da un abrazo con los ojos hinchados."),
+      o("b", "Dormir en el asiento hasta aterrizar", "Escapar un rato", { moral: 2, forma: 2 }, "Duermes cuatro horas seguidas. Al despertar, la cara de tu compañero de al lado te dice que no ha pegado ojo. Le ofreces tu botella de agua y te devuelve una sonrisa vacía."),
+      o("c", "Escribir una carta a la afición durante el vuelo", "Dar explicaciones con humildad", { reputacion: 5, rel_aficion: 5, moral: -1 }, "La escribes a mano, en una servilleta de papel. Al aterrizar, la lees en un vídeo corto. Es la primera vez que alguien en el país recuerda una carta de una fase de grupos."),
+    ]),
+  S("sel-grupos-portada", "seleccion", { torneo: { type: "any", outcomes: ["fase_de_grupos", "octavos"] }, minAge: 18, fama: [35, 100] }, "prensa",
+    "La portada que te destroza",
+    "En el quiosco de la esquina hay una portada con tu cara en blanco y negro y un titular feroz: «ADIÓS, LEYENDA». Una foto tuya, cabizbajo, con los brazos en jarras, bajo una luz de funeral. El quiosquero, que siempre te saluda, hoy se hace el distraído. Tu hermana te la manda con un solo mensaje: «No la leas».",
+    [
+      o("a", "Comprarla y leerla entera, con calma", "Enfrentarte a la crítica", { reputacion: 3, moral: -2, forma: 1 }, "La lees de arriba abajo. Hay partes injustas, partes ciertas y una frase que te marca. La pegas en tu taquilla del club: «Para que me acuerde»."),
+      o("b", "Ignorarla y llamar a tu familia", "Proteger tu cabeza", { moral: 3, forma: 1 }, "Llamas a tu madre y te pasas una hora hablando de cosas pequeñas: la lavadora, el vecino, el huerto. Cuando cuelgas, la portada te parece más pequeña."),
+      o("c", "Responder con una frase en redes: «Volveré»", "Una promesa pública", { fama: 3, rel_aficion: 3, moral: 2, reputacion: 1 }, "Escribes cuatro palabras y la gente las coge como un lema. Durante la siguiente temporada, cada vez que haces un buen partido, el titular es: «Cumpliendo lo prometido»."),
+    ]),
+  S("sel-recuerdo-torneo", "seleccion", { after: [after("sel-campeon-bus", undefined, 80, 320)], minAge: 30 }, "vida",
+    "Un niño te pregunta por el torneo",
+    "Estás firmando camisetas en un acto del club cuando un niño de ocho años, con gafas gigantes, te pregunta con total seriedad: «¿Es verdad que ganaste el Mundial?». Tú le dices que sí, que fue hace mucho. El niño frunce el ceño. «Mi abuelo dice que fue un gol en el último minuto». «Eso no fue así», le dices. «Fue más raro, más largo y más bonito».",
+    [
+      o("a", "Sentarte con él y contarle cómo fue de verdad", "Compartir la historia", { moral: 8, rel_aficion: 4, reputacion: 3 }, "Te sientas en un banco con el niño y le cuentas el torneo desde el primer partido: el nervio, los hoteles, el miedo, la alegría. El crío te escucha con la boca abierta. Al final, te pide un autógrafo en la gafa."),
+      o("b", "Firmarle la camiseta y decirle que lo importante es jugar", "Un consejo sencillo", { moral: 4, rel_aficion: 3 }, "Le firmas la camiseta y le dices que lo que importa es jugar con ganas. El niño te escucha con poco entusiasmo: «Sí, pero ¿cuánto gol metiste?». Te ríes tanto que lloras un poco."),
+    ]),
+  S("sel-amistoso-convocatoria", "seleccion", { media: [68, 99], minAge: 19, fama: [28, 100], notFlags: ["sel_debut"] }, "vida",
+    "La primera convocatoria con la absoluta",
+    "El sobre llega a tu casa, con el escudo de la federación. Dentro, una carta con tu nombre y una frase: «Nos gustaría que te unieras a la concentración». Tu madre grita en la cocina, tu padre se pone la chaqueta buena y tu hermano pequeño sale a la calle a contárselo al vecino. El club te da permiso con una sonrisa que no engaña a nadie.",
+    [
+      o("a", "Aceptar con una carta de agradecimiento escrita a mano", "Hacerlo con cuidado", { moral: 9, reputacion: 4, rel_aficion: 3, flags: { sel_debut: true } }, "Escribes tres folios al seleccionador. Él los guarda en una carpeta que, años después, te enseñará con una sonrisa. En la concentración, ya te conoce de antes."),
+      o("b", "Aceptar con humor: «Dile al seleccionador que ya era hora»", "Hacer reír", { fama: 3, rel_aficion: 4, moral: 6, flags: { sel_debut: true } }, "Se lo cuenta a los periodistas. La frase corre como la pólvora. El seleccionador, cuando te ve, finge una mirada severa: «Así que ya era hora». Se ríe."),
+      o("c", "Pedir unos días para pensarlo con tu familia", "Ir despacio", { moral: 3, reputacion: 1, flags: { sel_debut: true } }, "Pides dos días. El seleccionador te los concede con un asentimiento. Esa noche, en la cena, tu padre pregunta con voz grave: «¿Y qué hay que pensar?»."),
+    ], { isMilestone: true, milestoneType: "carrera", imageScene: "Photorealistic photo of a young footballer in a living room opening a official federation letter, his family around him, mother with hands over mouth in joy, warm domestic light, emotional documentary style, no logos" }),
+  S("sel-himno-primera", "seleccion", { flags: ["sel_debut"], media: [66, 99], minAge: 19, notFlags: ["sel_himno"] }, "partido",
+    "Tu primer himno con la selección",
+    "Suena el himno y el estadio entero lo canta a todo pulmón. Tienes la mano en el pecho y, en mitad del segundo estribillo, te das cuenta de que te tiembla la voz. Piensas en el patio del colegio. Piensas en tu abuelo. Piensas en tu primer balón desinflado. A tu lado, un veterano te da un codazo suave: «Respira».",
+    [
+      o("a", "Cantarlo con todas tus fuerzas, aunque se te quiebre", "Entregarte al momento", { moral: 8, rel_aficion: 4, fama: 3, flags: { sel_himno: true } }, "Cantas más alto de lo que has cantado nunca. Se te quiebra la voz. La cámara te enfoca. Cuando acabas, el veterano te dice: «Esa es la mejor versión que he oído»."),
+      o("b", "Cerrar los ojos y pensar en quienes te trajeron hasta aquí", "Un momento íntimo", { moral: 7, reputacion: 2, flags: { sel_himno: true } }, "Cierras los ojos y ves a tu madre con la caja de zapatos, a tu padre en el autobús de línea, a Nacho en la pizzería. Cuando los abres, los ojos te escuecen."),
+    ]),
+]; 
