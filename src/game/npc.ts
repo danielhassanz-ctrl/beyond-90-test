@@ -223,7 +223,14 @@ export function ensureCast(s: GameState): CareerCast {
 
   rotateClubScopeIfNeeded(s, cast);
   const openingAdviserChoice = s.flags["opening_adviser_choice"];
-  if (openingAdviserChoice === 2) {
+  if (openingAdviserChoice === 1) {
+    cast.adviserKind = "agent";
+    if (cast.adviser.name === "Papá" || cast.adviser.name === "Álex Romero") {
+      cast.adviser.name = typeof s.agent.name === "string" && s.agent.name && s.agent.name !== "Papá" && s.agent.name !== "Álex Romero" ? s.agent.name : nameFor(s, "career-adviser");
+    }
+    cast.adviser.role = adviserRole("agent");
+    s.agent.commission = Math.max(7, s.agent.commission || 8);
+  } else if (openingAdviserChoice === 2) {
     cast.adviserKind = "father";
     cast.adviser.name = "Papá";
     cast.adviser.role = adviserRole("father");
