@@ -55,9 +55,11 @@ import { ROLES } from "./roles";
 import { PAREJA3 } from "./pareja3";
 import { RIVALES2 } from "./rivales2";
 import { HUMOR5 } from "./humor5";
+import { TORNEOS3 } from "./torneos3";
+import { MERCADO4 } from "./mercado4";
 
 /** Todas las escenas del banco, en un solo sitio. Añadir una familia nueva = importarla aquí. */
-export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS, ...CAMBIOS, ...PAREJA, ...RIVALES, ...SURREALISMO, ...NEGOCIOS, ...VETERANOS, ...JUVENTUD, ...AFICION, ...VESTUARIO2, ...REDES, ...FAMILIA, ...LESIONES, ...SELECCION2, ...MISTER2, ...SUELTAS2, ...MERCADO2, ...TORNEOS2, ...DIA_A_DIA, ...SURREALISMO2, ...HUMOR3, ...EMOCION, ...CANTERA2, ...PAREJA2, ...PRENSA3, ...EUROPA, ...CLUB2, ...VESTUARIO3, ...BARRIO2, ...SALUD, ...LUJO, ...MENTALIDAD, ...CUERPO_TECNICO, ...SELECCION3, ...AFICION3, ...CIUDAD, ...HUMOR4, ...EXTRANJERO, ...FICHAJES_VIDA, ...FAMILIA2, ...VERANO, ...VETERANO2, ...ROLES, ...PAREJA3, ...RIVALES2, ...HUMOR5];
+export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS, ...CAMBIOS, ...PAREJA, ...RIVALES, ...SURREALISMO, ...NEGOCIOS, ...VETERANOS, ...JUVENTUD, ...AFICION, ...VESTUARIO2, ...REDES, ...FAMILIA, ...LESIONES, ...SELECCION2, ...MISTER2, ...SUELTAS2, ...MERCADO2, ...TORNEOS2, ...DIA_A_DIA, ...SURREALISMO2, ...HUMOR3, ...EMOCION, ...CANTERA2, ...PAREJA2, ...PRENSA3, ...EUROPA, ...CLUB2, ...VESTUARIO3, ...BARRIO2, ...SALUD, ...LUJO, ...MENTALIDAD, ...CUERPO_TECNICO, ...SELECCION3, ...AFICION3, ...CIUDAD, ...HUMOR4, ...EXTRANJERO, ...FICHAJES_VIDA, ...FAMILIA2, ...VERANO, ...VETERANO2, ...ROLES, ...PAREJA3, ...RIVALES2, ...HUMOR5, ...TORNEOS3, ...MERCADO4];
 
 /**
  * Banderas que dejan las escenas del banco y que cuentan algo de la historia
