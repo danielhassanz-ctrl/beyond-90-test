@@ -1,0 +1,87 @@
+/**
+ * Lo que viene después de tener pareja: pedir matrimonio, la boda, la luna de miel, la noticia de
+ * que serás padre o madre, el primer paso del niño, la ex que reaparece y la segunda oportunidad.
+ * Todo depende de la bandera "pareja", y varias escenas dejan "hijos" para el resto de la carrera.
+ */
+import { S, o, r, after } from "../dsl";
+import type { BankScene } from "../types";
+
+export const PAREJA2: BankScene[] = [
+  S("p2-anillo", "pareja", { flags: ["pareja"], minAge: 21, patrimonio: [6000, 100000000], clubTurns: [4, 400], notFlags: ["p2_anillo", "convivencia_rota"] }, "vida",
+    "Llevas un anillo en el bolsillo y no encuentras el momento",
+    "Está en una cajita de terciopelo, escondida en el fondo de tu bolsa de deporte, entre las espinilleras y un calcetín. Llevas tres semanas buscando el instante perfecto: una cena, un viaje, un atardecer. Cada vez que parece llegar, algo falla: un mensaje del club, una llamada de tu agente, una cola en el restaurante. {pareja}, mientras tanto, empieza a sospechar por tu forma de mirar el bolsillo.",
+    [
+      r("a", "Pedírselo en casa, sin ceremonias, un martes cualquiera", "Lo sencillo", 0.7, "Lo dices con voz temblorosa, de pie en la cocina, con el delantal puesto. {pareja} se tapa la boca con las dos manos, llora, ríe, y dice que sí antes de que acabes la frase. El anillo le queda grande. Lo arreglaréis mañana.", { moral: 12, rel_aficion: 3, reputacion: 3, flags: { p2_anillo: "si", prometidos: true } }, "Se lo pides y {pareja} se queda callada un segundo eterno. «Necesito pensarlo», dice, con los ojos húmedos. No es un no, pero tampoco un sí. El anillo vuelve al fondo de la bolsa. Esa noche, no duerme ninguno.", { moral: -6, flags: { p2_anillo: "pienso" } }, "moral"),
+      o("b", "Organizar algo grande: un viaje sorpresa con los suyos", "Hacerlo inolvidable", { patrimonio: -2500, moral: 11, rel_aficion: 4, fama: 2, flags: { p2_anillo: "viaje", prometidos: true } }, "Llevas a {pareja} a un pueblo con vistas, con toda su familia escondida detrás de una puerta. Cuando abre los ojos y ve el anillo, un coro de voces grita «¡Sí!» por ella. Es el mejor momento de tu vida, y la foto sale en todas partes."),
+      o("c", "Esperar a un momento mejor y seguir con el anillo escondido", "Aplazar", { moral: -1, flags: { p2_anillo: "luego" } }, "Pasan los meses. Un día, {pareja} encuentra la caja mientras busca unas llaves. Se hace un silencio en el pasillo. «¿Para cuándo era?», pregunta con una media sonrisa. Te quedas sin respuesta. Y, por primera vez, no te hace falta."),
+    ]),
+  S("p2-boda", "pareja", { after: [after("p2-anillo", undefined, 6, 40)], flags: ["prometidos"], minAge: 22 }, "especial",
+    "El día de la boda, con trescientos invitados y un caos adorable",
+    "La iglesia está llena de flores, de risas y de un montón de familiares que no veías desde hace años. Tu madre llora en primera fila con un pañuelo bordado, tu padre, con el traje alquilado, ensaya el brazo para entrar con la novia. Tus compañeros, todos juntos, parecen una orquesta de futbolistas de gala. Y tú, en el altar, sientes que las piernas son de gelatina. La música empieza.",
+    [
+      o("a", "Decir tus votos con tus propias palabras, mirándole a los ojos", "Hablar con el corazón", { moral: 15, reputacion: 5, rel_aficion: 4, rel_vestuario: 4, flags: { casados: true, convivencia: true } }, "No has escrito nada. Hablas de la primera vez que os visteis, del día que casi te abandonó por un partido, de las veces que ha secado tus lágrimas. La iglesia llora. {pareja} sonríe con la cara llena de lágrimas y dice «sí» antes de que acabes la pregunta."),
+      o("b", "Salir corriendo de la iglesia a media ceremonia por los nervios y volver a los diez minutos", "Dar un susto", { moral: 8, fama: 3, rel_aficion: 2, flags: { casados: true, convivencia: true } }, "Respiras aire fresco en la acera, con un tío que te pone un vaso de agua en la mano. Vuelves. {pareja}, con una ceja levantada, dice en voz baja: «Esto lo contarán en la boda de nuestros nietos». Os casáis, entre risas y aplausos."),
+      o("c", "Dejar que el capitán dé el discurso por ti", "Delegar el momento", { moral: 10, rel_vestuario: 5, flags: { casados: true, convivencia: true } }, "El capitán, con la copa en alto, cuenta anécdotas que te hacen ruborizar. Los invitados ríen. Cuando termina, dices «gracias» con la voz quebrada. {pareja} te agarra de la mano bajo la mesa. Esa noche, bailáis hasta las cinco."),
+    ], { isMilestone: true, milestoneType: "carrera", imageScene: "Photorealistic photo of a footballer in a dark wedding suit kissing his bride at a church entrance, guests throwing rice and petals, teammates in suits cheering behind, golden afternoon light, emotional joy, no logos or readable text" }),
+  S("p2-luna-miel", "pareja", { after: [after("p2-boda", undefined, 1, 8)], flags: ["casados"], patrimonio: [3000, 100000000] }, "vida",
+    "La luna de miel, con una llamada del club en plena playa",
+    "Es una isla con arena blanca, un agua del color de los sueños y una cabaña con un hamaca. Llevas tres días sin mirar el móvil. Al cuarto, mientras tomas un cóctel con una sombrilla en la mano, suena el teléfono. Es tu agente. «Perdona la molestia —dice—, pero el club necesita saber algo urgente. ¿Estás sentado?». {pareja}, a tu lado, te mira con una ceja levantada.",
+    [
+      o("a", "Contestar con calma y decir que no se puede hablar de trabajo hoy", "Poner un límite", { moral: 8, rel_representante: -1, reputacion: 3, flags: { p2_luna: "limite" } }, "Dices con una sonrisa que estás de luna de miel y que cualquier cosa tendrá que esperar. Tu agente se ríe: «Dile a {pareja} que esto lo celebro yo». Cuelgas. La llamada urgente, por cierto, era sobre un anuncio de colonias."),
+      o("b", "Salir a la playa a hablar un momento y volver rápido", "Cuidar los dos mundos", { moral: 3, rel_representante: 2, flags: { p2_luna: "rapido" } }, "Son cinco minutos, con el pie en la arena. Cuando vuelves, {pareja} te mira sin decir nada. «Eso son cinco minutos menos de luna de miel», murmura. Lo compensas con una cena de gala."),
+      o("c", "Apagar el teléfono y lanzarlo al agua", "Desconexión total", { moral: 10, patrimonio: -300, rel_representante: -3, flags: { p2_luna: "agua" } }, "Lo lanzas con ganas. Salpica. Un pez, curioso, se acerca a mirarlo. {pareja} se parte de risa. Durante una semana, el mundo, y el fútbol con él, se quedan sin ti. Es el mejor regalo de bodas que os hacéis."),
+    ]),
+  S("p2-embarazo", "pareja", { flags: ["pareja"], minAge: 21, clubTurns: [4, 400], notFlags: ["hijos", "p2_embarazo"] }, "vida",
+    "{pareja} te enseña una prueba de embarazo en la cocina, sin decir nada",
+    "No hay frases ni preámbulos. Llegas de entrenar, dejas la bolsa en la entrada y, al entrar en la cocina, {pareja} está de pie, apoyada en la encimera, con algo pequeño en la mano. Te lo enseña sin decir una palabra. Dos rayitas. El grifo gotea, el frigorífico zumba, y por la ventana se cuela el ruido de unos niños jugando. Tú te quedas mirando la prueba un buen rato.",
+    [
+      o("a", "Abrazarla con los ojos llenos de lágrimas", "Alegría pura", { moral: 12, rel_vestuario: 2, flags: { p2_embarazo: "alegria", embarazo: true } }, "No dices nada. La abrazas y os quedáis así, de pie en la cocina, durante un buen rato. «¿Estás contento?», pregunta ella con una voz pequeña. «Estoy aterrado y feliz», respondes. Y es la verdad más pura que has dicho nunca."),
+      o("b", "Quedarte sin palabras y sentarte en el suelo", "Asimilarlo", { moral: 7, flags: { p2_embarazo: "asimilo", embarazo: true } }, "Te deslizas por la pared hasta quedarte sentado en el suelo. {pareja} se agacha, te toma la cara con las manos y dice: «Respira». Tardas diez minutos en hablar. Cuando lo haces, es para decir: «Vamos a necesitar una cuna»."),
+      o("c", "Preguntar enseguida cómo afectará a vuestra vida y planificar", "Pensar en todo", { moral: 4, rel_representante: 1, flags: { p2_embarazo: "planifico", embarazo: true } }, "Empiezas a hablar de fechas, de colegios, de la casa. {pareja}, tras un rato, te interrumpe: «Para. Respira. Primero, sentirlo». Y tiene razón. Esa noche, en la cama, os quedáis hablando de nombres hasta el amanecer."),
+    ]),
+  S("p2-nacimiento", "pareja", { after: [after("p2-embarazo", undefined, 6, 14)], flags: ["embarazo"] }, "especial",
+    "El día que nace tu hijo, con un partido pendiente",
+    "Son las cuatro de la madrugada cuando suena el teléfono. {pareja} está de parto y tú, a doscientos kilómetros, con el equipo en un hotel de concentración. El míster, que ya está levantado, te ve entrar en el pasillo con la bolsa en la mano. No pregunta nada. Solo dice: «Ve». Tardas siete horas en llegar. Cuando entras en la sala, hay un llanto que no habías oído nunca.",
+    [
+      o("a", "Coger a tu hijo en brazos y quedarte con él sin mirar el reloj", "Estar ahí", { moral: 15, rel_entrenador: 4, reputacion: 6, rel_aficion: 4, flags: { hijos: true, embarazo: "" } }, "Lo sostienes y te quedas sin aliento. Es pequeño, caliente, con unos ojos enormes. «Hola», dices. Él te mira. Todo el miedo, toda la presión, el fútbol entero se queda fuera de la sala. {pareja} te sonríe, agotada y feliz. Será el mejor día de tu vida."),
+      o("b", "Llamar al míster desde la sala para darle la noticia", "Compartirlo con el equipo", { moral: 12, rel_vestuario: 6, rel_entrenador: 3, flags: { hijos: true, embarazo: "" } }, "El míster contesta al primer tono. «Enhorabuena, papá —dice—. Mañana, si quieres, no vienes». Se lo cuentas al grupo con un vídeo desde la sala. El vestuario enloquece. Alguien manda una cuna desde un hotel de la concentración."),
+    ], { isMilestone: true, milestoneType: "carrera", imageScene: "Photorealistic photo of a young footballer holding his newborn baby wrapped in a blanket in a hospital room, tears of joy, soft morning light, his partner smiling in the bed behind, no logos or readable text" }),
+  S("p2-noches", "pareja", { flags: ["hijos"], minAge: 22, clubTurns: [2, 400], notFlags: ["p2_noches"] }, "vida",
+    "Llevas tres semanas sin dormir más de cuatro horas seguidas",
+    "El bebé tiene un reloj interno que no conoce el calendario de partidos. Llora a las tres, a las cinco, a las siete. {pareja} y tú os turnáis con una sincronización de relevistas. En el entrenamiento, el míster te mira con lástima. En el campo, tus piernas pesan el doble. Un compañero te pasa un café con una sonrisa cómplice: «Padre primerizo, ¿eh? Te esperan diez años de esto».",
+    [
+      o("a", "Pedirle al club un día libre entre semana para recuperarte", "Cuidarte", { rel_entrenador: -1, forma: 3, moral: 4, flags: { p2_noches: "pido" } }, "El míster te mira, resopla y dice: «Tienes un día». Duermes diez horas seguidas. Al despertar, tienes una nota de {pareja}: «Te quiero. Y el niño, también». Son las mejores frases del año."),
+      o("b", "Seguir con el ritmo y confiar en tu resistencia", "Aguantar", { forma: -3, moral: -2, rel_entrenador: 2, flags: { p2_noches: "aguanto" } }, "Entrenas con ojeras de pirata. El domingo, rindes peor. El fisio te mira con preocupación. «Tienes que dormir», dice. Pero hay una cuna, y un llanto, y una persona a la que quieres más que a nada."),
+      o("c", "Contratar a una persona de confianza para que os ayude unas semanas", "Pedir ayuda", { patrimonio: -900, forma: 2, moral: 5, flags: { p2_noches: "ayuda" } }, "Llega una señora con delantal y una paciencia infinita. En tres días, el niño duerme seis horas seguidas. {pareja} te abraza con lágrimas. «Nos has salvado», dice. A veces, la mejor decisión es la más sencilla."),
+    ]),
+  S("p2-primer-paso", "pareja", { after: [after("p2-nacimiento", undefined, 10, 60)], flags: ["hijos"], minAge: 23 }, "vida",
+    "Tu hijo da su primer paso justo cuando sales por la puerta",
+    "Ibas con prisa: un entrenamiento, un desplazamiento, una rueda de prensa. Llevabas la bolsa en el hombro y las llaves en la mano. De repente, oyes un sonido: unos pasitos torpes. Te giras y ves a tu hijo, agarrado a una silla, soltándose y dando un paso. Dos. Tres. Cae sentado, ríe y levanta los brazos. {pareja}, en el sofá, te mira con las lágrimas a punto de caer.",
+    [
+      o("a", "Soltar la bolsa y quedarte con él, aunque llegues tarde", "Lo primero, lo primero", { moral: 12, rel_entrenador: -2, reputacion: 3, flags: { p2_primer_paso: "quedo" } }, "Te agachas y le abres los brazos. Da otros tres pasos. Y te caes de rodillas contigo, abrazándole. Llegas treinta minutos tarde al entrenamiento. El míster, cuando se lo cuentas, no dice nada. Solo te pone una mano en el hombro."),
+      o("b", "Grabarlo con el móvil y ya", "Guardarlo", { moral: 8, flags: { p2_primer_paso: "video" } }, "Lo grabas. Será el vídeo que más veces repetirás en tu vida. Luego, con el niño en brazos, sales por la puerta. En el coche, lo ves otra vez, con una sonrisa que no puedes explicar."),
+    ]),
+  S("p2-ex-aparece", "pareja", { flags: ["ex_pareja"], minAge: 20, fama: [35, 100], notFlags: ["p2_ex"] }, "prensa",
+    "Tu ex da una entrevista hablando de ti",
+    "Una revista del corazón publica un reportaje de seis páginas con un titular grande: «Lo que nunca dije de él». Tu ex, con una sonrisa dulce, cuenta anécdotas, medias verdades y alguna cosa que no es tuya. Todo con una elegancia sospechosa. Tu agente te manda la portada con un solo mensaje: «¿Respondes o lo dejamos pasar?». Tienes treinta llamadas perdidas.",
+    [
+      o("a", "No responder y concentrarte en tu vida", "Elevar el tono", { reputacion: 5, moral: -1, flags: { p2_ex: "silencio" } }, "No dices nada. La entrevista se olvida a las dos semanas. En el siguiente partido, la grada te canta una frase cariñosa. Un compañero te dice: «Gracias por no entrar al trapo». Tu agente te manda un emoji."),
+      o("b", "Escribir una frase educada y firme en redes", "Poner las cosas en su sitio", { reputacion: 3, fama: 2, moral: 1, flags: { p2_ex: "frase" } }, "«Le deseo lo mejor y ya está», escribes. La frase se hace viral por su elegancia. Tu ex, al verla, te manda un mensaje privado: «Gracias por no machacarme». Os dais un último adiós digital."),
+      o("c", "Contraatacar con tu versión de los hechos", "Dar guerra", { fama: 5, rel_aficion: 1, reputacion: -4, moral: -3, flags: { p2_ex: "guerra" } }, "Das una entrevista y cuentas tu versión. La prensa se frota las manos. Durante tres semanas, tu relación es el tema de moda. Tu madre, por teléfono, te dice: «Hijo, cuando uno tiene razón, no necesita gritarla»."),
+    ]),
+  S("p2-nueva-oportunidad", "pareja", { after: [after("pa-ex-duelo", undefined, 20, 140)], notFlags: ["pareja"], minAge: 20 }, "vida",
+    "Conoces a alguien en un lugar en el que no esperabas conocer a nadie",
+    "Fue en una librería, buscando un regalo para tu madre. Una persona, al otro lado de la estantería, comenta en voz baja: «Ese libro está mejor que la película». Te giras. Hay una sonrisa, un par de ojos curiosos, y un silencio que dura dos segundos de más. Le preguntas qué más le ha gustado últimamente. Os sentáis en un banco del parque a hablar. Cuando miras el reloj, han pasado cuatro horas.",
+    [
+      o("a", "Pedirle su número y proponer verse otro día", "Dar el paso", { moral: 8, reputacion: 2, flags: { pareja: "Ariadna" } }, "Se llama Ariadna, trabaja en un museo y no sabe nada de fútbol. En la primera cita, te pregunta qué es un fuera de juego y lo explicas con sal y pimienta. En la tercera, ya conoce a tu madre. Algo muy bonito empieza."),
+      o("b", "Despedirte con cortesía y dejar que el destino decida", "Sin prisa", { moral: 2, flags: { p2_nueva: "destino" } }, "Os despedís con una sonrisa. Una semana después, te la cruzas en un supermercado. Os reís. «¿Era una señal?», pregunta ella. «Probablemente», respondes. Y esta vez, sí, pedís números."),
+      o("c", "Decirle que no estás preparado todavía", "Ser honesto", { moral: -1, reputacion: 2, flags: { p2_nueva: "no" } }, "Ella asiente, con respeto. «Aquí estaré», dice, con una naturalidad que descoloca. Pasan meses. Un día, un libro llega a tu portal con una nota: «Está mejor que la película». Sonríes."),
+    ]),
+  S("p2-cena-reconciliacion", "pareja", { flags: ["pa_reconciliacion"], minAge: 20, clubTurns: [2, 400], notFlags: ["p2_cena_recon"] }, "vida",
+    "Cenáis en el restaurante donde os visteis la primera vez",
+    "{pareja} ha reservado una mesa en el rincón de siempre, el del mantel de cuadros. No dice por qué. El camarero, que os reconoce, os trae sin pedirlo las croquetas de la casa y una botella de vino que no sabes cómo ha llegado. Os miráis. Pasa un silencio cómodo. De pronto, ella dice: «Hace un año estuvimos a punto de perder todo esto. Y mira». Alza la copa.",
+    [
+      o("a", "Brindar y decirle que lo volverías a elegir una y mil veces", "Con el corazón", { moral: 10, reputacion: 2, flags: { p2_cena_recon: "corazon" } }, "Brindáis con los ojos húmedos. «Yo te elegiría otra vez —dices—, aunque hubiera que pasar por todo lo que pasamos». {pareja} te aprieta la mano. Es la cena más corta y más larga de vuestra vida."),
+      o("b", "Sacar una foto de los dos con el camarero y colgarla en la pared del local", "Una tradición", { moral: 7, rel_aficion: 2, flags: { p2_cena_recon: "foto" } }, "El camarero la cuelga junto a otras. Dice: «Aquí, las parejas que vuelven». Cada vez que pasáis por delante, os reís. La foto sigue allí, más amarilla cada año."),
+    ]),
+];
