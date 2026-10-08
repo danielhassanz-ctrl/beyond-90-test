@@ -920,8 +920,23 @@ export function buildOwnMoveEvent(player: Player): GameEvent {
   return {
     id: `mercado-propio-${w}-${Date.now()}`,
     category: "representante",
-    title: "Tu decisión: ¿te quedas o mueves ficha?",
-    description: `${mood} ${agent} lo deja claro: "Si quieres moverte, es ahora. Esto lo decides tú."`,
+    title: pick([
+      "Tu decisión: ¿te quedas o mueves ficha?",
+      "La encrucijada del mercado",
+      "¿Tu casa o una casa nueva?",
+      "La pregunta que llevas semanas evitando",
+      "Cuentas claras sobre tu futuro",
+      "El día de elegir",
+      "Un café para decidir qué quieres",
+    ]),
+    description: `${mood} ${pick([
+      `${agent} lo deja claro: "Si quieres moverte, es ahora. Esto lo decides tú."`,
+      `${agent} te cita en una cafetería y dice sin rodeos: "El mercado está abierto y a ti te toca mover ficha o quedarte. Piénsalo bien."`,
+      `Te llega un mensaje de ${agent}: "Hablemos hoy. Hay cosas que decidir antes de que se cierre el mercado."`,
+      `En el coche, camino de casa, ${agent} te llama: "Hay que decidir ya, que el mercado no espera a nadie."`,
+      `${agent} te manda un audio de cuatro minutos. El resumen es una sola pregunta: "¿Qué quieres tú?"`,
+      `Tu madre te pregunta en la cena, sin saber nada del mercado: "¿Estás a gusto?". Esa noche, ${agent} te escribe lo mismo con otras palabras.`,
+    ])}`,
     allowFreeText: true,
     freeTextPrompt: `Se lo dices a ${agent} sin filtros. ¿Qué quieres de verdad?`,
     options: [

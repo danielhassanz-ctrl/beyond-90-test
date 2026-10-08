@@ -3420,6 +3420,16 @@ export async function pickNextEventDynamic(
     console.log(`[pickNextEventDynamic] Own move decision`);
     return maybeAddFreeText(own);
   }
+  // El banco de escenas, antes que el resto del "sabor" (pretemporada, DMs, rarezas): como mucho una por semana
+  // (lo limita pickBankScene). Sin este primer intento, el sabor antiguo se llevaba casi todos los huecos y el
+  // banco, con cientos de escenas, solo salía ~35 veces por carrera.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && Math.random() < 0.75) {
+    const bankedEarly = pickBankScene(playerWithDynamics, usedEventIds);
+    if (bankedEarly) {
+      console.log(`[pickNextEventDynamic] Banco de escenas (prioridad): "${bankedEarly.title}"`);
+      return maybeAddFreeText(bankedEarly);
+    }
+  }
   if (!midMatch && shouldTriggerPreseasonLife(playerWithDynamics)) {
     const pre = buildPreseasonLifeEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Preseason life: "${pre.title}"`);

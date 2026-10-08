@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { eligibleBankScenes } from "../src/lib/narrative/bank/select";
 import { playerAge } from "../src/types/career";
 /**
  * Simulación local (SIN API real) de carreras completas contra el motor: una respuesta
@@ -139,6 +140,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
   const prefixCount: Record<string, number> = {};
 
   for (let i = 0; i < 1800 && player.week < 190; i++) {
+    if (process.env.POOL) { const el = eligibleBankScenes(player, used); (globalThis as any).__pool = ((globalThis as any).__pool ?? []).concat([el.length]); }
     let ev: any;
     try {
       ev = await pickNextEventDynamic(player, history, used);
@@ -152,6 +154,8 @@ async function career(club: string, media: number, seed: number): Promise<Result
       break;
     }
     res.events++;
+    if (process.env.SEQ && res.events < 140 && seed === 0) process.stdout.write(`SEQ w${player.week} ${String(ev.id).slice(0, 40)}
+`);
     res.cats[ev.category] = (res.cats[ev.category] ?? 0) + 1;
     const { role } = computeRole(player);
     res.roles[role] = (res.roles[role] ?? 0) + 1;
@@ -224,6 +228,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
 
     // métricas
     for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-", "banco-", "arco-salto-"]) {
+      { const k = String(ev.id).replace(/[-_]?d{6,}.*$/, "").replace(/-d+$/, "").slice(0, 28); (globalThis as any).__ids = (globalThis as any).__ids ?? {}; (globalThis as any).__ids[k] = ((globalThis as any).__ids[k] ?? 0) + 1; }
       if (ev.id.startsWith(pre)) prefixCount[pre] = (prefixCount[pre] ?? 0) + 1;
     }
     if (ev.id.startsWith("matchday-") && ev.matchKey) {
@@ -308,3 +313,15 @@ for (const c of perCareer) console.log(`   carrera: ${c.total} escenas no-partid
   console.log('   romance vistas:', bankSeen.filter((id) => /bank-(ro|pa)-/.test(id)).join(' '));
   console.log('   por familia (distintas):', [...fam.entries()].map(([f, n]) => `${f}:${n}`).join(' '));
 }
+if (process.env.POOL) {
+  const arr: number[] = (globalThis as any).__pool ?? [];
+  const mean = arr.reduce((a, b) => a + b, 0) / Math.max(1, arr.length);
+  const zero = arr.filter((n) => n === 0).length / Math.max(1, arr.length);
+  process.stdout.write(`POOL: media ${mean.toFixed(1)} escenas elegibles por turno; vacío en ${(zero * 100).toFixed(0)}% de los turnos (n=${arr.length})\n`);
+}
+if (process.env.POOL) {
+  const ids: Record<string, number> = (globalThis as any).__ids ?? {};
+  const top = Object.entries(ids).filter(([k]) => !k.startsWith("matchday") && !k.startsWith("match-decision")).sort((a, b) => b[1] - a[1]).slice(0, 28);
+  process.stdout.write("TOP IDS (no partido): " + top.map(([k, n]) => `${k}:${n}`).join(" | ") + "\n");
+}
+if (process.env.BANKDBG) process.stdout.write("BANK DEBUG: " + JSON.stringify((globalThis as any).__bk) + "\n");
