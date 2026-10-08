@@ -19,6 +19,14 @@ import { bankFlagKey, type BankScene, type BankWhen, type Range } from "./types"
 
 type Flags = Record<string, string | boolean>;
 
+/** Clubes fuera de España que pueden salir en el juego. */
+const FOREIGN_CLUBS = new Set([
+  "Manchester City", "Liverpool FC", "Arsenal", "Chelsea", "Paris Saint-Germain", "Bayern de Múnich", "Bayern Múnich", "Bayern Munich",
+  "Juventus", "Inter de Milán", "AS Roma", "Atalanta", "Borussia Dortmund", "Bayer Leverkusen", "FC Schalke 04", "Benfica", "Ajax",
+  "Sporting CP", "Feyenoord", "Rangers FC", "Fenerbahçe", "Olympiacos", "Slavia Praga", "Al-Nassr FC",
+]);
+export const isForeignClub = (club: string) => FOREIGN_CLUBS.has(club);
+
 const inRange = (value: number | undefined, r: Range | undefined): boolean =>
   !r || (value !== undefined && value >= r[0] && value <= r[1]);
 
@@ -43,6 +51,7 @@ function fits(player: Player, when: BankWhen): { ok: boolean; chained: boolean }
   const onLoan = Boolean(flags.loan_active) && !flags.loan_returned;
   if (Boolean(when.loan) !== onLoan) return { ok: false, chained: false };
 
+  if (when.exterior !== undefined && when.exterior !== isForeignClub(player.club)) return { ok: false, chained: false };
   if (when.roles && !when.roles.includes(computeRole(player).role as never)) return { ok: false, chained: false };
   if (when.clubLevels && !when.clubLevels.includes(getClubLevel(player.club))) return { ok: false, chained: false };
   if (when.positions && !when.positions.some((p) => (player.position ?? "").toLowerCase().includes(p.toLowerCase()))) return { ok: false, chained: false };
