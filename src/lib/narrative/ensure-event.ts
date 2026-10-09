@@ -143,6 +143,12 @@ async function ensureNextEventInner(
   player: Player,
 ): Promise<{ event: GameEvent; usedEventIds: string[] }> {
   await migrateSalaryDeal(supabase, player);
+  // Una oferta de fichaje guardada con las cifras antiguas (sueldo que seguía a la media) se descarta y se genera de nuevo.
+  const stale = player.pending_event as (GameEvent & { termsV?: number }) | null;
+  if (stale && !stale.termsV && /^(oferta-(?!humo|cesion|engano)|arco-salto-3-)/.test(String(stale.id))) {
+    await supabase.from("players").update({ pending_event: null }).eq("id", player.id);
+    player.pending_event = null;
+  }
   // Corrige compras antiguas de coche/yate/jet que no se pagaron enteras (finance/repair.ts).
   await repairCashPurchases(supabase, player);
   let event: GameEvent | null = player.pending_event;

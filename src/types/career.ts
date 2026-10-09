@@ -124,6 +124,8 @@ export interface GameEvent {
   freeTextPrompt?: string;
   isMilestone?: boolean;
   milestoneType?: string;
+  /** Versión de las cifras de una oferta de fichaje (2 = sueldo fijo del contrato). Las ofertas guardadas sin ella se regeneran. */
+  termsV?: number;
   /** Si resolver este evento significa ganar un trofeo (decidido en código, no por el texto). */
   trophy?: { kind: string; detail?: string; /** Temporada a la que pertenece, si no es la actual (la Liga se celebra ya en la siguiente). */ season?: number };
   /** Solo aparece a partir de esta semana (para dar progresión) */

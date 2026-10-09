@@ -830,6 +830,7 @@ export function buildTransferOfferEvent(player: Player): GameEvent {
   const options = offerOptions(player, terms, { club, art, closeFlags: clear });
   return {
     id: `oferta-${Date.now()}`,
+    termsV: 2,
     category: "representante",
     title: `Oferta formal ${de(club)}`,
     description: `${agent} entra con los papeles en la mano: "Ya no es un rumor. ${art(club).charAt(0).toUpperCase() + art(club).slice(1)} ha puesto una oferta por escrito y quiere respuesta rápida. Estas son las condiciones:"
@@ -1015,6 +1016,7 @@ export function buildDeadlineDayEvent(player: Player): GameEvent {
   );
   return {
     id: `oferta-deadline-${Date.now()}`,
+    termsV: 2,
     category: "representante",
     title: `Último día de mercado: llama ${art(club)}`,
     description: `Quedan horas para que se cierre el mercado de ${w === "verano" ? "verano (hoy es 1 de septiembre)" : "invierno"}. ${agent} te llama sin aliento: "${cap(art(club))} ha vuelto a la carga. O firmas hoy o esto se acaba. Estas son sus condiciones:"

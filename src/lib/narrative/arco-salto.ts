@@ -182,6 +182,7 @@ function chapter3(player: Player): GameEvent {
   });
   return {
     id: `arco-salto-3-${Date.now()}`,
+    termsV: 2,
     category: "representante",
     title: `La oferta del ${club}`,
     description: `Ya no es un rumor. ${agent} entra con papeles y la voz temblando: el ${club} ha puesto una oferta formal. "Esto es lo que llevabas esperando. Pero tienes que decidir ya. Estas son las condiciones:"
