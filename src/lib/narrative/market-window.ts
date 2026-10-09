@@ -136,9 +136,11 @@ export function pickInterestedClub(player: Player): string {
   } else if (level === "grande") {
     // En rotación (juegas, pero no eres fijo) también te quieren los clubes de
     // nivel medio, que ofrecen el protagonismo que no tienes en un grande.
-    pool = role === "rotacion" ? [...POOL_ELITE, ...POOL_MID, ...POOL_MID] : POOL_ELITE;
+    const top = media >= 78 ? POOL_ELITE : media >= 68 ? [...POOL_HIGH, ...POOL_ELITE] : [...POOL_MID, ...POOL_HIGH];
+    pool = role === "rotacion" ? [...top, ...POOL_MID, ...POOL_MID] : top;
   } else if (level === "europeo") {
-    pool = media >= 72 ? [...POOL_HIGH, ...POOL_ELITE] : POOL_HIGH;
+    // Un chico de 17 con media 58 no suena para el Dortmund: el interés se parece a su nivel.
+    pool = media >= 76 ? [...POOL_HIGH, ...POOL_ELITE] : media >= 68 ? POOL_HIGH : media >= 60 ? [...POOL_MID, ...POOL_MID, ...POOL_HIGH] : [...POOL_LOW, ...POOL_MID];
   } else {
     pool = media >= 72 ? POOL_HIGH : media >= 62 ? [...POOL_MID, ...POOL_HIGH] : byMedia;
   }

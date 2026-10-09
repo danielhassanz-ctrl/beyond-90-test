@@ -214,7 +214,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "entrevista",
     title: "Entrevista de pretemporada",
-    desc: (c) => `Un periodista de ${c.club} te pregunta: "¿Qué objetivo os ponéis esta temporada?". La grabadora ya está encendida.`,
+    desc: (c) => `Un periodista ${c.club === "Las Palmas" ? "de Las Palmas" : "del " + c.club} te pregunta: "¿Qué objetivo os ponéis esta temporada?". La grabadora ya está encendida.`,
     opts: () => [
       { label: "Ir a por todo", subtitle: "Ambición, sin miedo", consequences: { fama: 3, rel_aficion: 3, rel_entrenador: -1 }, outcomeText: "Lo sueltas sin pestañear, con la grabadora encendida. El titular del día siguiente: 'Vamos a por todo'. El míster lo lee con una ceja arqueada." },
       { label: "Ir partido a partido", subtitle: "Prudencia futbolera", consequences: { rel_entrenador: 2, reputacion: 1 }, outcomeText: "Respondes con la frase de siempre. El periodista sonríe: es la respuesta que esperaba. El míster, desde el fondo, asiente." },
