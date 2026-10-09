@@ -12,6 +12,7 @@
  * la IA trabaja; la otra petición espera a que aparezca la escena real.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { playerAnnualGross } from "@/lib/narrative/transfer-terms";
 import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
 import { pickNextEventDynamic } from "@/lib/narrative/engine";
@@ -102,10 +103,46 @@ export async function ensureNextEvent(
   return result;
 }
 
+/**
+ * Contratos pactados antes de que el sueldo fuera una cifra fija: se guardaba un múltiplo que seguía a tu media, y el
+ * sueldo se disparaba cada vez que subías un punto. Se recupera la cifra real que firmaste (o renovaste) leyendo el
+ * texto de esa escena en el historial, y se deja fija.
+ */
+async function migrateSalaryDeal(supabase: SupabaseClient, player: Player): Promise<void> {
+  const f = player.flags ?? {};
+  if (!f.salary_mult || f.salary_fixed || String(f.salary_club ?? "") !== player.club) return;
+  const since = parseInt(String(f.club_since ?? "0"), 10) || 0;
+  let fixed = 0;
+  try {
+    const { data } = await supabase
+      .from("career_events")
+      .select("outcome_text, week, created_at")
+      .eq("player_id", player.id)
+      .ilike("outcome_text", "%brutos al año%")
+      .gte("week", Math.max(0, since - 1))
+      .order("week", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(6);
+    for (const row of data ?? []) {
+      const m = String(row.outcome_text ?? "").match(/([d.]{5,}) € brutos al año/);
+      if (m) {
+        fixed = parseInt(m[1].replace(/./g, ""), 10) || 0;
+        if (fixed > 0) break;
+      }
+    }
+  } catch {
+    // sin historial legible: se fija la cifra actual
+  }
+  if (!(fixed > 0)) fixed = playerAnnualGross(player);
+  player.flags = { ...f, salary_fixed: String(fixed) };
+  await supabase.from("players").update({ flags: player.flags }).eq("id", player.id);
+}
+
 async function ensureNextEventInner(
   supabase: SupabaseClient,
   player: Player,
 ): Promise<{ event: GameEvent; usedEventIds: string[] }> {
+  await migrateSalaryDeal(supabase, player);
   // Corrige compras antiguas de coche/yate/jet que no se pagaron enteras (finance/repair.ts).
   await repairCashPurchases(supabase, player);
   let event: GameEvent | null = player.pending_event;

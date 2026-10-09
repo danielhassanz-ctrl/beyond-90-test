@@ -45,6 +45,9 @@ export const salaryMultFor = (flags: Record<string, string | boolean> | null | u
 
 /** Sueldo bruto anual real del jugador: escala de su media y su club, por lo pactado en su contrato. */
 export function playerAnnualGross(player: Pick<Player, "media" | "club" | "flags">): number {
+  // Un contrato pactado es una cifra FIJA mientras sigas en ese club: no sube ni baja con tu media (para eso están las renovaciones).
+  const fixed = parseInt(String(player.flags?.salary_fixed ?? "0"), 10) || 0;
+  if (fixed > 0 && String(player.flags?.salary_club ?? "") === player.club) return fixed;
   return Math.max(15000, Math.round((baseAnnual(player.media ?? 50) * clubTier(player.club) * salaryMultFor(player.flags, player.club)) / 1000) * 1000);
 }
 
@@ -164,6 +167,7 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
   const stayBonus = Math.max(2000, Math.round((t.currentAnnual * 0.1) / 1000) * 1000);
   const dealFlags = (annual: number, forClub: string) => ({
     salary_mult: (annual / Math.max(1, baseAnnual(player.media ?? 50) * clubTier(forClub))).toFixed(3),
+    salary_fixed: String(annual),
     salary_club: forClub,
   });
   return [
