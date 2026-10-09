@@ -99,7 +99,10 @@ export function maybeSeedTransferInterest(player: Player): void {
   const lastOffer = parseInt(String(player.flags?.offer_last_week ?? "0"), 10) || 0;
   if (lastOffer > 0 && player.week - lastOffer < 14) return;
   if (lastOffer === 0 && player.week < 16) return;
-  if (Math.random() >= 0.5) return;
+  // Sin oferta en mucho tiempo: el mercado te tiene que llegar. Pasadas 20 semanas desde la última (o
+  // desde el principio), la ventana trae interés seguro; antes, 65% por turno de ventana.
+  const drought = player.week - (lastOffer || 12) >= 20;
+  if (!drought && Math.random() >= 0.65) return;
   if (!player.flags) player.flags = {};
   Object.assign(player.flags, interestFlags(pickInterestedClub(player), player.week - 1, "prensa"));
 }

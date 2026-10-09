@@ -226,6 +226,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
       if (bench > 0 && cons.flags?.coach_bench === undefined) player.flags.coach_bench = String(Math.max(0, bench - (newWeek - player.week)));
     }
 
+    if (process.env.OFF && /^(oferta-|mercado-)/.test(String(ev.id))) process.stdout.write(`OFF w${player.week} ${String(ev.id).slice(0, 28)} | ${ev.title}\n`);
     // métricas
     for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-", "banco-", "arco-salto-", "tanda-", "oferta-", "mercado-"]) {
       { const k = String(ev.id).replace(/[-_]?d{6,}.*$/, "").replace(/-d+$/, "").slice(0, 28); (globalThis as any).__ids = (globalThis as any).__ids ?? {}; (globalThis as any).__ids[k] = ((globalThis as any).__ids[k] ?? 0) + 1; }
@@ -275,7 +276,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
   return res;
 }
 
-const setups: [string, number][] = [["Real Madrid", 72], ["Sevilla FC", 64], ["Málaga CF", 55]];
+const setups: [string, number][] = process.env.SETUP ? [[process.env.SETUP.split(":")[0], Number(process.env.SETUP.split(":")[1])]] : [["Real Madrid", 72], ["Sevilla FC", 64], ["Málaga CF", 55]];
 let totalErrors = 0;
 for (const [club, media] of setups) {
   for (let seed = 0; seed < 2; seed++) {
