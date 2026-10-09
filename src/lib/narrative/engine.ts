@@ -48,6 +48,7 @@ import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narra
 import { settleShootout, shootoutInstruction, isPenaltyShootout } from "@/lib/narrative/shootout";
 import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
 import { monthlyRent } from "@/lib/finance/rent";
+import { buildTorneoFinalEvent } from "@/lib/narrative/world-results";
 import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
@@ -3052,6 +3053,8 @@ async function pickTorneoEvent(
   if (adv.finished) {
     if (!player.flags) player.flags = {};
     player.flags[`torneo_result_${progress.type}_${progress.season}`] = adv.outcome;
+    // Eliminado antes de la final: más adelante verás quién la gana (escena torneo-final-*).
+    if (!adv.champion && adv.outcome !== "subcampeon") player.flags.torneo_final_pending = `${progress.type}|${progress.season}|${adv.outcome}`;
     saveTorneoProgress(player, null);
   } else {
     saveTorneoProgress(player, adv.next);
@@ -3408,6 +3411,16 @@ export async function pickNextEventDynamic(
     getInjuryRemaining(playerWithDynamics.flags) > 0,
   );
   if (torneoEvent) return torneoEvent;
+
+  // La final de un torneo de selecciones que viste desde casa tras caer eliminado.
+  const finalPending = player.flags?.torneo_final_pending;
+  if (typeof finalPending === "string" && finalPending) {
+    const [ftype, fseason, foutcome] = finalPending.split("|");
+    player.flags.torneo_final_pending = "";
+    if (ftype === "mundial" || ftype === "eurocopa" || ftype === "copa_america") {
+      return buildTorneoFinalEvent(playerWithDynamics, ftype, parseInt(fseason, 10) || 0, foutcome ?? "");
+    }
+  }
 
   // Selección entre torneos: Nations League, clasificatorias, amistosos.
   const selEvent = await pickSeleccionWindowEvent(

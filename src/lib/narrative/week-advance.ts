@@ -57,6 +57,8 @@ const LOCKED_PREFIXES = [
   "liga-campeon-",
   "award-",
   "matchday-torneo-",
+  // La final de un torneo que ves desde casa tras caer eliminado.
+  "torneo-final-",
   // Partidos con la selección entre torneos (Nations League, clasificatorias).
   "matchday-sel-",
   // Escenas con el fisio durante una lesión.

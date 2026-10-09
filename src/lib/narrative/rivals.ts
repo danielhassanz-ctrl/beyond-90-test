@@ -7,7 +7,7 @@
  * Todo sale de semillas: mismo jugador, mismos rivales, sin guardar nada.
  */
 import type { Player } from "@/types/player";
-import { fictionalFullName } from "@/lib/narrative/npcs";
+import { fictionalPlayerName } from "@/lib/narrative/npcs";
 import { maxMediaForAge } from "@/lib/narrative/media-cap";
 
 export interface Rival {
@@ -59,7 +59,7 @@ export function getRivals(player: Player): Rival[] {
     out.push({
       key,
       kind: "peer",
-      name: fictionalFullName(seed, player.last_name),
+      name: fictionalPlayerName(seed, player.club, player.last_name),
       club: player.club,
       media,
       position: i === 0 ? player.position || "Delantero" : POSITIONS[hash(`${seed}:p`) % POSITIONS.length],
@@ -76,7 +76,7 @@ export function getRivals(player: Player): Rival[] {
     out.push({
       key,
       kind: "mega",
-      name: fictionalFullName(seed, player.last_name),
+      name: fictionalPlayerName(seed, MEGA_CLUBS[idx], player.last_name),
       club: MEGA_CLUBS[idx],
       media: Math.min(97, cap(85) + between(`${seed}:m:${season}`, -2, 3)),
       position: POSITIONS[hash(`${seed}:p`) % POSITIONS.length],

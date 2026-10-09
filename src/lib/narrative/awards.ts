@@ -9,7 +9,8 @@ import { playerAge } from "@/types/career";
 import type { Player } from "@/types/player";
 import { displayName } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
-import { fictionalFullName } from "@/lib/narrative/npcs";
+import { fictionalFullName, fictionalPlayerName } from "@/lib/narrative/npcs";
+import { CLUB_WEIGHTS, championsPodium, weightedPick } from "@/lib/narrative/world-results";
 import { getRivals } from "@/lib/narrative/rivals";
 import { maxMediaForAge } from "@/lib/narrative/media-cap";
 import { TORNEO_NAMES, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
@@ -69,12 +70,26 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
   const out: Finalist[] = [{ name: mine, club: player.club, score: playerScore, isPlayer: true }];
   const megas = getRivals(player).filter((r) => r.kind === "mega" && (kind === "balon_oro" || r.media > 0));
   for (const m of megas) out.push({ name: m.name, club: m.club, score: m.media - 2.5 + jitter(`${m.name}:${season}`) * 1.5, isPlayer: false });
+  // Los clubes que de verdad han ganado mandan: el campeón de Europa de la temporada pasada (tu club, si lo ganaste tú) y
+  // el finalista aportan jugadores a la lista; el resto sale de los grandes de todas las ligas, con un máximo de dos por club.
+  const podium = championsPodium(player, season - 1);
+  const perClub = new Map<string, number>();
+  const count = (c: string) => perClub.get(c) ?? 0;
+  for (const f of out) perClub.set(f.club, count(f.club) + 1);
+  const forced: string[] = [
+    podium.winner, podium.winner, ...(kind === "balon_oro" ? [podium.winner] : []), podium.runnerUp,
+  ];
   for (let i = out.length - 1; out.length < 10; i++) {
     const seed = `${player.id}:${kind}:${season}:f${i}`;
+    const wanted = forced.shift();
+    const full = new Set(CLUB_WEIGHTS.map(([c]) => c).filter((c) => count(c) >= (c === podium.winner ? 3 : 2)));
+    const club = wanted && count(wanted) < 3 ? wanted : weightedPick(`${seed}:c`, CLUB_WEIGHTS, full);
+    perClub.set(club, count(club) + 1);
+    const champBonus = club === podium.winner ? 2.2 : club === podium.runnerUp ? 1 : 0;
     out.push({
-      name: fictionalFullName(seed, player.last_name),
-      club: CLUBS[hash(`${seed}:c`) % CLUBS.length],
-      score: top - 1.5 - (out.length - 3) * (kind === "golden_boy" ? 1.1 : 0.9) + jitter(`${seed}:s`) * 2.5,
+      name: fictionalPlayerName(seed, club, player.last_name),
+      club,
+      score: top - 1.5 - (out.length - 3) * (kind === "golden_boy" ? 1.1 : 0.9) + jitter(`${seed}:s`) * 2.5 + champBonus,
       isPlayer: false,
     });
   }

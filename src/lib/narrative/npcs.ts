@@ -85,7 +85,7 @@ const SURNAMES = [
  * Nombres por país para la gente de un club extranjero (míster, capitán, directivos, compañeros): en el Bayern no
  * puede haber un Asier Bermejo. Nombres y apellidos corrientes del país, sin parecerse a nadie en concreto.
  */
-export type NameCountry = "es" | "de" | "en" | "fr" | "it" | "sa" | "pt" | "nl" | "tr";
+export type NameCountry = "es" | "de" | "en" | "fr" | "it" | "sa" | "pt" | "nl" | "tr" | "br" | "ar" | "af";
 
 const COUNTRY_OF_CLUB: Record<string, NameCountry> = {
   "Bayern de Múnich": "de", "Bayern Múnich": "de", "Bayern Munich": "de", "Borussia Dortmund": "de", "Bayer Leverkusen": "de", "FC Schalke 04": "de",
@@ -136,6 +136,21 @@ const POOLS: Record<Exclude<NameCountry, "es">, Pool> = {
     f: ["Annelies", "Sanne", "Lotte", "Marloes", "Femke", "Ilse", "Esmee", "Wilma"],
     s: ["Van der Berg", "De Groot", "Visser", "Bakker", "Smeets", "Vermeulen", "Hoekstra", "Brouwer", "Dekker", "Mulder", "Kuipers", "Jansen", "Verbeek", "Bosman", "Hendriks", "Schouten"],
   },
+  br: {
+    m: ["Rafael", "Thiago", "Matheus", "Caio", "Bruno", "Henrique", "Leandro", "Gustavo", "Murilo", "Wesley", "Jonathan", "Felipe", "Danilo", "Renan", "Otávio", "Washington"],
+    f: ["Camila", "Larissa", "Beatriz", "Juliana", "Fernanda", "Priscila", "Débora", "Luana"],
+    s: ["Almeida", "Barbosa", "Cardoso", "Nascimento", "Teixeira", "Moreira", "Carvalho", "Ribeiro", "Araújo", "Monteiro", "Pacheco", "Siqueira", "Campos", "Medeiros", "Tavares", "Albuquerque"],
+  },
+  ar: {
+    m: ["Matías", "Facundo", "Nicolás", "Franco", "Joaquín", "Tomás", "Ezequiel", "Maximiliano", "Agustín", "Leandro", "Emiliano", "Gonzalo", "Lisandro", "Braian", "Cristian", "Julián"],
+    f: ["Valentina", "Agustina", "Milagros", "Florencia", "Candelaria", "Luciana", "Brenda", "Macarena"],
+    s: ["Benítez", "Acosta", "Sosa", "Ledesma", "Giménez", "Ibarra", "Peralta", "Cabral", "Villalba", "Quiroga", "Montenegro", "Rinaldi", "Ferreyra", "Maidana", "Paredes", "Escobar"],
+  },
+  af: {
+    m: ["Ibrahima", "Kofi", "Moussa", "Seydou", "Amadou", "Cheikh", "Yaya", "Nabil", "Bakary", "Idrissa", "Kwame", "Mamadou", "Lamine", "Souleymane", "Kwesi", "Abdoulaye"],
+    f: ["Aminata", "Fatoumata", "Awa", "Mariama", "Adama", "Nafi", "Khadija", "Aïcha"],
+    s: ["Diop", "Fofana", "Touré", "Sanogo", "Coulibaly", "Gueye", "Sylla", "Mbaye", "Cissé", "Keita", "Bamba", "Ndiaye", "Mensah", "Owusu", "Camara", "Sow"],
+  },
   tr: {
     m: ["Emre", "Burak", "Caner", "Mert", "Kerem", "Onur", "Serkan", "Volkan", "Tolga", "Barış", "Ümit", "Selim", "Murat", "Cem", "Okan", "Hakan"],
     f: ["Elif", "Zeynep", "Selin", "Deniz", "Ayşe", "Defne", "Gülay", "Naz"],
@@ -183,6 +198,29 @@ function surnameOf(name: string | null | undefined): string {
   if (!trimmed) return "";
   const parts = trimmed.split(/\s+/);
   return parts[parts.length - 1];
+}
+
+/**
+ * Un futbolista de un club: en su mayoría del país del club, pero con mucho internacional (brasileños, argentinos,
+ * franceses, africanos...), como en cualquier plantilla de élite. Estable según la semilla.
+ */
+const PLAYER_ORIGIN: Record<string, [NameCountry, number][]> = {
+  local: [["es", 0], ["br", 14], ["ar", 9], ["fr", 9], ["af", 7], ["pt", 5], ["en", 5], ["de", 5], ["it", 5], ["nl", 3]],
+};
+export function playerNameCountry(seed: string, club: string): NameCountry {
+  const home = nameCountryOf(club);
+  const table: [NameCountry, number][] = [[home, 42], ...PLAYER_ORIGIN.local.filter(([c]) => c !== home && c !== "es").map(([c, w]) => [c, w] as [NameCountry, number])];
+  if (home !== "es") table.push(["es", 8]);
+  const total = table.reduce((n, [, w]) => n + w, 0);
+  let r = (mix(seed + ":origin") % 100000) / 100000 * total;
+  for (const [c, w] of table) {
+    r -= w;
+    if (r <= 0) return c;
+  }
+  return home;
+}
+export function fictionalPlayerName(seed: string, club: string, avoid = ""): string {
+  return buildName(seed, "m", surnameOf(avoid), playerNameCountry(seed, club));
 }
 
 /** Nombre + un apellido a partir de una semilla; el apellido nunca coincide con `own`. */
@@ -251,7 +289,7 @@ function rememberEpisodic(name: string, hint: string): string {
 
 /** Compañeros de equipo: cambian con el club, distintos entre sí según la `salt`. */
 export function getTeammateName(player: Player, salt: string): string {
-  const name = buildName(`${player.id}:${player.club}:mate:${salt}`, "m", surnameOf(player.last_name), nameCountryOf(player.club));
+  const name = fictionalPlayerName(`${player.id}:${player.club}:mate:${salt}`, player.club, player.last_name);
   return rememberEpisodic(name, `compañero de equipo ${salt}`);
 }
 
