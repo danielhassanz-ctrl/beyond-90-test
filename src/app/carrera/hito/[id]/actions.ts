@@ -32,6 +32,8 @@ export async function regenerateMilestoneImage(formData: FormData) {
   // completo. Con esto, el próximo intento dice exactamente en qué línea
   // se queda parado, en vez de tener que adivinarlo.
   const milestoneId = String(formData.get("milestone_id") ?? "");
+  // "Rehacer": el jugador pide otra foto de un hito que YA tiene imagen (gasta una foto).
+  const force = formData.get("force") === "1";
   console.log(`[regenerateMilestoneImage] START milestoneId=${milestoneId}`);
 
   const { supabase, user, player } = await getCurrentUserAndPlayer();
@@ -52,7 +54,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
   const pendingAge = startedAt ? Date.now() - startedAt : Infinity;
   const isFreshPending = milestone.image_status === "pending" && pendingAge < STALE_PENDING_MS;
   console.log(`[regenerateMilestoneImage] guard check: image_url=${!!milestone.image_url} isFreshPending=${isFreshPending} pendingAge=${pendingAge} hasPhoto=${!!player.photo_url}`);
-  if (milestone.image_url || isFreshPending || !player.photo_url) {
+  if ((milestone.image_url && !force) || isFreshPending || !player.photo_url) {
     console.log(`[regenerateMilestoneImage] EARLY EXIT via guard, redirecting back`);
     redirect(`/carrera/hito/${milestoneId}`);
   }
@@ -107,8 +109,11 @@ export async function regenerateMilestoneImage(formData: FormData) {
   // paloma: la IA no tenía forma de saber qué escena dibujar. La prioridad
   // es: escena real guardada > plantilla cinematográfica conocida (hitos
   // "grandes") > genérico basado solo en el título, como última red.
-  const contextual = getMilestoneImagePrompt(String(milestone.type), age, player.club, player.last_name, String(milestone.type), player.agent_name ?? undefined);
+  // Las galas de premios tienen su propia escena (smoking y trofeo): la que se guardó al crear el hito pudo ser la de "récord".
+  const awardId = /bal[oó]n de oro/i.test(String(milestone.title)) ? "award-balon-oro" : /golden boy/i.test(String(milestone.title)) ? "award-golden-boy" : null;
+  const contextual = getMilestoneImagePrompt(awardId ?? String(milestone.type), age, player.club, player.last_name, String(milestone.type), player.agent_name ?? undefined);
   const prompt =
+    (awardId ? contextual : null) ??
     (milestone.image_scene as string | null) ??
     contextual ??
     `Photorealistic cinematic photo of the photographed man in an emotional football moment: "${milestone.title}". He wears a ${describeKit(player.club)} football jersey, natural stadium light, expressive face, documentary sports photography style`;

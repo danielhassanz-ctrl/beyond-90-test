@@ -188,6 +188,7 @@ export default async function HitoPage({
                 {player.photo_url && milestone.type !== "dm_instagram" && canGenerateMore && (
                   <form action={regenerateMilestoneImage} className="text-center">
                     <input type="hidden" name="milestone_id" value={milestone.id} />
+                    <input type="hidden" name="force" value="1" />
                     <RegenerateButton label="🔄 Rehacer esta foto (usa 1 de tus fotos)" />
                   </form>
                 )}
