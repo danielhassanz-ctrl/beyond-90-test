@@ -143,6 +143,14 @@ export function deteriorateRelationships(player: Player): Record<string, number>
     updates.rel_aficion = (player.rel_aficion || 50) - 3;
   }
 
+  // Las relaciones se enfrían solas: el cariño de la grada, el vestuario o el míster no se queda en 90+ para
+  // siempre sin mantenimiento. Por encima de 75 cada turno se pierde algo (más cuanto más alto), así que el techo
+  // real queda en el entorno de 83-85 y mantenerlo exige seguir ganándolo con decisiones.
+  for (const k of ["rel_entrenador", "rel_vestuario", "rel_aficion", "rel_representante"] as const) {
+    const cur = updates[k] ?? player[k];
+    if (typeof cur === "number" && cur > 75) updates[k] = cur - Math.ceil((cur - 75) / 6);
+  }
+
   // Si cambias de club (club differs from second_club?), algunos relacionan deterioran
   // Esto se maneja en events, not aquí
 

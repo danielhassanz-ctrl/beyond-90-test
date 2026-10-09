@@ -200,7 +200,9 @@ export async function resolveEvent(formData: FormData) {
   const addTrophy = (kind: string, detail?: string, forSeason?: number) => {
     const k = kind as TrofeoKind;
     const holder = k === "mundial" || k === "eurocopa" || k === "copa_america" || k === "olimpico" ? player.nation : player.club;
-    const s = forSeason ?? seasonNow;
+    // Los torneos de selecciones se juegan en verano, al final de la temporada que se cierra: cuentan para esa.
+    const summerTourney = k === "mundial" || k === "eurocopa" || k === "copa_america" || k === "olimpico";
+    const s = forSeason ?? (summerTourney && seasonNow > 0 && ((player.week - 1) % WEEKS_PER_SEASON) + 1 === 1 ? seasonNow - 1 : seasonNow);
     const next = withTrofeo(trophyList, { s, k, c: holder, ...(detail ? { d: detail } : {}) });
     if (next) {
       trophyList = next;

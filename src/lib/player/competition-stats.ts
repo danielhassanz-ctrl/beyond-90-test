@@ -11,7 +11,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
 import { WEEKS_PER_SEASON, seasonLabel } from "@/types/career";
-import { extractStatsFromEvent } from "@/lib/player/update-stats";
+import { extractStatsFromEvent, statSeasonOf } from "@/lib/player/update-stats";
 import { readAllSim, sumSim, type SimComp } from "@/lib/narrative/off-screen-matches";
 import { allTrofeos, INDIVIDUAL, type TrofeoKind } from "@/lib/honours";
 
@@ -109,7 +109,7 @@ export async function getCompetitionStats(
   const season = emptyCompetitionStats();
   const career = emptyCompetitionStats();
   const bySeason = new Map<string, SeasonHistoryRow>();
-  const seasonStartWeek = Math.floor((player.week - 1) / WEEKS_PER_SEASON) * WEEKS_PER_SEASON + 1;
+  const currentSeasonIdx = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
 
   try {
     const { data, error } = await supabase
@@ -151,7 +151,7 @@ export async function getCompetitionStats(
         options: [],
       } as GameEvent);
       if (!u.matches_played) continue;
-      const idx = Math.floor((row.week - 1) / WEEKS_PER_SEASON);
+      const idx = statSeasonOf(row.week, row.event_id);
       const { comp, torneo } = classifyMatch(row.title, row.description);
       const teamOf: SeasonHistoryRow["team"] = comp === "seleccion" ? "seleccion" : filialUntil > 0 && row.week <= filialUntil ? "filial" : "club";
       const hKey = `${idx}:${teamOf}`;
@@ -161,7 +161,7 @@ export async function getCompetitionStats(
       hist.assists += u.assists ?? 0;
       hist.minutes += u.minutes_played ?? 0;
       bySeason.set(hKey, hist);
-      const targets = row.week >= seasonStartWeek ? [career, season] : [career];
+      const targets = idx >= currentSeasonIdx ? [career, season] : [career];
       for (const t of targets) {
         add(t[comp], u);
         if (comp === "seleccion" && torneo) add(t.torneos[torneo], u);
@@ -173,7 +173,6 @@ export async function getCompetitionStats(
 
   // Partidos estimados (los que no se viven como escena): misma cuenta que la
   // cabecera de la tarjeta, así que todo suma lo mismo.
-  const currentSeasonIdx = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   for (const [idx, sim] of readAllSim(flags)) {
     const total = sumSim(sim);
     if (total.matches === 0) continue;

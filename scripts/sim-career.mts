@@ -227,7 +227,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
     }
 
     // métricas
-    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-", "banco-", "arco-salto-", "tanda-"]) {
+    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-", "banco-", "arco-salto-", "tanda-", "oferta-", "mercado-"]) {
       { const k = String(ev.id).replace(/[-_]?d{6,}.*$/, "").replace(/-d+$/, "").slice(0, 28); (globalThis as any).__ids = (globalThis as any).__ids ?? {}; (globalThis as any).__ids[k] = ((globalThis as any).__ids[k] ?? 0) + 1; }
       if (ev.id.startsWith(pre)) prefixCount[pre] = (prefixCount[pre] ?? 0) + 1;
     }

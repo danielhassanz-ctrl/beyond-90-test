@@ -153,6 +153,17 @@ export function applyStatUpdate(player: Player, update: StatUpdate): Player {
  * análisis de texto que ya se usa al resolver cada turno, así que no
  * puede desincronizarse de los totales de carrera.
  */
+/**
+ * A qué temporada cuenta un partido. Los torneos de selecciones se juegan en junio-julio, o sea al FINAL de la
+ * temporada que acaba de cerrarse, aunque en el calendario del juego arranquen en la semana 1 de la siguiente:
+ * esos partidos pertenecen al año anterior.
+ */
+export function statSeasonOf(week: number, eventId?: string | null): number {
+  const s = Math.floor((week - 1) / WEEKS_PER_SEASON);
+  const inSeason = ((week - 1) % WEEKS_PER_SEASON) + 1;
+  return inSeason === 1 && s > 0 && /^matchday-torneo-/.test(eventId ?? "") ? s - 1 : s;
+}
+
 export interface SeasonStats {
   matches_played: number;
   goals: number;
@@ -185,10 +196,11 @@ export async function getCurrentSeasonStats(
   try {
     const { data, error } = await supabase
       .from("career_events")
-      .select("title, description, category, event_id")
+      .select("title, description, category, event_id, week")
       .eq("player_id", player.id)
       .gte("week", seasonStartWeek)
-      .lte("week", player.week);
+      // Hasta la semana 1 de la temporada siguiente: ahí caen los torneos de verano de ESTA temporada.
+      .lte("week", seasonStartWeek + WEEKS_PER_SEASON);
 
     if (error || !data) return totals;
 
@@ -199,13 +211,16 @@ export async function getCurrentSeasonStats(
     // Solo si ya trae marcador: la víspera de un partido también es
     // categoría "partido" pero todavía no se ha jugado nada.
     const pendingIsPlayedMatch =
-      pendingEvent && /marcador[^0-9]{0,20}\d{1,2}\s*-\s*\d{1,2}/i.test(`${pendingEvent.title} ${pendingEvent.description}`);
+      pendingEvent &&
+      statSeasonOf(player.week, pendingEvent.id) === season &&
+      /marcador[^0-9]{0,20}\d{1,2}\s*-\s*\d{1,2}/i.test(`${pendingEvent.title} ${pendingEvent.description}`);
+    const dataInSeason = data.filter((r) => statSeasonOf((r.week as number) ?? 0, r.event_id as string) === season);
     const rowsToCount = pendingIsPlayedMatch && pendingEvent
       ? [
-          ...data,
+          ...dataInSeason,
           { event_id: pendingEvent.id, category: pendingEvent.category, title: pendingEvent.title, description: pendingEvent.description },
         ]
-      : data;
+      : dataInSeason;
 
     for (const row of rowsToCount) {
       const fakeEvent = {
