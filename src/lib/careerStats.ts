@@ -1,5 +1,5 @@
 import type { Player } from "@/types/player";
-import { allTrofeos, TROFEO_LABEL } from "@/lib/honours";
+import { allTrofeos, trofeoLabel } from "@/lib/honours";
 
 export interface CareerStats {
   ovr: number;
@@ -40,7 +40,7 @@ export function computeCareerStats(player: Player): CareerStats {
   const qualityValue = Math.max(0, player.media - 40) ** 2.2 / 90;
   const valueM = Math.round(Math.max(0.3, qualityValue + player.fama * 0.15) * 10) / 10;
 
-  const titles: string[] = allTrofeos(player).map((x) => TROFEO_LABEL[x.k]);
+  const titles: string[] = allTrofeos(player).map((x) => trofeoLabel(x));
 
   return { ovr, valueM, games, goals, assists, titles };
 }

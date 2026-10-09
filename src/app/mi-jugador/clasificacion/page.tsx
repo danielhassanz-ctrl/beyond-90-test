@@ -63,6 +63,7 @@ export default async function ClasificacionPage() {
               career={competitionStats.career}
               seasonLabel={seasonLabel(player.week)}
               view="season"
+              club={player.club}
             />
 
             {primary && <StandingsTable standings={primary} />}

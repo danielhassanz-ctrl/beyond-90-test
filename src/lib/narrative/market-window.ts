@@ -1009,7 +1009,7 @@ export function buildDeadlineDayEvent(player: Player): GameEvent {
   const clear = { transfer_interest: "" };
   const terms = buildTerms(player, club, w);
   // Contra reloj el club aprieta: la oferta sube algo para cerrar hoy, pero no hay margen de pedir más.
-  const rushed = { ...terms, offeredMonthly: Math.round((terms.offeredMonthly * 1.05) / 100) * 100, mult: terms.mult * 1.05 };
+  const rushed = { ...terms, offeredAnnual: Math.round((terms.offeredAnnual * 1.05) / 1000) * 1000 };
   const options = offerOptions(player, rushed, { club, art, closeFlags: clear, haggleChance: 0.4 }).map((o) =>
     o.id === "fichar" ? { ...o, label: `Firmar ya, contra reloj: ${o.label.replace("Aceptar: ", "")}` } : o,
   );

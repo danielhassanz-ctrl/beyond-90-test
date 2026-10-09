@@ -510,7 +510,7 @@ export async function resolveEvent(formData: FormData) {
     }
     const agentName = (playerUpdate.agent_name as string | undefined) ?? player.agent_name ?? "tu representante";
     // El sueldo de la escena de la firma es el real (el que se cobrará cada mes), siempre al año.
-    const signedSalary = annualSalaryText({ media: (playerUpdate.media as number | undefined) ?? player.media, flags: playerUpdate.flags as Record<string, string | boolean> });
+    const signedSalary = annualSalaryText({ media: (playerUpdate.media as number | undefined) ?? player.media, club: newClub, flags: playerUpdate.flags as Record<string, string | boolean> });
     const aiContractEvent = await generateContractEvent(
       { ...player, club: newClub, agent_name: agentName },
       newClub,

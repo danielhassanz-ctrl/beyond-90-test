@@ -7,13 +7,14 @@
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
+import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
 import { readProperties, monthlyPayment, remainingLoan, serializeProperty, totalMonthlyPayments } from "@/lib/finance/mortgage";
 
 const COOLDOWN_WEEKS = 8;
 
-/** Mismo cálculo que weeklySalary (engine.ts), sin importar el motor para no crear un ciclo. */
-function monthlySalary(media: number): number {
-  return Math.round(Math.max(150, Math.max(0, media - 40) ** 2 * 8) / 10) * 10;
+/** Sueldo neto mensual real (ver transfer-terms.ts). */
+function monthlySalary(player: Player): number {
+  return playerMonthlyNet(player);
 }
 
 export function shouldTriggerDebtTrouble(player: Player): boolean {
@@ -31,7 +32,7 @@ export function buildDebtTroubleEvent(player: Player): GameEvent {
   const payments = totalMonthlyPayments(player.flags);
   const pending = props.reduce((n, p) => n + remainingLoan(p, player.week), 0);
   const eur = (n: number) => `${n.toLocaleString("es")} €`;
-  const advance = monthlySalary(player.media) * 3;
+  const advance = monthlySalary(player) * 3;
   const saleGain = Math.max(0, Math.round(worst.price * 0.92 - remainingLoan(worst, player.week)));
   const seen = { debt_event_week: String(player.week) };
   const renegotiated = serializeProperty({ ...worst, paymentFactor: Math.min(worst.paymentFactor ?? 1, 0.7) });

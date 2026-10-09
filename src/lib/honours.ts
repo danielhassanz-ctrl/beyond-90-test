@@ -6,6 +6,7 @@
  * contador de títulos, la tarjeta de carrera y la página de palmarés.
  */
 import type { Player } from "@/types/player";
+import { leagueOf } from "@/lib/calendar/leagues";
 
 export type TrofeoKind =
   | "liga"
@@ -44,6 +45,16 @@ export const TROFEO_LABEL: Record<TrofeoKind, string> = {
   balon_oro: "Balón de Oro",
   golden_boy: "Golden Boy",
 };
+
+/** Nombre del título según con qué club se ganó: la Liga y la Copa son las del país de ese club (ver leagues.ts). */
+export function trofeoLabel(t: { k: TrofeoKind; c?: string }): string {
+  if (t.c && t.k === "copa") return leagueOf(t.c).cup;
+  if (t.c && t.k === "liga") {
+    const lg = leagueOf(t.c);
+    return lg.id === "es" ? "Liga" : lg.name;
+  }
+  return TROFEO_LABEL[t.k];
+}
 
 export const TROFEO_ICON: Record<TrofeoKind, string> = {
   liga: "🏆",

@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { CompetitionStatsCard } from "@/components/CompetitionStatsCard";
 import { TrophyIcon } from "@/components/TrophyIcon";
 import { getCompetitionStats, type SeasonHistoryRow } from "@/lib/player/competition-stats";
-import { allTrofeos, INDIVIDUAL, TROFEO_LABEL, type Trofeo, type TrofeoKind } from "@/lib/honours";
+import { allTrofeos, INDIVIDUAL, trofeoLabel, type Trofeo, type TrofeoKind } from "@/lib/honours";
 import { repairTrophies } from "@/lib/honours-repair";
 import { NO_CLUB_YET } from "@/lib/constants";
 
@@ -104,7 +104,7 @@ function KindCard({ kind, list }: { kind: TrofeoKind; list: Trofeo[] }) {
         <TrophyIcon kind={kind} size={78} />
         <span className="font-display text-4xl leading-none text-gold">×{list.length}</span>
       </div>
-      <p className="mt-3 font-display text-lg leading-tight text-foreground">{TROFEO_LABEL[kind]}</p>
+      <p className="mt-3 font-display text-lg leading-tight text-foreground">{trofeoLabel({ k: kind, c: list[list.length - 1]?.c })}</p>
       <p className="mt-1 text-xs text-muted-foreground">{list.map((t) => seasonName(t.s)).join(" · ")}</p>
     </div>
   );
@@ -218,7 +218,7 @@ export default async function TrayectoriaPage() {
         {/* Toda la carrera, competición a competición */}
         <section className="space-y-3">
           <p className="text-kicker text-gold">Por competición</p>
-          <CompetitionStatsCard season={season} career={career} seasonLabel="" view="career" />
+          <CompetitionStatsCard season={season} career={career} seasonLabel="" view="career" club={player.club} />
         </section>
 
         {/* Selección: aparte, con la camiseta de tu país */}

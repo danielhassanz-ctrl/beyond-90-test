@@ -9,6 +9,7 @@ import { playerAge } from "@/types/career";
 import { computeRole } from "@/lib/narrative/role";
 import { getClubLevel } from "@/lib/calendar/match-calendar";
 import { hasMajorTournament } from "@/lib/calendar/season";
+import { isKnownForeignClub } from "@/lib/calendar/leagues";
 import { getMarketWindow } from "@/lib/narrative/market-window";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { openThreads } from "@/lib/narrative/threads";
@@ -25,7 +26,7 @@ const FOREIGN_CLUBS = new Set([
   "Juventus", "Inter de Milán", "AS Roma", "Atalanta", "Borussia Dortmund", "Bayer Leverkusen", "FC Schalke 04", "Benfica", "Ajax",
   "Sporting CP", "Feyenoord", "Rangers FC", "Fenerbahçe", "Olympiacos", "Slavia Praga", "Al-Nassr FC",
 ]);
-export const isForeignClub = (club: string) => FOREIGN_CLUBS.has(club);
+export const isForeignClub = (club: string) => FOREIGN_CLUBS.has(club) || isKnownForeignClub(club);
 
 const inRange = (value: number | undefined, r: Range | undefined): boolean =>
   !r || (value !== undefined && value >= r[0] && value <= r[1]);

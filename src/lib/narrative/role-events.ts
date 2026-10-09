@@ -9,6 +9,7 @@ import type { EventOption, GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import type { MatchWeek } from "@/lib/calendar/match-calendar";
 import { getClubLevel } from "@/lib/calendar/match-calendar";
+import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { benchRemaining } from "@/lib/narrative/role";
 
 const WEEKS_PER_SEASON = 10;
@@ -18,8 +19,8 @@ const streakOf = (player: Player) => parseInt(String(player.flags?.bench_streak 
 /** Partido del equipo SIN ti: el entrenador no te convoca. */
 export function buildBenchedMatchEvent(player: Player, match: MatchWeek): GameEvent {
   const compLabel: Record<string, string> = {
-    liga: "La Liga",
-    copa: "Copa del Rey",
+    liga: ligaLabel(player.club),
+    copa: copaLabel(player.club),
     champions: "Champions League",
     europa: "Europa League",
   };
@@ -103,7 +104,18 @@ const LOWER_CLUBS: Record<"grande" | "europeo" | "modesto", string[]> = {
 };
 
 export function pickLowerClub(player: Player): string {
-  const pool = LOWER_CLUBS[getClubLevel(player.club)].filter((c) => c !== player.club);
+  const level = getClubLevel(player.club);
+  const lg = leagueOf(player.club);
+  // Fuera de España, un escalón por debajo dentro de TU liga (no un club español).
+  const own =
+    lg.id === "es"
+      ? []
+      : lg.teams.filter((t) => {
+          const tier = lg.tiers[t] ?? 3;
+          return level === "grande" ? tier >= 3 && tier <= 4 : level === "europeo" ? tier >= 2 && tier <= 3 : tier <= 2;
+        });
+  const base = own.length > 0 ? own : LOWER_CLUBS[level];
+  const pool = base.filter((c) => c !== player.club);
   return pool[Math.floor(Math.random() * pool.length)];
 }
 

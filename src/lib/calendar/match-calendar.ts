@@ -14,6 +14,8 @@
  * Total: ~10-15 partidos/temporada virtual
  */
 
+import { leagueOf, ligaJornadaByWeek, europeanRivals, ALL_CHAMPIONS, ALL_EUROPA } from "@/lib/calendar/leagues";
+
 export type CompetitionType = "liga" | "copa" | "champions" | "europa" | "amistoso" | "internacional";
 
 /**
@@ -155,8 +157,8 @@ export function addMatchDone(flags: Record<string, string | boolean> | null | un
  * pelean todo; los europeos, Europa League; los modestos, solo Liga y Copa.
  */
 export function getClubLevel(club: string): ClubLevel {
-  if (CHAMPIONS_REGULARS.has(club)) return "grande";
-  if (EUROPA_REGULARS.has(club)) return "europeo";
+  if (CHAMPIONS_REGULARS.has(club) || ALL_CHAMPIONS.has(club)) return "grande";
+  if (EUROPA_REGULARS.has(club) || ALL_EUROPA.has(club)) return "europeo";
   return "modesto";
 }
 
@@ -206,7 +208,8 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
   // tapado por la secuencia guionada de fichaje/debut; a partir de la 1 SÍ
   // es lo que ve el jugador cada preseason.
   const friendlyRandom = seededRandom(hashString(`${playerClub}:${season}:amistosos`));
-  const friendlyPool = PRESEASON_FRIENDLY_OPPONENTS.filter((team) => team !== playerClub);
+  const league = leagueOf(playerClub);
+  const friendlyPool = (league.id === "es" ? PRESEASON_FRIENDLY_OPPONENTS : league.cupEarly).filter((team) => team !== playerClub);
   const friendlyRivals: string[] = [];
   while (friendlyRivals.length < 2) {
     const candidate = friendlyPool[Math.floor(friendlyRandom() * friendlyPool.length)];
@@ -233,16 +236,9 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
   const ligaPool = generateLaLigaFixture(playerClub, season).slice(0, 8);
 
   // --- Copa del Rey -------------------------------------------------------
-  const copaRivals = [
-    "CD Mirandés",
-    "Racing de Ferrol",
-    "UD Ibiza",
-    "CD Eldense",
-    "SD Ponferradina",
-    "Real Unión",
-    "CD Tenerife",
-    "Cultural Leonesa",
-  ];
+  const copaRivals = league.cupEarly;
+  const bigRivals = league.id === "es" ? BIG_RIVALS : new Set(league.champions);
+  const copaLate = league.id === "es" ? COPA_LATE_RIVALS : league.teams;
   const copaRandom = seededRandom(hashString(`${playerClub}:${season}:copa`));
   const copaRound1Rival = copaRivals[Math.floor(copaRandom() * copaRivals.length)];
   const copaUsed = new Set<string>([copaRound1Rival]);
@@ -253,8 +249,8 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
       // Un rival "normal" no se repite en la misma temporada entre Liga y
       // Copa (salía el mismo equipo en turnos consecutivos); solo los
       // grandes de verdad, que sí tiene sentido volver a ver en otro torneo.
-      const pool = COPA_LATE_RIVALS.filter(
-        (c) => c !== playerClub && !copaUsed.has(c) && (BIG_RIVALS.has(c) || !ligaPool.includes(c)),
+      const pool = copaLate.filter(
+        (c) => c !== playerClub && !copaUsed.has(c) && (bigRivals.has(c) || !ligaPool.includes(c)),
       );
       const rr = seededRandom(hashString(`${playerClub}:${season}:copa-r${r}`));
       rival = pool[Math.floor(rr() * pool.length)];
@@ -269,7 +265,7 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
       awayTeam: rival,
       rivalClub: rival,
       mandatory: false,
-      description: `Copa del Rey - ${COPA_ROUND_LABELS[r - 1]} · Partido único ante ${rival}`,
+      description: `${league.cup} - ${COPA_ROUND_LABELS[r - 1]} · Partido único ante ${rival}`,
       stakes: r === 1 ? "importante" : "decisivo",
       cupRound: r,
     });
@@ -342,13 +338,9 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
   }
   let ligaIndex = 0;
   const rivalImportance = (rival: string): { stakes: MatchStakes; angle: string } | null => {
-    const pair = (a: string, b: string) => (playerClub === a && rival === b) || (playerClub === b && rival === a);
-    if (pair("Real Madrid", "FC Barcelona")) return { stakes: "decisivo", angle: " · El Clásico" };
-    if (
-      pair("Real Madrid", "Atlético de Madrid") || pair("FC Barcelona", "Atlético de Madrid") || pair("Sevilla FC", "Real Betis") ||
-      pair("Athletic Club", "Real Sociedad") || pair("Valencia CF", "Villarreal CF")
-    ) return { stakes: "importante", angle: " · Derbi" };
-    if (BIG_LIGA_RIVALS.has(rival)) return { stakes: "importante", angle: " · Un grande de la Liga" };
+    const derby = league.derbies.find((d) => (d.a === playerClub && d.b === rival) || (d.b === playerClub && d.a === rival));
+    if (derby) return { stakes: derby.big ? "decisivo" : "importante", angle: ` · ${derby.name}` };
+    if (league.champions.includes(rival)) return { stakes: "importante", angle: ` · Un grande de la ${league.id === "es" ? "Liga" : league.name}` };
     return null;
   };
   for (const w of ligaWeeks) {
@@ -361,7 +353,7 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
     if (isFinalMatchday) {
       if (level === "grande") {
         stakes = "decisivo";
-        angle = " · Se decide el liderato de Liga";
+        angle = ` · Se decide el liderato de ${league.id === "es" ? "Liga" : league.name}`;
       } else if (level === "europeo") {
         stakes = "importante";
         angle = " · En juego la clasificación europea";
@@ -379,7 +371,7 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
         angle = imp.angle;
       }
     }
-    const jornada = LIGA_JORNADA_BY_WEEK[w];
+    const jornada = ligaJornadaByWeek(playerClub)[w];
     entries.push({
       week: baseWeek + w,
       season,
@@ -389,7 +381,7 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
       awayTeam: isHome ? rival : playerClub,
       rivalClub: rival,
       mandatory: true,
-      description: `La Liga - Jornada ${jornada}${angle}`,
+      description: `${league.name} - Jornada ${jornada}${angle}`,
       stakes,
       jornada,
     });
@@ -498,11 +490,12 @@ const EUROPA_RIVALS = ["AS Roma", "Ajax", "Sporting CP", "Feyenoord", "Olympiaco
 export function getEuropeanCompetitionFor(
   playerClub: string,
 ): { competition: "champions" | "europa"; label: string; rivals: string[] } | null {
-  if (CHAMPIONS_REGULARS.has(playerClub)) {
-    return { competition: "champions", label: "Champions League - Fase de grupos", rivals: CHAMPIONS_RIVALS };
+  const lg = leagueOf(playerClub);
+  if (CHAMPIONS_REGULARS.has(playerClub) || ALL_CHAMPIONS.has(playerClub)) {
+    return { competition: "champions", label: "Champions League - Fase de grupos", rivals: lg.id === "es" ? CHAMPIONS_RIVALS : europeanRivals(lg, "champions") };
   }
-  if (EUROPA_REGULARS.has(playerClub)) {
-    return { competition: "europa", label: "Europa League - Fase de grupos", rivals: EUROPA_RIVALS };
+  if (EUROPA_REGULARS.has(playerClub) || ALL_EUROPA.has(playerClub)) {
+    return { competition: "europa", label: "Europa League - Fase de grupos", rivals: lg.id === "es" ? EUROPA_RIVALS : europeanRivals(lg, "europa") };
   }
   return null;
 }
@@ -528,28 +521,7 @@ function hashString(value: string): number {
 const LIGA_FIXTURE_CACHE = new Map<string, string[]>();
 
 function generateLaLigaFixture(playerClub: string, season: number): string[] {
-  const laLigaTeams = [
-    "Real Madrid",
-    "FC Barcelona",
-    "Atlético de Madrid",
-    "Sevilla FC",
-    "Real Betis",
-    "Valencia CF",
-    "Villarreal CF",
-    "Real Sociedad",
-    "Athletic Club",
-    "Getafe CF",
-    "Rayo Vallecano",
-    "Cádiz CF",
-    "Osasuna",
-    "Girona FC",
-    "Las Palmas",
-    "Almería",
-    "Celta de Vigo",
-    "Real Valladolid",
-    "Mallorca",
-    "Elche CF",
-  ];
+  const laLigaTeams = leagueOf(playerClub).teams;
 
   // Remover el club del jugador de la lista
   const key = `${playerClub}:${season}`;

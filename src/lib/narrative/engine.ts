@@ -46,12 +46,14 @@ import {
 } from "@/lib/narrative/market-window";
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
 import { settleShootout, shootoutInstruction, isPenaltyShootout } from "@/lib/narrative/shootout";
+import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
+import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
 import { maxMediaForAge } from "@/lib/narrative/media-cap";
 import { awardDue, buildAwardEvent, buildConvocatoriaEvent } from "@/lib/narrative/awards";
-import { TROFEO_LABEL, type TrofeoKind } from "@/lib/honours";
+import { trofeoLabel, type TrofeoKind } from "@/lib/honours";
 import { firstLegFor } from "@/lib/calendar/match-calendar";
 import { pickNewDecision, pushRecentNew, decisionCloser } from "@/lib/narrative/match-decisions";
 import { selWindowPlan, buildSelMatch, decideSelResult, selWindowKey } from "@/lib/narrative/seleccion";
@@ -799,7 +801,7 @@ function clampPercent(value: number) {
  * se cuenta con claridad en el texto y pasa a ser un hito compartible.
  */
 function withTrophy(event: GameEvent, kind: TrofeoKind, team: string, detail?: string, scene?: string): GameEvent {
-  const label = TROFEO_LABEL[kind];
+  const label = trofeoLabel({ k: kind, c: team });
   const already = /campe[oó]n|levantw+ (el|la) (trofeo|copa)/i.test(event.description);
   return {
     ...event,
@@ -835,11 +837,12 @@ function pickLigaChampionEvent(player: Player): GameEvent | null {
         ? "No has sido imprescindible todos los meses, pero cada minuto tuyo ha sumado, y todos lo saben."
         : "Desde un segundo plano has empujado cada semana, y el vestuario no se olvida de quién aguanta cuando no juega.";
   const club = player.club;
+  const league = leagueOf(club);
   return {
     id: `liga-campeon-${season}`,
     category: "especial",
-    title: "¡Campeones de Liga!",
-    description: `Tras treinta y ocho jornadas, ${club} termina la Liga ${yearLabel} con ${pts} puntos: ${gapText}. La ciudad entera se echa a la calle; hay bufandas, bocinas y gente llorando en los balcones. ${roleText}`,
+    title: league.id === "es" ? "¡Campeones de Liga!" : `¡Campeones de la ${league.name}!`,
+    description: `Tras ${league.jornadas === 34 ? "treinta y cuatro" : "treinta y ocho"} jornadas, ${club} termina la ${league.id === "es" ? "Liga" : league.name} ${yearLabel} con ${pts} puntos: ${gapText}. La ciudad entera se echa a la calle; hay bufandas, bocinas y gente llorando en los balcones. ${roleText}`,
     isMilestone: true,
     milestoneType: "titulo",
     trophy: { kind: "liga", season },
@@ -996,8 +999,8 @@ async function generatePreMatchEvent(
   };
 
   const compContext = {
-    liga: `La Liga - Lucha por puntos cruciales. ${rivalContext[match.rivalClub] || "Rival de la liga"}.`,
-    copa: "Copa del Rey - Eliminatoria directa. No hay segundo partido: o pasas o te elimina.",
+    liga: `${ligaLabel(player.club)} - Lucha por puntos cruciales. ${rivalContext[match.rivalClub] || "Rival de la liga"}.`,
+    copa: `${copaLabel(player.club)} - Eliminatoria directa. No hay segundo partido: o pasas o te elimina.`,
     champions: "Champions League - El escenario más grande. Nivel élite europeo. Portadas internacionales. Presión máxima.",
     europa: "Europa League - Competición europea importante. Experiencia internacional.",
     amistoso: "Amistoso - Menos presión, pero oportunidad de mostrar nivel. Evaluación física.",
@@ -3071,8 +3074,8 @@ async function pickTorneoEvent(
  */
 function buildInjuredMatchEvent(player: Player, match: MatchWeek, monthsLeft: number): GameEvent {
   const compLabel: Record<string, string> = {
-    liga: "La Liga",
-    copa: "Copa del Rey",
+    liga: ligaLabel(player.club),
+    copa: copaLabel(player.club),
     champions: "Champions League",
     europa: "Europa League",
     internacional: "Partido internacional",
@@ -3131,8 +3134,8 @@ export async function generateMatchDayEvent(
   const team = match.competition === "internacional" ? player.nation : player.club;
 
   const compLabel: Record<string, string> = {
-    liga: "La Liga",
-    copa: "Copa del Rey",
+    liga: ligaLabel(player.club),
+    copa: copaLabel(player.club),
     champions: "Champions League",
     europa: "Europa League",
     amistoso: "Amistoso",
@@ -3264,7 +3267,7 @@ function applyCareerDynamics(player: Player): Player {
   // nadie) — se aplica ANTES del resto de dinámicas para usar la media
   // de esta semana, igual que el resto de esta función.
   if (player.club !== NO_CLUB_YET) {
-    player.patrimonio = (player.patrimonio ?? 0) + weeklySalary(player.media, player.flags);
+    player.patrimonio = (player.patrimonio ?? 0) + playerMonthlyNet(player);
   }
   // Patrocinios firmados: la marca paga cada turno mientras dura el contrato.
   const sponsorIncome = monthlySponsorshipIncome(player.flags, player.week);
@@ -3665,7 +3668,7 @@ export async function pickNextEventDynamic(
     if (forcedResult) {
       const koKey = `${matchThisWeek.week}_${matchKey(matchThisWeek)}`;
       const compName =
-        matchThisWeek.competition === "champions" ? "Champions League" : matchThisWeek.competition === "europa" ? "Europa League" : "Copa del Rey";
+        matchThisWeek.competition === "champions" ? "Champions League" : matchThisWeek.competition === "europa" ? "Europa League" : copaLabel(playerWithDynamics.club);
       const round = isFinal
         ? "Final"
         : matchThisWeek.euroKoRound

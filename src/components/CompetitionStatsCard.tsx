@@ -1,11 +1,16 @@
 import type { CompetitionStats, CompStat, SeasonHistoryRow } from "@/lib/player/competition-stats";
+import { leagueOf } from "@/lib/calendar/leagues";
 
-const CLUB_ROWS: { key: "liga" | "champions" | "europa" | "copa"; label: string; icon: string }[] = [
-  { key: "liga", label: "LaLiga", icon: "🏆" },
-  { key: "champions", label: "Champions League", icon: "⭐" },
-  { key: "europa", label: "Europa League", icon: "🟠" },
-  { key: "copa", label: "Copa del Rey", icon: "🥇" },
-];
+/** La liga y la copa son las del país del club actual (ver leagues.ts). */
+function clubRows(club?: string): { key: "liga" | "champions" | "europa" | "copa"; label: string; icon: string }[] {
+  const league = leagueOf(club ?? "Real Madrid");
+  return [
+    { key: "liga", label: league.short, icon: "🏆" },
+    { key: "champions", label: "Champions League", icon: "⭐" },
+    { key: "europa", label: "Europa League", icon: "🟠" },
+    { key: "copa", label: league.cup, icon: "🥇" },
+  ];
+}
 
 const TORNEO_ROWS: { key: "mundial" | "eurocopa" | "copa_america" | "otros"; label: string }[] = [
   { key: "mundial", label: "Mundial" },
@@ -30,7 +35,8 @@ function Row({ label, icon, stat, sub = false }: { label: string; icon?: string;
   );
 }
 
-function Table({ title, stats }: { title: string; stats: CompetitionStats }) {
+function Table({ title, stats, club }: { title: string; stats: CompetitionStats; club?: string }) {
+  const CLUB_ROWS = clubRows(club);
   const totalMatches = CLUB_ROWS.reduce((n, r) => n + stats[r.key].matches, 0) + stats.seleccion.matches;
   const showTorneos = stats.seleccion.matches > 0;
   return (
@@ -73,16 +79,19 @@ export function CompetitionStatsCard({
   career,
   seasonLabel,
   view = "season",
+  club,
 }: {
   season: CompetitionStats;
   career: CompetitionStats;
   seasonLabel: string;
   view?: "season" | "career";
   history?: SeasonHistoryRow[];
+  /** Club actual: decide cómo se llaman la liga y la copa. */
+  club?: string;
 }) {
   return (
     <div className="space-y-4">
-      {view === "season" ? <Table title={`Esta temporada · ${seasonLabel}`} stats={season} /> : <Table title="Toda la carrera, por competición" stats={career} />}
+      {view === "season" ? <Table title={`Esta temporada · ${seasonLabel}`} stats={season} club={club} /> : <Table title="Toda la carrera, por competición" stats={career} club={club} />}
       <p className="text-center text-[11px] text-muted-foreground">
         Suman todos tus partidos: los que juegas como escena y los que se disputan entre medias, estimados según tu rol, tu posición y tu nivel.
         {view === "season" ? " La clasificación de abajo es la del equipo entero (todas las jornadas), así que ahí salen más partidos que a ti." : ""}

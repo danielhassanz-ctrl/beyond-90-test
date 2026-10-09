@@ -16,6 +16,7 @@ import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import type { MatchWeek } from "@/lib/calendar/match-calendar";
 import { computeRole } from "@/lib/narrative/role";
+import { ligaLabel, copaLabel } from "@/lib/calendar/leagues";
 import { getNpcName, getTeammateName } from "@/lib/narrative/npcs";
 
 interface Decision {
@@ -31,6 +32,9 @@ const COMP_LABEL: Record<string, string> = {
   europa: "Europa League",
   internacional: "Partido internacional",
 };
+/** La liga y la copa son las del país del club (ver leagues.ts). */
+const compLabelFor = (competition: string, club: string): string =>
+  competition === "liga" ? ligaLabel(club) : competition === "copa" ? copaLabel(club) : (COMP_LABEL[competition] ?? "partido oficial");
 
 const HEADLINES: Record<string, string[]> = {
   goal: ["tu gol marca el partido", "noche de goleador", "el gol que cambia la tarde", "tú abres la lata"],
@@ -506,7 +510,7 @@ export function buildFallbackMatchReport(args: {
   const verdict = pens
     ? args.forcedWin ? "gana en los penaltis a" : "pierde en los penaltis ante"
     : result === "win" ? "gana a" : result === "draw" ? "empata con" : "pierde ante";
-  const compBase = COMP_LABEL[match.competition] ?? "partido oficial";
+  const compBase = compLabelFor(match.competition, args.player.club);
   const comp = args.competitionNote ? `${compBase} (${args.competitionNote})` : compBase;
   const headline = rnd(HEADLINES[args.debut && goals > 0 && outcome !== "wondergoal" ? "goal" : outcome] ?? HEADLINES.contained);
 

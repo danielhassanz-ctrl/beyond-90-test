@@ -13,6 +13,7 @@
  * falta ninguna columna nueva en la base de datos.
  */
 import type { Player } from "@/types/player";
+import { leagueOf } from "@/lib/calendar/leagues";
 
 export interface CupProgress {
   season: number;
@@ -22,13 +23,7 @@ export interface CupProgress {
   elim?: { opp: string; score: string; club: string };
 }
 
-const COPA_ROUND_NAMES = [
-  "Dieciseisavos de Copa del Rey",
-  "Octavos de Copa del Rey",
-  "Cuartos de Copa del Rey",
-  "Semifinal de Copa del Rey",
-  "Final de Copa del Rey",
-];
+const COPA_ROUND_STAGES = ["Dieciseisavos", "Octavos", "Cuartos", "Semifinal", "Final"];
 const EURO_ROUND_NAMES = ["Octavos de final", "Cuartos de final", "Semifinal", "Final"];
 
 function parseProgress(raw: string | boolean | undefined, season: number): CupProgress {
@@ -51,8 +46,11 @@ export function getEuroProgress(player: Player, season: number): CupProgress {
   return parseProgress(player.flags?.euro_progress, season);
 }
 
-export function copaRoundName(round: number): string {
-  return COPA_ROUND_NAMES[round - 1] ?? "Copa del Rey";
+/** "Octavos de Copa del Rey" / "Octavos de FA Cup"...: la copa es la del país del club (ver leagues.ts). */
+export function copaRoundName(round: number, club?: string): string {
+  const cup = club ? leagueOf(club).cup : "Copa del Rey";
+  const stage = COPA_ROUND_STAGES[round - 1];
+  return stage ? `${stage} de ${cup}` : cup;
 }
 
 export function euroRoundName(round: number): string {

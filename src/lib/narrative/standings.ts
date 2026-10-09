@@ -3,11 +3,10 @@ import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import {
   getEuropeanCompetitionFor,
-  LIGA_JORNADA_BY_WEEK,
-  LIGA_TOTAL_JORNADAS,
   EURO_GROUP_WEEKS,
   EURO_GROUP_JORNADAS,
 } from "@/lib/calendar/match-calendar";
+import { leagueOf, leagueTier, ligaJornadaByWeek, canonicalClub } from "@/lib/calendar/leagues";
 import { getCopaProgress, getEuroProgress, copaRoundName, euroRoundName } from "@/lib/calendar/competition-progress";
 import { WEEKS_PER_SEASON } from "@/types/career";
 import { getTorneoProgress, torneoGroupRivals, TORNEO_NAMES, TORNEO_STAGE_LABELS, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
@@ -112,7 +111,7 @@ const CLUB_TIER: Record<string, number> = {
 };
 
 function clubTier(club: string): number {
-  return CLUB_TIER[club] ?? 3;
+  return CLUB_TIER[club] ?? leagueTier(club) ?? 3;
 }
 
 function mixSeed(value: string): number {
@@ -238,14 +237,15 @@ function simulateGame(seed: string, tier: number, g: number): "W" | "D" | "L" {
 function buildLigaTable(seed: string, playerClub: string, record?: SeasonMatchRecord): TableStandings {
   const keyByJornada = new Map<number, "W" | "D" | "L">();
   for (const res of record?.results ?? []) {
-    const jornada = LIGA_JORNADA_BY_WEEK[res.inSeasonWeek];
+    const jornada = ligaJornadaByWeek(playerClub)[res.inSeasonWeek];
     if (jornada) keyByJornada.set(jornada, res.r);
   }
   const jornadaNow = keyByJornada.size > 0 ? Math.max(...keyByJornada.keys()) : 0;
 
-  const others = LIGA_FULL_POOL.filter((c) => c !== playerClub)
+  const league = leagueOf(playerClub);
+  const others = league.teams.filter((c) => c !== playerClub)
     .sort((a, b) => mixSeed(`${seed}:${a}`) - mixSeed(`${seed}:${b}`))
-    .slice(0, 19);
+    .slice(0, league.teams.length - 1);
   const rows: StandingsRow[] = [playerClub, ...others]
     .map((club) => {
       const isPlayer = club === playerClub;
@@ -263,7 +263,7 @@ function buildLigaTable(seed: string, playerClub: string, record?: SeasonMatchRe
     })
     .sort((a, b) => b.points - a.points || b.won - a.won);
 
-  const label = jornadaNow > 0 ? `LaLiga · Jornada ${jornadaNow} de ${LIGA_TOTAL_JORNADAS}` : "LaLiga";
+  const label = jornadaNow > 0 ? `${league.short} · Jornada ${jornadaNow} de ${league.jornadas}` : league.short;
   return { type: "table", label, rows };
 }
 
@@ -280,7 +280,7 @@ function buildLigaTable(seed: string, playerClub: string, record?: SeasonMatchRe
 // Europa League y Copa del Rey ya tienen su propio seguimiento real (tabla
 // europea aparte, cuadro de eliminatoria), así que por defecto se excluyen
 // de la racha "doméstica" para no mezclar dos competiciones en una tabla.
-const SEPARATE_COMPETITION_LABELS = ["Champions League", "Europa League", "Copa del Rey", "Partido internacional"];
+const SEPARATE_COMPETITION_LABELS = ["Champions League", "Europa League", "Copa del Rey", "FA Cup", "DFB-Pokal", "Copa de Italia", "Copa de Francia", "Copa del Rey saudí", "Partido internacional"];
 
 export async function getSeasonMatchRecord(
   supabase: SupabaseClient,
@@ -485,9 +485,9 @@ export function getActiveStandings(
     p.elim ? `${p.elim.club} ${p.elim.score} ${p.elim.opp}` : roundName;
   const copa: KnockoutStandings | null =
     copaProgress.round > 0 && copaProgress.alive
-      ? { type: "knockout", label: "Copa del Rey", roundLabel: copaRoundName(copaProgress.round), alive: true }
+      ? { type: "knockout", label: leagueOf(player.club).cup, roundLabel: copaRoundName(copaProgress.round, player.club), alive: true }
       : copaProgress.round > 0
-        ? { type: "knockout", label: "Copa del Rey", roundLabel: `Eliminado en ${shortRound(copaRoundName(copaProgress.round))}`, alive: false, result: eliminatedText("", copaProgress) || undefined }
+        ? { type: "knockout", label: leagueOf(player.club).cup, roundLabel: `Eliminado en ${shortRound(copaRoundName(copaProgress.round, player.club))}`, alive: false, result: eliminatedText("", copaProgress) || undefined }
         : null;
 
   const euroProgress = getEuroProgress(player, season);
@@ -546,7 +546,7 @@ export function leagueFinish(
   player: Pick<Player, "id" | "club" | "week">,
   record: SeasonMatchRecord,
 ): { rank: number; points: number; secondPoints: number; leaderPoints: number } | null {
-  if (!LIGA_FULL_POOL.includes(player.club)) return null;
+  if (!leagueOf(player.club).teams.includes(canonicalClub(player.club))) return null;
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const table = buildLigaTable(`${player.id}:${season}:liga`, player.club, record);
   const played = table.rows[0]?.played ?? 0;
