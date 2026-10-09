@@ -47,6 +47,7 @@ import {
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
 import { settleShootout, shootoutInstruction, isPenaltyShootout } from "@/lib/narrative/shootout";
 import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
+import { monthlyRent } from "@/lib/finance/rent";
 import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
@@ -3277,6 +3278,9 @@ function applyCareerDynamics(player: Player): Player {
   // el banco acaba llamando (ver buildDebtTroubleEvent).
   const mortgagePayments = totalMonthlyPayments(player.flags);
   if (mortgagePayments > 0) player.patrimonio = Math.max(0, (player.patrimonio ?? 0) - mortgagePayments);
+  // El alquiler de la vivienda en la ciudad del club se paga cada turno.
+  const rentPayment = monthlyRent(player.flags);
+  if (rentPayment > 0) player.patrimonio = Math.max(0, (player.patrimonio ?? 0) - rentPayment);
 
   // Aplicar degradación de forma si no ha jugado
   player.forma = naturalFormaDegradation(player);

@@ -19,6 +19,9 @@ import {
   buildEleccionRepresentanteEvent,
   buildInicioFichajeEvent,
   buildCasaEvent,
+  buildCityHousingEvent,
+  buildCityCarEvent,
+  cityMoveIds,
   buildMansionEvent,
   buildYachtEvent,
   buildJetEvent,
@@ -159,6 +162,25 @@ async function ensureNextEventInner(
   // pedía 18.000€ de entrada, por encima del propio umbral — un jugador
   // con 15-17k€ podía ver tres casas sin poder pagar la entrada de
   // ninguna. Se deriva ahora del catálogo real en vez de un número suelto.
+  // Mudanza a la ciudad de un club nuevo (no el primero, ni una cesión): primero dónde vivir, un par de turnos
+  // después el coche. Una escena de cada por cada club al que llegas.
+  {
+    const clubChanges = parseInt(String(player.flags?.club_changes ?? "0"), 10) || 0;
+    const since = parseInt(String(player.flags?.club_since ?? "0"), 10) || 0;
+    const here = player.week - since;
+    const onLoan = Boolean(player.flags?.loan_active) && !player.flags?.loan_returned;
+    const ids = cityMoveIds(player.club);
+    if (!event && clubChanges >= 2 && !onLoan && since > 0 && here >= 1 && here <= 14 && player.status === "active") {
+      if (!usedEventIds.includes(ids.casa)) {
+        event = await buildCityHousingEvent(player, supabase);
+        await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+      } else if (!usedEventIds.includes(ids.coche) && here >= 3) {
+        event = await buildCityCarEvent(player, supabase);
+        await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+      }
+    }
+  }
+
   const MIN_PATRIMONIO_FOR_HOME = getMinHomeDownPayment();
   if (
     !event &&

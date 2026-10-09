@@ -6,6 +6,7 @@ import { seasonLabel, WEEKS_PER_SEASON } from "@/types/career";
 import { getGameDateLabel } from "@/lib/calendar/season";
 import { BottomNav } from "@/components/BottomNav";
 import { playerMonthlyNet, playerAnnualGross } from "@/lib/narrative/transfer-terms";
+import { readRent } from "@/lib/finance/rent";
 import { findPropertyPrompt, findPropertyInteriorPrompt } from "@/lib/narrative/events";
 import { readProperties, monthlyPayment, remainingLoan, totalMonthlyPayments } from "@/lib/finance/mortgage";
 import { readInvestments, investmentValue } from "@/lib/finance/investments";
@@ -168,7 +169,8 @@ export default async function PatrimonioPage() {
   const netWorth = player.patrimonio + propertyValue + investmentsTotal - mortgageDebt;
   const sponsors = activeSponsorships(player.flags, player.week);
   const sponsorMonthly = sponsors.reduce((n, x) => n + x.monthly, 0);
-  const monthlyBalance = monthlySalary + sponsorMonthly - mortgageMonthly;
+  const rent = readRent(player.flags);
+  const monthlyBalance = monthlySalary + sponsorMonthly - mortgageMonthly - (rent?.monthly ?? 0);
   const pressure = getFinancialPressure(netWorth);
 
   return (
@@ -225,6 +227,12 @@ export default async function PatrimonioPage() {
                   <span className="font-num font-semibold text-pitch">+{x.monthly.toLocaleString("es")} €</span>
                 </div>
               ))}
+              {rent && (
+                <div className="flex justify-between">
+                  <span className="text-foreground/90">Sale: alquiler en {rent.city}</span>
+                  <span className="font-num font-semibold text-destructive">-{rent.monthly.toLocaleString("es")} €</span>
+                </div>
+              )}
               {mortgageMonthly > 0 && (
                 <div className="flex justify-between">
                   <span className="text-foreground/90">Sale: cuotas de hipotecas y préstamos</span>

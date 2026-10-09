@@ -498,6 +498,7 @@ export async function resolveEvent(formData: FormData) {
       club_changes: String((parseInt(String(flagsSoFar.club_changes ?? "0"), 10) || 0) + 1),
       clubs_history: previousClubs.slice(-12).join("|"),
       club_since: String(newWeek),
+      alquiler: "",
       coach_bench: "0",
       bench_streak: "0",
       euro_progress: "",

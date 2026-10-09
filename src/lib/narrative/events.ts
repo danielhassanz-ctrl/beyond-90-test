@@ -8,6 +8,8 @@ import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-vari
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
 import { investmentFlag } from "@/lib/finance/investments";
 import { monthlyPayment, vehicleFinancing } from "@/lib/finance/mortgage";
+import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
+import { leagueOf } from "@/lib/calendar/leagues";
 
 /**
  * Primer evento de carrera: elegir representante. Ahora es dinámico con 15+ variantes
@@ -6967,3 +6969,135 @@ export const EVENTS: GameEvent[] = [
     ],
   },
 ];
+
+/* ─────────────── Mudanza a la ciudad de un club nuevo: vivienda y coche ─────────────── */
+
+const CITY_BY_CLUB: Record<string, string> = {
+  "Bayern de Múnich": "Múnich", "Borussia Dortmund": "Dortmund", "Bayer Leverkusen": "Leverkusen", "RB Leipzig": "Leipzig", "Eintracht Fráncfort": "Fráncfort",
+  "Manchester City": "Mánchester", "Manchester United": "Mánchester", "Liverpool FC": "Liverpool", Arsenal: "Londres", Chelsea: "Londres", "Tottenham Hotspur": "Londres",
+  "West Ham United": "Londres", Fulham: "Londres", Brentford: "Londres", "Crystal Palace": "Londres", "Newcastle United": "Newcastle", "Aston Villa": "Birmingham",
+  "Paris Saint-Germain": "París", "Olympique de Marsella": "Marsella", "AS Mónaco": "Mónaco", "Olympique de Lyon": "Lyon", "LOSC Lille": "Lille",
+  Juventus: "Turín", Torino: "Turín", "Inter de Milán": "Milán", "AC Milan": "Milán", "AS Roma": "Roma", Lazio: "Roma", "SSC Nápoles": "Nápoles", Atalanta: "Bérgamo", Fiorentina: "Florencia",
+  "Al-Nassr FC": "Riad", "Al-Hilal": "Riad", "Real Madrid": "Madrid", "Atlético de Madrid": "Madrid", "Getafe CF": "Madrid", "Rayo Vallecano": "Madrid", "FC Barcelona": "Barcelona",
+  "Sevilla FC": "Sevilla", "Real Betis": "Sevilla", "Valencia CF": "Valencia", "Villarreal CF": "Villarreal", "Athletic Club": "Bilbao", "Real Sociedad": "San Sebastián",
+  "Girona FC": "Girona", "Celta de Vigo": "Vigo", "Málaga CF": "Málaga",
+};
+export const cityOfClub = (club: string): string => CITY_BY_CLUB[club] ?? club;
+
+/** Identificador estable por club para las escenas de mudanza (una vivienda y un coche por cada club nuevo). */
+export function cityMoveIds(club: string): { casa: string; coche: string } {
+  const slug = club.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  return { casa: `vid-vivienda-${slug}`, coche: `vid-coche-${slug}` };
+}
+
+const round50 = (n: number) => Math.round(n / 50) * 50;
+
+/**
+ * Has fichado por un club de otra ciudad: toca decidir dónde vivir. Alquilar (un piso normal o un ático de lujo,
+ * con fianza y una cuota que sale cada mes), comprar (financiado, como siempre) o quedarte en el hotel del club un
+ * tiempo. Las cuotas escalan con tu sueldo neto: un chaval no puede con un ático; una estrella, sí.
+ */
+export async function buildCityHousingEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
+  const city = cityOfClub(player.club);
+  const abroad = leagueOf(player.club).id !== "es";
+  const net = playerMonthlyNet(player);
+  const flat = Math.min(9000, Math.max(600, round50(net * 0.1)));
+  const lux = Math.min(26000, Math.max(flat + 700, round50(net * 0.22)));
+  const rentFlag = (name: string, monthly: number) => JSON.stringify({ name, monthly, city, since: player.week });
+
+  // Compra: una vivienda de lujo si la cuenta lo permite (solo en una ciudad de costa o interior que encaje), o una normal.
+  const rich = player.patrimonio >= getMinMansionDownPayment();
+  const pool = rich
+    ? MANSION_LISTINGS.filter((l) => !isInlandClub(player.club) || !l.coastal)
+    : HOME_LISTINGS.filter((l) => Math.round((l.min * 0.2) / 500) * 500 <= player.patrimonio);
+  const buyList = pool.length > 0 ? pickRandom(pool, 1)[0] : null;
+  const buyPrice = buyList ? randomPrice(buyList.min, buyList.max, rich ? 50000 : 5000) : 0;
+  const buyDown = Math.round((buyPrice * (rich ? 0.3 : 0.2)) / 500) * 500;
+  const photo = buyList ? await getOrCreatePropertyPhoto(supabase, player.user_id, buyList.name, buyList.prompt) : null;
+
+  const intro = abroad
+    ? `Has aterrizado en ${city} con dos maletas y un idioma que no es el tuyo. El club te ha pagado el hotel unos días, pero no puedes vivir en el hotel para siempre. Tu representante lo resume: "O decides ahora, o decide la agencia de relocation por ti, y te aseguro que no te va a gustar".`
+    : `Has fichado por un club de ${city} y toca decidir dónde vivir. Tu representante lo ve claro: "Cuanto antes te instales, antes te rinde la cabeza".`;
+
+  return {
+    id: cityMoveIds(player.club).casa,
+    category: "vida",
+    title: `Dónde vivir en ${city}`,
+    description: intro,
+    options: [
+      {
+        id: "alquiler-piso",
+        label: `Alquilar un piso cerca del campo de entrenamiento — ${flat.toLocaleString("es")} €/mes`,
+        subtitle: `Fianza de ${(flat * 2).toLocaleString("es")} € · cómodo y sin ataduras`,
+        consequences: { patrimonio: -flat * 2, moral: 4, flags: { alquiler: rentFlag(`Piso en ${city}`, flat) } },
+        outcomeText: `Firmas un contrato de alquiler de un piso luminoso a diez minutos del campo. El casero te pide un autógrafo para su sobrino antes de darte las llaves.`,
+      },
+      {
+        id: "alquiler-atico",
+        label: `Alquilar un ático de lujo en el centro — ${lux.toLocaleString("es")} €/mes`,
+        subtitle: `Fianza de ${(lux * 2).toLocaleString("es")} € · terraza, portero y vistas`,
+        consequences: { patrimonio: -lux * 2, moral: 7, fama: 2, flags: { alquiler: rentFlag(`Ático de lujo en ${city}`, lux) } },
+        outcomeText: `El ático tiene terraza, portero y una vista de la ciudad que te hace olvidar el cansancio. Cada mes, eso sí, la cuota se nota en la cuenta.`,
+      },
+      ...(buyList
+        ? [
+            {
+              id: "comprar",
+              label: `Comprar: ${buyList.name} — ${buyPrice.toLocaleString("es")} €`,
+              subtitle: `Entrada: ${buyDown.toLocaleString("es")} € · Cuota: ${monthlyPayment({ key: "", name: "", price: buyPrice, downPayment: buyDown }).toLocaleString("es")} €/mes`,
+              imageUrl: photo ?? undefined,
+              consequences: {
+                patrimonio: -buyDown,
+                moral: 8,
+                flags: { [`propiedad_${Date.now()}_c`]: JSON.stringify({ name: buyList.name, price: buyPrice, downPayment: buyDown, photoUrl: photo ?? null, since: player.week }) },
+              },
+              outcomeText: `Firmas ante notario con el estómago encogido y una sonrisa enorme. Por primera vez en ${city}, algo es tuyo.`,
+            },
+          ]
+        : []),
+      {
+        id: "hotel",
+        label: "Quedarte en el hotel del club unas semanas más",
+        subtitle: "Sin gastos, sin sensación de hogar",
+        consequences: { moral: -2, flags: {} },
+        outcomeText: "Te quedas en la habitación del hotel, con el desayuno incluido y la maleta a medio deshacer. A las tres semanas, las paredes empiezan a parecerte conocidas.",
+      },
+    ],
+    minWeek: 8,
+  };
+}
+
+/** Un coche para moverte por la ciudad nueva (financiado, como el resto de compras). */
+export async function buildCityCarEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
+  const city = cityOfClub(player.club);
+  const abroad = leagueOf(player.club).id !== "es";
+  const listings = pickAffordable(CAR_LISTINGS, 3, "coche", player, 5000);
+  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  return {
+    id: cityMoveIds(player.club).coche,
+    category: "vida",
+    title: `Un coche para moverte por ${city}`,
+    description: abroad
+      ? `En ${city} las distancias son otras y el transporte público habla un idioma que aún no dominas. Un compañero te habla de un concesionario donde atienden a jugadores del club y te lo dejan listo en dos días.`
+      : `Con la mudanza a ${city}, tu coche de siempre se te queda corto. Un compañero te pasa el contacto de un concesionario donde ya conocen al club.`,
+    options: [
+      ...listings.map((l, i) => {
+        const buy = financedPurchase("coche", l, photos[i], player.week, i);
+        return {
+          id: `coche-${i}`,
+          label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+          subtitle: `Entrada: ${buy.down.toLocaleString("es")} € · Cuota: ${buy.monthly.toLocaleString("es")} €/mes`,
+          imageUrl: photos[i] ?? undefined,
+          consequences: { patrimonio: -buy.down, moral: 6, fama: 1, flags: buy.flag },
+        };
+      }),
+      {
+        id: "pasar",
+        label: "Pasar: te mueves en taxi y en el coche del club",
+        subtitle: "Sin prisa",
+        consequences: { moral: 1 },
+      },
+    ],
+    minWeek: 8,
+  };
+}
