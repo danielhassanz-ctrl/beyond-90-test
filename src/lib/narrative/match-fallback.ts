@@ -454,6 +454,8 @@ export function buildFallbackMatchReport(args: {
   competitionNote?: string;
   /** Eliminatoria a doble partido: "Ida: ... Global: ... Pasa de ronda." */
   tieNote?: string;
+  /** La ida de una eliminatoria a doble partido: el global se calcula con el marcador FINAL de la vuelta. */
+  firstLeg?: { own: number; rival: number; text: string };
   /** Primer partido oficial con la selección: el jugador (si no es portero) marca. */
   debut?: boolean;
 }): GameEvent {
@@ -491,7 +493,10 @@ export function buildFallbackMatchReport(args: {
   if (args.debut && !isKeeper && goals === 0) goals = 1;
   if (goals === 1 && Math.random() < 0.12) goals = 2;
   if (outcome === "concede" || outcome === "penalty_conceded") rival = Math.max(rival, 1);
+  const ownBefore = own;
   own = Math.max(own, goals + assists);
+  // Con un marcador ya decidido (eliminatoria, torneo) la diferencia se conserva: subir tus goles sube también los del rival.
+  if (forced) rival += own - ownBefore;
 
   // Minutos según el rol; la jugada decisiva tiene que caber dentro
   const rawMin = String(decision.min ?? "");
@@ -506,7 +511,8 @@ export function buildFallbackMatchReport(args: {
   const nota = rating.toFixed(1);
 
   const result: Result = own > rival ? "win" : own === rival ? "draw" : "loss";
-  const pens = own === rival && args.forcedWin !== undefined;
+  // Solo hay tanda si el marcador decidido la trae ("1-1 (4-3 en penaltis)"): un empate en la vuelta con el global ganado no es una tanda.
+  const pens = own === rival && args.forcedWin !== undefined && /penaltis/i.test(args.forcedScoreLine ?? "");
   const verdict = pens
     ? args.forcedWin ? "gana en los penaltis a" : "pierde en los penaltis ante"
     : result === "win" ? "gana a" : result === "draw" ? "empata con" : "pierde ante";
@@ -533,17 +539,33 @@ export function buildFallbackMatchReport(args: {
         : rnd([`Una derrota ${venue} que se hace larga.`, `Se perdió ${venue}, y los silbidos al final no fueron para nadie en particular.`]);
   const play = decision.sit || decision.outcome ? playLine(outcome, decision.sit ?? "", rawMin) : "";
 
+  // En una eliminatoria, qué se juega y qué pasa: de qué competición (y ronda) pasas o quedas fuera.
+  const stage = match.cupRound
+    ? ["Dieciseisavos", "Octavos", "Cuartos", "Semifinal", "Final"][match.cupRound - 1]
+    : match.euroKoRound
+      ? ["Octavos", "Cuartos", "Semifinal", "Final"][match.euroKoRound - 1]
+      : null;
+  const stageText = stage ? (stage === "Final" ? "la final" : stage === "Semifinal" ? "la semifinal" : stage.toLowerCase()) : "";
+  const aggText = args.firstLeg ? `Ida: ${args.firstLeg.text}. Global: ${args.firstLeg.own + own}-${args.firstLeg.rival + rival}${pens ? " (a penaltis)" : ""}.` : "";
+  const tieOutcome =
+    args.forcedWin === undefined || !stage
+      ? ""
+      : args.forcedWin
+        ? stage === "Final" ? `Es campeón de ${compBase}.` : `Tu equipo pasa de ronda en ${compBase}.`
+        : `Tu equipo queda eliminado de ${compBase} en ${stageText}.`;
+
   // Primera frase con el formato exacto que lee extractStatsFromEvent; después, la narración.
   const description =
     `Ante ${match.rivalClub} en ${comp}, jugaste ${minutes} minutos. Nota: ${nota}/10. Goles: ${goals}. Asistencias: ${assists}. ` +
     `Marcador: ${own}-${rival} (${team}-${match.rivalClub}). Tu equipo ${verdict} ${match.rivalClub}. ` +
     [
       args.debut ? `Es tu debut oficial con ${team}${goals > 0 ? " y lo estrenas con gol: la grada se pone en pie y tu familia, en casa, rompe a llorar" : ", con el himno todavía en la garganta"}.` : "",
-      args.tieNote,
+      args.firstLeg ? aggText : args.tieNote,
       stakesText,
       ambience,
       play,
       coachLine(coach, result, rating, goals),
+      tieOutcome,
     ]
       .filter(Boolean)
       .join(" ");

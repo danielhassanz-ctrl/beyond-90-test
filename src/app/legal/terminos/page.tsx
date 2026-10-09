@@ -8,7 +8,7 @@ export default function TerminosPage() {
       <div className="space-y-1">
         <p className="text-4xl">📋</p>
         <h1 className="font-display text-2xl">Términos de uso</h1>
-        <p className="text-xs text-muted-foreground">Última actualización: septiembre de 2026</p>
+        <p className="text-xs text-muted-foreground">Última actualización: octubre de 2026 · Beyond 90 está en fase beta</p>
       </div>
 
       <p>
@@ -26,6 +26,26 @@ export default function TerminosPage() {
           clubes, agentes, familiares y situaciones que aparecen son ficticios, generados o inventados para la
           partida — cualquier parecido con una persona real es casualidad, salvo tu propio jugador.
         </p>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold text-gold">Clubes, competiciones y nombres reales</h2>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            Los nombres de clubes, selecciones, ligas y competiciones reales (Real Madrid, Premier League, Mundial...)
+            se usan solo como contexto de la ficción. <strong>Beyond 90 no está afiliado, patrocinado ni respaldado por
+            ningún club, liga, federación, marca ni persona.</strong>
+          </li>
+          <li>
+            <strong>Los jugadores, entrenadores, directivos, familiares, agentes, periodistas y demás personas que
+            aparecen son ficticios.</strong> Si algún nombre coincide con el de una persona real, es pura casualidad. Los
+            escudos que ves son insignias de color propias del juego, no los escudos oficiales.
+          </li>
+          <li>
+            Los resultados, clasificaciones, fichajes y premios son simulados: no corresponden a competiciones ni
+            temporadas reales.
+          </li>
+        </ul>
       </section>
 
       <section className="space-y-2">
@@ -56,6 +76,29 @@ export default function TerminosPage() {
           Las imágenes y la narrativa del juego se generan con ayuda de inteligencia artificial. No garantizamos
           que una imagen concreta llegue a generarse (a veces falla o tarda), ni que el resultado sea siempre
           perfecto — es entretenimiento, no un servicio de fotografía profesional.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold text-gold">Compras de fotos</h2>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            Algunas fotos de hitos se generan gratis y puedes comprar packs de fotos adicionales. El precio se muestra
+            antes de pagar y el cobro lo gestiona Stripe.
+          </li>
+          <li>
+            Es un contenido digital que empieza a prestarse al generarse la foto. Al comprar aceptas que, una vez
+            empezada la generación, pierdes el derecho de desistimiento de 14 días respecto de las fotos ya generadas.
+          </li>
+          <li>Si una foto falla por un error técnico nuestro, la devolvemos a tu saldo; no se cobra dos veces por la misma.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold text-gold">Fase beta</h2>
+        <p>
+          Beyond 90 está en pruebas. Puede haber errores, cambios en el juego y, en casos excepcionales, reinicios de
+          partidas. Te avisaremos si pasa. Tu opinión nos ayuda a mejorarlo.
         </p>
       </section>
 

@@ -50,6 +50,7 @@ import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
 import { monthlyRent } from "@/lib/finance/rent";
 import { getNpcName, nationalSquadView } from "@/lib/narrative/npcs";
 import { buildTorneoFinalEvent } from "@/lib/narrative/world-results";
+import { applyExClubTouch } from "@/lib/narrative/ex-club";
 import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
@@ -3156,7 +3157,7 @@ export async function generateMatchDayEvent(
   // la causa raíz de que apareciera un "Cuartos de Copa" después de que
   // el jugador ya estuviera eliminado esa misma temporada.
   const resultInstruction = forcedResult
-    ? `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES NI LO CONTRADIGAS: "${forcedResult.scoreLine}" en formato ${team}-${match.rivalClub}. Tu equipo ${forcedResult.win ? "GANA y AVANZA de ronda" : "PIERDE y QUEDA ELIMINADO de la competición"} — que el titular y la crónica lo dejen clarísimo, sin ambigüedad. Tu propio rendimiento personal (minutos, nota, goles) sí es libre, siempre que sea coherente con ese marcador.`
+    ? `- MARCADOR YA DECIDIDO, ÚSALO EXACTAMENTE Y NO LO CAMBIES NI LO CONTRADIGAS: "${forcedResult.scoreLine}" en formato ${team}-${match.rivalClub}. Tu equipo ${forcedResult.win ? "GANA y AVANZA de ronda" : `PIERDE y QUEDA ELIMINADO de ${compLabel[match.competition as keyof typeof compLabel] ?? "la competición"} (di claramente de qué competición y en qué ronda)`} — que el titular y la crónica lo dejen clarísimo, sin ambigüedad. Tu propio rendimiento personal (minutos, nota, goles) sí es libre, siempre que sea coherente con ese marcador.`
     : "";
   const stakesInstruction =
     match.stakes === "decisivo"
@@ -3750,7 +3751,7 @@ export async function pickNextEventDynamic(
     }
     // Si la IA falla, el partido se resuelve igual con una crónica escrita en
     // código (match-fallback.ts): sin esto la semana se quedaba atascada.
-    const matchDayEvent =
+    const matchDayEventRaw =
       (await generateMatchDayEvent(playerWithDynamics, matchThisWeek, history, decisionOutcome, forcedResult, extraInstruction)) ??
       buildFallbackMatchReport({
         player: playerWithDynamics,
@@ -3760,7 +3761,10 @@ export async function pickNextEventDynamic(
         forcedWin: forcedResult?.win,
         team: playerWithDynamics.club,
         tieNote,
+        firstLeg: leg1 && twoLeg ? { own: leg1.own, rival: leg1.rival, text: leg1.text } : undefined,
       });
+    // Contra un antiguo club: la crónica lo nota y, si marcas, no lo celebras (hito).
+    const matchDayEvent = matchDayEventRaw ? applyExClubTouch(matchDayEventRaw, playerWithDynamics, matchThisWeek.rivalClub) : matchDayEventRaw;
     if (matchDayEvent) {
       if (forcedResult && matchThisWeek.cupRound) {
         advanceCupProgress(playerWithDynamics, "copa_progress", currentSeason, matchThisWeek.cupRound, forcedResult.win, { opp: matchThisWeek.rivalClub, score: forcedResult.scoreLine });

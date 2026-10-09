@@ -8,7 +8,7 @@ export default function PrivacidadPage() {
       <div className="space-y-1">
         <p className="text-4xl">🔒</p>
         <h1 className="font-display text-2xl">Política de privacidad</h1>
-        <p className="text-xs text-muted-foreground">Última actualización: septiembre de 2026</p>
+        <p className="text-xs text-muted-foreground">Última actualización: octubre de 2026 · Beyond 90 está en fase beta</p>
       </div>
 
       <p>
@@ -36,6 +36,14 @@ export default function PrivacidadPage() {
             <strong>La foto que subes</strong> para tu jugador. Es un dato personal si es tu cara real, y lo
             tratamos como tal.
           </li>
+          <li>
+            <strong>Datos de uso y errores técnicos</strong> (por ejemplo, qué escenas has visto o un fallo al generar una
+            imagen), para que el juego funcione y poder arreglarlo.
+          </li>
+          <li>
+            <strong>Datos de pago</strong>, si compras un pack de fotos: los gestiona Stripe. Nosotros no vemos ni
+            guardamos el número de tu tarjeta, solo que el pago se ha completado.
+          </li>
         </ul>
       </section>
 
@@ -61,13 +69,26 @@ export default function PrivacidadPage() {
           </li>
           <li>
             <strong>Replicate</strong> (genera las imágenes de tus hitos a partir de tu foto, usando modelos de
-            inteligencia artificial).
+            inteligencia artificial de terceros que aloja esa plataforma). Tu foto se envía a este proveedor para
+            poder generar tus imágenes.
+          </li>
+          <li>
+            <strong>Anthropic</strong> (escribe parte de la narrativa con inteligencia artificial). Se le envían datos
+            del personaje y de la partida —nombre del jugador, club, decisiones recientes—, nunca tu email, tu
+            contraseña ni tu foto.
+          </li>
+          <li>
+            <strong>Stripe</strong> (cobra los packs de fotos).
           </li>
           <li>
             <strong>Vercel</strong> (aloja la aplicación web).
           </li>
         </ul>
-        <p>Ninguno de ellos puede usar tu foto para nada distinto de prestarnos ese servicio técnico.</p>
+        <p>
+          Estos proveedores pueden tratar datos fuera del Espacio Económico Europeo (por ejemplo, en Estados Unidos),
+          con las garantías habituales que exige la normativa europea. Los contratamos solo para prestar el servicio y
+          no los usamos para publicidad.
+        </p>
       </section>
 
       <section className="space-y-2">
