@@ -110,7 +110,9 @@ export async function ensureNextEvent(
  */
 async function migrateSalaryDeal(supabase: SupabaseClient, player: Player): Promise<void> {
   const f = player.flags ?? {};
-  if (!f.salary_mult || f.salary_fixed || String(f.salary_club ?? "") !== player.club) return;
+  // fix_v 2 = la cifra ya es la firmada de verdad (la fijan los propios contratos nuevos o esta recuperación).
+  if (f.salary_fix_v === "2") return;
+  if (!f.salary_mult || String(f.salary_club ?? "") !== player.club) return;
   const since = parseInt(String(f.club_since ?? "0"), 10) || 0;
   let fixed = 0;
   try {
@@ -118,23 +120,22 @@ async function migrateSalaryDeal(supabase: SupabaseClient, player: Player): Prom
       .from("career_events")
       .select("outcome_text, week, created_at")
       .eq("player_id", player.id)
-      .ilike("outcome_text", "%brutos al año%")
+      .ilike("outcome_text", "%€%al año%")
       .gte("week", Math.max(0, since - 1))
       .order("week", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(8);
     for (const row of data ?? []) {
-      const m = String(row.outcome_text ?? "").match(/([d.]{5,}) € brutos al año/);
-      if (m) {
-        fixed = parseInt(m[1].replace(/./g, ""), 10) || 0;
-        if (fixed > 0) break;
-      }
+      // Solo lo que se firmó o renovó de verdad (el texto del resultado), no las ofertas que rechazaste.
+      const m = String(row.outcome_text ?? "").match(/(\d[\d.]{4,}) € (?:brutos )?al año/);
+      if (m) fixed = parseInt(m[1].replace(/\./g, ""), 10) || 0;
+      if (fixed > 0) break;
     }
   } catch {
     // sin historial legible: se fija la cifra actual
   }
-  if (!(fixed > 0)) fixed = playerAnnualGross(player);
-  player.flags = { ...f, salary_fixed: String(fixed) };
+  if (!(fixed > 0)) fixed = playerAnnualGross({ ...player, flags: { ...f, salary_fixed: "0" } });
+  player.flags = { ...f, salary_fixed: String(fixed), salary_fix_v: "2" };
   await supabase.from("players").update({ flags: player.flags }).eq("id", player.id);
 }
 

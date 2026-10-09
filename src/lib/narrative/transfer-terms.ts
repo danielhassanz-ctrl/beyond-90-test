@@ -168,6 +168,7 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
   const dealFlags = (annual: number, forClub: string) => ({
     salary_mult: (annual / Math.max(1, baseAnnual(player.media ?? 50) * clubTier(forClub))).toFixed(3),
     salary_fixed: String(annual),
+    salary_fix_v: "2",
     salary_club: forClub,
   });
   return [
