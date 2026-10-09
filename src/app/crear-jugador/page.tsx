@@ -56,7 +56,7 @@ export default async function CrearJugadorPage({
             <p className="text-kicker">Tu identidad</p>
 
             <Field label="Nombre y apellidos" emoji="👤">
-              <input name="last_name" required placeholder="Ej: Ronaldo" className={inputClass} />
+              <input name="last_name" required placeholder="Ej: Pablo Sanz" className={inputClass} />
             </Field>
 
             <Field label="Apodo (opcional)" emoji="✨">

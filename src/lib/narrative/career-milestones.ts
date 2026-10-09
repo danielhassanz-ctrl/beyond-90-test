@@ -83,7 +83,7 @@ export function buildMilestoneEvent(type: MilestoneType, player: Player): GameEv
       id: `milestone-goal-10-${player.week}`,
       category: "prensa",
       title: `Diez goles: ${player.last_name} se consolida como delantero`,
-      description: `La prensa local hace cuenta: ya son 10 goles esta temporada. No es Mbappé ni Lewandowski, pero para alguien de tu edad y en tu nivel, es destacable. "Está en buena racha", dicen. "Si continúa así, clubes grandes lo vigilarán."`,
+      description: `La prensa local hace cuenta: ya son 10 goles esta temporada. No son cifras de crack mundial, pero para alguien de tu edad y en tu nivel, es destacable. "Está en buena racha", dicen. "Si continúa así, clubes grandes lo vigilarán."`,
       isMilestone: true,
       milestoneType: "prensa",
       options: [
