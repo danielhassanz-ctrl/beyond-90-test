@@ -27,7 +27,7 @@ import { describeLook } from "@/lib/playerLook";
 import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt, withSceneGuards } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
-import { annualSalaryText } from "@/lib/narrative/transfer-terms";
+import { annualSalaryText, playerMonthlyNet } from "@/lib/narrative/transfer-terms";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, WEEKS_PER_SEASON, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
@@ -119,6 +119,8 @@ export async function resolveEvent(formData: FormData) {
             if (k.startsWith("@set_")) return [];
             // "@+1": suma uno al contador actual (cambios de entrenador, capitán...).
             if (v === "@+1") return [[k, String((parseInt(String(player.flags?.[k] ?? "0"), 10) || 0) + 1)]];
+            // "@WEEK+N": dentro de N turnos (los estados temporales caducan en esa semana, ver states.ts).
+            if (typeof v === "string" && /^@WEEK\+\d+$/.test(v)) return [[k, String(player.week + parseInt(v.slice(6), 10))]];
             // "@interest": un club se interesa por ti ahora (la oferta formal llega después).
             // Lo usan las escenas del banco sobre rumores de fichajes.
             if (k === "@interest") {
@@ -174,9 +176,13 @@ export async function resolveEvent(formData: FormData) {
     : consequencesSponsor;
   // Una escena del banco deja anotado qué opción elegiste y cuándo: así otras
   // escenas del banco pueden encadenarse a esa decisión (narrative/bank).
-  const consequences = event.id.startsWith("bank-")
-    ? { ...consequencesThread, flags: { ...consequencesThread.flags, [bankFlagKey(event.id)]: `${option.id}:${player.week}` } }
+  // Una multa son n meses de tu sueldo neto: un gasto real, proporcional a lo que cobras.
+  const consequencesFined = consequencesThread.multa
+    ? { ...consequencesThread, patrimonio: (consequencesThread.patrimonio ?? 0) - Math.max(300, Math.round((playerMonthlyNet(player as Player) * consequencesThread.multa) / 100) * 100) }
     : consequencesThread;
+  const consequences = event.id.startsWith("bank-")
+    ? { ...consequencesFined, flags: { ...consequencesFined.flags, [bankFlagKey(event.id)]: `${option.id}:${player.week}` } }
+    : consequencesFined;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.

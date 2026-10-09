@@ -7,6 +7,7 @@ import { getNpcName, describeRelationshipLevel, type NpcRole } from "@/lib/narra
 import { getCachedNpcFace } from "@/lib/images/npcFaces";
 import { LifeCircle, type LifeMember } from "@/components/LifeCircle";
 import { chicaPhoto } from "@/lib/narrative/chicas-roster";
+import { StateChips } from "@/components/StateChips";
 import { NO_CLUB_YET } from "@/lib/constants";
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -104,6 +105,10 @@ export default async function VidaPage() {
         <Stat label="Moral" value={player.moral} />
         <Stat label="Forma" value={player.forma} />
         <Stat label="Fama" value={player.fama} />
+      </div>
+
+      <div className="w-full max-w-md empty:hidden">
+        <StateChips flags={player.flags} week={player.week} detailed />
       </div>
 
       <LifeCircle icon="🏠" title="Familia" subtitle="Los que estaban antes de la fama" members={familia} defaultOpen />

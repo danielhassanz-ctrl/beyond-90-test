@@ -205,7 +205,9 @@ async function career(club: string, media: number, seed: number): Promise<Result
       player.rel_entrenador = 50; player.rel_vestuario = 45; player.rel_aficion = 40;
       res.transfers = (res.transfers ?? 0) + 1;
     }
-    player.flags = { ...player.flags, ...(cons.flags ?? {}) };
+    { const fl: Record<string, any> = { ...(cons.flags ?? {}) }; for (const [k, v] of Object.entries(fl)) { if (typeof v === "string" && /^@WEEK+d+$/.test(v)) fl[k] = String(player.week + parseInt(v.slice(6), 10)); else if (v === "@+1") fl[k] = String((parseInt(String(player.flags[k] ?? "0"), 10) || 0) + 1); }
+      player.flags = { ...player.flags, ...fl };
+      if ((cons as any).multa) player.patrimonio = Math.max(0, player.patrimonio - Math.round((player.patrimonio * 0) / 100)); }
     if (typeof player.flags.pareja === "string" && player.flags.pareja && parejaFirst === null) parejaFirst = player.week;
     if (matchDoneFlag) player.flags.match_done_week = matchDoneFlag;
     player.flags.wk_count = weekCounter;
@@ -228,7 +230,7 @@ async function career(club: string, media: number, seed: number): Promise<Result
 
     if (process.env.OFF && /^(oferta-|mercado-)/.test(String(ev.id))) process.stdout.write(`OFF w${player.week} ${String(ev.id).slice(0, 28)} | ${ev.title}\n`);
     // métricas
-    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-", "banco-", "arco-salto-", "tanda-", "oferta-", "mercado-"]) {
+    for (const pre of ["fisio-", "mercado-banquillo-", "matchday-baja-banquillo-", "matchday-baja-", "agent-minutes-", "agent-injury-", "sel-", "torneo-life-", "echo-", "banco-", "arco-salto-", "tanda-", "oferta-", "mercado-", "bank-dc-", "bank-es-", "bank-ch-"]) {
       { const k = String(ev.id).replace(/[-_]?d{6,}.*$/, "").replace(/-d+$/, "").slice(0, 28); (globalThis as any).__ids = (globalThis as any).__ids ?? {}; (globalThis as any).__ids[k] = ((globalThis as any).__ids[k] ?? 0) + 1; }
       if (ev.id.startsWith(pre)) prefixCount[pre] = (prefixCount[pre] ?? 0) + 1;
     }

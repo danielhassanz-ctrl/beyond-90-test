@@ -21,6 +21,8 @@ export interface Consequences {
   /** Media futbolística (tipo videojuego de fútbol): empieza en 50 a los 16 años, sube con goles/títulos/buen rendimiento, baja si te quedas en el banquillo o te peleas con el entrenador. Techo 99. */
   media?: number;
   patrimonio?: number;
+  /** Una multa: n meses de tu sueldo neto (se convierte en un gasto de patrimonio al resolverse). */
+  multa?: number;
   rel_entrenador?: number;
   rel_vestuario?: number;
   rel_aficion?: number;
@@ -49,6 +51,7 @@ export const CONSEQUENCE_LABELS: Record<string, string> = {
   fama: "Fama y prensa",
   media: "Media",
   patrimonio: "Patrimonio",
+  multa: "Multa",
   rel_entrenador: "Entrenador",
   rel_vestuario: "Vestuario",
   rel_aficion: "Afición",

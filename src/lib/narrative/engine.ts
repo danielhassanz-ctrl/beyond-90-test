@@ -52,6 +52,12 @@ import { getNpcName, nationalSquadView } from "@/lib/narrative/npcs";
 import { buildTorneoFinalEvent } from "@/lib/narrative/world-results";
 import { applyExClubTouch } from "@/lib/narrative/ex-club";
 import { trophyCelebrationOptions } from "@/lib/narrative/trophy-celebration";
+import { applyStateTick, stateRollNudge, hasState } from "@/lib/narrative/states";
+import { CHICAS } from "@/lib/narrative/bank/scenes/chicas";
+import { DISCIPLINA } from "@/lib/narrative/bank/scenes/disciplina";
+import { ESTADOS } from "@/lib/narrative/bank/scenes/estados";
+import { ESTADOS2 } from "@/lib/narrative/bank/scenes/estados2";
+import { DISCIPLINA2 } from "@/lib/narrative/bank/scenes/disciplina2";
 import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
@@ -959,7 +965,7 @@ export function resolveOption(
 
   const { baseChance, statModifier, success, fail } = option.resolve;
   const statValue = statModifier ? state[statModifier] : 50;
-  const nudge = (statValue - 50) / 250; // pequeño empujón, nunca decisivo
+  const nudge = (statValue - 50) / 250 + stateRollNudge(state.flags, state.week); // pequeño empujón, nunca decisivo (más los estados activos)
   // Jugadas decisivas de partido: tras varias malas seguidas la suerte
   // "compensa" (+7 puntos por fallo acumulado, hasta +25) y hay un pequeño
   // plus base. Reportado en vivo: 4-5 partidos sin acertar ni una, y así
@@ -3302,6 +3308,8 @@ function applyCareerDynamics(player: Player): Player {
 
   // Aplicar degradación de forma si no ha jugado
   player.forma = naturalFormaDegradation(player);
+  // Complicaciones y rachas buenas en curso (states.ts): restan o suman cada turno.
+  applyStateTick(player);
 
   // Aplicar declive por edad (si >32 años)
   const mediaAfterAge = ageBasedMediaDecline(player);
@@ -3482,6 +3490,33 @@ export async function pickNextEventDynamic(
     const own = buildOwnMoveEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Own move decision`);
     return maybeAddFreeText(own);
+  }
+  // Las cosas pasan: cada pocos turnos, una complicación (o una racha buena) con efecto real, y alguien que te escribe por redes.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics)) {
+    const f = (playerWithDynamics.flags ??= {});
+    const wk = playerWithDynamics.week;
+    const age = playerAge(wk);
+    // Una chica de las redes: sin pareja ni historia en curso, cada ~7 turnos.
+    const lastGirl = parseInt(String(f.ch_last_dm ?? "0"), 10) || 0;
+    if (!f.pareja && !f.ch_en_curso && age >= 18 && (playerWithDynamics.fama ?? 0) >= 20 && wk - lastGirl >= 7 && Math.random() < 0.55) {
+      const dm = pickBankScene(playerWithDynamics, usedEventIds, CHICAS.filter((s) => /-dm$/.test(s.id)));
+      if (dm) {
+        f.ch_last_dm = String(wk);
+        console.log(`[pickNextEventDynamic] Chica por redes: "${dm.title}"`);
+        return maybeAddFreeText(dm);
+      }
+    }
+    // Una complicación o una racha, si no hay ya un estado en curso.
+    const lastEstado = parseInt(String(f.estado_last_week ?? "0"), 10) || 0;
+    if (!hasState(f, wk) && wk - lastEstado >= 3 && Math.random() < 0.65) {
+      const pool = Math.random() < 0.45 ? [...DISCIPLINA, ...DISCIPLINA2, ...ESTADOS, ...ESTADOS2] : [...ESTADOS, ...ESTADOS2];
+      const ev = pickBankScene(playerWithDynamics, usedEventIds, pool);
+      if (ev) {
+        f.estado_last_week = String(wk);
+        console.log(`[pickNextEventDynamic] Complicación/racha: "${ev.title}"`);
+        return maybeAddFreeText(ev);
+      }
+    }
   }
   // Una oferta formal ya en marcha (interés de un club + mercado abierto) va antes que cualquier escena suelta: si no, el banco se la comía.
   if (!midMatch && shouldTriggerTransferOffer(playerWithDynamics)) {

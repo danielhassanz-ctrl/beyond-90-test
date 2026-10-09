@@ -26,6 +26,7 @@ import { introduceCast } from "@/lib/narrative/cast";
 import { computeRole, ROLE_LABELS } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { NpcAvatarRow } from "@/components/NpcAvatarRow";
+import { StateChips } from "@/components/StateChips";
 import { chicaPhoto } from "@/lib/narrative/chicas-roster";
 import { DmPreview } from "@/components/DmPreview";
 
@@ -174,6 +175,7 @@ export default async function CarreraPage() {
           <MiniStat label="Moral" value={player.moral} />
           <MiniStat label="Fama" value={player.fama} />
         </div>
+        <StateChips flags={player.flags} week={player.week} />
 
         <div className="space-y-3 overflow-hidden rounded-2xl border border-panel-border bg-surface">
           {event.category === "partido" && event.rivalClub ? (
