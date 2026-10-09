@@ -97,12 +97,13 @@ export function maybeSeedTransferInterest(player: Player): void {
   const current = player.flags?.transfer_interest;
   if (typeof current === "string" && current) return;
   const lastOffer = parseInt(String(player.flags?.offer_last_week ?? "0"), 10) || 0;
-  if (lastOffer > 0 && player.week - lastOffer < 14) return;
+  // Los buenos jugadores reciben ofertas de varios clubes en la misma ventana; el resto, con más espacio.
+  if (lastOffer > 0 && player.week - lastOffer < ((player.media ?? 50) >= 75 ? 2 : 5)) return;
   if (lastOffer === 0 && player.week < 16) return;
   // Sin oferta en mucho tiempo: el mercado te tiene que llegar. Pasadas 20 semanas desde la última (o
   // desde el principio), la ventana trae interés seguro; antes, 65% por turno de ventana.
-  const drought = player.week - (lastOffer || 12) >= 20;
-  if (!drought && Math.random() >= 0.65) return;
+  const drought = player.week - (lastOffer || 12) >= 8;
+  if (!drought && Math.random() >= 0.85) return;
   if (!player.flags) player.flags = {};
   Object.assign(player.flags, interestFlags(pickInterestedClub(player), player.week - 1, "prensa"));
 }
@@ -737,7 +738,7 @@ export function shouldTriggerTransferOffer(player: Player): boolean {
   if (since > 15) return false;
   // Solo se ficha con el mercado abierto; el interés espera a la siguiente ventana.
   if (!getMarketWindow(player.week)) return false;
-  return Math.random() < 0.7;
+  return Math.random() < 0.9;
 }
 
 /** El interés caducado (o hacia el propio club) se limpia para que no se acumule. */
