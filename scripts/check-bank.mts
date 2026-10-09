@@ -51,7 +51,7 @@ for (const s of BANK_SCENES) {
     for (const k of ["moral", "forma", "fama", "media", "rel_entrenador", "rel_vestuario", "rel_aficion", "rel_representante", "reputacion"]) {
       if (c[k] !== undefined && (typeof c[k] !== "number" || Math.abs(c[k]) > 15)) err(s.id, `opción ${o.id}: ${k}=${c[k]} fuera de rango (±15)`);
     }
-    if (c.patrimonio !== undefined && (typeof c.patrimonio !== "number" || Math.abs(c.patrimonio) > 30000)) err(s.id, `opción ${o.id}: patrimonio=${c.patrimonio} fuera de rango`);
+    if (c.patrimonio !== undefined && (typeof c.patrimonio !== "number" || Math.abs(c.patrimonio) > (String(s.id).startsWith("bank-iv-") ? 2000000 : 30000))) err(s.id, `opción ${o.id}: patrimonio=${c.patrimonio} fuera de rango`);
     if (typeof c.club === "string" && c.club !== "@LOWER") err(s.id, `opción ${o.id}: club solo puede ser @LOWER en el banco`);
   }
   for (const t of texts) {

@@ -4891,11 +4891,30 @@ export const EVENTS: GameEvent[] = [
           statModifier: "reputacion",
           success: {
             text: "La startup despega mucho más rápido de lo esperado y una ronda posterior multiplica tu inversión por varias veces. La prensa económica se hace eco de la operación.",
-            consequences: { patrimonio: 60000, moral: 5, rel_representante: 4 },
+            consequences: {
+              patrimonio: -18000,
+              moral: 5,
+              rel_representante: 4,
+              flags: investmentFlag("startup_semilla", {
+                name: "Startup tecnológica (ronda semilla)",
+                detail: "Una participación en una startup que ha despegado. Ha multiplicado su valor varias veces.",
+                amount: 18000,
+                annualRate: 2.2,
+              }),
+            },
           },
           fail: {
             text: "La startup no llega a levantar la siguiente ronda y cierra dos años después. El dinero no vuelve.",
-            consequences: { patrimonio: -18000, moral: -4 },
+            consequences: {
+              patrimonio: -18000,
+              moral: -4,
+              flags: investmentFlag("startup_semilla", {
+                name: "Startup tecnológica (en pérdidas)",
+                detail: "La startup no despegó. Lo invertido se ha ido desvalorizando.",
+                amount: 18000,
+                annualRate: -0.8,
+              }),
+            },
           },
         },
       },
@@ -4903,7 +4922,16 @@ export const EVENTS: GameEvent[] = [
         id: "b",
         label: "Entrar solo con una cantidad simbólica",
         subtitle: "Riesgo bajo, recompensa baja",
-        consequences: { patrimonio: -3000, rel_representante: 2 },
+        consequences: {
+          patrimonio: -3000,
+          rel_representante: 2,
+          flags: investmentFlag("startup_simbolica", {
+            name: "Participación simbólica en una startup",
+            detail: "Una pequeña participación en una startup de un cliente de tu representante. Rentabilidad incierta, ~10 % anual.",
+            amount: 3000,
+            annualRate: 0.1,
+          }),
+        },
         outcomeText: "Pones una cantidad simbólica, casi como un gesto. Los fundadores te dan las gracias con una sonrisa, aunque se nota que esperaban más.",
       },
       {

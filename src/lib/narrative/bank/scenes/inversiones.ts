@@ -1,0 +1,46 @@
+/**
+ * Inversiones con tu representante cuando ya hay dinero de verdad. Cada opción deja un activo concreto en Patrimonio
+ * (nombre, importe, rentabilidad) que se revaloriza cada turno, no un gasto que desaparece. Hay una escena para cada
+ * tramo de patrimonio: 100 mil, 500 mil y 2 millones.
+ */
+import { S, o, r } from "../dsl";
+import type { BankScene } from "../types";
+import { investmentFlag } from "@/lib/finance/investments";
+
+const inv = (slug: string, name: string, detail: string, amount: number, annualRate: number) => investmentFlag(slug, { name, detail, amount, annualRate });
+
+export const INVERSIONES: BankScene[] = [
+  S("iv-100k", "dinero", { minAge: 18, patrimonio: [100000, 600000], notFlags: ["iv_100k"], clubTurns: [4, 400] }, "representante",
+    "Tu representante te propone dónde poner 50.000 €",
+    "Tu representante te cita en su despacho con una carpeta azul y esa cara que pone cuando va en serio. «Tienes dinero parado, y el dinero parado se come solo». Sobre la mesa, tres opciones: un fondo de bolsa global, un piso para alquilar en una zona universitaria y una participación en una startup de un cliente suyo. «Mi recomendación es repartir. Pero tú decides».",
+    [
+      o("a", "Fondo de bolsa global — 50.000 €", "Estable · ~6 % anual", { patrimonio: -50000, rel_representante: 2, reputacion: 1, flags: { iv_100k: true, ...inv("fondo_global_50k", "Fondo de bolsa global", "Cartera diversificada de cientos de empresas. A largo plazo, ~6 % anual.", 50000, 0.06) } }, "Firmas sin leer la letra pequeña (la lees luego, y está bien). Tu representante te sonríe: «Dentro de diez años me lo agradecerás»."),
+      o("b", "Piso para alquilar en una zona universitaria — 50.000 €", "Alquiler seguro · ~4,5 % anual", { patrimonio: -50000, rel_representante: 1, reputacion: 2, flags: { iv_100k: true, ...inv("piso_universitario", "Piso para alquilar (zona universitaria)", "Un piso de tres habitaciones alquilado a estudiantes. Renta estable, ~4,5 % anual.", 50000, 0.045) } }, "Visitas el piso con tu representante. Huele a pintura nueva y a café. Tres estudiantes de Erasmus lo reservan en una tarde. «Ahora eres casero», dice tu representante con una sonrisa de oreja a oreja."),
+      r("c", "Startup de un cliente de tu representante — 50.000 €", "Riesgo alto, recompensa alta", 0.35,
+        "La startup despega: la compra un grupo mayor por una cifra que te deja sin palabras. Tu representante te mira: «Ya te decía yo». Tu inversión vale varias veces lo que pusiste.", { patrimonio: -50000, rel_representante: 3, moral: 5, flags: { iv_100k: true, ...inv("startup_50k", "Startup tecnológica", "Participación en una startup que despegó. Ha multiplicado su valor.", 50000, 1.2) } },
+        "La startup no consigue otra ronda y cierra a los dos años. Te queda una carpeta con papeles y la sabiduría barata de quien ha perdido dinero. Tu representante, con las manos en alto: «El riesgo es el riesgo».", { patrimonio: -50000, moral: -4, rel_representante: -1, flags: { iv_100k: true, ...inv("startup_50k", "Startup tecnológica (en pérdidas)", "La startup no despegó. Lo invertido se ha ido desvalorizando.", 50000, -0.8) } }, "reputacion"),
+      o("d", "No invertir: prefieres tenerlo líquido", "Conservador", { moral: 1, rel_representante: -1, flags: { iv_100k: true } }, "Lo dices con una sonrisa y una sombra de nerviosismo. Tu representante recoge la carpeta con una calma profesional. «Cuando quieras volver a hablarlo, aquí estoy»."),
+    ]),
+  S("iv-500k", "dinero", { minAge: 19, patrimonio: [500000, 3000000], notFlags: ["iv_500k"], clubTurns: [4, 400] }, "representante",
+    "Tu representante te propone una inversión seria: 250.000 €",
+    "Esta vez no hay carpeta azul: hay un asesor financiero con una tablet, un abogado y una sala de reuniones con vistas. Hablan de cifras con una naturalidad que te marea un poco. «Con tu perfil, lo prudente es diversificar: renta variable, inmuebles y un pequeño porcentaje en capital riesgo». Tu representante te toca el brazo: «Tú dices hasta dónde».",
+    [
+      o("a", "Cartera diversificada — 250.000 €", "Mixta · ~6,5 % anual", { patrimonio: -250000, rel_representante: 2, reputacion: 2, flags: { iv_500k: true, ...inv("cartera_250k", "Cartera diversificada gestionada", "Renta variable, fija e inmuebles. Gestionada por un asesor independiente, ~6,5 % anual.", 250000, 0.065) } }, "Firmas con la mano firme y el corazón acelerado. El asesor asiente y apunta algo en la tablet. Tu representante, después, en el ascensor: «Esto es lo que hacen los jugadores que duran»."),
+      o("b", "Edificio de apartamentos turísticos — 250.000 €", "Renta alta, algo de riesgo · ~5,5 % anual", { patrimonio: -250000, rel_representante: 1, flags: { iv_500k: true, ...inv("apartamentos_250k", "Participación en apartamentos turísticos", "Un edificio de apartamentos en una ciudad costera. Renta variable según temporada, ~5,5 % anual.", 250000, 0.055) } }, "Visitas el edificio en pleno agosto y está lleno hasta la azotea. «No siempre será así», dice el gestor. Tú ya estás pensando en tu propia habitación en la última planta."),
+      r("c", "Fondo de capital riesgo — 250.000 €", "Alto riesgo, alta recompensa", 0.4,
+        "Dos de las empresas del fondo se disparan y compensan de largo las perdedoras. A los tres años, tu participación vale mucho más de lo que pusiste. Tu representante te abraza: «Te lo dije, pero no tanto».", { patrimonio: -250000, moral: 6, rel_representante: 3, flags: { iv_500k: true, ...inv("capital_riesgo_250k", "Fondo de capital riesgo", "Participación en un fondo de empresas jóvenes. Ha ido muy bien.", 250000, 0.9) } },
+        "El fondo no acierta con ninguna. Duele, con ese dolor sordo de las pérdidas grandes. «Es parte del juego», dice el gestor, con unos ojos que no se creen su propia frase.", { patrimonio: -250000, moral: -6, rel_representante: -2, flags: { iv_500k: true, ...inv("capital_riesgo_250k", "Fondo de capital riesgo (en pérdidas)", "El fondo no acertó. Lo invertido se ha ido desvalorizando.", 250000, -0.7) } }, "reputacion"),
+      o("d", "Dejarlo para más adelante", "Sin prisa", { moral: 1, flags: { iv_500k: true } }, "Dices que lo piensas. Tu representante asiente con la cara de quien sabe que un «lo pienso» a veces es un «no». Pero no insiste."),
+    ]),
+  S("iv-2m", "dinero", { minAge: 20, patrimonio: [2000000, 1000000000], notFlags: ["iv_2m"], clubTurns: [4, 400] }, "representante",
+    "Tu representante te presenta a una gestora de patrimonios",
+    "La reunión es en una torre de cristal con alfombras que se tragan los pasos. Te sirven un café que cuesta más de lo que costaba tu primera nevera. «Con su nivel de patrimonio, lo habitual es una gestión integral», dice un hombre de pelo plateado. Tu representante, al lado, te mira con una mezcla de orgullo y vértigo. «Tú has llegado hasta aquí. Esto es lo siguiente».",
+    [
+      o("a", "Gestión integral conservadora — 1.000.000 €", "Estable · ~5,5 % anual", { patrimonio: -1000000, reputacion: 3, rel_representante: 2, flags: { iv_2m: true, ...inv("gestora_1m", "Gestión de patrimonios conservadora", "Cartera de renta fija, bolsa y activos reales con riesgo moderado, ~5,5 % anual.", 1000000, 0.055) } }, "Firmas un contrato de treinta páginas con una pluma que pesa. Sales a la calle con la sensación rara de que, por primera vez, tu dinero tiene un horario y tú, un asesor."),
+      o("b", "Inversión en inmuebles de lujo — 1.000.000 €", "Más riesgo, más revalorización · ~7 % anual", { patrimonio: -1000000, reputacion: 2, flags: { iv_2m: true, ...inv("inmuebles_1m", "Inmuebles de lujo", "Una participación en edificios de oficinas y áticos de lujo en una gran ciudad, ~7 % anual.", 1000000, 0.07) } }, "Visitas una de las torres con el equipo de la gestora, con un casco en la cabeza. «Esto será la mejor dirección de la ciudad», dicen. Miras hacia arriba y piensas que algún día podrías entrar sin pagar."),
+      r("c", "Entrar en una ronda de empresas deportivas y de ocio — 1.000.000 €", "Riesgo alto, recompensa alta", 0.4,
+        "Una de las empresas se hace enorme y las demás se mantienen a flote. Ganas dinero y, además, la sensación de haber estado en el sitio justo. Tu representante lleva una semana sonriendo sin motivo.", { patrimonio: -1000000, moral: 6, fama: 2, rel_representante: 3, flags: { iv_2m: true, ...inv("deporte_ocio_1m", "Empresas de deporte y ocio", "Participación en un grupo de empresas deportivas y de ocio que ha tenido un gran crecimiento.", 1000000, 0.6) } },
+        "Dos empresas quiebran y la tercera no despega. Un golpe duro, de los que reconoces con el estómago antes que con la cabeza. El asesor de pelo plateado te mira con una tristeza profesional: «Ocurre».", { patrimonio: -1000000, moral: -7, rel_representante: -2, flags: { iv_2m: true, ...inv("deporte_ocio_1m", "Empresas de deporte y ocio (en pérdidas)", "El grupo no despegó. Lo invertido se ha ido desvalorizando.", 1000000, -0.6) } }, "reputacion"),
+      o("d", "Seguir como estás: ya tienes suficiente", "Sin tocar nada", { moral: 2, flags: { iv_2m: true } }, "Dices que te gusta la sencillez. Los asesores asienten con elegancia profesional, y tu representante, desde la silla, hace un gesto casi imperceptible de «es tu dinero»."),
+    ]),
+];
