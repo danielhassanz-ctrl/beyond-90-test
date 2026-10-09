@@ -866,22 +866,24 @@ MEMORABILIDAD Y REDES SOCIALES:
  */
 function randomSalaryFigure(isFirstSigning: boolean, fama: number): string {
   if (isFirstSigning) {
-    const monthly = Math.round((600 + Math.random() * 1900) / 50) * 50;
-    return `${monthly.toLocaleString("es")} € al mes`;
+    const monthly = Math.round((9000 + Math.random() * 20000) / 500) * 500;
+    return `${monthly.toLocaleString("es")} € brutos al año`;
   }
   const base = 12000 + fama * 300 + Math.random() * 35000;
-  const weekly = Math.round(base / 500) * 500;
-  return `${weekly.toLocaleString("es")} € a la semana`;
+  const weekly = Math.round((base * 12) / 1000) * 1000;
+  return `${weekly.toLocaleString("es")} € brutos al año`;
 }
 
 export async function generateContractEvent(
   player: Player,
   club: string,
   isFirstSigning: boolean,
+  /** Sueldo real al año ya decidido (ver annualSalaryText): la escena tiene que usar esta cifra. */
+  salaryText?: string,
 ): Promise<GameEvent | null> {
   const age = playerAge(player.week);
   const agent = player.agent_name ?? "tu representante";
-  const salaryFigure = randomSalaryFigure(isFirstSigning, player.fama);
+  const salaryFigure = salaryText ?? randomSalaryFigure(isFirstSigning, player.fama);
 
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
 El jugador acaba de fichar por un nuevo club. Genera la escena de la firma del contrato: se sienta con el entrenador, el presidente del club y ${agent} para cerrar los términos.

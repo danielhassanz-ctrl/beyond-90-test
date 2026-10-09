@@ -137,7 +137,7 @@ export default async function PatrimonioPage() {
   const currentSeason = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const inSeason = (m: Movimiento) => !m.isSecondLife && Math.floor((m.week - 1) / WEEKS_PER_SEASON) === currentSeason;
   const total = (rows: Movimiento[]) => rows.reduce((acc, m) => acc + Math.abs(m.monto), 0);
-  const monthlySalary = player.club !== NO_CLUB_YET ? weeklySalary(player.media) : 0;
+  const monthlySalary = player.club !== NO_CLUB_YET ? weeklySalary(player.media, player.flags) : 0;
 
   // Propiedades: foto exterior + foto interior. Si alguna no llegó a guardarse
   // (fallo puntual o propiedad anterior a las fotos de interior) se genera
@@ -216,7 +216,7 @@ export default async function PatrimonioPage() {
             <p className="text-kicker">Cada mes (cada turno)</p>
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
-                <span className="text-foreground/90">Entra: sueldo del {player.club}</span>
+                <span className="text-foreground/90">Entra: sueldo del {player.club} ({(monthlySalary * 12).toLocaleString("es")} € al año)</span>
                 <span className="font-num font-semibold text-pitch">+{monthlySalary.toLocaleString("es")} €</span>
               </div>
               {sponsors.map((x) => (
@@ -374,7 +374,7 @@ export default async function PatrimonioPage() {
               <li className="flex items-start justify-between gap-3 py-2.5">
                 <div>
                   <p className="text-sm font-medium text-foreground">Sueldo de {player.club}</p>
-                  <p className="text-xs text-muted-foreground">Cada mes, automático</p>
+                  <p className="text-xs text-muted-foreground">Cada mes, automático · {(monthlySalary * 12).toLocaleString("es")} € brutos al año</p>
                 </div>
                 <span className="font-num shrink-0 text-sm font-bold text-pitch">+{monthlySalary.toLocaleString("es")} €</span>
               </li>

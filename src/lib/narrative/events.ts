@@ -28,10 +28,10 @@ export function buildFallbackContractEvent(
   club: string,
   agentName: string,
   isFirstSigning: boolean,
+  /** El sueldo real al año, en texto (ver annualSalaryText). Si no llega, una cifra de cantera. */
+  salaryText?: string,
 ): GameEvent {
-  const salary = isFirstSigning
-    ? `${(Math.round((600 + Math.random() * 1900) / 50) * 50).toLocaleString("es")} € al mes`
-    : `${(Math.round((12000 + Math.random() * 40000) / 500) * 500).toLocaleString("es")} € a la semana`;
+  const salary = salaryText ?? `${(Math.round((9000 + Math.random() * 20000) / 500) * 500).toLocaleString("es")} € brutos al año`;
   const minutosClause = isFirstSigning
     ? "sin ninguna promesa de minutos: tendrás que ganarte el puesto en pretemporada"
     : "titular indiscutible desde el primer partido";

@@ -50,6 +50,8 @@ type SceneExtra = {
   milestoneType?: GameEvent["milestoneType"];
   allowFreeText?: boolean;
   freeTextPrompt?: string;
+  /** Mensaje por redes que abre la escena (con foto opcional del remitente). */
+  dm?: GameEvent["dm"];
 };
 
 export function S(

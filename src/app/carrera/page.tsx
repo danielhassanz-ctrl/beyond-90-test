@@ -26,6 +26,7 @@ import { introduceCast } from "@/lib/narrative/cast";
 import { computeRole, ROLE_LABELS } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { NpcAvatarRow } from "@/components/NpcAvatarRow";
+import { chicaPhoto } from "@/lib/narrative/chicas-roster";
 import { DmPreview } from "@/components/DmPreview";
 
 function MiniStat({ label, value }: { label: string; value: number }) {
@@ -115,10 +116,12 @@ export default async function CarreraPage() {
         await markNpcSeen(supabase, player, role);
         return null;
       }
+      // Si tu pareja es una de las chicas de las redes, lleva su foto propia (no se genera ninguna cara).
+      const chica = role === "pareja" ? chicaPhoto(player.flags?.pareja) : null;
       return {
         role,
         label: NPC_ROLE_LABELS[role],
-        url: await getOrCreateNpcFace(supabase, player, role, user.id),
+        url: chica ?? (await getOrCreateNpcFace(supabase, player, role, user.id)),
       };
     }),
   );

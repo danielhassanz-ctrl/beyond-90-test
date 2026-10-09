@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { getNpcName, describeRelationshipLevel, type NpcRole } from "@/lib/narrative/npcs";
 import { getCachedNpcFace } from "@/lib/images/npcFaces";
 import { LifeCircle, type LifeMember } from "@/components/LifeCircle";
+import { chicaPhoto } from "@/lib/narrative/chicas-roster";
 import { NO_CLUB_YET } from "@/lib/constants";
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -55,7 +56,7 @@ export default async function VidaPage() {
             name: parejaName,
             label: player.flags?.convivencia ? "Tu pareja · vivís juntos" : "Tu pareja",
             detail: "Lo que hay fuera del campo cuando el campo se acaba.",
-            face: face("pareja"),
+            face: chicaPhoto(pareja) ?? face("pareja"),
           },
         ]
       : []),

@@ -3247,8 +3247,9 @@ ${stakesInstruction}
  * sobre media-40), escalada para que una carrera Pro completa (~200
  * semanas) acumule un patrimonio alto pero no absurdo.
  */
-export function weeklySalary(media: number): number {
-  return Math.round(Math.max(150, Math.max(0, media - 40) ** 2 * 8) / 10) * 10;
+export function weeklySalary(media: number, flags?: Record<string, string | boolean> | null): number {
+  const mult = Math.min(6, Math.max(0.1, parseFloat(String(flags?.salary_mult ?? "1")) || 1));
+  return Math.round((Math.max(150, Math.max(0, media - 40) ** 2 * 8) * mult) / 10) * 10;
 }
 
 function applyCareerDynamics(player: Player): Player {
@@ -3263,7 +3264,7 @@ function applyCareerDynamics(player: Player): Player {
   // nadie) — se aplica ANTES del resto de dinámicas para usar la media
   // de esta semana, igual que el resto de esta función.
   if (player.club !== NO_CLUB_YET) {
-    player.patrimonio = (player.patrimonio ?? 0) + weeklySalary(player.media);
+    player.patrimonio = (player.patrimonio ?? 0) + weeklySalary(player.media, player.flags);
   }
   // Patrocinios firmados: la marca paga cada turno mientras dura el contrato.
   const sponsorIncome = monthlySponsorshipIncome(player.flags, player.week);

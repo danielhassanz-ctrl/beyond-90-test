@@ -5,6 +5,7 @@ import { randomPersonName } from "@/lib/narrative/npcs";
 import { getEuropeanCompetitionFor, getClubLevel } from "@/lib/calendar/match-calendar";
 import { computeRole } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
+import { buildTerms, offerOptions, termsText } from "@/lib/narrative/transfer-terms";
 
 /**
  * Mercado de fichajes: dos ventanas por temporada (verano y enero) y en
@@ -825,45 +826,15 @@ export function buildTransferOfferEvent(player: Player): GameEvent {
     };
   }
 
-  const options: EventOption[] = [
-    {
-      id: "fichar",
-      label: `Aceptar y fichar por ${art(club)}`,
-      subtitle: "Nuevo reto, nuevo vestuario",
-      consequences: { club, fama: 6, moral: 4, rel_vestuario: -4, rel_aficion: -5, flags: clear },
-      outcomeText: `Firmas el traspaso con la mano temblando. En el vestuario te despiden con abrazos sinceros... y alguna mirada fría que no se molesta en disimular.`,
-    },
-    {
-      id: "negociar",
-      label: "Usar la oferta para negociar mejoras en tu club",
-      subtitle: "Jugar tus cartas",
-      consequences: {},
-      resolve: {
-        baseChance: 0.5,
-        statModifier: "reputacion",
-        success: {
-          text: `Tu club se asusta y mejora tu contrato para que te quedes. Ganas peso en el vestuario y en la cuenta.`,
-          consequences: { patrimonio: raise, rel_entrenador: 3, moral: 4, flags: clear },
-        },
-        fail: {
-          text: `Tu club se lo toma mal, se enfría todo y ${art(club)} se echa atrás. Te quedas sin oferta y con el ambiente raro.`,
-          consequences: { moral: -5, rel_entrenador: -3, flags: clear },
-        },
-      },
-    },
-    {
-      id: "rechazar",
-      label: "Rechazarla: aquí me quedo",
-      subtitle: "La grada lo va a agradecer",
-      consequences: { rel_aficion: 7, rel_entrenador: 3, moral: 2, flags: clear },
-      outcomeText: "La noticia de que has rechazado la oferta recorre el club en horas. En el siguiente partido, la grada te dedica una ovación larga y cerrada.",
-    },
-  ];
+  const terms = buildTerms(player, club, getMarketWindow(player.week));
+  const options = offerOptions(player, terms, { club, art, closeFlags: clear });
   return {
     id: `oferta-${Date.now()}`,
     category: "representante",
     title: `Oferta formal ${de(club)}`,
-    description: `${agent} entra con papeles en la mano: "Ya no es un rumor. ${art(club).charAt(0).toUpperCase() + art(club).slice(1)} ha puesto una oferta por escrito y quiere una respuesta rápida."`,
+    description: `${agent} entra con los papeles en la mano: "Ya no es un rumor. ${art(club).charAt(0).toUpperCase() + art(club).slice(1)} ha puesto una oferta por escrito y quiere respuesta rápida. Estas son las condiciones:"
+
+${termsText(terms, art)}`,
     allowFreeText: true,
     freeTextPrompt: `¿Qué le dices a ${agent} después de leer la oferta?`,
     options,
@@ -1036,51 +1007,24 @@ export function buildDeadlineDayEvent(player: Player): GameEvent {
   const club = String(player.flags.transfer_interest);
   const agent = player.agent_name ?? "Tu representante";
   const clear = { transfer_interest: "" };
-  const raise = Math.round((9000 + (player.media ?? 50) * 320) / 500) * 500;
+  const terms = buildTerms(player, club, w);
+  // Contra reloj el club aprieta: la oferta sube algo para cerrar hoy, pero no hay margen de pedir más.
+  const rushed = { ...terms, offeredMonthly: Math.round((terms.offeredMonthly * 1.05) / 100) * 100, mult: terms.mult * 1.05 };
+  const options = offerOptions(player, rushed, { club, art, closeFlags: clear, haggleChance: 0.4 }).map((o) =>
+    o.id === "fichar" ? { ...o, label: `Firmar ya, contra reloj: ${o.label.replace("Aceptar: ", "")}` } : o,
+  );
   return {
     id: `oferta-deadline-${Date.now()}`,
     category: "representante",
     title: `Último día de mercado: llama ${art(club)}`,
-    description: `Quedan horas para que se cierre el mercado. ${agent} te llama sin aliento: "${cap(art(club))} ha vuelto a la carga. O firmas hoy o esto se acaba."`,
+    description: `Quedan horas para que se cierre el mercado de ${w === "verano" ? "verano (hoy es 1 de septiembre)" : "invierno"}. ${agent} te llama sin aliento: "${cap(art(club))} ha vuelto a la carga. O firmas hoy o esto se acaba. Estas son sus condiciones:"
+
+${termsText(rushed, art)}`,
     allowFreeText: true,
     freeTextPrompt: "Tienes el teléfono en la mano y el reloj corriendo. ¿Qué haces?",
-    options: [
-      {
-        id: "firmar",
-        label: "Firmar ya, contra reloj",
-        subtitle: "Ahora o nunca",
-        consequences: { club, fama: 6, moral: 3, rel_vestuario: -4, rel_aficion: -5, flags: clear },
-        outcomeText: `Firmas a toda prisa, con ${agent} dictándote por teléfono dónde poner cada rúbrica. A las doce en punto de la noche, el fichaje es oficial.`,
-      },
-      {
-        id: "forzar",
-        label: "Apretar a tu club: mejoras o me voy",
-        subtitle: "Jugarte el todo por el todo",
-        consequences: {},
-        resolve: {
-          baseChance: 0.45,
-          statModifier: "reputacion",
-          success: {
-            text: "Tu club cede en el último minuto: contrato nuevo y mejor ficha. Se cierra el mercado y sigues aquí, con más peso.",
-            consequences: { patrimonio: raise, moral: 5, rel_entrenador: 2, flags: clear },
-          },
-          fail: {
-            text: `${cap(art(club))} se cansa de esperar, tu club no se mueve y suena el pitido final del mercado. Te quedas sin nada.`,
-            consequences: { moral: -6, rel_entrenador: -3, flags: clear },
-          },
-        },
-      },
-      {
-        id: "dejar-pasar",
-        label: "Dejarlo pasar: te quedas",
-        subtitle: "Sin arrepentimientos",
-        consequences: { rel_aficion: 6, moral: 1, flags: clear },
-        outcomeText: "Se cierra el mercado sin que muevas un dedo. A la mañana siguiente, los aficionados que esperaban en la puerta del campo te aplauden.",
-      },
-    ],
+    options,
   };
 }
-
 
 
 /**

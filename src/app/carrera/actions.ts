@@ -27,6 +27,7 @@ import { describeLook } from "@/lib/playerLook";
 import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt, withSceneGuards } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
+import { annualSalaryText } from "@/lib/narrative/transfer-terms";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, WEEKS_PER_SEASON, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
@@ -508,10 +509,13 @@ export async function resolveEvent(formData: FormData) {
       playerUpdate.rel_aficion = 40;
     }
     const agentName = (playerUpdate.agent_name as string | undefined) ?? player.agent_name ?? "tu representante";
+    // El sueldo de la escena de la firma es el real (el que se cobrará cada mes), siempre al año.
+    const signedSalary = annualSalaryText({ media: (playerUpdate.media as number | undefined) ?? player.media, flags: playerUpdate.flags as Record<string, string | boolean> });
     const aiContractEvent = await generateContractEvent(
       { ...player, club: newClub, agent_name: agentName },
       newClub,
       isFirstSigning,
+      signedSalary,
     );
     const contractEvent = aiContractEvent
       ? {
@@ -520,7 +524,7 @@ export async function resolveEvent(formData: FormData) {
           milestoneType: "contrato",
           imageScene: `Photorealistic photo of the photographed man holding up a ${describeKit(newClub)} football jersey with both hands at an official club unveiling event, a club president in a suit next to him extending a handshake, camera flashes, stadium or press room backdrop, official club photo style`,
         }
-      : buildFallbackContractEvent(newClub, agentName, isFirstSigning);
+      : buildFallbackContractEvent(newClub, agentName, isFirstSigning, signedSalary);
     playerUpdate.pending_event = maybeAddFreeText(contractEvent);
   }
 

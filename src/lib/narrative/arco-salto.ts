@@ -19,7 +19,8 @@ import { getClubLevel } from "@/lib/calendar/match-calendar";
 import { getNpcName } from "@/lib/narrative/npcs";
 import { computeRole } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
-import { pickInterestedClub } from "@/lib/narrative/market-window";
+import { pickInterestedClub, getMarketWindow } from "@/lib/narrative/market-window";
+import { buildTerms, offerOptions, termsText } from "@/lib/narrative/transfer-terms";
 
 type Postura = "leal" | "ambicioso" | "discreto";
 
@@ -54,7 +55,8 @@ export function shouldTriggerSalto(player: Player): boolean {
   }
   const gap = now - lastWeek(player);
   if (f === 1 || f === 2) return gap >= 4 && Math.random() < 0.6;
-  if (f === 3) return gap >= 1;
+  // La oferta formal solo llega con el mercado abierto (julio-agosto o enero-febrero).
+  if (f === 3) return gap >= 1 && getMarketWindow(now) !== null;
   if (f === 4) return player.club === target(player);
   if (f === 5) return gap >= 6 && getInjuryRemaining(player.flags) === 0;
   return false;
@@ -161,46 +163,30 @@ function chapter3(player: Player): GameEvent {
   const club = target(player);
   const p = postura(player);
   const agent = player.agent_name && !/^(Tu |Sin )/.test(player.agent_name) ? player.agent_name : "Tu representante";
-  const raise = Math.round((12000 + (player.media ?? 60) * 350) / 500) * 500;
+  const art = (c: string) => (c === "Las Palmas" ? c : `el ${c}`);
   const farewell =
     p === "leal"
       ? "Te vas con las puertas abiertas: en el club te desean suerte de corazón."
       : p === "ambicioso"
         ? "Te vas con una despedida fría: en el club ya habían empezado a mirar a otro."
         : "Te vas sin dramas, aunque con un par de abrazos sinceros.";
-  const options: EventOption[] = [
-    {
-      id: "fichar",
-      label: `Fichar por el ${club}`,
-      subtitle: "El salto que llevabas esperando",
-      consequences: { club, fama: 6, moral: 5, rel_aficion: -4, flags: { ...stamp(player, { salto_fase: "4" }) } },
-      outcomeText: `Firmas con ${agent} a tu lado y el estómago hecho un nudo. ${farewell} En el coche, camino del aeropuerto, no puedes dejar de mirar por el retrovisor.`,
-    },
-    {
-      id: "negociar",
-      label: "Usar la oferta para negociar quedarte",
-      subtitle: "Jugar tus cartas",
-      consequences: {},
-      resolve: {
-        baseChance: p === "leal" ? 0.6 : 0.45,
-        statModifier: "reputacion",
-        success: { text: "Tu club mueve ficha y te ofrece un proyecto y una cifra que no esperabas. Te quedas con la mano llena y la afición, encantada.", consequences: { patrimonio: raise, moral: 4, rel_aficion: 4, rel_entrenador: 2, flags: { ...stamp(player, { salto_fase: "0", salto_cooldown: String(player.week + 20) }) } } },
-        fail: { text: `El ${club} se cansa de esperar y retira la oferta. Tu club, que ya sabe que querías irte, te trata con una frialdad educada.`, consequences: { moral: -6, rel_entrenador: -3, rel_aficion: -2, flags: { ...stamp(player, { salto_fase: "0", salto_cooldown: String(player.week + 25) }) } } },
-      },
-    },
-    {
-      id: "rechazar",
-      label: "Rechazarla: aquí hay una historia por terminar",
-      subtitle: "La grada lo va a agradecer",
-      consequences: { rel_aficion: 7, rel_entrenador: 3, moral: 1, flags: { ...stamp(player, { salto_fase: "0", salto_cooldown: String(player.week + 25) }) } },
-      outcomeText: "Lo anuncias en la zona mixta con una frase corta. En el estadio, el domingo siguiente, hay una pancarta nueva con tu nombre y la palabra \"gracias\".",
-    },
-  ];
+  const terms = buildTerms(player, club, getMarketWindow(player.week));
+  const stay = { salto_fase: "0", salto_cooldown: String(player.week + 25) };
+  const options: EventOption[] = offerOptions(player, terms, {
+    club,
+    art,
+    signFlags: stamp(player, { salto_fase: "4" }),
+    closeFlags: stamp(player, stay),
+    farewell: `${farewell} En el coche, camino del aeropuerto, no puedes dejar de mirar por el retrovisor.`,
+    haggleChance: p === "leal" ? 0.5 : 0.55,
+  });
   return {
     id: `arco-salto-3-${Date.now()}`,
     category: "representante",
     title: `La oferta del ${club}`,
-    description: `Ya no es un rumor. ${agent} entra con papeles y la voz temblando: el ${club} ha puesto una oferta formal, con contrato, ficha y proyecto. "Esto es lo que llevabas esperando. Pero tienes que decidir ya."`,
+    description: `Ya no es un rumor. ${agent} entra con papeles y la voz temblando: el ${club} ha puesto una oferta formal. "Esto es lo que llevabas esperando. Pero tienes que decidir ya. Estas son las condiciones:"
+
+${termsText(terms, art)}`,
     isMilestone: true,
     imageScene: `Photorealistic photo of the photographed man sitting at a long table in a modern club office, a contract and a pen in front of him, an agent in a suit at his side, bright natural window light, serious thoughtful expression, official signing-day style`,
     allowFreeText: true,

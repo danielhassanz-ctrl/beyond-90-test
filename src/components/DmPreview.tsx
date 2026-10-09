@@ -4,6 +4,7 @@ interface DmPreviewProps {
     name: string;
     message: string;
     platform?: "instagram" | "tiktok" | "x";
+    avatar?: string;
   };
 }
 
@@ -32,12 +33,17 @@ export function DmPreview({ dm }: DmPreviewProps) {
   return (
     <div className="rounded-2xl border border-panel-border p-3" style={{ background: theme.bg }}>
       <div className="mb-2 flex items-center gap-2">
-        <div
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-          style={{ background: theme.accent }}
-        >
-          {initial}
-        </div>
+        {dm.avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={dm.avatar} alt={dm.name} className="h-10 w-10 shrink-0 rounded-full object-cover object-top" />
+        ) : (
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+            style={{ background: theme.accent }}
+          >
+            {initial}
+          </div>
+        )}
         <div className="min-w-0">
           <p className="truncate text-xs font-bold text-white">{dm.name}</p>
           <p className="truncate text-[10px] text-gray-400">
