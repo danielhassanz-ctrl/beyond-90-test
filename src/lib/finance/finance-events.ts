@@ -8,6 +8,8 @@ import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
+import { monthlySponsorshipIncome } from "@/lib/finance/sponsorship-income";
+import { monthlyRent } from "@/lib/finance/rent";
 import { readProperties, monthlyPayment, remainingLoan, serializeProperty, totalMonthlyPayments } from "@/lib/finance/mortgage";
 
 const COOLDOWN_WEEKS = 8;
@@ -21,7 +23,10 @@ export function shouldTriggerDebtTrouble(player: Player): boolean {
   if (player.club === NO_CLUB_YET) return false;
   const payments = totalMonthlyPayments(player.flags);
   if (payments <= 0) return false;
-  if ((player.patrimonio ?? 0) >= payments * 2) return false;
+  // Lo que entra cada mes (sueldo neto + patrocinios − alquiler) cuenta: con 0 € en la cuenta pero 380.000 € que entran el mes que viene,
+  // el banco no llama. Solo hay apuros si el dinero y el ingreso de un mes no cubren dos meses de cuotas.
+  const income = playerMonthlyNet(player) + monthlySponsorshipIncome(player.flags, player.week) - monthlyRent(player.flags);
+  if ((player.patrimonio ?? 0) + Math.max(0, income) >= payments * 2) return false;
   const last = parseInt(String(player.flags?.debt_event_week ?? "0"), 10) || 0;
   return last === 0 || player.week - last >= COOLDOWN_WEEKS;
 }
