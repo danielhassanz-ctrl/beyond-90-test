@@ -17,7 +17,7 @@ import type { Player } from "@/types/player";
 import type { MatchWeek } from "@/lib/calendar/match-calendar";
 import { computeRole } from "@/lib/narrative/role";
 import { ligaLabel, copaLabel } from "@/lib/calendar/leagues";
-import { getNpcName, getTeammateName } from "@/lib/narrative/npcs";
+import { getNpcName, getTeammateName, nationalSquadView } from "@/lib/narrative/npcs";
 
 interface Decision {
   outcome?: string;
@@ -514,8 +514,10 @@ export function buildFallbackMatchReport(args: {
   const comp = args.competitionNote ? `${compBase} (${args.competitionNote})` : compBase;
   const headline = rnd(HEADLINES[args.debut && goals > 0 && outcome !== "wondergoal" ? "goal" : outcome] ?? HEADLINES.contained);
 
-  const coach = getNpcName(player, "entrenador");
-  const mate = getTeammateName(player, `${match.week}:${match.rivalClub}`);
+  // Con la selección el míster es el seleccionador y el compañero es de la selección, no del club.
+  const squad = match.competition === "internacional" ? nationalSquadView(player) : player;
+  const coach = getNpcName(squad, "entrenador");
+  const mate = getTeammateName(squad, `${match.week}:${match.rivalClub}`);
   const venue = match.competition === "internacional" ? "en sede neutral" : match.homeTeam === team ? "en casa" : "a domicilio";
   const stakesText =
     match.stakes === "decisivo"

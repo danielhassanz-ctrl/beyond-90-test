@@ -175,7 +175,10 @@ function buildRegistry(player: Player): Entry[] {
     ["cunado", "Tu cuñado", "cunado", 3],
     ["amigo", "Tu mejor amigo de la infancia", "amigo", 3],
   ];
-  const entries: Entry[] = roles.map(([role, label, bankKey, priority]) => {
+  const national = player.club.startsWith("SELECCIÓN:");
+  const entries: Entry[] = roles.map(([role0, label0, bankKey, priority]) => {
+    const role = role0;
+    const label = national ? (role0 === "entrenador" ? "Seleccionador" : role0 === "capitan" ? "Capitán de la selección" : label0) : label0;
     const name = getNpcName(player, role);
     return { name, role: label, blurb: pick(BLURBS[bankKey], `${player.id}:${role}:${player.club}`), priority };
   });
@@ -184,7 +187,7 @@ function buildRegistry(player: Player): Entry[] {
     const age = ageFor(`${player.id}:squad${i}`, 19, 35);
     entries.push({
       name,
-      role: "Compañero de equipo",
+      role: national ? "Compañero de selección" : "Compañero de equipo",
       blurb: `${age} años. ${pick(BLURBS.compañero, `${player.id}:squad${i}:${player.club}`)}`,
       priority: 3,
     });

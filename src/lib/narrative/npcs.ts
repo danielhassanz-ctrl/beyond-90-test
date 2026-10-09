@@ -97,7 +97,25 @@ const COUNTRY_OF_CLUB: Record<string, NameCountry> = {
   "Ajax": "nl", "Feyenoord": "nl",
   "Fenerbahçe": "tr",
 };
-export const nameCountryOf = (club: string): NameCountry => COUNTRY_OF_CLUB[club] ?? "es";
+const COUNTRY_OF_NATION: Record<string, NameCountry> = {
+  Alemania: "de", Inglaterra: "en", Francia: "fr", Italia: "it", Portugal: "pt", "Países Bajos": "nl", Brasil: "br", Argentina: "ar", Marruecos: "af", Turquía: "tr",
+};
+/** Prefijo del "club" ficticio con el que se ve al jugador cuando está con su selección (ver nationalSquadView). */
+export const NATIONAL_PREFIX = "SELECCIÓN:";
+export const nameCountryOf = (club: string): NameCountry =>
+  club.startsWith(NATIONAL_PREFIX) ? (COUNTRY_OF_NATION[club.slice(NATIONAL_PREFIX.length)] ?? "es") : (COUNTRY_OF_CLUB[club] ?? "es");
+
+/**
+ * El jugador visto desde su selección: el míster es el seleccionador, el capitán el de la selección y los compañeros
+ * son los convocados, no los de su club (que salían nombrados en los partidos internacionales).
+ */
+export function nationalSquadView(player: Player): Player {
+  return { ...player, club: `${NATIONAL_PREFIX}${player.nation || "España"}` };
+}
+/** ¿La escena es con la selección (partido, concentración, convocatoria, torneo)? */
+export function isNationalEvent(event: Pick<GameEvent, "id" | "ownTeam">): boolean {
+  return Boolean(event.ownTeam) || /^(matchday-sel-|matchday-torneo-|match-decision-sel|sel-|torneo-|arco-seleccion)/.test(event.id);
+}
 
 interface Pool { m: string[]; f: string[]; s: string[] }
 const POOLS: Record<Exclude<NameCountry, "es">, Pool> = {
@@ -209,6 +227,8 @@ const PLAYER_ORIGIN: Record<string, [NameCountry, number][]> = {
 };
 export function playerNameCountry(seed: string, club: string): NameCountry {
   const home = nameCountryOf(club);
+  // Una selección convoca a sus propios jugadores: nombres de su país.
+  if (club.startsWith(NATIONAL_PREFIX)) return home;
   const table: [NameCountry, number][] = [[home, 42], ...PLAYER_ORIGIN.local.filter(([c]) => c !== home && c !== "es").map(([c, w]) => [c, w] as [NameCountry, number])];
   if (home !== "es") table.push(["es", 8]);
   const total = table.reduce((n, [, w]) => n + w, 0);
@@ -567,7 +587,9 @@ function nameFirstMentions(texts: string[], player: Player, done: Set<string>, s
 /** Las escenas de la IA llevan id "<prefijo>-<timestamp>-<aleatorio>": ya traen sus propios nombres con apellidos. */
 const AI_EVENT_ID = /-\d{10,}-[a-z0-9]{4,}$/;
 
-export function personalizeEvent<T extends GameEvent>(rawEvent: T, player: Player): T {
+export function personalizeEvent<T extends GameEvent>(rawEvent: T, clubPlayer: Player): T {
+  // Con la selección, los personajes del club (míster, capitán, compañeros) no pintan nada: se nombra al seleccionador y a los convocados.
+  const player = isNationalEvent(rawEvent) ? nationalSquadView(clubPlayer) : clubPlayer;
   const event = replaceFixedNames(rawEvent, player);
   // Una escena de IA ya nombró a sus personajes (COMMON_RULES): ponerles además
   // "llamado X" daba dos nombres distintos para la misma persona en el título y

@@ -48,6 +48,7 @@ import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narra
 import { settleShootout, shootoutInstruction, isPenaltyShootout } from "@/lib/narrative/shootout";
 import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
 import { monthlyRent } from "@/lib/finance/rent";
+import { getNpcName, nationalSquadView } from "@/lib/narrative/npcs";
 import { buildTorneoFinalEvent } from "@/lib/narrative/world-results";
 import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
@@ -3182,7 +3183,8 @@ TU SITUACIÓN:
 ${buildDecisionInstruction(decisionRaw)}
 
 PERSONAJES FIJOS (si mencionas a alguien de tu entorno, usa estos nombres y apellidos exactos):
-${describeCast(player)}
+${describeCast(match.competition === "internacional" ? nationalSquadView(player) : player)}
+${match.competition === "internacional" ? `- EN ESTE PARTIDO juegas con la SELECCIÓN de ${player.nation}: tu entrenador es el seleccionador ${getNpcName(nationalSquadView(player), "entrenador")} y tu capitán es ${getNpcName(nationalSquadView(player), "capitan")}. NUNCA menciones al entrenador ni a los compañeros de tu club.` : ""}
 
 REGLAS CRÍTICAS:
 ${COMMON_RULES}
