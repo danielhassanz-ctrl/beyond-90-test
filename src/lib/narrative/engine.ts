@@ -3470,6 +3470,12 @@ export async function pickNextEventDynamic(
     console.log(`[pickNextEventDynamic] Own move decision`);
     return maybeAddFreeText(own);
   }
+  // Una oferta formal ya en marcha (interés de un club + mercado abierto) va antes que cualquier escena suelta: si no, el banco se la comía.
+  if (!midMatch && shouldTriggerTransferOffer(playerWithDynamics)) {
+    const offer = buildTransferOfferEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Formal transfer offer (prioridad): "${offer.title}"`);
+    return maybeAddFreeText(offer);
+  }
   // El banco de escenas, antes que el resto del "sabor" (pretemporada, DMs, rarezas): como mucho una por semana
   // (lo limita pickBankScene). Sin este primer intento, el sabor antiguo se llevaba casi todos los huecos y el
   // banco, con cientos de escenas, solo salía ~35 veces por carrera.
