@@ -37,9 +37,22 @@ function hash(value: string): number {
 /** Decimal estable en [-1, 1]. */
 const jitter = (seed: string) => ((hash(seed) % 2001) - 1000) / 1000;
 
+/** El Balón de Oro lo ganan delanteros con más frecuencia, pero también centrocampistas, defensas y, rara vez, porteros. */
+const POS_BIAS: Record<string, number> = { delantero: 0, centrocampista: -0.9, defensa: -2, portero: -3 };
+function posKey(position: string | null | undefined): string {
+  const p = (position ?? "").toLowerCase();
+  return p.includes("portero") ? "portero" : p.includes("defensa") || p.includes("lateral") || p.includes("central") ? "defensa" : p.includes("delantero") || p.includes("extremo") ? "delantero" : "centrocampista";
+}
+/** La demarcación de un finalista inventado, estable por semilla: mezcla realista de posiciones. */
+function randomPos(seed: string): string {
+  const r = hash(`${seed}:pos`) % 100;
+  return r < 42 ? "delantero" : r < 74 ? "centrocampista" : r < 94 ? "defensa" : "portero";
+}
+
 interface Finalist {
   name: string;
   club: string;
+  pos: string;
   score: number;
   isPlayer: boolean;
 }
@@ -71,12 +84,15 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
   // Para los menores de 25 la media por encima de 86 pesa menos: un 92 a los 20 es un fenómeno, pero no un ganador seguro.
   const mediaEff = young && player.media > 86 ? 86 + (player.media - 86) * 0.6 : player.media;
   const playerScore =
-    mediaEff + ((player.fama ?? 50) - 50) * 0.06 + Math.min(4, titlesThisSeason * 1.5) - youthPenalty + jitter(`${player.id}:${kind}:${season}:yo`) * (young ? 5 : 1.5);
+    mediaEff + ((player.fama ?? 50) - 50) * 0.06 + Math.min(4, titlesThisSeason * 1.5) - youthPenalty + jitter(`${player.id}:${kind}:${season}:yo`) * (young ? 5 : 1.5) + (kind === "balon_oro" ? (POS_BIAS[posKey(player.position)] ?? 0) : 0);
   // Los demás: los megacracks de tu generación (si encajan) y el resto inventados, de más a menos.
   const top = kind === "golden_boy" ? maxMediaForAge(player.week, 78) : 90;
-  const out: Finalist[] = [{ name: mine, club: player.club, score: playerScore, isPlayer: true }];
+  const out: Finalist[] = [{ name: mine, club: player.club, pos: posKey(player.position), score: playerScore, isPlayer: true }];
   const megas = getRivals(player).filter((r) => r.kind === "mega" && (kind === "balon_oro" || r.media > 0));
-  for (const m of megas) out.push({ name: m.name, club: m.club, score: m.media - 2.5 + jitter(`${m.name}:${season}`) * 1.5, isPlayer: false });
+  for (const m of megas) {
+    const pos = randomPos(m.name);
+    out.push({ name: m.name, club: m.club, pos, score: m.media - 2.5 + jitter(`${m.name}:${season}`) * 1.5 + (kind === "balon_oro" ? POS_BIAS[pos] : 0), isPlayer: false });
+  }
   // Los clubes que de verdad han ganado mandan: el campeón de Europa de la temporada pasada (tu club, si lo ganaste tú) y
   // el finalista aportan jugadores a la lista; el resto sale de los grandes de todas las ligas, con un máximo de dos por club.
   const podium = championsPodium(player, season - 1);
@@ -93,17 +109,19 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
     const club = wanted && count(wanted) < 3 ? wanted : weightedPick(`${seed}:c`, CLUB_WEIGHTS, full);
     perClub.set(club, count(club) + 1);
     const champBonus = club === podium.winner ? 2.2 : club === podium.runnerUp ? 1 : 0;
+    const pos = randomPos(seed);
     out.push({
       name: fictionalPlayerName(seed, club, player.last_name),
       club,
-      score: top - 1.5 - (out.length - 3) * (kind === "golden_boy" ? 1.1 : 0.9) + jitter(`${seed}:s`) * 2.5 + champBonus,
+      pos,
+      score: top - 1.5 - (out.length - 3) * (kind === "golden_boy" ? 1.1 : 0.9) + jitter(`${seed}:s`) * 2.5 + champBonus + (kind === "balon_oro" ? POS_BIAS[pos] : 0),
       isPlayer: false,
     });
   }
   return out.sort((a, b) => b.score - a.score).slice(0, 10);
 }
 
-const listLine = (list: Finalist[]) => list.map((f, i) => `${i + 1}. ${f.name}${f.isPlayer ? " (tú)" : ""} · ${f.club}`).join("  |  ");
+const listLine = (list: Finalist[]) => list.map((f, i) => `${i + 1}. ${f.name}${f.isPlayer ? " (tú)" : ""} · ${f.club} · ${f.pos}`).join("  |  ");
 
 /** El evento del premio (con la clasificación final ya decidida), o null si no toca o no entras entre los diez. */
 export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
@@ -113,7 +131,7 @@ export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
   const year = 2026 + season;
   const gb = kind === "golden_boy";
   const prizeName = gb ? "Golden Boy" : "Balón de Oro";
-  const alphabetical = [...list].sort((a, b) => a.name.localeCompare(b.name, "es")).map((f) => `${f.name}${f.isPlayer ? " (tú)" : ""} (${f.club})`).join(" · ");
+  const alphabetical = [...list].sort((a, b) => a.name.localeCompare(b.name, "es")).map((f) => `${f.name}${f.isPlayer ? " (tú)" : ""} (${f.club}, ${f.pos})`).join(" · ");
   const winner = list[0];
   const podium = list.slice(0, 3).map((f, i) => `${i + 1}. ${f.name}${f.isPlayer ? " (tú)" : ""}`).join("  ·  ");
   const resultLine = `Clasificación final: ${listLine(list)}.`;

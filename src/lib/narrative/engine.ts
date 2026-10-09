@@ -60,6 +60,8 @@ import { ESTADOS2 } from "@/lib/narrative/bank/scenes/estados2";
 import { DISCIPLINA2 } from "@/lib/narrative/bank/scenes/disciplina2";
 import { DISCIPLINA3 } from "@/lib/narrative/bank/scenes/disciplina3";
 import { CONVIVENCIA } from "@/lib/narrative/bank/scenes/convivencia";
+import { VIDA2 } from "@/lib/narrative/bank/scenes/vida2";
+import { CLUB3 } from "@/lib/narrative/bank/scenes/club3";
 import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
@@ -3511,7 +3513,7 @@ export async function pickNextEventDynamic(
     // Una complicación o una racha, si no hay ya un estado en curso.
     const lastEstado = parseInt(String(f.estado_last_week ?? "0"), 10) || 0;
     if (!hasState(f, wk) && wk - lastEstado >= 3 && Math.random() < 0.65) {
-      const pool = Math.random() < 0.45 ? [...DISCIPLINA, ...DISCIPLINA2, ...DISCIPLINA3, ...CONVIVENCIA, ...ESTADOS, ...ESTADOS2] : [...ESTADOS, ...ESTADOS2];
+      const pool = Math.random() < 0.45 ? [...DISCIPLINA, ...DISCIPLINA2, ...DISCIPLINA3, ...CONVIVENCIA, ...VIDA2, ...CLUB3, ...ESTADOS, ...ESTADOS2] : [...ESTADOS, ...ESTADOS2];
       const ev = pickBankScene(playerWithDynamics, usedEventIds, pool);
       if (ev) {
         f.estado_last_week = String(wk);
