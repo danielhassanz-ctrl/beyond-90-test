@@ -184,6 +184,13 @@ export default async function HitoPage({
                   title="Beyond 90"
                   text={shareText}
                 />
+                {/* Si la foto no es la que querías, se puede rehacer (gasta una de tus fotos). */}
+                {player.photo_url && milestone.type !== "dm_instagram" && canGenerateMore && (
+                  <form action={regenerateMilestoneImage} className="text-center">
+                    <input type="hidden" name="milestone_id" value={milestone.id} />
+                    <RegenerateButton label="🔄 Rehacer esta foto (usa 1 de tus fotos)" />
+                  </form>
+                )}
               </div>
             </>
           ) : (

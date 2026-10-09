@@ -11,7 +11,7 @@ import { useFormStatus } from "react-dom";
  * `useFormStatus` desactiva el botón en cuanto se envía la primera vez,
  * sin esperar a la respuesta del servidor.
  */
-export function RegenerateButton() {
+export function RegenerateButton({ label = "✨ Generar la foto de este momento" }: { label?: string }) {
   const { pending } = useFormStatus();
 
   return (
@@ -20,7 +20,7 @@ export function RegenerateButton() {
       disabled={pending}
       className="cursor-pointer rounded-full border border-gold/50 px-5 py-2 font-cond text-xs font-bold uppercase tracking-wide text-gold disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {pending ? "Enviando…" : "✨ Generar la foto de este momento"}
+      {pending ? "Enviando…" : label}
     </button>
   );
 }
