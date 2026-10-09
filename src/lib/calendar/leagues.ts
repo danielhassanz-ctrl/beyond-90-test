@@ -54,7 +54,7 @@ export const LEAGUES: Record<LeagueId, League> = {
     id: "en",
     name: "Premier League",
     short: "Premier League",
-    cup: "FA Cup",
+    cup: "Copa de Inglaterra",
     jornadas: 38,
     teams: [
       "Manchester City", "Liverpool FC", "Arsenal", "Chelsea", "Manchester United", "Tottenham Hotspur", "Newcastle United", "Aston Villa",
@@ -82,7 +82,7 @@ export const LEAGUES: Record<LeagueId, League> = {
     id: "de",
     name: "Bundesliga",
     short: "Bundesliga",
-    cup: "DFB-Pokal",
+    cup: "Copa de Alemania",
     jornadas: 34,
     teams: [
       "Bayern de Múnich", "Borussia Dortmund", "Bayer Leverkusen", "RB Leipzig", "Eintracht Fráncfort", "VfB Stuttgart", "SC Friburgo", "VfL Wolfsburgo",
@@ -152,7 +152,7 @@ export const LEAGUES: Record<LeagueId, League> = {
     id: "sa",
     name: "Saudi Pro League",
     short: "Liga saudí",
-    cup: "Copa del Rey saudí",
+    cup: "Copa de Arabia",
     jornadas: 34,
     teams: [
       "Al-Nassr FC", "Al-Hilal", "Al-Ittihad", "Al-Ahli", "Al-Shabab", "Al-Ettifaq", "Al-Fateh", "Al-Taawoun", "Al-Raed", "Al-Fayha", "Damac FC", "Al-Khaleej",

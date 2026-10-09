@@ -79,7 +79,7 @@ type Classified = { comp: "liga" | "champions" | "europa" | "copa" | "seleccion"
  */
 export function classifyMatch(title: string, description: string): Classified {
   const text = `${title} ${description}`.toLowerCase();
-  const framed = text.match(/\ben (la liga|la premier league|premier league|la bundesliga|bundesliga|la serie a|serie a|la ligue 1|ligue 1|saudi pro league|copa del rey saudí|copa del rey|la fa cup|fa cup|dfb-pokal|copa de italia|copa de francia|champions league|europa league|partido internacional|el mundial|la eurocopa|la copa am[eé]rica)/);
+  const framed = text.match(/\ben (la liga|la premier league|premier league|la bundesliga|bundesliga|la serie a|serie a|la ligue 1|ligue 1|saudi pro league|copa del rey|copa de inglaterra|copa de alemania|copa de italia|copa de francia|copa de arabia|dfb-pokal|fa cup|champions league|europa league|partido internacional|el mundial|la eurocopa|la copa am[eé]rica)/);
   const key = framed ? framed[1] : text;
 
   const torneo = (): TournamentKey =>
@@ -87,7 +87,7 @@ export function classifyMatch(title: string, description: string): Classified {
 
   if (/champions league/.test(key)) return { comp: "champions" };
   if (/europa league/.test(key)) return { comp: "europa" };
-  if (/copa del rey|fa cup|dfb-pokal|copa de italia|copa de francia/.test(key)) return { comp: "copa" };
+  if (/copa del rey|copa de inglaterra|copa de alemania|copa de italia|copa de francia|copa de arabia|dfb-pokal|fa cup/.test(key)) return { comp: "copa" };
   if (/partido internacional|mundial|eurocopa|copa am[eé]rica/.test(key)) return { comp: "seleccion", torneo: torneo() };
   return { comp: "liga" };
 }
