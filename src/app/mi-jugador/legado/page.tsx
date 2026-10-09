@@ -23,6 +23,9 @@ const SECOND_LIFE_MILESTONE_TYPES = new Set([
  * guarda (stats_*, flags, tipos de milestone) — no añade ningún tracking
  * nuevo.
  */
+// Reloj fuera del render: la página se calcula en el servidor en cada petición.
+const nowMs = () => Date.now();
+
 function buildAchievements(
   player: NonNullable<Awaited<ReturnType<typeof getCurrentUserAndPlayer>>["player"]>,
   milestoneTypes: Set<string>,
@@ -169,7 +172,7 @@ export default async function LegadoPage() {
             // que se quedó colgado de verdad jugando esta sesión.
             const regenStartedAt = parseInt(String(player.flags?.[`regen_${m.id}`] ?? "0"), 10) || 0;
             const startedAt = Math.max(regenStartedAt, m.created_at ? new Date(m.created_at).getTime() : 0);
-            const isStalePending = m.image_status === "pending" && startedAt > 0 && Date.now() - startedAt > 5 * 60_000;
+            const isStalePending = m.image_status === "pending" && startedAt > 0 && nowMs() - startedAt > 5 * 60_000;
 
             return (
             <Link

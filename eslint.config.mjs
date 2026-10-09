@@ -12,7 +12,14 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Salida de `vercel build` (generada).
+    ".vercel/**",
   ]),
+  // Los scripts de prueba trabajan con JSON de forma libre: `any` es aceptable ahí.
+  {
+    files: ["scripts/**"],
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
+  },
 ]);
 
 export default eslintConfig;

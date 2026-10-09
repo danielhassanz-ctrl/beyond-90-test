@@ -252,7 +252,7 @@ export async function resolveEvent(formData: FormData) {
   const { newWeek, matchDoneFlag, weekCounter } = computeWeekAdvance(player as Player, event);
   // Cierre de temporada: puesto final de Liga con la misma tabla que ve el jugador. Campeón = trofeo
   // (se anota al ver la escena de celebración del mes siguiente); el puesto queda para la trayectoria.
-  let ligaFinishFlags: Record<string, string> = {};
+  const ligaFinishFlags: Record<string, string> = {};
   if (player.status === "active" && Math.floor((newWeek - 1) / WEEKS_PER_SEASON) > seasonNow) {
     try {
       const rec = await getSeasonMatchRecord(supabase, player as Player, { pendingEvent: event });

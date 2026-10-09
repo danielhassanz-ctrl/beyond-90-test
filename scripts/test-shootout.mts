@@ -8,7 +8,7 @@ let bad = 0;
 const check = (c: boolean, m: string) => { if (!c) { bad++; console.log("FALLO:", m); } };
 
 for (const yo of ["gol", "fallo"]) {
-  let wins = 0, n = 400;
+  let wins = 0; const n = 400;
   for (let i = 0; i < n; i++) {
     const p = mk();
     const a = settleShootout(p, ctx.key, { win: i % 2 === 0, scoreLine: "1-1 (5-4 en penaltis)" }, ctx);

@@ -47,6 +47,9 @@ import { regenerateMilestoneImage } from "./actions";
 // La regeneración de la foto corre en segundo plano (after()) y puede tardar minutos.
 export const maxDuration = 300;
 
+// Reloj fuera del render: la página se calcula en el servidor en cada petición.
+const nowMs = () => Date.now();
+
 export default async function HitoPage({
   params,
 }: {
@@ -134,7 +137,7 @@ export default async function HitoPage({
   const STALE_PENDING_MS = 5 * 60_000;
   const regenStartedAt = parseInt(String(player.flags?.[`regen_${milestone.id}`] ?? "0"), 10) || 0;
   const startedAt = Math.max(regenStartedAt, milestone.created_at ? new Date(milestone.created_at).getTime() : 0);
-  const pendingSince = startedAt ? Date.now() - startedAt : 0;
+  const pendingSince = startedAt ? nowMs() - startedAt : 0;
   const isStalePending = milestone.image_status === "pending" && pendingSince > STALE_PENDING_MS;
 
   return (

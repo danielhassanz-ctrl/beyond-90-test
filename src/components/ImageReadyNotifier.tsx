@@ -28,9 +28,12 @@ export function ImageReadyNotifier() {
   }, []);
 
   useEffect(() => {
-    poll();
+    const first = setTimeout(poll, 0);
     const interval = setInterval(poll, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(first);
+      clearInterval(interval);
+    };
   }, [poll]);
 
   if (queue.length === 0) return null;
