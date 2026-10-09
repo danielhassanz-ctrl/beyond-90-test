@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { BottomNav } from "@/components/BottomNav";
@@ -21,13 +22,20 @@ export default async function FotosPage({
   const paid = getPaidCredits(player);
   const totalLeft = freeLeft + paid;
 
+  const { data: shots } = await supabase
+    .from("milestones")
+    .select("id, title, image_url")
+    .eq("player_id", player.id)
+    .not("image_url", "is", null)
+    .order("created_at", { ascending: false });
+
   return (
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">
       <div className="w-full max-w-md space-y-1 text-center">
         <p className="text-4xl">📸</p>
         <h1 className="font-display text-2xl">Fotos de tus hitos</h1>
         <p className="text-sm text-muted-foreground">
-          Cada momento importante de tu carrera puede tener su propia foto generada con IA.
+          Cada momento importante de tu carrera puede tener su propia foto generada con IA. Aquí están todas y lo que te queda por generar.
         </p>
       </div>
 
@@ -74,6 +82,28 @@ export default async function FotosPage({
             ? `Te quedan ${totalLeft} fotos disponibles para tus próximos hitos.`
             : "No te quedan fotos disponibles. Compra un pack para seguir generando fotos de tus momentos."}
         </p>
+      </div>
+
+      <div className="w-full max-w-md space-y-3">
+        <p className="text-kicker">Tus fotos{shots && shots.length > 0 ? ` · ${shots.length}` : ""}</p>
+        {!shots || shots.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Todavía no hay ninguna foto. Cada hito importante generará la suya.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {shots.map((m) => (
+              <Link
+                key={m.id as string}
+                href={`/carrera/hito/${m.id}`}
+                className="group relative aspect-square overflow-hidden rounded-2xl border border-panel-border bg-surface-2 hover:border-gold/50"
+              >
+                <Image src={m.image_url as string} alt={(m.title as string) ?? "Hito"} fill className="object-cover transition group-hover:scale-105" />
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-2 pb-1.5 pt-6 font-cond text-[10px] uppercase tracking-wide text-white">
+                  {m.title as string}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       <form action={createCreditCheckout} className="w-full max-w-md">

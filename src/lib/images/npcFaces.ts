@@ -71,6 +71,12 @@ export async function markNpcSeen(
   }
 }
 
+/** URL de la cara ya generada de un personaje (null si aún no se le ha puesto cara). Solo lectura: no genera nada. */
+export function getCachedNpcFace(player: Pick<Player, "club" | "flags">, role: NpcRole): string | null {
+  const url = player.flags?.[faceFlagKey(role, player)];
+  return typeof url === "string" && url.startsWith("http") ? url : null;
+}
+
 function mix(value: string): number {
   let h = 2166136261;
   for (let i = 0; i < value.length; i++) {

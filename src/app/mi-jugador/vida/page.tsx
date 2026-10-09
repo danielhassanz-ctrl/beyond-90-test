@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { LifeThreads } from "@/components/LifeThreads";
 import { BottomNav } from "@/components/BottomNav";
-import { getNpcName, describeRelationshipLevel, NPC_ROLE_LABELS } from "@/lib/narrative/npcs";
+import { getNpcName, describeRelationshipLevel, type NpcRole } from "@/lib/narrative/npcs";
+import { getCachedNpcFace } from "@/lib/images/npcFaces";
+import { LifeCircle, type LifeMember } from "@/components/LifeCircle";
 import { NO_CLUB_YET } from "@/lib/constants";
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -32,95 +34,61 @@ export default async function VidaPage() {
     redirect("/crear-jugador");
   }
 
-  const pareja = typeof player.flags?.pareja === "string" ? player.flags.pareja : null;
+  const pareja = typeof player.flags?.pareja === "string" && player.flags.pareja ? player.flags.pareja : null;
 
   // Sin club todavía no existe entrenador, capitán, rival por el puesto
-  // ni fisio — son roles de la plantilla de un club real, no genéricos
-  // del jugador. Antes salían igual desde el segundo 1 de crear el
-  // jugador (deterministas por player.id, sin depender de nada) — un
-  // "3 patas" recién creado, sin equipo, ya tenía opinión de un
-  // entrenador que nunca había conocido. Visto en vivo jugando: el
-  // entorno tiene que ir apareciendo según avanza la carrera, no todo de
-  // golpe desde el principio.
+  // ni fisio — son roles de la plantilla de un club real. El entorno tiene
+  // que ir apareciendo según avanza la carrera, no todo de golpe.
   const hasClub = player.club !== NO_CLUB_YET;
 
-  // Cada personaje del entorno se ata a la relación numérica más
-  // parecida que ya llevamos: el entrenador a rel_entrenador, el capitán
-  // y la competencia por el puesto (compañeros de vestuario) a
-  // rel_vestuario. Fisio y prensa no tienen un número propio en el
-  // juego — se muestran con un tono neutro fijo, igual que hacía el
-  // prototipo de referencia con los roles que tampoco rastreaba.
-  const entorno = [
-    ...(hasClub
+  const face = (role: NpcRole) => getCachedNpcFace(player, role);
+  const parejaName = pareja ? (pareja === "Lucía" ? getNpcName(player, "pareja") : pareja) : null;
+
+  const familia: LifeMember[] = [
+    { key: "madre", name: getNpcName(player, "madre"), label: "Tu madre", detail: "Te llama los domingos, tengas o no noticias.", face: face("madre") },
+    { key: "padre", name: getNpcName(player, "padre"), label: "Tu padre", detail: "Opina de fútbol más de lo que debería.", face: face("padre") },
+    { key: "hermano", name: getNpcName(player, "hermano"), label: "Tu hermano pequeño", detail: "Quiere ser como tú (y ganarte a la consola)." },
+    ...(parejaName
       ? [
           {
-            role: "entrenador" as const,
-            name: getNpcName(player, "entrenador"),
-            detail: describeRelationshipLevel(player.rel_entrenador),
-          },
-          {
-            role: "capitan" as const,
-            name: getNpcName(player, "capitan"),
-            detail: describeRelationshipLevel(player.rel_vestuario),
-          },
-          {
-            role: "rival_puesto" as const,
-            name: getNpcName(player, "rival_puesto"),
-            detail: "Compite contigo por los mismos minutos.",
-          },
-          {
-            role: "fisio" as const,
-            name: getNpcName(player, "fisio"),
-            detail: "Cuida de ti cada semana, gane o pierda el equipo.",
-          },
-          {
-            role: "director_deportivo" as const,
-            name: getNpcName(player, "director_deportivo"),
-            detail: "Manda en los fichajes y en las renovaciones.",
-          },
-          {
-            role: "presidente" as const,
-            name: getNpcName(player, "presidente"),
-            detail: "Firma los contratos y da la cara ante la afición.",
-          },
-          {
-            role: "utillero" as const,
-            name: getNpcName(player, "utillero"),
-            detail: "Lo ha visto todo en este club, y no cuenta ni la mitad.",
-          },
-        ]
-      : []),
-    {
-      role: "prensa" as const,
-      name: getNpcName(player, "prensa"),
-      detail: hasClub ? "Sigue tu carrera de cerca para su medio." : "Vigila a los agentes libres con proyección.",
-    },
-    { role: "madre" as const, name: getNpcName(player, "madre"), detail: "Te llama los domingos, tengas o no noticias." },
-    { role: "padre" as const, name: getNpcName(player, "padre"), detail: "Opina de fútbol más de lo que debería." },
-    { role: "hermano" as const, name: getNpcName(player, "hermano"), detail: "Quiere ser como tú (y ganarte a la consola)." },
-    { role: "amigo" as const, name: getNpcName(player, "amigo"), detail: "El de siempre: te conoció antes de ser futbolista." },
-    ...(typeof player.flags?.pareja === "string" && player.flags.pareja
-      ? [
-          {
-            role: "pareja" as const,
-            name: player.flags.pareja === "Lucía" ? getNpcName(player, "pareja") : (player.flags.pareja as string),
+            key: "pareja",
+            name: parejaName,
+            label: player.flags?.convivencia ? "Tu pareja · vivís juntos" : "Tu pareja",
             detail: "Lo que hay fuera del campo cuando el campo se acaba.",
-          },
-        ]
-      : []),
-    ...(player.agent_name
-      ? [
-          {
-            role: "representante" as const,
-            name: player.agent_name,
-            detail: describeRelationshipLevel(player.rel_representante),
+            face: face("pareja"),
           },
         ]
       : []),
   ];
 
+  const amigos: LifeMember[] = [
+    { key: "amigo", name: getNpcName(player, "amigo"), label: "Amigo de la infancia", detail: "El de siempre: te conoció antes de ser futbolista." },
+    ...(hasClub
+      ? [
+          { key: "capitan", name: getNpcName(player, "capitan"), label: "Capitán", detail: describeRelationshipLevel(player.rel_vestuario), value: player.rel_vestuario, face: face("capitan") },
+          { key: "rival", name: getNpcName(player, "rival_puesto"), label: "Competencia por el puesto", detail: "Compite contigo por los mismos minutos." },
+          { key: "utillero", name: getNpcName(player, "utillero"), label: "Utillero", detail: "Lo ha visto todo en este club, y no cuenta ni la mitad." },
+        ]
+      : []),
+  ];
+
+  const club: LifeMember[] = [
+    ...(hasClub
+      ? [
+          { key: "entrenador", name: getNpcName(player, "entrenador"), label: "Entrenador", detail: describeRelationshipLevel(player.rel_entrenador), value: player.rel_entrenador, face: face("entrenador") },
+          { key: "fisio", name: getNpcName(player, "fisio"), label: "Fisioterapeuta", detail: "Cuida de ti cada semana, gane o pierda el equipo." },
+          { key: "director", name: getNpcName(player, "director_deportivo"), label: "Director deportivo", detail: "Manda en los fichajes y en las renovaciones." },
+          { key: "presidente", name: getNpcName(player, "presidente"), label: "Presidente", detail: "Firma los contratos y da la cara ante la afición." },
+        ]
+      : []),
+    ...(player.agent_name
+      ? [{ key: "agente", name: player.agent_name, label: "Representante", detail: describeRelationshipLevel(player.rel_representante), value: player.rel_representante, face: face("agente") }]
+      : []),
+    { key: "prensa", name: getNpcName(player, "prensa"), label: "Prensa", detail: hasClub ? "Sigue tu carrera de cerca para su medio." : "Vigila a los agentes libres con proyección." },
+  ];
+
   return (
-    <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">
+    <main className="flex flex-1 flex-col items-center gap-5 p-6 pb-24">
       <div className="w-full max-w-md space-y-1">
         <Link href="/mi-jugador" className="font-cond text-xs uppercase tracking-wide text-muted-foreground hover:text-gold">
           ‹ Mi jugador
@@ -137,22 +105,9 @@ export default async function VidaPage() {
         <Stat label="Fama" value={player.fama} />
       </div>
 
-      <div className="w-full max-w-md space-y-3 rounded-2xl border border-panel-border bg-surface p-4">
-        <p className="text-kicker">Tu entorno</p>
-        <div className="space-y-3">
-          {entorno.map((npc) => (
-            <div key={npc.role} className="flex items-start justify-between gap-3 border-b border-panel-border/60 pb-3 last:border-0 last:pb-0">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{npc.name}</p>
-                <p className="font-cond text-[10px] uppercase tracking-wide text-gold-soft">
-                  {npc.role === "representante" ? "Representante" : NPC_ROLE_LABELS[npc.role]}
-                </p>
-              </div>
-              <p className="max-w-[55%] shrink-0 text-right text-xs text-muted-foreground">{npc.detail}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      <LifeCircle icon="🏠" title="Familia" subtitle="Los que estaban antes de la fama" members={familia} defaultOpen />
+      <LifeCircle icon="🤝" title="Amigos y compañeros" subtitle="Vestuario, barrio y quien te disputa el puesto" members={amigos} />
+      <LifeCircle icon="🏟️" title="Club y cuerpo técnico" subtitle="Míster, médicos, directivos y tu representante" members={club} />
 
       {(hasClub || player.agent_name) && (
         <div className="grid w-full max-w-md grid-cols-2 gap-4 rounded-2xl border border-panel-border bg-surface p-4">
@@ -169,9 +124,6 @@ export default async function VidaPage() {
 
       <div className="w-full max-w-md">
         <LifeThreads flags={player.flags} />
-        {pareja && (
-          <p className="mt-2 text-center text-xs text-muted-foreground">Vida sentimental: en pareja con {pareja}.</p>
-        )}
       </div>
 
       <BottomNav active="vida" />
