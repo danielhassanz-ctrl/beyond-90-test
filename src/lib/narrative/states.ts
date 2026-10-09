@@ -29,6 +29,7 @@ export const STATES: Record<string, StateDef> = {
   preocupado: { id: "preocupado", label: "Con la cabeza en casa", tone: "bad", icon: "💭", roll: -0.06, forma: -1, moral: -2, hint: "Te cuesta concentrarte en el campo." },
   castigo: { id: "castigo", label: "Castigado por el míster", tone: "bad", icon: "🚫", roll: -0.03, forma: 0, moral: -1, rel_entrenador: -1, hint: "Tienes que ganarte otra vez su confianza." },
   mal_ambiente: { id: "mal_ambiente", label: "Mal ambiente en el vestuario", tone: "bad", icon: "⚡", roll: -0.04, forma: 0, moral: -1, rel_vestuario: -1, hint: "Nadie te pasa el balón con ganas." },
+  pitada: { id: "pitada", label: "La grada te pita", tone: "bad", icon: "📣", roll: -0.04, forma: 0, moral: -2, rel_aficion: -1, hint: "Cada balón que tocas lo recibes con silbidos." },
   racha: { id: "racha", label: "En racha", tone: "good", icon: "🔥", roll: 0.08, forma: 1, moral: 2, hint: "Todo te sale: más confianza, mejores jugadas." },
   mentor: { id: "mentor", label: "Con un mentor", tone: "good", icon: "🧭", roll: 0.04, forma: 1, moral: 1, hint: "Un veterano te enseña los detalles que no se ven." },
   fisico: { id: "fisico", label: "A tope físicamente", tone: "good", icon: "💪", roll: 0.03, forma: 2, moral: 1, hint: "Llegas a todo y recuperas rápido." },

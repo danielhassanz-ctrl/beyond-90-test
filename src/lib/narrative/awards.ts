@@ -66,9 +66,12 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
   // El Balón de Oro lo ganan jugadores de 24-30 años en su apogeo; un chico de 20 casi nunca (solo un genio generacional).
   // La edad pesa: cuanto más joven, más lejos del puesto de arriba aunque la media sea altísima.
   const ageNow = playerAge(player.week);
-  const youthPenalty = kind === "balon_oro" ? Math.max(0, 25 - ageNow) * 1.6 : 0;
+  const young = kind === "balon_oro" && ageNow < 25;
+  const youthPenalty = young ? (25 - ageNow) * 0.2 : 0;
+  // Para los menores de 25 la media por encima de 86 pesa menos: un 92 a los 20 es un fenómeno, pero no un ganador seguro.
+  const mediaEff = young && player.media > 86 ? 86 + (player.media - 86) * 0.6 : player.media;
   const playerScore =
-    player.media + ((player.fama ?? 50) - 50) * 0.06 + Math.min(4, titlesThisSeason * 1.5) - youthPenalty + jitter(`${player.id}:${kind}:${season}:yo`) * 1.5;
+    mediaEff + ((player.fama ?? 50) - 50) * 0.06 + Math.min(4, titlesThisSeason * 1.5) - youthPenalty + jitter(`${player.id}:${kind}:${season}:yo`) * (young ? 5 : 1.5);
   // Los demás: los megacracks de tu generación (si encajan) y el resto inventados, de más a menos.
   const top = kind === "golden_boy" ? maxMediaForAge(player.week, 78) : 90;
   const out: Finalist[] = [{ name: mine, club: player.club, score: playerScore, isPlayer: true }];
