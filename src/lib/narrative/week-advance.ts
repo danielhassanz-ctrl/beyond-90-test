@@ -40,6 +40,8 @@ const LOCKED_PREFIXES = [
   "contrato-debut",
   // La jugada decisiva es parte del MISMO partido que se resuelve después.
   "match-decision-",
+  // La tanda de penaltis de una eliminatoria: también es parte del mismo partido.
+  "tanda-",
   // Rumores de mercado, ofertas, redes, vida de pretemporada.
   "mercado-",
   "oferta-",

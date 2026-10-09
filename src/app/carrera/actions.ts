@@ -926,19 +926,22 @@ export async function resolveEvent(formData: FormData) {
     }
   }
 
-  // Cada 4 temporadas, empezando por la primera (temporada 1, 5, 9...):
-  // pedido explícito del usuario — refresca la foto base del jugador con
-  // una generación de IA que refleje el club actual (colores/
-  // equipación real) y cómo ha cambiado su aspecto con la edad, para que
-  // la tarjeta de cierre de temporada no reutilice siempre la misma foto
-  // antigua durante años. Deliberadamente fuera del sistema de hitos (no
-  // entra en milestoneAchieved): no genera tarjeta propia ni aparece en
-  // Legado, solo actualiza current_photo_url en segundo plano.
-  const preseasonSeasonMatch = /^preseason-(\d+)$/.exec(event.id);
+  // Foto resumen del cierre de temporada: pedido explícito del usuario. Se
+  // genera en la primera temporada y se renueva cada 4 (1, 5, 9...), con la
+  // equipación del club actual y el aspecto acorde a la edad. Va en su propio
+  // flag (recap_photo) y NO toca current_photo_url, que es la foto de
+  // referencia del jugador. Si aún no hay ninguna (carreras ya empezadas) se
+  // genera en el siguiente cierre. Mientras se genera, recap_photo_pending
+  // hace que la tarjeta espere en vez de enseñar la foto de perfil.
+  const preseasonSeasonMatch = /^preseason-(d+)$/.exec(event.id);
   const preseasonSeason = preseasonSeasonMatch ? parseInt(preseasonSeasonMatch[1], 10) : null;
-  const isSeasonPhotoRefresh = preseasonSeason !== null && (preseasonSeason - 1) % 4 === 0;
+  const recapFlagsNow = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+  const lastRecapSeason = parseInt(String(recapFlagsNow.recap_photo_season ?? "-99"), 10);
+  const isSeasonPhotoRefresh =
+    preseasonSeason !== null &&
+    (!recapFlagsNow.recap_photo || preseasonSeason - lastRecapSeason >= 4 || (preseasonSeason - 1) % 4 === 0);
 
-  if (isSeasonPhotoRefresh && player.photo_url && (await hasImageCredit(supabase, player, user.email))) {
+  if (isSeasonPhotoRefresh && preseasonSeason !== null && player.photo_url && (await hasImageCredit(supabase, player, user.email))) {
     const refreshQuota = await checkImageGenerationQuota(supabase, user.id);
     if (refreshQuota.allowed) {
       const refreshPhotoUrl = player.photo_url as string;
@@ -948,7 +951,22 @@ export async function resolveEvent(formData: FormData) {
       const refreshPlayerFlags = player.flags ?? {};
       const refreshAge = playerAge(newWeek);
       const refreshClub = typeof consequences.club === "string" ? consequences.club : player.club;
-      const refreshPrompt = `Photorealistic professional portrait of a footballer wearing the ${describeKit(refreshClub)} kit, ${describeLook(refreshAge, player.last_name ?? "")}, confident calm expression, clean training ground or stadium backdrop, natural light, high-end sports photography style`;
+      const refreshSeason = preseasonSeason;
+      const refreshPrompt = `Photorealistic dramatic portrait of a footballer wearing the ${describeKit(refreshClub)} kit, ${describeLook(refreshAge, player.last_name ?? "")}, intense confident gaze, stadium floodlights and dusk sky behind, cinematic rim light, trading-card hero shot from the chest up with empty space at the bottom, high-end sports photography style`;
+
+      playerUpdate.flags = { ...recapFlagsNow, recap_photo_pending: `${refreshSeason}:${Date.now()}` };
+
+      const clearPending = async (photoUrl: string | null) => {
+        const { data: cur } = await supabase.from("players").select("flags").eq("id", refreshPlayerId).maybeSingle();
+        const curFlags = ((cur?.flags as Record<string, string | boolean> | null) ?? {}) as Record<string, string | boolean>;
+        const next: Record<string, string | boolean> = { ...curFlags };
+        delete next.recap_photo_pending;
+        if (photoUrl) {
+          next.recap_photo = photoUrl;
+          next.recap_photo_season = String(refreshSeason);
+        }
+        await supabase.from("players").update({ flags: next }).eq("id", refreshPlayerId);
+      };
 
       after(async () => {
         try {
@@ -958,22 +976,22 @@ export async function resolveEvent(formData: FormData) {
             await logAppError(supabase, "resolveEvent:season-photo-refresh", "generatePlayerImage returned null", {
               userId: refreshUserId,
               playerId: refreshPlayerId,
-              detail: { preseasonSeason },
+              detail: { preseasonSeason: refreshSeason },
             });
+            await clearPending(null);
             return;
           }
           await logImageGeneration(supabase, refreshUserId);
           await consumeImageCredit(supabase, { id: refreshPlayerId, flags: refreshPlayerFlags }, refreshUserEmail);
           const newUrl = await uploadGeneratedImage(supabase, refreshUserId, buffer, "look");
-          if (newUrl) {
-            await supabase.from("players").update({ current_photo_url: newUrl }).eq("id", refreshPlayerId);
-          }
+          await clearPending(newUrl);
         } catch (err) {
           console.error("[resolveEvent:after] season photo refresh threw:", err);
           await logAppError(supabase, "resolveEvent:season-photo-refresh", err, {
             userId: refreshUserId,
             playerId: refreshPlayerId,
           });
+          await clearPending(null).catch(() => {});
         }
       });
     }

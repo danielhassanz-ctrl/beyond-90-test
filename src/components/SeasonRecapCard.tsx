@@ -13,10 +13,10 @@ import { ClubCrest } from "@/components/ClubCrest";
  * aparte sin foto — antes esta tarjeta no llevaba ninguna foto del
  * jugador, solo números.
  *
- * La foto usa current_photo_url (la más reciente generada por cualquier
- * hito de la carrera) o, si todavía no hay ninguna, la foto original
- * subida al crear el jugador — nunca genera una nueva, sigue sin gastar
- * en Replicate como pedía el diseño original de esta tarjeta.
+ * La foto es la foto resumen propia del cierre (flags.recap_photo, generada
+ * en la primera temporada y renovada cada 4); si todavía no existe, la de
+ * perfil. Mientras se genera (`pending`) se enseña un "revelando…" en vez
+ * de la foto de perfil.
  */
 export function SeasonRecapCard({
   player,
@@ -25,6 +25,8 @@ export function SeasonRecapCard({
   stats,
   tagline,
   linkLine,
+  photoUrl: photoOverride,
+  pending,
 }: {
   player: Player;
   seasonLabel: string;
@@ -34,8 +36,12 @@ export function SeasonRecapCard({
   tagline?: string;
   /** URL del juego sin protocolo (ver lib/constants.ts getAppUrl). */
   linkLine?: string | null;
+  /** Foto resumen del cierre (flags.recap_photo). */
+  photoUrl?: string | null;
+  /** Se está generando la foto resumen. */
+  pending?: boolean;
 }) {
-  const photoUrl = player.current_photo_url ?? player.photo_url;
+  const photoUrl = pending ? null : (photoOverride ?? player.current_photo_url ?? player.photo_url);
   const statEntries: [string, number][] = [
     ["Partidos", stats.matches_played],
     ["Goles", stats.goals],
@@ -49,6 +55,12 @@ export function SeasonRecapCard({
       ) : (
         <div className="absolute inset-0 flex items-center justify-center opacity-30">
           <ClubCrest club={player.club} size={140} />
+        </div>
+      )}
+      {pending && (
+        <div className="absolute inset-x-0 top-1/3 flex flex-col items-center gap-2 text-center">
+          <span className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400/30 border-t-amber-400" />
+          <p className="text-[11px] font-bold uppercase tracking-widest text-amber-300">Revelando tu foto de temporada…</p>
         </div>
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20" />

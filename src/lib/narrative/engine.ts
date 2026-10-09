@@ -45,6 +45,7 @@ import {
   buildDeadlineDayEvent,
 } from "@/lib/narrative/market-window";
 import { shouldTriggerPreseasonLife, buildPreseasonLifeEvent } from "@/lib/narrative/preseason-life";
+import { settleShootout, shootoutInstruction, isPenaltyShootout } from "@/lib/narrative/shootout";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
@@ -2952,11 +2953,37 @@ async function pickTorneoEvent(
 
   // Crónica del partido: el resultado y lo que implica (pasar de fase,
   // eliminación, título) se deciden en código ANTES de pedírsela a la IA.
-  const result = decideTorneoResult(player, progress, match.rivalClub);
-  const adv = advanceTorneo(progress, result);
+  let result = decideTorneoResult(player, progress, match.rivalClub);
   const tName = `${TORNEO_NAMES[progress.type]} ${torneoYear(progress.season)}`;
   const nation = player.nation;
   const lines: string[] = [];
+  // Si la eliminatoria se va a los penaltis, se vive como escena propia (tira el jugador) y su desenlace
+  // inclina el resultado final de la tanda.
+  let torneoShootoutYo: string | null = null;
+  if (result.kind === "ko") {
+    const settled = settleShootout(
+      player,
+      stageKey,
+      { win: result.win, scoreLine: result.scoreLine },
+      {
+        key: stageKey,
+        team: nation,
+        rival: match.rivalClub,
+        comp: tName,
+        regular: "",
+        round: TORNEO_STAGE_LABELS[progress.stage],
+        decisive: progress.stage >= 5,
+        national: true,
+      },
+    );
+    if ("scene" in settled) return settled.scene;
+    result = { ...result, win: settled.win, scoreLine: settled.scoreLine };
+    torneoShootoutYo = settled.yo;
+  }
+  const adv = advanceTorneo(progress, result);
+  if (result.kind === "ko" && isPenaltyShootout(result.scoreLine)) {
+    lines.push(shootoutInstruction(torneoShootoutYo, result.win, (player.position ?? "").toLowerCase().includes("portero"), nation));
+  }
   if (result.kind === "group") {
     const verdict = result.win ? "victoria" : result.draw ? "empate" : "derrota";
     lines.push(
@@ -3625,19 +3652,47 @@ export async function pickNextEventDynamic(
     // VUELTA y el pase se decide por el global, con la ida ya conocida.
     const twoLegRound = matchThisWeek.euroKoRound && matchThisWeek.euroKoRound <= 3 ? matchThisWeek.euroKoRound : 0;
     const leg1 = twoLegRound ? firstLegFor(playerWithDynamics.club, currentSeason, twoLegRound) : null;
-    const twoLeg = leg1 ? decideTwoLegResult(playerWithDynamics.media, leg1, levelBonus) : null;
-    const forcedResult = twoLeg
-      ? { win: twoLeg.win, scoreLine: twoLeg.scoreLine }
+    const twoLegRaw = leg1 ? decideTwoLegResult(playerWithDynamics.media, leg1, levelBonus) : null;
+    let forcedResult: { win: boolean; scoreLine: string } | undefined = twoLegRaw
+      ? { win: twoLegRaw.win, scoreLine: twoLegRaw.scoreLine }
       : koRound
         ? decideKnockoutResult(playerWithDynamics.media, koRound, levelBonus)
         : undefined;
+    const isFinal = matchThisWeek.cupRound === 5 || matchThisWeek.euroKoRound === 4;
+    // Tanda de penaltis: escena propia (tira el jugador) y su desenlace inclina el resultado de la tanda.
+    let shootoutNote: string | undefined;
+    if (forcedResult) {
+      const koKey = `${matchThisWeek.week}_${matchKey(matchThisWeek)}`;
+      const compName =
+        matchThisWeek.competition === "champions" ? "Champions League" : matchThisWeek.competition === "europa" ? "Europa League" : "Copa del Rey";
+      const round = isFinal
+        ? "Final"
+        : matchThisWeek.euroKoRound
+          ? (["Octavos de final", "Cuartos de final", "Semifinal"][matchThisWeek.euroKoRound - 1] ?? "Eliminatoria")
+          : "Eliminatoria de Copa";
+      const settled = settleShootout(playerWithDynamics, koKey, forcedResult, {
+        key: koKey,
+        team: playerWithDynamics.club,
+        rival: matchThisWeek.rivalClub,
+        comp: compName,
+        regular: "",
+        round,
+        decisive: isFinal || matchThisWeek.euroKoRound === 3,
+      });
+      if ("scene" in settled) return settled.scene;
+      forcedResult = { win: settled.win, scoreLine: settled.scoreLine };
+      if (isPenaltyShootout(settled.scoreLine)) {
+        shootoutNote = shootoutInstruction(settled.yo, settled.win, (playerWithDynamics.position ?? "").toLowerCase().includes("portero"), playerWithDynamics.club);
+      }
+    }
+    const twoLeg = twoLegRaw && forcedResult ? { ...twoLegRaw, win: forcedResult.win, scoreLine: forcedResult.scoreLine } : null;
     const tieNote =
       leg1 && twoLeg
         ? `Ida: ${leg1.text}. Global: ${twoLeg.aggregate}${twoLeg.wentToPenalties ? " (a penaltis)" : ""}. ${twoLeg.win ? "Tu equipo pasa de ronda." : "Tu equipo queda eliminado."}`
         : undefined;
     // Último partido de la fase de grupos europea: se decide aquí si pasas
     // de fase, y la crónica tiene que cuadrar con ello.
-    let extraInstruction: string | undefined;
+    let extraInstruction: string | undefined = shootoutNote;
     if (matchThisWeek.euroGroupIndex === 2) {
       const groupQualified = resolveEuroGroupStage(playerWithDynamics, currentSeason, level);
       const compName = matchThisWeek.competition === "champions" ? "Champions League" : "Europa League";
@@ -3655,11 +3710,10 @@ export async function pickNextEventDynamic(
     }
     // Finales (Copa o europea): ganar es un TÍTULO — el contador de títulos lo
     // detecta por el texto, así que se pide expresarlo claramente.
-    const isFinal = matchThisWeek.cupRound === 5 || matchThisWeek.euroKoRound === 4;
     if (isFinal && forcedResult) {
-      extraInstruction = forcedResult.win
+      extraInstruction = [shootoutNote, forcedResult.win
         ? `- Es una FINAL y tu equipo la GANA: es un TÍTULO. Escribe con claridad que "te proclamas campeón" y "levantas el trofeo". is_milestone debe ser true, con image_scene del momento de levantar el trofeo.`
-        : `- Es una FINAL y tu equipo la PIERDE: queda la espina clavada del subcampeón, sin ningún título. NO uses las palabras "campeón" ni "título" para tu equipo.`;
+        : `- Es una FINAL y tu equipo la PIERDE: queda la espina clavada del subcampeón, sin ningún título. NO uses las palabras "campeón" ni "título" para tu equipo.`].filter(Boolean).join("\n");
     }
     if (firstTeam) {
       const roleLine = roleInstruction(roleInfo.role, playerWithDynamics.rel_entrenador ?? 50);

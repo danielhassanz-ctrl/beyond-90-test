@@ -121,6 +121,8 @@ interface Ctx {
   rating: number;
   intl: boolean;
   minutes: number;
+  /** Tu equipo ha perdido o queda eliminado (también en los penaltis). */
+  lost: boolean;
 }
 
 const mediaFor = (ctx: Ctx) => (ctx.rating >= 8 ? 3 : ctx.rating >= 7 ? 1 : ctx.rating < 5.2 ? -2 : ctx.rating < 5.8 ? -1 : 0);
@@ -376,12 +378,48 @@ const REACTIONS: ReactionKit[] = [
     id: "himno",
     label: "Cantar con los tuyos en el vestuario",
     subtitle: "Cuando el país se te queda dentro",
-    when: (c) => c.intl,
+    when: (c) => c.intl && !c.lost,
     weight: 2.5,
     consequences: (c) => ({ media: mediaFor(c), moral: 3, rel_vestuario: 2, rel_aficion: 1 }),
     text: () => [
       "Alguien pone el himno en un altavoz y todos acabáis cantándolo con la camiseta a medio quitar. Un veterano llora sin disimulo. Nadie dice nada.",
       "Os quedáis más rato del necesario, sin ganas de salir. Con la selección, hasta el vestuario huele a algo que no tiene nombre.",
+    ],
+  },
+  {
+    id: "consolar",
+    label: "Sentarte con el compañero que más lo está pasando mal",
+    subtitle: "Aguantar juntos el golpe",
+    when: (c) => c.lost,
+    weight: 2.5,
+    consequences: (c) => ({ media: mediaFor(c), rel_vestuario: 5, reputacion: 2, moral: -1 }),
+    text: (c) => [
+      `Te sientas junto a ${c.mate}, que lleva diez minutos con la cabeza entre las manos. No le dices nada importante: «Mañana duele menos». Se queda mirándote, asiente y te agarra el antebrazo. Eso, a veces, es todo.`,
+      "Al fondo del vestuario, un chaval joven llora sin ruido. Te acercas y te quedas a su lado hasta que se le pasa. Nadie os mira. Todos lo han visto.",
+    ],
+  },
+  {
+    id: "camiseta",
+    label: "Quedarte un rato en el césped con la camiseta puesta",
+    subtitle: "Despedirte del estadio",
+    when: (c) => c.lost,
+    weight: 2,
+    consequences: (c) => ({ media: mediaFor(c), moral: 1, rel_aficion: 3, reputacion: 2 }),
+    text: () => [
+      "Cuando el estadio se vacía, te sientas en el césped con la camiseta aún empapada. Miras la grada, ahora silenciosa. Duele, y a la vez es hermoso: has estado aquí. El utillero, desde lejos, te deja un rato en paz.",
+      "Alguien apaga las luces del fondo. Tú sigues sentado, sin prisa. Un aficionado rezagado te grita desde arriba: «¡Gracias!». Le levantas la mano. Y por fin te levantas.",
+    ],
+  },
+  {
+    id: "perdon",
+    label: "Escribir unas líneas a la afición agradeciendo el apoyo",
+    subtitle: "Dar la cara tras la derrota",
+    when: (c) => c.lost,
+    weight: 1.8,
+    consequences: (c) => ({ media: mediaFor(c), rel_aficion: 4, reputacion: 3, moral: -1 }),
+    text: () => [
+      "«No ha sido, pero ha valido la pena», escribes. Lo relees tres veces antes de publicarlo. En una hora, tiene cientos de miles de respuestas: algunos te abrazan, otros te piden más. Todos te leen.",
+      "Un mensaje corto, sin excusas. La afición, dolida, lo recibe con respeto. Es un buen modo de empezar a levantarse.",
     ],
   },
   {
@@ -504,7 +542,8 @@ export function buildFallbackMatchReport(args: {
       .filter(Boolean)
       .join(" ");
 
-  const ctx: Ctx = { coach, mate, rival: match.rivalClub, result, goals, bad, rating, intl: match.competition === "internacional", minutes };
+  const lost = args.forcedWin === false || (args.forcedWin === undefined && result === "loss");
+  const ctx: Ctx = { coach, mate, rival: match.rivalClub, result, goals, bad, rating, intl: match.competition === "internacional", minutes, lost };
   // Tres reacciones que encajan con cómo ha ido el partido, sorteadas del surtido y sin repetir las
   // de los últimos partidos (si no, siempre salían las mismas tres).
   if (!player.flags) player.flags = {};

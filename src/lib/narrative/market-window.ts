@@ -27,7 +27,8 @@ export type MarketWindow = "verano" | "enero";
 
 export function getMarketWindow(week: number): MarketWindow | null {
   const weekInSeason = ((week - 1) % 10) + 1;
-  if (weekInSeason >= 2 && weekInSeason <= 4) return "verano";
+  // Desde la semana 1: lo primero que pasa tras el resumen de temporada, en septiembre, es el salseo del mercado.
+  if (weekInSeason >= 1 && weekInSeason <= 4) return "verano";
   if (weekInSeason >= 5 && weekInSeason <= 9) return "enero";
   return null;
 }

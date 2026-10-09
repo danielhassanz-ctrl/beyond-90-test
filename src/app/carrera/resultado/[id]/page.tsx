@@ -5,6 +5,7 @@ import { withShareLink, getAppUrlLine } from "@/lib/constants";
 import { ShareButton } from "@/components/ShareButton";
 import { ShareableCard } from "@/components/ShareableCard";
 import { SeasonRecapCard } from "@/components/SeasonRecapCard";
+import { RecapPhotoWatcher } from "@/components/RecapPhotoWatcher";
 import { CONSEQUENCE_LABELS, WEEKS_PER_SEASON, seasonLabel, playerAge } from "@/types/career";
 import { displayName } from "@/types/player";
 import { EventScene } from "@/components/EventScene";
