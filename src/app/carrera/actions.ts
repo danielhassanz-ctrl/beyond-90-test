@@ -665,8 +665,9 @@ export async function resolveEvent(formData: FormData) {
         overrideMilestoneType ?? event.milestoneType,
         currentAgentName,
       );
+      // Un título lleva su escena propia (levantando LA copa de esa competición), no la genérica de "trofeo".
       milestoneImagePrompt =
-        contextualPrompt ??
+        (event.trophy && event.imageScene ? null : contextualPrompt) ??
         (event.imageScene
           ? withSceneGuards(event.imageScene, {
               club: newClub,

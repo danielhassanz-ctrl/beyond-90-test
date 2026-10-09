@@ -51,6 +51,7 @@ import { monthlyRent } from "@/lib/finance/rent";
 import { getNpcName, nationalSquadView } from "@/lib/narrative/npcs";
 import { buildTorneoFinalEvent } from "@/lib/narrative/world-results";
 import { applyExClubTouch } from "@/lib/narrative/ex-club";
+import { trophyCelebrationOptions } from "@/lib/narrative/trophy-celebration";
 import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
@@ -807,15 +808,26 @@ function clampPercent(value: number) {
 function withTrophy(event: GameEvent, kind: TrofeoKind, team: string, detail?: string, scene?: string): GameEvent {
   const label = trofeoLabel({ k: kind, c: team });
   const already = /campe[oó]n|levantw+ (el|la) (trofeo|copa)/i.test(event.description);
+  const cup =
+    kind === "champions"
+      ? "the large silver Champions League trophy with big handles"
+      : kind === "europa"
+        ? "the Europa League trophy"
+        : kind === "mundial"
+          ? "the golden World Cup trophy"
+          : `the ${label} trophy`;
+  const national = kind === "mundial" || kind === "eurocopa" || kind === "copa_america";
   return {
     ...event,
     trophy: { kind, detail },
     isMilestone: true,
     milestoneType: "titulo",
+    // Ganar un título se celebra: la noche con el vestuario, el desfile, la familia, la dedicatoria.
+    options: trophyCelebrationOptions(label, { national, team }),
     imageScene:
       event.imageScene ??
       scene ??
-      `Photorealistic photo of a footballer lifting the ${label} trophy with teammates after winning the final, confetti, fireworks, packed stadium at night, emotional celebration, no logos or readable text`,
+      `Photorealistic photo of a footballer holding ${cup} high above his head with both hands on the pitch after winning the final, teammates hugging around him, confetti and fireworks, packed stadium at night, emotional celebration, no readable text`,
     description: already ? event.description : `${event.description} ¡Te proclamas campeón de ${label} con ${team}! Levantas el trofeo mientras el estadio entero se viene abajo.`,
   };
 }
@@ -3729,6 +3741,10 @@ export async function pickNextEventDynamic(
       extraInstruction = groupQualified
         ? `- Era el ÚLTIMO partido de la fase de grupos de la ${compName}: con este resultado tu equipo SE CLASIFICA para las eliminatorias (octavos de final). Que la crónica lo deje claro.`
         : `- Era el ÚLTIMO partido de la fase de grupos de la ${compName}: con este resultado tu equipo QUEDA ELIMINADO de la competición europea. Que la crónica lo deje claro.`;
+    }
+    if (leg1 && twoLeg && !isPenaltyShootout(twoLeg.scoreLine)) {
+      extraInstruction = [extraInstruction, "- NO hubo tanda de penaltis: el pase se decide por el global, no menciones penaltis."].filter(Boolean).join("
+");
     }
     if (leg1 && twoLeg) {
       extraInstruction = [
