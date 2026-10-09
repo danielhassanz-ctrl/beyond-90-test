@@ -3743,8 +3743,7 @@ export async function pickNextEventDynamic(
         : `- Era el ÚLTIMO partido de la fase de grupos de la ${compName}: con este resultado tu equipo QUEDA ELIMINADO de la competición europea. Que la crónica lo deje claro.`;
     }
     if (leg1 && twoLeg && !isPenaltyShootout(twoLeg.scoreLine)) {
-      extraInstruction = [extraInstruction, "- NO hubo tanda de penaltis: el pase se decide por el global, no menciones penaltis."].filter(Boolean).join("
-");
+      extraInstruction = [extraInstruction, "- NO hubo tanda de penaltis: el pase se decide por el global, no menciones penaltis."].filter(Boolean).join("\n");
     }
     if (leg1 && twoLeg) {
       extraInstruction = [
