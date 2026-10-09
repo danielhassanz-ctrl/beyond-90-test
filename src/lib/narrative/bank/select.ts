@@ -31,6 +31,43 @@ export const isForeignClub = (club: string) => FOREIGN_CLUBS.has(club) || isKnow
 const inRange = (value: number | undefined, r: Range | undefined): boolean =>
   !r || (value !== undefined && value >= r[0] && value <= r[1]);
 
+/**
+ * Las escenas de la vida cotidiana (un problema en casa, una bronca, un titular) pueden volver a pasar con los años:
+ * pasados ~9 temporadas desde la última vez se consideran nuevas otra vez (se limpian sus marcas propias). Los grandes
+ * momentos únicos (pareja, selección, traspasos, premios, lesiones graves) y las cadenas no se repiten nunca.
+ */
+const RECYCLABLE_FAMILIES = new Set([
+  "estados", "disciplina", "convivencia", "familia", "mente", "cuerpo", "club", "prensa", "negocio", "redes", "aficion", "vestuario", "humor",
+  "surreal", "dia", "barrio", "juventud", "salud", "ciudad", "emocion", "mister", "negocios",
+]);
+
+function sceneFlagKeys(scene: BankScene): Set<string> {
+  const keys = new Set<string>();
+  for (const opt of scene.event.options) {
+    for (const c of [opt.consequences, opt.resolve?.success.consequences, opt.resolve?.fail.consequences]) {
+      for (const k of Object.keys(c?.flags ?? {})) keys.add(k);
+    }
+  }
+  return keys;
+}
+
+/** Devuelve los ids ya vividos quitando los que, por tiempo, vuelven a poder salir; limpia sus marcas. */
+export function recycleBankScenes(player: Player, usedIds: string[], scenes: BankScene[] = BANK_SCENES, afterTurns = 90): string[] {
+  const flags = (player.flags ??= {}) as Flags;
+  const back = new Set<string>();
+  const used = new Set(usedIds);
+  for (const s of scenes) {
+    if (!used.has(s.id) || !RECYCLABLE_FAMILIES.has(s.family) || (s.when.after?.length ?? 0) > 0) continue;
+    const choice = readBankChoice(flags, s.id);
+    if (!choice || player.week - choice.week < afterTurns) continue;
+    back.add(s.id);
+    flags[bankFlagKey(s.id)] = "";
+    const set = sceneFlagKeys(s);
+    for (const f of s.when.notFlags ?? []) if (set.has(f) && !f.startsWith("estado_")) flags[f] = "";
+  }
+  return back.size === 0 ? usedIds : usedIds.filter((id) => !back.has(id));
+}
+
 /** Lo que decidiste en una escena del banco: { opción, semana } o null si no se ha vivido. */
 export function readBankChoice(flags: Flags | null | undefined, sceneId: string): { option: string; week: number } | null {
   const raw = flags?.[bankFlagKey(sceneId)];

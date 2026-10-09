@@ -74,7 +74,7 @@ import { pickNewDecision, pushRecentNew, decisionCloser } from "@/lib/narrative/
 import { selWindowPlan, buildSelMatch, decideSelResult, selWindowKey } from "@/lib/narrative/seleccion";
 import { BANK_SCENES } from "@/lib/narrative/bank/scenes";
 import { fillBankEvent } from "@/lib/narrative/bank/select";
-import { pickBankScene } from "@/lib/narrative/bank/select";
+import { pickBankScene, recycleBankScenes } from "@/lib/narrative/bank/select";
 import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
 import { monthlySponsorshipIncome } from "@/lib/finance/sponsorship-income";
@@ -3495,6 +3495,8 @@ export async function pickNextEventDynamic(
     console.log(`[pickNextEventDynamic] Own move decision`);
     return maybeAddFreeText(own);
   }
+  // Las escenas cotidianas que ya viviste hace años pueden volver a pasar (bank/select.ts).
+  const usedBank = recycleBankScenes(playerWithDynamics, usedEventIds);
   // Las cosas pasan: cada pocos turnos, una complicación (o una racha buena) con efecto real, y alguien que te escribe por redes.
   if (!midMatch && !getTorneoProgress(playerWithDynamics)) {
     const f = (playerWithDynamics.flags ??= {});
@@ -3503,7 +3505,7 @@ export async function pickNextEventDynamic(
     // Una chica de las redes: sin pareja ni historia en curso, cada ~7 turnos.
     const lastGirl = parseInt(String(f.ch_last_dm ?? "0"), 10) || 0;
     if (!f.pareja && !f.ch_en_curso && age >= 18 && (playerWithDynamics.fama ?? 0) >= 20 && wk - lastGirl >= 7 && Math.random() < 0.55) {
-      const dm = pickBankScene(playerWithDynamics, usedEventIds, CHICAS.filter((s) => /-dm$/.test(s.id)));
+      const dm = pickBankScene(playerWithDynamics, usedBank, CHICAS.filter((s) => /-dm$/.test(s.id)));
       if (dm) {
         f.ch_last_dm = String(wk);
         console.log(`[pickNextEventDynamic] Chica por redes: "${dm.title}"`);
@@ -3514,7 +3516,7 @@ export async function pickNextEventDynamic(
     const lastEstado = parseInt(String(f.estado_last_week ?? "0"), 10) || 0;
     if (!hasState(f, wk) && wk - lastEstado >= 3 && Math.random() < 0.65) {
       const pool = Math.random() < 0.45 ? [...DISCIPLINA, ...DISCIPLINA2, ...DISCIPLINA3, ...CONVIVENCIA, ...VIDA2, ...CLUB3, ...ESTADOS, ...ESTADOS2] : [...ESTADOS, ...ESTADOS2];
-      const ev = pickBankScene(playerWithDynamics, usedEventIds, pool);
+      const ev = pickBankScene(playerWithDynamics, usedBank, pool);
       if (ev) {
         f.estado_last_week = String(wk);
         console.log(`[pickNextEventDynamic] Complicación/racha: "${ev.title}"`);
@@ -3532,7 +3534,7 @@ export async function pickNextEventDynamic(
   // (lo limita pickBankScene). Sin este primer intento, el sabor antiguo se llevaba casi todos los huecos y el
   // banco, con cientos de escenas, solo salía ~35 veces por carrera.
   if (!midMatch && !getTorneoProgress(playerWithDynamics) && Math.random() < 0.75) {
-    const bankedEarly = pickBankScene(playerWithDynamics, usedEventIds);
+    const bankedEarly = pickBankScene(playerWithDynamics, usedBank);
     if (bankedEarly) {
       console.log(`[pickNextEventDynamic] Banco de escenas (prioridad): "${bankedEarly.title}"`);
       return maybeAddFreeText(bankedEarly);
@@ -4015,7 +4017,7 @@ export async function pickNextEventDynamic(
   // unas a otras según lo que decidió (corto, medio y largo plazo). Cero coste
   // de IA y la fuente preferida de escenas de vida antes de recurrir a la IA.
   if (!midMatch && !getTorneoProgress(playerWithDynamics)) {
-    const banked = pickBankScene(playerWithDynamics, usedEventIds);
+    const banked = pickBankScene(playerWithDynamics, usedBank);
     if (banked) {
       console.log(`[pickNextEventDynamic] Banco de escenas: "${banked.title}"`);
       return maybeAddFreeText(banked);
