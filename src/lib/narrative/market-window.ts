@@ -93,7 +93,7 @@ export function maybeSeedTransferInterest(player: Player): void {
   const w = getMarketWindow(player.week);
   if (!w || !player.flags?.[windowKey(player.week, w)]) return; // primero el rumor
   if (getInjuryRemaining(player.flags) > 0) return;
-  if ((player.media ?? 50) < 55) return;
+  if ((player.media ?? 50) < 42) return;
   const current = player.flags?.transfer_interest;
   if (typeof current === "string" && current) return;
   const lastOffer = parseInt(String(player.flags?.offer_last_week ?? "0"), 10) || 0;
