@@ -128,7 +128,7 @@ export const TRASPASOS: BankScene[] = [
       o("b", "Escribir un agradecimiento sincero a cada uno", "Cuidar los vínculos", { moral: 5, reputacion: 2 }, "Pasas toda la tarde escribiendo mensajes a mano. Algunos tardan días en contestar, y uno de ellos, el más duro, solo escribe: «Gracias por acordarte»."),
       o("c", "Dejar el mensaje en visto, con culpa", "Pasar página", { moral: -2 }, "Lo lees dos veces y lo dejas. No sabes qué decir. Esa noche, en la cama, se te hace un nudo del que no hablas con nadie."),
     ]),
-  S("tr-mercado-cierre", "traspaso", { market: "enero", turn: [8, 9], fama: [25, 100], minAge: 18 }, "representante",
+  S("tr-mercado-cierre", "traspaso", { market: "enero", turn: [8, 8], fama: [25, 100], minAge: 18 }, "representante",
     "El último día del mercado",
     "A las diez de la mañana, tu agente te llama con una voz de película de acción: «Esto se mueve. No salgas de casa. Ni apagues el móvil. Ni te duches». A las tres, te envía un audio con ruido de fondo de aeropuerto. A las seis, un mensaje de una sola palabra: «Espera». A las once de la noche, cuando ya te has dormido en el sofá, suena otra vez.",
     [

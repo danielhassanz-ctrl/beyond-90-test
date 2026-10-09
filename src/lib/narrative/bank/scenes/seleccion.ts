@@ -154,7 +154,7 @@ export const SELECCION: BankScene[] = [
       o("a", "Sentarte con él y contarle cómo fue de verdad", "Compartir la historia", { moral: 8, rel_aficion: 4, reputacion: 3 }, "Te sientas en un banco con el niño y le cuentas el torneo desde el primer partido: el nervio, los hoteles, el miedo, la alegría. El crío te escucha con la boca abierta. Al final, te pide un autógrafo en la gafa."),
       o("b", "Firmarle la camiseta y decirle que lo importante es jugar", "Un consejo sencillo", { moral: 4, rel_aficion: 3 }, "Le firmas la camiseta y le dices que lo que importa es jugar con ganas. El niño te escucha con poco entusiasmo: «Sí, pero ¿cuánto gol metiste?». Te ríes tanto que lloras un poco."),
     ]),
-  S("sel-amistoso-convocatoria", "seleccion", { media: [68, 99], minAge: 19, fama: [28, 100], notFlags: ["sel_debut"] }, "vida",
+  S("sel-amistoso-convocatoria", "seleccion", { media: [68, 99], minAge: 19, fama: [28, 100], notFlags: ["sel_debut"], selDebut: true }, "vida",
     "La primera convocatoria con la absoluta",
     "El sobre llega a tu casa, con el escudo de la federación. Dentro, una carta con tu nombre y una frase: «Nos gustaría que te unieras a la concentración». Tu madre grita en la cocina, tu padre se pone la chaqueta buena y tu hermano pequeño sale a la calle a contárselo al vecino. El club te da permiso con una sonrisa que no engaña a nadie.",
     [

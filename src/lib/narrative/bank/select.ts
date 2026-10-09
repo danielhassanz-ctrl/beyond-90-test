@@ -51,6 +51,7 @@ function fits(player: Player, when: BankWhen): { ok: boolean; chained: boolean }
   const onLoan = Boolean(flags.loan_active) && !flags.loan_returned;
   if (Boolean(when.loan) !== onLoan) return { ok: false, chained: false };
 
+  if (when.selDebut && (flags.sel_debut_played || Object.keys(flags).some((k) => /^(torneo_started_|sel_win_|torneo_result_)/.test(k)))) return { ok: false, chained: false };
   if (when.exterior !== undefined && when.exterior !== isForeignClub(player.club)) return { ok: false, chained: false };
   if (when.roles && !when.roles.includes(computeRole(player).role as never)) return { ok: false, chained: false };
   if (when.clubLevels && !when.clubLevels.includes(getClubLevel(player.club))) return { ok: false, chained: false };

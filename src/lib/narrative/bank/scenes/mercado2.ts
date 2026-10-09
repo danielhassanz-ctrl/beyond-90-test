@@ -23,7 +23,7 @@ export const MERCADO2: BankScene[] = [
       o("b", "Llevarte todo, hasta la taza rota", "Cargar con la historia", { moral: 5, flags: { mk_maleta: "todo" } }, "La maleta pesa treinta kilos. En el aeropuerto, te cobran un suplemento absurdo. Pero cuando abres la taza en tu nueva casa, te sientes a gusto. El sitio huele a hogar."),
       o("c", "Pedir ayuda a tu madre y dejar que decida qué te llevas", "Confiar en ella", { moral: 6, rel_representante: 0, flags: { mk_maleta: "madre" } }, "Tu madre elige con una precisión de cirujana. Cuando abres la maleta en tu nuevo piso, descubres, bajo una camiseta, un sobre con una nota: «Aquí tienes tu casa». Lloras durante diez minutos."),
     ]),
-  S("mk-ultimo-dia", "mercado", { minAge: 17, market: "abierta", clubTurns: [2, 400], turn: [10, 10], notFlags: ["mk_ultimo_dia"] }, "representante",
+  S("mk-ultimo-dia", "mercado", { minAge: 17, market: "abierta", clubTurns: [2, 400], turn: [2, 2], notFlags: ["mk_ultimo_dia"] }, "representante",
     "El último día del mercado: fax, nervios y una impresora rota",
     "Es la una de la madrugada en la oficina de tu agente. Hay tres teléfonos sonando, una impresora que no imprime, un fax del siglo pasado que nadie sabe encender y una pizza fría. Falta una hora para el cierre y tu futuro depende de una firma que no llega. El abogado, con la corbata aflojada, murmura: «Si no la mandan, nos quedamos».",
     [

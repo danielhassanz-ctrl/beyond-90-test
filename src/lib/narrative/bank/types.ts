@@ -61,6 +61,8 @@ export interface BankWhen {
   olimpicos?: "antesala" | "ano";
   /** true = solo si juegas en un club fuera de España; false = solo si juegas en España. */
   exterior?: boolean;
+  /** true = solo si todavía no has jugado nunca con tu selección (ni torneo ni ventana de selecciones). */
+  selDebut?: boolean;
   /** Mes de la temporada (1 = pretemporada/julio ... 10 = mayo). */
   turn?: Range;
   /** Turnos que llevas en el club actual (para escenas de llegada o de arraigo). */

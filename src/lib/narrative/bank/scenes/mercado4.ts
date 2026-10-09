@@ -56,7 +56,7 @@ export const MERCADO4: BankScene[] = [
       o("b", "Quejarte al míster por el trato y pedir explicaciones", "Reclamar", { rel_entrenador: -2, moral: 1, flags: { m4_cedido: "queja" } }, "El míster, de brazos cruzados, te dice: «Aquí nadie tiene nada asegurado». Es una frase fría pero cierta. Te llevas la taquilla nueva con un sabor agrio."),
       o("c", "Preguntarle al nuevo dueño de tu taquilla cómo se llama y presentarte", "Ser un buen compañero", { rel_vestuario: 6, reputacion: 3, moral: 3, flags: { m4_cedido: "presento" } }, "Se llama Teo, es un canterano de diecinueve años y se ruboriza al verte. «Perdón, no sabía». Ríes: «Está bien, la cuidas». Os hacéis amigos esa misma tarde."),
     ]),
-  S("m4-traspaso-tardio", "mercado", { minAge: 17, market: "abierta", turn: [10, 10], clubTurns: [3, 400], notFlags: ["m4_tardio"] }, "representante",
+  S("m4-traspaso-tardio", "mercado", { minAge: 17, market: "abierta", turn: [2, 2], clubTurns: [3, 400], notFlags: ["m4_tardio"] }, "representante",
     "En el último día del mercado te llega una oferta que no puedes ignorar y no puedes aceptar",
     "Son las 23:15 y suena el teléfono. Es tu agente, con la voz atropellada. «Hay una oferta increíble. Pero hay un problema: no podemos firmar sin el visto bueno de tu club, y el presidente no coge el teléfono». Miras el reloj. Quedan cuarenta y cinco minutos. En tu cabeza, un mapa de posibilidades, sustos y arrepentimientos. En tu piso, el silencio es total. Tu agente, al otro lado, espera una decisión.",
     [

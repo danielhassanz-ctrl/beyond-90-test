@@ -27,9 +27,11 @@ export type MarketWindow = "verano" | "enero";
 
 export function getMarketWindow(week: number): MarketWindow | null {
   const weekInSeason = ((week - 1) % 10) + 1;
-  // Desde la semana 1: lo primero que pasa tras el resumen de temporada, en septiembre, es el salseo del mercado.
-  if (weekInSeason >= 1 && weekInSeason <= 4) return "verano";
-  if (weekInSeason >= 5 && weekInSeason <= 9) return "enero";
+  // Calendario real (semana 1 = julio, 2 = agosto ... 7 = enero, 8 = febrero): el mercado de verano se abre
+  // el 30 de junio y se cierra el 1 de septiembre (semanas 1-2); el de invierno es enero (semanas 7-8, cierra a
+  // primeros de febrero). Fuera de ahí no hay fichajes.
+  if (weekInSeason === 1 || weekInSeason === 2) return "verano";
+  if (weekInSeason === 7 || weekInSeason === 8) return "enero";
   return null;
 }
 
@@ -61,11 +63,11 @@ export function shouldTriggerMarketRumor(player: Player): boolean {
   if (!w) return false;
   const key = windowKey(player.week, w);
   if (!player.flags?.[key]) return true;
-  // La ventana de enero es larga (5 turnos): puede traer un SEGUNDO rumor
+  // La ventana de enero dura dos turnos: puede traer un SEGUNDO rumor
   // hacia el final, el mercado es el salseo del juego y una sola noticia por
   // ventana se hacía corta.
   const weekInSeason = ((player.week - 1) % 10) + 1;
-  return w === "enero" && weekInSeason >= 7 && !player.flags?.[`${key}_2`] && Math.random() < 0.5;
+  return w === "enero" && weekInSeason === 8 && !player.flags?.[`${key}_2`] && Math.random() < 0.5;
 }
 
 export function markMarketRumorShown(player: Player): void {
@@ -730,6 +732,8 @@ export function shouldTriggerTransferOffer(player: Player): boolean {
   const since = player.week - (parseInt(String(player.flags?.transfer_interest_week ?? "0"), 10) || 0);
   if (since < 1) return false;
   if (since > 15) return false;
+  // Solo se ficha con el mercado abierto; el interés espera a la siguiente ventana.
+  if (!getMarketWindow(player.week)) return false;
   return Math.random() < 0.7;
 }
 
@@ -1016,7 +1020,8 @@ export function shouldTriggerDeadlineDay(player: Player): boolean {
   const w = getMarketWindow(player.week);
   if (!w) return false;
   const weekInSeason = ((player.week - 1) % 10) + 1;
-  if (weekInSeason !== 4 && weekInSeason !== 9) return false;
+  // El último día de cada ventana: 1 de septiembre (semana 2) y primeros de febrero (semana 8).
+  if (weekInSeason !== 2 && weekInSeason !== 8) return false;
   return !player.flags?.[`market_deadline_${seasonOf(player.week)}_${w}`];
 }
 
