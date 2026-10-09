@@ -203,7 +203,7 @@ function chapter4(player: Player): GameEvent {
     id: `arco-salto-4-${Date.now()}`,
     category: "vestuario",
     title: `Primer día en el ${club}`,
-    description: `Cruzas el túnel del ${club} con tu maleta aún sin deshacer. En el vestuario, ${captain}, el capitán, te señala una taquilla en la esquina; en la puerta, ${coach}, tu nuevo entrenador, te mira de arriba abajo sin una sonrisa: "Aquí lo que hiciste antes no vale nada. Empiezas de cero."`,
+    description: `Cruzas el túnel del ${club} con tu maleta aún sin deshacer. En el vestuario, el capitán te señala una taquilla en la esquina; en la puerta, el míster te mira de arriba abajo sin una sonrisa: "Aquí lo que hiciste antes no vale nada. Empiezas de cero."`,
     options: [
       {
         id: "grupo",

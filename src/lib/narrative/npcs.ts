@@ -80,6 +80,69 @@ const SURNAMES = [
   "Toledo", "Urbano", "Vidal", "Yebra", "Cordero", "Beltrán", "Escudero", "Gallego", "Hidalgo", "Ledesma",
 ];
 
+
+/**
+ * Nombres por país para la gente de un club extranjero (míster, capitán, directivos, compañeros): en el Bayern no
+ * puede haber un Asier Bermejo. Nombres y apellidos corrientes del país, sin parecerse a nadie en concreto.
+ */
+export type NameCountry = "es" | "de" | "en" | "fr" | "it" | "sa" | "pt" | "nl" | "tr";
+
+const COUNTRY_OF_CLUB: Record<string, NameCountry> = {
+  "Bayern de Múnich": "de", "Bayern Múnich": "de", "Bayern Munich": "de", "Borussia Dortmund": "de", "Bayer Leverkusen": "de", "FC Schalke 04": "de",
+  "Manchester City": "en", "Liverpool FC": "en", "Arsenal": "en", "Chelsea": "en", "Rangers FC": "en",
+  "Paris Saint-Germain": "fr",
+  "Juventus": "it", "Inter de Milán": "it", "AS Roma": "it", "Atalanta": "it",
+  "Al-Nassr FC": "sa",
+  "Benfica": "pt", "Sporting CP": "pt",
+  "Ajax": "nl", "Feyenoord": "nl",
+  "Fenerbahçe": "tr",
+};
+export const nameCountryOf = (club: string): NameCountry => COUNTRY_OF_CLUB[club] ?? "es";
+
+interface Pool { m: string[]; f: string[]; s: string[] }
+const POOLS: Record<Exclude<NameCountry, "es">, Pool> = {
+  de: {
+    m: ["Lukas", "Jonas", "Felix", "Tobias", "Matthias", "Florian", "Stefan", "Jörg", "Dieter", "Hannes", "Sven", "Torsten", "Konrad", "Rüdiger", "Wolfgang", "Axel"],
+    f: ["Anke", "Birgit", "Katrin", "Sabine", "Greta", "Heike", "Ulrike", "Franziska"],
+    s: ["Albrecht", "Hartmann", "Lindner", "Schreiber", "Fuchs", "Neumann", "Reinhardt", "Weigel", "Böhm", "Sommer", "Keller", "Ziegler", "Engel", "Baumann", "Lehmann", "Sauer", "Voss", "Wendt", "Hoffmeister", "Brunner", "Kessler", "Auer", "Pfeiffer", "Rademacher"],
+  },
+  en: {
+    m: ["Callum", "Ewan", "Rory", "Tristan", "Gareth", "Miles", "Barnaby", "Lewis", "Graham", "Nigel", "Duncan", "Warren", "Dermot", "Alistair", "Hamish", "Trevor"],
+    f: ["Fiona", "Beverley", "Harriet", "Philippa", "Maureen", "Gillian", "Imogen", "Joanna"],
+    s: ["Ashworth", "Pemberton", "Hargreaves", "Whitlock", "Fenwick", "Thorne", "Redfern", "Lowther", "Gaskell", "Holloway", "Prescott", "Stapleton", "Winslow", "Cartwright", "Mulgrew", "Ormerod", "Tattersall", "Blakeley", "Dunmore", "Hartley"],
+  },
+  fr: {
+    m: ["Étienne", "Baptiste", "Maxence", "Quentin", "Anselme", "Lucien", "Corentin", "Gaétan", "Thibault", "Aurélien", "Yann", "Romain", "Sébastien", "Fabrice", "Gérard", "Olivier"],
+    f: ["Mathilde", "Aurélie", "Chantal", "Odile", "Solène", "Colette", "Capucine", "Delphine"],
+    s: ["Delorme", "Vasseur", "Lefèvre", "Brissac", "Duval", "Rochefort", "Gaudin", "Colbert", "Mercier", "Lacombe", "Fontaine", "Vidal", "Perrault", "Chevalier", "Marchand", "Delacroix", "Bouchet", "Lemaire", "Garnier", "Rousseau"],
+  },
+  it: {
+    m: ["Matteo", "Fabrizio", "Riccardo", "Alessio", "Tommaso", "Giacomo", "Emanuele", "Ettore", "Gianluca", "Massimo", "Stefano", "Claudio", "Aldo", "Nicola", "Paolo", "Vittorio"],
+    f: ["Chiara", "Giulia", "Francesca", "Elisabetta", "Federica", "Silvana", "Lucrezia", "Paola"],
+    s: ["Bellandi", "Ferraresi", "Cattaneo", "Mancuso", "Orsini", "Valenti", "Bernardi", "Costantini", "Moretti", "Lombardi", "Gentile", "Rinaldi", "Fabbri", "Caruso", "Santoro", "Marchesi", "Basile", "Ferrante", "De Angelis", "Colombo"],
+  },
+  sa: {
+    m: ["Khalid", "Faisal", "Tariq", "Nasser", "Omar", "Salman", "Rashid", "Abdulaziz", "Fahad", "Hamad", "Majed", "Saud", "Yousef", "Talal", "Sultan", "Bandar"],
+    f: ["Noura", "Reem", "Hessa", "Lamya", "Dalal", "Amal", "Haya", "Maha"],
+    s: ["Al-Mutairi", "Al-Shammari", "Al-Zahrani", "Al-Ghamdi", "Al-Otaibi", "Al-Harbi", "Al-Dossary", "Al-Subaie", "Al-Anazi", "Al-Rashid", "Al-Saleh", "Al-Mansour"],
+  },
+  pt: {
+    m: ["Rui", "Tiago", "Nuno", "Duarte", "Rodrigo", "Filipe", "Gonçalo", "Hugo", "Vasco", "Ricardo", "Joaquim", "Álvaro", "Bernardo", "Sérgio", "Paulo", "Fábio"],
+    f: ["Inês", "Beatriz", "Joana", "Catarina", "Mariana", "Teresa", "Sofia", "Leonor"],
+    s: ["Carvalhais", "Figueiredo", "Pimentel", "Baptista", "Albuquerque", "Sampaio", "Teixeira", "Vilarinho", "Cardoso", "Nogueira", "Caetano", "Matos", "Ferraz", "Louro", "Pinheiro", "Brandão"],
+  },
+  nl: {
+    m: ["Joost", "Bram", "Daan", "Sander", "Maarten", "Rik", "Wouter", "Jelle", "Pieter", "Koen", "Ruud", "Gijs", "Thijs", "Hendrik", "Niels", "Stijn"],
+    f: ["Annelies", "Sanne", "Lotte", "Marloes", "Femke", "Ilse", "Esmee", "Wilma"],
+    s: ["Van der Berg", "De Groot", "Visser", "Bakker", "Smeets", "Vermeulen", "Hoekstra", "Brouwer", "Dekker", "Mulder", "Kuipers", "Jansen", "Verbeek", "Bosman", "Hendriks", "Schouten"],
+  },
+  tr: {
+    m: ["Emre", "Burak", "Caner", "Mert", "Kerem", "Onur", "Serkan", "Volkan", "Tolga", "Barış", "Ümit", "Selim", "Murat", "Cem", "Okan", "Hakan"],
+    f: ["Elif", "Zeynep", "Selin", "Deniz", "Ayşe", "Defne", "Gülay", "Naz"],
+    s: ["Yılmaz", "Demirci", "Aksoy", "Karaca", "Erdem", "Tuncer", "Başaran", "Özkan", "Güneş", "Aydoğan", "Sezer", "Korkmaz", "Polat", "Çınar", "Akbulut", "Uysal"],
+  },
+};
+
 /** Roles del club: cambian al cambiar de equipo. Familia, amigos y prensa te acompañan. */
 const CLUB_BOUND = new Set<NpcRole>([
   "entrenador", "capitan", "rival_puesto", "fisio", "director_deportivo", "presidente", "utillero", "preparador",
@@ -123,12 +186,14 @@ function surnameOf(name: string | null | undefined): string {
 }
 
 /** Nombre + un apellido a partir de una semilla; el apellido nunca coincide con `own`. */
-function buildName(seed: string, gender: "m" | "f", own = ""): string {
-  const firstPool = gender === "f" ? FIRST_F : FIRST_M;
+function buildName(seed: string, gender: "m" | "f", own = "", country: NameCountry = "es"): string {
+  const pool = country === "es" ? null : POOLS[country];
+  const firstPool = pool ? (gender === "f" ? pool.f : pool.m) : gender === "f" ? FIRST_F : FIRST_M;
+  const surnames = pool ? pool.s : SURNAMES;
   const first = firstPool[mix(seed + ":n") % firstPool.length];
   const ownLower = own.toLowerCase();
-  let s1 = SURNAMES[mix(seed + ":a") % SURNAMES.length];
-  if (s1.toLowerCase() === ownLower) s1 = SURNAMES[(SURNAMES.indexOf(s1) + 1) % SURNAMES.length];
+  let s1 = surnames[mix(seed + ":a") % surnames.length];
+  if (s1.toLowerCase() === ownLower) s1 = surnames[(surnames.indexOf(s1) + 1) % surnames.length];
   return `${first} ${s1}`;
 }
 
@@ -141,7 +206,20 @@ export function getNpcName(player: Player, role: NpcRole): string {
   // cambia (flag gen_<rol>), el personaje es otro, con otro nombre, no el mismo para siempre.
   const gen = parseInt(String(player.flags?.[`gen_${role}`] ?? "0"), 10) || 0;
   const genSuffix = gen > 0 ? `:g${gen}` : "";
-  const seed = (CLUB_BOUND.has(role) ? `${player.id}:${role}:${player.club}` : `${player.id}:${role}`) + genSuffix;
+  const clubBound = CLUB_BOUND.has(role);
+  const country = clubBound ? nameCountryOf(player.club) : "es";
+  const nameAt = (club: string, extra = "") => {
+    const sd = (clubBound ? `${player.id}:${role}:${club}` : `${player.id}:${role}`) + genSuffix + extra;
+    return buildName(sd, pickGender(sd, ROLE_GENDER[role]), surnameOf(player.last_name), nameCountryOf(club));
+  };
+  if (clubBound && (role === "entrenador" || role === "capitan")) {
+    // El míster o el capitán de un club nuevo nunca se llaman igual que los de un club anterior tuyo.
+    const previous = String(player.flags?.clubs_history ?? "").split("|").filter((c) => c && c !== player.club);
+    let name = nameAt(player.club);
+    for (let i = 1; i < 6 && previous.some((c) => nameAt(c) === name); i++) name = nameAt(player.club, `:x${i}`);
+    return name;
+  }
+  const seed = (clubBound ? `${player.id}:${role}:${player.club}` : `${player.id}:${role}`) + genSuffix;
   const gender = pickGender(seed, ROLE_GENDER[role]);
   // Tu padre y tu hermano comparten tu apellido — no hace falta generar uno propio.
   if ((role === "padre" || role === "hermano") && player.last_name) {
@@ -149,7 +227,7 @@ export function getNpcName(player: Player, role: NpcRole): string {
     const first = firstPool[mix(seed + ":n") % firstPool.length];
     return `${first} ${surnameOf(player.last_name)}`;
   }
-  return buildName(seed, gender, surnameOf(player.last_name));
+  return buildName(seed, gender, surnameOf(player.last_name), country);
 }
 
 /** Un nombre completo al azar (p. ej. el nuevo representante cuando despides al anterior). */
@@ -173,7 +251,7 @@ function rememberEpisodic(name: string, hint: string): string {
 
 /** Compañeros de equipo: cambian con el club, distintos entre sí según la `salt`. */
 export function getTeammateName(player: Player, salt: string): string {
-  const name = buildName(`${player.id}:${player.club}:mate:${salt}`, "m", surnameOf(player.last_name));
+  const name = buildName(`${player.id}:${player.club}:mate:${salt}`, "m", surnameOf(player.last_name), nameCountryOf(player.club));
   return rememberEpisodic(name, `compañero de equipo ${salt}`);
 }
 
