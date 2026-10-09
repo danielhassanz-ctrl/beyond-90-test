@@ -41,6 +41,7 @@ export const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
 
   "sel-copa-america": "Passion and celebration: [AGE] footballer celebrating on South American championship pitch with raw emotion and passion, teammates embracing. Tropical stadium atmosphere (palm trees, warm colors visible). South American crowd energy visible. Warm lighting creating golden tones. Field vibrant green, sky warm. National colors dominant. Color palette: tropical warmth, national pride colors, green field, golden hour tones. This represents continental South American achievement. Dynamic action photography, celebratory intensity, colorful and vibrant composition",
 
+  "premio-golden-boy": "Gala moment: [AGE] holding a golden youth-award trophy on an elegant stage, wearing a sharp dark suit with an open collar, a proud and slightly overwhelmed smile, camera flashes (bokeh) and an elegant audience in evening wear behind him, warm theatrical lighting, deep blacks and golds, cinematic fashion and sports photography, no readable text anywhere",
   "premio-pichichi": "Golden scorer's moment: [AGE] footballer holding the Pichichi trophy high with victorious smile, golden trophy gleaming. Stadium background, field visible. Golden hour lighting or theatrical stage lighting creating trophy reflection. Soccer ball visible in composition. Teammates or crowd in soft focus background. Color palette: golden trophy dominant, emerald field, warm lighting, white crowd areas. This represents the pinnacle of individual scoring achievement — the top goal-scorer of the league. Premium sports photography, golden hour cinematography, achievement imagery",
 
   "premio-mvp-torneo": "Tournament MVP crowning moment: [AGE] footballer on stage holding massive MVP trophy, standing between club officials or ceremony presenters. Stage background with tournament branding visible. Professional event lighting creating perfect visibility of trophy and expression. Audience visible (blurred), creating atmosphere. Formal presentation moment captured. Color palette: stage lighting tones, trophy gold, formal blacks and whites, crowd bokeh. This represents tournament-level individual dominance. Premium award ceremony photography, official tournament imagery, prestige and achievement captured",
@@ -104,7 +105,10 @@ export function getMilestoneImagePrompt(
 
   // 1) Prompts cinematográficos hechos a mano para IDs de evento conocidos
   //    (los más elaborados: fichaje, hat-trick, título, boda, Balón de Oro...)
-  const basePrompt = MILESTONE_IMAGE_PROMPTS[eventId];
+  // Las galas de premios (award-balon-oro-*, award-golden-boy-*) llevan su propia escena: sin esto, el tipo "premio" caía
+  // en la escena de "récord" (un marcador con "50 goles") y salía una foto que no tenía nada que ver con la gala.
+  const promptKey = eventId.startsWith("award-balon-oro") ? "premio-balon-oro" : eventId.startsWith("award-golden-boy") ? "premio-golden-boy" : eventId;
+  const basePrompt = MILESTONE_IMAGE_PROMPTS[promptKey];
   if (basePrompt) {
     let prompt = basePrompt;
     const ageContext =

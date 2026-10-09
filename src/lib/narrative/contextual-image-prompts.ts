@@ -185,6 +185,8 @@ export function getContextualImagePrompt(
   const values = buildExtraContextDefaults(extraContext);
   const wantedKey = EVENT_TYPE_CONTEXT_KEY[key];
   const contextValue = wantedKey ? values[wantedKey] : "";
+  // La escena de récord no decía nada de la camiseta y el modelo se inventaba una (salió una del Arsenal con el jugador del Bayern).
+  const kitClause = key === "recordista_marca" && values.clubName ? `, wearing ${describeKit(values.clubName)}` : "";
 
-  return `${promptFn(playerName, contextValue || playerName)}, ${lookClause}`;
+  return `${promptFn(playerName, contextValue || playerName)}${kitClause}, ${lookClause}`;
 }
