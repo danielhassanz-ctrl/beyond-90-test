@@ -75,6 +75,8 @@ import { selWindowPlan, buildSelMatch, decideSelResult, selWindowKey } from "@/l
 import { BANK_SCENES } from "@/lib/narrative/bank/scenes";
 import { fillBankEvent } from "@/lib/narrative/bank/select";
 import { pickBankScene, recycleBankScenes } from "@/lib/narrative/bank/select";
+import { shouldTriggerInvestmentReview, buildInvestmentReviewEvent } from "@/lib/narrative/investment-review";
+import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
 import { monthlySponsorshipIncome } from "@/lib/finance/sponsorship-income";
@@ -3523,6 +3525,18 @@ export async function pickNextEventDynamic(
         return maybeAddFreeText(ev);
       }
     }
+  }
+  // Una inversión que ya lleva una temporada: tu representante te dice qué vale hoy y decides mantenerla, venderla o meter más.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerInvestmentReview(playerWithDynamics)) {
+    const review = buildInvestmentReviewEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Seguimiento de inversión: "${review.title}"`);
+    return review;
+  }
+  // Un patrocinio que acaba de vencer: la marca propone renovar (más o menos según cómo te haya ido) o te dejas ir.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerSponsorRenewal(playerWithDynamics)) {
+    const renewal = buildSponsorRenewalEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Renovación de patrocinio: "${renewal.title}"`);
+    return renewal;
   }
   // Una oferta formal ya en marcha (interés de un club + mercado abierto) va antes que cualquier escena suelta: si no, el banco se la comía.
   if (!midMatch && shouldTriggerTransferOffer(playerWithDynamics)) {

@@ -25,6 +25,15 @@ const { extractStatsFromEvent, applyStatUpdate } = await import("../src/lib/play
 const { generateSecondLifeEvent, generateSecondLifeThreadPayoff } = await import("../src/lib/narrative/ai");
 const { getSecondLifeEvents } = await import("../src/lib/narrative/segundaVida");
 const { playerAge } = await import("../src/types/career");
+const { runWithAiBudget, careerBudgetTotal, SECOND_LIFE_BUDGET } = await import("../src/lib/narrative/ai-budget");
+
+// Mismo presupuesto que en producción (ver ai-budget.ts): sin él el script pedía ~500 llamadas por carrera.
+// BUDGET=0 lo desactiva (carrera sin límite). Freno duro de gasto estimado: STOP_USD (por defecto 3,5).
+const USE_BUDGET = process.env.BUDGET !== "0";
+const STOP_USD = Number(process.env.STOP_USD ?? 3.5);
+let careerAiUsed = 0;
+let secondAiUsed = 0;
+const usd = () => { const u = (globalThis as any).__usage ?? { input: 0, output: 0 }; return (u.input * 3 + u.output * 15) / 1_000_000; };
 
 // Carrera con modelo barato (AI_MODEL_CAREER); la segunda vida con el modelo de producción.
 if (process.env.AI_MODEL_CAREER) process.env.AI_MODEL = process.env.AI_MODEL_CAREER;
@@ -74,7 +83,17 @@ let retired = false;
 let n = 0;
 while (n < MAX && !retired && player.week < 215) {
   n++;
-  const ev: any = await pickNextEventDynamic(player, history, used);
+  if (usd() > STOP_USD) { out("\n!! FRENO DE GASTO: se alcanzó " + STOP_USD + " US$ estimados"); break; }
+  const ev: any = USE_BUDGET
+    ? await (async () => {
+        const { result, used: u } = await runWithAiBudget(
+          { used: careerAiUsed, total: careerBudgetTotal(player.mode), week: player.week, targetWeeks: 200 },
+          () => pickNextEventDynamic(player, history, used),
+        );
+        careerAiUsed = u;
+        return result;
+      })()
+    : await pickNextEventDynamic(player, history, used);
   if (!ev?.options?.length) { out("\n!! evento vacío en semana " + player.week); break; }
   if (!/^(matchday|match-decision|torneo|sel-|fisio|arco|banco|echo|oferta|mercado|agent|social|preseason|hilo)/.test(ev.id)) aiScenes++;
   const shown: any = personalizeEvent(ev, player);
@@ -161,15 +180,22 @@ if (retired || player.week >= 170 || process.env.FORCE_SECOND) {
   while (player.second_week <= 20 && guard++ < 40) {
     let ev: any = null;
     let fromThread = false;
+    if (usd() > STOP_USD) { out("!! FRENO DE GASTO en la segunda vida"); break; }
+    const slRun = async <T,>(fn: () => Promise<T>): Promise<T> => {
+      if (!USE_BUDGET) return fn();
+      const { result, used: u } = await runWithAiBudget({ used: secondAiUsed, total: SECOND_LIFE_BUDGET, week: player.second_week, targetWeeks: 20 }, fn);
+      secondAiUsed = u;
+      return result;
+    };
     const due = openThreads(player.flags)[0];
     if (due && shouldTriggerSecondLifePayoff(player)) {
-      ev = await generateSecondLifeThreadPayoff(player, ROLE, due, slHistory);
+      ev = await slRun(() => generateSecondLifeThreadPayoff(player, ROLE, due, slHistory));
       if (ev) {
         fromThread = true;
         player.flags = { ...player.flags, hilos: consumeThread(player.flags, due), thread_last_second_week: String(player.second_week) };
       }
     }
-    if (!ev) ev = await generateSecondLifeEvent(player, ROLE, slHistory);
+    if (!ev) ev = await slRun(() => generateSecondLifeEvent(player, ROLE, slHistory));
     if (!ev) ev = pickNextEvent(getSecondLifeEvents(ROLE, player.second_club), player.second_week, slUsed);
     if (!ev?.options?.length) { out("!! sin evento de segunda vida"); break; }
     const opt = [...ev.options].sort((a: any, b: any) => score(b) - score(a))[0];
@@ -198,7 +224,8 @@ for (const d of earlyDecisions) out("- " + d);
 
 const g = globalThis as any;
 const u = g.__usage ?? { calls: 0, input: 0, output: 0 };
-const costUsd = (u.input * 3 + u.output * 15) / 1_000_000;
-out(`\n\n## GASTO DE LA API: ${u.calls} llamadas · ${u.input} tokens de entrada · ${u.output} de salida · ≈ ${costUsd.toFixed(2)} US$ (a 3/15 US$ por millón de tokens; el precio real puede variar)`);
+const costUsd = (u.input * 3 + u.output * 15) / 1_000_000; // tarifa de Sonnet (techo)
+const costHaiku = (u.input * 1 + u.output * 5) / 1_000_000; // tarifa de Haiku 4.5
+out(`\n\n## GASTO DE LA API: ${u.calls} llamadas · ${u.input} tokens de entrada · ${u.output} de salida · ≈ ${costHaiku.toFixed(2)} US$ a tarifa Haiku (1/5 por millón) · ${costUsd.toFixed(2)} US$ como techo a tarifa Sonnet (3/15). Llamadas dentro del presupuesto: carrera ${careerAiUsed}, segunda vida ${secondAiUsed}.`);
 console.log = origLog;
-console.log(`Transcripción escrita en ${OUT}: ${n} escenas de carrera, ~${aiScenes} sueltas de IA. API: ${u.calls} llamadas, ≈ ${costUsd.toFixed(2)} US$`);
+console.log(`Transcripción escrita en ${OUT}: ${n} escenas de carrera, ~${aiScenes} sueltas de IA. API: ${u.calls} llamadas, ≈ ${costHaiku.toFixed(2)} US$ (Haiku) · techo ${costUsd.toFixed(2)} US$ (Sonnet)`);
