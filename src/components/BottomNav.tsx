@@ -99,7 +99,7 @@ export function BottomNav({ active }: { active: "carrera" | "patrimonio" | "vida
               className={`relative flex flex-1 flex-col items-center gap-1.5 py-4 text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 ${
                 isActive
                   ? "text-gold"
-                  : "text-neutral-500 hover:text-neutral-300"
+                  : "text-neutral-400 hover:text-neutral-300"
               }`}
             >
               {/* Icono con animación */}

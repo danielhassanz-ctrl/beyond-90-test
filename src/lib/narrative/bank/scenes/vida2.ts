@@ -2,7 +2,7 @@
  * Familia, pareja y cabeza: lo que ocurre en casa cuando el fútbol te cambia la vida. Cada escena deja una huella (relaciones,
  * estados con efecto, hilos que vuelven) y algunas se encadenan con otras.
  */
-import { S, o, r, th, after } from "../dsl";
+import { S, o } from "../dsl";
 import type { BankScene, BankWhen } from "../types";
 
 const ADULTO: BankWhen = { minAge: 18, maxAge: 40 };

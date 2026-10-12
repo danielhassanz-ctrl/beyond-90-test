@@ -49,7 +49,7 @@ export default async function LoginPage({
 
           <div className="space-y-2">
             <label htmlFor="password" className="text-kicker">
-              Contraseña <span className="normal-case text-muted-foreground/70">(mínimo 8 caracteres)</span>
+              Contraseña <span className="normal-case text-muted-foreground">(mínimo 8 caracteres)</span>
             </label>
             <input
               id="password"
@@ -61,7 +61,7 @@ export default async function LoginPage({
               className="w-full rounded-full border border-input bg-surface-2 px-4 py-3 text-sm text-foreground outline-none focus:border-gold focus:ring-1 focus:ring-gold/50 transition-all"
             />
             <p className="text-right">
-              <Link href="/login/recuperar" className="text-xs text-muted-foreground hover:text-gold hover:underline">
+              <Link href="/login/recuperar" className="inline-block py-2 text-xs text-muted-foreground hover:text-gold hover:underline">
                 ¿Olvidaste tu contraseña?
               </Link>
             </p>
@@ -88,15 +88,15 @@ export default async function LoginPage({
               vuelve solo por no haber marcado una casilla pensada para el
               registro. El bloqueo real está en el servidor: signup()
               rechaza la petición si no viene marcada (ver actions.ts). */}
-          <label className="flex items-start gap-2 text-xs text-muted-foreground">
-            <input type="checkbox" name="accept_terms" value="yes" className="mt-0.5 accent-gold" />
+          <label className="flex items-start gap-3 py-1 text-xs text-muted-foreground">
+            <input type="checkbox" name="accept_terms" value="yes" className="mt-0.5 h-5 w-5 shrink-0 accent-gold" />
             <span>
               Al crear una cuenta aceptas los{" "}
-              <Link href="/legal/terminos" className="text-gold hover:underline" target="_blank">
+              <Link href="/legal/terminos" className="text-gold underline underline-offset-2" target="_blank">
                 Términos de uso
               </Link>{" "}
               y la{" "}
-              <Link href="/legal/privacidad" className="text-gold hover:underline" target="_blank">
+              <Link href="/legal/privacidad" className="text-gold underline underline-offset-2" target="_blank">
                 Política de privacidad
               </Link>{" "}
               (subes una foto tuya que se procesa con IA para generar las imágenes del juego).

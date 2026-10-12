@@ -22,7 +22,7 @@ const TORNEO_ROWS: { key: "mundial" | "eurocopa" | "copa_america" | "otros"; lab
 function Row({ label, icon, stat, sub = false }: { label: string; icon?: string; stat: CompStat; sub?: boolean }) {
   const dim = stat.matches === 0;
   return (
-    <tr className={dim ? "text-muted-foreground/70" : "text-foreground/90"}>
+    <tr className={dim ? "text-muted-foreground" : "text-foreground/90"}>
       <td className={`py-2 pr-2 ${sub ? "pl-6 text-xs" : "pl-4"}`}>
         <span className="mr-1.5">{icon}</span>
         {label}

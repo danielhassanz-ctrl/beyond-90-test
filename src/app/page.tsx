@@ -131,7 +131,7 @@ export default async function Home() {
 
         {/* Features grid mejorado */}
         <div className="mt-8 w-full max-w-sm space-y-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+          <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">
             Lo que incluye
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -154,7 +154,7 @@ export default async function Home() {
 
         {/* Footer */}
         <div className="mt-auto w-full max-w-sm space-y-2 pb-8 pt-8 text-center">
-          <p className="text-[11px] uppercase tracking-widest text-neutral-500">
+          <p className="text-[11px] uppercase tracking-widest text-neutral-400">
             🚀 Beyond 90 · Beta
           </p>
           <p className="text-[10px] text-neutral-600">Tu progreso se guarda automáticamente en la nube</p>

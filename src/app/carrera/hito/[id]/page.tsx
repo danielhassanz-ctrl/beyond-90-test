@@ -155,7 +155,7 @@ export default async function HitoPage({
               {milestone.subtitle}
             </p>
           )}
-          <p className="pt-2 text-xs text-muted-foreground/70">{timeLabel}</p>
+          <p className="pt-2 text-xs text-muted-foreground">{timeLabel}</p>
         </div>
 
         {/* Imagen o tarjeta compartible */}

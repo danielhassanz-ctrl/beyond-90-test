@@ -18,11 +18,6 @@ import { readTrofeos } from "@/lib/honours";
 
 export type AwardKind = "golden_boy" | "balon_oro";
 
-const CLUBS = [
-  "Real Madrid", "FC Barcelona", "Manchester City", "Bayern Múnich", "Paris Saint-Germain", "Liverpool FC",
-  "Inter de Milán", "Borussia Dortmund", "Juventus", "Atlético de Madrid", "Arsenal", "Benfica", "Ajax", "Sporting CP",
-];
-
 function hash(value: string): number {
   let h = 2166136261;
   for (let i = 0; i < value.length; i++) {

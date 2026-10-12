@@ -1,4 +1,4 @@
-import type { GameEvent, EventOption } from "@/types/career";
+import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { randomPersonName } from "@/lib/narrative/npcs";
@@ -769,7 +769,6 @@ export function buildTransferOfferEvent(player: Player): GameEvent {
     return buildFizzleEvent(player, "otro");
   }
   const agent = player.agent_name ?? "Tu representante";
-  const raise = Math.round((8000 + (player.media ?? 50) * 300) / 500) * 500;
   const clear = { transfer_interest: "" };
 
   // Sin ser titular en un club grande, lo natural es que un club de nivel

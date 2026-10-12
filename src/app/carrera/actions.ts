@@ -947,7 +947,7 @@ export async function resolveEvent(formData: FormData) {
   // referencia del jugador. Si aún no hay ninguna (carreras ya empezadas) se
   // genera en el siguiente cierre. Mientras se genera, recap_photo_pending
   // hace que la tarjeta espere en vez de enseñar la foto de perfil.
-  const preseasonSeasonMatch = /^preseason-(d+)$/.exec(event.id);
+  const preseasonSeasonMatch = /^preseason-(\d+)$/.exec(event.id);
   const preseasonSeason = preseasonSeasonMatch ? parseInt(preseasonSeasonMatch[1], 10) : null;
   const recapFlagsNow = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
   const lastRecapSeason = parseInt(String(recapFlagsNow.recap_photo_season ?? "-99"), 10);

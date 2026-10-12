@@ -13,7 +13,7 @@ export default function TerminosPage() {
 
       <p>
         Al crear una cuenta en Beyond 90 aceptas estos términos. Si tienes dudas, escríbenos a{" "}
-        <a href="mailto:danielhassanz@gmail.com" className="text-gold hover:underline">
+        <a href="mailto:danielhassanz@gmail.com" className="text-gold underline underline-offset-2">
           danielhassanz@gmail.com
         </a>
         .
@@ -126,7 +126,7 @@ export default function TerminosPage() {
         <p>
           Puedes borrar tu jugador cuando quieras desde la propia app, o pedirnos que borremos tu cuenta entera
           escribiéndonos por email. Ver también nuestra{" "}
-          <Link href="/legal/privacidad" className="text-gold hover:underline">
+          <Link href="/legal/privacidad" className="text-gold underline underline-offset-2">
             Política de privacidad
           </Link>
           .
@@ -139,7 +139,7 @@ export default function TerminosPage() {
       </section>
 
       <p className="pt-4 text-center">
-        <Link href="/login" className="text-gold hover:underline">
+        <Link href="/login" className="text-gold underline underline-offset-2">
           Volver
         </Link>
       </p>

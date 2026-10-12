@@ -5,7 +5,7 @@
  * ellas, el míster o el capitán del club pasan a ser otra persona (otro
  * nombre, y la relación empieza de nuevo), no el mismo para siempre.
  */
-import { S, o, r, th, after } from "../dsl";
+import { S, o, th, after } from "../dsl";
 import type { BankScene } from "../types";
 
 export const CAMBIOS: BankScene[] = [

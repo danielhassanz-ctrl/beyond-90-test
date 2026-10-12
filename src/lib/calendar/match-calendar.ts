@@ -58,8 +58,6 @@ const LIGA_WEEKS_BY_TIER: Record<ClubLevel, number[]> = {
   europeo: [3, 4, 6, 7, 9, 10],
   modesto: [3, 5, 7, 9, 10],
 };
-/** Rivales de Liga que, por sí solos, hacen que un partido sea importante. */
-const BIG_LIGA_RIVALS = new Set(["Real Madrid", "FC Barcelona", "Atlético de Madrid"]);
 /** Fase de grupos europea: dos partidos clave que representan las jornadas 3 y 6 de 6. */
 export const EURO_GROUP_WEEKS = [4, 6];
 export const EURO_GROUP_JORNADAS = [3, 6];

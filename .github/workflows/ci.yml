@@ -18,3 +18,5 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint -- --quiet
       - run: npm test
+      # Solo dependencias de producción: las de desarrollo (p. ej. `braces`, sin versión corregida) no llegan a la web.
+      - run: npm audit --omit=dev --audit-level=high

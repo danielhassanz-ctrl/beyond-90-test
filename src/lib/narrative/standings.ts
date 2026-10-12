@@ -69,18 +69,6 @@ const RESERVE_RIVALS = [
   "Real Oviedo Vetusta",
 ];
 
-const LIGA_POOL = [
-  "Real Madrid", "FC Barcelona", "Atlético de Madrid", "Sevilla FC", "Real Betis", "Villarreal CF",
-  "Athletic Club", "Real Sociedad", "Valencia CF", "Real Valladolid", "Celta de Vigo", "Rayo Vallecano",
-  "CA Osasuna", "RCD Mallorca", "Getafe CF", "Girona FC",
-];
-
-/** Los 20 equipos de la tabla completa de LaLiga (38 jornadas). */
-const LIGA_FULL_POOL = [...LIGA_POOL, "Elche CF", "UD Almería", "UD Las Palmas", "Cádiz CF"];
-
-const MUNDIAL_POOL = ["Brasil", "Francia", "Argentina", "Inglaterra", "Alemania", "Portugal", "Países Bajos", "Italia"];
-const EUROCOPA_POOL = ["Alemania", "Francia", "Inglaterra", "Italia", "Portugal", "Países Bajos", "Bélgica", "Croacia"];
-const COPA_AMERICA_POOL = ["Brasil", "Argentina", "Uruguay", "Colombia", "Chile", "Ecuador", "Perú", "Paraguay"];
 
 /**
  * Nivel de club 1-5 — mismo dato que ya usan las ofertas de fichaje

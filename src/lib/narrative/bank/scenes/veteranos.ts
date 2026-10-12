@@ -3,7 +3,7 @@
  * se cruzó contigo (el loro del utillero, el amigo al que ayudaste, los críos del campo del
  * barrio), y los cameos solo salen si de verdad viviste aquellas escenas.
  */
-import { S, o, r, after } from "../dsl";
+import { S, o, after } from "../dsl";
 import type { BankScene } from "../types";
 
 export const VETERANOS: BankScene[] = [

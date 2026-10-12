@@ -3,7 +3,7 @@
  * que acaba funcionando, la mascota con vida propia. Humor, ternura y alguna cosa que da un poco
  * de escalofrío, siempre con una marca que otra escena pueda recoger.
  */
-import { S, o, r, after } from "../dsl";
+import { S, o, r } from "../dsl";
 import type { BankScene } from "../types";
 
 export const SURREALISMO2: BankScene[] = [

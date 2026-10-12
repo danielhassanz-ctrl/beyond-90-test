@@ -1,6 +1,6 @@
 /** Prueba sin IA de las ligas: un club extranjero juega SU liga, su copa, su clasificación y rivales europeos de otras ligas. */
 import { buildMatchCalendar, getEuropeanCompetitionFor, getClubLevel } from "../src/lib/calendar/match-calendar";
-import { leagueOf, LEAGUES } from "../src/lib/calendar/leagues";
+import { leagueOf } from "../src/lib/calendar/leagues";
 import { getActiveStandings } from "../src/lib/narrative/standings";
 
 let bad = 0;

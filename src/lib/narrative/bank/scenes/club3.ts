@@ -2,7 +2,7 @@
  * El club, el cuerpo técnico, tu representante y la prensa: conflictos y oportunidades del día a día profesional, con
  * consecuencias en el banquillo, la relación con el míster, el dinero y los estados temporales (states.ts).
  */
-import { S, o, r, th, after } from "../dsl";
+import { S, o, r } from "../dsl";
 import type { BankScene, BankWhen } from "../types";
 
 const EQUIPO: BankWhen = { minAge: 17, roles: ["titular", "rotacion", "suplente"], clubTurns: [3, 400] };

@@ -25,7 +25,7 @@ export default async function ActualizarContrasenaPage({
         <form className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="password" className="text-kicker">
-              Contraseña nueva <span className="normal-case text-muted-foreground/70">(mínimo 8 caracteres)</span>
+              Contraseña nueva <span className="normal-case text-muted-foreground">(mínimo 8 caracteres)</span>
             </label>
             <input
               id="password"

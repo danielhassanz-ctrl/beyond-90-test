@@ -59,7 +59,7 @@ export default async function AdminPage() {
                   {JSON.stringify(e.detail, null, 2)}
                 </pre>
               )}
-              <p className="mt-1 text-[10px] text-muted-foreground/70">
+              <p className="mt-1 text-[10px] text-muted-foreground">
                 player: {(e.player_id as string | null) ?? "-"} · user: {(e.user_id as string | null) ?? "-"}
               </p>
             </div>

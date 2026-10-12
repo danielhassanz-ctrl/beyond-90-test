@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * CARRERA COMPLETA CON IA REAL: desde el debut hasta el retiro y la segunda
  * vida (entrenador o presidente), con la misma lógica que resolveEvent. Escribe

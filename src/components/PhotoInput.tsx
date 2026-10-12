@@ -94,7 +94,7 @@ export function PhotoInput({ name }: { name: string }) {
               className="h-14 w-14 rounded-md border border-panel-border object-cover"
             />
           )}
-          {status && <p className="text-xs text-neutral-500">{status}</p>}
+          {status && <p className="text-xs text-neutral-400">{status}</p>}
         </div>
       )}
     </div>

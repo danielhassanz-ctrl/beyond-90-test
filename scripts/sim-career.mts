@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { eligibleBankScenes } from "../src/lib/narrative/bank/select";
 import { playerAge } from "../src/types/career";
 /**
@@ -56,7 +55,6 @@ const { computeWeekAdvance } = await import("../src/lib/narrative/week-advance")
 const { tickInjury, getInjuryRemaining } = await import("../src/lib/narrative/career-dynamics");
 const { computeRole } = await import("../src/lib/narrative/role");
 const { summarizeEffects } = await import("../src/lib/narrative/state-brief");
-const { getClubLevel } = await import("../src/lib/calendar/match-calendar");
 const { buildLedgerEntry, appendLedger } = await import("../src/lib/narrative/ledger");
 const { introduceCast, markCastMet } = await import("../src/lib/narrative/cast");
 const { personalizeEvent } = await import("../src/lib/narrative/npcs");

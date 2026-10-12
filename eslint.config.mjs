@@ -15,6 +15,12 @@ const eslintConfig = defineConfig([
     // Salida de `vercel build` (generada).
     ".vercel/**",
   ]),
+  // Parámetros con guion bajo (_x): a propósito sin usar (funciones de relleno con firma fija).
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+    },
+  },
   // Los scripts de prueba trabajan con JSON de forma libre: `any` es aceptable ahí.
   {
     files: ["scripts/**"],

@@ -4,7 +4,7 @@
  * escenas de rumores usan la bandera especial "@interest" para que un club
  * muestre interés de verdad y, tras ello, pueda llegar una oferta formal.
  */
-import { S, o, r, th, after } from "../dsl";
+import { S, o, th } from "../dsl";
 import type { BankScene } from "../types";
 
 export const TRASPASOS: BankScene[] = [

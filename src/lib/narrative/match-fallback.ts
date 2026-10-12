@@ -55,15 +55,6 @@ function rnd<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function shuffled<T>(arr: readonly T[]): T[] {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
 function parseScore(line: string): { own: number; rival: number } | null {
   const m = line.match(/(\d{1,2})\s*-\s*(\d{1,2})/);
   return m ? { own: Number(m[1]), rival: Number(m[2]) } : null;

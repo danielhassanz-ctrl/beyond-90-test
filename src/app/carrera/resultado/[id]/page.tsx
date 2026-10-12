@@ -12,6 +12,9 @@ import { EventScene } from "@/components/EventScene";
 import { getCurrentSeasonStats } from "@/lib/player/update-stats";
 import { getGameDateLabel } from "@/lib/calendar/season";
 
+// Reloj fuera del render: la página se calcula en el servidor en cada petición.
+const nowMs = () => Date.now();
+
 export default async function ResultadoPage({
   params,
 }: {
@@ -64,8 +67,16 @@ export default async function ResultadoPage({
     ? await getCurrentSeasonStats(supabase, { id: player.id, week: closedSeasonWeek }, null, player.flags)
     : null;
 
+  // Foto resumen propia del cierre (se genera en segundo plano al confirmar la decisión, ver resolveEvent):
+  // mientras tarda se enseña "revelando…" y la página se refresca sola hasta que está lista.
+  const recapFlags = (player.flags ?? {}) as Record<string, string | boolean>;
+  const recapPendingSince = parseInt(String(recapFlags.recap_photo_pending ?? "").split(":")[1] ?? "0", 10) || 0;
+  const recapPending = isSeasonRecap && recapPendingSince > 0 && nowMs() - recapPendingSince < 4 * 60_000;
+  const recapPhoto = typeof recapFlags.recap_photo === "string" && recapFlags.recap_photo ? recapFlags.recap_photo : null;
+
   return (
     <main className="flex flex-1 items-center justify-center bg-background p-4">
+      {recapPending && <RecapPhotoWatcher />}
       <div className="w-full max-w-2xl space-y-4">
         <div className="overflow-hidden rounded-2xl border border-panel-border bg-surface">
           <EventScene club={player.club} category={careerEvent.category} />
@@ -140,6 +151,8 @@ export default async function ResultadoPage({
               stats={seasonStats!}
               tagline="Así cerré la temporada. ¿Cómo vas tú?"
               linkLine={getAppUrlLine()}
+              photoUrl={recapPhoto}
+              pending={recapPending}
             />
           </ShareableCard>
         ) : (

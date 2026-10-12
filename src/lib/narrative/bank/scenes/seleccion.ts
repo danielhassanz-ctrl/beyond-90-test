@@ -5,7 +5,7 @@
  * Lee el resultado real guardado en las banderas del torneo, así que el
  * eco coincide con lo que de verdad ocurrió.
  */
-import { S, o, r, th, after } from "../dsl";
+import { S, o, th, after } from "../dsl";
 import type { BankScene } from "../types";
 
 export const SELECCION: BankScene[] = [

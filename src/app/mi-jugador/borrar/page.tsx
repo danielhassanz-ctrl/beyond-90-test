@@ -24,10 +24,10 @@ export default async function BorrarJugadorPage() {
             Se va a borrar toda su carrera: eventos vividos, hitos, estadísticas y todas las fotos
             (la tuya original y las generadas). Esta acción no se puede deshacer.
           </p>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-neutral-400">
             Tu cuenta de acceso (email y contraseña) no se borra con esto — solo el personaje.
             Si quieres cerrar también la cuenta por completo, escríbenos a{" "}
-            <a href="mailto:danielhassanz@gmail.com" className="text-gold hover:underline">
+            <a href="mailto:danielhassanz@gmail.com" className="text-gold underline underline-offset-2">
               danielhassanz@gmail.com
             </a>
             .

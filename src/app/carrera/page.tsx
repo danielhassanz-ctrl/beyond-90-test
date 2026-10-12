@@ -278,10 +278,11 @@ export default async function CarreraPage() {
 
               {event.allowFreeText && (
                 <div className="space-y-2">
-                  <label className="text-kicker">
+                  <label className="text-kicker" htmlFor="free_text">
                     {event.freeTextPrompt ?? "Respuesta libre (opcional)"}
                   </label>
                   <textarea
+                    id="free_text"
                     name="free_text"
                     rows={2}
                     className="w-full rounded-2xl border border-input bg-surface-2 px-4 py-3 text-sm text-foreground outline-none focus:border-gold focus:ring-1 focus:ring-gold/50 transition-all"

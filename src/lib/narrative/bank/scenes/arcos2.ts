@@ -4,7 +4,7 @@
  *   B) El periodista que no te suelta (una pieza dura, un enemigo, una oportunidad de reconciliación).
  * Lo que decides en cada capítulo cambia el siguiente y el desenlace; algunos desenlaces dejan hilos y estados.
  */
-import { S, o, r, th, after } from "../dsl";
+import { S, o, th, after } from "../dsl";
 import type { BankScene, BankWhen } from "../types";
 
 const EQ: BankWhen = { minAge: 20, roles: ["titular", "rotacion"], clubTurns: [4, 400] };

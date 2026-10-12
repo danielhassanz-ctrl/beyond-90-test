@@ -83,21 +83,21 @@ export function CareerStatCard({
 
       <div className="mt-5 grid grid-cols-3 gap-2 rounded-lg border border-amber-500/20 bg-black/30 p-3 text-center">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-neutral-500">PJ</p>
+          <p className="text-[10px] uppercase tracking-widest text-neutral-400">PJ</p>
           <p className="text-xl font-black text-white">{stats.games}</p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-neutral-500">GLS</p>
+          <p className="text-[10px] uppercase tracking-widest text-neutral-400">GLS</p>
           <p className="text-xl font-black text-white">{stats.goals}</p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-neutral-500">AST</p>
+          <p className="text-[10px] uppercase tracking-widest text-neutral-400">AST</p>
           <p className="text-xl font-black text-white">{stats.assists}</p>
         </div>
       </div>
 
       <div className="mt-5 text-center">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
           Trayectoria
         </p>
         <p className="mt-2 text-sm font-bold uppercase tracking-wide text-amber-200">
@@ -107,7 +107,7 @@ export function CareerStatCard({
 
       {grouped.length > 0 && (
         <div className="mt-5 text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
             Títulos
           </p>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
@@ -125,7 +125,7 @@ export function CareerStatCard({
         </div>
       )}
 
-      <div className="mt-5 flex items-center justify-between border-t border-amber-500/20 pt-3 text-[10px] text-neutral-500">
+      <div className="mt-5 flex items-center justify-between border-t border-amber-500/20 pt-3 text-[10px] text-neutral-400">
         <span>Beyond 90</span>
         <span className="font-semibold uppercase text-amber-300">{displayName(player)}</span>
       </div>

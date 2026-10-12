@@ -49,7 +49,7 @@ export default async function RecuperarPage({
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          <Link href="/login" className="text-gold hover:underline">
+          <Link href="/login" className="text-gold underline underline-offset-2">
             Volver a iniciar sesión
           </Link>
         </p>

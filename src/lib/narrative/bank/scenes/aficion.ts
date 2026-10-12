@@ -2,7 +2,7 @@
  * La ciudad y la grada: el taxista que opina, la abuela más ultra del estadio, el niño que te espera
  * cada tarde en la puerta. Casi todo es sencillo y humano; algunas cosas, con los años, vuelven.
  */
-import { S, o, r, th, after } from "../dsl";
+import { S, o, th, after } from "../dsl";
 import type { BankScene } from "../types";
 
 export const AFICION: BankScene[] = [

@@ -14,7 +14,7 @@ export default function PrivacidadPage() {
       <p>
         Esta política explica, en un lenguaje sencillo, qué datos recoge Beyond 90, para qué los usa y qué puedes
         hacer con ellos. Si tienes cualquier duda, escríbenos a{" "}
-        <a href="mailto:danielhassanz@gmail.com" className="text-gold hover:underline">
+        <a href="mailto:danielhassanz@gmail.com" className="text-gold underline underline-offset-2">
           danielhassanz@gmail.com
         </a>
         .
@@ -103,11 +103,11 @@ export default function PrivacidadPage() {
         <h2 className="text-lg font-semibold text-gold">5. Tus derechos</h2>
         <p>
           Puedes pedirnos acceder a tus datos, corregirlos, borrarlos o llevártelos a otro sitio, escribiendo a{" "}
-          <a href="mailto:danielhassanz@gmail.com" className="text-gold hover:underline">
+          <a href="mailto:danielhassanz@gmail.com" className="text-gold underline underline-offset-2">
             danielhassanz@gmail.com
           </a>
           . También puedes borrar tu jugador tú mismo desde{" "}
-          <Link href="/mi-jugador/borrar" className="text-gold hover:underline">
+          <Link href="/mi-jugador/borrar" className="text-gold underline underline-offset-2">
             Mi jugador → Borrar
           </Link>
           .
@@ -131,7 +131,7 @@ export default function PrivacidadPage() {
       </section>
 
       <p className="pt-4 text-center">
-        <Link href="/login" className="text-gold hover:underline">
+        <Link href="/login" className="text-gold underline underline-offset-2">
           Volver
         </Link>
       </p>

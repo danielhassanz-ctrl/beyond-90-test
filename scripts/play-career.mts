@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * PARTIDA REAL (con la API de Claude): juega N eventos del motor con un jugador
  * de personalidad concreta y escribe una transcripción para revisarla.
@@ -7,10 +6,9 @@
 import { writeFileSync } from "node:fs";
 const { pickNextEventDynamic, resolveOption, applyConsequences } = await import("../src/lib/narrative/engine");
 const { computeWeekAdvance } = await import("../src/lib/narrative/week-advance");
-const { tickInjury, getInjuryRemaining } = await import("../src/lib/narrative/career-dynamics");
+const { tickInjury } = await import("../src/lib/narrative/career-dynamics");
 const { computeRole } = await import("../src/lib/narrative/role");
 const { summarizeEffects } = await import("../src/lib/narrative/state-brief");
-const { getClubLevel } = await import("../src/lib/calendar/match-calendar");
 const { getGameDateLabel } = await import("../src/lib/calendar/season");
 const { buildLedgerEntry, appendLedger } = await import("../src/lib/narrative/ledger");
 const { introduceCast, markCastMet } = await import("../src/lib/narrative/cast");

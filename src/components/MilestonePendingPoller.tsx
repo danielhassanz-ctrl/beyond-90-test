@@ -64,7 +64,7 @@ export function MilestonePendingPoller({ milestoneId }: { milestoneId: string })
 
   if (gaveUp) {
     return (
-      <p className="mt-3 text-xs text-neutral-500">
+      <p className="mt-3 text-xs text-neutral-400">
         Está tardando más de lo normal — puedes seguir jugando, si termina te avisamos igualmente.
       </p>
     );

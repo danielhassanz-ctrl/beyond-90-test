@@ -10,15 +10,28 @@ const inputClass =
 const selectClass =
   "w-full rounded-full border border-input bg-surface-2 px-4 py-3 text-sm text-foreground outline-none focus:border-gold focus:ring-1 focus:ring-gold/50 transition-all appearance-none cursor-pointer";
 
-function Field({ label, emoji, children }: { label: string; emoji?: string; children: ReactNode }) {
+function Field({ label, emoji, children, group }: { label: string; emoji?: string; children: ReactNode; group?: boolean }) {
+  // Un campo suelto se asocia con su <label>; un grupo de opciones (radios) es un grupo con nombre, porque una
+  // etiqueta solo puede asociarse a un control y el resto de opciones ya llevan la suya.
+  if (group) {
+    return (
+      <div role="group" aria-label={label} className="space-y-2">
+        <span className="text-kicker flex items-center gap-2" aria-hidden="true">
+          {emoji && <span className="text-base normal-case">{emoji}</span>}
+          {label}
+        </span>
+        {children}
+      </div>
+    );
+  }
   return (
-    <div className="space-y-2">
-      <label className="text-kicker flex items-center gap-2">
-        {emoji && <span className="text-base normal-case">{emoji}</span>}
+    <label className="block space-y-2">
+      <span className="text-kicker flex items-center gap-2">
+        {emoji && <span className="text-base normal-case" aria-hidden="true">{emoji}</span>}
         {label}
-      </label>
+      </span>
       {children}
-    </div>
+    </label>
   );
 }
 
@@ -80,7 +93,7 @@ export default async function CrearJugadorPage({
           <div className="space-y-4 rounded-2xl border border-panel-border bg-surface p-6">
             <p className="text-kicker">Estilo de juego</p>
 
-            <Field label="Posición" emoji="🎯">
+            <Field label="Posición" emoji="🎯" group>
               <div className="flex flex-wrap gap-2">
                 {POSITIONS.map((position, i) => (
                   <label key={position} className="cursor-pointer">
@@ -100,7 +113,7 @@ export default async function CrearJugadorPage({
               </div>
             </Field>
 
-            <Field label="Pie hábil" emoji="👟">
+            <Field label="Pie hábil" emoji="👟" group>
               <div className="flex flex-wrap gap-2">
                 {FEET.map((foot, i) => (
                   <label key={foot} className="cursor-pointer">

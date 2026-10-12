@@ -55,7 +55,7 @@ export function LifeThreads({ flags }: { flags: Record<string, string | boolean>
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-[11px] text-neutral-500">Tarde o temprano, alguien volverá a por esto.</p>
+        <p className="mt-2 text-[11px] text-neutral-400">Tarde o temprano, alguien volverá a por esto.</p>
       </div>
     )}
     </>

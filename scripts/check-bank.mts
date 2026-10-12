@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Validador del banco de escenas (gratis, sin IA): esquema, coherencia de las
  * cadenas (cada "after" apunta a una escena y opción que existen), texto sano
@@ -14,7 +13,6 @@ const warn: string[] = [];
 const err = (id: string, msg: string) => errors.push(`✗ ${id}: ${msg}`);
 
 const VOSEO = /(?<![\p{L}])(vos|tenés|querés|sos|podés|andá|contame|mirá|fijate|sabés|decime|dale che|(?<!de )(?<!la )(?<!una )plata|computadora|celular|auto)(?![\p{L}])/iu;
-const BROKEN = /undefined|\[object|NaN|\{\w+\}(?<!\{club\}|\{el_club\}|\{apellido\})/;
 const KNOWN_PLACEHOLDERS = new Set(["{club}", "{el_club}", "{apellido}", "{interes}", "{el_interes}", "{ex_club}", "{el_ex_club}", "{pareja}", "{nacion}"]);
 
 const ids = new Set<string>();

@@ -6,7 +6,7 @@
  * aparece y desaparece, y el resto del juego (IA, segunda vida, escenas)
  * lo nota.
  */
-import { S, o, r, th, after } from "../dsl";
+import { S, o, r, after } from "../dsl";
 import type { BankScene, BankWhen } from "../types";
 
 const SOLO: BankWhen = { notFlags: ["pareja"], minAge: 18, maxAge: 40 };

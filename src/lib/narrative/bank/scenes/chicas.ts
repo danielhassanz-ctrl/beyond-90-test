@@ -11,7 +11,7 @@
  *   ch_<x>_no     ya no volverá a salir
  *   pareja_foto   ruta de la foto de tu pareja, para Vida y las escenas
  */
-import { S, o, r, after } from "../dsl";
+import { S, o, after } from "../dsl";
 import type { BankScene, BankWhen } from "../types";
 
 const LIBRE: BankWhen = { notFlags: ["pareja", "ch_en_curso"], minAge: 18, maxAge: 36 };
