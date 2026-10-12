@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit -p .",
-    "test": "tsx scripts/test-shootout.mts && tsx scripts/test-chicas.mts && tsx scripts/test-ligas.mts && tsx scripts/test-disciplina.mts && tsx scripts/test-arcos.mts && tsx scripts/test-chain.mts && tsx scripts/test-inversiones.mts && tsx scripts/test-patrocinios.mts && tsx scripts/test-fetchall.mts && tsx scripts/check-bank.mts",
+    "test": "tsx scripts/test-shootout.mts && tsx scripts/test-chicas.mts && tsx scripts/test-ligas.mts && tsx scripts/test-disciplina.mts && tsx scripts/test-arcos.mts && tsx scripts/test-chain.mts && tsx scripts/test-inversiones.mts && tsx scripts/test-patrocinios.mts && tsx scripts/test-fetchall.mts && tsx scripts/test-propiedades.mts && tsx scripts/check-bank.mts",
     "check": "npm run typecheck && npm run lint -- --quiet && npm test"
   },
   "dependencies": {

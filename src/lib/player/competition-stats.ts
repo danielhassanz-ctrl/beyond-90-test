@@ -86,7 +86,7 @@ export function classifyMatch(title: string, description: string): Classified {
   const torneo = (): TournamentKey =>
     /mundial/.test(text) ? "mundial" : /eurocopa/.test(text) ? "eurocopa" : /copa am[eé]rica/.test(text) ? "copa_america" : "otros";
 
-  if (/champions league/.test(key)) return { comp: "champions" };
+  if (/champions league|liga de campeones de asia/.test(key)) return { comp: "champions" };
   if (/europa league/.test(key)) return { comp: "europa" };
   if (/copa del rey|copa de inglaterra|copa de alemania|copa de italia|copa de francia|copa de arabia|dfb-pokal|fa cup/.test(key)) return { comp: "copa" };
   if (/partido internacional|mundial|eurocopa|copa am[eé]rica/.test(key)) return { comp: "seleccion", torneo: torneo() };

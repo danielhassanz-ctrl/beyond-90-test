@@ -14,7 +14,7 @@
  * Total: ~10-15 partidos/temporada virtual
  */
 
-import { leagueOf, ligaJornadaByWeek, europeanRivals, ALL_CHAMPIONS, ALL_EUROPA } from "@/lib/calendar/leagues";
+import { leagueOf, ligaJornadaByWeek, europeanRivals, ALL_CHAMPIONS, ALL_EUROPA, ASIA_RIVALS, continentalName } from "@/lib/calendar/leagues";
 
 export type CompetitionType = "liga" | "copa" | "champions" | "europa" | "amistoso" | "internacional";
 
@@ -302,7 +302,7 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
     }
 
     const koMaxRound = Math.min(EURO_KO_WEEKS.length, progress?.euro?.round ?? 0);
-    const compName = europeanCompetition.competition === "champions" ? "Champions League" : "Europa League";
+    const compName = continentalName(playerClub, europeanCompetition.competition);
     for (let r = 1; r <= koMaxRound; r++) {
       const rival = pickEuroRival(seededRandom(hashString(`${playerClub}:${season}:euro-ko${r}`)));
       // Octavos, cuartos y semifinal son a doble partido: el que se juega aquí es
@@ -489,6 +489,11 @@ export function getEuropeanCompetitionFor(
   playerClub: string,
 ): { competition: "champions" | "europa"; label: string; rivals: string[] } | null {
   const lg = leagueOf(playerClub);
+  if (lg.id === "sa") {
+    return ALL_CHAMPIONS.has(playerClub)
+      ? { competition: "champions", label: `${continentalName(playerClub, "champions")} - Fase de grupos`, rivals: ASIA_RIVALS }
+      : null;
+  }
   if (CHAMPIONS_REGULARS.has(playerClub) || ALL_CHAMPIONS.has(playerClub)) {
     return { competition: "champions", label: "Champions League - Fase de grupos", rivals: lg.id === "es" ? CHAMPIONS_RIVALS : europeanRivals(lg, "champions") };
   }

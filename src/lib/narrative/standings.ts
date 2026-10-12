@@ -6,7 +6,7 @@ import {
   EURO_GROUP_WEEKS,
   EURO_GROUP_JORNADAS,
 } from "@/lib/calendar/match-calendar";
-import { leagueOf, leagueTier, ligaJornadaByWeek, canonicalClub } from "@/lib/calendar/leagues";
+import { leagueOf, leagueTier, ligaJornadaByWeek, canonicalClub, continentalName } from "@/lib/calendar/leagues";
 import { getCopaProgress, getEuroProgress, copaRoundName, euroRoundName } from "@/lib/calendar/competition-progress";
 import { WEEKS_PER_SEASON } from "@/types/career";
 import { getTorneoProgress, torneoGroupRivals, TORNEO_NAMES, TORNEO_STAGE_LABELS, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
@@ -268,7 +268,7 @@ function buildLigaTable(seed: string, playerClub: string, record?: SeasonMatchRe
 // Europa League y Copa del Rey ya tienen su propio seguimiento real (tabla
 // europea aparte, cuadro de eliminatoria), así que por defecto se excluyen
 // de la racha "doméstica" para no mezclar dos competiciones en una tabla.
-const SEPARATE_COMPETITION_LABELS = ["Champions League", "Europa League", "Copa del Rey", "Copa de Inglaterra", "Copa de Alemania", "Copa de Italia", "Copa de Francia", "Copa de Arabia", "DFB-Pokal", "FA Cup", "Partido internacional"];
+const SEPARATE_COMPETITION_LABELS = ["Champions League", "Europa League", "Liga de Campeones de Asia", "Copa de la AFC", "Copa del Rey", "Copa de Inglaterra", "Copa de Alemania", "Copa de Italia", "Copa de Francia", "Copa de Arabia", "DFB-Pokal", "FA Cup", "Partido internacional"];
 
 export async function getSeasonMatchRecord(
   supabase: SupabaseClient,
@@ -479,7 +479,7 @@ export function getActiveStandings(
         : null;
 
   const euroProgress = getEuroProgress(player, season);
-  const euroLabel = european ? (european.competition === "champions" ? "Champions League" : "Europa League") : "";
+  const euroLabel = european ? continentalName(player.club, european.competition) : "";
   const euro: KnockoutStandings | null = !european
     ? null
     : euroProgress.round > 0 && euroProgress.alive

@@ -23,6 +23,8 @@ export interface PropertyRecord {
   rate?: number;
   /** Qué es: casa, mansion, coche, yate o jet (para nombrar la cuota: hipoteca o préstamo). */
   kind?: "casa" | "mansion" | "coche" | "yate" | "jet";
+  /** Multiplicador de valor por reformas (1 = sin reformas). */
+  valueAdj?: number;
 }
 
 /** Financiación de los caprichos (coche, yate, jet): entrada, plazo e interés. Las casas siguen su propio camino. */
@@ -83,6 +85,25 @@ export function remainingLoan(p: PropertyRecord, week: number): number {
   const growth = (1 + r) ** n;
   const balance = (loan * (growth - (1 + r) ** k)) / (growth - 1);
   return Math.max(0, Math.round(balance));
+}
+
+/**
+ * Lo que vale hoy una propiedad. Antes valía siempre lo que costó. Las casas se revalorizan ~4 % anual; los
+ * vehículos pierden valor con los años (coche -15 %, yate -7 %, jet -6 % al año, con un suelo). Un turno = un mes.
+ */
+export function propertyValue(p: PropertyRecord, week: number): number {
+  const months = Math.max(0, week - (p.since ?? week));
+  const kind = p.kind ?? "casa";
+  let factor: number;
+  if (kind === "coche") factor = Math.max(0.25, (1 - 0.15 / 12) ** months);
+  else if (kind === "yate") factor = Math.max(0.4, (1 - 0.07 / 12) ** months);
+  else if (kind === "jet") factor = Math.max(0.4, (1 - 0.06 / 12) ** months);
+  else factor = (1 + 0.04 / 12) ** months * (p.valueAdj ?? 1);
+  return Math.round((p.price * factor) / 100) * 100;
+}
+
+export function totalPropertyValue(flags: Record<string, string | boolean> | null | undefined, week: number): number {
+  return readProperties(flags).reduce((n, p) => n + propertyValue(p, week), 0);
 }
 
 export function totalMonthlyPayments(flags: Record<string, string | boolean> | null | undefined): number {

@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { playerMonthlyNet, playerAnnualGross } from "@/lib/narrative/transfer-terms";
 import { readRent } from "@/lib/finance/rent";
 import { findPropertyPrompt, findPropertyInteriorPrompt } from "@/lib/narrative/events";
-import { readProperties, monthlyPayment, remainingLoan, totalMonthlyPayments } from "@/lib/finance/mortgage";
+import { readProperties, monthlyPayment, remainingLoan, totalMonthlyPayments, propertyValue as propertyValueOf } from "@/lib/finance/mortgage";
 import { readInvestments, investmentValue } from "@/lib/finance/investments";
 import { activeSponsorships } from "@/lib/finance/sponsorship-income";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
@@ -169,7 +169,7 @@ export default async function PatrimonioPage() {
   const inversiones = readInvestments(player.flags);
 
   // Patrimonio NETO: dinero + propiedades + inversiones − hipotecas pendientes.
-  const propertyValue = propiedades.reduce((acc, p) => acc + p.price, 0);
+  const propertyValue = propiedades.reduce((acc, p) => acc + propertyValueOf(p, player.week), 0);
   const investmentsTotal = inversiones.reduce((acc, i) => acc + investmentValue(i, player.week), 0);
   const mortgageDebt = propiedades.reduce((acc, p) => acc + remainingLoan(p, player.week), 0);
   const mortgageMonthly = totalMonthlyPayments(player.flags);
@@ -305,8 +305,12 @@ export default async function PatrimonioPage() {
                     <p className="font-display text-base text-foreground">{p.name}</p>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Vale</span>
-                        <span className="font-num font-semibold text-gold">{p.price.toLocaleString("es")} €</span>
+                        <span className="text-muted-foreground">Vale hoy</span>
+                        <span className="font-num font-semibold text-gold">{propertyValueOf(p, player.week).toLocaleString("es")} €</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Precio de compra</span>
+                        <span className="font-num font-semibold text-foreground">{p.price.toLocaleString("es")} €</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Pagaste al comprarla</span>

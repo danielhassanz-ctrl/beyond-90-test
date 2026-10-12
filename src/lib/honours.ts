@@ -6,7 +6,7 @@
  * contador de títulos, la tarjeta de carrera y la página de palmarés.
  */
 import type { Player } from "@/types/player";
-import { leagueOf } from "@/lib/calendar/leagues";
+import { leagueOf, continentalName } from "@/lib/calendar/leagues";
 
 export type TrofeoKind =
   | "liga"
@@ -53,6 +53,7 @@ export function trofeoLabel(t: { k: TrofeoKind; c?: string }): string {
     const lg = leagueOf(t.c);
     return lg.id === "es" ? "Liga" : lg.name;
   }
+  if (t.c && (t.k === "champions" || t.k === "europa")) return continentalName(t.c, t.k);
   return TROFEO_LABEL[t.k];
 }
 

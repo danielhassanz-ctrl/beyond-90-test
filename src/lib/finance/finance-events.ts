@@ -10,7 +10,7 @@ import { NO_CLUB_YET } from "@/lib/constants";
 import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
 import { monthlySponsorshipIncome } from "@/lib/finance/sponsorship-income";
 import { monthlyRent } from "@/lib/finance/rent";
-import { readProperties, monthlyPayment, remainingLoan, serializeProperty, totalMonthlyPayments } from "@/lib/finance/mortgage";
+import { readProperties, monthlyPayment, remainingLoan, serializeProperty, totalMonthlyPayments, propertyValue } from "@/lib/finance/mortgage";
 
 const COOLDOWN_WEEKS = 8;
 
@@ -38,7 +38,7 @@ export function buildDebtTroubleEvent(player: Player): GameEvent {
   const pending = props.reduce((n, p) => n + remainingLoan(p, player.week), 0);
   const eur = (n: number) => `${n.toLocaleString("es")} €`;
   const advance = monthlySalary(player) * 3;
-  const saleGain = Math.max(0, Math.round(worst.price * 0.92 - remainingLoan(worst, player.week)));
+  const saleGain = Math.max(0, Math.round(propertyValue(worst, player.week) * 0.92 - remainingLoan(worst, player.week)));
   const seen = { debt_event_week: String(player.week) };
   const renegotiated = serializeProperty({ ...worst, paymentFactor: Math.min(worst.paymentFactor ?? 1, 0.7) });
 

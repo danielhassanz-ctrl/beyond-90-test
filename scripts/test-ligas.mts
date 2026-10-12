@@ -26,3 +26,26 @@ for (const club of ["Bayern de Múnich", "Manchester City", "Juventus", "Paris S
   console.log(`${club.padEnd(22)} ${lg.name.padEnd(17)} nivel ${getClubLevel(club).padEnd(7)} euro: ${eu?.competition ?? "—"} | rivales liga ${rivals.size} | copa ${[...cups].slice(0, 3).join(", ")} | tabla: ${st.primary?.label} (${rows.length})`);
 }
 console.log(bad === 0 ? "TODO OK" : `${bad} fallos`);
+
+// ── Liga saudí: los grandes juegan la Liga de Campeones de Asia (no la europea)
+{
+  const { getEuropeanCompetitionFor, getClubLevel: lvl } = await import("../src/lib/calendar/match-calendar");
+  const { continentalName } = await import("../src/lib/calendar/leagues");
+  const { trofeoLabel } = await import("../src/lib/honours");
+  let bad = 0;
+  const chk = (c: boolean, m: string) => { console.log((c ? "  ✓ " : "  ✗ ") + m); if (!c) bad++; };
+  const nas = getEuropeanCompetitionFor("Al-Nassr FC");
+  chk(!!nas && /Asia/.test(nas.label), `Al-Nassr juega: ${nas?.label}`);
+  chk(!!nas && nas.rivals.every((r) => !/Madrid|Barcelona|Bayern|Liverpool|Al-Nassr|Al-Hilal/.test(r)), "rivales asiáticos, nunca europeos ni de su liga");
+  chk(getEuropeanCompetitionFor("Al-Taawoun") === null, "un club saudí modesto no juega competición continental");
+  chk(continentalName("Al-Hilal", "champions") === "Liga de Campeones de Asia" && continentalName("Real Madrid", "champions") === "Champions League", "el nombre depende de la liga");
+  chk(trofeoLabel({ k: "champions", c: "Al-Hilal" }) === "Liga de Campeones de Asia" && trofeoLabel({ k: "champions", c: "Real Madrid" }) === "Champions League", "el trofeo también");
+  chk(lvl("Al-Nassr FC") === "grande", `nivel de Al-Nassr: ${lvl("Al-Nassr FC")}`);
+  const { buildMatchCalendar: bmc } = await import("../src/lib/calendar/match-calendar");
+  const cal = bmc("Al-Nassr FC", 2, { copa: { round: 1, alive: true }, euro: { round: 4, alive: true } });
+  const euro = cal.filter((m: any) => m.competition === "champions");
+  chk(euro.length >= 6, `el calendario trae ${euro.length} partidos de la competición continental`);
+  chk(euro.every((m: any) => /Asia/.test(`${m.description}`) && !/Champions League/.test(`${m.description}`)), "todos se llaman de Asia y ninguno 'Champions League'");
+  chk(euro.every((m: any) => !/Madrid|Barcelona|Bayern|Liverpool|Manchester|Inter|Juventus/.test(`${m.rivalClub}`) && !!m.rivalClub), `rivales: ${[...new Set(euro.map((m: any) => m.rivalClub))].slice(0, 6).join(", ")}`);
+  if (bad) { console.log(`FALLOS SAUDÍ: ${bad}`); process.exit(1); }
+}

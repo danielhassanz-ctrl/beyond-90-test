@@ -158,7 +158,8 @@ export const LEAGUES: Record<LeagueId, League> = {
       "Al-Nassr FC", "Al-Hilal", "Al-Ittihad", "Al-Ahli", "Al-Shabab", "Al-Ettifaq", "Al-Fateh", "Al-Taawoun", "Al-Raed", "Al-Fayha", "Damac FC", "Al-Khaleej",
       "Al-Okhdood", "Al-Riyadh", "Al-Wehda", "Abha Club", "Al-Hazem", "Al-Tai",
     ],
-    champions: [],
+    // Los cuatro grandes juegan la Liga de Campeones de Asia (ver ASIA_RIVALS y continentalName).
+    champions: ["Al-Hilal", "Al-Nassr FC", "Al-Ittihad", "Al-Ahli"],
     europa: [],
     cupEarly: ["Al-Jabalain", "Al-Qadsiah", "Al-Najma", "Al-Orobah", "Al-Batin", "Al-Kholood", "Hajer FC", "Al-Arabi"],
     tiers: { "Al-Nassr FC": 5, "Al-Hilal": 5, "Al-Ittihad": 4, "Al-Ahli": 4, "Al-Shabab": 3, "Al-Ettifaq": 3, "Al-Fateh": 3, "Al-Taawoun": 3 },
@@ -225,6 +226,17 @@ export function europeanRivals(league: League, kind: "champions" | "europa"): st
   const own = new Set(league.teams);
   const pool = (kind === "champions" ? EURO_TOP : EURO_SECOND).filter((c) => !own.has(c));
   return pool.slice(0, 10);
+}
+
+/** Rivales de la Liga de Campeones de Asia para los clubes saudíes (de otras ligas asiáticas, nunca de la suya). */
+export const ASIA_RIVALS = [
+  "Al-Sadd", "Al-Duhail", "Al-Ain", "Persépolis", "Pakhtakor", "Ulsan HD", "Urawa Red Diamonds", "Yokohama F. Marinos", "Shanghai Port", "Melbourne City",
+];
+
+/** Nombre de la competición continental según el club: los saudíes juegan la de Asia, el resto la de Europa. */
+export function continentalName(club: string, kind: "champions" | "europa"): string {
+  if (leagueOf(club).id === "sa") return kind === "champions" ? "Liga de Campeones de Asia" : "Copa de la AFC";
+  return kind === "champions" ? "Champions League" : "Europa League";
 }
 
 /** Frase "en {competición}" para las crónicas de partido. */

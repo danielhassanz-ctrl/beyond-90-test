@@ -27,7 +27,7 @@ export function LifeThreads({ flags }: { flags: Record<string, string | boolean>
     <div className="rounded-lg border border-panel-border bg-panel p-4">
       <p className="mb-2 text-xs uppercase tracking-wide text-neutral-400">Familia y pareja</p>
       {entries.length === 0 ? (
-        <p className="text-xs text-neutral-600">
+        <p className="text-xs text-neutral-400">
           Todavía no hay nada que contar aquí. Va a ir apareciendo con tus decisiones.
         </p>
       ) : (

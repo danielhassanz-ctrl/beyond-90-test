@@ -157,8 +157,8 @@ export default async function Home() {
           <p className="text-[11px] uppercase tracking-widest text-neutral-400">
             🚀 Beyond 90 · Beta
           </p>
-          <p className="text-[10px] text-neutral-600">Tu progreso se guarda automáticamente en la nube</p>
-          <p className="text-[10px] text-neutral-600">¿Primera vez? Crea una cuenta al empezar</p>
+          <p className="text-[10px] text-neutral-400">Tu progreso se guarda automáticamente en la nube</p>
+          <p className="text-[10px] text-neutral-400">¿Primera vez? Crea una cuenta al empezar</p>
         </div>
       </div>
     </main>

@@ -62,7 +62,7 @@ import { DISCIPLINA3 } from "@/lib/narrative/bank/scenes/disciplina3";
 import { CONVIVENCIA } from "@/lib/narrative/bank/scenes/convivencia";
 import { VIDA2 } from "@/lib/narrative/bank/scenes/vida2";
 import { CLUB3 } from "@/lib/narrative/bank/scenes/club3";
-import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
+import { ligaLabel, copaLabel, leagueOf, continentalName } from "@/lib/calendar/leagues";
 import { buildTorneoLifeEvent } from "@/lib/narrative/torneo-life";
 import { buildStateBrief } from "@/lib/narrative/state-brief";
 import { shouldTriggerEcho, pickEchoCandidate, consumeEcho } from "@/lib/narrative/ledger";
@@ -77,6 +77,7 @@ import { fillBankEvent } from "@/lib/narrative/bank/select";
 import { pickBankScene, recycleBankScenes } from "@/lib/narrative/bank/select";
 import { shouldTriggerInvestmentReview, buildInvestmentReviewEvent } from "@/lib/narrative/investment-review";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
+import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
 import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
 import { totalMonthlyPayments } from "@/lib/finance/mortgage";
 import { monthlySponsorshipIncome } from "@/lib/finance/sponsorship-income";
@@ -821,7 +822,9 @@ function withTrophy(event: GameEvent, kind: TrofeoKind, team: string, detail?: s
   const label = trofeoLabel({ k: kind, c: team });
   const already = /campe[oó]n|levantw+ (el|la) (trofeo|copa)/i.test(event.description);
   const cup =
-    kind === "champions"
+    kind === "champions" && leagueOf(team).id === "sa"
+      ? "the large silver Asian Champions League trophy with big handles"
+      : kind === "champions"
       ? "the large silver Champions League trophy with big handles"
       : kind === "europa"
         ? "the Europa League trophy"
@@ -3538,6 +3541,12 @@ export async function pickNextEventDynamic(
     console.log(`[pickNextEventDynamic] Renovación de patrocinio: "${renewal.title}"`);
     return renewal;
   }
+  // Una propiedad con un par de temporadas: tasación al día y decides quedártela, venderla o reformarla.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerPropertyReview(playerWithDynamics)) {
+    const review = buildPropertyReviewEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Seguimiento de propiedad: "${review.title}"`);
+    return review;
+  }
   // Una oferta formal ya en marcha (interés de un club + mercado abierto) va antes que cualquier escena suelta: si no, el banco se la comía.
   if (!midMatch && shouldTriggerTransferOffer(playerWithDynamics)) {
     const offer = buildTransferOfferEvent(playerWithDynamics);
@@ -3761,7 +3770,7 @@ export async function pickNextEventDynamic(
     if (forcedResult) {
       const koKey = `${matchThisWeek.week}_${matchKey(matchThisWeek)}`;
       const compName =
-        matchThisWeek.competition === "champions" ? "Champions League" : matchThisWeek.competition === "europa" ? "Europa League" : copaLabel(playerWithDynamics.club);
+        matchThisWeek.competition === "champions" || matchThisWeek.competition === "europa" ? continentalName(playerWithDynamics.club, matchThisWeek.competition) : copaLabel(playerWithDynamics.club);
       const round = isFinal
         ? "Final"
         : matchThisWeek.euroKoRound
@@ -3792,7 +3801,7 @@ export async function pickNextEventDynamic(
     let extraInstruction: string | undefined = shootoutNote;
     if (matchThisWeek.euroGroupIndex === 2) {
       const groupQualified = resolveEuroGroupStage(playerWithDynamics, currentSeason, level);
-      const compName = matchThisWeek.competition === "champions" ? "Champions League" : "Europa League";
+      const compName = continentalName(playerWithDynamics.club, matchThisWeek.competition === "champions" ? "champions" : "europa");
       extraInstruction = groupQualified
         ? `- Era el ÚLTIMO partido de la fase de grupos de la ${compName}: con este resultado tu equipo SE CLASIFICA para las eliminatorias (octavos de final). Que la crónica lo deje claro.`
         : `- Era el ÚLTIMO partido de la fase de grupos de la ${compName}: con este resultado tu equipo QUEDA ELIMINADO de la competición europea. Que la crónica lo deje claro.`;
