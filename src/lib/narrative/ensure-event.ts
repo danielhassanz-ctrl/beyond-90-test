@@ -41,6 +41,7 @@ import { repairCashPurchases } from "@/lib/finance/repair";
 import { runWithAiBudget, careerBudgetTotal, currentAiUsed } from "@/lib/narrative/ai-budget";
 import { MODE_TARGET_WEEKS } from "@/types/career";
 
+import { fetchAllRows } from "@/lib/supabase/fetchAll";
 export const GEN_LOCK_ID = "gen-lock";
 const LOCK_TTL_MS = 90_000;
 
@@ -187,10 +188,9 @@ async function ensureNextEventInner(
 
   // Para no repetir nunca un evento fijo, se compara contra TODA la
   // carrera, no solo los últimos turnos.
-  const { data: allHistory } = await supabase
-    .from("career_events")
-    .select("event_id")
-    .eq("player_id", player.id);
+  const { data: allHistory } = await fetchAllRows<{ event_id: string }>((from, to) =>
+    supabase.from("career_events").select("event_id").eq("player_id", player.id).order("id").range(from, to),
+  );
   const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
   // Comprar casa necesita 3 opciones con precios sorteados en el momento,

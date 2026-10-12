@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * Modelo freemium por carrera: las primeras FREE_IMAGES_PER_CAREER fotos
@@ -97,7 +98,15 @@ export async function isEligibleForFreeTier(
 
   let eligible = true;
   try {
-    const { count, error } = await supabase.from("players").select("id", { count: "exact", head: true });
+    // Con el cliente del jugador, RLS solo deja contar SU fila (count = 1 siempre): el tope nunca se aplicaba.
+    // Con la service role el recuento es el real; sin ella se cae al cliente normal.
+    let counter: SupabaseClient = supabase;
+    try {
+      counter = createServiceClient();
+    } catch {
+      // sin SUPABASE_SERVICE_ROLE_KEY (local): recuento con el cliente del jugador
+    }
+    const { count, error } = await counter.from("players").select("id", { count: "exact", head: true });
     if (error) {
       console.error("[isEligibleForFreeTier] recuento falló, se deja pasar como elegible:", error.message);
     } else {

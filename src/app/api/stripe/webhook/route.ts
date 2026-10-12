@@ -38,6 +38,11 @@ export async function POST(request: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
+    // Con medios de pago diferidos la sesión se "completa" antes de cobrar: solo se acredita lo ya pagado.
+    if (session.payment_status !== "paid") {
+      console.log(`[stripe webhook] sesión ${session.id} con payment_status=${session.payment_status}, no se acredita todavía`);
+      return NextResponse.json({ received: true });
+    }
     const playerId = session.client_reference_id;
     if (!playerId) {
       console.error("[stripe webhook] checkout.session.completed sin client_reference_id, no se puede acreditar a nadie");
@@ -63,8 +68,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true });
     }
 
+    // Stripe repite avisos (reintentos, reenvíos desde el panel): cada sesión de pago acredita UNA sola vez.
+    const handled = String(player.flags?.img_paid_sessions ?? "").split(",").filter(Boolean);
+    if (handled.includes(session.id)) {
+      console.log(`[stripe webhook] sesión ${session.id} ya acreditada, se ignora el aviso repetido`);
+      return NextResponse.json({ received: true });
+    }
+
     const currentPaid = getPaidCredits({ flags: player.flags ?? {} });
-    const newFlags = { ...(player.flags ?? {}), img_paid_credits: String(currentPaid + CREDIT_PACK.images) };
+    const newFlags = {
+      ...(player.flags ?? {}),
+      img_paid_credits: String(currentPaid + CREDIT_PACK.images),
+      img_paid_sessions: [...handled, session.id].slice(-20).join(","),
+    };
 
     const { error: updateErr } = await supabase.from("players").update({ flags: newFlags }).eq("id", playerId);
     if (updateErr) {

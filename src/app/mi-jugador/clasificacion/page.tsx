@@ -12,6 +12,7 @@ import { displayName } from "@/types/player";
 import { seasonLabel } from "@/types/career";
 import { NO_CLUB_YET } from "@/lib/constants";
 
+import { fetchAllRows } from "@/lib/supabase/fetchAll";
 export default async function ClasificacionPage() {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
 
@@ -20,10 +21,9 @@ export default async function ClasificacionPage() {
 
   // Mismo criterio que carrera/page.tsx para saber si sigues en el
   // filial o si ya se disputó tu debut oficial con el primer equipo.
-  const { data: allHistory } = await supabase
-    .from("career_events")
-    .select("event_id")
-    .eq("player_id", player.id);
+  const { data: allHistory } = await fetchAllRows<{ event_id: string }>((from, to) =>
+    supabase.from("career_events").select("event_id").eq("player_id", player.id).order("id").range(from, to),
+  );
   const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
   const torneo = typeof player.flags?.torneo_activo === "string" ? player.flags.torneo_activo : null;

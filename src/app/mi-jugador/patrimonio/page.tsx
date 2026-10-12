@@ -15,6 +15,7 @@ import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { repairCashPurchases } from "@/lib/finance/repair";
 
+import { fetchAllRows } from "@/lib/supabase/fetchAll";
 /** Cómo va la economía, en una frase honesta, según el patrimonio neto. */
 function getFinancialPressure(patrimonio: number): { label: string; tone: string; description: string } {
   if (patrimonio < 20000) {
@@ -108,11 +109,17 @@ export default async function PatrimonioPage() {
   // Compras antiguas que no se pagaron enteras: se recalculan una sola vez.
   await repairCashPurchases(supabase, player);
 
-  const { data: allEvents } = await supabase
-    .from("career_events")
-    .select("id, event_id, week, title, category, consequences, chosen_option_label, created_at")
-    .eq("player_id", player.id)
-    .order("created_at", { ascending: false });
+  const { data: allEvents } = await fetchAllRows<{
+    id: string; event_id: string; week: number; title: string; category: string; consequences: unknown; chosen_option_label: string | null; created_at: string;
+  }>((from, to) =>
+    supabase
+      .from("career_events")
+      .select("id, event_id, week, title, category, consequences, chosen_option_label, created_at")
+      .eq("player_id", player.id)
+      .order("created_at", { ascending: false })
+      .order("id")
+      .range(from, to),
+  );
 
   const movimientos: Movimiento[] = (allEvents ?? []).flatMap((e) => {
     const consequences = e.consequences as { patrimonio?: number } | null;

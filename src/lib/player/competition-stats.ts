@@ -15,6 +15,7 @@ import { extractStatsFromEvent, statSeasonOf } from "@/lib/player/update-stats";
 import { readAllSim, sumSim, type SimComp } from "@/lib/narrative/off-screen-matches";
 import { allTrofeos, INDIVIDUAL, type TrofeoKind } from "@/lib/honours";
 
+import { fetchAllRows } from "@/lib/supabase/fetchAll";
 export interface CompStat {
   matches: number;
   goals: number;
@@ -112,12 +113,16 @@ export async function getCompetitionStats(
   const currentSeasonIdx = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
 
   try {
-    const { data, error } = await supabase
-      .from("career_events")
-      .select("title, description, category, event_id, week")
-      .eq("player_id", player.id)
-      .neq("category", "segunda_vida")
-      .lte("week", player.week);
+    const { data, error } = await fetchAllRows<{ title: string; description: string; category: string; event_id: string; week: number }>((from, to) =>
+      supabase
+        .from("career_events")
+        .select("title, description, category, event_id, week")
+        .eq("player_id", player.id)
+        .neq("category", "segunda_vida")
+        .lte("week", player.week)
+        .order("id")
+        .range(from, to),
+    );
     if (error || !data) return { season, career, history: [] };
 
     const rows: { event_id: string; category: string; title: string; description: string; week: number }[] = data.map((r) => ({

@@ -11,6 +11,7 @@ import type { Player } from "@/types/player";
 import { WEEKS_PER_SEASON } from "@/types/career";
 import { allTrofeos, INDIVIDUAL, withTrofeo, writeTrofeos, type Trofeo, type TrofeoKind } from "@/lib/honours";
 
+import { fetchAllRows } from "@/lib/supabase/fetchAll";
 interface Row {
   event_id: string;
   title: string;
@@ -27,11 +28,15 @@ export async function repairTrophies(supabase: SupabaseClient, player: Player): 
   let list: Trofeo[] = allTrofeos(player);
   let changed = false;
   try {
-    const { data } = await supabase
-      .from("career_events")
-      .select("event_id, title, description, week")
-      .eq("player_id", player.id)
-      .lte("week", player.week);
+    const { data } = await fetchAllRows<{ event_id: string; title: string; description: string; week: number }>((from, to) =>
+      supabase
+        .from("career_events")
+        .select("event_id, title, description, week")
+        .eq("player_id", player.id)
+        .lte("week", player.week)
+        .order("id")
+        .range(from, to),
+    );
     const rows = ((data ?? []) as Row[]).map((r) => ({ ...r, text: `${r.title} ${r.description}`.toLowerCase() }));
     const byWeek = new Map<number, typeof rows>();
     for (const r of rows) byWeek.set(r.week, [...(byWeek.get(r.week) ?? []), r]);

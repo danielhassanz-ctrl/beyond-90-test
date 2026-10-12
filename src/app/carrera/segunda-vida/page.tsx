@@ -19,6 +19,7 @@ import { displayName } from "@/types/player";
 import { EventScene } from "@/components/EventScene";
 import { resolveSecondLifeEvent } from "./actions";
 
+import { fetchAllRows } from "@/lib/supabase/fetchAll";
 export default async function SegundaVidaPage() {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
 
@@ -58,10 +59,9 @@ export default async function SegundaVidaPage() {
       scene: h.description as string | null,
     }));
 
-    const { data: allHistory } = await supabase
-      .from("career_events")
-      .select("event_id")
-      .eq("player_id", player.id);
+    const { data: allHistory } = await fetchAllRows<{ event_id: string }>((from, to) =>
+      supabase.from("career_events").select("event_id").eq("player_id", player.id).order("id").range(from, to),
+    );
     const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
     // Un asunto pendiente de su carrera como futbolista vuelve a cobrarse
