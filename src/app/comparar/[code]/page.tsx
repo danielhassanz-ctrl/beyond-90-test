@@ -4,6 +4,7 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { ensurePublicCareerCard, getPublicCareerCard, type PublicCareerCard } from "@/lib/player/shareCard";
 import { ClubCrest } from "@/components/ClubCrest";
 import { getAppUrlLine } from "@/lib/constants";
+import type { Metadata } from "next";
 
 /**
  * Página pública (sin login) para comparar dos carreras — pedido tras la
@@ -62,6 +63,22 @@ function CareerCard({ card, highlight }: { card: PublicCareerCard; highlight: bo
       </div>
     </div>
   );
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
+  const { code } = await params;
+  const { supabase } = await getCurrentUserAndPlayer();
+  const card = await getPublicCareerCard(supabase, code);
+  if (!card) return { title: "Enlace no encontrado", robots: { index: false } };
+  const resumen = `${card.display_name} (${card.club}, ${card.age} años): media ${card.media}, ${card.stats_goals} goles, ${card.stats_assists} asistencias y ${card.stats_titles} títulos en ${card.stats_matches_played} partidos. ¿Puedes superarlo?`;
+  const titulo = `La carrera de ${card.display_name} en Beyond 90`;
+  return {
+    title: `La carrera de ${card.display_name}`,
+    description: resumen,
+    robots: { index: false },
+    openGraph: { title: titulo, description: resumen },
+    twitter: { title: titulo, description: resumen },
+  };
 }
 
 export default async function CompararPage({ params }: { params: Promise<{ code: string }> }) {

@@ -6,6 +6,7 @@ import { seasonLabel, WEEKS_PER_SEASON } from "@/types/career";
 import { getGameDateLabel } from "@/lib/calendar/season";
 import { BottomNav } from "@/components/BottomNav";
 import { playerMonthlyNet, playerAnnualGross } from "@/lib/narrative/transfer-terms";
+import { contractUntil, TURNS_PER_YEAR } from "@/lib/narrative/contract-renewal";
 import { readRent } from "@/lib/finance/rent";
 import { findPropertyPrompt, findPropertyInteriorPrompt } from "@/lib/narrative/events";
 import { readProperties, monthlyPayment, remainingLoan, totalMonthlyPayments, propertyValue as propertyValueOf } from "@/lib/finance/mortgage";
@@ -394,6 +395,13 @@ export default async function PatrimonioPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">Sueldo de {player.club}</p>
                   <p className="text-xs text-muted-foreground">Cada mes, automático · {playerAnnualGross(player).toLocaleString("es")} € brutos al año, tras impuestos y comisiones</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(() => {
+                      const left = contractUntil(player) - player.week;
+                      if (left <= 0) return "Contrato vencido: toca decidir si renuevas o te marchas.";
+                      return left <= TURNS_PER_YEAR ? `Contrato: te queda ${left <= 1 ? "1 mes" : `${left} meses`} (última temporada).` : `Contrato: vence dentro de ${(left / TURNS_PER_YEAR).toFixed(1).replace(".", ",")} temporadas.`;
+                    })()}
+                  </p>
                 </div>
                 <span className="font-num shrink-0 text-sm font-bold text-pitch">+{monthlySalary.toLocaleString("es")} €</span>
               </li>

@@ -5056,43 +5056,6 @@ export const EVENTS: GameEvent[] = [
     minWeek: 55,
   },
   {
-    id: "rep-renovacion-contrato",
-    category: "representante",
-    priority: true,
-    title: "El club quiere que sigas",
-    description:
-      "El club te ofrece una renovación antes de que expire tu contrato actual: quieren dejar claro que cuentan contigo a largo plazo. Tu representante ya se ha sentado a hablar números con el director deportivo.",
-    isMilestone: true,
-    milestoneType: "contrato",
-    imageScene:
-      "Photorealistic photo of the photographed man holding up a club jersey with a new contract on the table, sitting next to a club director in a suit, official club office, camera flashes, warm lighting",
-    options: [
-      {
-        id: "a",
-        label: "Firmar sin dilatarlo, quieres seguir aquí",
-        subtitle: "+Relación con la afición",
-        consequences: { rel_aficion: 8, moral: 6 },
-        outcomeText: "Firmas sin regatear. En la rueda de prensa, la afición aplaude con fuerza cuando dices 'esta es mi casa'.",
-      },
-      {
-        id: "b",
-        label: "Usar el interés de otros clubes para mejorar las condiciones",
-        subtitle: "+Patrimonio, jugada más fría",
-        consequences: { patrimonio: 20000, rel_representante: 5, rel_aficion: -2 },
-        outcomeText: "Dejas que se filtre el interés de otros clubes. El club, nervioso, mejora la oferta en 48 horas. Tu representante te guiña un ojo.",
-      },
-      {
-        id: "c",
-        label: "Pedir una cláusula de salida más baja, por si acaso",
-        subtitle: "Te cubres las espaldas",
-        consequences: { rel_representante: 3 },
-        outcomeText: "Pides la cláusula y el club suelta un suspiro. 'Va en serio', murmura el director deportivo, sin enfadarse, pero tomando nota.",
-      },
-    ],
-    minWeek: 45,
-    minMedia: 58,
-  },
-  {
     id: "fork-ascenso-division",
     category: "partido",
     priority: true,

@@ -156,6 +156,20 @@ export interface OfferCfg {
 
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
+/** Una temporada = 10 turnos: lo que dura un año de contrato (ver contract-renewal.ts). */
+const TURNS_PER_CONTRACT_YEAR = 10;
+
+/** Todo lo que fija un contrato firmado: sueldo (cifra fija mientras sigas en ese club) y cuándo vence. */
+export function contractFlags(player: Pick<Player, "media" | "week">, annual: number, forClub: string, years: number): Record<string, string> {
+  return {
+    salary_mult: (annual / Math.max(1, baseAnnual(player.media ?? 50) * clubTier(forClub))).toFixed(3),
+    salary_fixed: String(annual),
+    salary_fix_v: "2",
+    salary_club: forClub,
+    contract_until: String(player.week + Math.max(1, years) * TURNS_PER_CONTRACT_YEAR),
+  };
+}
+
 /** Las cuatro salidas de una oferta con cifras: firmar, regatear con el club que ofrece, usarla en tu club y rechazar. */
 export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOption[] {
   const { club, art } = cfg;
@@ -165,18 +179,13 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
   const haggleBonus = Math.round((t.bonus * 1.35) / 1000) * 1000;
   const stayAnnual = round1k(t.currentAnnual * 1.18);
   const stayBonus = Math.max(2000, Math.round((t.currentAnnual * 0.1) / 1000) * 1000);
-  const dealFlags = (annual: number, forClub: string) => ({
-    salary_mult: (annual / Math.max(1, baseAnnual(player.media ?? 50) * clubTier(forClub))).toFixed(3),
-    salary_fixed: String(annual),
-    salary_fix_v: "2",
-    salary_club: forClub,
-  });
+  const dealFlags = (annual: number, forClub: string, years: number) => contractFlags(player, annual, forClub, years);
   return [
     {
       id: "fichar",
       label: `Aceptar: ${eur(t.offeredAnnual)} al año, ${t.years} años`,
       subtitle: `Fichar por ${art(club)} · prima ${eur(t.bonus)} · incorporación inmediata`,
-      consequences: { club, fama: 6, moral: 4, rel_vestuario: -4, rel_aficion: -5, patrimonio: t.bonus, flags: { ...close, ...sign, ...dealFlags(t.offeredAnnual, club) } },
+      consequences: { club, fama: 6, moral: 4, rel_vestuario: -4, rel_aficion: -5, patrimonio: t.bonus, flags: { ...close, ...sign, ...dealFlags(t.offeredAnnual, club, t.years) } },
       outcomeText: `Firmas ${t.years} años con ${art(club)}: ${eur(t.offeredAnnual)} brutos al año y ${eur(t.bonus)} de prima. ${cfg.farewell ?? "En el vestuario te despiden con abrazos sinceros... y alguna mirada fría que no se molesta en disimular."}`,
     },
     {
@@ -189,7 +198,7 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
         statModifier: "reputacion",
         success: {
           text: `${cap(art(club))} cede: ${eur(haggleAnnual)} al año y ${eur(haggleBonus)} de prima. Tu representante sale del despacho con una sonrisa que da miedo.`,
-          consequences: { club, fama: 6, moral: 6, rel_vestuario: -4, rel_aficion: -5, patrimonio: haggleBonus, flags: { ...close, ...sign, ...dealFlags(haggleAnnual, club) } },
+          consequences: { club, fama: 6, moral: 6, rel_vestuario: -4, rel_aficion: -5, patrimonio: haggleBonus, flags: { ...close, ...sign, ...dealFlags(haggleAnnual, club, t.years) } },
         },
         fail: {
           text: `Te pasas de listo: ${art(club)} da un paso atrás y retira la oferta. Te quedas donde estabas y con la sensación de haberlo dejado escapar.`,
@@ -207,7 +216,7 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
         statModifier: "reputacion",
         success: {
           text: `Tu club se asusta y mejora tu contrato: ${eur(stayAnnual)} brutos al año y ${eur(stayBonus)} de prima por renovar. Ganas peso en el vestuario y en la cuenta.`,
-          consequences: { patrimonio: stayBonus, rel_entrenador: 3, moral: 4, flags: { ...close, ...dealFlags(stayAnnual, player.club) } },
+          consequences: { patrimonio: stayBonus, rel_entrenador: 3, moral: 4, flags: { ...close, ...dealFlags(stayAnnual, player.club, Math.max(2, t.years - 1)) } },
         },
         fail: {
           text: `Tu club se lo toma mal, se enfría todo y ${art(club)} se echa atrás. Te quedas sin oferta y con el ambiente raro.`,

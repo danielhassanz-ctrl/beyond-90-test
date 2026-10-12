@@ -76,6 +76,7 @@ import { BANK_SCENES } from "@/lib/narrative/bank/scenes";
 import { fillBankEvent } from "@/lib/narrative/bank/select";
 import { pickBankScene, recycleBankScenes } from "@/lib/narrative/bank/select";
 import { shouldTriggerInvestmentReview, buildInvestmentReviewEvent } from "@/lib/narrative/investment-review";
+import { shouldTriggerContractRenewal, buildContractRenewalEvent } from "@/lib/narrative/contract-renewal";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
 import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
@@ -3528,6 +3529,12 @@ export async function pickNextEventDynamic(
         return maybeAddFreeText(ev);
       }
     }
+  }
+  // El contrato del club: última temporada (renovar, pedir más o salir libre) y fin de contrato.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerContractRenewal(playerWithDynamics)) {
+    const contract = buildContractRenewalEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Contrato: "${contract.title}"`);
+    return contract;
   }
   // Una inversión que ya lleva una temporada: tu representante te dice qué vale hoy y decides mantenerla, venderla o meter más.
   if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerInvestmentReview(playerWithDynamics)) {
