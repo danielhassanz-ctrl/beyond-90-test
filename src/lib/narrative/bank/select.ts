@@ -3,6 +3,7 @@
  * del jugador y prioriza lo encadenado (una decisión anterior que ya toca
  * cobrar) sobre lo suelto. Ver types.ts.
  */
+import { cityOfClub } from "@/lib/narrative/cities";
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { playerAge } from "@/types/career";
@@ -194,6 +195,7 @@ export function fillBankEvent<T extends Omit<GameEvent, "id">>(event: T, player:
   const fill = (t: string) =>
     fillRivals(t)
       .replace(/\{el_club\}/g, club === "tu club" ? "tu club" : clubWithArticle(club))
+      .replace(/\{ciudad\}/g, club === "tu club" ? "tu ciudad" : cityOfClub(club))
       .replace(/\{club\}/g, club)
       .replace(/\{el_interes\}/g, withArt(interes, "un club importante"))
       .replace(/\{interes\}/g, interes)

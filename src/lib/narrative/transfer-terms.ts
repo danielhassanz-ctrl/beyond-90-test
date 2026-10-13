@@ -12,6 +12,7 @@
  */
 import type { EventOption } from "@/types/career";
 import type { Player } from "@/types/player";
+import { buildFarewell } from "@/lib/narrative/farewell";
 import { getClubLevel } from "@/lib/calendar/match-calendar";
 import { computeRole } from "@/lib/narrative/role";
 
@@ -256,7 +257,7 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
       label: `Aceptar: ${eur(t.offeredAnnual)} al año, ${t.years} años`,
       subtitle: `Fichar por ${art(club)} · prima ${eur(t.bonus)} · incorporación inmediata`,
       consequences: { club, fama: 6, moral: 4, rel_vestuario: -4, rel_aficion: -5, patrimonio: t.bonus, flags: { ...close, ...sign, ...dealFlags(t.offeredAnnual, club, t.years, t.clauseM) } },
-      outcomeText: `Firmas ${t.years} años con ${art(club)}: ${eur(t.offeredAnnual)} brutos al año y ${eur(t.bonus)} de prima. ${cfg.farewell ?? "En el vestuario te despiden con abrazos sinceros... y alguna mirada fría que no se molesta en disimular."}`,
+      outcomeText: `Firmas ${t.years} años con ${art(club)}: ${eur(t.offeredAnnual)} brutos al año y ${eur(t.bonus)} de prima. ${cfg.farewell ?? buildFarewell(player)}`,
     },
     {
       id: "regatear",

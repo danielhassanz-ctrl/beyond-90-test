@@ -11,7 +11,7 @@ export const PAREJA4: BankScene[] = [
   // ───── Ella echa raíces ─────
   S("p4-ciudad-feliz", "pareja", { flags: ["pareja", "pareja_encantada"], notFlags: ["p4_feliz"], minAge: 19, clubTurns: [4, 400] }, "vida",
     "{pareja} ya se siente de aquí",
-    "Lo notas en las pequeñas cosas: conoce al panadero por su nombre, ha encontrado «su» cafetería y el domingo te arrastra a un mercadillo del que no sabías nada. En {club} ha echado raíces antes que tú. Esta noche, sin que venga a cuento, te lo dice: «Aquí soy feliz. No me importaría quedarme muchos años».",
+    "Lo notas en las pequeñas cosas: conoce al panadero por su nombre, ha encontrado «su» cafetería y el domingo te arrastra a un mercadillo del que no sabías nada. En {ciudad} ha echado raíces antes que tú. Esta noche, sin que venga a cuento, te lo dice: «Aquí soy feliz. No me importaría quedarme muchos años».",
     [
       o("a", "Decirle que tú también, y que no tienes prisa por irte", "Echar raíces juntos", { moral: 6, rel_aficion: 1, flags: { pareja_delta: "8", p4_feliz: true } }, "Le coges la mano por encima de la mesa y se lo prometes sin pensarlo demasiado. Esa noche duerme con la tranquilidad de quien sabe dónde está su casa. Tú, con un nudo agradable: has dicho en voz alta que aquí quieres estar."),
       o("b", "Agradecérselo, pero recordarle que el fútbol manda", "Honesto, aunque frío", { moral: 1, flags: { pareja_delta: "-3", p4_feliz: true } }, "Se lo dices con cariño, pero lo dices: las carreras cambian de ciudad cuando toca. Ella asiente, sonríe a medias y recoge los platos antes de tiempo. No es un reproche; es una nota mental que se queda guardada."),
@@ -20,7 +20,7 @@ export const PAREJA4: BankScene[] = [
 
   // ───── Ella no se adapta ─────
   S("p4-ciudad-dura", "pareja", { flags: ["pareja", "pareja_reacia"], notFlags: ["p4_dura"], minAge: 19, clubTurns: [4, 400] }, "vida",
-    "{pareja} no se adapta a {club}",
+    "{pareja} no se adapta a {ciudad}",
     "Llevas semanas notándolo: sale menos, llama más a su madre y a las once de la noche, cuando termina la cena, mira por la ventana como quien espera que aparezca otra ciudad. Hoy te lo suelta en la cocina: «Aquí no estoy bien. No es por ti. Es la ciudad, la gente, el idioma… Me siento sola».",
     [
       o("a", "Escucharla de verdad y prometerle que lo pensaréis juntos", "Ponerte de su lado", { moral: -1, flags: { pareja_delta: "7", p4_dura: "a" } }, "Dejas el móvil, te sientas en el suelo de la cocina y la escuchas una hora sin interrumpir. Al final no hay soluciones, pero hay algo mejor: ella sabe que lo ha dicho y que alguien la ha oído. «Gracias por no decirme que se pasa solo», susurra."),

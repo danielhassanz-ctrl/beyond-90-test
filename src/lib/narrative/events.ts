@@ -4,6 +4,7 @@ import { PRO_RETIREMENT_MIN_WEEK } from "@/types/career";
 import type { Player } from "@/types/player";
 import { pickStartingClubOffers, type ClubOffer } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
+import { cityOfClub } from "@/lib/narrative/cities";
 import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
 import { investmentFlag } from "@/lib/finance/investments";
@@ -6934,17 +6935,7 @@ export const EVENTS: GameEvent[] = [
 
 /* ─────────────── Mudanza a la ciudad de un club nuevo: vivienda y coche ─────────────── */
 
-const CITY_BY_CLUB: Record<string, string> = {
-  "Bayern de Múnich": "Múnich", "Borussia Dortmund": "Dortmund", "Bayer Leverkusen": "Leverkusen", "RB Leipzig": "Leipzig", "Eintracht Fráncfort": "Fráncfort",
-  "Manchester City": "Mánchester", "Manchester United": "Mánchester", "Liverpool FC": "Liverpool", Arsenal: "Londres", Chelsea: "Londres", "Tottenham Hotspur": "Londres",
-  "West Ham United": "Londres", Fulham: "Londres", Brentford: "Londres", "Crystal Palace": "Londres", "Newcastle United": "Newcastle", "Aston Villa": "Birmingham",
-  "Paris Saint-Germain": "París", "Olympique de Marsella": "Marsella", "AS Mónaco": "Mónaco", "Olympique de Lyon": "Lyon", "LOSC Lille": "Lille",
-  Juventus: "Turín", Torino: "Turín", "Inter de Milán": "Milán", "AC Milan": "Milán", "AS Roma": "Roma", Lazio: "Roma", "SSC Nápoles": "Nápoles", Atalanta: "Bérgamo", Fiorentina: "Florencia",
-  "Al-Nassr FC": "Riad", "Al-Hilal": "Riad", "Real Madrid": "Madrid", "Atlético de Madrid": "Madrid", "Getafe CF": "Madrid", "Rayo Vallecano": "Madrid", "FC Barcelona": "Barcelona",
-  "Sevilla FC": "Sevilla", "Real Betis": "Sevilla", "Valencia CF": "Valencia", "Villarreal CF": "Villarreal", "Athletic Club": "Bilbao", "Real Sociedad": "San Sebastián",
-  "Girona FC": "Girona", "Celta de Vigo": "Vigo", "Málaga CF": "Málaga",
-};
-export const cityOfClub = (club: string): string => CITY_BY_CLUB[club] ?? club;
+export { cityOfClub };
 
 /** Identificador estable por club para las escenas de mudanza (una vivienda y un coche por cada club nuevo). */
 export function cityMoveIds(club: string): { casa: string; coche: string } {

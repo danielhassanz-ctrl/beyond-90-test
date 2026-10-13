@@ -46,6 +46,11 @@ const withOp = addPartnerOpinion(ev, { club: "Liverpool FC", flags: { pareja: "M
 ok(/Marta/.test(withOp.description) && withOp.description.startsWith("Hay oferta."), `el texto recoge su opinión: «${withOp.description.split("\n\n")[1]}»`);
 ok(addPartnerOpinion(ev, { club: "Liverpool FC", flags: {} }).description === "Hay oferta.", "sin pareja, el texto no cambia");
 
+ok(moveReaction("Marta Vidal", "Real Madrid", "Atlético de Madrid") === null, "cambiar de equipo sin cambiar de ciudad (Real Madrid → Atlético) no es una mudanza para ella");
+ok(cityStance("Marta Vidal", "Real Madrid") === cityStance("Marta Vidal", "Atlético de Madrid"), "las dos de Madrid le parecen la misma ciudad");
+const conCiudad = addPartnerOpinion({ ...ev, options: [{ id: "a", label: "x", subtitle: "", consequences: { club: "Bayern de Múnich" } }] } as any, { club: "Liverpool FC", flags: { pareja: "Marta Vidal" } });
+ok(!/Bayern de Múnich/.test(conCiudad.description.split("\n\n")[1] ?? "") && /Múnich/.test(conCiudad.description), "habla de la ciudad (Múnich), no del club");
+
 console.log("4) La historia con una chica no se pierde");
 const cena = CHICAS.find((x) => x.id === "bank-ch-nerea-cena")!;
 const fl: any = { ch_en_curso: "nerea", ch_nerea: "dm", [bankFlagKey("bank-ch-nerea-dm")]: "a:100" };

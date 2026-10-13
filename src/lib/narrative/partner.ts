@@ -12,6 +12,7 @@
  *   pareja_baja / pareja_rota_ya / pareja_reacia / pareja_encantada   estados que desbloquean escenas
  */
 import { canonicalClub } from "@/lib/calendar/leagues";
+import { cityOfClub } from "@/lib/narrative/cities";
 import type { GameEvent } from "@/types/career";
 
 type Flags = Record<string, string | boolean>;
@@ -42,9 +43,12 @@ function hash(s: string): number {
   return (h >>> 0) % 100;
 }
 
-/** Cómo lleva ELLA vivir en esa ciudad: fijo para cada pareja y club (a unas ciudades se adapta y a otras no). */
+/** La ciudad donde vivirías jugando en ese club (Real Madrid y Atlético son la misma: Madrid). */
+const cityName = (club: string) => cityOfClub(canonicalClub(club)) || club;
+
+/** Cómo lleva ELLA vivir en esa CIUDAD (no en el club): fijo para cada pareja y ciudad. */
 export function cityStance(partner: string, club: string): CityStance {
-  const v = hash(`${partner}|${canonicalClub(club)}`);
+  const v = hash(`${partner}|${cityName(club)}`);
   return v < 35 ? "encantada" : v < 65 ? "neutral" : "reacia";
 }
 
@@ -58,13 +62,14 @@ export function describeRel(rel: number): string {
 
 export function describeCity(partner: string, club: string): string {
   const name = partnerFirstName(partner);
+  const city = cityName(club);
   switch (cityStance(partner, club)) {
     case "encantada":
-      return `${name} está encantada con la vida en ${club}.`;
+      return `${name} está encantada con la vida en ${city}.`;
     case "reacia":
-      return `${name} no acaba de adaptarse a ${club} y echa de menos su casa.`;
+      return `${name} no acaba de adaptarse a ${city} y echa de menos su casa.`;
     default:
-      return `${name} lleva bien lo de vivir en ${club}, sin más.`;
+      return `${name} lleva bien lo de vivir en ${city}, sin más.`;
   }
 }
 
@@ -75,15 +80,18 @@ export interface MoveReaction {
 
 /** Qué le parece a tu pareja que cambies de {fromClub} a {toClub}: cuánto cambia la relación y qué dice. */
 export function moveReaction(partner: string, fromClub: string, toClub: string): MoveReaction | null {
-  if (canonicalClub(fromClub) === canonicalClub(toClub)) return null;
+  const fromCity = cityName(fromClub);
+  const toCity = cityName(toClub);
+  // Cambiar de equipo sin cambiar de ciudad (Real Madrid ↔ Atlético) no es una mudanza: ella no tiene nada que decir.
+  if (fromCity === toCity) return null;
   const name = partnerFirstName(partner);
   const from = cityStance(partner, fromClub);
   const to = cityStance(partner, toClub);
-  if (to === "encantada" && from === "reacia") return { delta: 12, text: `${name} se echa a llorar de alegría: por fin se va de una ciudad que se le hacía cuesta arriba, y ${toClub} le encanta.` };
-  if (to === "reacia" && from === "encantada") return { delta: -14, text: `${name} no dice nada en toda la cena. Dejar ${fromClub} le parte el alma y ${toClub} no le entusiasma nada.` };
-  if (to === "reacia") return { delta: -9, text: `${name} asiente, pero se le nota el nudo en la garganta: ${toClub} no es la ciudad en la que se ve viviendo.` };
-  if (from === "reacia") return { delta: 6, text: `${name} respira aliviada: cambiar de aires le viene bien después de lo que le costó adaptarse en ${fromClub}.` };
-  if (to === "encantada") return { delta: 5, text: `${name} sonríe: ${toClub} le gusta y ya se imagina allí.` };
+  if (to === "encantada" && from === "reacia") return { delta: 12, text: `${name} se echa a llorar de alegría: por fin se va de una ciudad que se le hacía cuesta arriba, y ${toCity} le encanta.` };
+  if (to === "reacia" && from === "encantada") return { delta: -14, text: `${name} no dice nada en toda la cena. Dejar ${fromCity} le parte el alma y ${toCity} no le entusiasma nada.` };
+  if (to === "reacia") return { delta: -9, text: `${name} asiente, pero se le nota el nudo en la garganta: ${toCity} no es la ciudad en la que se ve viviendo.` };
+  if (from === "reacia") return { delta: 6, text: `${name} respira aliviada: cambiar de aires le viene bien después de lo que le costó adaptarse en ${fromCity}.` };
+  if (to === "encantada") return { delta: 5, text: `${name} sonríe: ${toCity} le gusta y ya se imagina allí.` };
   return { delta: -2, text: `${name} lo acepta sin pegas, aunque otra mudanza más le cansa.` };
 }
 
@@ -94,10 +102,12 @@ export function partnerOpinionLine(partner: string, fromClub: string, toClub: st
   const name = partnerFirstName(partner);
   const to = cityStance(partner, toClub);
   const from = cityStance(partner, fromClub);
-  if (to === "reacia" && from === "encantada") return `${name} te ha dejado claro lo que piensa: es feliz aquí y no quiere irse a ${toClub}.`;
-  if (to === "reacia") return `${name} duda de ${toClub}: no se ve viviendo allí.`;
+  const fromCity = cityName(fromClub);
+  const toCity = cityName(toClub);
+  if (to === "reacia" && from === "encantada") return `${name} te ha dejado claro lo que piensa: es feliz en ${fromCity} y no quiere mudarse a ${toCity}.`;
+  if (to === "reacia") return `${name} duda de ${toCity}: no se ve viviendo allí.`;
   if (from === "reacia") return `${name} lleva meses pidiendo un cambio de aires: con esto, se le ilumina la cara.`;
-  if (to === "encantada") return `${name} ya ha mirado fotos de ${toClub} y le encanta la idea.`;
+  if (to === "encantada") return `${name} ya ha mirado fotos de ${toCity} y le encanta la idea.`;
   return `${name} te apoyará, aunque otra mudanza le pesa.`;
 }
 
@@ -137,7 +147,7 @@ export function stepPartner(flags: Flags | null | undefined, input: PartnerStepI
   if (Number.isFinite(explicit) && explicit !== 0) delta += explicit;
   else if (/^bank-(pa|p2|p3|p4)-/.test(input.eventId)) delta += Math.round((input.moral ?? 0) * 0.8);
 
-  if (input.newClub && canonicalClub(input.newClub) !== canonicalClub(input.club)) {
+  if (input.newClub && cityName(input.newClub) !== cityName(input.club)) {
     const react = moveReaction(partner, input.club, input.newClub);
     if (react) {
       delta += react.delta;
