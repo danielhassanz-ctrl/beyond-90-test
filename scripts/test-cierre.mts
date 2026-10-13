@@ -34,6 +34,8 @@ let r = await getCompetitionStats(fakeSupabase(), { id: "p", week: 56, nation: "
 ok(r.season.liga.matches === 4 && r.season.liga.goals === 2, `Liverpool: ${r.season.liga.matches} partidos, ${r.season.liga.goals} goles`);
 ok(r.previous.length === 1 && r.previous[0].club === "Bayern de Múnich" && r.previous[0].stats.liga.matches === 3 && r.previous[0].stats.liga.goals === 3, `Bayern aparte: ${r.previous[0]?.stats.liga.matches} partidos, ${r.previous[0]?.stats.liga.goals} goles`);
 ok(r.career.liga.matches === 7, "la carrera suma los dos");
+const rowsSeason = r.history.filter((h) => h.idx === SEASON && h.team === "club");
+ok(rowsSeason.length === 2 && rowsSeason[0].club === "Bayern de Múnich" && rowsSeason[0].matches === 3 && rowsSeason[1].matches === 4, `Trayectoria: la temporada se reparte en una fila por club (${rowsSeason.map((x) => x.club + " " + x.matches).join(" · ")})`);
 
 console.log("3) Cambio de club anterior a este registro y recién hecho (tu caso)");
 let f2: any = { club_since: "53", clubs_history: "Real Betis|Bayern de Múnich" };

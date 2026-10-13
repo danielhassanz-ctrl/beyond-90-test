@@ -11,6 +11,7 @@ import { PropertyActions } from "@/components/PropertyActions";
 import { cityOfClub } from "@/lib/narrative/events";
 import { readRent } from "@/lib/finance/rent";
 import { findPropertyPrompt, findPropertyInteriorPrompt } from "@/lib/narrative/events";
+import { repairPropertyCities } from "@/lib/finance/property-city";
 import { readProperties, monthlyPayment, remainingLoan, originalLoan, totalMonthlyPayments, propertyValue as propertyValueOf, canRent, propertyRentMonthly, totalRentalIncome, saleProceeds } from "@/lib/finance/mortgage";
 import { readInvestments, investmentValue } from "@/lib/finance/investments";
 import { activeSponsorships } from "@/lib/finance/sponsorship-income";
@@ -111,6 +112,8 @@ export default async function PatrimonioPage() {
 
   // Compras antiguas que no se pagaron enteras: se recalculan una sola vez.
   await repairCashPurchases(supabase, player);
+  // Propiedades de antes sin ciudad: se recupera la del club en el que estabas al comprarlas (y ya no se pierde al cambiar de club).
+  await repairPropertyCities(supabase, player);
 
   const { data: allEvents } = await fetchAllRows<{
     id: string; event_id: string; week: number; title: string; category: string; consequences: unknown; chosen_option_label: string | null; created_at: string;

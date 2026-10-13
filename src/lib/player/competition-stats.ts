@@ -50,6 +50,10 @@ export interface SeasonHistoryRow {
   trophies: TrofeoKind[];
   /** Qué es cada trofeo (misma posición que `trophies`): «Champions League · Real Madrid · 2029/30». */
   trophyLabels: string[];
+  /** Fila de un club que dejaste a mitad de esa temporada (la temporada se reparte en una fila por club). */
+  fixedClub?: string;
+  /** Orden dentro de la temporada: los clubes que dejaste (0, 1…) van antes que el actual. */
+  seg?: number;
   label: string;
   matches: number;
   goals: number;
@@ -207,8 +211,15 @@ export async function getCompetitionStats(
       const idx = statSeasonOf(row.week, row.event_id);
       const { comp, torneo } = classifyMatch(row.title, row.description);
       const teamOf: SeasonHistoryRow["team"] = comp === "seleccion" ? "seleccion" : filialUntil > 0 && row.week <= filialUntil ? "filial" : "club";
-      const hKey = `${idx}:${teamOf}`;
+      let hKey = `${idx}:${teamOf}`;
+      // Una temporada en la que cambiaste de club se reparte en una fila por club: lo jugado antes del corte es del anterior.
+      const gi = idx === currentSeasonIdx && teamOf === "club" ? segments.findIndex((g) => row.week < g.sp.w) : -1;
+      if (gi >= 0) hKey = `${idx}:club@${segments[gi].sp.club}`;
       const hist = bySeason.get(hKey) ?? newRow(idx, teamOf);
+      if (gi >= 0) {
+        hist.fixedClub = segments[gi].sp.club;
+        hist.seg = gi;
+      }
       hist.matches += 1;
       hist.goals += u.goals ?? 0;
       hist.assists += u.assists ?? 0;
@@ -229,6 +240,8 @@ export async function getCompetitionStats(
   for (const [idx, sim] of readAllSim(flags)) {
     const total = sumSim(sim);
     if (total.matches === 0) continue;
+    const segSum = segments.map(() => ({ matches: 0, goals: 0, assists: 0, minutes: 0 }));
+    const restSum = { matches: 0, goals: 0, assists: 0, minutes: 0 };
     for (const k of Object.keys(sim) as SimComp[]) {
       const c = sim[k];
       career[k].matches += c.matches;
@@ -250,6 +263,10 @@ export async function getCompetitionStats(
           g.stats[k].goals += part.goals;
           g.stats[k].assists += part.assists;
           g.stats[k].minutes += part.minutes;
+          segSum[i].matches += part.matches;
+          segSum[i].goals += part.goals;
+          segSum[i].assists += part.assists;
+          segSum[i].minutes += part.minutes;
           if (i === segments.length - 1) {
             rest = {
               matches: Math.max(0, c.matches - g.sp.sim[k].matches),
@@ -263,14 +280,31 @@ export async function getCompetitionStats(
         season[k].goals += rest.goals;
         season[k].assists += rest.assists;
         season[k].minutes += rest.minutes;
+        restSum.matches += rest.matches;
+        restSum.goals += rest.goals;
+        restSum.assists += rest.assists;
+        restSum.minutes += rest.minutes;
       }
     }
-    const hist = bySeason.get(`${idx}:club`) ?? newRow(idx, "club");
-    hist.matches += total.matches;
-    hist.goals += total.goals;
-    hist.assists += total.assists;
-    hist.minutes += total.minutes;
-    bySeason.set(`${idx}:club`, hist);
+    const addTo = (key: string, v: { matches: number; goals: number; assists: number; minutes: number }, fixed?: string, seg?: number) => {
+      if (fixed && v.matches === 0) return;
+      const h = bySeason.get(key) ?? newRow(idx, "club");
+      h.matches += v.matches;
+      h.goals += v.goals;
+      h.assists += v.assists;
+      h.minutes += v.minutes;
+      if (fixed) {
+        h.fixedClub = fixed;
+        h.seg = seg;
+      }
+      bySeason.set(key, h);
+    };
+    if (idx === currentSeasonIdx && segments.length > 0) {
+      segments.forEach((g, i) => addTo(`${idx}:club@${g.sp.club}`, segSum[i], g.sp.club, i));
+      addTo(`${idx}:club`, restSum);
+    } else {
+      addTo(`${idx}:club`, total);
+    }
   }
 
   // Palmarés real: los trofeos los decide el código (ver honours.ts), no el texto de las crónicas.
@@ -293,10 +327,10 @@ export async function getCompetitionStats(
   const firstKnown = clubAtSeasonEnd(flags, -1, clubChanges, lastHistoryClub) || undefined;
   for (const row of bySeason.values()) {
     const c = clubAtSeasonEnd(flags, row.idx, clubChanges, lastHistoryClub, trophyClub.get(row.idx)) || firstKnown;
-    row.club = row.team === "seleccion" ? player.nation : row.team === "filial" ? (c ? `${c} B` : "Filial") : c;
+    row.club = row.fixedClub ?? (row.team === "seleccion" ? player.nation : row.team === "filial" ? (c ? `${c} B` : "Filial") : c);
   }
   const order = { filial: 0, club: 1, seleccion: 2 } as const;
-  const history = [...bySeason.values()].sort((x, y) => x.idx - y.idx || order[x.team] - order[y.team]);
+  const history = [...bySeason.values()].sort((x, y) => x.idx - y.idx || order[x.team] - order[y.team] || (x.seg ?? 99) - (y.seg ?? 99));
   const previous: PreviousClubStats[] = segments
     .map((g) => ({ club: g.sp.club, stats: g.stats }))
     .filter((p) => p.stats.liga.matches + p.stats.champions.matches + p.stats.europa.matches + p.stats.copa.matches > 0);

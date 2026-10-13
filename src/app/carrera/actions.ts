@@ -33,6 +33,7 @@ import { annualSalaryText, playerMonthlyNet, marketValueM } from "@/lib/narrativ
 import { netWorth as playerNetWorth } from "@/lib/finance/net-worth";
 import { stepPartner } from "@/lib/narrative/partner";
 import { readExTies } from "@/lib/narrative/ex-clubs";
+import { stampPropertyCities } from "@/lib/finance/property-city";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, WEEKS_PER_SEASON, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
@@ -526,6 +527,8 @@ export async function resolveEvent(formData: FormData) {
       club_changes: String((parseInt(String(flagsSoFar.club_changes ?? "0"), 10) || 0) + 1),
       clubs_history: previousClubs.slice(-12).join("|"),
       club_since: String(newWeek),
+      // La ciudad de lo que compraste en el club que dejas (casas, yate...) se queda anotada.
+      ...(player.club && player.club !== NO_CLUB_YET ? stampPropertyCities(flagsSoFar, player.club) : {}),
       // Los cambios de club recientes (semana de cada uno): a más cambios, más temporadas sin ofertas (market-window.ts).
       club_moves: [...String(flagsSoFar.club_moves ?? "").split(",").filter(Boolean), String(newWeek)].slice(-6).join(","),
       // Cómo te llevabas con el club que dejas (para Vida y para cuando vuelvas): entrenador y vestuario al irte.
