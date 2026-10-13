@@ -62,6 +62,28 @@ export const eurFee = (millions: number) => (millions >= 1 ? `${Math.round(milli
 
 const round1k = (n: number) => Math.round(n / 1000) * 1000;
 
+/**
+ * Lo que vale hoy el jugador en el mercado, en millones: lo que pagaría un club por él. Es determinista (sin el azar de
+ * una oferta concreta) y sale de la media y la edad. Sirve de referencia para la cláusula de rescisión.
+ */
+export function marketValueM(player: Pick<Player, "media" | "week">): number {
+  const media = player.media ?? 50;
+  const age = 16 + Math.floor(player.week / 10);
+  let v = Math.max(0.4, Math.max(0, media - 48) ** 2 / 22);
+  v *= age >= 31 ? 0.45 : age >= 29 ? 0.75 : age <= 21 ? 1.35 : 1;
+  return v >= 10 ? Math.round(v) : Math.round(v * 10) / 10;
+}
+
+/**
+ * Tu cláusula de rescisión actual, en millones. Se fija al firmar (flags.contract_clause_m, válida mientras sigas en ese
+ * club); si no consta (carreras anteriores) se estima algo por encima de lo que vales ahora.
+ */
+export function releaseClauseM(player: Pick<Player, "media" | "week" | "club" | "flags">): number {
+  const stored = parseFloat(String(player.flags?.contract_clause_m ?? "0"));
+  if (stored > 0 && String(player.flags?.salary_club ?? "") === player.club) return stored;
+  return Math.max(1, Math.round(marketValueM(player) * 1.25));
+}
+
 /** El sueldo real del jugador al año, en texto (para la escena de la firma). */
 export function annualSalaryText(player: Pick<Player, "media" | "club" | "flags">): string {
   return `${eur(playerAnnualGross(player))} brutos al año`;
@@ -157,17 +179,64 @@ export interface OfferCfg {
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 /** Una temporada = 10 turnos: lo que dura un año de contrato (ver contract-renewal.ts). */
-const TURNS_PER_CONTRACT_YEAR = 10;
+export const TURNS_PER_YEAR = 10;
+const TURNS_PER_CONTRACT_YEAR = TURNS_PER_YEAR;
+
+/**
+ * Semana en que acaba el contrato actual. Si no consta (carreras anteriores, o cambio de club por una vía que no fija
+ * contrato) se deriva de cuándo llegaste al club: cuatro años de contrato, con un margen mínimo.
+ */
+export function contractUntil(player: Pick<Player, "week" | "club" | "flags">): number {
+  const f = player.flags ?? {};
+  const stored = parseInt(String(f.contract_until ?? "0"), 10) || 0;
+  if (stored > 0 && String(f.salary_club ?? "") === player.club) return stored;
+  const since = parseInt(String(f.club_since ?? "0"), 10) || 0;
+  return Math.max(since + 4 * TURNS_PER_YEAR, player.week + 6);
+}
+
+/** Turnos desde que firmaste o renovaste por última vez (un número grande si no consta). */
+export function turnsSinceContractSigned(player: Pick<Player, "week" | "flags">): number {
+  const signed = parseInt(String(player.flags?.contract_signed ?? "0"), 10) || 0;
+  return signed > 0 ? player.week - signed : 999;
+}
 
 /** Todo lo que fija un contrato firmado: sueldo (cifra fija mientras sigas en ese club) y cuándo vence. */
-export function contractFlags(player: Pick<Player, "media" | "week">, annual: number, forClub: string, years: number): Record<string, string> {
+export function contractFlags(
+  player: Pick<Player, "media" | "week">,
+  annual: number,
+  forClub: string,
+  years: number,
+  clauseM?: number,
+): Record<string, string> {
   return {
+    ...(clauseM && clauseM > 0 ? { contract_clause_m: String(clauseM) } : {}),
     salary_mult: (annual / Math.max(1, baseAnnual(player.media ?? 50) * clubTier(forClub))).toFixed(3),
     salary_fixed: String(annual),
     salary_fix_v: "2",
     salary_club: forClub,
     contract_until: String(player.week + Math.max(1, years) * TURNS_PER_CONTRACT_YEAR),
+    contract_signed: String(player.week),
   };
+}
+
+export interface RenewalDeal {
+  salary: number;
+  clauseM: number;
+  years: number;
+  bonus: number;
+}
+
+/**
+ * Lo que se pacta al renovar con tu club pidiendo mejoras. El sueldo sube por lo menos un 15 % y nunca baja de lo que
+ * ofrece el mercado; la cláusula se blinda (como mínimo el doble de lo que vales y un 50 % más que la anterior).
+ * `ask` > 1 pide más (cifras más altas).
+ */
+export function renewalDeal(player: Player, ask = 1): RenewalDeal {
+  const t = buildTerms(player, player.club, null);
+  const current = playerAnnualGross(player);
+  const salary = round1k(Math.max(current * 1.15, t.offeredAnnual) * ask);
+  const clauseM = Math.max(2, Math.round(Math.max(releaseClauseM(player) * 1.5, marketValueM(player) * 2) * ask));
+  return { salary, clauseM, years: t.years, bonus: Math.max(2000, round1k(salary * 0.1)) };
 }
 
 /** Las cuatro salidas de una oferta con cifras: firmar, regatear con el club que ofrece, usarla en tu club y rechazar. */
@@ -179,13 +248,14 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
   const haggleBonus = Math.round((t.bonus * 1.35) / 1000) * 1000;
   const stayAnnual = round1k(t.currentAnnual * 1.18);
   const stayBonus = Math.max(2000, Math.round((t.currentAnnual * 0.1) / 1000) * 1000);
-  const dealFlags = (annual: number, forClub: string, years: number) => contractFlags(player, annual, forClub, years);
+  const stayClauseM = Math.max(2, Math.round(Math.max(releaseClauseM(player) * 1.3, marketValueM(player) * 1.8)));
+  const dealFlags = (annual: number, forClub: string, years: number, clauseM?: number) => contractFlags(player, annual, forClub, years, clauseM);
   return [
     {
       id: "fichar",
       label: `Aceptar: ${eur(t.offeredAnnual)} al año, ${t.years} años`,
       subtitle: `Fichar por ${art(club)} · prima ${eur(t.bonus)} · incorporación inmediata`,
-      consequences: { club, fama: 6, moral: 4, rel_vestuario: -4, rel_aficion: -5, patrimonio: t.bonus, flags: { ...close, ...sign, ...dealFlags(t.offeredAnnual, club, t.years) } },
+      consequences: { club, fama: 6, moral: 4, rel_vestuario: -4, rel_aficion: -5, patrimonio: t.bonus, flags: { ...close, ...sign, ...dealFlags(t.offeredAnnual, club, t.years, t.clauseM) } },
       outcomeText: `Firmas ${t.years} años con ${art(club)}: ${eur(t.offeredAnnual)} brutos al año y ${eur(t.bonus)} de prima. ${cfg.farewell ?? "En el vestuario te despiden con abrazos sinceros... y alguna mirada fría que no se molesta en disimular."}`,
     },
     {
@@ -198,7 +268,7 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
         statModifier: "reputacion",
         success: {
           text: `${cap(art(club))} cede: ${eur(haggleAnnual)} al año y ${eur(haggleBonus)} de prima. Tu representante sale del despacho con una sonrisa que da miedo.`,
-          consequences: { club, fama: 6, moral: 6, rel_vestuario: -4, rel_aficion: -5, patrimonio: haggleBonus, flags: { ...close, ...sign, ...dealFlags(haggleAnnual, club, t.years) } },
+          consequences: { club, fama: 6, moral: 6, rel_vestuario: -4, rel_aficion: -5, patrimonio: haggleBonus, flags: { ...close, ...sign, ...dealFlags(haggleAnnual, club, t.years, t.clauseM) } },
         },
         fail: {
           text: `Te pasas de listo: ${art(club)} da un paso atrás y retira la oferta. Te quedas donde estabas y con la sensación de haberlo dejado escapar.`,
@@ -208,15 +278,15 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
     },
     {
       id: "negociar",
-      label: `Usar la oferta para subir tu sueldo aquí (a ${eur(stayAnnual)} al año)`,
+      label: `Usar la oferta para renovar aquí: ${eur(stayAnnual)} al año y cláusula de ${eurFee(stayClauseM)}`,
       subtitle: "Jugar tus cartas con tu club",
       consequences: {},
       resolve: {
         baseChance: 0.5,
         statModifier: "reputacion",
         success: {
-          text: `Tu club se asusta y mejora tu contrato: ${eur(stayAnnual)} brutos al año y ${eur(stayBonus)} de prima por renovar. Ganas peso en el vestuario y en la cuenta.`,
-          consequences: { patrimonio: stayBonus, rel_entrenador: 3, moral: 4, flags: { ...close, ...dealFlags(stayAnnual, player.club, Math.max(2, t.years - 1)) } },
+          text: `Tu club se asusta y mejora tu contrato: ${eur(stayAnnual)} brutos al año (antes ${eur(t.currentAnnual)}), ${eur(stayBonus)} de prima por renovar y la cláusula de rescisión sube de ${eurFee(releaseClauseM(player))} a ${eurFee(stayClauseM)}. Ganas peso en el vestuario y en la cuenta.`,
+          consequences: { patrimonio: stayBonus, rel_entrenador: 3, moral: 4, flags: { ...close, ...dealFlags(stayAnnual, player.club, Math.max(2, t.years - 1), stayClauseM) } },
         },
         fail: {
           text: `Tu club se lo toma mal, se enfría todo y ${art(club)} se echa atrás. Te quedas sin oferta y con el ambiente raro.`,

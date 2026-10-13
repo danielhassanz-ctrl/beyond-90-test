@@ -5,7 +5,7 @@ import { randomPersonName } from "@/lib/narrative/npcs";
 import { getEuropeanCompetitionFor, getClubLevel } from "@/lib/calendar/match-calendar";
 import { computeRole } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
-import { buildTerms, offerOptions, termsText } from "@/lib/narrative/transfer-terms";
+import { buildTerms, offerOptions, termsText, eur, eurFee, contractFlags, contractUntil, turnsSinceContractSigned, renewalDeal, releaseClauseM, marketValueM, playerAnnualGross } from "@/lib/narrative/transfer-terms";
 
 /**
  * Mercado de fichajes: dos ventanas por temporada (verano y enero) y en
@@ -175,6 +175,8 @@ function pickKind(player: Player): RumorKind {
   const options = [...weighted, ...extra].filter((k) => !lastTwo.includes(k));
   return pick(options);
 }
+
+const club0 = (p: Player) => p.club;
 
 export function buildMarketRumorEvent(player: Player): GameEvent {
   const w = getMarketWindow(player.week) ?? "verano";
@@ -377,31 +379,44 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
   }
 
   if (kind === "clausula") {
-    const raise = Math.round((6000 + (player.media ?? 50) * 250) / 500) * 500;
+    const clause = releaseClauseM(player);
+    const value = marketValueM(player);
+    const deal = renewalDeal(player);
+    const current = playerAnnualGross(player);
+    const cheap = clause < value * 0.95;
+    const verdict = cheap
+      ? `Tu cláusula es de ${eurFee(clause)} y ya vales más: tu valor de mercado ronda los ${eurFee(value)}. Es una ganga, y todos lo saben.`
+      : `Tu cláusula es de ${eurFee(clause)}, frente a un valor de mercado de unos ${eurFee(value)}.`;
     return {
       id,
       category: "representante",
       title: "Se filtra tu cláusula de rescisión",
-      description: `${outlet} publica la cifra de tu cláusula y dice que ${art(club)} estaría dispuesto a pagarla en ${label}. Tu club te cita en el despacho: quieren "hablar de tu futuro".`,
+      description: `${outlet} publica la cifra de tu cláusula y dice que ${art(club)} estaría dispuesto a pagarla en ${label}. ${verdict} Tu club te cita en el despacho: quieren "hablar de tu futuro".`,
       allowFreeText: true,
       freeTextPrompt: "El presidente te pregunta qué quieres. ¿Qué le dices?",
       options: [
         {
           id: "renovar-subir",
-          label: "Pedir renovar con la cláusula más alta",
-          subtitle: "Blindarte y cobrar más",
+          label: `Pedir renovar: cláusula de ${eurFee(clause)} a ${eurFee(deal.clauseM)} y ${eur(deal.salary)} al año`,
+          subtitle: `Blindarte y cobrar más · ${deal.years} años · ficha actual: ${eur(current)} brutos al año`,
           consequences: {},
           resolve: {
             baseChance: 0.5,
             statModifier: "reputacion",
-            success: { text: "El club cede: renuevas, te suben la cláusula y te mejoran la ficha. Mensaje claro a todo el mercado.", consequences: { patrimonio: raise, moral: 5, rel_entrenador: 3 } },
-            fail: { text: "El presidente se niega a tocar nada y la conversación acaba fría. Te quedas igual, pero con peor ambiente.", consequences: { moral: -4, rel_entrenador: -2 } },
+            success: {
+              text: `El club cede. Renuevas ${deal.years} años: tu ficha pasa de ${eur(current)} a ${eur(deal.salary)} brutos al año, la cláusula de rescisión sube de ${eurFee(clause)} a ${eurFee(deal.clauseM)} y cobras ${eur(deal.bonus)} de prima por firmar. Mensaje claro a todo el mercado.`,
+              consequences: { patrimonio: deal.bonus, moral: 5, rel_entrenador: 3, flags: contractFlags(player, deal.salary, club0(player), deal.years, deal.clauseM) },
+            },
+            fail: {
+              text: `El presidente se niega a tocar nada: tu cláusula se queda en ${eurFee(clause)} y tu ficha, en ${eur(current)} al año. La conversación acaba fría. Te quedas igual, pero con peor ambiente.`,
+              consequences: { moral: -4, rel_entrenador: -2 },
+            },
           },
         },
         {
           id: "dejar-que-pague",
           label: "Que pague quien te quiera: tú te dejas querer",
-          subtitle: "Poner el foco en la salida",
+          subtitle: `Poner el foco en la salida · tu cláusula: ${eurFee(clause)}`,
           consequences: { fama: 3, rel_aficion: -3, flags: interestFlags(club, week, source) },
           outcomeText: "La noticia corre por el club en una hora. En el vestuario te miran con otros ojos, y desde la grada alguien te grita 'mercenario' al salir del campo.",
         },
@@ -865,6 +880,8 @@ export function shouldTriggerOwnMoveDecision(player: Player): boolean {
   // de renovar): mínimo 20 turnos entre una y otra.
   const lastOwn = parseInt(String(player.flags?.market_own_last_week ?? "0"), 10) || 0;
   if (lastOwn > 0 && player.week - lastOwn < 20) return false;
+  // Si acabas de firmar o renovar, no tiene sentido preguntarte si te quedas: lo has decidido hace nada.
+  if (turnsSinceContractSigned(player) < 25) return false;
   const unhappy = (player.moral ?? 70) < 55 || (player.rel_entrenador ?? 60) < 50 || ["suplente", "apartado"].includes(computeRole(player).role);
   const outgrown = (player.media ?? 50) >= 75 && getEuropeanCompetitionFor(player.club)?.competition !== "champions";
   const chance = Math.min(0.85, 0.4 + (unhappy ? 0.3 : 0) + (outgrown ? 0.15 : 0));
@@ -891,7 +908,9 @@ export function buildOwnMoveEvent(player: Player): GameEvent {
   const bigger = pickInterestedClub(player);
   const minutesPool = (media >= 72 ? POOL_MID : POOL_LOW).filter((c) => c !== player.club);
   const minutesClub = pick(minutesPool.length ? minutesPool : POOL_LOW);
-  const raise = Math.round((7000 + media * 280) / 500) * 500;
+  const stayDeal = renewalDeal(player);
+  const stayCurrent = playerAnnualGross(player);
+  const stayClause = releaseClauseM(player);
   const unhappy = (player.moral ?? 70) < 55 || (player.rel_entrenador ?? 60) < 50 || ["suplente", "apartado"].includes(computeRole(player).role);
   const mood = unhappy
     ? "Llevas semanas con la cabeza en otra parte y todo el vestuario lo nota."
@@ -921,7 +940,7 @@ export function buildOwnMoveEvent(player: Player): GameEvent {
     ])}`,
     allowFreeText: true,
     freeTextPrompt: `Se lo dices a ${agent} sin filtros. ¿Qué quieres de verdad?`,
-    options: [
+    options: ownMoveOptions([
       {
         id: "pedir-salir",
         label: `Pedir salir del club y apostar por ${art(bigger)}`,
@@ -960,18 +979,18 @@ export function buildOwnMoveEvent(player: Player): GameEvent {
       },
       {
         id: "renovar",
-        label: "Pedir renovación con mejoras y quedarte",
-        subtitle: "Apostar por este proyecto",
+        label: `Pedir renovación con mejoras: ${eur(stayDeal.salary)} al año y cláusula de ${eurFee(stayDeal.clauseM)}`,
+        subtitle: `Apostar por este proyecto · ${stayDeal.years} años · hoy cobras ${eur(stayCurrent)} brutos al año`,
         consequences: {},
         resolve: {
           baseChance: 0.55,
           statModifier: "media",
           success: {
-            text: "El club te renueva y te sube la ficha. Ganas peso en el vestuario y la afición te lo agradece.",
-            consequences: { patrimonio: raise, moral: 4, rel_aficion: 5, rel_entrenador: 3 },
+            text: `El club te renueva ${stayDeal.years} años: tu ficha pasa de ${eur(stayCurrent)} a ${eur(stayDeal.salary)} brutos al año, la cláusula de rescisión sube de ${eurFee(stayClause)} a ${eurFee(stayDeal.clauseM)} y cobras ${eur(stayDeal.bonus)} de prima. Ganas peso en el vestuario y la afición te lo agradece.`,
+            consequences: { patrimonio: stayDeal.bonus, moral: 4, rel_aficion: 5, rel_entrenador: 3, flags: contractFlags(player, stayDeal.salary, player.club, stayDeal.years, stayDeal.clauseM) },
           },
           fail: {
-            text: "'Ahora no es el momento', te dicen. Sigues igual, pero sabiendo dónde estás.",
+            text: `'Ahora no es el momento', te dicen. Sigues con ${eur(stayCurrent)} brutos al año y una cláusula de ${eurFee(stayClause)}, pero sabiendo dónde estás.`,
             consequences: { moral: -3 },
           },
         },
@@ -983,8 +1002,32 @@ export function buildOwnMoveEvent(player: Player): GameEvent {
         consequences: { moral: 1, forma: 2, rel_entrenador: 2 },
         outcomeText: "Te quedas, sin aspavientos. En el siguiente entrenamiento nadie comenta nada, pero el míster te sitúa en el primer grupo.",
       },
-    ],
+    ], player),
   };
+}
+
+/**
+ * Las salidas de "¿te quedas o mueves ficha?" tienen que ser coherentes con lo que ya eres y has hecho:
+ *  - un titular no "busca un club donde jugar de verdad": ya juega;
+ *  - la renovación solo se pide si el contrato está en sus dos últimas temporadas (acabas de renovar → no sale);
+ *  - "quedarte" cambia de texto si ya eres titular.
+ */
+function ownMoveOptions(options: GameEvent["options"], player: Player): GameEvent["options"] {
+  const role = computeRole(player).role;
+  const yearsLeftTurns = contractUntil(player) - player.week;
+  return options
+    .filter((o) => o.id !== "buscar-minutos" || role !== "titular")
+    .filter((o) => o.id !== "renovar" || (yearsLeftTurns <= 2 * 10 && turnsSinceContractSigned(player) >= 25))
+    .map((o) =>
+      o.id === "competir" && role === "titular"
+        ? {
+            ...o,
+            label: "Quedarte: estás donde quieres estar",
+            subtitle: "Seguir a lo tuyo",
+            outcomeText: "Te quedas, sin aspavientos. Eres titular, juegas y el vestuario te respeta: no hay mucho más que decidir. En el siguiente entrenamiento, el míster te lo agradece con un gesto.",
+          }
+        : o,
+    );
 }
 
 /**

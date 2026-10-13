@@ -1,5 +1,5 @@
 /** Prueba sin IA: las propiedades se revalorizan (casas) o pierden valor (vehículos) y la escena de seguimiento cambia de verdad el patrimonio y la propiedad. */
-import { propertyValue, readProperties, remainingLoan, serializeProperty } from "../src/lib/finance/mortgage";
+import { propertyValue, readProperties, remainingLoan, serializeProperty, canRent, propertyRentMonthly, totalRentalIncome, saleProceeds } from "../src/lib/finance/mortgage";
 import { dueProperty, buildPropertyReviewEvent } from "../src/lib/narrative/property-review";
 
 let fails = 0;
@@ -47,6 +47,21 @@ console.log("6) Mantener aplaza la siguiente revisión");
 p = mk(31, { propiedad_a: prop({}) }); ev = buildPropertyReviewEvent(p); apply(p, ev.options.find((o: any) => o.id === "a").consequences);
 p.week = 40; ok(dueProperty(p) === null, "9 turnos después no vuelve");
 p.week = 52; ok(dueProperty(p) !== null, "21 turnos después, sí");
+
+console.log("7) Alquilar y vender");
+const piso = readProperties({ propiedad_a: prop({ city: "Múnich" }) })[0];
+ok(piso.city === "Múnich", "la propiedad recuerda su ciudad");
+ok(canRent(piso) && !canRent(coche), "una casa se alquila; un coche no");
+ok(propertyRentMonthly(piso, 30) === 0, "sin poner en alquiler no entra nada");
+const alquilada = { ...piso, rented: true };
+const renta = propertyRentMonthly(alquilada, 30);
+ok(renta > 0 && Math.abs(renta - (propertyValue(piso, 30) * 0.032) / 12) < 10, `en alquiler entra una renta neta de ${renta} €/mes (3,2 % anual del valor)`);
+ok(propertyRentMonthly({ ...coche, rented: true }, 30) === 0, "un coche no genera renta aunque se marque");
+const flagsRent = { propiedad_a: serializeProperty(alquilada), propiedad_b: prop({ name: "Otra", price: 200000, downPayment: 200000, rented: true }) };
+ok(totalRentalIncome(flagsRent, 30) > renta, `la renta total suma todas las alquiladas (${totalRentalIncome(flagsRent, 30)} €/mes)`);
+const venta = saleProceeds(piso, 30);
+ok(venta === Math.round(propertyValue(piso, 30) * 0.95) - remainingLoan(piso, 30), `vender: valor − 5 % de gastos − deuda = ${venta} €`);
+ok(saleProceeds(readProperties({ propiedad_x: prop({ price: 100000, downPayment: 0, since: 30 }) })[0], 30) < 0, "recién comprada con toda la hipoteca, vender cuesta dinero (gastos + deuda)");
 
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);

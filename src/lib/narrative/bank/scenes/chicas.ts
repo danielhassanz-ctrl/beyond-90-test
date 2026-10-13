@@ -11,14 +11,14 @@
  *   ch_<x>_no     ya no volverá a salir
  *   pareja_foto   ruta de la foto de tu pareja, para Vida y las escenas
  */
-import { S, o, after } from "../dsl";
+import { S, o, after, withDmReplies } from "../dsl";
 import type { BankScene, BankWhen } from "../types";
 
 const LIBRE: BankWhen = { notFlags: ["pareja", "ch_en_curso"], minAge: 18, maxAge: 36 };
 const viva = (x: string): BankWhen => ({ flags: [`ch_${x}`], notFlags: ["pareja", `ch_${x}_no`], minAge: 18 });
 const fin = (x: string) => ({ [`ch_${x}`]: "", [`ch_${x}_no`]: true, ch_en_curso: "" });
 
-export const CHICAS: BankScene[] = [
+const CHICAS_BASE: BankScene[] = [
   // ───────────────────────── ALMA FERRER · actriz ─────────────────────────
   S("ch-alma-dm", "chicas", { ...LIBRE, notFlags: ["pareja", "ch_en_curso", "ch_alma_no"], fama: [45, 100] } as BankWhen, "vida",
     "Una actriz de series te escribe",
@@ -211,3 +211,23 @@ export const CHICAS: BankScene[] = [
       o("b", "Responder con una nota amable y no ir", "Respetar su camino", { moral: -2, flags: fin("lola") }, "Le escribes una nota cálida y se la mandas por correo. Lola contesta con un dibujo tuyo con una sola pierna, saludando. «Hasta pronto, tres piernas». Entiendes que algunas historias son bonitas justo por quedarse así."),
     ]),
 ];
+
+/** Lo que tú contestas (y lo que ella responde) en el primer mensaje: sale en la tarjeta compartible. */
+export const CHICAS: BankScene[] = withDmReplies(CHICAS_BASE, {
+  "bank-ch-alma-dm": {
+    a: { reply: "Mi madre opina lo mismo. Para disimular, el café lo pago yo.", followUp: "Jueves. Sin fotógrafos. O con uno solo, el mío." },
+    b: { reply: "Un café suena bien. Perdona la tardanza: mi vestuario ha opinado de más.", followUp: "Jajaja. Dile a tu capitán que tiene buen gusto." },
+  },
+  "bank-ch-nerea-dm": {
+    a: { reply: "Valoro la sinceridad. A cambio, cenamos tú y yo, sin cámaras.", followUp: "Trato hecho. Pero el postre lo grabo yo." },
+    b: { reply: "Sinceramente: ¿cuánto hay de agencia y cuánto de ti?", followUp: "Te lo escribo entero. Léelo con calma, que no es corto." },
+  },
+  "bank-ch-candela-dm": {
+    a: { reply: "Te cuento algo que no sale en la entrevista: antes de salir me tiembla la garganta y empiezo siempre por el calcetín derecho.", followUp: "Gracias por contármelo. Prometo no usarlo en tu contra." },
+    b: { reply: "Cuéntame el viaje más raro que hayas hecho.", followUp: "Prepárate: hay un autobús, una cabra y un monasterio." },
+  },
+  "bank-ch-lola-dm": {
+    a: { reply: "Hecho. Pero quiero una copia firmada.", followUp: "Firmada y con tres piernas, que es como mejor sales." },
+    b: { reply: "¿Y cuánto vale un dibujo así en el mercadillo?", followUp: "Doce euros. ¿Mucho?" },
+  },
+});

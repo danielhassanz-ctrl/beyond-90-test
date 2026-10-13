@@ -171,6 +171,7 @@ function financedPurchase(
   photoUrl: string | null | undefined,
   week: number,
   i: number,
+  city?: string,
 ) {
   const f = vehicleFinancing(kind, l.price);
   const monthly = monthlyPayment({ key: "", name: "", price: l.price, downPayment: f.down, termMonths: f.termMonths, rate: f.rate });
@@ -179,6 +180,7 @@ function financedPurchase(
     monthly,
     flag: {
       [`propiedad_${Date.now()}_${i}`]: JSON.stringify({
+        ...(city ? { city } : {}),
         name: l.name,
         price: l.price,
         downPayment: f.down,
@@ -909,7 +911,7 @@ export async function buildCasaEvent(player: Player, supabase: SupabaseClient): 
           consequences: {
             patrimonio: -downPayment,
             moral: 5,
-            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null, since: player.week }) },
+            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ city: cityOfClub(player.club), name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null, since: player.week }) },
           },
         };
       }),
@@ -967,7 +969,7 @@ export async function buildMansionEvent(player: Player, supabase: SupabaseClient
             patrimonio: -downPayment,
             moral: 8,
             fama: 3,
-            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null, since: player.week }) },
+            flags: { [`propiedad_${Date.now()}_${i}`]: JSON.stringify({ city: cityOfClub(player.club), name: l.name, price: l.price, downPayment, photoUrl: photos[i] ?? null, since: player.week }) },
           },
         };
       }),
@@ -999,7 +1001,7 @@ export async function buildYachtEvent(player: Player, supabase: SupabaseClient):
       "Tu nombre ya suena en cualquier lado. Un amigo del gremio te comenta que se ha comprado un barco y que 'no hay nada como desconectar en el agua'. Tu representante te manda un par de opciones, por si te apetece. Se paga una entrada y el resto se financia con cuota mensual.",
     options: [
       ...listings.map((l, i) => {
-        const buy = financedPurchase("yate", l, photos[i], player.week, i);
+        const buy = financedPurchase("yate", l, photos[i], player.week, i, cityOfClub(player.club));
         return {
           id: `yate-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,
@@ -1036,7 +1038,7 @@ export async function buildJetEvent(player: Player, supabase: SupabaseClient): P
       "Entre viajes de selección, publicidad y vacaciones, tu representante hace cuentas: 'A este ritmo, un jet privado se paga solo en comodidad. Es una pasada de dinero, pero míralo tú mismo.'",
     options: [
       ...listings.map((l, i) => {
-        const buy = financedPurchase("jet", l, photos[i], player.week, i);
+        const buy = financedPurchase("jet", l, photos[i], player.week, i, cityOfClub(player.club));
         return {
           id: `jet-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,
@@ -1079,7 +1081,7 @@ export async function buildCarEvent(player: Player, supabase: SupabaseClient): P
       "Con el sueldo ya entrando de verdad, un compañero de vestuario te comenta que se acaba de comprar un coche que 'no necesita, pero se lo merece'. Tu representante te manda un par de opciones, por si te apetece darte el capricho.",
     options: [
       ...listings.map((l, i) => {
-        const buy = financedPurchase("coche", l, photos[i], player.week, i);
+        const buy = financedPurchase("coche", l, photos[i], player.week, i, cityOfClub(player.club));
         return {
           id: `coche-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,
@@ -7009,7 +7011,7 @@ export async function buildCityHousingEvent(player: Player, supabase: SupabaseCl
               consequences: {
                 patrimonio: -buyDown,
                 moral: 8,
-                flags: { [`propiedad_${Date.now()}_c`]: JSON.stringify({ name: buyList.name, price: buyPrice, downPayment: buyDown, photoUrl: photo ?? null, since: player.week }) },
+                flags: { [`propiedad_${Date.now()}_c`]: JSON.stringify({ city: cityOfClub(player.club), name: buyList.name, price: buyPrice, downPayment: buyDown, photoUrl: photo ?? null, since: player.week }) },
               },
               outcomeText: `Firmas ante notario con el estómago encogido y una sonrisa enorme. Por primera vez en ${city}, algo es tuyo.`,
             },
@@ -7042,7 +7044,7 @@ export async function buildCityCarEvent(player: Player, supabase: SupabaseClient
       : `Con la mudanza a ${city}, tu coche de siempre se te queda corto. Un compañero te pasa el contacto de un concesionario donde ya conocen al club.`,
     options: [
       ...listings.map((l, i) => {
-        const buy = financedPurchase("coche", l, photos[i], player.week, i);
+        const buy = financedPurchase("coche", l, photos[i], player.week, i, cityOfClub(player.club));
         return {
           id: `coche-${i}`,
           label: `${l.name} — ${l.price.toLocaleString("es")} €`,

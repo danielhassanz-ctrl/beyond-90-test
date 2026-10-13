@@ -17,6 +17,7 @@ import { getRivals } from "@/lib/narrative/rivals";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { BANK_SCENES } from "./scenes";
 import { bankFlagKey, type BankScene, type BankWhen, type Range } from "./types";
+import { eur, eurFee, playerAnnualGross, releaseClauseM } from "@/lib/narrative/transfer-terms";
 
 type Flags = Record<string, string | boolean>;
 
@@ -200,6 +201,9 @@ export function fillBankEvent<T extends Omit<GameEvent, "id">>(event: T, player:
       .replace(/\{ex_club\}/g, exClub)
       .replace(/\{pareja\}/g, typeof f.pareja === "string" && f.pareja ? f.pareja : "tu pareja")
       .replace(/\{nacion\}/g, player.nation ?? "tu país")
+      // Cifras reales de tu contrato: la ficha bruta anual y la cláusula de rescisión.
+      .replace(/\{ficha\}/g, `${eur(playerAnnualGross(player))} brutos al año`)
+      .replace(/\{clausula\}/g, eurFee(releaseClauseM(player)))
       .replace(/\{apellido\}/g, player.last_name ?? "");
   const text = (t: string | undefined) => (t === undefined ? t : fill(t));
   return {

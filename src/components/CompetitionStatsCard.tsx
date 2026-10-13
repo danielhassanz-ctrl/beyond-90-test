@@ -1,14 +1,14 @@
-import type { CompetitionStats, CompStat, SeasonHistoryRow } from "@/lib/player/competition-stats";
+import type { CompetitionStats, CompStat, PreviousClubStats, SeasonHistoryRow } from "@/lib/player/competition-stats";
 import { leagueOf } from "@/lib/calendar/leagues";
 
 /** La liga y la copa son las del país del club actual (ver leagues.ts). */
-function clubRows(club?: string): { key: "liga" | "champions" | "europa" | "copa"; label: string; icon: string }[] {
+function clubRows(club?: string, generic = false): { key: "liga" | "champions" | "europa" | "copa"; label: string; icon: string }[] {
   const league = leagueOf(club ?? "Real Madrid");
   return [
-    { key: "liga", label: league.short, icon: "🏆" },
+    { key: "liga", label: generic ? "Liga" : league.short, icon: "🏆" },
     { key: "champions", label: "Champions League", icon: "⭐" },
     { key: "europa", label: "Europa League", icon: "🟠" },
-    { key: "copa", label: league.cup, icon: "🥇" },
+    { key: "copa", label: generic ? "Copa" : league.cup, icon: "🥇" },
   ];
 }
 
@@ -35,8 +35,8 @@ function Row({ label, icon, stat, sub = false }: { label: string; icon?: string;
   );
 }
 
-function Table({ title, stats, club }: { title: string; stats: CompetitionStats; club?: string }) {
-  const CLUB_ROWS = clubRows(club);
+function Table({ title, stats, club, generic = false }: { title: string; stats: CompetitionStats; club?: string; generic?: boolean }) {
+  const CLUB_ROWS = clubRows(club, generic);
   const totalMatches = CLUB_ROWS.reduce((n, r) => n + stats[r.key].matches, 0) + stats.seleccion.matches;
   const showTorneos = stats.seleccion.matches > 0;
   return (
@@ -80,6 +80,7 @@ export function CompetitionStatsCard({
   seasonLabel,
   view = "season",
   club,
+  previous = [],
 }: {
   season: CompetitionStats;
   career: CompetitionStats;
@@ -88,10 +89,16 @@ export function CompetitionStatsCard({
   history?: SeasonHistoryRow[];
   /** Club actual: decide cómo se llaman la liga y la copa. */
   club?: string;
+  /** Clubes que dejaste esta misma temporada y lo que jugaste en cada uno (cada uno con su liga). */
+  previous?: PreviousClubStats[];
 }) {
   return (
     <div className="space-y-4">
-      {view === "season" ? <Table title={`Esta temporada · ${seasonLabel}`} stats={season} club={club} /> : <Table title="Toda la carrera, por competición" stats={career} club={club} />}
+      {view === "season" ? <Table title={`Esta temporada · ${seasonLabel}`} stats={season} club={club} /> : <Table title="Toda la carrera, por competición" stats={career} club={club} generic />}
+      {view === "season" &&
+        previous.map((p) => (
+          <Table key={p.club} title={`Antes del fichaje · ${p.club}`} stats={p.stats} club={p.club} />
+        ))}
       <p className="text-center text-[11px] text-muted-foreground">
         Suman todos tus partidos: los que juegas como escena y los que se disputan entre medias, estimados según tu rol, tu posición y tu nivel.
         {view === "season" ? " La clasificación de abajo es la del equipo entero (todas las jornadas), así que ahí salen más partidos que a ti." : ""}

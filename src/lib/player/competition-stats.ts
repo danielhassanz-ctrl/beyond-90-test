@@ -12,7 +12,7 @@ import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
 import { WEEKS_PER_SEASON, seasonLabel } from "@/types/career";
 import { extractStatsFromEvent, statSeasonOf } from "@/lib/player/update-stats";
-import { readAllSim, sumSim, type SimComp } from "@/lib/narrative/off-screen-matches";
+import { readAllSim, sumSim, type SimComp, readClubSplits, readSimSeason } from "@/lib/narrative/off-screen-matches";
 import { allTrofeos, INDIVIDUAL, type TrofeoKind } from "@/lib/honours";
 
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
@@ -57,6 +57,12 @@ export interface SeasonHistoryRow {
 
 function newRow(idx: number, team: SeasonHistoryRow["team"] = "club"): SeasonHistoryRow {
   return { idx, team, trophies: [], label: seasonLabel(idx * WEEKS_PER_SEASON + 1), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
+}
+
+/** Lo jugado esta temporada con un club que ya dejaste (tras un fichaje a mitad de temporada). */
+export interface PreviousClubStats {
+  club: string;
+  stats: CompetitionStats;
 }
 
 export function emptyCompetitionStats(): CompetitionStats {
@@ -106,11 +112,28 @@ export async function getCompetitionStats(
   pendingEvent?: GameEvent | null,
   /** flags del jugador: traen los partidos estimados que no se viven como escena (off-screen-matches.ts). */
   flags?: Record<string, string | boolean> | null,
-): Promise<{ season: CompetitionStats; career: CompetitionStats; history: SeasonHistoryRow[] }> {
+): Promise<{ season: CompetitionStats; career: CompetitionStats; history: SeasonHistoryRow[]; previous: PreviousClubStats[] }> {
   const season = emptyCompetitionStats();
   const career = emptyCompetitionStats();
   const bySeason = new Map<string, SeasonHistoryRow>();
   const currentSeasonIdx = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+
+  // Si fichaste por otro club esta misma temporada, lo jugado antes del cambio es del club anterior (otra liga, otra
+  // clasificación): se cuenta aparte en vez de presentarse como partidos del club nuevo.
+  let splits = readClubSplits(flags).filter((x) => x.s === currentSeasonIdx).sort((a, b) => a.w - b.w);
+  if (splits.length === 0) {
+    // Cambio de club anterior a este registro y recién hecho: todo lo estimado hasta ahora es del club que dejaste.
+    const f = flags ?? {};
+    const since = parseInt(String(f.club_since ?? "0"), 10) || 0;
+    const left = String(f.clubs_history ?? "").split("|").filter(Boolean).pop();
+    if (left && since > 0 && Math.floor((since - 1) / WEEKS_PER_SEASON) === currentSeasonIdx && player.week - since <= 2) {
+      const total = readSimSeason(f, currentSeasonIdx);
+      splits = [{ s: currentSeasonIdx, club: left, w: since, sim: total }];
+    }
+  }
+  const segments = splits.map((sp) => ({ sp, stats: emptyCompetitionStats() }));
+  /** Dónde cuenta un partido de esta temporada según la semana: el club anterior (si fue antes del cambio) o el actual. */
+  const seasonTargetFor = (week: number): CompetitionStats => segments.find((g) => week < g.sp.w)?.stats ?? season;
 
   try {
     const { data, error } = await fetchAllRows<{ title: string; description: string; category: string; event_id: string; week: number }>((from, to) =>
@@ -123,7 +146,7 @@ export async function getCompetitionStats(
         .order("id")
         .range(from, to),
     );
-    if (error || !data) return { season, career, history: [] };
+    if (error || !data) return { season, career, history: [], previous: [] };
 
     const rows: { event_id: string; category: string; title: string; description: string; week: number }[] = data.map((r) => ({
       event_id: (r.event_id as string) ?? "",
@@ -166,7 +189,7 @@ export async function getCompetitionStats(
       hist.assists += u.assists ?? 0;
       hist.minutes += u.minutes_played ?? 0;
       bySeason.set(hKey, hist);
-      const targets = idx >= currentSeasonIdx ? [career, season] : [career];
+      const targets = idx >= currentSeasonIdx ? [career, seasonTargetFor(row.week)] : [career];
       for (const t of targets) {
         add(t[comp], u);
         if (comp === "seleccion" && torneo) add(t.torneos[torneo], u);
@@ -188,10 +211,33 @@ export async function getCompetitionStats(
       career[k].assists += c.assists;
       career[k].minutes += c.minutes;
       if (idx === currentSeasonIdx) {
-        season[k].matches += c.matches;
-        season[k].goals += c.goals;
-        season[k].assists += c.assists;
-        season[k].minutes += c.minutes;
+        // El corte guardado dice cuánto llevabas al irte de cada club: lo anterior es de ese club, el resto del actual.
+        let rest = { ...c };
+        segments.forEach((g, i) => {
+          const before = i > 0 ? segments[i - 1].sp.sim[k] : { matches: 0, goals: 0, assists: 0, minutes: 0 };
+          const part = {
+            matches: Math.max(0, g.sp.sim[k].matches - before.matches),
+            goals: Math.max(0, g.sp.sim[k].goals - before.goals),
+            assists: Math.max(0, g.sp.sim[k].assists - before.assists),
+            minutes: Math.max(0, g.sp.sim[k].minutes - before.minutes),
+          };
+          g.stats[k].matches += part.matches;
+          g.stats[k].goals += part.goals;
+          g.stats[k].assists += part.assists;
+          g.stats[k].minutes += part.minutes;
+          if (i === segments.length - 1) {
+            rest = {
+              matches: Math.max(0, c.matches - g.sp.sim[k].matches),
+              goals: Math.max(0, c.goals - g.sp.sim[k].goals),
+              assists: Math.max(0, c.assists - g.sp.sim[k].assists),
+              minutes: Math.max(0, c.minutes - g.sp.sim[k].minutes),
+            };
+          }
+        });
+        season[k].matches += rest.matches;
+        season[k].goals += rest.goals;
+        season[k].assists += rest.assists;
+        season[k].minutes += rest.minutes;
       }
     }
     const hist = bySeason.get(`${idx}:club`) ?? newRow(idx, "club");
@@ -222,5 +268,8 @@ export async function getCompetitionStats(
   }
   const order = { filial: 0, club: 1, seleccion: 2 } as const;
   const history = [...bySeason.values()].sort((x, y) => x.idx - y.idx || order[x.team] - order[y.team]);
-  return { season, career, history };
+  const previous: PreviousClubStats[] = segments
+    .map((g) => ({ club: g.sp.club, stats: g.stats }))
+    .filter((p) => p.stats.liga.matches + p.stats.champions.matches + p.stats.europa.matches + p.stats.copa.matches > 0);
+  return { season, career, history, previous };
 }

@@ -11,25 +11,13 @@
  */
 import type { EventOption, GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
-import { buildTerms, contractFlags, eur, playerAnnualGross, type Terms } from "@/lib/narrative/transfer-terms";
+import { TURNS_PER_YEAR, buildTerms, contractFlags, contractUntil, eur, eurFee, marketValueM, playerAnnualGross, releaseClauseM, type Terms } from "@/lib/narrative/transfer-terms";
 import { pickInterestedClub } from "@/lib/narrative/market-window";
 import { NO_CLUB_YET } from "@/lib/constants";
 
-export const TURNS_PER_YEAR = 10;
+export { contractUntil, TURNS_PER_YEAR };
 const num = (v: string | boolean | undefined) => parseInt(String(v ?? "0"), 10) || 0;
 const round1k = (n: number) => Math.round(n / 1000) * 1000;
-
-/**
- * Semana en que acaba el contrato actual. Si no consta (carreras anteriores a este sistema, o cambio de club por una
- * vía que no fija contrato) se deriva de cuándo llegaste al club: cuatro años de contrato, con un margen mínimo.
- */
-export function contractUntil(player: Pick<Player, "week" | "club" | "flags">): number {
-  const f = player.flags ?? {};
-  const stored = num(f.contract_until);
-  if (stored > 0 && String(f.salary_club ?? "") === player.club) return stored;
-  const since = num(f.club_since);
-  return Math.max(since + 4 * TURNS_PER_YEAR, player.week + 6);
-}
 
 export type ContractPhase = "ultima" | "fin" | null;
 
@@ -76,6 +64,10 @@ export function buildContractRenewalEvent(player: Player): GameEvent {
   const offer = round1k(renewalOffer(player, own) * lapse);
   const years = own.years;
   const bonus = Math.max(2000, round1k(offer * 0.08));
+  // La cláusula de rescisión: la actual y la que se pactaría al renovar (por lo menos un 40 % más, y casi el doble de lo que vales).
+  const clause = releaseClauseM(player);
+  const newClause = Math.max(2, Math.round(Math.max(clause * 1.4, marketValueM(player) * 1.8)));
+  const askClause = Math.round(newClause * 1.25);
   const done = { [phase === "ultima" ? `ctr_ult_${until}` : `ctr_fin_${until}`]: "1", ctr_last: String(week) };
   const delta = offer - current;
   const sign = delta >= 0 ? "+" : "−";
@@ -83,15 +75,15 @@ export function buildContractRenewalEvent(player: Player): GameEvent {
   const renew: EventOption = {
     id: "a",
     label: `Renovar ${years} años por ${eur(offer)} brutos al año`,
-    subtitle: `${sign}${eur(Math.abs(delta))} sobre lo que cobras (${eur(current)}) · prima ${eur(bonus)}`,
+    subtitle: `${sign}${eur(Math.abs(delta))} sobre lo que cobras (${eur(current)}) · prima ${eur(bonus)} · cláusula ${eurFee(clause)} → ${eurFee(newClause)}`,
     consequences: {
       patrimonio: bonus,
       moral: 3,
       rel_entrenador: 2,
       rel_aficion: 2,
-      flags: { ...done, ctr_enfriado: "", ctr_salida: "", ...contractFlags(player, offer, club, years) },
+      flags: { ...done, ctr_enfriado: "", ctr_salida: "", ...contractFlags(player, offer, club, years, newClause) },
     },
-    outcomeText: `Firmas ${years} años más con ${club}: ${eur(offer)} brutos al año y ${eur(bonus)} de prima. ${agent} guarda el boli y te dice, bajito: «Con esto tienes tranquilidad. Y a nosotros nos sobra el tiempo para mirar lo que venga».`,
+    outcomeText: `Firmas ${years} años más con ${club}: ${eur(offer)} brutos al año (antes ${eur(current)}), ${eur(bonus)} de prima y la cláusula de rescisión sube de ${eurFee(clause)} a ${eurFee(newClause)}. ${agent} guarda el boli y te dice, bajito: «Con esto tienes tranquilidad. Y a nosotros nos sobra el tiempo para mirar lo que venga».`,
   };
 
   const options: EventOption[] = [renew];
@@ -100,20 +92,20 @@ export function buildContractRenewalEvent(player: Player): GameEvent {
     const ask = round1k(offer * 1.2);
     options.push({
       id: "b",
-      label: `Pedir más: ${eur(ask)} al año`,
+      label: `Pedir más: ${eur(ask)} al año y cláusula de ${eurFee(askClause)}`,
       subtitle: "Negociar fuerte · riesgo de que el club se enfríe",
       consequences: {},
       resolve: {
         baseChance: Math.min(0.72, 0.42 + ((player.fama ?? 50) - 50) / 300),
         statModifier: "reputacion",
         success: {
-          text: `El club cede: ${eur(ask)} brutos al año durante ${years} años. ${agent} sale del despacho con una sonrisa que da miedo. Que te valoren así también cambia cómo te miran en el vestuario.`,
+          text: `El club cede: ${eur(ask)} brutos al año durante ${years} años y la cláusula de rescisión sube a ${eurFee(askClause)} (antes ${eurFee(clause)}). ${agent} sale del despacho con una sonrisa que da miedo. Que te valoren así también cambia cómo te miran en el vestuario.`,
           consequences: {
             patrimonio: Math.round(bonus * 1.3),
             moral: 6,
             fama: 1,
             rel_entrenador: 1,
-            flags: { ...done, ctr_enfriado: "", ctr_salida: "", ...contractFlags(player, ask, club, years) },
+            flags: { ...done, ctr_enfriado: "", ctr_salida: "", ...contractFlags(player, ask, club, years, askClause) },
           },
         },
         fail: {
@@ -143,7 +135,7 @@ export function buildContractRenewalEvent(player: Player): GameEvent {
     options.push({
       id: "c",
       label: `Marcharte libre a ${target}: ${eur(freeAnnual)} al año`,
-      subtitle: `${free.years} años · prima de fichaje ${eur(freeBonus)} · sin traspaso`,
+      subtitle: `${free.years} años · prima de fichaje ${eur(freeBonus)} · cláusula ${eurFee(free.clauseM)} · sin traspaso`,
       consequences: {
         club: target,
         patrimonio: freeBonus,
@@ -151,9 +143,9 @@ export function buildContractRenewalEvent(player: Player): GameEvent {
         moral: 4,
         rel_vestuario: -3,
         rel_aficion: -4,
-        flags: { ...done, ctr_enfriado: "", ctr_salida: "", transfer_interest: "", ...contractFlags(player, freeAnnual, target, free.years) },
+        flags: { ...done, ctr_enfriado: "", ctr_salida: "", transfer_interest: "", ...contractFlags(player, freeAnnual, target, free.years, free.clauseM) },
       },
-      outcomeText: `Quedas libre y firmas por ${target}: ${free.years} años, ${eur(freeAnnual)} brutos al año y ${eur(freeBonus)} de prima, sin traspaso de por medio. En ${club} te despiden con respeto. ${agent} te dice que has hecho justo lo que se hace cuando se puede elegir.`,
+      outcomeText: `Quedas libre y firmas por ${target}: ${free.years} años, ${eur(freeAnnual)} brutos al año, ${eur(freeBonus)} de prima y cláusula de ${eurFee(free.clauseM)}, sin traspaso de por medio. En ${club} te despiden con respeto. ${agent} te dice que has hecho justo lo que se hace cuando se puede elegir.`,
     });
   }
 
@@ -167,7 +159,7 @@ export function buildContractRenewalEvent(player: Player): GameEvent {
         : "Se te acaba el contrato";
   const description =
     phase === "ultima"
-      ? `${agent} te cita con la carpeta bajo el brazo: «Te queda una temporada de contrato con ${club}. Quieren hablar de la renovación ya, antes de que el mercado empiece a hacer ruido». ${cooled ? "Tras la última negociación, la propuesta es más fría de lo que esperabas. " : ""}La oferta sobre la mesa: ${eur(offer)} brutos al año durante ${years} años.`
+      ? `${agent} te cita con la carpeta bajo el brazo: «Te queda una temporada de contrato con ${club}. Quieren hablar de la renovación ya, antes de que el mercado empiece a hacer ruido». ${cooled ? "Tras la última negociación, la propuesta es más fría de lo que esperabas. " : ""}Tu cláusula actual es de ${eurFee(clause)}. La oferta sobre la mesa: ${eur(offer)} brutos al año durante ${years} años, con la cláusula subiendo a ${eurFee(newClause)}.`
       : leaving
         ? `Tu contrato con ${club} ha vencido y, como habías avisado, eres agente libre. ${agent} te muestra lo que hay: puedes seguir en ${club} por ${eur(offer)} brutos al año, o irte a otro sitio por mucho más y con una buena prima, porque nadie tiene que pagar por ti.`
         : `Tu contrato con ${club} se ha agotado sin renovar. El club te hace una última propuesta, más baja que la de antes: ${eur(offer)} brutos al año. ${agent} te recuerda que también puedes marcharte libre: «Nadie paga traspaso por ti, y eso se nota en la oferta».`;

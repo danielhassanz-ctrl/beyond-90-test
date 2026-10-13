@@ -187,3 +187,42 @@ export function addSimSeason(flags: Flags, season: number, add: SimByComp): Flag
   const enc = Object.fromEntries((Object.keys(cur) as SimComp[]).map((k) => [k, [cur[k].matches, cur[k].goals, cur[k].assists, cur[k].minutes]]));
   return { ...flags, [`sim_stats_${season}`]: JSON.stringify(enc) };
 }
+
+/** Lo que llevabas jugado (estimado) esa temporada cuando te fuiste de un club: sirve para repartir los partidos entre clubes. */
+export interface ClubSplit {
+  /** Temporada (índice) en la que ocurrió el cambio. */
+  s: number;
+  /** El club que dejaste. */
+  club: string;
+  /** Semana en la que empiezas en el club nuevo. */
+  w: number;
+  sim: SimByComp;
+}
+
+const encodeSim = (sim: SimByComp) => Object.fromEntries((Object.keys(sim) as SimComp[]).map((k) => [k, [sim[k].matches, sim[k].goals, sim[k].assists, sim[k].minutes]]));
+
+export function readClubSplits(flags: Flags | null | undefined): ClubSplit[] {
+  const raw = String(flags?.club_split ?? "");
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw) as { s: number; club: string; w: number; sim: Partial<Record<SimComp, number[]>> }[];
+    return arr.map((x) => {
+      const sim = emptySim();
+      for (const k of Object.keys(sim) as SimComp[]) {
+        const [m, g, a, min] = x.sim?.[k] ?? [];
+        sim[k] = { matches: m ?? 0, goals: g ?? 0, assists: a ?? 0, minutes: min ?? 0 };
+      }
+      return { s: x.s, club: x.club, w: x.w, sim };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** Anota el corte al cambiar de club: se conservan solo los de la temporada en curso (los anteriores ya no se reparten). */
+export function addClubSplit(flags: Flags, season: number, leftClub: string, startWeek: number): Flags {
+  const sim = readSimSeason(flags, season);
+  const keep = readClubSplits(flags).filter((x) => x.s === season);
+  const next = [...keep, { s: season, club: leftClub, w: startWeek, sim }].slice(-3);
+  return { ...flags, club_split: JSON.stringify(next.map((x) => ({ s: x.s, club: x.club, w: x.w, sim: encodeSim(x.sim) }))) };
+}

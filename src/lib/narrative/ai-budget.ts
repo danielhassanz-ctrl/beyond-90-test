@@ -41,7 +41,7 @@ export function careerBudgetTotal(mode: string | undefined): number {
 /** Prioridad por tipo de escena: lo emocional y lo memorable manda; la rutina espera. */
 export function priorityFor(idPrefix: string, explicit?: AiPriority): AiPriority {
   if (explicit) return explicit;
-  if (/^(echo|hilo|segunda-vida|inicio-fichaje|eleccion-representante|contrato|debut-pretemp|decline|adversity)/.test(idPrefix)) return "high";
+  if (/^(echo|hilo|segunda-vida|inicio-fichaje|eleccion-representante|contrato|debut-pretemp|decline|adversity|preseason-\d)/.test(idPrefix)) return "high";
   if (/^(matchday|partido)/.test(idPrefix)) return "low";
   return "normal";
 }

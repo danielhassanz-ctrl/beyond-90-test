@@ -25,6 +25,10 @@ export interface PropertyRecord {
   kind?: "casa" | "mansion" | "coche" | "yate" | "jet";
   /** Multiplicador de valor por reformas (1 = sin reformas). */
   valueAdj?: number;
+  /** Ciudad donde está (la del club con el que vivías al comprarla). */
+  city?: string;
+  /** Puesta en alquiler: cada turno entra una renta neta. */
+  rented?: boolean;
 }
 
 /** Financiación de los caprichos (coche, yate, jet): entrada, plazo e interés. Las casas siguen su propio camino. */
@@ -104,6 +108,29 @@ export function propertyValue(p: PropertyRecord, week: number): number {
 
 export function totalPropertyValue(flags: Record<string, string | boolean> | null | undefined, week: number): number {
   return readProperties(flags).reduce((n, p) => n + propertyValue(p, week), 0);
+}
+
+/** Renta anual neta de un inmueble alquilado (tras gastos, impuestos y periodos vacíos), sobre su valor. */
+export const RENT_YIELD_NET = 0.032;
+/** Gastos de una venta (agencia, impuestos, traspaso) sobre el valor. */
+export const SALE_COST = 0.05;
+
+/** Solo las casas se pueden alquilar; un coche, un yate o un jet no. */
+export const canRent = (p: PropertyRecord): boolean => (p.kind ?? "casa") === "casa" || p.kind === "mansion";
+
+/** Lo que entra cada turno si el inmueble está en alquiler. */
+export function propertyRentMonthly(p: PropertyRecord, week: number): number {
+  if (!p.rented || !canRent(p)) return 0;
+  return Math.round((propertyValue(p, week) * RENT_YIELD_NET) / 12 / 10) * 10;
+}
+
+export function totalRentalIncome(flags: Record<string, string | boolean> | null | undefined, week: number): number {
+  return readProperties(flags).reduce((n, p) => n + propertyRentMonthly(p, week), 0);
+}
+
+/** Lo que te queda al venderlo: valor menos gastos menos lo que aún debes al banco (puede ser negativo). */
+export function saleProceeds(p: PropertyRecord, week: number): number {
+  return Math.round(propertyValue(p, week) * (1 - SALE_COST)) - remainingLoan(p, week);
 }
 
 export function totalMonthlyPayments(flags: Record<string, string | boolean> | null | undefined): number {

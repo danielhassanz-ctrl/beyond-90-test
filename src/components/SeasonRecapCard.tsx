@@ -41,7 +41,8 @@ export function SeasonRecapCard({
   /** Se está generando la foto resumen. */
   pending?: boolean;
 }) {
-  const photoUrl = pending ? null : (photoOverride ?? player.current_photo_url ?? player.photo_url);
+  // La foto de cabecera (current_photo_url) sigue al último hito (una lesión, una gala…): no sirve para un resumen.
+  const photoUrl = pending ? null : (photoOverride ?? player.photo_url);
   const statEntries: [string, number][] = [
     ["Partidos", stats.matches_played],
     ["Goles", stats.goals],

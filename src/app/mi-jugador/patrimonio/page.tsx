@@ -5,11 +5,13 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { seasonLabel, WEEKS_PER_SEASON } from "@/types/career";
 import { getGameDateLabel } from "@/lib/calendar/season";
 import { BottomNav } from "@/components/BottomNav";
-import { playerMonthlyNet, playerAnnualGross } from "@/lib/narrative/transfer-terms";
+import { playerMonthlyNet, playerAnnualGross, releaseClauseM, eurFee } from "@/lib/narrative/transfer-terms";
 import { contractUntil, TURNS_PER_YEAR } from "@/lib/narrative/contract-renewal";
+import { PropertyActions } from "@/components/PropertyActions";
+import { cityOfClub } from "@/lib/narrative/events";
 import { readRent } from "@/lib/finance/rent";
 import { findPropertyPrompt, findPropertyInteriorPrompt } from "@/lib/narrative/events";
-import { readProperties, monthlyPayment, remainingLoan, totalMonthlyPayments, propertyValue as propertyValueOf } from "@/lib/finance/mortgage";
+import { readProperties, monthlyPayment, remainingLoan, totalMonthlyPayments, propertyValue as propertyValueOf, canRent, propertyRentMonthly, totalRentalIncome, saleProceeds } from "@/lib/finance/mortgage";
 import { readInvestments, investmentValue } from "@/lib/finance/investments";
 import { activeSponsorships } from "@/lib/finance/sponsorship-income";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
@@ -61,9 +63,9 @@ function conceptOf(eventId: string, category: string | null, title: string, chos
   if (category === "segunda_vida") return "Segunda vida";
   if (/^(sponsor|arco-patrocinador|rep-patrocinio)/.test(id) || /patrocin|marca|embajador|campaña publicitaria|anuncio/.test(t)) return "Patrocinio y marcas";
   if (/^social/.test(id) || /redes|colaboraci|influencer|stream/.test(t)) return "Redes sociales";
-  if (/inversi|startup|cripto|asesor financiero|negocio/.test(id) || /invert|inversi|negocio|startup/.test(t)) return "Inversión";
+  if (/inversi|invest|startup|cripto|asesor financiero|negocio/.test(id) || /invert|inversi|negocio|startup|futuro econ[oó]mico|para alquilarlo/.test(t)) return "Inversión";
   if (/^vid-(casa|mansion|yate|jet|coche)/.test(id) || /^banco-/.test(id)) return "Propiedades y bancos";
-  if (/fich|contrato|renov|prima|cl[aá]usula/.test(id) || /fichaje|contrato|renovaci|prima|ficha|mejoras|sueldo|salario/.test(t)) return "Contratos y primas";
+  if (/fich|contrato|renov|prima|cl[aá]usula/.test(id) || /fichaje|contrato|renov|prima|ficha|mejoras|sueldo|salario|cl[aá]usula|rescisi/.test(t)) return "Contratos y primas";
   if (/^(sel-|torneo)/.test(id)) return "Selección";
   return "Otros";
 }
@@ -178,7 +180,8 @@ export default async function PatrimonioPage() {
   const sponsors = activeSponsorships(player.flags, player.week);
   const sponsorMonthly = sponsors.reduce((n, x) => n + x.monthly, 0);
   const rent = readRent(player.flags);
-  const monthlyBalance = monthlySalary + sponsorMonthly - mortgageMonthly - (rent?.monthly ?? 0);
+  const rentalMonthly = totalRentalIncome(player.flags, player.week);
+  const monthlyBalance = monthlySalary + sponsorMonthly + rentalMonthly - mortgageMonthly - (rent?.monthly ?? 0);
   const pressure = getFinancialPressure(netWorth);
 
   return (
@@ -235,6 +238,12 @@ export default async function PatrimonioPage() {
                   <span className="font-num font-semibold text-pitch">+{x.monthly.toLocaleString("es")} €</span>
                 </div>
               ))}
+              {rentalMonthly > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-foreground/90">Entra: alquiler de tus propiedades</span>
+                  <span className="font-num font-semibold text-pitch">+{rentalMonthly.toLocaleString("es")} €</span>
+                </div>
+              )}
               {rent && (
                 <div className="flex justify-between">
                   <span className="text-foreground/90">Sale: alquiler en {rent.city}</span>
@@ -304,6 +313,17 @@ export default async function PatrimonioPage() {
                   </div>
                   <div className="space-y-2 p-4">
                     <p className="font-display text-base text-foreground">{p.name}</p>
+                    {(() => {
+                      // Ciudad: la guardada al comprar; en compras antiguas, la de tu club actual si la compraste estando en él.
+                      const clubSince = parseInt(String(player.flags?.club_since ?? "0"), 10) || 0;
+                      const city = p.city ?? ((p.since ?? 0) >= clubSince && player.club !== NO_CLUB_YET ? cityOfClub(player.club) : null);
+                      return (
+                        <p className="text-xs text-muted-foreground">
+                          {city ? `📍 ${city}` : "📍 Ubicación sin registrar"}
+                          {p.rented && <span className="ml-2 rounded-full bg-pitch/15 px-2 py-0.5 font-cond text-[10px] uppercase tracking-wide text-pitch">En alquiler</span>}
+                        </p>
+                      );
+                    })()}
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Vale hoy</span>
@@ -331,7 +351,25 @@ export default async function PatrimonioPage() {
                       ) : (
                         <p className="text-xs text-pitch">Pagada al contado: sin hipoteca.</p>
                       )}
+                      {p.rented && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Renta neta al mes</span>
+                          <span className="font-num font-semibold text-pitch">+{propertyRentMonthly(p, player.week).toLocaleString("es")} €</span>
+                        </div>
+                      )}
                     </div>
+                    <PropertyActions
+                      propertyKey={p.key}
+                      name={p.name}
+                      canRent={canRent(p)}
+                      rented={Boolean(p.rented)}
+                      rentText={`+${propertyRentMonthly({ ...p, rented: true }, player.week).toLocaleString("es")} €/mes`}
+                      saleText={
+                        saleProceeds(p, player.week) >= 0
+                          ? `recibes ${saleProceeds(p, player.week).toLocaleString("es")} € (tras gastos y deuda)`
+                          : `pones ${(-saleProceeds(p, player.week)).toLocaleString("es")} € de tu cuenta para cerrar la deuda`
+                      }
+                    />
                   </div>
                 </div>
               );
@@ -399,7 +437,8 @@ export default async function PatrimonioPage() {
                     {(() => {
                       const left = contractUntil(player) - player.week;
                       if (left <= 0) return "Contrato vencido: toca decidir si renuevas o te marchas.";
-                      return left <= TURNS_PER_YEAR ? `Contrato: te queda ${left <= 1 ? "1 mes" : `${left} meses`} (última temporada).` : `Contrato: vence dentro de ${(left / TURNS_PER_YEAR).toFixed(1).replace(".", ",")} temporadas.`;
+                      const clause = `Cláusula de rescisión: ${eurFee(releaseClauseM(player))}.`;
+                      return left <= TURNS_PER_YEAR ? `Contrato: te queda ${left <= 1 ? "1 mes" : `${left} meses`} (última temporada). ${clause}` : `Contrato: vence dentro de ${(left / TURNS_PER_YEAR).toFixed(1).replace(".", ",")} temporadas. ${clause}`;
                     })()}
                   </p>
                 </div>

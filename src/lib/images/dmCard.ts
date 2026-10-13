@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import { measureText, textToPath, wrapByWidth } from "@/lib/images/textToPath";
+import { getAppUrl } from "@/lib/constants";
 
 /**
  * Captura falsa (pero creíble) de un chat de mensajes directos de Instagram:
@@ -25,6 +26,33 @@ export interface DmCardInput {
   message: string;
   reply?: string;
   followUp?: string;
+  /** Foto de ella: ruta de public/ ("/chicas/nerea.jpg") o URL. Sin ella, se dibuja la inicial. */
+  avatar?: string;
+  /** Tu foto (URL): con las dos, la conversación abre con vuestras fotos juntas. */
+  playerPhoto?: string | null;
+}
+
+/** Descarga una imagen (ruta de public/ o URL); si falla, null y la tarjeta usa la inicial. */
+async function loadImage(src: string | null | undefined): Promise<Buffer | null> {
+  if (!src) return null;
+  try {
+    const url = /^https?:\/\//.test(src) ? src : `${getAppUrl() ?? "https://beyond-90.vercel.app"}${src}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    return Buffer.from(await res.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+/** La foto recortada en círculo, centrada arriba (donde suele estar la cara). */
+async function circle(buf: Buffer, d: number): Promise<Buffer | null> {
+  try {
+    const mask = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}"><circle cx="${d / 2}" cy="${d / 2}" r="${d / 2}" fill="#fff"/></svg>`);
+    return await sharp(buf).resize(d, d, { fit: "cover", position: "top" }).composite([{ input: mask, blend: "dest-in" }]).png().toBuffer();
+  } catch {
+    return null;
+  }
 }
 
 const W = 1080;
@@ -53,18 +81,36 @@ export async function composeDmCard(input: DmCardInput): Promise<Buffer> {
   const name = clean(input.name);
   const theme = THEMES[input.platform ?? "instagram"];
   const initial = (name[0] ?? "?").toUpperCase();
+  const [avatarRaw, playerRaw] = await Promise.all([loadImage(input.avatar), loadImage(input.playerPhoto)]);
+  const avatar = avatarRaw ? await circle(avatarRaw, 86) : null;
+  const mePhoto = playerRaw ? await circle(playerRaw, 86) : null;
+  const composites: { input: Buffer; left: number; top: number }[] = [];
   const parts: string[] = [];
 
-  // Cabecera
+  // Cabecera: su foto y, si tenemos la tuya, las dos solapadas (como el avatar de un chat entre dos personas)
   parts.push(textToPath("<", { x: 44, y: 112, fontSize: 64, fill: "#FFFFFF", weight: 700 }));
-  parts.push(`<circle cx="176" cy="92" r="56" fill="url(#ring)" /><circle cx="176" cy="92" r="49" fill="#000" /><circle cx="176" cy="92" r="43" fill="#3A3A3C" />`);
-  parts.push(textToPath(initial, { x: 176 - measureText(initial, 46) / 2, y: 108, fontSize: 46, fill: "#FFFFFF", weight: 700 }));
-  parts.push(textToPath(name, { x: 262, y: 88, fontSize: 38, fill: "#FFFFFF", weight: 700 }));
-  parts.push(textToPath(`${clean(input.handle)} · ${theme.status}`, { x: 262, y: 130, fontSize: 28, fill: "#8E8E93" }));
+  const ringAt = (cx: number) => `<circle cx="${cx}" cy="92" r="56" fill="url(#ring)" /><circle cx="${cx}" cy="92" r="49" fill="#000" />`;
+  let textX = 262;
+  if (avatar && mePhoto) {
+    // la tuya detrás, la de ella delante
+    parts.push(ringAt(236), ringAt(176));
+    composites.push({ input: mePhoto, left: 236 - 43, top: 92 - 43 }, { input: avatar, left: 176 - 43, top: 92 - 43 });
+    textX = 320;
+  } else {
+    parts.push(ringAt(176));
+    if (avatar) {
+      composites.push({ input: avatar, left: 176 - 43, top: 92 - 43 });
+    } else {
+      parts.push(`<circle cx="176" cy="92" r="43" fill="#3A3A3C" />`);
+      parts.push(textToPath(initial, { x: 176 - measureText(initial, 46) / 2, y: 108, fontSize: 46, fill: "#FFFFFF", weight: 700 }));
+    }
+  }
+  parts.push(textToPath(name, { x: textX, y: 88, fontSize: 38, fill: "#FFFFFF", weight: 700 }));
+  parts.push(textToPath(`${clean(input.handle)} · ${theme.status}`, { x: textX, y: 130, fontSize: 28, fill: "#8E8E93" }));
   parts.push(`<rect x="0" y="170" width="${W}" height="2" fill="${theme.line}" />`);
 
-  // Conversación
   let y = 250;
+  // Conversación
   parts.push(textToPath("HOY 23:41", { x: W / 2 - measureText("HOY 23:41", 26) / 2, y, fontSize: 26, fill: "#8E8E93" }));
   y += 44;
   const her = bubble(input.message, "left", y, theme);
@@ -85,8 +131,8 @@ export async function composeDmCard(input: DmCardInput): Promise<Buffer> {
   }
 
   // Barra de escribir
-  parts.push(`<rect x="40" y="1040" width="${W - 80}" height="96" rx="48" fill="none" stroke="${theme.line}" stroke-width="2.5" />`);
-  parts.push(textToPath(theme.placeholder, { x: 84, y: 1098, fontSize: 34, fill: "#8E8E93" }));
+  parts.push(`<rect x="40" y="1190" width="${W - 80}" height="96" rx="48" fill="none" stroke="${theme.line}" stroke-width="2.5" />`);
+  parts.push(textToPath(theme.placeholder, { x: 84, y: 1248, fontSize: 34, fill: "#8E8E93" }));
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
 <defs>
@@ -97,5 +143,6 @@ export async function composeDmCard(input: DmCardInput): Promise<Buffer> {
 ${parts.join("\n")}
 </svg>`;
 
-  return sharp(Buffer.from(svg)).png().toBuffer();
+  const base = sharp(Buffer.from(svg));
+  return (composites.length ? base.composite(composites) : base).png().toBuffer();
 }

@@ -58,7 +58,8 @@ export default async function ResultadoPage({
   // carrera larga, cada cierre de año en Legado saturaría de "momentos
   // destacados" cosas que no lo son. Esta tarjeta se genera al vuelo,
   // sin gastar en Replicate.
-  const isSeasonRecap = careerEvent.event_id?.startsWith("preseason-") ?? false;
+  // Solo el cierre real ("preseason-12"): las escenas de vida de pretemporada ("preseason-ev-...") no cierran nada.
+  const isSeasonRecap = /^preseason-\d+$/.test(careerEvent.event_id ?? "");
   const closedSeasonWeek = Math.max(1, careerEvent.week - WEEKS_PER_SEASON);
   // Para la temporada que se acaba de cerrar, no la nueva que ya empezó —
   // player.week ya ha avanzado a la temporada siguiente para cuando se ve

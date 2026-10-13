@@ -5,12 +5,12 @@
  * Oro, una lesión y el final de una carrera. Quién gana cada duelo se queda guardado (nm_tu / nm_el) y se nota.
  * Todo escrito a mano: cero llamadas a la IA.
  */
-import { S, o, r, th, after } from "../dsl";
+import { S, o, th, after, r, withDmReplies } from "../dsl";
 import type { BankScene } from "../types";
 
 const GRANDE = { minAge: 18, maxAge: 33, fama: [35, 100] as [number, number], media: [66, 99] as [number, number] };
 
-export const RIVALES3: BankScene[] = [
+const RIVALES3_BASE: BankScene[] = [
   // ───── Capítulo 1: se enciende ─────
   S("nm-1", "nemesis", { ...GRANDE, notFlags: ["nm_camino"] }, "prensa",
     "{mega1} y tú, en la misma portada",
@@ -152,3 +152,19 @@ export const RIVALES3: BankScene[] = [
       o("c", "«Rival, y punto. Los amigos son otra cosa»", "Mantener la frontera", { moral: 0, reputacion: 1, fama: 2, flags: { nm_6: "frontera", nm_final: "frio" } }, "La presentadora sonríe incómoda. {mega1} te mira un segundo largo, hace un gesto de «fue bonito mientras duró» y cambia de tema. Cuando acaba la entrevista, no os despedís. Es la forma que tenéis de respetaros: sin sentimentalismos, hasta el final."),
     ], { weight: 6, isMilestone: true, milestoneType: "dm_instagram", dm: { handle: "{mega1_handle}", name: "{mega1}", platform: "instagram", message: "Veinte años compitiendo contigo. Me hiciste mejor. Gracias por cada partido." } }),
 ];
+
+/** Lo que contestas al rival (y lo que él responde): sale en la tarjeta compartible. */
+export const RIVALES3: BankScene[] = withDmReplies(RIVALES3_BASE, {
+  "bank-nm-r1": {
+    a: { reply: "Cuando quieras. Verano, a doble sesión, sin cámaras.", followUp: "Agosto. Te mando la ubicación." },
+    b: { reply: "Trato. Pero tú primero me enseñas lo del desmarque.", followUp: "Jajaja. Y tú me debes lo de la cadera." },
+  },
+  "bank-nm-4g": {
+    a: { reply: "Gracias. Tenía el día malo.", followUp: "Pues hoy ya tienes uno mejor. Aquí estoy." },
+    b: { reply: "Te espero en el campo.", followUp: "Allí nos vemos." },
+  },
+  "bank-nm-6": {
+    a: { reply: "Tú también me hiciste mejor a mí.", followUp: "Nos vemos en la próxima, leyenda." },
+    b: { reply: "Fue un honor competir contigo.", followUp: "El honor fue mío." },
+  },
+});

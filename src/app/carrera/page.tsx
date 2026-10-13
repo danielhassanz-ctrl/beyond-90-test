@@ -1,3 +1,5 @@
+import { allTrofeos } from "@/lib/honours";
+import { canonicalClub } from "@/lib/calendar/leagues";
 import { headerPhotoUrl } from "@/lib/player/header-photo";
 import { redirect } from "next/navigation";
 
@@ -128,7 +130,10 @@ export default async function CarreraPage() {
   );
   const npcFaces = npcFacesRaw.filter((f): f is NonNullable<typeof f> => f !== null);
 
-  const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;
+  // Los títulos del escudo son los ganados CON ESTE CLUB (no los de toda tu carrera): al llegar a un club nuevo son 0.
+  const clubTitleCount = allTrofeos(player).filter(
+    (t) => ["liga", "copa", "champions", "europa"].includes(t.k) && canonicalClub(t.c) === canonicalClub(player.club),
+  ).length;
 
   // Antes esto era literalmente el texto fijo "Titular" siempre, aunque el
   // jugador estuviera en plena cadena de debut con el filial (semanas

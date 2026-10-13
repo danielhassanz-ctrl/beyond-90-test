@@ -9,7 +9,7 @@
 import type { Consequences, EventCategory, EventOption, GameEvent } from "@/types/career";
 import type { BankScene, BankWhen } from "./types";
 
-type OptExtra = Partial<Pick<EventOption, "thread" | "imageUrl">>;
+type OptExtra = Partial<Pick<EventOption, "thread" | "imageUrl" | "dmReply" | "dmFollowUp">>;
 
 export const o = (id: string, label: string, subtitle: string, consequences: Consequences, outcomeText: string, extra: OptExtra = {}): EventOption => ({
   id,
@@ -76,3 +76,21 @@ export function S(
 
 /** Referencia a otra escena del banco para encadenar. */
 export const after = (id: string, option?: string, minGap = 3, maxGap?: number) => ({ scene: `bank-${id}`, option, minGap, maxGap });
+
+/**
+ * Añade a las opciones de las escenas de mensaje (con `dm`) lo que TÚ contestas y lo que ella responde después: sale en
+ * la tarjeta compartible junto al mensaje original. mapa[idDeEscena][idDeOpción] = { reply, followUp? }.
+ */
+export function withDmReplies(scenes: BankScene[], map: Record<string, Record<string, { reply: string; followUp?: string }>>): BankScene[] {
+  return scenes.map((s) => {
+    const replies = map[s.id];
+    if (!replies) return s;
+    return {
+      ...s,
+      event: {
+        ...s.event,
+        options: s.event.options.map((o) => (replies[o.id] ? { ...o, dmReply: replies[o.id].reply, dmFollowUp: replies[o.id].followUp } : o)),
+      },
+    };
+  });
+}

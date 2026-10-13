@@ -77,11 +77,13 @@ import { fillBankEvent } from "@/lib/narrative/bank/select";
 import { pickBankScene, recycleBankScenes } from "@/lib/narrative/bank/select";
 import { shouldTriggerInvestmentReview, buildInvestmentReviewEvent } from "@/lib/narrative/investment-review";
 import { shouldTriggerContractRenewal, buildContractRenewalEvent } from "@/lib/narrative/contract-renewal";
+import { shouldTriggerArrivalIntro, buildArrivalIntroEvent } from "@/lib/narrative/arrival-intro";
+import { buildSeasonCloseEvent } from "@/lib/narrative/season-close";
 import { shouldTriggerSeriousInjury, shouldTriggerSagaStage, buildSeriousInjuryEvent, buildSagaStageEvent } from "@/lib/narrative/injury-saga";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
 import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
-import { totalMonthlyPayments } from "@/lib/finance/mortgage";
+import { totalMonthlyPayments, totalRentalIncome } from "@/lib/finance/mortgage";
 import { monthlySponsorshipIncome } from "@/lib/finance/sponsorship-income";
 import { shouldTriggerSalto, buildSaltoEvent } from "@/lib/narrative/arco-salto";
 import { buildFallbackMatchReport } from "@/lib/narrative/match-fallback";
@@ -3307,6 +3309,9 @@ function applyCareerDynamics(player: Player): Player {
   // Patrocinios firmados: la marca paga cada turno mientras dura el contrato.
   const sponsorIncome = monthlySponsorshipIncome(player.flags, player.week);
   if (sponsorIncome > 0) player.patrimonio = (player.patrimonio ?? 0) + sponsorIncome;
+  // Propiedades puestas en alquiler: la renta neta entra cada turno.
+  const rentalIncome = totalRentalIncome(player.flags, player.week);
+  if (rentalIncome > 0) player.patrimonio = (player.patrimonio ?? 0) + rentalIncome;
   // Cuotas de las hipotecas (finance/mortgage.ts): se descuentan solas cada
   // turno, igual que el sueldo se ingresa. Si no hay dinero, se quedan a 0 y
   // el banco acaba llamando (ver buildDebtTroubleEvent).
@@ -3485,6 +3490,28 @@ export async function pickNextEventDynamic(
   const midMatch = Object.keys(playerWithDynamics.flags ?? {}).some(
     (k) => k.startsWith(decisionPrefix) && !matchDoneKeys.includes(k.slice(decisionPrefix.length)),
   );
+  // EL CIERRE DE TEMPORADA. Las temporadas se cierran el 1 de julio (turno 1 de la nueva) o, si hay torneo de selecciones
+  // en verano, justo cuando acaba el torneo. Tiene que ir ANTES que cualquier otra escena de verano (mercado, fichajes,
+  // presentaciones, escenas sueltas): si no, la primera semana se la llevaba otra escena y el resumen salía en septiembre
+  // (visto en vivo). Vale durante las primeras semanas de la temporada hasta que se viva, y espera a que acabe un torneo.
+  // También va antes que "hay partido esta semana": la primera semana siempre trae un amistoso programado.
+  const closingId = `preseason-${season}`;
+  const closingPending = weekInSeason <= 4 && season > 0 && age >= 17 && !usedEventIds.includes(closingId) && !getTorneoProgress(playerWithDynamics);
+  if (closingPending) {
+    console.log(`[pickNextEventDynamic] Cierre de temporada ${season} (turno ${weekInSeason}) para ${player.last_name}, ${age} años`);
+    const { generatePreseasoneEvent } = await import("./ai");
+    // Sin IA (sin presupuesto o sin respuesta) se usa la versión escrita en código: el cierre no puede faltar nunca.
+    const preseasoneEvent = (await generatePreseasoneEvent(player, season, history, usedEventIds)) ?? buildSeasonCloseEvent(player, season);
+    console.log(`[pickNextEventDynamic] Preseason event: "${preseasoneEvent.title}"`);
+    return maybeAddFreeText(addMatchContext(preseasoneEvent, player));
+  }
+
+  // Recién fichado por otro club: lo primero es conocer al míster, al capitán y a alguien del cuerpo técnico.
+  if (!midMatch && shouldTriggerArrivalIntro(playerWithDynamics)) {
+    const intro = buildArrivalIntroEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Presentación en el club nuevo: "${intro.title}"`);
+    return maybeAddFreeText(intro);
+  }
   if (!midMatch && shouldTriggerMarketRumor(playerWithDynamics)) {
     markMarketRumorShown(playerWithDynamics);
     const rumor = buildMarketRumorEvent(playerWithDynamics);
@@ -3633,26 +3660,6 @@ export async function pickNextEventDynamic(
     const offer = buildTransferOfferEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Formal transfer offer: "${offer.title}"`);
     return maybeAddFreeText(offer);
-  }
-
-  // El cierre de una temporada y el arranque de la siguiente (edad+1,
-  // stats del año que se cierra) tiene que tener su propio momento
-  // narrativo — comprobarlo ANTES que "hay partido esta semana", porque
-  // la primera semana de cada temporada nueva SIEMPRE tiene un amistoso
-  // programado (ver match-calendar.ts) y ese check ganaba siempre,
-  // dejando la temporada pasar sin que se notara nunca el cambio de año
-  // (el jugador solo se daba cuenta porque de golpe tenía un año más).
-  // Visto en vivo jugando.
-  const isPreseasson = weekInSeason === 1 && season > 0 && age >= 17;
-
-  if (isPreseasson) {
-    console.log(`[pickNextEventDynamic] Preseason detected for ${player.last_name}, season ${season}, age ${age}`);
-    const { generatePreseasoneEvent } = await import("./ai");
-    const preseasoneEvent = await generatePreseasoneEvent(player, season, history, usedEventIds);
-    if (preseasoneEvent) {
-      console.log(`[pickNextEventDynamic] Generated preseason event: "${preseasoneEvent.title}"`);
-      return maybeAddFreeText(addMatchContext(preseasoneEvent, player));
-    }
   }
 
   // El progreso de Copa de ESTA temporada (competition-progress.ts) decide

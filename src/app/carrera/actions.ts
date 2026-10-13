@@ -4,7 +4,7 @@ import { pickInterestedClub } from "@/lib/narrative/market-window";
 import { ensureNextEvent } from "@/lib/narrative/ensure-event";
 import { appendThread } from "@/lib/narrative/threads";
 import { bankFlagKey } from "@/lib/narrative/bank/types";
-import { simulateOffScreenMatches, backfillOffScreen, addSimSeason, sumSim, emptySim } from "@/lib/narrative/off-screen-matches";
+import { simulateOffScreenMatches, backfillOffScreen, addSimSeason, addClubSplit, sumSim, emptySim } from "@/lib/narrative/off-screen-matches";
 import { defaultReaction } from "@/lib/narrative/default-reactions";
 import { sponsorshipFlagFor } from "@/lib/finance/sponsorship-income";
 import { redirect } from "next/navigation";
@@ -499,8 +499,13 @@ export async function resolveEvent(formData: FormData) {
     if (player.club && player.club !== NO_CLUB_YET && previousClubs[previousClubs.length - 1] !== player.club) {
       previousClubs.push(player.club);
     }
+    // Qué llevabas jugado esta temporada con el club que dejas: así la clasificación reparte los partidos entre los dos.
+    const splitFlags =
+      player.club && player.club !== NO_CLUB_YET && player.club !== newClub
+        ? addClubSplit(flagsSoFar, Math.floor((player.week - 1) / WEEKS_PER_SEASON), player.club, newWeek)
+        : flagsSoFar;
     playerUpdate.flags = {
-      ...flagsSoFar,
+      ...splitFlags,
       club_changes: String((parseInt(String(flagsSoFar.club_changes ?? "0"), 10) || 0) + 1),
       clubs_history: previousClubs.slice(-12).join("|"),
       club_since: String(newWeek),
@@ -787,7 +792,12 @@ export async function resolveEvent(formData: FormData) {
     if (milestoneId && event.dm) {
       const dmMilestoneId = milestoneId;
       const dmUserId = user.id;
-      const dmCard = { ...event.dm, reply: option.dmReply, followUp: option.dmFollowUp };
+      const dmCard = {
+        ...event.dm,
+        reply: option.dmReply,
+        followUp: option.dmFollowUp,
+        playerPhoto: (player.current_photo_url as string | null | undefined) ?? (player.photo_url as string | null | undefined) ?? null,
+      };
       after(async () => {
         try {
           const raw = await composeDmCard(dmCard);

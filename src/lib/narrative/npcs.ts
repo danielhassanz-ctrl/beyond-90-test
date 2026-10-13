@@ -595,7 +595,9 @@ export function personalizeEvent<T extends GameEvent>(rawEvent: T, clubPlayer: P
   // "llamado X" daba dos nombres distintos para la misma persona en el título y
   // en el texto (visto en una partida de prueba: "Un veterano llamado Ismael
   // Roca..." cuyo texto hablaba de Gaspar Espinosa).
-  if (AI_EVENT_ID.test(event.id)) return event;
+  // Las escenas de mensaje y las de las chicas ya traen a su protagonista con nombre y foto: ponerle además "llamada X"
+  // daba dos nombres para la misma persona ("Una influencer llamada Dafne…" cuando el mensaje era de Nerea).
+  if (AI_EVENT_ID.test(event.id) || event.dm || /^bank-ch-/.test(event.id)) return event;
   const salt = event.id;
   const done = alreadyNamedKeys(JSON.stringify(event));
 
