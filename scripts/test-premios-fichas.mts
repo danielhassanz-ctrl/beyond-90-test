@@ -29,6 +29,8 @@ const blurbs = rivalCards.map((e) => e.blurb);
 ok(rivalCards.length === getRivals(player).length, `${rivalCards.length} fichas de rivales`);
 ok(new Set(blurbs).size === blurbs.length, "ninguna ficha de rival repite la misma frase");
 ok(!blurbs.some((b) => /todo el mundo te compara, para bien y para mal/.test(b)), "ya no sale la frase repetida de siempre");
+const finales = blurbs.map((b) => b.split(". ").slice(-1)[0]);
+ok(new Set(finales.slice(2)).size === 3, "las tres fichas de megacracks no acaban con la misma frase de comparación");
 blurbs.forEach((b) => console.log("     · " + b));
 
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");

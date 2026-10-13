@@ -170,9 +170,13 @@ function rivalBlurb(player: Player, r: Rival): string {
       "Mismo año de nacimiento y mismo puesto en la lista del míster: cada convocatoria es un pequeño duelo.",
     ];
     const d = r.media - (player.media ?? 0);
-    const fact = d >= 2 ? `Ahora mismo rinde ${d} puntos por encima de ti en los entrenos.` : d <= -3 ? `Le sacas ${-d} puntos de media y él lo sabe.` : "Estáis a la par, y eso lo hace peor.";
     // Cada rival con su frase: el índice depende del puesto del rival, no solo del nombre (así nunca se repiten).
     const slot = r.key === "peer1" ? 0 : 1;
+    const ahead = [`Ahora mismo rinde ${d} puntos por encima de ti en los entrenos.`, `El míster ya le ha puesto de ejemplo: lleva ${d} puntos más de media que tú.`];
+    const behind = [`Le sacas ${-d} puntos de media y él lo sabe.`, `Por media le superas en ${-d}, pero no lo dará por perdido.`];
+    const level = ["Estáis a la par, y eso lo hace peor.", "Entre los dos hay una diferencia de nada: cada partido decide quién se lleva la titularidad."];
+    const pool = d >= 2 ? ahead : d <= -3 ? behind : level;
+    const fact = pool[(mix(`${player.id}:peerfact`) + slot) % pool.length];
     return `${ids[(mix(`${player.id}:peers`) + slot) % ids.length]} ${fact}`;
   }
   const identity = [
@@ -190,8 +194,17 @@ function rivalBlurb(player: Player, r: Rival): string {
   if (r.club === podium.winner) facts.push(podium.byPlayer ? `Os visteis campeones de Europa juntos con el ${r.club}.` : `Levantó la Champions con el ${r.club} la temporada pasada.`);
   else if (r.club === podium.runnerUp) facts.push(`Perdió la final de la Champions con el ${r.club} la temporada pasada.`);
   const d = r.media - (player.media ?? 0);
-  facts.push(d >= 3 ? `Tiene ${d} puntos de media más que tú: ${r.media} contra ${player.media}.` : d <= -3 ? `Le sacas ${-d} puntos de media, pero juega como si fuera al revés.` : `Estáis a la par en la media (${r.media} él, ${player.media} tú), y la prensa lo sabe.`);
   const slot = r.key === "mega1" ? 0 : r.key === "mega2" ? 1 : 2;
+  // La comparación de medias, con una redacción distinta para cada rival (si no, las tres fichas acaban con la misma frase).
+  const ahead = [`Tiene ${d} puntos de media más que tú: ${r.media} contra ${player.media}.`, `Va ${d} puntos por delante en la media y la prensa se lo recuerda cada semana.`, `Su ${r.media} de media le da ventaja sobre tu ${player.media}.`];
+  const behind = [`Le sacas ${-d} puntos de media, pero juega como si fuera al revés.`, `Tu media (${player.media}) supera a la suya (${r.media}) y aun así le siguen llamando favorito.`, `Por números vas ${-d} puntos por delante; él presume de lo que los números no cuentan.`];
+  const level = [
+    `Entre su ${r.media} y tu ${player.media} no hay diferencia que valga: lo decide cada partido.`,
+    `Estáis a la par en la media (${r.media} él, ${player.media} tú).`,
+    `Cada vez que subes un punto, él sube otro. Lo vuestro va de décimas.`,
+  ];
+  const pool = d >= 3 ? ahead : d <= -3 ? behind : level;
+  facts.push(pool[(mix(`${player.id}:megafact`) + slot) % pool.length]);
   return `${identity[(mix(`${player.id}:megas`) + slot * 2) % identity.length]} ${facts.slice(0, 2).join(" ")}`;
 }
 
