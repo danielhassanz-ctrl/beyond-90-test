@@ -4,12 +4,12 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { checkReadyMilestoneNotifications, type ReadyImageNotification } from "@/app/notifications/actions";
 
-const POLL_INTERVAL_MS = 15_000;
+const POLL_INTERVAL_MS = 30_000;
 
 /**
  * Avisa cuando una foto generada en segundo plano (ver after() en
  * src/app/carrera/actions.ts) ya está lista, sin que el jugador tenga
- * que quedarse esperando ni refrescar nada. Sondea cada 15s; si no hay
+ * que quedarse esperando ni refrescar nada. Sondea cada 30s; si no hay
  * sesión o no hay nada nuevo, no hace ni muestra nada.
  */
 export function ImageReadyNotifier() {
@@ -17,6 +17,8 @@ export function ImageReadyNotifier() {
   const router = useRouter();
 
   const poll = useCallback(async () => {
+    // Con la pestaña en segundo plano no se sondea: cada llamada compite con la carga de la pantalla.
+    if (typeof document !== "undefined" && document.hidden) return;
     try {
       const ready = await checkReadyMilestoneNotifications();
       if (ready.length > 0) {

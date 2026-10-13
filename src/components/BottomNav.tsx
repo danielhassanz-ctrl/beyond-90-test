@@ -96,6 +96,7 @@ export function BottomNav({ active }: { active: "carrera" | "patrimonio" | "vida
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className={`relative flex flex-1 flex-col items-center gap-1.5 py-4 text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 ${
                 isActive
                   ? "text-gold"
