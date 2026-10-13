@@ -32,6 +32,17 @@ export interface DmCardInput {
   playerPhoto?: string | null;
   /** Foto de los dos (la que haría un paparazzi): va grande ARRIBA y la conversación, debajo. */
   scenePhoto?: Buffer | null;
+  /** Tu respuesta es una nota de voz: se dibuja como audio (ondas y duración) con su transcripción debajo. */
+  replyAudio?: boolean;
+}
+
+/** ¿La opción elegida es mandar un audio / nota de voz? */
+export const isAudioReply = (label: string | null | undefined): boolean => /(^|[^a-záéíóúñ])(audio|nota de voz)/i.test(label ?? "");
+
+/** Duración de la nota de voz según lo que dice (unas 2,6 palabras por segundo), entre 6 y 59 s. */
+function audioSeconds(text: string): number {
+  const words = clean(text).split(" ").filter(Boolean).length;
+  return Math.max(6, Math.min(59, Math.round(words / 2.6)));
 }
 
 /** Descarga una imagen (ruta de public/ o URL); si falla, null y la tarjeta usa la inicial. */
@@ -87,10 +98,58 @@ function bubble(text: string, side: "left" | "right", y: number, theme: (typeof 
   return { svg: `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="${Math.round(m.font * 1.1)}" fill="${fill}" />\n${paths}`, height: bh };
 }
 
+/** Nota de voz estilo Instagram: botón de play, ondas, duración y, debajo, la transcripción. */
+function audioBubble(text: string, y: number, theme: (typeof THEMES)[DmPlatform], m: Metrics = NORMAL): { svg: string; height: number } {
+  const bw = Math.min(m.max + m.pad * 2, 700);
+  const x = W - 48 - bw;
+  const rowH = Math.round(m.font * 1.7);
+  const tFont = Math.round(m.font * 0.78);
+  const tLine = Math.round(m.line * 0.78);
+  const lines = wrapByWidth(clean(text), tFont, bw - m.pad * 2);
+  const top = Math.round(m.pad * 0.7);
+  const labelH = Math.round(m.font * 0.5) + 14;
+  const height = top + rowH + 16 + labelH + lines.length * tLine + Math.round(m.pad * 0.7);
+
+  const r = Math.round(rowH * 0.42);
+  const cx = x + m.pad + r;
+  const cy = y + top + rowH / 2;
+  const secs = audioSeconds(text);
+  const dur = `0:${String(secs).padStart(2, "0")}`;
+  const durFont = Math.round(m.font * 0.62);
+  const durW = measureText(dur, durFont);
+  const waveX0 = cx + r + 18;
+  const waveX1 = x + bw - m.pad - durW - 14;
+  const bars = Math.max(10, Math.floor((waveX1 - waveX0) / 9));
+  const seed = hashText(text);
+  const parts: string[] = [`<rect x="${x}" y="${y}" width="${bw}" height="${height}" rx="${Math.round(m.font * 1.1)}" fill="url(#mine)" />`];
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#FFFFFF" />`);
+  const t = r * 0.55;
+  parts.push(`<path d="M${cx - t * 0.45} ${cy - t} L${cx + t * 0.95} ${cy} L${cx - t * 0.45} ${cy + t} Z" fill="${theme.mine[0]}" />`);
+  for (let i = 0; i < bars; i++) {
+    const hgt = (0.28 + 0.72 * (Math.abs((seed >> (i % 24)) ^ Math.imul(i + 1, 2654435761)) % 100) / 100) * rowH * 0.8;
+    const bx = waveX0 + i * 9;
+    const played = i < bars * 0.32;
+    parts.push(`<rect x="${bx}" y="${cy - hgt / 2}" width="5" height="${hgt}" rx="2.5" fill="${played ? "#FFFFFF" : "#D9CCFF"}" fill-opacity="${played ? 1 : 0.6}" />`);
+  }
+  parts.push(textToPath(dur, { x: x + bw - m.pad - durW, y: cy + durFont * 0.35, fontSize: durFont, fill: "#FFFFFF" }));
+  const sepY = y + top + rowH + 8;
+  parts.push(`<rect x="${x + m.pad}" y="${sepY}" width="${bw - m.pad * 2}" height="1.5" fill="#FFFFFF" fill-opacity="0.25" />`);
+  const labelY = sepY + 8 + Math.round(m.font * 0.5);
+  parts.push(textToPath("TRANSCRIPCIÓN", { x: x + m.pad, y: labelY, fontSize: Math.round(m.font * 0.5), fill: "#E6DDFF" }));
+  lines.forEach((l, i) => parts.push(textToPath(l, { x: x + m.pad, y: labelY + 12 + tLine * (i + 1) - 6, fontSize: tFont, fill: "#FFFFFF" })));
+  return { svg: parts.join("\n"), height };
+}
+
+function hashText(t: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
 /** Alto que ocupa la conversación con estas medidas (para elegir el tamaño de letra que cabe). */
 function chatHeight(input: DmCardInput, theme: (typeof THEMES)[DmPlatform], m: Metrics): number {
   let h = 44 + bubble(input.message, "left", 0, theme, m).height + 22;
-  if (input.reply) h += bubble(input.reply, "right", 0, theme, m).height + 14;
+  if (input.reply) h += (input.replyAudio ? audioBubble(input.reply, 0, theme, m) : bubble(input.reply, "right", 0, theme, m)).height + 14;
   h += input.followUp ? 56 + bubble(input.followUp, "left", 0, theme, m).height : 40;
   return h;
 }
@@ -142,9 +201,11 @@ export async function composeDmCard(input: DmCardInput): Promise<Buffer> {
   const barY = hasScene ? 1250 : 1190;
   const room = barY - (250 + oy) - 24;
   let metrics = NORMAL;
-  if (hasScene) {
+  // Con foto arriba, o si la conversación (p. ej. con una nota de voz y su transcripción) no cabe con la letra normal, se
+  // usa la mayor que quepa antes de la barra de escribir: nunca se monta sobre ella.
+  if (hasScene || chatHeight(input, theme, NORMAL) > room) {
     metrics = { font: 30, line: 41, pad: 28, max: 760 };
-    for (const font of [34, 32, 30, 28, 26, 24]) {
+    for (const font of hasScene ? [34, 32, 30, 28, 26, 24] : [38, 36, 34, 32, 30, 28, 26, 24]) {
       const m = { font, line: Math.round(font * 1.35), pad: Math.round(font * 0.85), max: 780 };
       if (chatHeight(input, theme, m) <= room) { metrics = m; break; }
       metrics = m;
@@ -159,7 +220,7 @@ export async function composeDmCard(input: DmCardInput): Promise<Buffer> {
   parts.push(her.svg);
   y += her.height + 22;
   if (input.reply) {
-    const mine = bubble(input.reply, "right", y, theme, metrics);
+    const mine = input.replyAudio ? audioBubble(input.reply, y, theme, metrics) : bubble(input.reply, "right", y, theme, metrics);
     parts.push(mine.svg);
     y += mine.height + 14;
   }

@@ -26,7 +26,7 @@ import { describeKit } from "@/lib/clubColors";
 import { recapPhotoPrompt } from "@/lib/images/recap-photo";
 import { maybeDmScenePhoto } from "@/lib/images/dm-scene";
 import { describeLook } from "@/lib/playerLook";
-import { composeDmCard } from "@/lib/images/dmCard";
+import { composeDmCard, isAudioReply } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt, withSceneGuards, cleanImagePrompt } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { annualSalaryText, playerMonthlyNet, marketValueM } from "@/lib/narrative/transfer-terms";
@@ -825,6 +825,7 @@ export async function resolveEvent(formData: FormData) {
       const dmCard = {
         ...event.dm,
         reply: option.dmReply,
+        replyAudio: isAudioReply(option.label),
         followUp: option.dmFollowUp,
         // Tu foto de referencia, NUNCA la de cabecera (current_photo_url): esa sigue al último hito, p. ej. una lesión.
         playerPhoto: (player.photo_url as string | null | undefined) ?? null,

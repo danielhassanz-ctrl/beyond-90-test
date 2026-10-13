@@ -14,7 +14,7 @@ import { describeKit } from "@/lib/clubColors";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { playerAge } from "@/types/career";
 import { logAppError } from "@/lib/errorLog";
-import { composeDmCard } from "@/lib/images/dmCard";
+import { composeDmCard, isAudioReply } from "@/lib/images/dmCard";
 import { maybeDmScenePhoto } from "@/lib/images/dm-scene";
 import { BANK_SCENES } from "@/lib/narrative/bank/scenes";
 import { fillBankEvent } from "@/lib/narrative/bank/select";
@@ -201,13 +201,13 @@ export async function regenerateDmCard(formData: FormData) {
   if (!milestone || milestone.type !== "dm_instagram") redirect(`/carrera/hito/${milestoneId}`);
 
   const wanted = String(milestone.subtitle ?? "").trim();
-  let found: { dm: NonNullable<(typeof BANK_SCENES)[number]["event"]["dm"]>; reply?: string; followUp?: string } | null = null;
+  let found: { dm: NonNullable<(typeof BANK_SCENES)[number]["event"]["dm"]>; reply?: string; audio?: boolean; followUp?: string } | null = null;
   for (const scene of BANK_SCENES) {
     if (!scene.event.dm) continue;
     const filled = fillBankEvent(scene.event, player as never);
     const opt = filled.options.find((o) => (o.outcomeText ?? "").trim() === wanted);
     if (opt && filled.dm) {
-      found = { dm: filled.dm, reply: opt.dmReply, followUp: opt.dmFollowUp };
+      found = { dm: filled.dm, reply: opt.dmReply, audio: isAudioReply(opt.label), followUp: opt.dmFollowUp };
       break;
     }
   }
@@ -221,6 +221,7 @@ export async function regenerateDmCard(formData: FormData) {
     const raw = await composeDmCard({
       ...found.dm,
       reply: found.reply,
+      replyAudio: found.audio,
       followUp: found.followUp,
       // Tu foto de referencia, NUNCA la de cabecera (esa sigue al último hito, p. ej. una lesión).
       playerPhoto: (player.photo_url as string | null | undefined) ?? null,

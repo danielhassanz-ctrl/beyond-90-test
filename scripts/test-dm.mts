@@ -1,6 +1,7 @@
 /** Prueba sin IA: cada mensaje directo del banco lleva su avatar y tu respuesta, y se puede localizar por su reacción (para rehacer la tarjeta). */
 import { BANK_SCENES } from "../src/lib/narrative/bank/scenes";
 import { fillBankEvent } from "../src/lib/narrative/bank/select";
+import { isAudioReply, composeDmCard } from "../src/lib/images/dmCard";
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? "  ✓ " : "  ✗ ") + m); if (!c) fails++; };
@@ -33,6 +34,10 @@ const nerea = dmScenes.find((s) => s.id === "bank-ch-nerea-dm")!;
 const f: any = fillBankEvent(nerea.event as any, player);
 const opt = f.options.find((o: any) => /Trato hecho\. Pero el postre/.test(o.outcomeText));
 ok(!!opt && opt.dmReply?.includes("Valoro la sinceridad") && opt.dmFollowUp?.includes("postre"), `Nerea: tu respuesta «${opt?.dmReply}» y su réplica «${opt?.dmFollowUp}»`);
+
+ok(isAudioReply("Grabar un audio con cariño") && isAudioReply("Mandar un audio y ya") && isAudioReply("Mandarle una nota de voz") && !isAudioReply("Mandarle una foto firmada") && !isAudioReply("Ir a verlo al partido"), "se reconoce cuándo tu respuesta es un audio");
+const audioCard = await composeDmCard({ name: "Rosa", handle: "rosa", message: "¿Podrías mandarle un audio de ánimo?", reply: "Dile que se divierta, que el miedo es normal y que yo también me pongo nervioso.", followUp: "Gracias!", replyAudio: true });
+ok(audioCard.length > 10000, "la tarjeta con nota de voz y transcripción se dibuja");
 
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);
