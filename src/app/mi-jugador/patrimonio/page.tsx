@@ -11,7 +11,7 @@ import { PropertyActions } from "@/components/PropertyActions";
 import { cityOfClub } from "@/lib/narrative/events";
 import { readRent } from "@/lib/finance/rent";
 import { findPropertyPrompt, findPropertyInteriorPrompt } from "@/lib/narrative/events";
-import { readProperties, monthlyPayment, remainingLoan, totalMonthlyPayments, propertyValue as propertyValueOf, canRent, propertyRentMonthly, totalRentalIncome, saleProceeds } from "@/lib/finance/mortgage";
+import { readProperties, monthlyPayment, remainingLoan, originalLoan, totalMonthlyPayments, propertyValue as propertyValueOf, canRent, propertyRentMonthly, totalRentalIncome, saleProceeds } from "@/lib/finance/mortgage";
 import { readInvestments, investmentValue } from "@/lib/finance/investments";
 import { activeSponsorships } from "@/lib/finance/sponsorship-income";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
@@ -347,6 +347,19 @@ export default async function PatrimonioPage() {
                             <span className="text-muted-foreground">Cuota al mes</span>
                             <span className="font-num font-semibold text-destructive">{monthlyPayment(p).toLocaleString("es")} €</span>
                           </div>
+                          {(() => {
+                            // Cada turno es un mes: lo que ya has devuelto y cuánto llevas pagando (al principio casi todo son intereses).
+                            const months = Math.max(0, player.week - (p.since ?? player.week));
+                            const repaid = Math.max(0, originalLoan(p) - remainingLoan(p, player.week));
+                            return (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Ya has devuelto</span>
+                                <span className="font-num font-semibold text-foreground">
+                                  {repaid.toLocaleString("es")} € · {months} {months === 1 ? "mes" : "meses"}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </>
                       ) : (
                         <p className="text-xs text-pitch">Pagada al contado: sin hipoteca.</p>
