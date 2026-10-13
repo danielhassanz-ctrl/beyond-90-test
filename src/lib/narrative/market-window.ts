@@ -67,6 +67,8 @@ export function stabilityTurns(player: Pick<Player, "week" | "flags">): number {
 }
 
 export function inStabilityPeriod(player: Pick<Player, "week" | "flags">): boolean {
+  // Si has pedido salir (o una cesión), el club lo sabe: las ofertas pueden llegar aunque hayas fichado hace poco (club-requests.ts).
+  if ((parseInt(String(player.flags?.listed_until ?? "0"), 10) || 0) > player.week) return false;
   const since = parseInt(String(player.flags?.club_since ?? "0"), 10) || 0;
   return since > 0 && player.week - since < stabilityTurns(player);
 }
@@ -144,6 +146,13 @@ const POOL_ELITE = ["Real Madrid", "Manchester City", "Liverpool FC", "Paris Sai
  * juegue. Antes un jugador del Real Madrid recibía "interés" del Sevilla o
  * del Getafe como si fuera un ascenso.
  */
+/** Un club de nivel inferior donde puedas jugar, para una cesión que has pedido. */
+export function pickLoanClub(player: Player): string {
+  const level = getClubLevel(player.club);
+  const pool = (level === "modesto" ? POOL_LOW : [...POOL_MID, ...POOL_LOW]).filter((c) => c !== player.club);
+  return pick(pool.length ? pool : POOL_LOW);
+}
+
 export function pickInterestedClub(player: Player): string {
   const media = player.media ?? 50;
   const age = 16 + Math.floor(player.week / 10);
@@ -800,7 +809,9 @@ export function buildTransferOfferEvent(player: Player): GameEvent {
   // interés vino por él) o un club que se echa atrás sin más.
   const source = String(player.flags?.transfer_interest_source ?? "prensa");
   const roll = Math.random();
-  if (source === "agente") {
+  if (source === "listado" || source === "cesion") {
+    // Lo has pedido tú: la oferta llega de verdad (sin humo ni clubes que se echan atrás).
+  } else if (source === "agente") {
     if (roll < 0.3) return buildFizzleEvent(player, "agente");
     if (roll < 0.4) return buildFizzleEvent(player, "otro");
   } else if (roll < 0.15) {
@@ -819,7 +830,7 @@ export function buildTransferOfferEvent(player: Player): GameEvent {
   const loanOngoing = Boolean(player.flags?.loan_active) && !player.flags?.loan_returned;
   const rank = { grande: 3, europeo: 2, modesto: 1 } as const;
   const lowerLevel = rank[getClubLevel(club)] < rank[getClubLevel(origin)];
-  if (notStarter && lowerLevel && age <= 27 && !loanOngoing && Math.random() < 0.65) {
+  if ((source === "cesion" && !loanOngoing) || (notStarter && lowerLevel && age <= 27 && !loanOngoing && Math.random() < 0.65)) {
     const loanFlags = { ...clear, loan_active: origin, loan_start_week: String(player.week), loan_returned: false };
     return {
       id: `oferta-cesion-${Date.now()}`,

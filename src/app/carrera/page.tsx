@@ -1,4 +1,6 @@
 import { allTrofeos } from "@/lib/honours";
+import { ClubRequests } from "@/components/ClubRequests";
+import { CLUB_REQUEST_KINDS, CLUB_REQUEST_INFO, requestStatus } from "@/lib/narrative/club-requests";
 import { displayWeek } from "@/lib/calendar/season-display";
 import { canonicalClub } from "@/lib/calendar/leagues";
 import { headerPhotoUrl } from "@/lib/player/header-photo";
@@ -146,6 +148,8 @@ export default async function CarreraPage() {
   const rookieChainFinished = usedEventIds.includes("rookie-debut-oficial");
   const statusLine =
     player.club === NO_CLUB_YET ? "Sin equipo" : rookieChainStarted && !rookieChainFinished ? "Con el filial" : ROLE_LABELS[computeRole(player).role];
+
+  const clubRequestItems = CLUB_REQUEST_KINDS.map((kind) => ({ kind, ...CLUB_REQUEST_INFO[kind], ...requestStatus(player, kind) }));
 
   return (
     <main className="flex flex-1 justify-center p-4 pb-24">
@@ -318,6 +322,7 @@ export default async function CarreraPage() {
             </div>
           )}
         </div>
+        {player.club !== NO_CLUB_YET && <ClubRequests items={clubRequestItems} />}
       </div>
       <BottomNav active="carrera" />
     </main>

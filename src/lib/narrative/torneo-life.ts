@@ -1,7 +1,7 @@
 import type { Consequences, EventOption, GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import type { TorneoProgress } from "@/lib/narrative/torneo";
-import { getPersonName, getTeammateName, getCelebrityName } from "@/lib/narrative/npcs";
+import { getPersonName, getTeammateName, getCelebrityName, getNpcName, nationalSquadView } from "@/lib/narrative/npcs";
 
 /**
  * Vida durante un torneo con la selección (Mundial, Eurocopa, Copa
@@ -41,6 +41,8 @@ interface Ctx {
   agent: string;
   journalist: string;
   veteran: string;
+  /** El capitán de la selección (el mismo que sale en el resto de escenas de selección). */
+  captain: string;
   fame: string;
   bigClub: string;
 }
@@ -347,7 +349,7 @@ const TEMPLATES: Tpl[] = [
         "Photorealistic photo of the photographed man in a national team kit wearing a captain armband during warm-up in a big tournament stadium, serious determined face, teammates behind him, floodlights, no real logos",
     },
     desc: (c) =>
-      `${c.veteran}, el capitán, se te acerca en pleno calentamiento, se quita el brazalete y te lo coloca en el brazo durante unos segundos: "Para que lo sientas", te dice. Medio vestuario lo ve y nadie dice nada. Es solo un gesto, pero ya lo has entendido todo.`,
+      `${c.captain}, que lleva el brazalete de la selección, se te acerca en pleno calentamiento, se quita el brazalete y te lo coloca en el brazo durante unos segundos: "Para que lo sientas", te dice. Medio vestuario lo ve y nadie dice nada. Es solo un gesto, pero ya lo has entendido todo.`,
     opts: () => [
       { label: "Devolvérselo con un abrazo", subtitle: "Respeto total", consequences: { rel_vestuario: 5, moral: 4 }, outcomeText: "Te da una palmada en la espalda con más fuerza de la necesaria. Es su forma de decirte que cuenta contigo." },
       { label: "Guardar el recuerdo en la cabeza y salir a jugar", subtitle: "Combustible emocional", consequences: { forma: 2, moral: 5 }, outcomeText: "Sales al campo con el brazo aún caliente de ese momento." },
@@ -416,6 +418,7 @@ export function buildTorneoLifeEvent(player: Player, progress?: TorneoProgress |
     agent: player.agent_name ?? getPersonName(player, `${salt}-agent`, "m"),
     journalist: getPersonName(player, `${salt}-press`, "any"),
     veteran: getTeammateName(player, `${salt}-vet`),
+    captain: getNpcName(nationalSquadView(player), "capitan"),
     fame: getCelebrityName(player, "influencer", salt, "m"),
     bigClub: BIG_CLUBS[(player.id.length + week) % BIG_CLUBS.length],
   };
