@@ -10,7 +10,7 @@ import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quot
 import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
 import { addShareBranding } from "@/lib/images/shareBranding";
 import { getMilestoneImagePrompt, cleanImagePrompt } from "@/lib/images/milestonePrompts";
-import { describeKit } from "@/lib/clubColors";
+import { describeKit, describeNationalKit } from "@/lib/clubColors";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { playerAge } from "@/types/career";
 import { logAppError } from "@/lib/errorLog";
@@ -122,10 +122,15 @@ export async function regenerateMilestoneImage(formData: FormData) {
     contextual ??
     `Photorealistic cinematic photo of the photographed man in an emotional football moment: "${milestone.title}". He wears a ${describeKit(player.club)} football jersey, natural stadium light, expressive face, documentary sports photography style`;
   // Una escena guardada sin camiseta (de antes de que se añadiera la cláusula) dejaba que el modelo eligiera la de cualquier club.
+  // Los momentos con la selección (convocatoria, torneo...) llevan la camiseta de la selección, nunca la del club.
+  const isNational = /convocad|selecci[oó]n|eurocopa|mundial|copa am[eé]rica|ol[ií]mpic/i.test(String(milestone.title ?? ""));
+  const kitClause = isNational
+    ? `If he wears any football kit, it is exactly ${describeNationalKit(String(player.nation ?? ""))}.`
+    : `If he wears any club kit, tracksuit or jacket, it is exactly: ${describeKit(player.club)}; never another club's colours or crest.`;
   const prompt = cleanImagePrompt(
     /(kit|jersey|shirt|tracksuit)/i.test(basePrompt) || /national team|world cup|selecci/i.test(basePrompt)
       ? basePrompt
-      : `${basePrompt} If he wears any club kit, tracksuit or jacket, it is exactly: ${describeKit(player.club)}; never another club's colours or crest.`,
+      : `${basePrompt} ${kitClause}`,
   );
 
   const photoUrl = player.photo_url as string;

@@ -230,6 +230,36 @@ function kitAccuracyClause(colorPhrase: string): string {
   return `${colorPhrase} (the jersey's actual base color MUST be ${colorPhrase}, not any other color — plain simple design, no crest, badge or pattern copied from any other real famous football club)`;
 }
 
+/** Camiseta de cada selección (primera equipación): las fotos con la selección nunca llevan la de un club. */
+const NATIONAL_KITS: Record<string, string> = {
+  "España": "a bright red jersey with golden-yellow trim on the collar and sleeves, navy blue shorts, and a small crown-topped shield badge on the chest",
+  "Francia": "a deep navy blue jersey with a small rooster badge on the chest, white shorts",
+  "Alemania": "a white jersey with black and red details, a small eagle badge on the chest, black shorts",
+  "Italia": "an azure blue jersey with a small roundel badge on the chest, white shorts",
+  "Inglaterra": "a plain white jersey with a small three-lions badge on the chest, navy blue shorts",
+  "Portugal": "a deep red jersey with dark green details and a small shield badge on the chest, green shorts",
+  "Brasil": "a bright yellow jersey with green trim and a small badge on the chest, blue shorts",
+  "Argentina": "a jersey with light-blue and white vertical stripes and a small badge on the chest, black shorts",
+  "Países Bajos": "a bright orange jersey with a small lion badge on the chest, orange shorts",
+  "Bélgica": "a red jersey with black and yellow details and a small badge on the chest, red shorts",
+  "Croacia": "a red-and-white checkered jersey with a small badge on the chest, white shorts",
+  "Marruecos": "a red jersey with green trim and a small badge on the chest, green shorts",
+  "Uruguay": "a sky-blue jersey with a small badge on the chest, black shorts",
+  "Colombia": "a bright yellow jersey with blue and red details, blue shorts",
+  "México": "a green jersey with a small eagle badge on the chest, white shorts",
+  "Suiza": "a red jersey with a white cross on the chest, red shorts",
+  "Dinamarca": "a red jersey with white details and a small badge on the chest, white shorts",
+  "Polonia": "a white jersey with red details and a small eagle badge on the chest, white shorts",
+  "Japón": "a deep blue jersey with a small badge on the chest, blue shorts",
+  "Estados Unidos": "a white jersey with red and navy details and a small badge on the chest, navy shorts",
+};
+
+/** La equipación de una selección, lista para meter en un prompt de imagen (sin textos legibles). */
+export function describeNationalKit(nation: string): string {
+  const kit = NATIONAL_KITS[nation] ?? `a jersey in the colours of the ${nation} flag with a small national federation badge on the chest`;
+  return `the ${nation} national team home kit: ${kit}; the shirt must NOT look like any club kit and must not show any club crest`;
+}
+
 export function describeKit(club: string): string {
   const colorPhrase = KIT_DESCRIPTIONS[club] ?? (() => {
     const colors = getClubColors(club);

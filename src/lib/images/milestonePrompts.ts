@@ -1,4 +1,4 @@
-import { describeKit } from "@/lib/clubColors";
+import { describeKit, describeNationalKit } from "@/lib/clubColors";
 
 import { describeLook } from "@/lib/playerLook";
 import { getContextualImagePrompt } from "@/lib/narrative/contextual-image-prompts";
@@ -101,7 +101,7 @@ export function cleanImagePrompt(prompt: string): string {
   const cleaned = prompt
     .replace(/Getty Images/gi, "press-agency")
     .replace(/jersey over (his )?shoulders?/gi, "jersey worn normally on his body");
-  return /no watermark/i.test(cleaned) ? cleaned : `${cleaned} No watermark and no photographer credit; no text anywhere except what is explicitly requested above; one jersey per person only (no second shirt draped over the shoulders).`;
+  return /no watermark/i.test(cleaned) ? cleaned : `${cleaned} No watermark and no photographer credit; no text anywhere except what is explicitly requested above; no names, numbers or lettering printed on the front of any worn shirt; any crest or badge is small, simple and clean (never a large invented emblem); one jersey per person only (no second shirt draped over the shoulders).`;
 }
 
 export function getMilestoneImagePrompt(
@@ -166,13 +166,20 @@ export function getMilestoneImagePrompt(
  * jugando con el Real Madrid, y un marcador con "HAT-TRICK" en un 1-2. Estas
  * cláusulas se añaden al final de cualquier escena de IA.
  */
-export function withSceneGuards(scene: string, opts: { club?: string; age: number; nationalTeam?: boolean }): string {
+export function withSceneGuards(scene: string, opts: { club?: string; age: number; nationalTeam?: boolean; nation?: string }): string {
   const ageText =
     opts.age < 18
       ? "a 16-17 year old teenager"
       : opts.age < 23
         ? `a ${opts.age}-year-old young man with a youthful, clean-shaven or lightly stubbled face, no wrinkles, no grey hair`
         : `a ${opts.age}-year-old man`;
-  const kit = opts.club && !opts.nationalTeam ? ` If he wears a football kit, it is: ${describeKit(opts.club)}.` : "";
+  // Con la selección, la camiseta es la de la selección (antes no se decía ninguna y salía una cualquiera: rojinegra y sin escudo).
+  const kit = opts.nationalTeam
+    ? opts.nation
+      ? ` If he wears a football kit, it is ${describeNationalKit(opts.nation)}.`
+      : ""
+    : opts.club
+      ? ` If he wears a football kit, it is: ${describeKit(opts.club)}.`
+      : "";
   return `${scene} Requirements: the man is ${ageText}.${kit} No readable text anywhere in the image: no scoreboard numbers, no captions, no player names, no banners with words.`;
 }

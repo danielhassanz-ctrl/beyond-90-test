@@ -22,7 +22,7 @@ import { addShareBranding } from "@/lib/images/shareBranding";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
 import { buildMatchContext, NO_CLUB_YET } from "@/lib/constants";
-import { describeKit } from "@/lib/clubColors";
+import { describeKit, describeNationalKit } from "@/lib/clubColors";
 import { recapPhotoPrompt } from "@/lib/images/recap-photo";
 import { maybeDmScenePhoto } from "@/lib/images/dm-scene";
 import { describeLook } from "@/lib/playerLook";
@@ -723,8 +723,13 @@ export async function resolveEvent(formData: FormData) {
               club: newClub,
               age: currentAge,
               nationalTeam: /^(sel-|torneo|matchday-torneo)/.test(event.id),
+              nation: player.nation ?? undefined,
             })
           : null);
+      // Con la selección, la camiseta es la de la selección (antes salía una cualquiera, sin sentido).
+      if (milestoneImagePrompt && /^(sel-|torneo|matchday-torneo)/.test(event.id) && player.nation && !/national team home kit/.test(milestoneImagePrompt)) {
+        milestoneImagePrompt += ` If he wears a football kit, it is ${describeNationalKit(player.nation)}.`;
+      }
       if (milestoneImagePrompt) milestoneImagePrompt = cleanImagePrompt(milestoneImagePrompt);
     }
 
