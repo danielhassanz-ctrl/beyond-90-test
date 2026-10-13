@@ -724,13 +724,15 @@ export async function resolveEvent(formData: FormData) {
               age: currentAge,
               nationalTeam: /^(sel-|torneo|matchday-torneo)/.test(event.id),
               nation: player.nation ?? undefined,
+              surname: player.last_name ?? undefined,
             })
           : null);
       // Con la selección, la camiseta es la de la selección (antes salía una cualquiera, sin sentido).
       if (milestoneImagePrompt && /^(sel-|torneo|matchday-torneo)/.test(event.id) && player.nation && !/national team home kit/.test(milestoneImagePrompt)) {
-        milestoneImagePrompt += ` If he wears a football kit, it is ${describeNationalKit(player.nation)}.`;
+        // La camiseta va AL PRINCIPIO: al final del prompt el modelo la ignoraba y ponía la de otra selección.
+        milestoneImagePrompt = `He is wearing ${describeNationalKit(player.nation)} — reproduce this exact kit faithfully. ${milestoneImagePrompt}`;
       }
-      if (milestoneImagePrompt) milestoneImagePrompt = cleanImagePrompt(milestoneImagePrompt);
+      if (milestoneImagePrompt) milestoneImagePrompt = cleanImagePrompt(milestoneImagePrompt, { surname: player.last_name });
     }
 
     // Los momentos garantizados de toda carrera (firma con el primer

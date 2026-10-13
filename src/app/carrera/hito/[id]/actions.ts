@@ -123,14 +123,20 @@ export async function regenerateMilestoneImage(formData: FormData) {
     `Photorealistic cinematic photo of the photographed man in an emotional football moment: "${milestone.title}". He wears a ${describeKit(player.club)} football jersey, natural stadium light, expressive face, documentary sports photography style`;
   // Una escena guardada sin camiseta (de antes de que se añadiera la cláusula) dejaba que el modelo eligiera la de cualquier club.
   // Los momentos con la selección (convocatoria, torneo...) llevan la camiseta de la selección, nunca la del club.
-  const isNational = /convocad|selecci[oó]n|eurocopa|mundial|copa am[eé]rica|ol[ií]mpic/i.test(String(milestone.title ?? ""));
+  const isNational = /convocad|selecci[oó]n|torneo|eurocopa|mundial|copa am[eé]rica|ol[ií]mpic/i.test(String(milestone.title ?? ""));
   const kitClause = isNational
     ? `If he wears any football kit, it is exactly ${describeNationalKit(String(player.nation ?? ""))}.`
     : `If he wears any club kit, tracksuit or jacket, it is exactly: ${describeKit(player.club)}; never another club's colours or crest.`;
   const prompt = cleanImagePrompt(
-    /(kit|jersey|shirt|tracksuit)/i.test(basePrompt) || /national team|world cup|selecci/i.test(basePrompt)
-      ? basePrompt
-      : `${basePrompt} ${kitClause}`,
+    isNational
+      ? // La camiseta de la selección va AL PRINCIPIO (al final del prompt el modelo la ignoraba y ponía la de otra selección).
+        /national team home kit/.test(basePrompt)
+        ? basePrompt
+        : `He is wearing ${describeNationalKit(String(player.nation ?? ""))} — reproduce this exact kit faithfully. ${basePrompt}`
+      : /(kit|jersey|shirt|tracksuit)/i.test(basePrompt) || /national team|world cup|selecci/i.test(basePrompt)
+        ? basePrompt
+        : `${basePrompt} ${kitClause}`,
+    { surname: player.last_name },
   );
 
   const photoUrl = player.photo_url as string;

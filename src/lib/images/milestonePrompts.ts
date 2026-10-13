@@ -97,8 +97,12 @@ export const MILESTONE_TYPE_TO_CONTEXT_TYPE: Record<string, string> = {
  * Limpieza de cualquier prompt de foto antes de enviarlo: «Getty Images» hacía que el modelo dibujara la marca de agua
  * y el crédito del fotógrafo, y «camiseta sobre los hombros» le hacía poner una segunda camiseta encima de la que ya llevaba.
  */
-export function cleanImagePrompt(prompt: string): string {
-  const cleaned = prompt
+export function cleanImagePrompt(prompt: string, opts: { surname?: string | null } = {}): string {
+  // Si la escena enseña el nombre en una camiseta, tiene que ser el apellido REAL del jugador (salía «Rodríguez»).
+  const surname = (opts.surname ?? "").trim().toUpperCase();
+  const showsShirtName = surname && /(name|surname|apellido)/i.test(prompt) && /(back|shirt|jersey)/i.test(prompt);
+  const nameRule = showsShirtName ? ` The only name that may appear on any shirt is his own surname, exactly spelled "${surname}" in capital letters; never write any other surname.` : "";
+  const cleaned = (prompt + nameRule)
     .replace(/Getty Images/gi, "press-agency")
     .replace(/jersey over (his )?shoulders?/gi, "jersey worn normally on his body");
   return /no watermark/i.test(cleaned) ? cleaned : `${cleaned} No watermark and no photographer credit; no text anywhere except what is explicitly requested above; no names, numbers or lettering printed on the front of any worn shirt; any crest or badge is small, simple and clean (never a large invented emblem); one jersey per person only (no second shirt draped over the shoulders).`;
@@ -166,7 +170,7 @@ export function getMilestoneImagePrompt(
  * jugando con el Real Madrid, y un marcador con "HAT-TRICK" en un 1-2. Estas
  * cláusulas se añaden al final de cualquier escena de IA.
  */
-export function withSceneGuards(scene: string, opts: { club?: string; age: number; nationalTeam?: boolean; nation?: string }): string {
+export function withSceneGuards(scene: string, opts: { club?: string; age: number; nationalTeam?: boolean; nation?: string; surname?: string }): string {
   const ageText =
     opts.age < 18
       ? "a 16-17 year old teenager"
@@ -181,5 +185,5 @@ export function withSceneGuards(scene: string, opts: { club?: string; age: numbe
     : opts.club
       ? ` If he wears a football kit, it is: ${describeKit(opts.club)}.`
       : "";
-  return `${scene} Requirements: the man is ${ageText}.${kit} No readable text anywhere in the image: no scoreboard numbers, no captions, no player names, no banners with words.`;
+  return `${scene} Requirements: the man is ${ageText}.${kit} No readable text anywhere in the image: no scoreboard numbers, no captions, no banners with words, and no names at all${opts.surname ? ` except his own surname "${opts.surname.toUpperCase()}" (only if a shirt back is shown)` : ""}.`;
 }

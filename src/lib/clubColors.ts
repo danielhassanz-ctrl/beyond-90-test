@@ -232,7 +232,7 @@ function kitAccuracyClause(colorPhrase: string): string {
 
 /** Camiseta de cada selección (primera equipación): las fotos con la selección nunca llevan la de un club. */
 const NATIONAL_KITS: Record<string, string> = {
-  "España": "a bright red jersey with golden-yellow trim on the collar and sleeves, navy blue shorts, and a small crown-topped shield badge on the chest",
+  "España": "a SOLID bright red jersey from collar to hem (entirely red: no white panels, no chevrons, no stripes or patterns on the torso or sleeves), with only thin golden-yellow trim on the neckline and cuffs and three thin yellow stripes along each shoulder, a small shield-shaped crest on the left chest topped with a golden royal crown (red and gold colours), navy blue shorts and red socks",
   "Francia": "a deep navy blue jersey with a small rooster badge on the chest, white shorts",
   "Alemania": "a white jersey with black and red details, a small eagle badge on the chest, black shorts",
   "Italia": "an azure blue jersey with a small roundel badge on the chest, white shorts",
@@ -257,7 +257,7 @@ const NATIONAL_KITS: Record<string, string> = {
 /** La equipación de una selección, lista para meter en un prompt de imagen (sin textos legibles). */
 export function describeNationalKit(nation: string): string {
   const kit = NATIONAL_KITS[nation] ?? `a jersey in the colours of the ${nation} flag with a small national federation badge on the chest`;
-  return `the ${nation} national team home kit: ${kit}; the shirt must NOT look like any club kit and must not show any club crest`;
+  return `the ${nation} national team home kit: ${kit}; the shirt must NOT look like any club kit, must not show any club crest and must not copy the kit of any other national team`;
 }
 
 export function describeKit(club: string): string {
