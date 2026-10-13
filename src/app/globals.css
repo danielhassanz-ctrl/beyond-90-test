@@ -117,3 +117,21 @@ body {
 .pitch-fill {
   background-image: var(--gradient-pitch);
 }
+
+/* Tailwind 4 ya no pone el cursor de "clic" en los botones: sin esto el puntero se queda como una flecha al pasar por
+   "Iniciar sesión", las opciones de las escenas, etc. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  input[type="submit"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+  button:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
+}
