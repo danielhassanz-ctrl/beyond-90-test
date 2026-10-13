@@ -24,6 +24,7 @@ const { extractStatsFromEvent, applyStatUpdate } = await import("../src/lib/play
 const { generateSecondLifeEvent, generateSecondLifeThreadPayoff } = await import("../src/lib/narrative/ai");
 const { getSecondLifeEvents } = await import("../src/lib/narrative/segundaVida");
 const { playerAge } = await import("../src/types/career");
+const { bankFlagKey } = await import("../src/lib/narrative/bank/types");
 const { runWithAiBudget, careerBudgetTotal, SECOND_LIFE_BUDGET } = await import("../src/lib/narrative/ai-budget");
 
 // Mismo presupuesto que en producción (ver ai-budget.ts): sin él el script pedía ~500 llamadas por carrera.
@@ -154,6 +155,8 @@ while (n < MAX && !retired && player.week < 215) {
     if (bench > 0 && cons.flags?.coach_bench === undefined) player.flags.coach_bench = String(Math.max(0, bench - (newWeek - player.week)));
   }
   player.week = newWeek;
+  // Como en el juego real (resolveEvent): una escena del banco deja su marca para que las cadenas se desbloqueen.
+  if (String(ev.id).startsWith("bank-")) player.flags[bankFlagKey(ev.id)] = `${opt.id}:${player.week}`;
   used.push(ev.id);
   history.unshift({ title: ev.title, chosen: opt.label, effects: summarizeEffects(cons), outcome, category: ev.category });
   if (history.length > 10) history.pop();

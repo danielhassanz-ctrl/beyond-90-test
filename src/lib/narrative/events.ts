@@ -6245,37 +6245,6 @@ export const EVENTS: GameEvent[] = [
     freeTextPrompt: "¿Qué es lo que más echas de menos de casa esta semana?",
   },
   {
-    id: "esp-lesion-ligamento-cruzado",
-    category: "especial",
-    title: "La rodilla que lo para todo",
-    description: "Rotura parcial de ligamento en un apoyo mal hecho, sin contacto. Unos 3 meses de baja (menos si todo va bien) y la pregunta que nadie dice en voz alta: ¿volverás al mismo nivel?",
-    minWeek: 25,
-    minMedia: 55,
-    isMilestone: true,
-    imageScene: "Photorealistic photo of the photographed man on crutches leaving a hospital in tracksuit, knee heavily bandaged, determined but tired expression, overcast daylight, photojournalistic style",
-    options: [
-      {
-        id: "a",
-        label: "Rehabilitación agresiva, sin saltarte nada",
-        subtitle: "Disciplina total · baja de unos 3 meses",
-        consequences: { forma: -8, moral: 2, rel_entrenador: 3, flags: { injury_duration_acl: "3", physio_stage: "0" } },
-        outcomeText: "Fisioterapeutas, gimnasio y paciencia: tres meses de baja contados día a día, sin atajos.",
-      },
-      {
-        id: "b",
-        label: "Volver antes de lo recomendado",
-        subtitle: "Riesgo de recaída · de 2 a 3 meses de baja",
-        resolve: {
-          baseChance: 0.35,
-          statModifier: "forma",
-          success: { text: "Aguanta. Vuelves en unos 2 meses, antes de lo previsto y sin secuelas visibles.", consequences: { forma: -2, fama: 3, flags: { injury_duration_acl: "2", physio_stage: "0" } } },
-          fail: { text: "La rodilla no estaba lista: recaída y vuelta a empezar la baja, esta vez con más miedo. Serán 3 meses completos.", consequences: { forma: -12, moral: -8, flags: { injury_duration_acl: "3", physio_stage: "0" } } },
-        },
-        consequences: {},
-      },
-    ],
-  },
-  {
     id: "ent-marginado-nuevo-entrenador",
     category: "entrenamiento",
     title: "El nuevo técnico no cuenta contigo",

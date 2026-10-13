@@ -34,7 +34,7 @@ for (const s of BANK_SCENES) {
   const e: any = s.event;
   if (!e.title || !e.description) err(s.id, "título o descripción vacíos");
   if (!e.options || e.options.length < 2 || e.options.length > 4) err(s.id, `debe tener 2-4 opciones (tiene ${e.options?.length})`);
-  if (e.isMilestone && !e.imageScene) err(s.id, "es hito pero no tiene imageScene");
+  if (e.isMilestone && !e.imageScene && !e.dm) err(s.id, "es hito pero no tiene imageScene ni tarjeta de mensaje (dm)");
   const optIds = new Set<string>();
   const texts: string[] = [e.title, e.description, e.freeTextPrompt ?? ""];
   for (const o of e.options) {

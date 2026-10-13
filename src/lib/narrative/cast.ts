@@ -10,6 +10,7 @@
  *
  * El estado vive en player.flags.cast_met (nombres separados por "|").
  */
+import { getRivals } from "@/lib/narrative/rivals";
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import {
@@ -182,8 +183,24 @@ function buildRegistry(player: Player): Entry[] {
     const name = getNpcName(player, role);
     return { name, role: label, blurb: pick(BLURBS[bankKey], `${player.id}:${role}:${player.club}`), priority };
   });
+  // Los rivales de tu generación (rivals.ts) tienen ficha propia: son personajes fijos de la carrera, y un compañero
+  // suelto nunca puede llevar su nombre (se presentaría como "compañero de equipo").
+  const rivals = getRivals(player);
+  const rivalNames = new Set(rivals.map((r) => r.name));
+  for (const r of rivals) {
+    entries.push({
+      name: r.name,
+      role: r.kind === "mega" ? `Rival de tu generación (${r.position.toLowerCase()} de ${r.club})` : "Compañero de tu edad que compite contigo",
+      blurb:
+        r.kind === "mega"
+          ? `Tu quinta, otro vestuario. Un ${r.position.toLowerCase()} de ${r.club} del que todo el mundo te compara, para bien y para mal.`
+          : `Un ${r.position.toLowerCase()} de tu edad en el mismo club. Os pasáis la pelota en el campo y la vida en los pasillos.`,
+      priority: 2,
+    });
+  }
   for (let i = 1; i <= 12; i++) {
     const name = getTeammateName(player, `squad${i}`);
+    if (rivalNames.has(name)) continue;
     const age = ageFor(`${player.id}:squad${i}`, 19, 35);
     entries.push({
       name,

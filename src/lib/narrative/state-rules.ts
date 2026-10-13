@@ -97,7 +97,6 @@ const RULES: Record<string, StateRule> = {
 
   // — Lesión: nada de entrenamientos ni partidos mientras tanto —
   "ent-lesion-susto": { notInjured: true },
-  "esp-lesion-ligamento-cruzado": { notInjured: true },
   "especial-lesion-grave": { notInjured: true },
   "ent-jugar-con-dolor": { notInjured: true },
   "ves-conflicto": { notInjured: true },

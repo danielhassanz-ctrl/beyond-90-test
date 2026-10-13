@@ -180,7 +180,13 @@ export function fillBankEvent<T extends Omit<GameEvent, "id">>(event: T, player:
     if (!s.includes("{peer") && !s.includes("{mega")) return s;
     let out = s;
     for (const r of rivals) {
-      out = out.split(`{${r.key}_club}`).join(r.club).split(`{${r.key}_pos}`).join(r.position.toLowerCase()).split(`{${r.key}}`).join(r.name);
+      // {mega1_handle}: el nombre como usuario de redes (sin acentos ni espacios), para las tarjetas de mensaje.
+      const handle = r.name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
+      out = out
+        .split(`{${r.key}_club}`).join(r.club)
+        .split(`{${r.key}_pos}`).join(r.position.toLowerCase())
+        .split(`{${r.key}_handle}`).join(handle)
+        .split(`{${r.key}}`).join(r.name);
     }
     return out;
   };
@@ -201,11 +207,14 @@ export function fillBankEvent<T extends Omit<GameEvent, "id">>(event: T, player:
     title: fill(event.title),
     description: fill(event.description),
     freeTextPrompt: text(event.freeTextPrompt),
+    dm: event.dm ? { ...event.dm, handle: fill(event.dm.handle), name: fill(event.dm.name), message: fill(event.dm.message) } : undefined,
     options: event.options.map((o) => ({
       ...o,
       label: fill(o.label),
       subtitle: fill(o.subtitle),
       outcomeText: text(o.outcomeText),
+      dmReply: text(o.dmReply),
+      dmFollowUp: text(o.dmFollowUp),
       resolve: o.resolve
         ? { ...o.resolve, success: { ...o.resolve.success, text: fill(o.resolve.success.text) }, fail: { ...o.resolve.fail, text: fill(o.resolve.fail.text) } }
         : undefined,

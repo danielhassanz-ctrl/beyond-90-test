@@ -34,6 +34,8 @@ function scenesTarget(remaining: number): number {
 export function shouldTriggerPhysioScene(player: Player): boolean {
   const remaining = getInjuryRemaining(player.flags);
   if (remaining <= 0) return false;
+  // Las lesiones graves (injury-saga.ts) llevan sus propias escenas; el fisio de siempre es para las de 3 meses.
+  if (player.flags?.lg_stage) return false;
   return shownScenes(player) < scenesTarget(remaining);
 }
 

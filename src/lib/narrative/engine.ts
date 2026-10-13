@@ -77,6 +77,7 @@ import { fillBankEvent } from "@/lib/narrative/bank/select";
 import { pickBankScene, recycleBankScenes } from "@/lib/narrative/bank/select";
 import { shouldTriggerInvestmentReview, buildInvestmentReviewEvent } from "@/lib/narrative/investment-review";
 import { shouldTriggerContractRenewal, buildContractRenewalEvent } from "@/lib/narrative/contract-renewal";
+import { shouldTriggerSeriousInjury, shouldTriggerSagaStage, buildSeriousInjuryEvent, buildSagaStageEvent } from "@/lib/narrative/injury-saga";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
 import { shouldTriggerThreadPayoff, pickThreadDue, consumeThread } from "@/lib/narrative/threads";
@@ -309,7 +310,6 @@ const GRAND_MOMENT_EVENT_IDS = new Set([
   // suplente que explota tarde, veterano que vuelve a su club de debut).
   "esp-fichaje-caro-presion",
   "vid-choque-cultural-extranjero",
-  "esp-lesion-ligamento-cruzado",
   "ent-marginado-nuevo-entrenador",
   "rep-cesion-exito-sin-hueco",
   "ves-suplente-explota-tarde",
@@ -3528,6 +3528,19 @@ export async function pickNextEventDynamic(
         console.log(`[pickNextEventDynamic] Complicación/racha: "${ev.title}"`);
         return maybeAddFreeText(ev);
       }
+    }
+  }
+  // Lesión grave con decisiones (diagnóstico, mitad de la rehabilitación, el alta y las secuelas): ver injury-saga.ts.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics)) {
+    if (shouldTriggerSagaStage(playerWithDynamics)) {
+      const stage = buildSagaStageEvent(playerWithDynamics);
+      console.log(`[pickNextEventDynamic] Lesión grave, fase: "${stage.title}"`);
+      return stage;
+    }
+    if (shouldTriggerSeriousInjury(playerWithDynamics)) {
+      const injury = buildSeriousInjuryEvent(playerWithDynamics);
+      console.log(`[pickNextEventDynamic] Lesión grave: "${injury.title}"`);
+      return injury;
     }
   }
   // El contrato del club: última temporada (renovar, pedir más o salir libre) y fin de contrato.

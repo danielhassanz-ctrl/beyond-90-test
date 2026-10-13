@@ -9,6 +9,7 @@
 import type { Player } from "@/types/player";
 import { fictionalPlayerName } from "@/lib/narrative/npcs";
 import { maxMediaForAge } from "@/lib/narrative/media-cap";
+import { canonicalClub } from "@/lib/calendar/leagues";
 
 export interface Rival {
   key: "peer1" | "peer2" | "mega1" | "mega2" | "mega3";
@@ -67,17 +68,18 @@ export function getRivals(player: Player): Rival[] {
   }
 
   // Megacracks: mejores que casi todos a su edad, en otros grandes (cambian cada 3 temporadas).
-  const used = new Set<string>([player.club]);
+  // Se compara el nombre canónico: "Bayern de Múnich" y "Bayern Múnich" son el mismo club, y un rival nunca juega en el tuyo.
+  const used = new Set<string>([canonicalClub(player.club)]);
   for (const key of ["mega1", "mega2", "mega3"] as const) {
     const seed = `${player.id}:${key}`;
     let idx = hash(`${seed}:club:${Math.floor(season / 3)}`) % MEGA_CLUBS.length;
-    while (used.has(MEGA_CLUBS[idx])) idx = (idx + 1) % MEGA_CLUBS.length;
-    used.add(MEGA_CLUBS[idx]);
+    while (used.has(canonicalClub(MEGA_CLUBS[idx]))) idx = (idx + 1) % MEGA_CLUBS.length;
+    used.add(canonicalClub(MEGA_CLUBS[idx]));
     out.push({
       key,
       kind: "mega",
       name: fictionalPlayerName(seed, MEGA_CLUBS[idx], player.last_name),
-      club: MEGA_CLUBS[idx],
+      club: canonicalClub(MEGA_CLUBS[idx]),
       media: Math.min(97, cap(85) + between(`${seed}:m:${season}`, -2, 3)),
       position: POSITIONS[hash(`${seed}:p`) % POSITIONS.length],
     });

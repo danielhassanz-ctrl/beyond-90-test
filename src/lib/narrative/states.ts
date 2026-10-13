@@ -32,6 +32,7 @@ export const STATES: Record<string, StateDef> = {
   pitada: { id: "pitada", label: "La grada te pita", tone: "bad", icon: "📣", roll: -0.04, forma: 0, moral: -2, rel_aficion: -1, hint: "Cada balón que tocas lo recibes con silbidos." },
   racha: { id: "racha", label: "En racha", tone: "good", icon: "🔥", roll: 0.08, forma: 1, moral: 2, hint: "Todo te sale: más confianza, mejores jugadas." },
   mentor: { id: "mentor", label: "Con un mentor", tone: "good", icon: "🧭", roll: 0.04, forma: 1, moral: 1, hint: "Un veterano te enseña los detalles que no se ven." },
+  regreso: { id: "regreso", label: "Volviendo de la lesión", tone: "bad", icon: "🩹", roll: -0.05, forma: 2, moral: 1, hint: "Aún no vas al cien por cien: cuesta más acertar, pero cada semana notas más fuerza." },
   fisico: { id: "fisico", label: "A tope físicamente", tone: "good", icon: "💪", roll: 0.03, forma: 2, moral: 1, hint: "Llegas a todo y recuperas rápido." },
   confianza: { id: "confianza", label: "Con la confianza del míster", tone: "good", icon: "🤝", roll: 0.05, forma: 0, moral: 1, rel_entrenador: 1, hint: "El míster cuenta contigo y se nota." },
 };

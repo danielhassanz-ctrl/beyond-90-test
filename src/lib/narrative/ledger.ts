@@ -40,6 +40,8 @@ const ECHO_COOLDOWN = 4;
 const IGNORED_PREFIXES = ["match-decision-", "torneo-life-", "fisio-", "matchday-", "mercado-", "oferta-", "preseason-ev-", "agent-"];
 const TECH_FLAGS = new Set([
   "bench_streak", "coach_bench", "physio_stage", "physio_diligent", "torneo_activo", "torneo_style", "torneo_life_recent",
+  "lg_stage", "lg_total", "lg_start", "lg_riesgo", "lg_kind", "lg_part", "lg_last", "lg_recaidas", "lg_psico", "lg_calidad", "lg_clinica", "lg_scene_last",
+  "ctr_last", "invrev_last", "proprev_last", "sporev_last",
   "dm_last_week", "dm_last_key", "transfer_interest", "transfer_interest_week", "transfer_interest_source", "match_done_week",
 ]);
 
