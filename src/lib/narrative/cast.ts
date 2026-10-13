@@ -10,7 +10,8 @@
  *
  * El estado vive en player.flags.cast_met (nombres separados por "|").
  */
-import { getRivals } from "@/lib/narrative/rivals";
+import { getRivals, type Rival } from "@/lib/narrative/rivals";
+import { championsPodium } from "@/lib/narrative/world-results";
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import {
@@ -27,7 +28,7 @@ export interface CastCard {
   blurb: string;
 }
 
-interface Entry {
+export interface Entry {
   name: string;
   role: string;
   blurb: string;
@@ -158,8 +159,44 @@ function ageFor(seed: string, min: number, max: number): number {
   return min + (mix(seed) % (max - min + 1));
 }
 
+/** La ficha de un rival de tu generación: quién es (varía por persona) y datos reales de tu carrera (Champions, media). */
+function rivalBlurb(player: Player, r: Rival): string {
+  const pos = r.position.toLowerCase();
+  if (r.kind === "peer") {
+    const ids = [
+      `Un ${pos} de tu edad en el mismo club. Os pasáis la pelota en el campo y la vida en los pasillos.`,
+      "Llegó al club casi a la vez que tú. Sois amigos hasta que el míster tiene que elegir a uno.",
+      `Un ${pos} de tu quinta que entrena como si le fuera la vida en cada rondo. No lo disimula y a ti te pica.`,
+      "Mismo año de nacimiento y mismo puesto en la lista del míster: cada convocatoria es un pequeño duelo.",
+    ];
+    const d = r.media - (player.media ?? 0);
+    const fact = d >= 2 ? `Ahora mismo rinde ${d} puntos por encima de ti en los entrenos.` : d <= -3 ? `Le sacas ${-d} puntos de media y él lo sabe.` : "Estáis a la par, y eso lo hace peor.";
+    // Cada rival con su frase: el índice depende del puesto del rival, no solo del nombre (así nunca se repiten).
+    const slot = r.key === "peer1" ? 0 : 1;
+    return `${ids[(mix(`${player.id}:peers`) + slot) % ids.length]} ${fact}`;
+  }
+  const identity = [
+    `Tu quinta, otro vestuario: un ${pos} del ${r.club} al que comparan contigo en cada tertulia.`,
+    `Un ${pos} del ${r.club} que va por libre: poco con la prensa, mucho con el balón.`,
+    `Juega de ${pos} en el ${r.club} y media afición cree que es el heredero de los grandes.`,
+    `Mismo año de nacimiento, otro camino: ${pos} del ${r.club}, con la mirada de quien ya se ve ganándolo todo.`,
+    `El ${pos} del ${r.club} con el que se llena cada previa de partido; siempre tiene una frase preparada para ti.`,
+    `Un ${pos} del ${r.club} que entrena como si le persiguieran. Es lo único que tenéis en común, dicen.`,
+  ];
+  // Datos reales: la Champions de la temporada pasada (la misma que sale en la gala del Balón de Oro) y la media.
+  const season = Math.floor((player.week - 1) / 10);
+  const podium = championsPodium(player, season - 1);
+  const facts: string[] = [];
+  if (r.club === podium.winner) facts.push(podium.byPlayer ? `Os visteis campeones de Europa juntos con el ${r.club}.` : `Levantó la Champions con el ${r.club} la temporada pasada.`);
+  else if (r.club === podium.runnerUp) facts.push(`Perdió la final de la Champions con el ${r.club} la temporada pasada.`);
+  const d = r.media - (player.media ?? 0);
+  facts.push(d >= 3 ? `Tiene ${d} puntos de media más que tú: ${r.media} contra ${player.media}.` : d <= -3 ? `Le sacas ${-d} puntos de media, pero juega como si fuera al revés.` : `Estáis a la par en la media (${r.media} él, ${player.media} tú), y la prensa lo sabe.`);
+  const slot = r.key === "mega1" ? 0 : r.key === "mega2" ? 1 : 2;
+  return `${identity[(mix(`${player.id}:megas`) + slot * 2) % identity.length]} ${facts.slice(0, 2).join(" ")}`;
+}
+
 /** El reparto fijo del jugador con ficha: staff del club, familia, representante y 12 compañeros. */
-function buildRegistry(player: Player): Entry[] {
+export function buildRegistry(player: Player): Entry[] {
   const roles: [NpcRole, string, string, number][] = [
     ["entrenador", "Entrenador", "entrenador", 2],
     ["capitan", "Capitán", "capitan", 2],
@@ -191,10 +228,7 @@ function buildRegistry(player: Player): Entry[] {
     entries.push({
       name: r.name,
       role: r.kind === "mega" ? `Rival de tu generación (${r.position.toLowerCase()} de ${r.club})` : "Compañero de tu edad que compite contigo",
-      blurb:
-        r.kind === "mega"
-          ? `Tu quinta, otro vestuario. Un ${r.position.toLowerCase()} de ${r.club} del que todo el mundo te compara, para bien y para mal.`
-          : `Un ${r.position.toLowerCase()} de tu edad en el mismo club. Os pasáis la pelota en el campo y la vida en los pasillos.`,
+      blurb: rivalBlurb(player, r),
       priority: 2,
     });
   }

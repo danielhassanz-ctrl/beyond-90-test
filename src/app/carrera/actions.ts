@@ -31,6 +31,7 @@ import { getMilestoneImagePrompt, withSceneGuards } from "@/lib/images/milestone
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { annualSalaryText, playerMonthlyNet, marketValueM } from "@/lib/narrative/transfer-terms";
 import { netWorth as playerNetWorth } from "@/lib/finance/net-worth";
+import { stepPartner } from "@/lib/narrative/partner";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, WEEKS_PER_SEASON, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
@@ -183,13 +184,25 @@ export async function resolveEvent(formData: FormData) {
   const consequencesFined = consequencesThread.multa
     ? { ...consequencesThread, patrimonio: (consequencesThread.patrimonio ?? 0) - Math.max(300, Math.round((playerMonthlyNet(player as Player) * consequencesThread.multa) / 100) * 100) }
     : consequencesThread;
-  const consequences = event.id.startsWith("bank-")
+  const consequencesBank = event.id.startsWith("bank-")
     ? { ...consequencesFined, flags: { ...consequencesFined.flags, [bankFlagKey(event.id)]: `${option.id}:${player.week}` } }
     : consequencesFined;
+  // La pareja: la relación sube o baja con lo que decides, y opina de las mudanzas (narrative/partner.ts).
+  const partnerStep = stepPartner(player.flags, {
+    club: player.club,
+    newClub: typeof consequencesBank.club === "string" && consequencesBank.club ? consequencesBank.club : null,
+    week: player.week,
+    eventId: event.id,
+    moral: consequencesBank.moral,
+    optionFlags: consequencesBank.flags,
+  });
+  const partnerTouches = Object.keys(partnerStep.flags).length > 1 || Boolean(consequencesBank.flags?.pareja_delta);
+  const consequences = partnerTouches ? { ...consequencesBank, flags: { ...consequencesBank.flags, ...partnerStep.flags } } : consequencesBank;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.
-  const outcomeText = resolution ? resolution.text : (option.outcomeText ?? defaultReaction(option, player));
+  const outcomeBase = resolution ? resolution.text : (option.outcomeText ?? defaultReaction(option, player));
+  const outcomeText = partnerStep.note ? `${outcomeBase} ${partnerStep.note}` : outcomeBase;
 
   const isRetirementDecision =
     (event.id === "fork-retiro-pro" && option.id === "retirarse") ||

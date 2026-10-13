@@ -6,7 +6,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { getNpcName, describeRelationshipLevel, type NpcRole } from "@/lib/narrative/npcs";
 import { getCachedNpcFace } from "@/lib/images/npcFaces";
 import { LifeCircle, type LifeMember } from "@/components/LifeCircle";
-import { chicaPhoto } from "@/lib/narrative/chicas-roster";
+import { chicaPhoto, chicaEnCurso } from "@/lib/narrative/chicas-roster";
+import { describeRel, describeCity, partnerRel } from "@/lib/narrative/partner";
 import { StateChips } from "@/components/StateChips";
 import { NO_CLUB_YET } from "@/lib/constants";
 
@@ -44,6 +45,7 @@ export default async function VidaPage() {
   const hasClub = player.club !== NO_CLUB_YET;
 
   const face = (role: NpcRole) => getCachedNpcFace(player, role);
+  const chicaActual = chicaEnCurso(player.flags);
   const parejaName = pareja ? (pareja === "Lucía" ? getNpcName(player, "pareja") : pareja) : null;
 
   const familia: LifeMember[] = [
@@ -56,8 +58,20 @@ export default async function VidaPage() {
             key: "pareja",
             name: parejaName,
             label: player.flags?.convivencia ? "Tu pareja · vivís juntos" : "Tu pareja",
-            detail: "Lo que hay fuera del campo cuando el campo se acaba.",
+            detail: `${describeRel(partnerRel(player.flags))}. ${hasClub ? describeCity(pareja ?? parejaName, player.club) : ""}`.trim(),
+            value: partnerRel(player.flags),
             face: chicaPhoto(pareja) ?? face("pareja"),
+          },
+        ]
+      : []),
+    ...(chicaActual
+      ? [
+          {
+            key: "chica",
+            name: chicaActual.name,
+            label: "Conociéndoos",
+            detail: chicaActual.estado,
+            face: chicaActual.photo ?? undefined,
           },
         ]
       : []),

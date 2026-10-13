@@ -196,7 +196,7 @@ export default async function CarreraPage() {
             <NpcAvatarRow faces={npcFaces} />
             <h2 className="font-display text-xl text-foreground leading-tight">{event.title}</h2>
             {event.dm && <DmPreview dm={event.dm} />}
-            <p className="text-sm text-muted-foreground">{event.description}</p>
+            <p className="whitespace-pre-line text-sm text-muted-foreground">{event.description}</p>
             {castCards.length > 0 && (
               <div className="space-y-2 rounded-xl border border-gold/30 bg-gold/5 p-3">
                 <p className="text-kicker text-gold">Quién es</p>

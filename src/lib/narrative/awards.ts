@@ -14,7 +14,7 @@ import { CLUB_WEIGHTS, championsPodium, weightedPick } from "@/lib/narrative/wor
 import { getRivals } from "@/lib/narrative/rivals";
 import { maxMediaForAge } from "@/lib/narrative/media-cap";
 import { TORNEO_NAMES, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
-import { readTrofeos } from "@/lib/honours";
+import { readTrofeos, INDIVIDUAL, trofeoLabel } from "@/lib/honours";
 
 export type AwardKind = "golden_boy" | "balon_oro";
 
@@ -50,6 +50,33 @@ interface Finalist {
   pos: string;
   score: number;
   isPlayer: boolean;
+  /** Por qué está entre los diez (títulos reales o el motivo de su temporada). */
+  why?: string;
+}
+
+/** Motivos de temporada de los finalistas inventados que no vienen de un título europeo (nunca afirman títulos). */
+const SEASON_REASONS = [
+  "pichichi de su liga",
+  "líder de asistencias de su liga",
+  "el jugador más decisivo de su equipo",
+  "la revelación de la temporada",
+  "el mejor de su selección en los últimos meses",
+  "máximo goleador entre los de su edad",
+  "el alma de su equipo en las noches europeas",
+  "una temporada regular y sin lesiones, de las que no se olvidan",
+];
+
+/** El motivo de cada finalista: lo que de verdad se sabe (la Champions, tus títulos) o un motivo de temporada. */
+function whyOf(f: Finalist, player: Player, podium: { winner: string; runnerUp: string; byPlayer: boolean }, seed: string): string {
+  const season = seasonOf(player);
+  if (f.isPlayer) {
+    const mine = readTrofeos(player.flags).filter((t) => (t.s === season - 1 || t.s === season) && !INDIVIDUAL.has(t.k));
+    const labels = [...new Set(mine.map((t) => trofeoLabel(t)))];
+    return labels.length > 0 ? `campeón de ${labels.join(", ")}` : "una gran temporada, aunque sin títulos";
+  }
+  if (f.club === podium.winner) return podium.byPlayer ? "campeón de Europa a tu lado" : `campeón de Europa con el ${f.club}`;
+  if (f.club === podium.runnerUp) return "finalista de la Champions";
+  return SEASON_REASONS[hash(`${seed}:why:${f.name}`) % SEASON_REASONS.length];
 }
 
 function seasonOf(player: Player) {
@@ -113,7 +140,9 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
       isPlayer: false,
     });
   }
-  return out.sort((a, b) => b.score - a.score).slice(0, 10);
+  const top10 = out.sort((a, b) => b.score - a.score).slice(0, 10);
+  for (const f of top10) f.why = whyOf(f, player, podium, `${player.id}:${kind}:${season}`);
+  return top10;
 }
 
 const listLine = (list: Finalist[]) => list.map((f, i) => `${i + 1}. ${f.name}${f.isPlayer ? " (tú)" : ""} · ${f.club} · ${f.pos}`).join("  |  ");
@@ -126,7 +155,15 @@ export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
   const year = 2026 + season;
   const gb = kind === "golden_boy";
   const prizeName = gb ? "Golden Boy" : "Balón de Oro";
-  const alphabetical = [...list].sort((a, b) => a.name.localeCompare(b.name, "es")).map((f) => `${f.name}${f.isPlayer ? " (tú)" : ""} (${f.club}, ${f.pos})`).join(" · ");
+  const alphabetical = [...list]
+    .sort((a, b) => a.name.localeCompare(b.name, "es"))
+    .map((f) => `• ${f.name}${f.isPlayer ? " (tú)" : ""} · ${f.club}, ${f.pos} — ${f.why}`)
+    .join("\n");
+  // Lo que de verdad se ha ganado: la Champions de la temporada pasada (y si fuiste tú), que explica los favoritos.
+  const podium0 = championsPodium(player, season - 1);
+  const championsLine = podium0.byPlayer
+    ? `La Champions de la temporada pasada la ganaste tú con el ${podium0.winner}; ${podium0.runnerUp} perdió la final.`
+    : `La Champions de la temporada pasada fue para el ${podium0.winner}; ${podium0.runnerUp} perdió la final. Por eso hay tantos nombres suyos en la lista.`;
   const winner = list[0];
   const podium = list.slice(0, 3).map((f, i) => `${i + 1}. ${f.name}${f.isPlayer ? " (tú)" : ""}`).join("  ·  ");
   const resultLine = `Clasificación final: ${listLine(list)}.`;
@@ -161,8 +198,8 @@ export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
     category: "especial",
     title: gb ? `Golden Boy ${year}: los diez finalistas` : `Balón de Oro ${year}: la gala`,
     description: gb
-      ? `Un diario italiano publica los diez finalistas del Golden Boy, el premio al mejor jugador menor de 21 años de Europa. Hay tres nombres que todo el mundo daba por hechos y varios que nadie esperaba. El tuyo está en la lista. Finalistas, por orden alfabético: ${alphabetical}. La gala es en pocos días.`
-      : `Llega la noche de París. Los diez finalistas del Balón de Oro, por orden alfabético: ${alphabetical}. Hay un traje preparado en tu habitación del hotel y una butaca en primera fila con tu nombre. Todo el mundo del fútbol está mirando el mismo sobre.`,
+      ? `Un diario italiano publica los diez finalistas del Golden Boy, el premio al mejor jugador menor de 21 años de Europa. ${championsLine} Hay tres nombres que todo el mundo daba por hechos y varios que nadie esperaba. El tuyo está en la lista. Finalistas, por orden alfabético y con lo que ha pesado en cada caso:\n${alphabetical}\nLa gala es en pocos días.`
+      : `Llega la noche de París. ${championsLine} Los diez finalistas del Balón de Oro, por orden alfabético y con lo que ha pesado en cada caso:\n${alphabetical}\nHay un traje preparado en tu habitación del hotel y una butaca en primera fila con tu nombre. Todo el mundo del fútbol está mirando el mismo sobre.`,
     options: [
       {
         id: "a",

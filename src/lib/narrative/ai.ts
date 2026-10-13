@@ -13,6 +13,7 @@ import {
 import { NarrativeContent } from "@/lib/narrative/narrative-content";
 import { describeKnownCast as describeCast } from "@/lib/narrative/cast";
 import { getNpcName } from "@/lib/narrative/npcs";
+import { describeRel, partnerRel } from "@/lib/narrative/partner";
 import { genericRoleOf, threadIsFromOtherClub, threadOriginClub, type Thread } from "@/lib/narrative/threads";
 import { aiBudgetAllows, priorityFor, recordAiCall, type AiPriority } from "@/lib/narrative/ai-budget";
 import { buildStateBrief, buildLegacyBrief } from "@/lib/narrative/state-brief";
@@ -185,7 +186,11 @@ const FLAVOR_CATEGORIES: EventCategory[] = [
 function describePersonalLife(flags: Record<string, string | boolean> | null | undefined): string {
   if (!flags) return "(todavía no tiene ningún hilo de vida personal establecido)";
   const lines: string[] = [];
-  if (flags.pareja) lines.push(`- Pareja: ${flags.pareja}`);
+  if (flags.pareja) {
+    const rel = partnerRel(flags);
+    const extra = [flags.pareja_reacia ? "no se adapta a la ciudad y echa de menos su casa" : flags.pareja_encantada ? "está encantada con la ciudad" : "", flags.p4_salida ? "él le prometió buscar una salida del club" : "", flags.pareja_baja ? "la relación está fría" : ""].filter(Boolean);
+    lines.push(`- Pareja: ${flags.pareja} (relación ${rel}/100, ${describeRel(rel).toLowerCase()}${extra.length ? `; ${extra.join("; ")}` : ""}). Si la escena toca su vida personal, que se note cómo está la relación.`);
+  }
   if (flags.convivencia) lines.push(`- Vive junto a su pareja`);
   if (flags.hijos) lines.push(`- Hijos: ${flags.hijos === true ? "sí" : flags.hijos}`);
   if (flags.title_liga) lines.push(`- Ya ganó la Liga con su club`);

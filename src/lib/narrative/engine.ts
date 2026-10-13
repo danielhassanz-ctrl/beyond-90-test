@@ -3544,6 +3544,23 @@ export async function pickNextEventDynamic(
     const f = (playerWithDynamics.flags ??= {});
     const wk = playerWithDynamics.week;
     const age = playerAge(wk);
+    // Historia con una chica ya empezada (cita, rumor, «¿qué somos?»): sus escenas tienen prioridad para que la
+    // historia no se quede a medias; si lleva demasiados turnos sin avanzar, se enfría y deja paso a otras.
+    if (f.ch_en_curso && !f.pareja) {
+      const next = pickBankScene(playerWithDynamics, usedBank, CHICAS.filter((s) => !/-dm$/.test(s.id)));
+      if (next) {
+        f.ch_last_scene = String(wk);
+        console.log(`[pickNextEventDynamic] Historia con una chica: "${next.title}"`);
+        return maybeAddFreeText(next);
+      }
+      const lastCh = Math.max(parseInt(String(f.ch_last_dm ?? "0"), 10) || 0, parseInt(String(f.ch_last_scene ?? "0"), 10) || 0);
+      if (lastCh > 0 && wk - lastCh > 45) {
+        const who = String(f.ch_en_curso);
+        f.ch_en_curso = "";
+        f[`ch_${who}`] = "";
+        f[`ch_${who}_no`] = true;
+      }
+    }
     // Una chica de las redes: sin pareja ni historia en curso, cada ~7 turnos.
     const lastGirl = parseInt(String(f.ch_last_dm ?? "0"), 10) || 0;
     if (!f.pareja && !f.ch_en_curso && age >= 18 && (playerWithDynamics.fama ?? 0) >= 20 && wk - lastGirl >= 7 && Math.random() < 0.55) {

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit -p .",
-    "test": "tsx scripts/test-shootout.mts && tsx scripts/test-chicas.mts && tsx scripts/test-ligas.mts && tsx scripts/test-disciplina.mts && tsx scripts/test-arcos.mts && tsx scripts/test-chain.mts && tsx scripts/test-inversiones.mts && tsx scripts/test-patrocinios.mts && tsx scripts/test-fetchall.mts && tsx scripts/test-propiedades.mts && tsx scripts/test-metricas.mts && tsx scripts/test-contratos.mts && tsx scripts/test-rival.mts && tsx scripts/test-lesion-grave.mts && tsx scripts/test-clausula.mts && tsx scripts/test-llegada.mts && tsx scripts/test-cierre.mts && tsx scripts/test-hilos.mts && tsx scripts/test-tarjeta-resumen.mts && tsx scripts/test-club-temporada.mts && tsx scripts/test-dm.mts && tsx scripts/check-bank.mts",
+    "test": "tsx scripts/test-shootout.mts && tsx scripts/test-chicas.mts && tsx scripts/test-ligas.mts && tsx scripts/test-disciplina.mts && tsx scripts/test-arcos.mts && tsx scripts/test-chain.mts && tsx scripts/test-inversiones.mts && tsx scripts/test-patrocinios.mts && tsx scripts/test-fetchall.mts && tsx scripts/test-propiedades.mts && tsx scripts/test-metricas.mts && tsx scripts/test-contratos.mts && tsx scripts/test-rival.mts && tsx scripts/test-lesion-grave.mts && tsx scripts/test-clausula.mts && tsx scripts/test-llegada.mts && tsx scripts/test-cierre.mts && tsx scripts/test-hilos.mts && tsx scripts/test-tarjeta-resumen.mts && tsx scripts/test-club-temporada.mts && tsx scripts/test-pareja.mts && tsx scripts/test-premios-fichas.mts && tsx scripts/test-dm.mts && tsx scripts/check-bank.mts",
     "check": "npm run typecheck && npm run lint -- --quiet && npm test"
   },
   "dependencies": {
