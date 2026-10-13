@@ -1205,8 +1205,24 @@ export async function generatePreseasoneEvent(
   // torneo sí existió este verano según el calendario, pedido explícito:
   // que se note desde fuera (quién lo ganó, como aficionado más) antes de
   // que el entrenador le cite para la pretemporada — no al revés.
+  // El id de la llegada al torneo lleva sufijo (sel-eurocopa-s6), así que no basta comparar el id exacto: antes siempre salía
+  // «lo viste desde el sofá» aunque hubieras ganado la Eurocopa. Se mira el resultado guardado del torneo y el id con prefijo.
+  const tType = seasonContext.majorTournament;
+  const tResult = tType ? String(player.flags?.[`torneo_result_${tType}_${season}`] ?? "") : "";
   const attendedTournament =
-    seasonContext.majorTournament !== undefined && usedEventIds.includes(`sel-${seasonContext.majorTournament}`);
+    tType !== undefined &&
+    (Boolean(tResult) || Boolean(player.flags?.[`torneo_started_${season}`]) || usedEventIds.some((id) => id.startsWith(`sel-${String(tType).replace("_", "-")}`)));
+  const RESULT_TEXT: Record<string, string> = {
+    campeon: "se proclamó CAMPEÓN del torneo",
+    subcampeon: "perdió la final (subcampeón)",
+    semifinal: "cayó en semifinales",
+    cuartos: "cayó en cuartos de final",
+    octavos: "cayó en octavos de final",
+    fase_de_grupos: "cayó en la fase de grupos",
+  };
+  const tournamentFacts = attendedTournament
+    ? `\n⭐ DATO REAL (no lo contradigas): este verano el jugador SÍ disputó el torneo de selecciones con ${player.nation}${tResult ? ` y su selección ${RESULT_TEXT[tResult] ?? "llegó lejos"}` : ""}. NUNCA escribas que lo vio desde casa, desde el sofá ni como aficionado.`
+    : "";
   const tournamentNote =
     seasonContext.hasMajorTournament && !attendedTournament
       ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)} El jugador NO fue convocado — lo vivió como aficionado más, viendo el torneo por televisión. Menciona de pasada quién se proclamó campeón (puedes inventar la selección ganadora si no quieres comprometerte con un resultado real) antes de que el entrenador le cite para la pretemporada.`
@@ -1234,7 +1250,7 @@ ${buildLastFreeTextNote(history)}
 
 CONTEXTO TEMPORAL:
 - Período de temporada: ${seasonContext.period.toUpperCase()} (${seasonContext.monthApprox})
-- ${seasonContext.description}${tournamentNote}
+- ${seasonContext.description}${tournamentNote}${tournamentFacts}
 
 REGLAS:
 ${COMMON_RULES}

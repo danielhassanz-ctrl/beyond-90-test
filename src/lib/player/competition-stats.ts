@@ -157,6 +157,14 @@ export async function getCompetitionStats(
     }
   }
   const segments = splits.map((sp) => ({ sp, stats: emptyCompetitionStats() }));
+  // Las temporadas ya cerradas en las que cambiaste de club también se reparten en una fila por club (antes solo la actual: al pasar
+  // el verano, la etapa en el club que dejaste a mitad de temporada se fundía con el club nuevo).
+  const pastSegs = new Map<number, ClubSplit[]>();
+  for (const sp of readClubSplits(flags)) {
+    if (sp.s === currentSeasonIdx) continue;
+    pastSegs.set(sp.s, [...(pastSegs.get(sp.s) ?? []), sp].sort((a, b) => a.w - b.w));
+  }
+  const segsOf = (idx: number): ClubSplit[] => (idx === currentSeasonIdx ? segments.map((g) => g.sp) : (pastSegs.get(idx) ?? []));
   /** Los fichajes de la carrera (cada uno deja `club` en sus consecuencias): sirven para saber en qué club estabas cada año. */
   const clubChanges: ClubChange[] = [];
   /** Dónde cuenta un partido de esta temporada según la semana: el club anterior (si fue antes del cambio) o el actual. */
@@ -215,11 +223,12 @@ export async function getCompetitionStats(
       const teamOf: SeasonHistoryRow["team"] = comp === "seleccion" ? "seleccion" : filialUntil > 0 && row.week <= filialUntil ? "filial" : "club";
       let hKey = `${idx}:${teamOf}`;
       // Una temporada en la que cambiaste de club se reparte en una fila por club: lo jugado antes del corte es del anterior.
-      const gi = idx === currentSeasonIdx && teamOf === "club" ? segments.findIndex((g) => row.week < g.sp.w) : -1;
-      if (gi >= 0) hKey = `${idx}:club@${segments[gi].sp.club}`;
+      const rowSegs = segsOf(idx);
+      const gi = teamOf === "club" ? rowSegs.findIndex((sp) => row.week < sp.w) : -1;
+      if (gi >= 0) hKey = `${idx}:club@${rowSegs[gi].club}`;
       const hist = bySeason.get(hKey) ?? newRow(idx, teamOf);
       if (gi >= 0) {
-        hist.fixedClub = segments[gi].sp.club;
+        hist.fixedClub = rowSegs[gi].club;
         hist.seg = gi;
       }
       hist.matches += 1;
@@ -242,7 +251,8 @@ export async function getCompetitionStats(
   for (const [idx, sim] of readAllSim(flags)) {
     const total = sumSim(sim);
     if (total.matches === 0) continue;
-    const segSum = segments.map(() => ({ matches: 0, goals: 0, assists: 0, minutes: 0 }));
+    const simSegs = segsOf(idx);
+    const segSum = simSegs.map(() => ({ matches: 0, goals: 0, assists: 0, minutes: 0 }));
     const restSum = { matches: 0, goals: 0, assists: 0, minutes: 0 };
     for (const k of Object.keys(sim) as SimComp[]) {
       const c = sim[k];
@@ -286,6 +296,21 @@ export async function getCompetitionStats(
         restSum.goals += rest.goals;
         restSum.assists += rest.assists;
         restSum.minutes += rest.minutes;
+      } else if (simSegs.length > 0) {
+        // Temporada ya cerrada con cambio de club: lo estimado hasta el corte es del club que dejaste; el resto, del siguiente.
+        const zero = { matches: 0, goals: 0, assists: 0, minutes: 0 };
+        simSegs.forEach((sp, i) => {
+          const before = i > 0 ? simSegs[i - 1].sim[k] : zero;
+          segSum[i].matches += Math.max(0, sp.sim[k].matches - before.matches);
+          segSum[i].goals += Math.max(0, sp.sim[k].goals - before.goals);
+          segSum[i].assists += Math.max(0, sp.sim[k].assists - before.assists);
+          segSum[i].minutes += Math.max(0, sp.sim[k].minutes - before.minutes);
+        });
+        const last = simSegs[simSegs.length - 1].sim[k];
+        restSum.matches += Math.max(0, c.matches - last.matches);
+        restSum.goals += Math.max(0, c.goals - last.goals);
+        restSum.assists += Math.max(0, c.assists - last.assists);
+        restSum.minutes += Math.max(0, c.minutes - last.minutes);
       }
     }
     const addTo = (key: string, v: { matches: number; goals: number; assists: number; minutes: number }, fixed?: string, seg?: number) => {
@@ -301,8 +326,8 @@ export async function getCompetitionStats(
       }
       bySeason.set(key, h);
     };
-    if (idx === currentSeasonIdx && segments.length > 0) {
-      segments.forEach((g, i) => addTo(`${idx}:club@${g.sp.club}`, segSum[i], g.sp.club, i));
+    if (simSegs.length > 0) {
+      simSegs.forEach((sp, i) => addTo(`${idx}:club@${sp.club}`, segSum[i], sp.club, i));
       addTo(`${idx}:club`, restSum);
     } else {
       addTo(`${idx}:club`, total);

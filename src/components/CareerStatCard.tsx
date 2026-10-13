@@ -2,7 +2,7 @@ import type { Player } from "@/types/player";
 import { displayName } from "@/types/player";
 import { computeCareerStats } from "@/lib/careerStats";
 import type { TrofeoKind } from "@/lib/honours";
-import { TrophyIcon } from "@/components/TrophyIcon";
+import { TrophyHint } from "@/components/TrophyHint";
 
 const POSITION_ABBR: Record<string, string> = {
   Portero: "POR",
@@ -105,8 +105,9 @@ export function CareerStatCard({
           </p>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
             {grouped.map((t) => (
-              <span key={t.name} className="relative inline-flex leading-none" title={t.name}>
-                <TrophyIcon kind={t.kind} size={36} />
+              <span key={t.name} className="relative inline-flex leading-none">
+                {/* Al tocarlo (móvil) o pasar el puntero dice qué trofeo es y cuántas veces lo has ganado. */}
+                <TrophyHint kind={t.kind} size={36} label={t.count > 1 ? `${t.name} · ${t.count} veces` : t.name} />
                 {t.count > 1 && (
                   <span className="absolute -bottom-1.5 -right-2 rounded-full bg-amber-400 px-1 text-[9px] font-bold text-neutral-950">
                     x{t.count}

@@ -113,7 +113,10 @@ export function computeWeekAdvance(
   const count = (sameWeek ? parseInt(cn, 10) || 0 : 0) + 1;
   // Un mes sin partidos pendientes no debe encadenar más de 6 escenas (antes se vieron 13
   // seguidas en pretemporada); con partidos por jugar caben más (jugada, crónica, respiros).
-  const limit = weekHasPendingMatches ? 16 : 6;
+  // Un torneo de selecciones tiene muchas escenas (llegada, concentraciones, jugadas y crónicas de cada partido) y TODAS ocurren en
+  // verano: la red de seguridad no puede avanzar el calendario a mitad de torneo (se saltaba agosto entero y se llegaba a septiembre).
+  const inTorneo = Boolean(player.flags?.torneo_activo);
+  const limit = inTorneo ? 80 : weekHasPendingMatches ? 16 : 6;
   if (newWeek === player.week && count >= limit) newWeek = player.week + 1;
   const weekCounter = newWeek === player.week ? `${player.week}:${count}` : `${newWeek}:0`;
 

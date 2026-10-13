@@ -3506,7 +3506,13 @@ export async function pickNextEventDynamic(
     // La IA no tiene los datos de la temporada que se cierra: si se inventa un partido, un doblete o un resultado, se descarta.
     if (preseasoneEvent) {
       const text = [preseasoneEvent.title, preseasoneEvent.description, ...preseasoneEvent.options.flatMap((o) => [o.label, o.subtitle, o.outcomeText ?? ""])].join(" ");
-      if (/doblete|triplete|hat-?trick|\d{1,2}\s*-\s*\d{1,2}|semifinal|cuartos de final|la final|nos eliminaron|campeones de/i.test(text)) {
+      // Si el jugador disputó el torneo de selecciones de este verano, la escena no puede decir que lo vio desde casa.
+      const playedTorneo = Object.keys(playerWithDynamics.flags ?? {}).some((k) => k === `torneo_started_${season}` || (k.endsWith(`_${season}`) && k.startsWith("torneo_result_")));
+      if (playedTorneo && /desde el sofá|desde casa|por televisión|por la tele|como un aficionado|mientras españa|viendo el torneo/i.test(text)) {
+        console.log("[pickNextEventDynamic] Cierre de temporada descartado: dice que vio desde casa un torneo que sí jugó");
+        preseasoneEvent = null;
+      }
+      if (preseasoneEvent && /doblete|triplete|hat-?trick|\d{1,2}\s*-\s*\d{1,2}|semifinal|cuartos de final|la final|nos eliminaron|campeones de/i.test(text)) {
         console.log("[pickNextEventDynamic] Cierre de temporada descartado: la IA inventó un partido o resultado");
         preseasoneEvent = null;
       }

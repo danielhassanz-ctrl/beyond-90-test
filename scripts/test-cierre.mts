@@ -61,6 +61,15 @@ f3 = addSimSeason(f3, SEASON, sim(5, 2));
 r = await getCompetitionStats(fakeSupabase(), { id: "p", week: 56, nation: "España" }, null, f3);
 ok(r.season.liga.matches === 5 && r.previous.length === 0, "5 partidos y ningún bloque «antes del fichaje»");
 
+console.log("4b) Una temporada ya cerrada con cambio de club sigue repartida por club");
+let fp: any = { club_since: "52", clubs_history: "Real Betis|Liverpool FC", club_s4: "Real Madrid" };
+fp = addSimSeason(fp, 4, sim(3, 2));
+fp = addClubSplit(fp, 4, "Liverpool FC", 46);
+fp = addSimSeason(fp, 4, sim(5, 3));
+const rp = await getCompetitionStats(fakeSupabase(), { id: "p", week: 75, nation: "España" }, null, fp);
+const cerrada = rp.history.filter((h) => h.idx === 4 && h.team === "club");
+ok(cerrada.length === 2 && cerrada[0].club === "Liverpool FC" && cerrada[0].matches === 3 && cerrada[1].matches === 5, `la temporada 4, ya cerrada: ${cerrada.map((x) => x.club + " " + x.matches).join(" · ")}`);
+
 console.log("5) Qué temporada se enseña mientras no se vive el cierre");
 ok(displayWeek(61, ["x"]) === 60, "1 de julio sin cierre vivido (convocatoria del torneo): se sigue enseñando la temporada que acaba de terminar");
 ok(displayWeek(62, ["preseason-6"]) === 62 || displayWeek(62, []) === 60, "turno 2 sin cierre: la anterior");
