@@ -13,7 +13,7 @@ import type { GameEvent } from "@/types/career";
 import { WEEKS_PER_SEASON, seasonLabel } from "@/types/career";
 import { extractStatsFromEvent, statSeasonOf } from "@/lib/player/update-stats";
 import { readAllSim, sumSim, emptySim, type SimComp, type ClubSplit, readClubSplits, readSimSeason } from "@/lib/narrative/off-screen-matches";
-import { allTrofeos, INDIVIDUAL, type TrofeoKind } from "@/lib/honours";
+import { allTrofeos, INDIVIDUAL, trofeoLabel, type TrofeoKind } from "@/lib/honours";
 import { clubAtSeasonEnd, type ClubChange } from "@/lib/player/club-timeline";
 
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
@@ -48,6 +48,8 @@ export interface SeasonHistoryRow {
   club?: string;
   /** Trofeos ganados esa temporada. */
   trophies: TrofeoKind[];
+  /** Qué es cada trofeo (misma posición que `trophies`): «Champions League · Real Madrid · 2029/30». */
+  trophyLabels: string[];
   label: string;
   matches: number;
   goals: number;
@@ -57,7 +59,7 @@ export interface SeasonHistoryRow {
 }
 
 function newRow(idx: number, team: SeasonHistoryRow["team"] = "club"): SeasonHistoryRow {
-  return { idx, team, trophies: [], label: seasonLabel(idx * WEEKS_PER_SEASON + 1), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
+  return { idx, team, trophies: [], trophyLabels: [], label: seasonLabel(idx * WEEKS_PER_SEASON + 1), matches: 0, goals: 0, assists: 0, minutes: 0, titles: 0 };
 }
 
 /** Lo jugado esta temporada con un club que ya dejaste (tras un fichaje a mitad de temporada). */
@@ -277,6 +279,7 @@ export async function getCompetitionStats(
     const team: SeasonHistoryRow["team"] = ["mundial", "eurocopa", "copa_america", "olimpico"].includes(tr.k) ? "seleccion" : "club";
     const row = bySeason.get(`${tr.s}:${team}`) ?? newRow(tr.s, team);
     row.trophies.push(tr.k);
+    row.trophyLabels.push(trofeoLabel(tr));
     if (!INDIVIDUAL.has(tr.k)) row.titles += 1;
     bySeason.set(`${tr.s}:${team}`, row);
   }

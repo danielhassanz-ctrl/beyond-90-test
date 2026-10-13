@@ -5,6 +5,7 @@ import { ClubCrest } from "@/components/ClubCrest";
 import { BottomNav } from "@/components/BottomNav";
 import { CompetitionStatsCard } from "@/components/CompetitionStatsCard";
 import { TrophyIcon } from "@/components/TrophyIcon";
+import { TrophyHint } from "@/components/TrophyHint";
 import { getCompetitionStats, type SeasonHistoryRow } from "@/lib/player/competition-stats";
 import { allTrofeos, INDIVIDUAL, trofeoLabel, type Trofeo, type TrofeoKind } from "@/lib/honours";
 import { repairTrophies } from "@/lib/honours-repair";
@@ -43,14 +44,14 @@ function ColumnHeads({ first }: { first: string }) {
   );
 }
 
-function NumCells({ pj, g, a, trophies }: { pj: number; g: number; a: number; trophies: TrofeoKind[] }) {
+function NumCells({ pj, g, a, trophies, labels, club, season }: { pj: number; g: number; a: number; trophies: TrofeoKind[]; labels: string[]; club?: string; season: string }) {
   return (
     <>
       <span className="font-num w-9 text-center text-sm text-foreground">{pj}</span>
       <span className="font-num w-11 text-center text-sm text-foreground">{g}</span>
       <span className="font-num w-11 text-center text-sm text-foreground">{a}</span>
       <span className="flex w-16 items-center justify-end gap-0.5">
-        {trophies.length > 0 ? trophies.map((k, i) => <TrophyIcon key={`${k}-${i}`} kind={k} size={26} />) : <span className="text-muted-foreground">—</span>}
+        {trophies.length > 0 ? trophies.map((k, i) => <TrophyHint key={`${k}-${i}`} kind={k} label={[labels[i], INDIVIDUAL.has(k) ? '' : club, season].filter(Boolean).join(' · ')} />) : <span className="text-muted-foreground">—</span>}
       </span>
     </>
   );
@@ -81,7 +82,7 @@ function StintCard({ stint, ligaPos, accent }: { stint: Stint; ligaPos: (idx: nu
                 <span className="font-num block text-sm text-foreground">{r.label}</span>
                 {pos && r.team === "club" && <span className="block text-[11px] text-muted-foreground">{pos}º en Liga</span>}
               </span>
-              <NumCells pj={r.matches} g={r.goals} a={r.assists} trophies={r.trophies} />
+              <NumCells pj={r.matches} g={r.goals} a={r.assists} trophies={r.trophies} labels={r.trophyLabels} club={r.club} season={r.label} />
             </li>
           );
         })}
