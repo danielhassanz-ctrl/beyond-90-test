@@ -14,6 +14,7 @@ import { WEEKS_PER_SEASON, seasonLabel } from "@/types/career";
 import { extractStatsFromEvent, statSeasonOf } from "@/lib/player/update-stats";
 import { readAllSim, sumSim, emptySim, type SimComp, type ClubSplit, readClubSplits, readSimSeason } from "@/lib/narrative/off-screen-matches";
 import { allTrofeos, INDIVIDUAL, type TrofeoKind } from "@/lib/honours";
+import { clubAtSeasonEnd, type ClubChange } from "@/lib/player/club-timeline";
 
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
 export interface CompStat {
@@ -147,14 +148,16 @@ export async function getCompetitionStats(
     }
   }
   const segments = splits.map((sp) => ({ sp, stats: emptyCompetitionStats() }));
+  /** Los fichajes de la carrera (cada uno deja `club` en sus consecuencias): sirven para saber en qué club estabas cada año. */
+  const clubChanges: ClubChange[] = [];
   /** Dónde cuenta un partido de esta temporada según la semana: el club anterior (si fue antes del cambio) o el actual. */
   const seasonTargetFor = (week: number): CompetitionStats => segments.find((g) => week < g.sp.w)?.stats ?? season;
 
   try {
-    const { data, error } = await fetchAllRows<{ title: string; description: string; category: string; event_id: string; week: number }>((from, to) =>
+    const { data, error } = await fetchAllRows<{ title: string; description: string; category: string; event_id: string; week: number; consequences: Record<string, unknown> | null }>((from, to) =>
       supabase
         .from("career_events")
-        .select("title, description, category, event_id, week")
+        .select("title, description, category, event_id, week, consequences")
         .eq("player_id", player.id)
         .neq("category", "segunda_vida")
         .lte("week", player.week)
@@ -163,6 +166,10 @@ export async function getCompetitionStats(
     );
     if (error || !data) return { season, career, history: [], previous: [], splitToPersist: null };
 
+    for (const r of data) {
+      const c = r.consequences;
+      if (c && typeof c.club === "string" && c.club) clubChanges.push({ week: (r.week as number) ?? 0, club: c.club });
+    }
     const rows: { event_id: string; category: string; title: string; description: string; week: number }[] = data.map((r) => ({
       event_id: (r.event_id as string) ?? "",
       category: (r.category as string) ?? "",
@@ -274,11 +281,14 @@ export async function getCompetitionStats(
     bySeason.set(`${tr.s}:${team}`, row);
   }
   // Club de cada temporada: el que quedó anotado al jugarla; las anteriores a ese registro, el primero conocido.
-  const clubIdxs = [...bySeason.values()].filter((r) => r.team === "club").map((r) => r.idx);
-  const knownClubs = clubIdxs.map((i) => String(flags?.[`club_s${i}`] ?? ""));
-  const firstKnown = knownClubs.find(Boolean) || String(flags?.clubs_history ?? "").split("|").filter(Boolean)[0] || undefined;
+  // Orden de fiabilidad: lo anotado turno a turno, el club del trofeo de equipo de esa temporada, y por último los
+  // fichajes del historial (antes se asignaba a todas las temporadas sin registro el primer club que constaba).
+  const trophyClub = new Map<number, string>();
+  for (const tr of trofeos) if (!INDIVIDUAL.has(tr.k) && tr.c && !["mundial", "eurocopa", "copa_america", "olimpico"].includes(tr.k)) trophyClub.set(tr.s, tr.c);
+  const lastHistoryClub = String(flags?.clubs_history ?? "").split("|").filter(Boolean).pop() ?? "";
+  const firstKnown = clubAtSeasonEnd(flags, -1, clubChanges, lastHistoryClub) || undefined;
   for (const row of bySeason.values()) {
-    const c = String(flags?.[`club_s${row.idx}`] ?? "") || firstKnown;
+    const c = clubAtSeasonEnd(flags, row.idx, clubChanges, lastHistoryClub, trophyClub.get(row.idx)) || firstKnown;
     row.club = row.team === "seleccion" ? player.nation : row.team === "filial" ? (c ? `${c} B` : "Filial") : c;
   }
   const order = { filial: 0, club: 1, seleccion: 2 } as const;

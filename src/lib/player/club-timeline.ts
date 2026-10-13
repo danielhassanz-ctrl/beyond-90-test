@@ -16,7 +16,11 @@ export function clubAtSeasonEnd(
   seasonIdx: number,
   changes: ClubChange[],
   currentClub: string,
+  /** El club de un trofeo de equipo ganado esa temporada: es el club en el que estabas al ganarlo. */
+  hint?: string,
 ): string {
+  // El trofeo de equipo dice con qué club se ganó, aunque ese mismo verano te hayas ido a otro.
+  if (hint) return hint;
   const stored = String(flags?.[`club_s${seasonIdx}`] ?? "");
   if (stored) return stored;
   const end = (seasonIdx + 1) * WEEKS_PER_SEASON;
