@@ -15,10 +15,15 @@ returns boolean
 language sql
 stable
 as $$
+  -- Sin sesión (SQL Editor, tareas internas) el rol es nulo: eso NO es un jugador, así que el resultado es false y no
+  -- se restringe nada. Solo se restringe a quien llega como 'authenticated' o 'anon' (el navegador del jugador).
   select coalesce(
-    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role',
-    nullif(current_setting('request.jwt.claim.role', true), '')
-  ) in ('authenticated', 'anon');
+    coalesce(
+      nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role',
+      nullif(current_setting('request.jwt.claim.role', true), '')
+    ) in ('authenticated', 'anon'),
+    false
+  );
 $$;
 
 -- ------------------------------------------------------------
