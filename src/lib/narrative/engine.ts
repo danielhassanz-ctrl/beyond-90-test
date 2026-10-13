@@ -2901,7 +2901,7 @@ async function pickSeleccionWindowEvent(
     return { ...maybeAddFreeText(buildMatchDecisionMoment(player, match)), ownTeam: player.nation, matchKey: key };
   }
 
-  const result = decideSelResult(player, match.rivalClub);
+  const result = decideSelResult(player, match.rivalClub, decisionOutcome);
   const nation = player.nation;
   const verdict = result.win ? "victoria" : result.draw ? "empate" : "derrota";
   const debut = isSelDebut(player);
@@ -2990,7 +2990,7 @@ async function pickTorneoEvent(
 
   // Crónica del partido: el resultado y lo que implica (pasar de fase,
   // eliminación, título) se deciden en código ANTES de pedírsela a la IA.
-  let result = decideTorneoResult(player, progress, match.rivalClub);
+  let result = decideTorneoResult(player, progress, match.rivalClub, decisionOutcome);
   const tName = `${TORNEO_NAMES[progress.type]} ${torneoYear(progress.season)}`;
   const nation = player.nation;
   const lines: string[] = [];
@@ -3811,11 +3811,11 @@ export async function pickNextEventDynamic(
     // VUELTA y el pase se decide por el global, con la ida ya conocida.
     const twoLegRound = matchThisWeek.euroKoRound && matchThisWeek.euroKoRound <= 3 ? matchThisWeek.euroKoRound : 0;
     const leg1 = twoLegRound ? firstLegFor(playerWithDynamics.club, currentSeason, twoLegRound) : null;
-    const twoLegRaw = leg1 ? decideTwoLegResult(playerWithDynamics.media, leg1, levelBonus) : null;
+    const twoLegRaw = leg1 ? decideTwoLegResult(playerWithDynamics.media, leg1, levelBonus, decisionOutcome) : null;
     let forcedResult: { win: boolean; scoreLine: string } | undefined = twoLegRaw
       ? { win: twoLegRaw.win, scoreLine: twoLegRaw.scoreLine }
       : koRound
-        ? decideKnockoutResult(playerWithDynamics.media, koRound, levelBonus)
+        ? decideKnockoutResult(playerWithDynamics.media, koRound, levelBonus, decisionOutcome)
         : undefined;
     const isFinal = matchThisWeek.cupRound === 5 || matchThisWeek.euroKoRound === 4;
     // Tanda de penaltis: escena propia (tira el jugador) y su desenlace inclina el resultado de la tanda.

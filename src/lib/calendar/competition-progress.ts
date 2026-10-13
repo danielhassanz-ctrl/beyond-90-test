@@ -122,7 +122,39 @@ export function advanceCupProgress(
  * más fuerte y las opciones se igualan. Cuanto mejor la media del
  * jugador, más probable avanzar.
  */
+/** Goles de tu equipo en el marcador, sin contar la tanda: «1-1 (5-4 en penaltis)» → 1. */
+export function ownGoalsOf(scoreLine: string): number {
+  const m = /^(\d+)\s*-\s*\d+/.exec(scoreLine.trim());
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+/** ¿Lo que viviste en la jugada decisiva (gol, golazo o asistencia) exige que tu equipo marque en el partido? */
+export function decisionNeedsGoal(decision?: string | null): boolean {
+  return decision === "goal" || decision === "wondergoal" || decision === "assist";
+}
+
+/**
+ * El resultado se decide en código, pero la jugada decisiva que acabas de vivir ya está escrita: si marcaste (o asististe), el
+ * marcador no puede ser un 0-0 ni una derrota sin gol («el balón se clava en la red» y luego «0-0 tras la prórroga»). Se
+ * vuelve a sortear hasta que cuadre.
+ */
+export function coherentWithDecision<T extends { scoreLine: string }>(roll: () => T, decision?: string | null): T {
+  let result = roll();
+  if (!decisionNeedsGoal(decision)) return result;
+  for (let i = 0; i < 25 && ownGoalsOf(result.scoreLine) === 0; i++) result = roll();
+  return result;
+}
+
 export function decideKnockoutResult(
+  playerMedia: number,
+  round: number,
+  levelBonus = 0,
+  decision?: string | null,
+): { win: boolean; scoreLine: string; wentToPenalties: boolean } {
+  return coherentWithDecision(() => rollKnockoutResult(playerMedia, round, levelBonus), decision);
+}
+
+function rollKnockoutResult(
   playerMedia: number,
   round: number,
   levelBonus = 0,
@@ -156,6 +188,15 @@ export function decideKnockoutResult(
  * (con penaltis si el global queda empatado), el global y si pasas de ronda.
  */
 export function decideTwoLegResult(
+  playerMedia: number,
+  firstLeg: { own: number; rival: number },
+  levelBonus = 0,
+  decision?: string | null,
+): { win: boolean; scoreLine: string; wentToPenalties: boolean; aggregate: string } {
+  return coherentWithDecision(() => rollTwoLegResult(playerMedia, firstLeg, levelBonus), decision);
+}
+
+function rollTwoLegResult(
   playerMedia: number,
   firstLeg: { own: number; rival: number },
   levelBonus = 0,

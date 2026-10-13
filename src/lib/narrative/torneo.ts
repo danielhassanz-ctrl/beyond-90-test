@@ -13,7 +13,7 @@
 import type { Player } from "@/types/player";
 import { WEEKS_PER_SEASON } from "@/types/career";
 import type { MatchWeek } from "@/lib/calendar/match-calendar";
-import { decideKnockoutResult } from "@/lib/calendar/competition-progress";
+import { decideKnockoutResult, coherentWithDecision } from "@/lib/calendar/competition-progress";
 import { hasMajorTournament } from "@/lib/calendar/season";
 import { getConfederation } from "@/lib/nations";
 
@@ -171,20 +171,23 @@ export interface TorneoResult {
 }
 
 /** Decide el resultado del partido (en código, antes de la crónica de la IA). */
-export function decideTorneoResult(player: Player, progress: TorneoProgress, rival: string): TorneoResult {
+export function decideTorneoResult(player: Player, progress: TorneoProgress, rival: string, decision?: string | null): TorneoResult {
   const diff = nationTier(player.nation) - nationTier(rival);
   const mediaBonus = Math.min(0.1, Math.max(-0.08, ((player.media ?? 60) - 70) / 250));
   if (progress.stage >= 3) {
-    const res = decideKnockoutResult(player.media ?? 60, 2, diff * 0.05);
+    const res = decideKnockoutResult(player.media ?? 60, 2, diff * 0.05, decision);
     return { kind: "ko", win: res.win, draw: false, scoreLine: res.scoreLine, points: 0 };
   }
   const pWin = Math.max(0.15, Math.min(0.8, 0.44 + diff * 0.1 + mediaBonus));
   const pDraw = 0.22;
-  const roll = Math.random();
   const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
-  if (roll < pWin) return { kind: "group", win: true, draw: false, scoreLine: pick(["1-0", "2-0", "2-1", "3-1", "3-0"]), points: 3 };
-  if (roll < pWin + pDraw) return { kind: "group", win: false, draw: true, scoreLine: pick(["0-0", "1-1", "2-2"]), points: 1 };
-  return { kind: "group", win: false, draw: false, scoreLine: pick(["0-1", "1-2", "0-2", "1-3"]), points: 0 };
+  // Si en la jugada decisiva marcaste o asististe, el marcador tiene que llevar algún gol de tu equipo.
+  return coherentWithDecision((): TorneoResult => {
+    const roll = Math.random();
+    if (roll < pWin) return { kind: "group", win: true, draw: false, scoreLine: pick(["1-0", "2-0", "2-1", "3-1", "3-0"]), points: 3 };
+    if (roll < pWin + pDraw) return { kind: "group", win: false, draw: true, scoreLine: pick(["0-0", "1-1", "2-2"]), points: 1 };
+    return { kind: "group", win: false, draw: false, scoreLine: pick(["0-1", "1-2", "0-2", "1-3"]), points: 0 };
+  }, decision);
 }
 
 /**

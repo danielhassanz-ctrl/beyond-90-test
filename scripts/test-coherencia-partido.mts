@@ -1,0 +1,29 @@
+/** Prueba sin IA: el marcador decidido en código es coherente con lo que viviste en la jugada decisiva (gol → no hay 0-0 ni derrota sin gol). */
+import { decideKnockoutResult, decideTwoLegResult, ownGoalsOf, decisionNeedsGoal } from "../src/lib/calendar/competition-progress";
+import { decideTorneoResult } from "../src/lib/narrative/torneo";
+import { decideSelResult } from "../src/lib/narrative/seleccion";
+
+let fails = 0;
+const ok = (c: boolean, m: string) => { console.log((c ? "  ✓ " : "  ✗ ") + m); if (!c) fails++; };
+const player: any = { id: "p", nation: "España", media: 92, club: "Real Madrid", flags: {} };
+
+ok(ownGoalsOf("1-1 (5-4 en penaltis)") === 1 && ownGoalsOf("0-0 (4-3 en penaltis)") === 0 && ownGoalsOf("2-1") === 2, "se cuentan los goles de tu equipo sin la tanda");
+ok(decisionNeedsGoal("goal") && decisionNeedsGoal("wondergoal") && decisionNeedsGoal("assist") && !decisionNeedsGoal("miss") && !decisionNeedsGoal(undefined), "gol, golazo y asistencia exigen gol del equipo");
+
+for (const decision of ["goal", "wondergoal", "assist"]) {
+  let sin = 0;
+  for (let i = 0; i < 400; i++) {
+    if (ownGoalsOf(decideKnockoutResult(92, 2, 0.05, decision).scoreLine) === 0) sin++;
+    if (ownGoalsOf(decideTwoLegResult(92, { own: 0, rival: 0 }, 0.05, decision).scoreLine) === 0) sin++;
+    if (ownGoalsOf(decideTorneoResult(player, { stage: 6, type: "eurocopa", alive: true, groupPts: 6 } as any, "Suiza", decision).scoreLine) === 0) sin++;
+    if (ownGoalsOf(decideTorneoResult(player, { stage: 1, type: "eurocopa", alive: true, groupPts: 3 } as any, "Suiza", decision).scoreLine) === 0) sin++;
+    if (ownGoalsOf(decideSelResult(player, "Suiza", decision).scoreLine) === 0) sin++;
+  }
+  ok(sin === 0, `${decision}: en 2000 partidos, ninguno termina sin gol de tu equipo`);
+}
+let sinGol = 0;
+for (let i = 0; i < 400; i++) if (ownGoalsOf(decideKnockoutResult(92, 2, 0.05, "miss").scoreLine) === 0) sinGol++;
+ok(sinGol > 20, `si fallas la jugada, sigue habiendo partidos sin gol (${sinGol}/400): no se fuerza nada de más`);
+
+console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
+process.exit(fails ? 1 : 0);

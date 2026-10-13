@@ -9,6 +9,7 @@
  * de 87 casi siempre, uno de 70 de vez en cuando. Cuenta en las estadísticas
  * como partido con la selección.
  */
+import { coherentWithDecision } from "@/lib/calendar/competition-progress";
 import type { Player } from "@/types/player";
 import type { MatchWeek } from "@/lib/calendar/match-calendar";
 import { hasMajorTournament } from "@/lib/calendar/season";
@@ -103,7 +104,11 @@ export function buildSelMatch(player: Player, plan: SelWindowPlan): MatchWeek {
 }
 
 /** Resultado decidido en código antes de pedir la crónica. */
-export function decideSelResult(player: Player, rival: string): { win: boolean; draw: boolean; scoreLine: string } {
+export function decideSelResult(player: Player, rival: string, decision?: string | null): { win: boolean; draw: boolean; scoreLine: string } {
+  return coherentWithDecision(() => rollSelResult(player, rival), decision);
+}
+
+function rollSelResult(player: Player, rival: string): { win: boolean; draw: boolean; scoreLine: string } {
   const diff = nationTier(player.nation) - nationTier(rival);
   const mediaBonus = clamp(((player.media ?? 60) - 70) / 250, -0.08, 0.1);
   const pWin = clamp(0.5 + diff * 0.1 + mediaBonus, 0.15, 0.85);
