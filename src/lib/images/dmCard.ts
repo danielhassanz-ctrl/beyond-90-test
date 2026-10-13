@@ -34,6 +34,8 @@ export interface DmCardInput {
   scenePhoto?: Buffer | null;
   /** Tu respuesta es una nota de voz: se dibuja como audio (ondas y duración) con su transcripción debajo. */
   replyAudio?: boolean;
+  /** El mensaje de ella es una nota de voz. */
+  messageAudio?: boolean;
 }
 
 /** ¿La opción elegida es mandar un audio / nota de voz? */
@@ -99,9 +101,9 @@ function bubble(text: string, side: "left" | "right", y: number, theme: (typeof 
 }
 
 /** Nota de voz estilo Instagram: botón de play, ondas, duración y, debajo, la transcripción. */
-function audioBubble(text: string, y: number, theme: (typeof THEMES)[DmPlatform], m: Metrics = NORMAL): { svg: string; height: number } {
+function audioBubble(text: string, y: number, theme: (typeof THEMES)[DmPlatform], m: Metrics = NORMAL, side: "left" | "right" = "right"): { svg: string; height: number } {
   const bw = Math.min(m.max + m.pad * 2, 700);
-  const x = W - 48 - bw;
+  const x = side === "left" ? 48 : W - 48 - bw;
   const rowH = Math.round(m.font * 1.7);
   const tFont = Math.round(m.font * 0.78);
   const tLine = Math.round(m.line * 0.78);
@@ -121,15 +123,15 @@ function audioBubble(text: string, y: number, theme: (typeof THEMES)[DmPlatform]
   const waveX1 = x + bw - m.pad - durW - 14;
   const bars = Math.max(10, Math.floor((waveX1 - waveX0) / 9));
   const seed = hashText(text);
-  const parts: string[] = [`<rect x="${x}" y="${y}" width="${bw}" height="${height}" rx="${Math.round(m.font * 1.1)}" fill="url(#mine)" />`];
+  const parts: string[] = [`<rect x="${x}" y="${y}" width="${bw}" height="${height}" rx="${Math.round(m.font * 1.1)}" fill="${side === "left" ? theme.her : "url(#mine)"}" />`];
   parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#FFFFFF" />`);
   const t = r * 0.55;
-  parts.push(`<path d="M${cx - t * 0.45} ${cy - t} L${cx + t * 0.95} ${cy} L${cx - t * 0.45} ${cy + t} Z" fill="${theme.mine[0]}" />`);
+  parts.push(`<path d="M${cx - t * 0.45} ${cy - t} L${cx + t * 0.95} ${cy} L${cx - t * 0.45} ${cy + t} Z" fill="${side === "left" ? "#262626" : theme.mine[0]}" />`);
   for (let i = 0; i < bars; i++) {
     const hgt = (0.28 + 0.72 * (Math.abs((seed >> (i % 24)) ^ Math.imul(i + 1, 2654435761)) % 100) / 100) * rowH * 0.8;
     const bx = waveX0 + i * 9;
     const played = i < bars * 0.32;
-    parts.push(`<rect x="${bx}" y="${cy - hgt / 2}" width="5" height="${hgt}" rx="2.5" fill="${played ? "#FFFFFF" : "#D9CCFF"}" fill-opacity="${played ? 1 : 0.6}" />`);
+    parts.push(`<rect x="${bx}" y="${cy - hgt / 2}" width="5" height="${hgt}" rx="2.5" fill="${played ? "#FFFFFF" : side === "left" ? "#8E8E93" : "#D9CCFF"}" fill-opacity="${played ? 1 : 0.6}" />`);
   }
   parts.push(textToPath(dur, { x: x + bw - m.pad - durW, y: cy + durFont * 0.35, fontSize: durFont, fill: "#FFFFFF" }));
   const sepY = y + top + rowH + 8;
@@ -148,7 +150,7 @@ function hashText(t: string): number {
 
 /** Alto que ocupa la conversación con estas medidas (para elegir el tamaño de letra que cabe). */
 function chatHeight(input: DmCardInput, theme: (typeof THEMES)[DmPlatform], m: Metrics): number {
-  let h = 44 + bubble(input.message, "left", 0, theme, m).height + 22;
+  let h = 44 + (input.messageAudio ? audioBubble(input.message, 0, theme, m, "left") : bubble(input.message, "left", 0, theme, m)).height + 22;
   if (input.reply) h += (input.replyAudio ? audioBubble(input.reply, 0, theme, m) : bubble(input.reply, "right", 0, theme, m)).height + 14;
   h += input.followUp ? 56 + bubble(input.followUp, "left", 0, theme, m).height : 40;
   return h;
@@ -216,7 +218,7 @@ export async function composeDmCard(input: DmCardInput): Promise<Buffer> {
   // Conversación
   parts.push(textToPath("HOY 23:41", { x: W / 2 - measureText("HOY 23:41", 26) / 2, y, fontSize: 26, fill: "#8E8E93" }));
   y += 44;
-  const her = bubble(input.message, "left", y, theme, metrics);
+  const her = input.messageAudio ? audioBubble(input.message, y, theme, metrics, "left") : bubble(input.message, "left", y, theme, metrics);
   parts.push(her.svg);
   y += her.height + 22;
   if (input.reply) {

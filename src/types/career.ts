@@ -161,7 +161,7 @@ export interface GameEvent {
    * Mensaje directo de Instagram: el hito se dibuja en código como una
    * captura de la conversación (src/lib/images/dmCard.ts), sin IA ni coste.
    */
-  dm?: { handle: string; name: string; message: string; platform?: "instagram" | "tiktok" | "x"; avatar?: string };
+  dm?: { handle: string; name: string; message: string; platform?: "instagram" | "tiktok" | "x"; avatar?: string; /** El mensaje que te llega es una nota de voz (se dibuja como audio con su transcripción). */ audio?: boolean };
   /**
    * Si está presente, este evento hace evolucionar la foto del jugador
    * (barba, pelo, madurez) para reflejar la etapa de la carrera.

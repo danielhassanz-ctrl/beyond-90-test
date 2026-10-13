@@ -81,6 +81,7 @@ export function CompetitionStatsCard({
   view = "season",
   club,
   previous = [],
+  injuryMonths = 0,
 }: {
   season: CompetitionStats;
   career: CompetitionStats;
@@ -91,9 +92,16 @@ export function CompetitionStatsCard({
   club?: string;
   /** Clubes que dejaste esta misma temporada y lo que jugaste en cada uno (cada uno con su liga). */
   previous?: PreviousClubStats[];
+  /** Meses de baja que quedan: mientras dura, no suman partidos y se avisa para que no parezca parado. */
+  injuryMonths?: number;
 }) {
   return (
     <div className="space-y-4">
+      {view === "season" && injuryMonths > 0 && (
+        <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-xs text-foreground">
+          🩹 De baja {injuryMonths} {injuryMonths === 1 ? "mes" : "meses"}: mientras dure, no suman partidos ni minutos. Volverán a avanzar cuando te den el alta.
+        </p>
+      )}
       {view === "season" ? <Table title={`Esta temporada · ${seasonLabel}`} stats={season} club={club} /> : <Table title="Toda la carrera, por competición" stats={career} club={club} generic />}
       {view === "season" &&
         previous.map((p) => (

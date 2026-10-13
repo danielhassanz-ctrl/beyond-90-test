@@ -15,6 +15,7 @@ import { getShareTagline } from "@/lib/shareTaglines";
 import { playerAge } from "@/types/career";
 import { logAppError } from "@/lib/errorLog";
 import { composeDmCard, isAudioReply } from "@/lib/images/dmCard";
+import { findSocialDmCard } from "@/lib/narrative/social-dm";
 import { maybeDmScenePhoto } from "@/lib/images/dm-scene";
 import { BANK_SCENES } from "@/lib/narrative/bank/scenes";
 import { fillBankEvent } from "@/lib/narrative/bank/select";
@@ -205,7 +206,7 @@ export async function regenerateDmCard(formData: FormData) {
 
   const { data: milestone } = await supabase
     .from("milestones")
-    .select("id, type, title, subtitle")
+    .select("id, type, title, subtitle, week")
     .eq("id", milestoneId)
     .eq("player_id", player.id)
     .maybeSingle();
@@ -222,6 +223,11 @@ export async function regenerateDmCard(formData: FormData) {
       break;
     }
   }
+  // Mensajes sueltos de redes (la madre de un canterano, un fan…): se reconstruyen con la misma semilla (social-dm.ts).
+  if (!found) {
+    const social = findSocialDmCard(player as never, { title: String(milestone.title ?? ""), week: Number(milestone.week ?? player.week), subtitle: milestone.subtitle as string | null });
+    if (social) found = { dm: social.dm, reply: social.reply, audio: isAudioReply(social.optionLabel), followUp: social.followUp };
+  }
   if (!found) {
     console.error(`[regenerateDmCard] sin escena que coincida con el hito ${milestoneId}`);
     redirect(`/carrera/hito/${milestoneId}?dm=no`);
@@ -233,6 +239,7 @@ export async function regenerateDmCard(formData: FormData) {
       ...found.dm,
       reply: found.reply,
       replyAudio: found.audio,
+      messageAudio: Boolean((found.dm as { audio?: boolean }).audio),
       followUp: found.followUp,
       // Tu foto de referencia, NUNCA la de cabecera (esa sigue al último hito, p. ej. una lesión).
       playerPhoto: (player.photo_url as string | null | undefined) ?? null,

@@ -1,8 +1,6 @@
 /**
- * Cambiar de club a mitad de temporada y la competición europea. Dos reglas reales:
- *  1) Un jugador que ya ha jugado la Champions o la Europa League con un club esta temporada NO puede jugar una
- *     competición europea con otro: llega «inscrito solo en Liga y Copa» hasta el año que viene.
- *  2) Si no la había jugado y llega a un club que sigue vivo en Europa, entra en la fase en la que está el equipo.
+ * Cambiar de club a mitad de temporada y la competición europea: el club te inscribe en su lista y entras en la fase en la que
+ * está el equipo (antes solo se contaba si llegabas a un club que sigue vivo en Europa).
  *     Antes el progreso europeo se ponía a cero al fichar y, si llegabas después de la fase de grupos (enero), te quedabas
  *     «en la fase de grupos» para siempre: ni un partido de Champions hasta mayo.
  * Es una lógica de código (sin IA): el resultado queda en flags.euro_progress y, si procede, una frase en la reacción.
@@ -40,14 +38,9 @@ export function euroOnTransfer(
   if (!newComp) return { flagsPatch: { euro_progress: "" }, note: null };
   const compName = continentalName(newClub, newComp.competition);
 
-  const oldComp = getEuropeanCompetitionFor(oldClub);
-  if (oldComp && hasPlayedEuropeThisSeason(flags, season)) {
-    const tied: CupProgress = { season, round: 0, alive: false, tied: true };
-    return {
-      flagsPatch: { euro_progress: JSON.stringify(tied) },
-      note: `Ojo: como ya has jugado ${continentalName(oldClub, oldComp.competition)} con ${oldClub} esta temporada, el reglamento no te deja disputar ${compName} con ${newClub} hasta el año que viene. Este curso, solo Liga y Copa.`,
-    };
-  }
+  // Un jugador fichado a mitad de temporada se puede inscribir en la competición europea del club nuevo (el club lo registra en la
+  // lista): no hay límite por haberla jugado con otro club.
+  void oldClub;
 
   // Llegas antes de que acabe la fase de grupos: juegas lo que quede con el equipo, sin cambios.
   if (weekInSeason <= lastGroupWeek) return { flagsPatch: { euro_progress: "" }, note: null };
@@ -77,7 +70,7 @@ export async function repairEuroAfterTransfer(
 ): Promise<void> {
   const flags = player.flags ?? {};
   const season = Math.floor((player.week - 1) / 10);
-  if (flags[`euro_fix_${season}`]) return;
+  if (flags[`euro_fix2_${season}`]) return;
   const since = parseInt(String(flags.club_since ?? "0"), 10) || 0;
   if (since <= 0 || Math.floor((since - 1) / 10) !== season) return;
   const oldClub = String(flags.clubs_history ?? "").split("|").filter(Boolean).pop();
@@ -85,12 +78,14 @@ export async function repairEuroAfterTransfer(
   // Si ya hay progreso europeo guardado esta temporada, se respeta.
   try {
     const raw = flags.euro_progress;
-    if (typeof raw === "string" && raw && (JSON.parse(raw) as CupProgress).season === season) return;
+    const parsed = typeof raw === "string" && raw ? (JSON.parse(raw) as CupProgress) : null;
+    // Una inscripción exclusiva guardada por la regla anterior (tied) se deshace; cualquier otro progreso se respeta.
+    if (parsed && parsed.season === season && !parsed.tied) return;
   } catch {
     // JSON corrupto: se recalcula
   }
   const move = euroOnTransfer(flags, oldClub, player.club, since, player.media);
-  const next = { ...flags, ...move.flagsPatch, [`euro_fix_${season}`]: "1" };
+  const next = { ...flags, ...move.flagsPatch, [`euro_fix2_${season}`]: "1" };
   const { data } = await supabase.from("players").update({ flags: next }).eq("id", player.id).select("id");
   if (data && data.length === 1) player.flags = next;
 }

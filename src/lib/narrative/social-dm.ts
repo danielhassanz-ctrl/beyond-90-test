@@ -546,3 +546,29 @@ export function buildSocialDmEvent(player: Player): GameEvent {
     })),
   };
 }
+
+/**
+ * Reconstruye lo que hay que dibujar en la tarjeta de un mensaje por redes ya vivido (para «Rehacer la tarjeta»): la chica, el
+ * mensaje y tu respuesta salen de la misma semilla (nombre del jugador, semana y escena), así que no hace falta haberlos
+ * guardado. La red (Instagram, TikTok o X) se sorteaba al azar y no se guarda: se usa Instagram.
+ */
+export function findSocialDmCard(
+  player: Player,
+  milestone: { title: string; week: number; subtitle?: string | null },
+): { dm: { handle: string; name: string; message: string; platform: "instagram" }; reply?: string; followUp?: string; optionLabel: string } | null {
+  const scenario = SCENARIOS.find((s) => s.title === milestone.title);
+  if (!scenario) return null;
+  const week = milestone.week;
+  const name = getPersonName(player, `dm-girl-${week}-${scenario.key}`, "f");
+  const ctx: DmCtx = { name, first: name.split(" ")[0], mate: getTeammateName(player, `dm-mate-${week}`), club: player.club, net: "Instagram" };
+  const wanted = String(milestone.subtitle ?? "").trim();
+  const options = scenario.options;
+  const chosen = options.find((o) => o.followUp && !o.resolve && `La respuesta llega enseguida: «${o.followUp}»` === wanted) ?? options.find((o) => o.reply) ?? options[0];
+  if (!chosen) return null;
+  return {
+    dm: { handle: handleFor(name, week), name, message: scenario.message(ctx), platform: "instagram" },
+    reply: chosen.reply || undefined,
+    followUp: chosen.followUp,
+    optionLabel: chosen.label,
+  };
+}

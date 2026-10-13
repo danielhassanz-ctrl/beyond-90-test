@@ -1,4 +1,5 @@
 import { headerPhotoUrl } from "@/lib/player/header-photo";
+import { displayWeek } from "@/lib/calendar/season-display";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -34,6 +35,12 @@ export default async function MiJugadorPage() {
     .limit(1)
     .maybeSingle<Player>();
   if (player) await repairTrophies(supabase, player);
+  // Mientras no se vive el cierre de temporada, se sigue enseñando la que acaba de terminar (calendar/season-display.ts).
+  const closedIds: string[] = [];
+  if (player) {
+    const { data: closes } = await supabase.from("career_events").select("event_id").eq("player_id", player.id).like("event_id", "preseason-%");
+    for (const c of closes ?? []) closedIds.push(String(c.event_id));
+  }
 
   return (
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">
@@ -63,7 +70,7 @@ export default async function MiJugadorPage() {
               name={displayName(player)}
               age={playerAge(player.week)}
               club={player.club}
-              categoryLabel={seasonLabel(player.week)}
+              categoryLabel={seasonLabel(displayWeek(player.week, closedIds))}
               statusLine={player.position}
               media={player.media}
               forma={player.forma}

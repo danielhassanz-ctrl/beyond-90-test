@@ -843,6 +843,7 @@ export async function resolveEvent(formData: FormData) {
         ...event.dm,
         reply: option.dmReply,
         replyAudio: isAudioReply(option.label),
+        messageAudio: Boolean(event.dm.audio),
         followUp: option.dmFollowUp,
         // Tu foto de referencia, NUNCA la de cabecera (current_photo_url): esa sigue al último hito, p. ej. una lesión.
         playerPhoto: (player.photo_url as string | null | undefined) ?? null,

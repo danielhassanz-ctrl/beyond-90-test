@@ -1,8 +1,6 @@
 import { withClubSplit } from "@/lib/narrative/off-screen-matches";
 import { displayWeek } from "@/lib/calendar/season-display";
-import { getEuroProgress } from "@/lib/calendar/competition-progress";
-import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
-import { continentalName } from "@/lib/calendar/leagues";
+import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { headerPhotoUrl } from "@/lib/player/header-photo";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
@@ -41,10 +39,6 @@ export default async function ClasificacionPage() {
   });
 
   const { primary, secondary, copa, euro } = getActiveStandings(shownPlayer, usedEventIds, matchRecord);
-  const euroTied = getEuroProgress(player, Math.floor((player.week - 1) / 10)).tied === true;
-  const lastClub = String(player.flags?.clubs_history ?? "").split("|").filter(Boolean).pop() ?? "tu club anterior";
-  const euroComp = getEuropeanCompetitionFor(player.club);
-  const euroName = euroComp ? continentalName(player.club, euroComp.competition) : "competición europea";
   const seasonStats = await getCurrentSeasonStats(supabase, shownPlayer, player.pending_event, player.flags);
   const competitionStats = await getCompetitionStats(supabase, shownPlayer, player.pending_event, player.flags, player.week);
   // Reparto de partidos inferido (cambio de club anterior al registro): se guarda UNA vez para que no cambie al volver.
@@ -83,17 +77,9 @@ export default async function ClasificacionPage() {
               view="season"
               club={player.club}
               previous={competitionStats.previous}
+              injuryMonths={getInjuryRemaining(player.flags)}
             />
 
-            {euroTied && (
-              <div className="rounded-2xl border border-gold/40 bg-gold/5 p-4 text-sm">
-                <p className="text-kicker text-gold">Competición europea</p>
-                <p className="mt-1 text-foreground">
-                  No puedes jugar la {euroName} con {player.club} esta temporada: ya la jugaste con {lastClub} y el reglamento no permite
-                  jugarla con dos clubes en el mismo curso. Hasta el año que viene, solo Liga y Copa.
-                </p>
-              </div>
-            )}
             {primary && <StandingsTable standings={primary} />}
             {secondary && <StandingsTable standings={secondary} />}
             {copa && <KnockoutBox knockout={copa} />}

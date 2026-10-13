@@ -2,6 +2,7 @@
 import { BANK_SCENES } from "../src/lib/narrative/bank/scenes";
 import { fillBankEvent } from "../src/lib/narrative/bank/select";
 import { isAudioReply, composeDmCard } from "../src/lib/images/dmCard";
+import { findSocialDmCard } from "../src/lib/narrative/social-dm";
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? "  ✓ " : "  ✗ ") + m); if (!c) fails++; };
@@ -38,6 +39,14 @@ ok(!!opt && opt.dmReply?.includes("Valoro la sinceridad") && opt.dmFollowUp?.inc
 ok(isAudioReply("Grabar un audio con cariño") && isAudioReply("Mandar un audio y ya") && isAudioReply("Mandarle una nota de voz") && !isAudioReply("Mandarle una foto firmada") && !isAudioReply("Ir a verlo al partido"), "se reconoce cuándo tu respuesta es un audio");
 const audioCard = await composeDmCard({ name: "Rosa", handle: "rosa", message: "¿Podrías mandarle un audio de ánimo?", reply: "Dile que se divierta, que el miedo es normal y que yo también me pongo nervioso.", followUp: "Gracias!", replyAudio: true });
 ok(audioCard.length > 10000, "la tarjeta con nota de voz y transcripción se dibuja");
+
+const entrante = await composeDmCard({ name: "Marc", handle: "marc", message: "Hay una cosa que haces con la cadera que no hace nadie. ¿Me la enseñas?", reply: "Claro, quedamos en verano.", messageAudio: true });
+ok(entrante.length > 10000, "un mensaje entrante que es una nota de voz se dibuja (audio a la izquierda con su transcripción)");
+const madre = findSocialDmCard(player, { title: "La madre de un canterano", week: 57, subtitle: "La respuesta llega enseguida: «Le acabo de poner el audio y no para de saltar. Muchas gracias!»" });
+ok(!!madre && /hijo tiene 12 años/.test(madre.dm.message) && isAudioReply(madre.optionLabel) && /Dile que se divierta/.test(madre.reply ?? ""), "«La madre de un canterano» se reconstruye con su audio y su respuesta para poder rehacer la tarjeta");
+ok(findSocialDmCard(player, { title: "Otra cosa", week: 1 }) === null, "una escena que no es de mensajes sueltos no se confunde");
+const dmRival = dmScenes.find((x) => x.id === "bank-nm-r1");
+ok(!!dmRival && dmRival.event.dm?.audio === true, "el audio del rival (nm-r1) está marcado como nota de voz");
 
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);
