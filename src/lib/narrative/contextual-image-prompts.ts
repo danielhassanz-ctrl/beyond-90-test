@@ -29,6 +29,25 @@ const GOAL_CELEBRATION_POSES = [
   "spinning around with his arms out, disbelief turning into a wide grin as teammates close in",
 ];
 
+/**
+ * El fichaje se presenta de varias formas, como en las presentaciones reales (una distinta cada vez): la foto oficial con la
+ * camiseta, el apretón de manos con el presidente delante de la camiseta con tu nombre, el posado con la camiseta en alto,
+ * la firma del contrato y la presentación en el césped. Siempre UNA sola camiseta y sin marca de agua.
+ */
+function pickSigningScene(playerName: string, club: string): string {
+  const kit = describeKit(club);
+  const base = `a young footballer (${playerName}) joining ${club}`;
+  const nameShirt = `a presentation jersey in the club colours (${kit}) with the surname "${playerName}" printed large on it`;
+  const scenes = [
+    `Official team photo: ${base}, wearing the ${club} home jersey (${kit}) on his body, standing upright and relaxed facing the camera with arms down, a single jersey only (no second shirt, scarf or garment draped over the shoulders), smiling confidently, stadium background, professional club photography style`,
+    `Club presentation photograph: ${base} shaking hands with the elderly club president in a dark suit and club tie, both smiling at the camera, each holding one side of ${nameShirt} between them, press-room backdrop with no readable text, flashbulbs, professional sports photography`,
+    `Presentation day at the stadium: ${base} proudly holding up ${nameShirt} with both hands in front of his chest, standing on the pitch of the empty stadium, big smile, golden light, no other text anywhere, professional sports photography`,
+    `Signing day: ${base} sitting at a table signing his contract with a pen, the club president in a dark suit shaking his other hand and smiling, ${nameShirt} laid on the table in front of them, press photographers in the background, no other text, professional sports photography`,
+    `Presentation on the pitch: ${base} wearing the ${club} home jersey (${kit}), a football under one arm, waving to the empty stands of the stadium, club president beside him applauding, a single jersey only, golden hour light, professional sports photography`,
+  ];
+  return scenes[Math.floor(Math.random() * scenes.length)];
+}
+
 function pickCelebrationPose(): string {
   return GOAL_CELEBRATION_POSES[Math.floor(Math.random() * GOAL_CELEBRATION_POSES.length)];
 }
@@ -46,8 +65,7 @@ export const CONTEXTUAL_IMAGE_PROMPTS: Record<string, (playerName: string, conte
   // patrón azulgrana calcado al del Barça para el Málaga). describeKit ya
   // resuelve esto en los prompts escritos a mano con el marcador
   // [CLUB_KIT]; aquí hacía falta el mismo forzado de color explícito.
-  transferencia_fichaje: (playerName: string, clubName: string | number) =>
-    `Official team photo: young footballer ${playerName} wearing the ${String(clubName)} home jersey (${describeKit(String(clubName))}) on his body, standing upright and relaxed facing the camera with arms down, a single jersey only (no second shirt, scarf or garment draped over the shoulders), smiling confidently, stadium background, professional club photography style, Getty Images quality`,
+  transferencia_fichaje: (playerName: string, clubName: string | number) => pickSigningScene(playerName, String(clubName)),
 
   // GOL - Celebración (pose distinta cada vez, ver GOAL_CELEBRATION_POSES)
   gol_celebracion: (playerName: string, clubName: string | number) =>

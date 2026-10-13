@@ -101,7 +101,7 @@ export function cleanImagePrompt(prompt: string): string {
   const cleaned = prompt
     .replace(/Getty Images/gi, "press-agency")
     .replace(/jersey over (his )?shoulders?/gi, "jersey worn normally on his body");
-  return /no watermark/i.test(cleaned) ? cleaned : `${cleaned} No watermark, no photographer credit, no readable text, a single jersey only (no second shirt draped over the shoulders).`;
+  return /no watermark/i.test(cleaned) ? cleaned : `${cleaned} No watermark and no photographer credit; no text anywhere except what is explicitly requested above; one jersey per person only (no second shirt draped over the shoulders).`;
 }
 
 export function getMilestoneImagePrompt(
