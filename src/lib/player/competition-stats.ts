@@ -92,8 +92,9 @@ export function classifyMatch(title: string, description: string): Classified {
   const framed = text.match(/\ben (la liga|la premier league|premier league|la bundesliga|bundesliga|la serie a|serie a|la ligue 1|ligue 1|saudi pro league|copa del rey|copa de inglaterra|copa de alemania|copa de italia|copa de francia|copa de arabia|dfb-pokal|fa cup|champions league|europa league|partido internacional|el mundial|la eurocopa|la copa am[eé]rica)/);
   const key = framed ? framed[1] : text;
 
+  // Un partido de clasificatoria (o Nations League, amistoso) NO es del torneo, aunque el texto nombre la Eurocopa o el Mundial.
   const torneo = (): TournamentKey =>
-    /mundial/.test(text) ? "mundial" : /eurocopa/.test(text) ? "eurocopa" : /copa am[eé]rica/.test(text) ? "copa_america" : "otros";
+    /clasificatori|nations league|amistos|eliminatori/.test(text) ? "otros" : /mundial/.test(text) ? "mundial" : /eurocopa/.test(text) ? "eurocopa" : /copa am[eé]rica/.test(text) ? "copa_america" : "otros";
 
   if (/champions league|liga de campeones de asia/.test(key)) return { comp: "champions" };
   if (/europa league/.test(key)) return { comp: "europa" };

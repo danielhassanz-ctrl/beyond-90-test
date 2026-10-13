@@ -1,6 +1,6 @@
 /** Prueba sin IA: el club de cada temporada se reconstruye con los fichajes y no es siempre el actual. */
 import { clubAtSeasonEnd } from "../src/lib/player/club-timeline";
-import { getCompetitionStats } from "../src/lib/player/competition-stats";
+import { getCompetitionStats, classifyMatch } from "../src/lib/player/competition-stats";
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? "  ✓ " : "  ✗ ") + m); if (!c) fails++; };
@@ -29,6 +29,13 @@ const r3 = h.history.find((x) => x.idx === 3 && x.team === "club");
 const r4 = h.history.find((x) => x.idx === 4 && x.team === "club");
 ok(r3?.club === "Real Madrid" && r3.titles === 2, `29/30: ${r3?.club}, ${r3?.titles} títulos`);
 ok(r4?.club === "Bayern de Múnich" && r4.titles === 1, `30/31: ${r4?.club}, ${r4?.titles} título`);
+
+const q = classifyMatch("Partido internacional", "Clasificatoria Eurocopa · ventana de octubre ante Dinamarca. Marcador 2-0");
+ok(q.comp === "seleccion" && q.torneo === "otros", "un partido de clasificatoria de la Eurocopa cuenta como «clasificatorios y otros», no como Eurocopa");
+const real = classifyMatch("Eurocopa: fase de grupos", "Juegas en la Eurocopa contra Francia. Marcador 1-1");
+ok(real.comp === "seleccion" && real.torneo === "eurocopa", "un partido de la Eurocopa sigue contando como Eurocopa");
+const mq = classifyMatch("Partido internacional", "Clasificatoria Mundial · ventana de marzo ante Grecia");
+ok(mq.torneo === "otros", "la clasificatoria del Mundial tampoco cuenta como Mundial");
 
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);
