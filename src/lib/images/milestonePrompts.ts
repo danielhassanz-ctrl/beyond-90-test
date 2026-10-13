@@ -44,7 +44,7 @@ export const MILESTONE_IMAGE_PROMPTS: Record<string, string> = {
   "premio-golden-boy": "Gala moment: [AGE] holding a golden youth-award trophy on an elegant stage, wearing a sharp dark suit with an open collar, a proud and slightly overwhelmed smile, camera flashes (bokeh) and an elegant audience in evening wear behind him, warm theatrical lighting, deep blacks and golds, cinematic fashion and sports photography, no readable text anywhere",
   "premio-pichichi": "Golden scorer's moment: [AGE] footballer holding the Pichichi trophy high with victorious smile, golden trophy gleaming. Stadium background, field visible. Golden hour lighting or theatrical stage lighting creating trophy reflection. Soccer ball visible in composition. Teammates or crowd in soft focus background. Color palette: golden trophy dominant, emerald field, warm lighting, white crowd areas. This represents the pinnacle of individual scoring achievement — the top goal-scorer of the league. Premium sports photography, golden hour cinematography, achievement imagery",
 
-  "premio-mvp-torneo": "Tournament MVP crowning moment: [AGE] footballer on stage holding massive MVP trophy, standing between club officials or ceremony presenters. Stage background with tournament branding visible. Professional event lighting creating perfect visibility of trophy and expression. Audience visible (blurred), creating atmosphere. Formal presentation moment captured. Color palette: stage lighting tones, trophy gold, formal blacks and whites, crowd bokeh. This represents tournament-level individual dominance. Premium award ceremony photography, official tournament imagery, prestige and achievement captured",
+  "premio-mvp-torneo": "Tournament MVP crowning moment: [AGE] footballer on stage holding massive MVP trophy, standing between club officials or ceremony presenters. Plain stage background with absolutely no readable text, logos, sponsor names or competition branding. Professional event lighting creating perfect visibility of trophy and expression. Audience visible (blurred), creating atmosphere. Formal presentation moment captured. Color palette: stage lighting tones, trophy gold, formal blacks and whites, crowd bokeh. This represents tournament-level individual dominance. Premium award ceremony photography, official tournament imagery, prestige and achievement captured",
 };
 
 /**
@@ -125,6 +125,9 @@ export function getMilestoneImagePrompt(
     prompt = prompt.replace("[AGE]", `${ageContext}, ${describeLook(age, safePlayerName)}`);
     if (club && prompt.includes("[CLUB_KIT]")) {
       prompt = prompt.replace("[CLUB_KIT]", describeKit(club));
+    } else if (club && !/national team|world cup|euro 20|selecci/i.test(prompt)) {
+      // Las escenas sin camiseta propia dejaban que el modelo eligiera una al azar (salió el escudo del Barça en un jugador del Liverpool).
+      prompt += ` If he wears any club kit, tracksuit or jacket, it is exactly: ${describeKit(club)}; never another club's colours or crest.`;
     }
     return prompt;
   }

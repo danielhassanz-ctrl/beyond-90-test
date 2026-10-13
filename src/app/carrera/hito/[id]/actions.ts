@@ -116,11 +116,16 @@ export async function regenerateMilestoneImage(formData: FormData) {
   // Las galas de premios tienen su propia escena (smoking y trofeo): la que se guardó al crear el hito pudo ser la de "récord".
   const awardId = /bal[oó]n de oro/i.test(String(milestone.title)) ? "award-balon-oro" : /golden boy/i.test(String(milestone.title)) ? "award-golden-boy" : null;
   const contextual = getMilestoneImagePrompt(awardId ?? String(milestone.type), age, player.club, player.last_name, String(milestone.type), player.agent_name ?? undefined);
-  const prompt =
+  const basePrompt =
     (awardId ? contextual : null) ??
     (milestone.image_scene as string | null) ??
     contextual ??
     `Photorealistic cinematic photo of the photographed man in an emotional football moment: "${milestone.title}". He wears a ${describeKit(player.club)} football jersey, natural stadium light, expressive face, documentary sports photography style`;
+  // Una escena guardada sin camiseta (de antes de que se añadiera la cláusula) dejaba que el modelo eligiera la de cualquier club.
+  const prompt =
+    /(kit|jersey|shirt|tracksuit)/i.test(basePrompt) || /national team|world cup|selecci/i.test(basePrompt)
+      ? basePrompt
+      : `${basePrompt} If he wears any club kit, tracksuit or jacket, it is exactly: ${describeKit(player.club)}; never another club's colours or crest.`;
 
   const photoUrl = player.photo_url as string;
   const userId = user.id;
