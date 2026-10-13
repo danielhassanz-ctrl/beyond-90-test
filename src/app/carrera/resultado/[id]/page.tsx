@@ -98,7 +98,7 @@ export default async function ResultadoPage({
   // La tarjeta de cada temporada se guarda ya montada (foto + cifras de AQUEL momento) la primera vez que se ve con la
   // foto lista; así conserva su foto y sus cifras aunque cambien después. Si se rehace la foto de esa temporada, se
   // borra y se vuelve a montar.
-  const recapSeason = isSeasonRecap ? parseInt(/^preseason-(d+)$/.exec(careerEvent.event_id ?? "")![1], 10) : null;
+  const recapSeason = isSeasonRecap ? parseInt(/^preseason-(\d+)$/.exec(careerEvent.event_id ?? "")![1], 10) : null;
   const cardKey = recapSeason !== null ? `recap_c2_${recapSeason}` : null;
   let recapCardUrl = cardKey && typeof recapFlags[cardKey] === "string" && recapFlags[cardKey] ? String(recapFlags[cardKey]) : null;
 
