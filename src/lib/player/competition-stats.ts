@@ -120,6 +120,8 @@ export async function getCompetitionStats(
   pendingEvent?: GameEvent | null,
   /** flags del jugador: traen los partidos estimados que no se viven como escena (off-screen-matches.ts). */
   flags?: Record<string, string | boolean> | null,
+  /** Hasta qué semana se leen las escenas (por defecto, la actual): al enseñar la temporada anterior con el verano ya empezado. */
+  untilWeek?: number,
 ): Promise<{ season: CompetitionStats; career: CompetitionStats; history: SeasonHistoryRow[]; previous: PreviousClubStats[]; splitToPersist: ClubSplit | null }> {
   const season = emptyCompetitionStats();
   const career = emptyCompetitionStats();
@@ -167,7 +169,7 @@ export async function getCompetitionStats(
         .select("title, description, category, event_id, week, consequences")
         .eq("player_id", player.id)
         .neq("category", "segunda_vida")
-        .lte("week", player.week)
+        .lte("week", Math.max(player.week, untilWeek ?? 0))
         .order("id")
         .range(from, to),
     );

@@ -3,6 +3,7 @@ import { getCompetitionStats } from "../src/lib/player/competition-stats";
 import { addClubSplit, addSimSeason, emptySim, withClubSplit } from "../src/lib/narrative/off-screen-matches";
 import { buildSeasonCloseEvent } from "../src/lib/narrative/season-close";
 import { priorityFor } from "../src/lib/narrative/ai-budget";
+import { displayWeek } from "../src/lib/calendar/season-display";
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? "  ✓ " : "  ✗ ") + m); if (!c) fails++; };
@@ -59,6 +60,13 @@ let f3: any = { club_since: "11", clubs_history: "Real Betis" };
 f3 = addSimSeason(f3, SEASON, sim(5, 2));
 r = await getCompetitionStats(fakeSupabase(), { id: "p", week: 56, nation: "España" }, null, f3);
 ok(r.season.liga.matches === 5 && r.previous.length === 0, "5 partidos y ningún bloque «antes del fichaje»");
+
+console.log("5) Qué temporada se enseña mientras no se vive el cierre");
+ok(displayWeek(61, ["x"]) === 60, "1 de julio sin cierre vivido (convocatoria del torneo): se sigue enseñando la temporada que acaba de terminar");
+ok(displayWeek(62, ["preseason-6"]) === 62 || displayWeek(62, []) === 60, "turno 2 sin cierre: la anterior");
+ok(displayWeek(62, ["preseason-6"]) === 62, "con el cierre vivido: la temporada nueva");
+ok(displayWeek(66, []) === 66, "pasado el turno 4, ya es la nueva aunque no hubiera cierre");
+ok(displayWeek(5, []) === 5, "la primera temporada no tiene cierre previo");
 
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);

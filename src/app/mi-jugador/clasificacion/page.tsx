@@ -1,4 +1,5 @@
 import { withClubSplit } from "@/lib/narrative/off-screen-matches";
+import { displayWeek } from "@/lib/calendar/season-display";
 import { getEuroProgress } from "@/lib/calendar/competition-progress";
 import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
 import { continentalName } from "@/lib/calendar/leagues";
@@ -31,18 +32,21 @@ export default async function ClasificacionPage() {
   const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
   const torneo = typeof player.flags?.torneo_activo === "string" ? player.flags.torneo_activo : null;
-  const matchRecord = await getSeasonMatchRecord(supabase, player, {
+  // Mientras no se viva el cierre de temporada (1 de julio o fin del torneo de verano) se enseña la temporada que acaba de terminar.
+  const shownWeek = displayWeek(player.week, usedEventIds);
+  const shownPlayer = { ...player, week: shownWeek } as typeof player;
+  const matchRecord = await getSeasonMatchRecord(supabase, shownPlayer, {
     onlyLabels: torneo ? ["Partido internacional"] : undefined,
     pendingEvent: player.pending_event,
   });
 
-  const { primary, secondary, copa, euro } = getActiveStandings(player, usedEventIds, matchRecord);
+  const { primary, secondary, copa, euro } = getActiveStandings(shownPlayer, usedEventIds, matchRecord);
   const euroTied = getEuroProgress(player, Math.floor((player.week - 1) / 10)).tied === true;
   const lastClub = String(player.flags?.clubs_history ?? "").split("|").filter(Boolean).pop() ?? "tu club anterior";
   const euroComp = getEuropeanCompetitionFor(player.club);
   const euroName = euroComp ? continentalName(player.club, euroComp.competition) : "competición europea";
-  const seasonStats = await getCurrentSeasonStats(supabase, player, player.pending_event, player.flags);
-  const competitionStats = await getCompetitionStats(supabase, player, player.pending_event, player.flags);
+  const seasonStats = await getCurrentSeasonStats(supabase, shownPlayer, player.pending_event, player.flags);
+  const competitionStats = await getCompetitionStats(supabase, shownPlayer, player.pending_event, player.flags, player.week);
   // Reparto de partidos inferido (cambio de club anterior al registro): se guarda UNA vez para que no cambie al volver.
   if (competitionStats.splitToPersist) {
     const { data: fresh } = await supabase.from("players").select("flags").eq("id", player.id).maybeSingle();
@@ -68,14 +72,14 @@ export default async function ClasificacionPage() {
             <SeasonStatsCard
               photoUrl={headerPhotoUrl(player)}
               name={displayName(player)}
-              seasonLabel={seasonLabel(player.week)}
+              seasonLabel={seasonLabel(shownWeek)}
               stats={seasonStats}
             />
 
             <CompetitionStatsCard
               season={competitionStats.season}
               career={competitionStats.career}
-              seasonLabel={seasonLabel(player.week)}
+              seasonLabel={seasonLabel(shownWeek)}
               view="season"
               club={player.club}
               previous={competitionStats.previous}

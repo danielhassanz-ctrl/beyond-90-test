@@ -1,4 +1,5 @@
 import { allTrofeos } from "@/lib/honours";
+import { displayWeek } from "@/lib/calendar/season-display";
 import { canonicalClub } from "@/lib/calendar/leagues";
 import { headerPhotoUrl } from "@/lib/player/header-photo";
 import { redirect } from "next/navigation";
@@ -164,7 +165,7 @@ export default async function CarreraPage() {
             name={displayName(player)}
             age={playerAge(player.week)}
             club={player.club}
-            categoryLabel={seasonLabel(player.week)}
+            categoryLabel={seasonLabel(displayWeek(player.week, usedEventIds))}
             statusLine={statusLine}
             media={player.media}
             forma={player.forma}
