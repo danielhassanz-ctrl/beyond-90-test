@@ -60,13 +60,13 @@ export function trofeoLabel(t: { k: TrofeoKind; c?: string }): string {
 export const TROFEO_ICON: Record<TrofeoKind, string> = {
   liga: "🏆",
   copa: "🥇",
-  champions: "👑",
+  champions: "🏆",
   europa: "🌟",
   mundial: "🌍",
   eurocopa: "🇪🇺",
   copa_america: "🌎",
   olimpico: "🏅",
-  balon_oro: "⚽",
+  balon_oro: "🥇",
   golden_boy: "✨",
 };
 

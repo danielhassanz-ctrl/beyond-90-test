@@ -75,16 +75,19 @@ function Ball() {
           <stop offset="1" stopColor="#9A6A0A" />
         </radialGradient>
         <linearGradient id="bo-p" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#3A2A10" />
-          <stop offset="1" stopColor="#17100A" />
+          <stop offset="0" stopColor="#5A5A64" />
+          <stop offset="1" stopColor="#1C1C21" />
         </linearGradient>
       </defs>
+      {/* La piedra negra sobre la que descansa el balón, como el trofeo de verdad */}
+      <path d="M11 40 H37 L39 50.5 H9 Z" fill="url(#bo-p)" />
+      <path d="M11 40 H37" stroke="#fff" strokeOpacity=".45" strokeWidth="1.2" />
+      <rect x="19" y="43.2" width="10" height="2.6" rx=".8" fill="#D9A21E" />
+      <rect x="9" y="48" width="30" height="2.5" rx="1" fill="#D9A21E" />
       <circle cx="24" cy="23" r="17" fill="url(#bo-g)" />
       <path d="M24 14.5 L31 19.6 L28.3 27.8 H19.7 L17 19.6 Z" fill="#7A5208" opacity=".78" />
       <path d="M24 14.5 V6.2 M31 19.6 L39 17 M28.3 27.8 L33.2 34.5 M19.7 27.8 L14.8 34.5 M17 19.6 L9 17" stroke="#7A5208" strokeOpacity=".6" strokeWidth="1.2" fill="none" />
       <path d="M13.5 13 C16 9 20 7.5 23 7.2" fill="none" stroke="#fff" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round" />
-      <path d="M17 41 H31 L33 46 H15 Z" fill="url(#bo-p)" />
-      <rect x="13" y="46" width="22" height="4.5" rx="1.6" fill="#D9A21E" />
     </svg>
   );
 }

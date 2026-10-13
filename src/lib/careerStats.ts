@@ -1,5 +1,5 @@
 import type { Player } from "@/types/player";
-import { allTrofeos, trofeoLabel } from "@/lib/honours";
+import { allTrofeos, trofeoLabel, type TrofeoKind } from "@/lib/honours";
 
 export interface CareerStats {
   ovr: number;
@@ -8,6 +8,8 @@ export interface CareerStats {
   goals: number;
   assists: number;
   titles: string[];
+  /** El tipo de cada título (misma posición que `titles`), para dibujar su trofeo. */
+  titleKinds: TrofeoKind[];
 }
 
 /**
@@ -42,5 +44,6 @@ export function computeCareerStats(player: Player): CareerStats {
 
   const titles: string[] = allTrofeos(player).map((x) => trofeoLabel(x));
 
-  return { ovr, valueM, games, goals, assists, titles };
+  const titleKinds: TrofeoKind[] = allTrofeos(player).map((x) => x.k);
+  return { ovr, valueM, games, goals, assists, titles, titleKinds };
 }

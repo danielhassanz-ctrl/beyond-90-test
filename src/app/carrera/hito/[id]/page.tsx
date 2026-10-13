@@ -1,3 +1,4 @@
+import { TrophyIcon } from "@/components/TrophyIcon";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -145,7 +146,11 @@ export default async function HitoPage({
       <div className="w-full max-w-2xl space-y-4">
         {/* Header con metadata */}
         <div className="text-center space-y-2">
-          <p className="text-3xl">{meta.emoji}</p>
+          {milestone.type === "title_champions" || milestone.type === "title_liga" ? (
+            <TrophyIcon kind={milestone.type === "title_champions" ? "champions" : "liga"} size={44} />
+          ) : (
+            <p className="text-3xl">{meta.emoji}</p>
+          )}
           <p className="text-kicker">{meta.label}</p>
           <h1 className="font-display text-3xl md:text-4xl text-foreground leading-tight">
             {milestone.title}

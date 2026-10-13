@@ -1,25 +1,14 @@
 import type { Player } from "@/types/player";
 import { displayName } from "@/types/player";
 import { computeCareerStats } from "@/lib/careerStats";
+import type { TrofeoKind } from "@/lib/honours";
+import { TrophyIcon } from "@/components/TrophyIcon";
 
 const POSITION_ABBR: Record<string, string> = {
   Portero: "POR",
   Defensa: "DEF",
   Centrocampista: "CEN",
   Delantero: "DEL",
-};
-
-const TITLE_ICONS: Record<string, string> = {
-  Liga: "🏆",
-  "Copa del Rey": "🥇",
-  "Champions League": "👑",
-  "Europa League": "🌟",
-  Mundial: "🌍",
-  Eurocopa: "🇪🇺",
-  "Copa América": "🌎",
-  "Juegos Olímpicos": "🏅",
-  "Balón de Oro": "⚽",
-  "Golden Boy": "✨",
 };
 
 const NATION_FLAGS: Record<string, string> = {
@@ -39,10 +28,14 @@ function flagFor(nation: string): string {
   return NATION_FLAGS[nation] ?? "🌍";
 }
 
-function groupTitles(titles: string[]): { name: string; count: number }[] {
-  const counts = new Map<string, number>();
-  for (const t of titles) counts.set(t, (counts.get(t) ?? 0) + 1);
-  return Array.from(counts.entries()).map(([name, count]) => ({ name, count }));
+function groupTitles(titles: string[], kinds: TrofeoKind[]): { name: string; kind: TrofeoKind; count: number }[] {
+  const groups = new Map<string, { kind: TrofeoKind; count: number }>();
+  titles.forEach((name, i) => {
+    const g = groups.get(name) ?? { kind: kinds[i] ?? "liga", count: 0 };
+    g.count += 1;
+    groups.set(name, g);
+  });
+  return Array.from(groups.entries()).map(([name, g]) => ({ name, ...g }));
 }
 
 /** Tarjeta-resumen de carrera al estilo "carta de stats" (OVR, valor, PJ/GLS/AST, títulos) para compartir de un vistazo. */
@@ -58,7 +51,7 @@ export function CareerStatCard({
   linkLine?: string | null;
 }) {
   const stats = computeCareerStats(player);
-  const grouped = groupTitles(stats.titles);
+  const grouped = groupTitles(stats.titles, stats.titleKinds);
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border-2 border-amber-400/80 bg-gradient-to-b from-amber-900/20 via-neutral-900 to-black p-5 shadow-[0_0_50px_-10px_rgba(245,183,64,0.35)]">
@@ -112,8 +105,8 @@ export function CareerStatCard({
           </p>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
             {grouped.map((t) => (
-              <span key={t.name} className="relative text-2xl leading-none" title={t.name}>
-                {TITLE_ICONS[t.name] ?? "🏆"}
+              <span key={t.name} className="relative inline-flex leading-none" title={t.name}>
+                <TrophyIcon kind={t.kind} size={36} />
                 {t.count > 1 && (
                   <span className="absolute -bottom-1.5 -right-2 rounded-full bg-amber-400 px-1 text-[9px] font-bold text-neutral-950">
                     x{t.count}
