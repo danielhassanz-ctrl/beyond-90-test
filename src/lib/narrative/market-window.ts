@@ -55,13 +55,33 @@ function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+/**
+ * Estabilidad tras un cambio de club: nadie paga por ti en cada mercado. Tras fichar, de 2 a 3 temporadas (20-30 turnos) sin
+ * ofertas formales — más cuantas más veces te hayas movido en los últimos años. Los rumores siguen, pero solo ruido.
+ */
+export function stabilityTurns(player: Pick<Player, "week" | "flags">): number {
+  const moves = String(player.flags?.club_moves ?? "").split(",").map((x) => parseInt(x, 10)).filter((n) => Number.isFinite(n));
+  // Partidas anteriores a este registro: se estima con el total de clubes que has tenido.
+  const recent = moves.length > 0 ? moves.filter((w) => player.week - w <= 60).length : Math.min(3, parseInt(String(player.flags?.club_changes ?? "0"), 10) || 0);
+  return recent >= 3 ? 30 : recent === 2 ? 25 : 20;
+}
+
+export function inStabilityPeriod(player: Pick<Player, "week" | "flags">): boolean {
+  const since = parseInt(String(player.flags?.club_since ?? "0"), 10) || 0;
+  return since > 0 && player.week - since < stabilityTurns(player);
+}
+
 export function shouldTriggerMarketRumor(player: Player): boolean {
   if (player.club === NO_CLUB_YET) return false;
   // Un debutante recién llegado no suena para nadie: primeras ventanas
   // reales a partir de la segunda temporada.
   if (player.week < 12) return false;
   const w = getMarketWindow(player.week);
-  if (!w) return false;
+  if (!w) {
+    // Fuera de las ventanas también corren rumores (la mayoría se queda en nada): uno cada pocos turnos.
+    const lastRumor = parseInt(String(player.flags?.rumor_last_week ?? "0"), 10) || 0;
+    return player.week - lastRumor >= 4 && Math.random() < 0.3;
+  }
   const key = windowKey(player.week, w);
   if (!player.flags?.[key]) return true;
   // La ventana de enero dura dos turnos: puede traer un SEGUNDO rumor
@@ -73,8 +93,9 @@ export function shouldTriggerMarketRumor(player: Player): boolean {
 
 export function markMarketRumorShown(player: Player): void {
   const w = getMarketWindow(player.week);
-  if (!w) return;
   if (!player.flags) player.flags = {};
+  player.flags.rumor_last_week = String(player.week);
+  if (!w) return;
   const key = windowKey(player.week, w);
   if (player.flags[key]) player.flags[`${key}_2`] = true;
   else player.flags[key] = true;
@@ -94,17 +115,17 @@ export function maybeSeedTransferInterest(player: Player): void {
   const w = getMarketWindow(player.week);
   if (!w || !player.flags?.[windowKey(player.week, w)]) return; // primero el rumor
   if (getInjuryRemaining(player.flags) > 0) return;
+  if (inStabilityPeriod(player)) return;
   if ((player.media ?? 50) < 42) return;
   const current = player.flags?.transfer_interest;
   if (typeof current === "string" && current) return;
   const lastOffer = parseInt(String(player.flags?.offer_last_week ?? "0"), 10) || 0;
-  // Los buenos jugadores reciben ofertas de varios clubes en la misma ventana; el resto, con más espacio.
-  if (lastOffer > 0 && player.week - lastOffer < ((player.media ?? 50) >= 75 ? 2 : 5)) return;
+  // Nadie paga por ti en cada mercado: como mucho una oferta formal cada ~2 ventanas (los mejores, algo más a menudo).
+  if (lastOffer > 0 && player.week - lastOffer < ((player.media ?? 50) >= 80 ? 8 : 12)) return;
   if (lastOffer === 0 && player.week < 16) return;
-  // Sin oferta en mucho tiempo: el mercado te tiene que llegar. Pasadas 20 semanas desde la última (o
-  // desde el principio), la ventana trae interés seguro; antes, 65% por turno de ventana.
-  const drought = player.week - (lastOffer || 12) >= 8;
-  if (!drought && Math.random() >= 0.85) return;
+  // Sin oferta en mucho tiempo (más de 3 temporadas) el mercado te tiene que llegar; si no, solo a veces.
+  const drought = player.week - (lastOffer || 12) >= 30;
+  if (!drought && Math.random() >= 0.4) return;
   if (!player.flags) player.flags = {};
   Object.assign(player.flags, interestFlags(pickInterestedClub(player), player.week - 1, "prensa"));
 }
@@ -164,7 +185,8 @@ function pickKind(player: Player): RumorKind {
   const weighted: RumorKind[] = ["interes", "interes", "interes", "agente", "agente", "agente", "competencia", "bulo", "capitan", "clausula", "clausula", "familia", "en_venta", "en_venta", "intermediario", "confundido", "asador", "hincha_rico", "agente_doble", "comision"];
   // El estado manda sobre el mercado: lesionado nadie paga por ti ahora (solo
   // ruido de fondo); sin minutos, el club empieza a ponerte en el escaparate.
-  if (getInjuryRemaining(player.flags) > 0) {
+  // Recién fichado nadie te quiere de verdad todavía: solo ruido (bulos, confusiones...).
+  if (getInjuryRemaining(player.flags) > 0 || inStabilityPeriod(player)) {
     const quiet: RumorKind[] = ["bulo", "confundido", "asador", "hincha_rico", "comision", "familia"];
     const pool = quiet.filter((k) => k !== last);
     return pick(pool.length ? pool : quiet);
@@ -180,7 +202,7 @@ const club0 = (p: Player) => p.club;
 
 export function buildMarketRumorEvent(player: Player): GameEvent {
   const w = getMarketWindow(player.week) ?? "verano";
-  const label = w === "verano" ? "el mercado de verano" : "el mercado de enero";
+  const label = !getMarketWindow(player.week) ? "los próximos mercados" : w === "verano" ? "el mercado de verano" : "el mercado de enero";
   const kind = pickKind(player);
   if (!player.flags) player.flags = {};
   player.flags.market_last_kind = [...String(player.flags.market_last_kind ?? "").split(",").filter(Boolean), kind].slice(-2).join(",");
@@ -751,6 +773,7 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
 export function shouldTriggerTransferOffer(player: Player): boolean {
   const club = player.flags?.transfer_interest;
   if (typeof club !== "string" || !club || club === player.club) return false;
+  if (inStabilityPeriod(player)) return false;
   const since = player.week - (parseInt(String(player.flags?.transfer_interest_week ?? "0"), 10) || 0);
   if (since < 1) return false;
   if (since > 15) return false;
@@ -1037,6 +1060,7 @@ function ownMoveOptions(options: GameEvent["options"], player: Player): GameEven
 export function shouldTriggerDeadlineDay(player: Player): boolean {
   const club = player.flags?.transfer_interest;
   if (typeof club !== "string" || !club || club === player.club) return false;
+  if (inStabilityPeriod(player)) return false;
   const w = getMarketWindow(player.week);
   if (!w) return false;
   const weekInSeason = ((player.week - 1) % 10) + 1;

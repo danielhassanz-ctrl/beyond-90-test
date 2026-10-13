@@ -9,6 +9,8 @@ import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { getNpcName } from "@/lib/narrative/npcs";
 import { cityOfClub } from "@/lib/narrative/events";
+import { isReturningTo, pastStint } from "@/lib/narrative/ex-clubs";
+import { trofeoLabel } from "@/lib/honours";
 
 const num = (v: string | boolean | undefined) => parseInt(String(v ?? "0"), 10) || 0;
 
@@ -27,7 +29,80 @@ export function shouldTriggerArrivalIntro(player: Player): boolean {
   return elapsed >= 0 && elapsed <= WINDOW;
 }
 
+/** Volver a un club en el que ya jugaste: el juego te recuerda, y la gente de allí también. */
+function buildReturnIntroEvent(player: Player): GameEvent {
+  const club = player.club;
+  const since = num(player.flags?.club_since);
+  const city = cityOfClub(club);
+  const mister = getNpcName(player, "entrenador");
+  const capitan = getNpcName(player, "capitan");
+  const preparador = getNpcName(player, "preparador");
+  const done = { arrival_intro: String(since) };
+  const corto = (full: string) => full.split(" ")[0];
+  const stint = pastStint(player);
+  const years = stint.seasons;
+  const labels = [...new Set(stint.titles.map((t) => trofeoLabel(t)))];
+  const stintLine =
+    years > 0
+      ? `Estuviste aquí ${years} ${years === 1 ? "temporada" : "temporadas"}${labels.length > 0 ? ` y dejaste ${stint.titles.length === 1 ? "un título" : `${stint.titles.length} títulos`} (${labels.join(", ")})` : ""}.`
+      : `Ya pasaste por aquí una vez${labels.length > 0 ? ` y dejaste algún título (${labels.join(", ")})` : ""}.`;
+  const tie = stint.tie;
+  const misterLine =
+    tie && tie.re >= 70
+      ? `${mister}, que no ha olvidado lo bien que os llevabais, te abraza antes de que cruces la puerta: «Sabía que volverías».`
+      : tie && tie.re < 35
+        ? `${mister} te da un apretón de manos correcto y sin más. Las cosas no acabaron del todo bien y los dos lo saben.`
+        : `${mister} te espera en la entrada: «Cuánto tiempo. Esto sigue en pie, ya lo ves».`;
+  const capitanLine =
+    tie && tie.rv >= 70
+      ? `${capitan} sale a tu encuentro y te levanta en volandas: media plantilla se acuerda de ti.`
+      : `${capitan} te hace un gesto con la cabeza y te enseña los cambios que ha habido: caras nuevas, taquillas movidas, el mismo olor de siempre.`;
+
+  const options: EventOption[] = [
+    {
+      id: "a",
+      label: "Abrazar a los de siempre y preguntar: «¿Qué me he perdido?»",
+      subtitle: "Retomar el vestuario donde lo dejaste",
+      consequences: { rel_vestuario: 5, moral: 4, flags: { ...done } },
+      outcomeText: `Te pasas media mañana de abrazo en abrazo. Los veteranos te cuentan lo que ha pasado desde que te fuiste y los nuevos te miran con la curiosidad de quien conoce la leyenda pero no al hombre. ${corto(capitan)} resume la jornada: «Aquí no te has ido nunca del todo».`,
+    },
+    {
+      id: "b",
+      label: "Presentarte a los nuevos: «Vuelvo, pero me toca ganarme el sitio otra vez»",
+      subtitle: "Humildad pese a todo lo que has hecho",
+      consequences: { rel_entrenador: 4, rel_vestuario: 2, moral: 2, flags: { ...done } },
+      outcomeText: `Lo dices delante de todos, sin adornos. ${mister} asiente despacio: «Eso es lo que quería oír». Los más jóvenes lo anotan mentalmente; los veteranos sonríen. Empiezas la semana con el respeto intacto y las expectativas por las nubes.`,
+    },
+    {
+      id: "c",
+      label: "Decirle a la afición que vuelves a por lo que dejaste pendiente",
+      subtitle: "Prometer, con todo el riesgo que eso trae",
+      consequences: { rel_aficion: 6, fama: 2, moral: 3, rel_vestuario: -1, flags: { ...done } },
+      outcomeText: `Lo dices ante las cámaras a la puerta de ${city}: «Vuelvo a casa y vuelvo a ganar». La grada, que lleva meses esperándote, estalla en redes. En el vestuario, algún compañero levanta una ceja: has puesto el listón muy alto desde el primer día.`,
+    },
+    {
+      id: "d",
+      label: "Ir a tu antigua taquilla y quedarte un minuto en silencio",
+      subtitle: "Dejar que los recuerdos hagan su trabajo",
+      consequences: { moral: 6, forma: 1, flags: { ...done, ret_nostalgia: true } },
+      outcomeText: `Sigue igual: la misma esquina, el mismo gancho torcido. ${corto(preparador)} te ve desde la puerta y respeta el silencio un buen rato antes de decirte, suave: «Cuando quieras, empezamos». Entras al primer entrenamiento con un nudo en la garganta y las piernas más ligeras de lo que esperabas.`,
+    },
+  ];
+
+  return {
+    id: `llegada-vuelta-${since}`,
+    category: "vida",
+    title: `Vuelves a ${club}: de nuevo en casa`,
+    description: `Cruzas la puerta de la ciudad deportiva de ${club} y no huele a nuevo: huele a casa. ${stintLine} ${misterLine} ${capitanLine} Desde el fondo del pasillo, alguien grita: «¡Eh, qué hay de nuevo, viejo!». ${corto(preparador)}, del cuerpo técnico, sigue ahí con su carpeta bajo el brazo. Todo se para un segundo: es el tiempo justo para decidir cómo quieres volver.`,
+    options,
+    priority: true,
+    allowFreeText: true,
+    freeTextPrompt: "¿Qué le dices al grupo en tu primera frase?",
+  };
+}
+
 export function buildArrivalIntroEvent(player: Player): GameEvent {
+  if (isReturningTo(player)) return buildReturnIntroEvent(player);
   const club = player.club;
   const since = num(player.flags?.club_since);
   const city = cityOfClub(club);

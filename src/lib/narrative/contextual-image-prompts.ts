@@ -47,7 +47,7 @@ export const CONTEXTUAL_IMAGE_PROMPTS: Record<string, (playerName: string, conte
   // resuelve esto en los prompts escritos a mano con el marcador
   // [CLUB_KIT]; aquí hacía falta el mismo forzado de color explícito.
   transferencia_fichaje: (playerName: string, clubName: string | number) =>
-    `Official team photo: young footballer ${playerName} posing with ${String(clubName)} jersey over shoulders (${describeKit(String(clubName))}), smiling confidently, stadium background, professional club photography style, Getty Images quality`,
+    `Official team photo: young footballer ${playerName} wearing the ${String(clubName)} home jersey (${describeKit(String(clubName))}) on his body, standing upright and relaxed facing the camera with arms down, a single jersey only (no second shirt, scarf or garment draped over the shoulders), smiling confidently, stadium background, professional club photography style, Getty Images quality`,
 
   // GOL - Celebración (pose distinta cada vez, ver GOAL_CELEBRATION_POSES)
   gol_celebracion: (playerName: string, clubName: string | number) =>

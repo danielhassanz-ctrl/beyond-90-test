@@ -9,7 +9,7 @@ import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
 import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
 import { addShareBranding } from "@/lib/images/shareBranding";
-import { getMilestoneImagePrompt } from "@/lib/images/milestonePrompts";
+import { getMilestoneImagePrompt, cleanImagePrompt } from "@/lib/images/milestonePrompts";
 import { describeKit } from "@/lib/clubColors";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { playerAge } from "@/types/career";
@@ -122,10 +122,11 @@ export async function regenerateMilestoneImage(formData: FormData) {
     contextual ??
     `Photorealistic cinematic photo of the photographed man in an emotional football moment: "${milestone.title}". He wears a ${describeKit(player.club)} football jersey, natural stadium light, expressive face, documentary sports photography style`;
   // Una escena guardada sin camiseta (de antes de que se añadiera la cláusula) dejaba que el modelo eligiera la de cualquier club.
-  const prompt =
+  const prompt = cleanImagePrompt(
     /(kit|jersey|shirt|tracksuit)/i.test(basePrompt) || /national team|world cup|selecci/i.test(basePrompt)
       ? basePrompt
-      : `${basePrompt} If he wears any club kit, tracksuit or jacket, it is exactly: ${describeKit(player.club)}; never another club's colours or crest.`;
+      : `${basePrompt} If he wears any club kit, tracksuit or jacket, it is exactly: ${describeKit(player.club)}; never another club's colours or crest.`,
+  );
 
   const photoUrl = player.photo_url as string;
   const userId = user.id;

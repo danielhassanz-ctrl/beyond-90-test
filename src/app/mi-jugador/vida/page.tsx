@@ -8,6 +8,7 @@ import { getCachedNpcFace } from "@/lib/images/npcFaces";
 import { LifeCircle, type LifeMember } from "@/components/LifeCircle";
 import { chicaPhoto, chicaEnCurso } from "@/lib/narrative/chicas-roster";
 import { describeRel, describeCity, partnerRel } from "@/lib/narrative/partner";
+import { exClubMembers } from "@/lib/narrative/ex-clubs";
 import { StateChips } from "@/components/StateChips";
 import { NO_CLUB_YET } from "@/lib/constants";
 
@@ -46,6 +47,8 @@ export default async function VidaPage() {
 
   const face = (role: NpcRole) => getCachedNpcFace(player, role);
   const chicaActual = chicaEnCurso(player.flags);
+  // Míster y capitán de tus clubes anteriores, con cómo os llevabais al despediros (flags.ex_ties).
+  const antiguos = exClubMembers(player as never);
   const parejaName = pareja ? (pareja === "Lucía" ? getNpcName(player, "pareja") : pareja) : null;
 
   const familia: LifeMember[] = [
@@ -128,6 +131,7 @@ export default async function VidaPage() {
       <LifeCircle icon="🏠" title="Familia" subtitle="Los que estaban antes de la fama" members={familia} defaultOpen />
       <LifeCircle icon="🤝" title="Amigos y compañeros" subtitle="Vestuario, barrio y quien te disputa el puesto" members={amigos} />
       <LifeCircle icon="🏟️" title="Club y cuerpo técnico" subtitle="Míster, médicos, directivos y tu representante" members={club} />
+      {antiguos.length > 0 && <LifeCircle icon="🕰️" title="De tus clubes anteriores" subtitle="Quienes te dirigieron y compartieron vestuario contigo" members={antiguos} />}
 
       {(hasClub || player.agent_name) && (
         <div className="grid w-full max-w-md grid-cols-2 gap-4 rounded-2xl border border-panel-border bg-surface p-4">

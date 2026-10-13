@@ -27,11 +27,12 @@ import { recapPhotoPrompt } from "@/lib/images/recap-photo";
 import { maybeDmScenePhoto } from "@/lib/images/dm-scene";
 import { describeLook } from "@/lib/playerLook";
 import { composeDmCard } from "@/lib/images/dmCard";
-import { getMilestoneImagePrompt, withSceneGuards } from "@/lib/images/milestonePrompts";
+import { getMilestoneImagePrompt, withSceneGuards, cleanImagePrompt } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
 import { annualSalaryText, playerMonthlyNet, marketValueM } from "@/lib/narrative/transfer-terms";
 import { netWorth as playerNetWorth } from "@/lib/finance/net-worth";
 import { stepPartner } from "@/lib/narrative/partner";
+import { readExTies } from "@/lib/narrative/ex-clubs";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, WEEKS_PER_SEASON, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
@@ -525,6 +526,15 @@ export async function resolveEvent(formData: FormData) {
       club_changes: String((parseInt(String(flagsSoFar.club_changes ?? "0"), 10) || 0) + 1),
       clubs_history: previousClubs.slice(-12).join("|"),
       club_since: String(newWeek),
+      // Los cambios de club recientes (semana de cada uno): a más cambios, más temporadas sin ofertas (market-window.ts).
+      club_moves: [...String(flagsSoFar.club_moves ?? "").split(",").filter(Boolean), String(newWeek)].slice(-6).join(","),
+      // Cómo te llevabas con el club que dejas (para Vida y para cuando vuelvas): entrenador y vestuario al irte.
+      ex_ties: JSON.stringify(
+        [
+          ...readExTies(flagsSoFar).filter((t) => t.c !== player.club),
+          ...(player.club && player.club !== NO_CLUB_YET && player.club !== newClub ? [{ c: player.club, w: player.week, re: player.rel_entrenador ?? 50, rv: player.rel_vestuario ?? 50 }] : []),
+        ].slice(-10),
+      ),
       alquiler: "",
       coach_bench: "0",
       bench_streak: "0",
@@ -702,6 +712,7 @@ export async function resolveEvent(formData: FormData) {
               nationalTeam: /^(sel-|torneo|matchday-torneo)/.test(event.id),
             })
           : null);
+      if (milestoneImagePrompt) milestoneImagePrompt = cleanImagePrompt(milestoneImagePrompt);
     }
 
     // Los momentos garantizados de toda carrera (firma con el primer

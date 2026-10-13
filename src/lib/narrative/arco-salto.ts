@@ -19,7 +19,7 @@ import { getClubLevel } from "@/lib/calendar/match-calendar";
 import { getNpcName } from "@/lib/narrative/npcs";
 import { computeRole } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
-import { pickInterestedClub, getMarketWindow } from "@/lib/narrative/market-window";
+import { pickInterestedClub, getMarketWindow, inStabilityPeriod } from "@/lib/narrative/market-window";
 import { buildTerms, offerOptions, termsText } from "@/lib/narrative/transfer-terms";
 
 type Postura = "leal" | "ambicioso" | "discreto";
@@ -42,6 +42,7 @@ export function shouldTriggerSalto(player: Player): boolean {
 
   if (f === 0) {
     if (getInjuryRemaining(player.flags) > 0) return false;
+    if (inStabilityPeriod(player)) return false;
     const cooldown = parseInt(String(player.flags?.salto_cooldown ?? "0"), 10) || 0;
     if (now < cooldown) return false;
     const level = getClubLevel(player.club);

@@ -93,6 +93,17 @@ export const MILESTONE_TYPE_TO_CONTEXT_TYPE: Record<string, string> = {
   presidente_federacion: "debut_internacional",
 };
 
+/**
+ * Limpieza de cualquier prompt de foto antes de enviarlo: «Getty Images» hacía que el modelo dibujara la marca de agua
+ * y el crédito del fotógrafo, y «camiseta sobre los hombros» le hacía poner una segunda camiseta encima de la que ya llevaba.
+ */
+export function cleanImagePrompt(prompt: string): string {
+  const cleaned = prompt
+    .replace(/Getty Images/gi, "press-agency")
+    .replace(/jersey over (his )?shoulders?/gi, "jersey worn normally on his body");
+  return /no watermark/i.test(cleaned) ? cleaned : `${cleaned} No watermark, no photographer credit, no readable text, a single jersey only (no second shirt draped over the shoulders).`;
+}
+
 export function getMilestoneImagePrompt(
   eventId: string,
   age: number,
