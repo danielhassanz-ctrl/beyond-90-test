@@ -995,6 +995,7 @@ export async function resolveEvent(formData: FormData) {
         if (photoUrl) {
           next.recap_photo = photoUrl;
           next.recap_photo_season = String(refreshSeason);
+          delete next[`recap_card_${refreshSeason}`];
         }
         await supabase.from("players").update({ flags: next }).eq("id", refreshPlayerId);
       };
