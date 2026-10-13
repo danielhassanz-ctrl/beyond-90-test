@@ -29,7 +29,8 @@ import { describeLook } from "@/lib/playerLook";
 import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt, withSceneGuards } from "@/lib/images/milestonePrompts";
 import { generateContractEvent } from "@/lib/narrative/ai";
-import { annualSalaryText, playerMonthlyNet } from "@/lib/narrative/transfer-terms";
+import { annualSalaryText, playerMonthlyNet, marketValueM } from "@/lib/narrative/transfer-terms";
+import { netWorth as playerNetWorth } from "@/lib/finance/net-worth";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, WEEKS_PER_SEASON, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
@@ -966,6 +967,15 @@ export async function resolveEvent(formData: FormData) {
   // hace que la tarjeta espere en vez de enseñar la foto de perfil.
   const preseasonSeasonMatch = /^preseason-(\d+)$/.exec(event.id);
   const preseasonSeason = preseasonSeasonMatch ? parseInt(preseasonSeasonMatch[1], 10) : null;
+  // Foto fija de cómo estabas al cerrar esta temporada (media, club, valor de mercado, patrimonio): la tarjeta de
+  // resumen de cada año enseña SUS cifras, no las de hoy.
+  if (preseasonSeason !== null) {
+    const snapBase = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    playerUpdate.flags = {
+      ...snapBase,
+      [`recap_snap_${preseasonSeason}`]: JSON.stringify({ m: player.media, c: player.club, v: marketValueM(player), n: playerNetWorth(player) }),
+    };
+  }
   const recapFlagsNow = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
   const lastRecapSeason = parseInt(String(recapFlagsNow.recap_photo_season ?? "-99"), 10);
   const isSeasonPhotoRefresh =
@@ -995,7 +1005,7 @@ export async function resolveEvent(formData: FormData) {
         if (photoUrl) {
           next.recap_photo = photoUrl;
           next.recap_photo_season = String(refreshSeason);
-          delete next[`recap_card_${refreshSeason}`];
+          delete next[`recap_c2_${refreshSeason}`];
         }
         await supabase.from("players").update({ flags: next }).eq("id", refreshPlayerId);
       };

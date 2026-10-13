@@ -15,6 +15,10 @@ import { displayName } from "@/types/player";
 import { EventScene } from "@/components/EventScene";
 import { getCurrentSeasonStats } from "@/lib/player/update-stats";
 import { getGameDateLabel } from "@/lib/calendar/season";
+import { composeRecapCard } from "@/lib/images/recapCard";
+import { uploadGeneratedImage } from "@/lib/images/upload";
+import { clubAtSeasonEnd, type ClubChange } from "@/lib/player/club-timeline";
+import { fetchAllRows } from "@/lib/supabase/fetchAll";
 
 /** "6,35 M€", "420 mil €" o "8.500 €": cabe en una casilla pequeña de la tarjeta. */
 function compactEur(n: number): string {
@@ -91,6 +95,85 @@ export default async function ResultadoPage({
   const recapPending = isSeasonRecap && recapPendingSince > 0 && nowMs() - recapPendingSince < 4 * 60_000;
   const recapPhoto = typeof recapFlags.recap_photo === "string" && recapFlags.recap_photo ? recapFlags.recap_photo : null;
 
+  // La tarjeta de cada temporada se guarda ya montada (foto + cifras de AQUEL momento) la primera vez que se ve con la
+  // foto lista; así conserva su foto y sus cifras aunque cambien después. Si se rehace la foto de esa temporada, se
+  // borra y se vuelve a montar.
+  const recapSeason = isSeasonRecap ? parseInt(/^preseason-(d+)$/.exec(careerEvent.event_id ?? "")![1], 10) : null;
+  const cardKey = recapSeason !== null ? `recap_c2_${recapSeason}` : null;
+  let recapCardUrl = cardKey && typeof recapFlags[cardKey] === "string" && recapFlags[cardKey] ? String(recapFlags[cardKey]) : null;
+
+  // Cómo estabas al cerrar ESA temporada: la foto fija que se guarda al cerrarla (recap_snap_N) o, en los cierres
+  // anteriores a ese registro, lo que se puede reconstruir (club por tus fichajes, media deshaciendo los cambios
+  // posteriores). El patrimonio de entonces no se puede reconstruir: en esos cierres no se enseña.
+  let cardClub = player.club;
+  let cardMedia = player.media;
+  let cardValueM = marketValueM(player);
+  let cardNetWorth: number | null = netWorth(player);
+  if (isSeasonRecap && recapSeason !== null && !recapCardUrl) {
+    let snap: { m?: number; c?: string; v?: number; n?: number } | null = null;
+    try {
+      const raw = recapFlags[`recap_snap_${recapSeason}`];
+      snap = typeof raw === "string" && raw ? JSON.parse(raw) : null;
+    } catch {
+      snap = null;
+    }
+    if (snap && typeof snap.m === "number" && snap.c) {
+      cardClub = snap.c;
+      cardMedia = snap.m;
+      cardValueM = typeof snap.v === "number" ? snap.v : marketValueM({ media: snap.m, week: careerEvent.week });
+      cardNetWorth = typeof snap.n === "number" ? snap.n : null;
+    } else {
+      const { data: evs } = await fetchAllRows<{ week: number; consequences: Record<string, unknown> | null }>((from, to) =>
+        supabase.from("career_events").select("week, consequences").eq("player_id", player.id).order("id").range(from, to),
+      );
+      const changes: ClubChange[] = [];
+      let mediaAfter = 0;
+      for (const e of evs ?? []) {
+        const c = e.consequences;
+        if (c && typeof c.club === "string" && c.club) changes.push({ week: e.week, club: c.club });
+        if (c && typeof c.media === "number" && e.week >= careerEvent.week) mediaAfter += c.media;
+      }
+      cardClub = clubAtSeasonEnd(recapFlags, closedSeasonIdx, changes, player.club);
+      cardMedia = Math.max(40, Math.min(99, player.media - mediaAfter));
+      cardValueM = marketValueM({ media: cardMedia, week: careerEvent.week });
+      cardNetWorth = null;
+    }
+  }
+  if (isSeasonRecap && cardKey && !recapCardUrl && !recapPending && seasonStats) {
+    try {
+      const buffer = await composeRecapCard({
+        name: displayName(player),
+        media: cardMedia,
+        position: player.position,
+        nation: player.nation ?? "",
+        age: playerAge(careerEvent.week),
+        club: cardClub,
+        seasonLabel: seasonLabel(closedSeasonWeek),
+        marketValue: eurFee(cardValueM),
+        netWorth: cardNetWorth === null ? undefined : compactEur(cardNetWorth),
+        stats: {
+          matches: seasonStats.matches_played,
+          goals: seasonStats.goals,
+          assists: seasonStats.assists,
+          titles: closedSeasonTitles,
+          minutes: seasonStats.minutes_played,
+        },
+        photoUrl: recapPhoto ?? player.photo_url,
+        tagline: "Así cerré la temporada. ¿Cómo vas tú?",
+        linkLine: getAppUrlLine(),
+      });
+      const url = await uploadGeneratedImage(supabase, user.id, buffer, "recapcard");
+      if (url) {
+        const { data: cur } = await supabase.from("players").select("flags").eq("id", player.id).maybeSingle();
+        const next = { ...((cur?.flags ?? {}) as Record<string, string | boolean>), [cardKey]: url };
+        const { data: saved } = await supabase.from("players").update({ flags: next }).eq("id", player.id).select("id");
+        if (saved && saved.length === 1) recapCardUrl = url;
+      }
+    } catch (err) {
+      console.error("[resultado] no se pudo montar la tarjeta de resumen:", err instanceof Error ? err.message : err);
+    }
+  }
+
   return (
     <main className="flex flex-1 items-center justify-center bg-background p-4">
       {recapPending && <RecapPhotoWatcher />}
@@ -161,9 +244,16 @@ export default async function ResultadoPage({
 
         {isSeasonRecap ? (
           <div className="space-y-3">
+          {recapCardUrl ? (
+            <div className="space-y-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={recapCardUrl} alt={`Resumen de la temporada ${seasonLabel(closedSeasonWeek)}`} className="w-full rounded-2xl" />
+              <ShareButton imageUrl={recapCardUrl} title="Beyond 90" text={shareText} />
+            </div>
+          ) : (
           <ShareableCard title="Beyond 90" text={shareText}>
             <SeasonRecapCard
-              player={player}
+              player={{ ...player, club: cardClub, media: cardMedia }}
               seasonLabel={seasonLabel(closedSeasonWeek)}
               age={playerAge(careerEvent.week)}
               stats={seasonStats!}
@@ -171,11 +261,12 @@ export default async function ResultadoPage({
               linkLine={getAppUrlLine()}
               photoUrl={recapPhoto}
               pending={recapPending}
-              marketValue={eurFee(marketValueM(player))}
-              netWorth={compactEur(netWorth(player))}
+              marketValue={eurFee(cardValueM)}
+              netWorth={cardNetWorth === null ? undefined : compactEur(cardNetWorth)}
               titles={closedSeasonTitles}
             />
           </ShareableCard>
+          )}
           {!recapPending && <RegenerateRecapButton careerEventId={id} />}
           </div>
         ) : (

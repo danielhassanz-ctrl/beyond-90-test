@@ -17,7 +17,8 @@ export interface RecapCardInput {
   club: string;
   seasonLabel: string;
   marketValue: string;
-  netWorth: string;
+  /** Sin cifra (no se conoce el de aquel momento) no se enseña la casilla. */
+  netWorth?: string;
   stats: { matches: number; goals: number; assists: number; titles: number; minutes: number };
   /** Foto resumen (URL). Sin ella, fondo oscuro con degradado. */
   photoUrl?: string | null;
@@ -113,11 +114,11 @@ export async function composeRecapCard(input: RecapCardInput): Promise<Buffer> {
 
   const infoRow: [string, string][] = [
     [input.marketValue, "Valor de mercado"],
-    [input.netWorth, "Patrimonio"],
+    ...(input.netWorth ? ([[input.netWorth, "Patrimonio"]] as [string, string][]) : []),
     [input.seasonLabel, "Temporada"],
     [input.club, "Club"],
   ];
-  const iw = (innerW - gap * 3) / 4;
+  const iw = (innerW - gap * (infoRow.length - 1)) / infoRow.length;
   by -= gap + rowH;
   infoRow.forEach(([v, l], i) => parts.push(box(left + i * (iw + gap), by, iw, rowH, v, l, 38, 18)));
 

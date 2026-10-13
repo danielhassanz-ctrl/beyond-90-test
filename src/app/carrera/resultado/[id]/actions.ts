@@ -57,7 +57,7 @@ export async function regenerateRecapPhoto(careerEventRowId: string): Promise<{ 
       next.recap_photo = url;
       next.recap_photo_season = String(season);
       // La tarjeta guardada de esta temporada llevaba la foto vieja: se vuelve a montar con la nueva.
-      delete next[`recap_card_${season}`];
+      delete next[`recap_c2_${season}`];
     }
     await supabase.from("players").update({ flags: next }).eq("id", playerId);
   };
