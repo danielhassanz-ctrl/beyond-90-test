@@ -48,7 +48,7 @@ r = await getCompetitionStats(fakeSupabase(), { id: "p", week: 55, nation: "Espa
 ok(r.previous[0]?.stats.liga.matches === 3 && r.season.liga.matches === 3, `Bayern ${r.previous[0]?.stats.liga.matches} · Liverpool ${r.season.liga.matches} (no 6 y 0)`);
 ok(!!r.splitToPersist, "devuelve el reparto para que la página lo guarde una vez");
 const saved = withClubSplit(f4, r.splitToPersist!);
-let f5: any = addSimSeason(saved, SEASON, sim(4, 1)); // pasan más semanas y se estiman 4 partidos más
+const f5: any = addSimSeason(saved, SEASON, sim(4, 1)); // pasan más semanas y se estiman 4 partidos más
 const r2 = await getCompetitionStats(fakeSupabase(), { id: "p", week: 59, nation: "España" }, null, f5);
 ok(r2.previous[0]?.stats.liga.matches === 3 && r2.season.liga.matches === 7 && r2.splitToPersist === null, `guardado: el Bayern sigue en ${r2.previous[0]?.stats.liga.matches} y el Liverpool suma hasta ${r2.season.liga.matches}`);
 
