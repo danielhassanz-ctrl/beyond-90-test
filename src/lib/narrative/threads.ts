@@ -9,6 +9,7 @@
  * Todo vive en player.flags.hilos (JSON), sin columnas nuevas.
  */
 import type { Player } from "@/types/player";
+import { canonicalClub } from "@/lib/calendar/leagues";
 
 export type ThreadKind = "favor" | "deuda" | "rencor" | "promesa" | "secreto";
 export const THREAD_KINDS: ThreadKind[] = ["favor", "deuda", "rencor", "promesa", "secreto"];
@@ -21,6 +22,8 @@ export interface Thread {
   who: string;
   /** Qué quedó pendiente, en una frase. */
   t: string;
+  /** Club en el que nació el asunto: quien lo cobra viene de ESE club aunque ya te hayas ido. */
+  c?: string;
   /** 1 si ya se cobró / se resolvió. */
   u?: 1;
 }
@@ -55,6 +58,7 @@ export function appendThread(
   flags: Record<string, string | boolean> | null | undefined,
   thread: { kind: string; who: string; text: string },
   week: number,
+  club?: string,
 ): string | null {
   const kind = THREAD_KINDS.find((k) => k === thread.kind);
   const who = thread.who?.trim();
@@ -63,7 +67,7 @@ export function appendThread(
   const list = readThreads(flags);
   // El mismo vínculo con la misma persona no se duplica.
   if (list.some((t) => !t.u && t.who === who && t.k === kind)) return null;
-  list.push({ w: week, k: kind, who: who.slice(0, 60), t: text.slice(0, 160) });
+  list.push({ w: week, k: kind, who: who.slice(0, 60), t: text.slice(0, 160), ...(club ? { c: club } : {}) });
   while (list.length > MAX_THREADS) {
     const closed = list.findIndex((t) => t.u);
     list.splice(closed >= 0 ? closed : 0, 1);
@@ -95,9 +99,46 @@ export function consumeThread(flags: Record<string, string | boolean> | null | u
   );
 }
 
+/**
+ * Club donde nació el asunto. Los hilos nuevos lo guardan (`c`); en los antiguos se deduce: si nació antes de
+ * llegar al club actual, es el último club de tu historial.
+ */
+export function threadOriginClub(thread: Thread, player: Pick<Player, "club" | "flags">): string {
+  if (thread.c) return thread.c;
+  const since = parseInt(String(player.flags?.club_since ?? "0"), 10) || 0;
+  if (since > 0 && thread.w < since) {
+    const history = String(player.flags?.clubs_history ?? "").split("|").filter(Boolean);
+    const last = history.filter((c) => canonicalClub(c) !== canonicalClub(player.club)).pop();
+    if (last) return last;
+  }
+  return player.club;
+}
+
+/** ¿El asunto nació en otro club distinto del actual? */
+export function threadIsFromOtherClub(thread: Thread, player: Pick<Player, "club" | "flags">): boolean {
+  return canonicalClub(threadOriginClub(thread, player)) !== canonicalClub(player.club);
+}
+
+/** Cargos genéricos que, en un hilo de otro club, hay que traducir al nombre de quien ocupaba ese cargo allí. */
+export function genericRoleOf(who: string): "presidente" | "entrenador" | "director_deportivo" | "capitan" | null {
+  const w = who.toLowerCase().trim();
+  if (/^(el |la )?presidente( del club)?$/.test(w)) return "presidente";
+  if (/^(el )?(míster|mister|entrenador)$/.test(w)) return "entrenador";
+  if (/^(el )?(director deportivo|secretario técnico)$/.test(w)) return "director_deportivo";
+  if (/^(el )?capitán$/.test(w)) return "capitan";
+  return null;
+}
+
 /** Para el resumen de estado de la IA. */
-export function describeOpenThreads(flags: Record<string, string | boolean> | null | undefined, week: number): string[] {
-  return openThreads(flags).map((t) => `${THREAD_LABELS[t.k]} con ${t.who} (hace ${Math.max(1, week - t.w)} turnos): ${t.t}`);
+export function describeOpenThreads(
+  flags: Record<string, string | boolean> | null | undefined,
+  week: number,
+  club?: string,
+): string[] {
+  return openThreads(flags).map((t) => {
+    const origin = t.c && club && canonicalClub(t.c) !== canonicalClub(club) ? ` [asunto del ${t.c}, club que ya dejaste]` : "";
+    return `${THREAD_LABELS[t.k]} con ${t.who}${origin} (hace ${Math.max(1, week - t.w)} turnos): ${t.t}`;
+  });
 }
 
 /** En la segunda vida: ¿toca que reaparezca un asunto pendiente de la carrera? (cada 3 turnos como mínimo) */

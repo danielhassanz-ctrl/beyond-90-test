@@ -15,6 +15,7 @@ import { getShareTagline } from "@/lib/shareTaglines";
 import { playerAge } from "@/types/career";
 import { logAppError } from "@/lib/errorLog";
 import { composeDmCard } from "@/lib/images/dmCard";
+import { maybeDmScenePhoto } from "@/lib/images/dm-scene";
 import { BANK_SCENES } from "@/lib/narrative/bank/scenes";
 import { fillBankEvent } from "@/lib/narrative/bank/select";
 
@@ -210,11 +211,14 @@ export async function regenerateDmCard(formData: FormData) {
   }
 
   try {
+    const scenePhoto = await maybeDmScenePhoto(supabase, { id: user.id, email: user.email }, { id: player.id, photo_url: player.photo_url as string | null, flags: player.flags }, found.dm.avatar);
     const raw = await composeDmCard({
       ...found.dm,
       reply: found.reply,
       followUp: found.followUp,
-      playerPhoto: (player.current_photo_url as string | null | undefined) ?? (player.photo_url as string | null | undefined) ?? null,
+      // Tu foto de referencia, NUNCA la de cabecera (esa sigue al último hito, p. ej. una lesión).
+      playerPhoto: (player.photo_url as string | null | undefined) ?? null,
+      scenePhoto,
     });
     const branded = await addShareBranding(raw, getShareTagline("dm_instagram"));
     const url = await uploadGeneratedImage(supabase, user.id, branded, "milestone");

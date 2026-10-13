@@ -117,7 +117,7 @@ export function buildStateBrief(player: Player, history: HistoryItem[]): string 
     .map(([, value]) => String(value))
     .slice(-5);
   if (threads.length > 0) lines.push(`- HILOS ABIERTOS (vínculos, promesas, rencores): ${threads.join(" | ")}.`);
-  const pendingThreads = describeOpenThreads(flags as Record<string, string | boolean>, player.week);
+  const pendingThreads = describeOpenThreads(flags as Record<string, string | boolean>, player.week, player.club);
   if (pendingThreads.length > 0) {
     lines.push(`- ASUNTOS PENDIENTES CON PERSONAS CONCRETAS (pueden reaparecer a cobrarse; si encaja de forma natural, nómbralos o hazlos avanzar): ${pendingThreads.join(" | ")}.`);
   }
@@ -204,7 +204,7 @@ export function buildLegacyBrief(player: Player): string {
     .slice(-8)
     .map((e) => `"${e.t}" → eligió "${e.c}"`);
   if (weighty.length > 0) lines.push(`- Decisiones que le marcaron: ${weighty.join(' | ')}.`);
-  const pending = describeOpenThreads(f, player.week);
+  const pending = describeOpenThreads(f, player.week, player.club);
   if (pending.length > 0) lines.push(`- Asuntos que nunca cerró (pueden volver a por él): ${pending.join(' | ')}.`);
   return `HISTORIA DE SU CARRERA COMO FUTBOLISTA (la segunda vida tiene que NOTAR este pasado: personas, clubes, títulos, rivales, favores, rencores y promesas pueden reaparecer):
 ${lines.join("\n")}`;

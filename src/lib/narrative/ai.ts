@@ -12,6 +12,8 @@ import {
 } from "@/lib/narrative/secondary-characters";
 import { NarrativeContent } from "@/lib/narrative/narrative-content";
 import { describeKnownCast as describeCast } from "@/lib/narrative/cast";
+import { getNpcName } from "@/lib/narrative/npcs";
+import { genericRoleOf, threadIsFromOtherClub, threadOriginClub, type Thread } from "@/lib/narrative/threads";
 import { aiBudgetAllows, priorityFor, recordAiCall, type AiPriority } from "@/lib/narrative/ai-budget";
 import { buildStateBrief, buildLegacyBrief } from "@/lib/narrative/state-brief";
 import { describeAgeWeeks } from "@/lib/narrative/ledger";
@@ -1310,10 +1312,20 @@ ${COMMON_RULES}
  */
 export async function generateThreadPayoffEvent(
   player: Player,
-  thread: { w: number; k: string; who: string; t: string },
+  thread: Thread,
   history: HistoryItem[],
 ): Promise<GameEvent | null> {
   const ago = describeAgeWeeks(player.week - thread.w);
+  // Un asunto que nació en un club que ya dejaste lo cobra gente de ESE club, nunca la del club actual
+  // (si el Bayern te adelantó dinero, te lo reclama el Bayern aunque ya juegues en el Liverpool).
+  const fromOther = threadIsFromOtherClub(thread, player);
+  const origin = threadOriginClub(thread, player);
+  const role = genericRoleOf(thread.who);
+  const who = fromOther && role ? getNpcName({ ...player, club: origin }, role) : thread.who;
+  const originRule = fromOther
+    ? `
+IMPORTANTE — DE QUÉ CLUB VIENE: este asunto nació en el ${origin}, el club en el que jugabas ANTES. Ahora juegas en el ${player.club} y ese club NO tiene nada que ver: no cobra, no reclama ni interviene. Quien reaparece es ${role ? `${who}, ${role === "presidente" ? "presidente" : role === "entrenador" ? "entrenador" : role === "capitan" ? "capitán" : "director deportivo"} del ${origin}` : `${who}, de su etapa en el ${origin}`}, y lo hace desde fuera (llamada, abogado o gestor del ${origin}, visita al hotel, un mensaje, un reencuentro en un partido contra ellos...). Que se note que ya no eres de su plantilla: el dinero o el favor se reclama igualmente, y la relación con el ${player.club} no se toca.`
+    : "";
   const kindText: Record<string, string> = {
     favor: "un FAVOR pendiente (alguien te lo hizo a ti, o tú se lo hiciste a esa persona)",
     deuda: "una DEUDA (de dinero o de gratitud)",
@@ -1324,9 +1336,9 @@ export async function generateThreadPayoffEvent(
   const prompt = `Eres el director narrativo de "Beyond 90", simulador de carrera de futbolista profesional.
 
 ESCENA DE COBRO — ALGO PENDIENTE VUELVE.
-${ago} quedó ${kindText[thread.k] ?? "algo pendiente"} con ${thread.who}: "${thread.t}".
+${ago} quedó ${kindText[thread.k] ?? "algo pendiente"} con ${who}: "${thread.t}".${originRule}
 
-Escribe la escena de AHORA en la que ${thread.who} reaparece y el asunto pasa factura o da fruto. Usa EXACTAMENTE el nombre y apellidos "${thread.who}". El jugador tiene que poder cumplir, pagar de otra forma, negarse o tirar de ese hilo, y cada opción cuesta o da algo de verdad: no todo se resuelve bien. Que se note el tiempo pasado y cómo ha cambiado esa persona.
+Escribe la escena de AHORA en la que ${who} reaparece y el asunto pasa factura o da fruto. Usa EXACTAMENTE el nombre y apellidos "${who}". El jugador tiene que poder cumplir, pagar de otra forma, negarse o tirar de ese hilo, y cada opción cuesta o da algo de verdad: no todo se resuelve bien. Que se note el tiempo pasado y cómo ha cambiado esa persona.
 
 JUGADOR: ${player.last_name}, ${playerAge(player.week)} años, ${player.position}, club ${player.club}, nacionalidad ${player.nation}.
 

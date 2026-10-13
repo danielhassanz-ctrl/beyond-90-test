@@ -144,6 +144,60 @@ export async function generatePlayerImage(
   }
 }
 
+/**
+ * La foto de los DOS (tú y ella) en una escena, como la que haría un paparazzi: se le pasan las dos fotos de referencia
+ * (la tuya y la suya) al mismo modelo de imagen y se pide que cada cara sea inequívocamente la de su foto. Mismo coste
+ * que una foto normal (~0,14 €). Si falla, un segundo intento con un prompt más corto; si vuelve a fallar, null y la
+ * tarjeta se dibuja sin foto.
+ */
+export async function generateCouplePhoto(playerPhotoUrl: string, herPhotoUrl: string, scene: string, lite = false): Promise<Buffer | null> {
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) {
+    console.error("[generateCouplePhoto] no REPLICATE_API_TOKEN set");
+    return null;
+  }
+  const identity =
+    "The man must be the exact same individual as in the FIRST reference photo and the woman the exact same individual as in the SECOND reference photo: same faces, same hair, same skin tones, immediately recognizable. ";
+  const prompt = lite
+    ? `A man (first reference photo) and a woman (second reference photo). ${scene}`
+    : `Using the first reference photo for the man and the second reference photo for the woman, generate: ${scene} ${identity}No text, no logos, no watermarks.`;
+  try {
+    const res = await fetchWithTimeout(
+      `https://api.replicate.com/v1/models/${MODEL_OWNER}/${MODEL_NAME}/predictions`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "wait=60" },
+        body: JSON.stringify({ input: { prompt, image_input: [playerPhotoUrl, herPhotoUrl], aspect_ratio: "3:2", resolution: "2K" } }),
+      },
+      70_000,
+    );
+    if (!res.ok) {
+      console.error(`[generateCouplePhoto] HTTP ${res.status}`, (await res.text().catch(() => "")).slice(0, 400));
+      return lite ? null : generateCouplePhoto(playerPhotoUrl, herPhotoUrl, scene, true);
+    }
+    let data = (await res.json()) as ReplicatePrediction;
+    if (data.status !== "succeeded" && data.urls?.get) {
+      const polled = await pollUntilDone(data.urls.get, token);
+      if (polled) data = polled;
+    }
+    if (data.status !== "succeeded" || !data.output) {
+      console.error(`[generateCouplePhoto] no succeeded: status=${data.status} error=${data.error ?? "(sin detalle)"}`);
+      return lite ? null : generateCouplePhoto(playerPhotoUrl, herPhotoUrl, scene, true);
+    }
+    const outputUrl = Array.isArray(data.output) ? data.output[0] : data.output;
+    const imageRes = await fetchWithTimeout(outputUrl, {}, 30_000);
+    if (!imageRes.ok) return null;
+    return Buffer.from(await imageRes.arrayBuffer());
+  } catch (err) {
+    console.error("[generateCouplePhoto] threw", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+/** La escena de la foto de los dos: un paparazzi desde la calle, a través de la ventana de un restaurante. */
+export const PAPARAZZI_RESTAURANT_SCENE =
+  "A candid paparazzi photograph taken from the street through the window of a dimly lit restaurant at night with a telephoto lens: the man and the woman sit across a small candle-lit table, leaning toward each other and smiling, glasses of wine between them, warm interior light, reflections of the street on the glass, slight motion blur and film grain, shallow depth of field, landscape composition, celebrity-gossip photojournalism style.";
+
 const NPC_FACE_MODEL_OWNER = "black-forest-labs";
 const NPC_FACE_MODEL_NAME = "flux-schnell";
 

@@ -24,6 +24,7 @@ import { GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
 import { buildMatchContext, NO_CLUB_YET } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
 import { recapPhotoPrompt } from "@/lib/images/recap-photo";
+import { maybeDmScenePhoto } from "@/lib/images/dm-scene";
 import { describeLook } from "@/lib/playerLook";
 import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt, withSceneGuards } from "@/lib/images/milestonePrompts";
@@ -171,7 +172,7 @@ export async function resolveEvent(formData: FormData) {
     : consequencesAgent;
   // Hilo abierto que deja esta opción (favor, deuda, rencor, promesa, secreto):
   // vuelve semanas después a cobrarse (ver narrative/threads.ts).
-  const threadJson = option.thread ? appendThread(player.flags, option.thread, player.week) : null;
+  const threadJson = option.thread ? appendThread(player.flags, option.thread, player.week, player.club) : null;
   const consequencesThread = threadJson
     ? { ...consequencesSponsor, flags: { ...consequencesSponsor.flags, hilos: threadJson } }
     : consequencesSponsor;
@@ -797,11 +798,16 @@ export async function resolveEvent(formData: FormData) {
         ...event.dm,
         reply: option.dmReply,
         followUp: option.dmFollowUp,
-        playerPhoto: (player.current_photo_url as string | null | undefined) ?? (player.photo_url as string | null | undefined) ?? null,
+        // Tu foto de referencia, NUNCA la de cabecera (current_photo_url): esa sigue al último hito, p. ej. una lesión.
+        playerPhoto: (player.photo_url as string | null | undefined) ?? null,
       };
+      const dmPlayerForPhoto = { id: player.id, photo_url: player.photo_url as string | null, flags: player.flags };
+      const dmUserForPhoto = { id: user.id, email: user.email };
       after(async () => {
         try {
-          const raw = await composeDmCard(dmCard);
+          // Con chica con foto y fotos disponibles: la foto de los dos arriba (cuesta una foto); si no, tarjeta sin ella.
+          const scenePhoto = await maybeDmScenePhoto(supabase, dmUserForPhoto, dmPlayerForPhoto, event.dm?.avatar);
+          const raw = await composeDmCard({ ...dmCard, scenePhoto });
           const branded = await addShareBranding(raw, getShareTagline("dm_instagram"));
           const url = await uploadGeneratedImage(supabase, dmUserId, branded, "milestone");
           await supabase

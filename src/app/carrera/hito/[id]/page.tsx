@@ -187,11 +187,11 @@ export default async function HitoPage({
                   title="Beyond 90"
                   text={shareText}
                 />
-                {/* Las tarjetas de mensaje se dibujan en código: rehacerlas es gratis y pone tu foto, la de ella y tu respuesta. */}
+                {/* La tarjeta de mensaje se dibuja en código; la foto de los dos de arriba la genera la IA (cuesta una foto) y, si no quedan fotos, sale sin ella. */}
                 {milestone.type === "dm_instagram" && (
                   <form action={regenerateDmCard} className="text-center">
                     <input type="hidden" name="milestone_id" value={milestone.id} />
-                    <RegenerateButton label="🔄 Rehacer la tarjeta (gratis)" />
+                    <RegenerateButton label="🔄 Rehacer la tarjeta (con foto de los dos: usa 1 de tus fotos)" />
                   </form>
                 )}
                 {/* Si la foto no es la que querías, se puede rehacer (gasta una de tus fotos). */}
