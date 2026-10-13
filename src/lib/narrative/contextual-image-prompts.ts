@@ -34,7 +34,7 @@ const GOAL_CELEBRATION_POSES = [
  * camiseta, el apretón de manos con el presidente delante de la camiseta con tu nombre, el posado con la camiseta en alto,
  * la firma del contrato y la presentación en el césped. Siempre UNA sola camiseta y sin marca de agua.
  */
-function pickSigningScene(playerName: string, club: string): string {
+export function pickSigningScene(playerName: string, club: string): string {
   const kit = describeKit(club);
   const base = `a young footballer (${playerName}) joining ${club}`;
   const nameShirt = `a presentation jersey in the club colours (${kit}) with the surname "${playerName}" printed large on it`;

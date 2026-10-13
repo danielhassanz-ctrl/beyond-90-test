@@ -1,7 +1,7 @@
 import { describeKit, describeNationalKit } from "@/lib/clubColors";
 
 import { describeLook } from "@/lib/playerLook";
-import { getContextualImagePrompt } from "@/lib/narrative/contextual-image-prompts";
+import { getContextualImagePrompt, pickSigningScene } from "@/lib/narrative/contextual-image-prompts";
 
 /**
  * Extraído de carrera/actions.ts para poder reutilizarlo también desde el
@@ -124,6 +124,10 @@ export function getMilestoneImagePrompt(
   // en la escena de "récord" (un marcador con "50 goles") y salía una foto que no tenía nada que ver con la gala.
   const promptKey = eventId.startsWith("award-balon-oro") ? "premio-balon-oro" : eventId.startsWith("award-golden-boy") ? "premio-golden-boy" : eventId;
   const basePrompt = MILESTONE_IMAGE_PROMPTS[promptKey];
+  // La primera firma también se presenta de varias formas (apretón de manos con el presidente, camiseta con tu apellido...).
+  if ((promptKey === "contrato-debut" || promptKey === "contrato-fallback") && club && Math.random() < 0.65) {
+    return pickSigningScene(safePlayerName, club);
+  }
   if (basePrompt) {
     let prompt = basePrompt;
     const ageContext =
