@@ -1,6 +1,6 @@
 /** Prueba sin IA: el cierre de temporada no puede faltar, la tarjeta de resumen solo acompaña al cierre real y los partidos se reparten entre clubes. */
 import { getCompetitionStats } from "../src/lib/player/competition-stats";
-import { addClubSplit, addSimSeason, emptySim } from "../src/lib/narrative/off-screen-matches";
+import { addClubSplit, addSimSeason, emptySim, withClubSplit } from "../src/lib/narrative/off-screen-matches";
 import { buildSeasonCloseEvent } from "../src/lib/narrative/season-close";
 import { priorityFor } from "../src/lib/narrative/ai-budget";
 
@@ -40,6 +40,17 @@ let f2: any = { club_since: "53", clubs_history: "Real Betis|Bayern de Múnich" 
 f2 = addSimSeason(f2, SEASON, sim(3, 3));
 r = await getCompetitionStats(fakeSupabase(), { id: "p", week: 53, nation: "España" }, null, f2);
 ok(r.season.liga.matches === 0 && r.previous.length === 1 && r.previous[0].club === "Bayern de Múnich" && r.previous[0].stats.liga.matches === 3, "los 3 partidos pasan al Bayern y el Liverpool queda a 0");
+
+console.log("3b) Ya has jugado con el club nuevo: el reparto es proporcional y se queda guardado");
+let f4: any = { club_since: "53", clubs_history: "Real Betis|Bayern de Múnich" };
+f4 = addSimSeason(f4, SEASON, sim(6, 4)); // 6 estimados en total a la semana 55: 3 con el Bayern y 3 con el Liverpool
+r = await getCompetitionStats(fakeSupabase(), { id: "p", week: 55, nation: "España" }, null, f4);
+ok(r.previous[0]?.stats.liga.matches === 3 && r.season.liga.matches === 3, `Bayern ${r.previous[0]?.stats.liga.matches} · Liverpool ${r.season.liga.matches} (no 6 y 0)`);
+ok(!!r.splitToPersist, "devuelve el reparto para que la página lo guarde una vez");
+const saved = withClubSplit(f4, r.splitToPersist!);
+let f5: any = addSimSeason(saved, SEASON, sim(4, 1)); // pasan más semanas y se estiman 4 partidos más
+const r2 = await getCompetitionStats(fakeSupabase(), { id: "p", week: 59, nation: "España" }, null, f5);
+ok(r2.previous[0]?.stats.liga.matches === 3 && r2.season.liga.matches === 7 && r2.splitToPersist === null, `guardado: el Bayern sigue en ${r2.previous[0]?.stats.liga.matches} y el Liverpool suma hasta ${r2.season.liga.matches}`);
 
 console.log("4) Sin cambio de club no hay bloque aparte");
 let f3: any = { club_since: "11", clubs_history: "Real Betis" };

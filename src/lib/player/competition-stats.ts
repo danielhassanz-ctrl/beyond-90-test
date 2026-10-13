@@ -12,7 +12,7 @@ import type { Player } from "@/types/player";
 import type { GameEvent } from "@/types/career";
 import { WEEKS_PER_SEASON, seasonLabel } from "@/types/career";
 import { extractStatsFromEvent, statSeasonOf } from "@/lib/player/update-stats";
-import { readAllSim, sumSim, type SimComp, readClubSplits, readSimSeason } from "@/lib/narrative/off-screen-matches";
+import { readAllSim, sumSim, emptySim, type SimComp, type ClubSplit, readClubSplits, readSimSeason } from "@/lib/narrative/off-screen-matches";
 import { allTrofeos, INDIVIDUAL, type TrofeoKind } from "@/lib/honours";
 
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
@@ -112,7 +112,7 @@ export async function getCompetitionStats(
   pendingEvent?: GameEvent | null,
   /** flags del jugador: traen los partidos estimados que no se viven como escena (off-screen-matches.ts). */
   flags?: Record<string, string | boolean> | null,
-): Promise<{ season: CompetitionStats; career: CompetitionStats; history: SeasonHistoryRow[]; previous: PreviousClubStats[] }> {
+): Promise<{ season: CompetitionStats; career: CompetitionStats; history: SeasonHistoryRow[]; previous: PreviousClubStats[]; splitToPersist: ClubSplit | null }> {
   const season = emptyCompetitionStats();
   const career = emptyCompetitionStats();
   const bySeason = new Map<string, SeasonHistoryRow>();
@@ -121,14 +121,29 @@ export async function getCompetitionStats(
   // Si fichaste por otro club esta misma temporada, lo jugado antes del cambio es del club anterior (otra liga, otra
   // clasificación): se cuenta aparte en vez de presentarse como partidos del club nuevo.
   let splits = readClubSplits(flags).filter((x) => x.s === currentSeasonIdx).sort((a, b) => a.w - b.w);
+  let splitToPersist: ClubSplit | null = null;
   if (splits.length === 0) {
-    // Cambio de club anterior a este registro y recién hecho: todo lo estimado hasta ahora es del club que dejaste.
+    // Cambio de club hecho antes de que existiera el registro de cortes: se reparte lo ESTIMADO de la temporada en
+    // proporción a las semanas jugadas con cada club y la página guarda ese reparto una sola vez (splitToPersist),
+    // para que no cambie cada vez que se vuelve a mirar. Los cambios nuevos ya guardan su corte exacto (actions.ts).
     const f = flags ?? {};
     const since = parseInt(String(f.club_since ?? "0"), 10) || 0;
     const left = String(f.clubs_history ?? "").split("|").filter(Boolean).pop();
-    if (left && since > 0 && Math.floor((since - 1) / WEEKS_PER_SEASON) === currentSeasonIdx && player.week - since <= 2) {
+    const seasonStart = currentSeasonIdx * WEEKS_PER_SEASON + 1;
+    if (left && since > seasonStart && Math.floor((since - 1) / WEEKS_PER_SEASON) === currentSeasonIdx && player.week >= since) {
       const total = readSimSeason(f, currentSeasonIdx);
-      splits = [{ s: currentSeasonIdx, club: left, w: since, sim: total }];
+      const ratio = Math.min(1, (since - seasonStart) / Math.max(1, player.week - seasonStart));
+      const snap = emptySim();
+      for (const k of Object.keys(snap) as SimComp[]) {
+        snap[k] = {
+          matches: Math.round(total[k].matches * ratio),
+          goals: Math.round(total[k].goals * ratio),
+          assists: Math.round(total[k].assists * ratio),
+          minutes: Math.round(total[k].minutes * ratio),
+        };
+      }
+      splitToPersist = { s: currentSeasonIdx, club: left, w: since, sim: snap };
+      splits = [splitToPersist];
     }
   }
   const segments = splits.map((sp) => ({ sp, stats: emptyCompetitionStats() }));
@@ -146,7 +161,7 @@ export async function getCompetitionStats(
         .order("id")
         .range(from, to),
     );
-    if (error || !data) return { season, career, history: [], previous: [] };
+    if (error || !data) return { season, career, history: [], previous: [], splitToPersist: null };
 
     const rows: { event_id: string; category: string; title: string; description: string; week: number }[] = data.map((r) => ({
       event_id: (r.event_id as string) ?? "",
@@ -271,5 +286,5 @@ export async function getCompetitionStats(
   const previous: PreviousClubStats[] = segments
     .map((g) => ({ club: g.sp.club, stats: g.stats }))
     .filter((p) => p.stats.liga.matches + p.stats.champions.matches + p.stats.europa.matches + p.stats.copa.matches > 0);
-  return { season, career, history, previous };
+  return { season, career, history, previous, splitToPersist };
 }

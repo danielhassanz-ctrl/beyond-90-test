@@ -226,3 +226,10 @@ export function addClubSplit(flags: Flags, season: number, leftClub: string, sta
   const next = [...keep, { s: season, club: leftClub, w: startWeek, sim }].slice(-3);
   return { ...flags, club_split: JSON.stringify(next.map((x) => ({ s: x.s, club: x.club, w: x.w, sim: encodeSim(x.sim) }))) };
 }
+
+/** Añade al registro un corte ya calculado (el reparto inferido para cambios de club anteriores al registro). */
+export function withClubSplit(flags: Flags, split: ClubSplit): Flags {
+  const keep = readClubSplits(flags).filter((x) => x.s === split.s && x.w !== split.w);
+  const next = [...keep, split].sort((a, b) => a.w - b.w).slice(-3);
+  return { ...flags, club_split: JSON.stringify(next.map((x) => ({ s: x.s, club: x.club, w: x.w, sim: encodeSim(x.sim) }))) };
+}

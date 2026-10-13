@@ -42,7 +42,7 @@ import { ShareableCard } from "@/components/ShareableCard";
 import { MilestonePendingPoller } from "@/components/MilestonePendingPoller";
 import { RegenerateButton } from "@/components/RegenerateButton";
 import { hasImageCredit } from "@/lib/images/credits";
-import { regenerateMilestoneImage } from "./actions";
+import { regenerateMilestoneImage, regenerateDmCard } from "./actions";
 
 // La regeneración de la foto corre en segundo plano (after()) y puede tardar minutos.
 export const maxDuration = 300;
@@ -187,6 +187,13 @@ export default async function HitoPage({
                   title="Beyond 90"
                   text={shareText}
                 />
+                {/* Las tarjetas de mensaje se dibujan en código: rehacerlas es gratis y pone tu foto, la de ella y tu respuesta. */}
+                {milestone.type === "dm_instagram" && (
+                  <form action={regenerateDmCard} className="text-center">
+                    <input type="hidden" name="milestone_id" value={milestone.id} />
+                    <RegenerateButton label="🔄 Rehacer la tarjeta (gratis)" />
+                  </form>
+                )}
                 {/* Si la foto no es la que querías, se puede rehacer (gasta una de tus fotos). */}
                 {player.photo_url && milestone.type !== "dm_instagram" && canGenerateMore && (
                   <form action={regenerateMilestoneImage} className="text-center">

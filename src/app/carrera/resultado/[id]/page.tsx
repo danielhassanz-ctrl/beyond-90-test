@@ -6,11 +6,24 @@ import { ShareButton } from "@/components/ShareButton";
 import { ShareableCard } from "@/components/ShareableCard";
 import { SeasonRecapCard } from "@/components/SeasonRecapCard";
 import { RecapPhotoWatcher } from "@/components/RecapPhotoWatcher";
+import { RegenerateRecapButton } from "@/components/RegenerateRecapButton";
+import { netWorth } from "@/lib/finance/net-worth";
+import { marketValueM, eur, eurFee } from "@/lib/narrative/transfer-terms";
+import { allTrofeos, INDIVIDUAL } from "@/lib/honours";
 import { CONSEQUENCE_LABELS, WEEKS_PER_SEASON, seasonLabel, playerAge } from "@/types/career";
 import { displayName } from "@/types/player";
 import { EventScene } from "@/components/EventScene";
 import { getCurrentSeasonStats } from "@/lib/player/update-stats";
 import { getGameDateLabel } from "@/lib/calendar/season";
+
+/** "6,35 M€", "420 mil €" o "8.500 €": cabe en una casilla pequeña de la tarjeta. */
+function compactEur(n: number): string {
+  const v = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (v >= 1_000_000) return `${sign}${(v / 1_000_000).toFixed(v >= 10_000_000 ? 1 : 2).replace(".", ",")} M€`;
+  if (v >= 100_000) return `${sign}${Math.round(v / 1000)} mil €`;
+  return `${sign}${Math.round(v).toLocaleString("es")} €`;
+}
 
 // Reloj fuera del render: la página se calcula en el servidor en cada petición.
 const nowMs = () => Date.now();
@@ -70,6 +83,9 @@ export default async function ResultadoPage({
 
   // Foto resumen propia del cierre (se genera en segundo plano al confirmar la decisión, ver resolveEvent):
   // mientras tarda se enseña "revelando…" y la página se refresca sola hasta que está lista.
+  // Títulos de equipo ganados en la temporada que se cierra (los premios individuales no cuentan).
+  const closedSeasonIdx = Math.floor((closedSeasonWeek - 1) / WEEKS_PER_SEASON);
+  const closedSeasonTitles = allTrofeos(player).filter((t) => t.s === closedSeasonIdx && !INDIVIDUAL.has(t.k)).length;
   const recapFlags = (player.flags ?? {}) as Record<string, string | boolean>;
   const recapPendingSince = parseInt(String(recapFlags.recap_photo_pending ?? "").split(":")[1] ?? "0", 10) || 0;
   const recapPending = isSeasonRecap && recapPendingSince > 0 && nowMs() - recapPendingSince < 4 * 60_000;
@@ -144,6 +160,7 @@ export default async function ResultadoPage({
         </div>
 
         {isSeasonRecap ? (
+          <div className="space-y-3">
           <ShareableCard title="Beyond 90" text={shareText}>
             <SeasonRecapCard
               player={player}
@@ -154,8 +171,13 @@ export default async function ResultadoPage({
               linkLine={getAppUrlLine()}
               photoUrl={recapPhoto}
               pending={recapPending}
+              marketValue={eurFee(marketValueM(player))}
+              netWorth={compactEur(netWorth(player))}
+              titles={closedSeasonTitles}
             />
           </ShareableCard>
+          {!recapPending && <RegenerateRecapButton careerEventId={id} />}
+          </div>
         ) : (
           <ShareButton title="Beyond 90" text={shareText} />
         )}

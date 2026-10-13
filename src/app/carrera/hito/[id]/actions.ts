@@ -14,6 +14,9 @@ import { describeKit } from "@/lib/clubColors";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { playerAge } from "@/types/career";
 import { logAppError } from "@/lib/errorLog";
+import { composeDmCard } from "@/lib/images/dmCard";
+import { BANK_SCENES } from "@/lib/narrative/bank/scenes";
+import { fillBankEvent } from "@/lib/narrative/bank/select";
 
 const STALE_PENDING_MS = 5 * 60_000;
 
@@ -169,5 +172,59 @@ export async function regenerateMilestoneImage(formData: FormData) {
 
   revalidatePath(`/carrera/hito/${milestoneId}`);
   console.log(`[regenerateMilestoneImage] redirecting back to hito page now`);
+  redirect(`/carrera/hito/${milestoneId}`);
+}
+
+/**
+ * Rehace la TARJETA de un mensaje directo (se dibuja en código: no usa IA ni gasta fotos). Sirve para las tarjetas hechas
+ * antes de que llevaran la foto de ella, tu respuesta y las dos fotos. Como el hito no guarda el mensaje, se busca la
+ * escena del banco cuya reacción coincide con el subtítulo del hito.
+ */
+export async function regenerateDmCard(formData: FormData) {
+  const milestoneId = String(formData.get("milestone_id") ?? "");
+  const { supabase, user, player } = await getCurrentUserAndPlayer();
+  if (!user || !player || !milestoneId) redirect("/login");
+
+  const { data: milestone } = await supabase
+    .from("milestones")
+    .select("id, type, title, subtitle")
+    .eq("id", milestoneId)
+    .eq("player_id", player.id)
+    .maybeSingle();
+  if (!milestone || milestone.type !== "dm_instagram") redirect(`/carrera/hito/${milestoneId}`);
+
+  const wanted = String(milestone.subtitle ?? "").trim();
+  let found: { dm: NonNullable<(typeof BANK_SCENES)[number]["event"]["dm"]>; reply?: string; followUp?: string } | null = null;
+  for (const scene of BANK_SCENES) {
+    if (!scene.event.dm) continue;
+    const filled = fillBankEvent(scene.event, player as never);
+    const opt = filled.options.find((o) => (o.outcomeText ?? "").trim() === wanted);
+    if (opt && filled.dm) {
+      found = { dm: filled.dm, reply: opt.dmReply, followUp: opt.dmFollowUp };
+      break;
+    }
+  }
+  if (!found) {
+    console.error(`[regenerateDmCard] sin escena que coincida con el hito ${milestoneId}`);
+    redirect(`/carrera/hito/${milestoneId}?dm=no`);
+  }
+
+  try {
+    const raw = await composeDmCard({
+      ...found.dm,
+      reply: found.reply,
+      followUp: found.followUp,
+      playerPhoto: (player.current_photo_url as string | null | undefined) ?? (player.photo_url as string | null | undefined) ?? null,
+    });
+    const branded = await addShareBranding(raw, getShareTagline("dm_instagram"));
+    const url = await uploadGeneratedImage(supabase, user.id, branded, "milestone");
+    if (!url) throw new Error("no se pudo subir la tarjeta");
+    const { data: updated, error } = await supabase.from("milestones").update({ image_url: url, image_status: "ready" }).eq("id", milestoneId).select("id");
+    if (error || !updated || updated.length !== 1) throw new Error(error?.message ?? "el UPDATE no cambió ninguna fila");
+  } catch (err) {
+    console.error("[regenerateDmCard] falló:", err);
+    await logAppError(supabase, "regenerateDmCard", err, { userId: user.id, playerId: player.id });
+  }
+  revalidatePath(`/carrera/hito/${milestoneId}`);
   redirect(`/carrera/hito/${milestoneId}`);
 }

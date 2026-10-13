@@ -3501,7 +3501,16 @@ export async function pickNextEventDynamic(
     console.log(`[pickNextEventDynamic] Cierre de temporada ${season} (turno ${weekInSeason}) para ${player.last_name}, ${age} años`);
     const { generatePreseasoneEvent } = await import("./ai");
     // Sin IA (sin presupuesto o sin respuesta) se usa la versión escrita en código: el cierre no puede faltar nunca.
-    const preseasoneEvent = (await generatePreseasoneEvent(player, season, history, usedEventIds)) ?? buildSeasonCloseEvent(player, season);
+    let preseasoneEvent = await generatePreseasoneEvent(player, season, history, usedEventIds);
+    // La IA no tiene los datos de la temporada que se cierra: si se inventa un partido, un doblete o un resultado, se descarta.
+    if (preseasoneEvent) {
+      const text = [preseasoneEvent.title, preseasoneEvent.description, ...preseasoneEvent.options.flatMap((o) => [o.label, o.subtitle, o.outcomeText ?? ""])].join(" ");
+      if (/doblete|triplete|hat-?trick|\d{1,2}\s*-\s*\d{1,2}|semifinal|cuartos de final|la final|nos eliminaron|campeones de/i.test(text)) {
+        console.log("[pickNextEventDynamic] Cierre de temporada descartado: la IA inventó un partido o resultado");
+        preseasoneEvent = null;
+      }
+    }
+    preseasoneEvent = preseasoneEvent ?? buildSeasonCloseEvent(player, season);
     console.log(`[pickNextEventDynamic] Preseason event: "${preseasoneEvent.title}"`);
     return maybeAddFreeText(addMatchContext(preseasoneEvent, player));
   }

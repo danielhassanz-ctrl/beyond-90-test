@@ -23,6 +23,7 @@ import { getShareTagline } from "@/lib/shareTaglines";
 import { GOL_CHILENA_EVENT_ID } from "@/lib/narrative/gol-chilena";
 import { buildMatchContext, NO_CLUB_YET } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
+import { recapPhotoPrompt } from "@/lib/images/recap-photo";
 import { describeLook } from "@/lib/playerLook";
 import { composeDmCard } from "@/lib/images/dmCard";
 import { getMilestoneImagePrompt, withSceneGuards } from "@/lib/images/milestonePrompts";
@@ -976,7 +977,7 @@ export async function resolveEvent(formData: FormData) {
       const refreshAge = playerAge(newWeek);
       const refreshClub = typeof consequences.club === "string" ? consequences.club : player.club;
       const refreshSeason = preseasonSeason;
-      const refreshPrompt = `Photorealistic dramatic portrait of a footballer wearing the ${describeKit(refreshClub)} kit, ${describeLook(refreshAge, player.last_name ?? "")}, intense confident gaze, stadium floodlights and dusk sky behind, cinematic rim light, trading-card hero shot from the chest up with empty space at the bottom, high-end sports photography style`;
+      const refreshPrompt = recapPhotoPrompt(refreshClub, refreshAge, player.last_name ?? "");
 
       playerUpdate.flags = { ...recapFlagsNow, recap_photo_pending: `${refreshSeason}:${Date.now()}` };
 

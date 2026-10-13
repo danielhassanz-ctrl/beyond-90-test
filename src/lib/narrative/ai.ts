@@ -1184,6 +1184,14 @@ export async function generatePreseasoneEvent(
     : "(últimos eventos de su carrera)";
 
   const seasonContext = getSeasonContext(player.week, player.nation);
+  // Hechos reales del club: si fichó esta misma temporada, la que se cierra la jugó en OTRO club.
+  const clubSinceWeek = parseInt(String(player.flags?.club_since ?? "0"), 10) || 0;
+  const leftClub = String(player.flags?.clubs_history ?? "").split("|").filter(Boolean).pop();
+  const joinedNow = clubSinceWeek >= season * 10 + 1 && Boolean(leftClub);
+  const clubFacts = joinedNow
+    ? `
+- ACABA DE FICHAR por ${player.club} este verano. La temporada que se cierra la jugó en ${leftClub}, NO en ${player.club}. Esta es su primera pretemporada en ${player.club}: no hables de partidos, goles ni logros con ${player.club} anteriores a esta pretemporada.`
+    : "";
   // Si el jugador de verdad fue convocado a este torneo, ya tiene su
   // propio hito (sel-mundial/sel-eurocopa/sel-copa-america) contando esa
   // historia — aquí no hace falta repetirla. Si NO fue convocado pero el
@@ -1203,11 +1211,11 @@ Esta escena marca el CIERRE de la temporada anterior y el ARRANQUE de la nueva (
 JUGADOR:
 - Apellido: ${player.last_name}
 - Edad NUEVA esta temporada: ${playerAge(player.week)} años (ha cumplido años en la pretemporada)
-- Club: ${player.club}
+- Club: ${player.club}${clubFacts}
 - Posición: ${player.position}
 - Personalidad: ${player.personality}
 - Media: ${player.media}/99, Moral: ${player.moral}/100
-- Números totales de su carrera hasta ahora: ${player.stats_matches_played ?? 0} partidos, ${player.stats_goals ?? 0} goles, ${player.stats_assists ?? 0} asistencias, ${player.stats_titles ?? 0} títulos.
+- Números totales de TODA su carrera hasta ahora (no de la temporada que se cierra): ${player.stats_matches_played ?? 0} partidos, ${player.stats_goals ?? 0} goles, ${player.stats_assists ?? 0} asistencias, ${player.stats_titles ?? 0} títulos.
 
 ESCENA DE PRETEMPORADA UNA VEZ CERRADO EL AÑO ANTERIOR: ${theme}.
 
@@ -1225,7 +1233,7 @@ REGLAS:
 ${COMMON_RULES}
 
 INSTRUCCIONES:
-- La descripción tiene que EMPEZAR reconociendo que la temporada anterior ha terminado — una frase de balance real (cómo le fue, en qué quedó el equipo, qué cambió en él) usando los números de carrera de arriba como referencia, antes de meterse en la escena de pretemporada en sí (${theme}). Esta escena cubre dos cosas (cierre de temporada + arranque de la nueva), así que puede ser algo más larga que la norma de 2-3 frases de las reglas comunes — pero el tope real son 4-5 frases EN TOTAL, nunca un párrafo largo. Una frase de balance, como mucho una de torneo si aplica, y el resto para la escena de pretemporada en sí.
+- La descripción tiene que EMPEZAR reconociendo que la temporada anterior ha terminado — una frase de balance GENERAL, sin hechos concretos (cómo se siente el jugador, qué ha cambiado en él o en su entorno). PROHIBIDO inventar partidos, rivales, dobletes, goles concretos, resultados, clasificaciones o títulos de la temporada que se cierra: no tienes esos datos y el jugador los conoce mejor que tú. Si citas números, son los TOTALES de toda su carrera y los llamas así ("llevas 173 partidos como profesional"), nunca de "la temporada pasada". antes de meterse en la escena de pretemporada en sí (${theme}). Esta escena cubre dos cosas (cierre de temporada + arranque de la nueva), así que puede ser algo más larga que la norma de 2-3 frases de las reglas comunes — pero el tope real son 4-5 frases EN TOTAL, nunca un párrafo largo. Una frase de balance, como mucho una de torneo si aplica, y el resto para la escena de pretemporada en sí.
 - Si hay CONTEXTO ESPECIAL de torneo de selecciones más abajo: el torneo YA ha pasado (se jugó en junio-julio, antes de esta pretemporada) — nunca lo escribas como algo que todavía está por llegar mientras se entrena. Si procede, menciónalo como algo recién vivido (o visto desde fuera), no como una amenaza futura.
 - La escena de pretemporada en sí tiene que arrancar con el motivo CONCRETO por el que el jugador vuelve a pisar las instalaciones del club — nunca "porque toca", siempre algo que el entrenador o el club han decidido sobre él: puede ser el entrenador diciéndole que cuenta con él de cara al nuevo curso, una citación para el reconocimiento médico de pretemporada (con algún detalle humano, como algún kilo de más tras las vacaciones), o algo similar propio del tema elegido (${theme}).
 - No marques is_milestone: es una escena rutinaria de arranque de temporada, no un hito — con 15-20 temporadas en una carrera larga, marcarla siempre saturaría de "momentos destacados" cosas que no lo son.

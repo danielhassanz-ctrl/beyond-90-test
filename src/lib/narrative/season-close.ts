@@ -19,16 +19,23 @@ export function buildSeasonCloseEvent(player: Player, season: number): GameEvent
   const closed = seasonLabel((season - 1) * WEEKS_PER_SEASON + 1);
   const seed = season * 31 + (player.last_name?.length ?? 3);
 
-  const arranques = [
+  const clubSince = parseInt(String(player.flags?.club_since ?? "0"), 10) || 0;
+  const joinedNow = clubSince >= season * WEEKS_PER_SEASON + 1 && String(player.flags?.clubs_history ?? "").split("|").some(Boolean);
+  const arranques = joinedNow
+    ? [
+        `Primera pretemporada en ${club}: otra ciudad, otro vestuario y un carnet con ${age} años. Todo huele a nuevo, hasta el aire de ${city}.`,
+        `Es tu primer verano en ${club}. Cumples ${age} años, no conoces los pasillos y todo el mundo te mira un segundo de más.`,
+      ]
+    : [
     `Vuelves a pisar la ciudad deportiva de ${club} con una temporada menos en las piernas y un año más en el carnet: ${age} años. Huele a césped recién cortado y a taquilla recién abierta.`,
     `Se acaba el verano y vuelven las instalaciones de ${club}, el olor a pomada y el chándal nuevo. Has cumplido ${age} años y notas que cada pretemporada pesa distinto.`,
     `Primer día de trabajo en ${city}: balones nuevos, caras nuevas y un cartel en la puerta que pone «Bienvenidos». Cumples ${age} años y el vestuario ya te trata de otra manera.`,
-  ];
+    ];
   const motivos = [
     `${mister} reúne a la plantilla en el césped y resume la temporada que acaba de pasar en dos frases. «Lo que hicimos no vale para este año», dice. «Empezamos de cero».`,
     `${mister} te saluda con un apretón seco y un «a trabajar». Sabes que cada pretemporada es una entrevista de trabajo para el sitio de titular.`,
     `${mister} pone el balón en el centro del círculo y no dice nada durante diez segundos. Después: «Quien quiera jugar este año, que se lo gane hoy».`,
-  ];
+  ].filter((_, i) => !(joinedNow && i === 0)); // la primera habla de "la temporada que acaba de pasar" en el club: no si acabas de llegar
 
   return {
     id: `preseason-${season}`,

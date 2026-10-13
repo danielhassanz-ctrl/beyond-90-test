@@ -1,3 +1,4 @@
+import { withClubSplit } from "@/lib/narrative/off-screen-matches";
 import { headerPhotoUrl } from "@/lib/player/header-photo";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
@@ -35,6 +36,12 @@ export default async function ClasificacionPage() {
   const { primary, secondary, copa, euro } = getActiveStandings(player, usedEventIds, matchRecord);
   const seasonStats = await getCurrentSeasonStats(supabase, player, player.pending_event, player.flags);
   const competitionStats = await getCompetitionStats(supabase, player, player.pending_event, player.flags);
+  // Reparto de partidos inferido (cambio de club anterior al registro): se guarda UNA vez para que no cambie al volver.
+  if (competitionStats.splitToPersist) {
+    const { data: fresh } = await supabase.from("players").select("flags").eq("id", player.id).maybeSingle();
+    const freshFlags = (fresh?.flags ?? {}) as Record<string, string | boolean>;
+    await supabase.from("players").update({ flags: withClubSplit(freshFlags, competitionStats.splitToPersist) }).eq("id", player.id);
+  }
 
   return (
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">
