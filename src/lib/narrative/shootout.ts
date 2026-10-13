@@ -47,6 +47,8 @@ export interface ShootoutCtx {
   decisive: boolean;
   /** Selección: la cabecera usa la bandera del país. */
   national?: boolean;
+  /** En la jugada decisiva marcaste o asististe: la tanda lo recuerda en vez de contar un partido sin goles. */
+  scored?: boolean;
 }
 
 export function buildShootoutEvent(player: Player, ctx: ShootoutCtx): GameEvent {
@@ -63,10 +65,13 @@ export function buildShootoutEvent(player: Player, ctx: ShootoutCtx): GameEvent 
   const flagKey = pensFlag.yo(ctx.key);
   const where = ctx.national ? `con la camiseta de ${ctx.team}` : `con la camiseta de ${ctx.team}`;
 
-  const intro = [
-    `${ctx.round}, ${ctx.comp}. Ciento veinte minutos de nervio y ${ctx.regular} en el marcador: se decide desde los once metros. ${final}`,
-    `Nadie ha podido con nadie. ${ctx.regular} tras la prórroga, ${ctx.rival} enfrente y un estadio entero conteniendo la respiración. ${final}`,
-  ][hash(seed + "i") % 2];
+  const intro = ctx.scored
+    ? // Si marcaste en la jugada decisiva, no se cuenta un partido sin goles: tu gol no bastó para ganar en el tiempo reglamentario.
+      `${ctx.round}, ${ctx.comp}. Tu gol había puesto el partido de cara, pero ${ctx.rival} no se rindió: tras la prórroga todo sigue igualado y se decide desde los once metros, con un estadio entero conteniendo la respiración. ${final}`
+    : [
+        `${ctx.round}, ${ctx.comp}. Ciento veinte minutos de nervio y ${ctx.regular} en el marcador: se decide desde los once metros. ${final}`,
+        `Nadie ha podido con nadie. ${ctx.regular} tras la prórroga, ${ctx.rival} enfrente y un estadio entero conteniendo la respiración. ${final}`,
+      ][hash(seed + "i") % 2];
 
   if (keeper) {
     const mk = (id: string, label: string, subtitle: string, chance: number, saveText: string, failText: string) => ({

@@ -19,7 +19,7 @@ import { shouldBeeFunnyMoment, pickRandomFunnyMoment, isSurrealMoment } from "@/
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
 import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, getClubLevel, matchKey, parseMatchDone, type MatchWeek } from "@/lib/calendar/match-calendar";
-import { getSeasonProgress, advanceCupProgress, decideKnockoutResult, decideTwoLegResult, resolveEuroGroupStage } from "@/lib/calendar/competition-progress";
+import { getSeasonProgress, advanceCupProgress, decideKnockoutResult, decideTwoLegResult, resolveEuroGroupStage, decisionNeedsGoal } from "@/lib/calendar/competition-progress";
 import { getInjuryRemaining, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
 import { shouldTriggerGolChilena, buildGolChilenaEvent, markGolChilenaTriggered } from "@/lib/narrative/gol-chilena";
@@ -3011,6 +3011,7 @@ async function pickTorneoEvent(
         round: TORNEO_STAGE_LABELS[progress.stage],
         decisive: progress.stage >= 5,
         national: true,
+        scored: decisionNeedsGoal(decisionOutcome),
       },
     );
     if ("scene" in settled) return settled.scene;
@@ -3837,6 +3838,7 @@ export async function pickNextEventDynamic(
         regular: "",
         round,
         decisive: isFinal || matchThisWeek.euroKoRound === 3,
+        scored: decisionNeedsGoal(decisionOutcome),
       });
       if ("scene" in settled) return settled.scene;
       forcedResult = { win: settled.win, scoreLine: settled.scoreLine };

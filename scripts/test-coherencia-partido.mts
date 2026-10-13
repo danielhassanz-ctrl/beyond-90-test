@@ -2,6 +2,7 @@
 import { decideKnockoutResult, decideTwoLegResult, ownGoalsOf, decisionNeedsGoal } from "../src/lib/calendar/competition-progress";
 import { decideTorneoResult } from "../src/lib/narrative/torneo";
 import { decideSelResult } from "../src/lib/narrative/seleccion";
+import { buildShootoutEvent } from "../src/lib/narrative/shootout";
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? "  ✓ " : "  ✗ ") + m); if (!c) fails++; };
@@ -24,6 +25,9 @@ for (const decision of ["goal", "wondergoal", "assist"]) {
 let sinGol = 0;
 for (let i = 0; i < 400; i++) if (ownGoalsOf(decideKnockoutResult(92, 2, 0.05, "miss").scoreLine) === 0) sinGol++;
 ok(sinGol > 20, `si fallas la jugada, sigue habiendo partidos sin gol (${sinGol}/400): no se fuerza nada de más`);
+
+const tanda = buildShootoutEvent({ ...player, last_name: "Hassan", position: "Delantero" } as any, { key: "k", team: "España", rival: "Suiza", comp: "Eurocopa 2032", regular: "", round: "Final", decisive: true, national: true, scored: true });
+ok(/Tu gol había puesto el partido de cara/.test(tanda.description) && !/0-0|Nadie ha podido con nadie/.test(tanda.description), "si marcaste, la tanda no cuenta un partido sin goles");
 
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);
