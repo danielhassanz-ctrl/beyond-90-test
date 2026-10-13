@@ -19,6 +19,8 @@ export interface CupProgress {
   season: number;
   round: number; // 1 = primera eliminatoria de la temporada, 2 = segunda...
   alive: boolean;
+  /** Ya jugaste una competición europea esta temporada con otro club: no puedes jugarla con este (hasta el año que viene). */
+  tied?: boolean;
   /** Cómo caíste (solo si alive es false): rival y marcador, para mostrarlo en la clasificación. */
   elim?: { opp: string; score: string; club: string };
 }
@@ -65,13 +67,13 @@ export function euroRoundName(round: number): string {
  */
 export function getSeasonProgress(player: Player, season: number): {
   copa: { round: number; alive: boolean };
-  euro: { round: number; alive: boolean };
+  euro: { round: number; alive: boolean; tied?: boolean };
 } {
   const copa = getCopaProgress(player, season);
   const euro = getEuroProgress(player, season);
   return {
     copa: { round: copa.round, alive: copa.alive },
-    euro: { round: euro.round, alive: euro.alive },
+    euro: { round: euro.round, alive: euro.alive, ...(euro.tied ? { tied: true } : {}) },
   };
 }
 

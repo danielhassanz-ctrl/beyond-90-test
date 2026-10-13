@@ -88,7 +88,7 @@ const weekInSeason = (week: number) => ((week - 1) % 10) + 1;
 function slotsForMonth(player: Player, week: number): SimComp[] {
   const slots: SimComp[] = Array.from({ length: OFF_SCREEN_PER_TURN }, () => "liga" as SimComp);
   const euro = getEuropeanCompetitionFor(player.club);
-  if (!euro) return slots;
+  if (!euro || getSeasonProgress(player, Math.floor((week - 1) / 10)).euro.tied) return slots;
   const wis = weekInSeason(week);
   if (EURO_GROUP_WEEKS.includes(wis)) slots.push(euro.competition, euro.competition);
   const reached = getSeasonProgress(player, Math.floor((week - 1) / 10)).euro.round;

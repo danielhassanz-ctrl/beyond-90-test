@@ -102,7 +102,7 @@ export interface MatchWeek {
 /** Progreso de competiciones de eliminación, para poder generar la SIGUIENTE ronda si el jugador sigue vivo. */
 export interface SeasonProgress {
   copa?: { round: number; alive: boolean };
-  euro?: { round: number; alive: boolean };
+  euro?: { round: number; alive: boolean; tied?: boolean };
 }
 
 /** Rivales con peso suficiente para que repetirlos en otro torneo (Liga y Copa) tenga sentido. */
@@ -270,7 +270,8 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
   }
 
   // --- Competición europea (fase de grupos + eliminatorias) ---------------
-  const europeanCompetition = getEuropeanCompetitionFor(playerClub);
+  // Si ya jugaste una competición europea esta temporada con otro club, no puedes jugarla con este (euro-transfer.ts).
+  const europeanCompetition = progress?.euro?.tied ? null : getEuropeanCompetitionFor(playerClub);
   if (europeanCompetition) {
     const europeanRandom = seededRandom(hashString(`${playerClub}:${season}:${europeanCompetition.competition}`));
     const europeanPool = europeanCompetition.rivals.filter((c) => c !== playerClub);

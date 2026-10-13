@@ -41,6 +41,7 @@ import { repairCashPurchases } from "@/lib/finance/repair";
 import { runWithAiBudget, careerBudgetTotal, currentAiUsed } from "@/lib/narrative/ai-budget";
 import { MODE_TARGET_WEEKS } from "@/types/career";
 import { addPartnerOpinion } from "@/lib/narrative/partner";
+import { repairEuroAfterTransfer } from "@/lib/calendar/euro-transfer";
 
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
 export const GEN_LOCK_ID = "gen-lock";
@@ -146,6 +147,8 @@ async function ensureNextEventInner(
   player: Player,
 ): Promise<{ event: GameEvent; usedEventIds: string[] }> {
   await migrateSalaryDeal(supabase, player);
+  // Fichajes a mitad de temporada anteriores a la regla de la competición europea: se corrige una vez (calendar/euro-transfer.ts).
+  await repairEuroAfterTransfer(supabase, player);
   // Una oferta de fichaje guardada con las cifras antiguas (sueldo que seguía a la media) se descarta y se genera de nuevo.
   const stale = player.pending_event as (GameEvent & { termsV?: number }) | null;
   if (stale && !stale.termsV && /^(oferta-(?!humo|cesion|engano)|arco-salto-3-)/.test(String(stale.id))) {

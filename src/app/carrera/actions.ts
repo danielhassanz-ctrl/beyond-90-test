@@ -34,6 +34,7 @@ import { netWorth as playerNetWorth } from "@/lib/finance/net-worth";
 import { stepPartner } from "@/lib/narrative/partner";
 import { readExTies } from "@/lib/narrative/ex-clubs";
 import { stampPropertyCities } from "@/lib/finance/property-city";
+import { euroOnTransfer, euroPlayedKey } from "@/lib/calendar/euro-transfer";
 import { buildFallbackContractEvent } from "@/lib/narrative/events";
 import { MODE_TARGET_WEEKS, WEEKS_PER_SEASON, playerAge, COACH_STANCE_TARGET } from "@/types/career";
 import { computeWeekAdvance } from "@/lib/narrative/week-advance";
@@ -204,7 +205,7 @@ export async function resolveEvent(formData: FormData) {
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.
   const outcomeBase = resolution ? resolution.text : (option.outcomeText ?? defaultReaction(option, player));
-  const outcomeText = partnerStep.note ? `${outcomeBase} ${partnerStep.note}` : outcomeBase;
+  let outcomeText = partnerStep.note ? `${outcomeBase} ${partnerStep.note}` : outcomeBase;
 
   const isRetirementDecision =
     (event.id === "fork-retiro-pro" && option.id === "retirarse") ||
@@ -268,6 +269,13 @@ export async function resolveEvent(formData: FormData) {
   // Cuánto avanza el calendario (y qué partido del mes queda marcado como
   // jugado) lo decide week-advance.ts: misma regla para el motor y las pruebas.
   const { newWeek, matchDoneFlag, weekCounter } = computeWeekAdvance(player as Player, event);
+  // Fichar a mitad de temporada y la competición europea: si ya la jugaste con tu club anterior no puedes jugarla con el nuevo; si
+  // no, entras en la ronda en la que está el equipo (calendar/euro-transfer.ts).
+  const euroMove =
+    typeof consequences.club === "string" && consequences.club && player.club && player.club !== NO_CLUB_YET && consequences.club !== player.club
+      ? euroOnTransfer(player.flags, player.club, consequences.club, newWeek, player.media ?? 60)
+      : null;
+  if (euroMove?.note) outcomeText = `${outcomeText} ${euroMove.note}`;
   // Cierre de temporada: puesto final de Liga con la misma tabla que ve el jugador. Campeón = trofeo
   // (se anota al ver la escena de celebración del mes siguiente); el puesto queda para la trayectoria.
   const ligaFinishFlags: Record<string, string> = {};
@@ -412,6 +420,8 @@ export async function resolveEvent(formData: FormData) {
     playerUpdate.flags = {
       ...((playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {}),
       ...(matchDoneFlag ? { match_done_week: matchDoneFlag } : {}),
+      // Haber jugado una competición europea con este club esta temporada impide jugarla con otro si te vas (euro-transfer.ts).
+      ...(typeof event.matchKey === "string" && event.matchKey.startsWith("euro.") ? { [euroPlayedKey(seasonNow)]: String(player.club) } : {}),
       wk_count: weekCounter,
     };
   }
@@ -541,7 +551,7 @@ export async function resolveEvent(formData: FormData) {
       alquiler: "",
       coach_bench: "0",
       bench_streak: "0",
-      euro_progress: "",
+      ...(euroMove?.flagsPatch ?? { euro_progress: "" }),
       capitan_club: false,
     };
     if (player.club && player.club !== NO_CLUB_YET && player.club !== newClub) {
