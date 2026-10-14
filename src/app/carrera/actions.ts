@@ -32,6 +32,7 @@ import { generateContractEvent } from "@/lib/narrative/ai";
 import { annualSalaryText, playerMonthlyNet, marketValueM } from "@/lib/narrative/transfer-terms";
 import { netWorth as playerNetWorth } from "@/lib/finance/net-worth";
 import { stepPartner } from "@/lib/narrative/partner";
+import { firstChildPatch } from "@/lib/narrative/children";
 import { readExTies } from "@/lib/narrative/ex-clubs";
 import { stampPropertyCities } from "@/lib/finance/property-city";
 import { euroOnTransfer, euroPlayedKey } from "@/lib/calendar/euro-transfer";
@@ -202,7 +203,9 @@ export async function resolveEvent(formData: FormData) {
     renewed: Boolean(consequencesBank.flags?.contract_until) && String(consequencesBank.flags?.salary_club ?? "") === player.club && !consequencesBank.club,
   });
   const partnerTouches = Object.keys(partnerStep.flags).length > 1 || Boolean(consequencesBank.flags?.pareja_delta);
-  const consequences = partnerTouches ? { ...consequencesBank, flags: { ...consequencesBank.flags, ...partnerStep.flags } } : consequencesBank;
+  const consequencesPartner = partnerTouches ? { ...consequencesBank, flags: { ...consequencesBank.flags, ...partnerStep.flags } } : consequencesBank;
+  // El nacimiento del primer hijo (escena del banco) anota su nombre y su fecha para los siguientes hijos y para Vida.
+  const consequences = event.id === "bank-p2-nacimiento" ? { ...consequencesPartner, flags: { ...consequencesPartner.flags, ...firstChildPatch(player as Player) } } : consequencesPartner;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
   // la reacción de la escena a decisiones sin incertidumbre — ver el
   // comentario junto a EventOption.outcomeText en types/career.ts.

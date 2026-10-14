@@ -72,7 +72,7 @@ export const PAREJA3: BankScene[] = [
       o("b", "Ceder en todo y dejar que ella organice la cocina", "Rendirte con elegancia", { moral: 1, flags: { p3_hogar: "cedo" } }, "Los platos, de repente, están siempre limpios. Pero un día, al abrir el armario, ves una disposición que no entiendes. «Lo de la derecha a la izquierda —dice ella—. No es por ti». Te rindes de nuevo. Y empiezas a sentir que la casa ya no es tuya."),
       o("c", "Hablar con ella de lo que de verdad os preocupa, más allá de los platos", "Ir al fondo", { moral: 6, reputacion: 2, flags: { p3_hogar: "fondo" } }, "Te dice que se siente sola cuando viajas. Tú, que tienes miedo de perderla. Os quedáis hablando hasta las tantas. Los platos, esa noche, los lava ella. Y los coloca como quiera. Es la última discusión por ese tema."),
     ]),
-  S("p3-hijos-decision", "pareja", { flags: ["pareja"], minAge: 24, clubTurns: [4, 400], notFlags: ["hijos", "p3_hijos"] }, "vida",
+  S("p3-hijos-decision", "pareja", { flags: ["pareja"], minAge: 27, clubTurns: [4, 400], notFlags: ["hijos", "p3_hijos", "embarazo"] }, "vida",
     "Hablar de tener hijos con {pareja} en medio de una temporada complicada",
     "Es un domingo por la tarde, con el balcón abierto y un silencio cómodo. {pareja} deja el libro y dice, sin preámbulo: «¿Has pensado en ser padre?». Te quedas mirando el techo. Hay partidos, viajes, concentraciones, una carrera que no admite pausas. Pero también hay una mirada franca a tu lado. «Sí», dices al fin. «Y me da miedo». Ella sonríe: «A mí, también».",
     [

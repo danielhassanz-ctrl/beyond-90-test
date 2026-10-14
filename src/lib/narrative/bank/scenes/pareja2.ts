@@ -31,7 +31,7 @@ export const PAREJA2: BankScene[] = [
       o("b", "Salir a la playa a hablar un momento y volver rápido", "Cuidar los dos mundos", { moral: 3, rel_representante: 2, flags: { p2_luna: "rapido" } }, "Son cinco minutos, con el pie en la arena. Cuando vuelves, {pareja} te mira sin decir nada. «Eso son cinco minutos menos de luna de miel», murmura. Lo compensas con una cena de gala."),
       o("c", "Apagar el teléfono y lanzarlo al agua", "Desconexión total", { moral: 10, patrimonio: -300, rel_representante: -3, flags: { p2_luna: "agua" } }, "Lo lanzas con ganas. Salpica. Un pez, curioso, se acerca a mirarlo. {pareja} se parte de risa. Durante una semana, el mundo, y el fútbol con él, se quedan sin ti. Es el mejor regalo de bodas que os hacéis."),
     ]),
-  S("p2-embarazo", "pareja", { flags: ["pareja"], minAge: 21, clubTurns: [4, 400], notFlags: ["hijos", "p2_embarazo"] }, "vida",
+  S("p2-embarazo", "pareja", { flags: ["pareja"], minAge: 27, clubTurns: [4, 400], notFlags: ["hijos", "p2_embarazo", "embarazo"] }, "vida",
     "{pareja} te enseña una prueba de embarazo en la cocina, sin decir nada",
     "No hay frases ni preámbulos. Llegas de entrenar, dejas la bolsa en la entrada y, al entrar en la cocina, {pareja} está de pie, apoyada en la encimera, con algo pequeño en la mano. Te lo enseña sin decir una palabra. Dos rayitas. El grifo gotea, el frigorífico zumba, y por la ventana se cuela el ruido de unos niños jugando. Tú te quedas mirando la prueba un buen rato.",
     [

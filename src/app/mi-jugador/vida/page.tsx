@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { readChildren, childAgeYears } from "@/lib/narrative/children";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { LifeThreads } from "@/components/LifeThreads";
@@ -67,6 +68,12 @@ export default async function VidaPage() {
           },
         ]
       : []),
+    ...readChildren(player.flags).map((c, i) => ({
+      key: `hijo-${i}`,
+      name: c.n,
+      label: c.f ? "Tu hija" : "Tu hijo",
+      detail: childAgeYears(c, player.week) < 1 ? "Un bebé en casa." : `${childAgeYears(c, player.week)} ${childAgeYears(c, player.week) === 1 ? "año" : "años"}.`,
+    })),
     ...(chicaActual
       ? [
           {

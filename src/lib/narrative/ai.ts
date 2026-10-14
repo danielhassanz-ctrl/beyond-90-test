@@ -14,6 +14,7 @@ import { NarrativeContent } from "@/lib/narrative/narrative-content";
 import { describeKnownCast as describeCast } from "@/lib/narrative/cast";
 import { getNpcName } from "@/lib/narrative/npcs";
 import { describeRel, partnerRel } from "@/lib/narrative/partner";
+import { readChildren } from "@/lib/narrative/children";
 import { genericRoleOf, threadIsFromOtherClub, threadOriginClub, type Thread } from "@/lib/narrative/threads";
 import { aiBudgetAllows, priorityFor, recordAiCall, type AiPriority } from "@/lib/narrative/ai-budget";
 import { buildStateBrief, buildLegacyBrief } from "@/lib/narrative/state-brief";
@@ -192,7 +193,10 @@ function describePersonalLife(flags: Record<string, string | boolean> | null | u
     lines.push(`- Pareja: ${flags.pareja} (relación ${rel}/100, ${describeRel(rel).toLowerCase()}${extra.length ? `; ${extra.join("; ")}` : ""}). Si la escena toca su vida personal, que se note cómo está la relación.`);
   }
   if (flags.convivencia) lines.push(`- Vive junto a su pareja`);
-  if (flags.hijos) lines.push(`- Hijos: ${flags.hijos === true ? "sí" : flags.hijos}`);
+  if (flags.hijos) {
+    const kids = readChildren(flags);
+    lines.push(kids.length > 0 ? `- Hijos (${kids.length}): ${kids.map((c) => `${c.n} (${c.f ? "niña" : "niño"})`).join(", ")}. Si la escena toca la familia, que se nombren y se note cuántos hay.` : `- Hijos: ${flags.hijos === true ? "sí" : flags.hijos}`);
+  }
   if (flags.title_liga) lines.push(`- Ya ganó la Liga con su club`);
   if (flags.title_champions) lines.push(`- Ya ganó la Champions League`);
   if (flags.title_balon_oro) lines.push(`- Ya ganó el Balón de Oro`);

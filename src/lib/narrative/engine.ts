@@ -19,6 +19,7 @@ import { shouldBeeFunnyMoment, pickRandomFunnyMoment, isSurrealMoment } from "@/
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
 import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, getClubLevel, matchKey, parseMatchDone, type MatchWeek } from "@/lib/calendar/match-calendar";
+import { childStage as childStageOf, buildChildEvent } from "@/lib/narrative/children";
 import { getSeasonProgress, advanceCupProgress, decideKnockoutResult, decideTwoLegResult, resolveEuroGroupStage, decisionNeedsGoal } from "@/lib/calendar/competition-progress";
 import { getInjuryRemaining, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
@@ -3551,6 +3552,13 @@ export async function pickNextEventDynamic(
     const f = (playerWithDynamics.flags ??= {});
     const wk = playerWithDynamics.week;
     const age = playerAge(wk);
+    // Los hijos: embarazo y nacimiento (a partir de los 27-29 años, con pareja estable; ver children.ts).
+    const childStage = childStageOf(playerWithDynamics);
+    if (childStage) {
+      const childEvent = buildChildEvent(playerWithDynamics, childStage);
+      console.log(`[pickNextEventDynamic] Hijos: "${childEvent.title}"`);
+      return maybeAddFreeText(childEvent);
+    }
     // Historia con una chica ya empezada (cita, rumor, «¿qué somos?»): sus escenas tienen prioridad para que la
     // historia no se quede a medias; si lleva demasiados turnos sin avanzar, se enfría y deja paso a otras.
     if (f.ch_en_curso && !f.pareja) {
