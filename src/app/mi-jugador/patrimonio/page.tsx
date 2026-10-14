@@ -510,7 +510,7 @@ export default async function PatrimonioPage() {
               .map((p) => (
                 <li key={p.key} className="flex items-start justify-between gap-3 py-2.5">
                   <div>
-                    <p className="text-sm font-medium text-foreground">{p.kind === "coche" || p.kind === "yate" || p.kind === "jet" ? "Préstamo" : "Hipoteca"}: {p.name}</p>
+                    <p className="text-sm font-medium text-foreground">{p.kind === "coche" || p.kind === "moto" || p.kind === "yate" || p.kind === "jet" ? "Préstamo" : "Hipoteca"}: {p.name}</p>
                     <p className="text-xs text-muted-foreground">Cada mes, automático</p>
                   </div>
                   <span className="font-num shrink-0 text-sm font-bold text-destructive">-{monthlyPayment(p).toLocaleString("es")} €</span>

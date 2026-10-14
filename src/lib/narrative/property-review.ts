@@ -38,7 +38,7 @@ export function buildPropertyReviewEvent(player: Player): GameEvent {
   const p = dueProperty(player) as PropertyRecord;
   const week = player.week;
   const slug = slugOf(p.key);
-  const isVehicle = p.kind === "coche" || p.kind === "yate" || p.kind === "jet";
+  const isVehicle = p.kind === "coche" || p.kind === "moto" || p.kind === "yate" || p.kind === "jet";
   const value = propertyValue(p, week);
   const diff = value - p.price;
   const debt = remainingLoan(p, week);
@@ -46,7 +46,7 @@ export function buildPropertyReviewEvent(player: Player): GameEvent {
   const agent = player.agent_name && player.agent_name !== "sin representante" ? player.agent_name : "Tu representante";
   const marked = { [`proprev_${slug}`]: String(week), proprev_last: String(week) };
   const money = player.patrimonio ?? 0;
-  const noun = p.kind === "coche" ? "el coche" : p.kind === "yate" ? "el yate" : p.kind === "jet" ? "el jet" : "la casa";
+  const noun = p.kind === "coche" ? "el coche" : p.kind === "moto" ? "la moto" : p.kind === "yate" ? "el yate" : p.kind === "jet" ? "el jet" : "la casa";
 
   const intro = isVehicle
     ? `${agent} te manda la tasación de ${p.name}. «Lo compraste por ${eur(p.price)} y hoy vale ${eur(value)}: ${eur(-diff)} menos. Es lo que tienen estos caprichos: en cuanto salen del concesionario, pierden valor cada año». ${debt > 0 ? `Todavía debes ${eur(debt)} al banco.` : "Ya lo tienes pagado."}`

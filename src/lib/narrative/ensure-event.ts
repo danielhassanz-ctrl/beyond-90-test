@@ -27,6 +27,7 @@ import {
   buildYachtEvent,
   buildJetEvent,
   buildCarEvent,
+  buildMotoEvent,
   buildOfertaArabiaEvent,
   attachClubOfferDetails,
   isInlandClub,
@@ -253,6 +254,18 @@ async function ensureNextEventInner(
     Math.random() < 0.3
   ) {
     event = await buildCarEvent(player, supabase);
+    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+  }
+
+  // La moto: otro capricho, algo más barato y frecuente que el coche deportivo.
+  if (
+    !event &&
+    player.week >= 14 &&
+    player.patrimonio >= 18000 &&
+    !usedEventIds.includes("vid-moto") &&
+    Math.random() < 0.22
+  ) {
+    event = await buildMotoEvent(player, supabase);
     await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
   }
 

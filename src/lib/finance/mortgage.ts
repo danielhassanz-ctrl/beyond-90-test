@@ -22,7 +22,7 @@ export interface PropertyRecord {
   /** Interés anual (por defecto 3,5 %). */
   rate?: number;
   /** Qué es: casa, mansion, coche, yate o jet (para nombrar la cuota: hipoteca o préstamo). */
-  kind?: "casa" | "mansion" | "coche" | "yate" | "jet";
+  kind?: "casa" | "mansion" | "coche" | "moto" | "yate" | "jet";
   /** Multiplicador de valor por reformas (1 = sin reformas). */
   valueAdj?: number;
   /** Ciudad donde está (la del club con el que vivías al comprarla). */
@@ -34,13 +34,14 @@ export interface PropertyRecord {
 /** Financiación de los caprichos (coche, yate, jet): entrada, plazo e interés. Las casas siguen su propio camino. */
 export const VEHICLE_FINANCING = {
   coche: { down: 0.2, months: 96, rate: 0.06 },
+  moto: { down: 0.2, months: 60, rate: 0.06 },
   yate: { down: 0.25, months: 180, rate: 0.05 },
   jet: { down: 0.3, months: 120, rate: 0.05 },
 } as const;
 
 export function vehicleFinancing(kind: keyof typeof VEHICLE_FINANCING, price: number) {
   const f = VEHICLE_FINANCING[kind];
-  const step = kind === "coche" ? 500 : 5000;
+  const step = kind === "coche" || kind === "moto" ? 500 : 5000;
   return { down: Math.round((price * f.down) / step) * step, termMonths: f.months, rate: f.rate, kind };
 }
 
@@ -100,6 +101,7 @@ export function propertyValue(p: PropertyRecord, week: number): number {
   const kind = p.kind ?? "casa";
   let factor: number;
   if (kind === "coche") factor = Math.max(0.25, (1 - 0.15 / 12) ** months);
+  else if (kind === "moto") factor = Math.max(0.25, (1 - 0.12 / 12) ** months);
   else if (kind === "yate") factor = Math.max(0.4, (1 - 0.07 / 12) ** months);
   else if (kind === "jet") factor = Math.max(0.4, (1 - 0.06 / 12) ** months);
   else factor = (1 + 0.04 / 12) ** months * (p.valueAdj ?? 1);

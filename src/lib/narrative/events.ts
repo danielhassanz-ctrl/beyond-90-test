@@ -4,6 +4,7 @@ import { PRO_RETIREMENT_MIN_WEEK } from "@/types/career";
 import type { Player } from "@/types/player";
 import { pickStartingClubOffers, type ClubOffer } from "@/lib/constants";
 import { describeKit } from "@/lib/clubColors";
+import { EXTRA_HOMES, EXTRA_MANSIONS, EXTRA_CARS, EXTRA_YACHTS, EXTRA_JETS, MOTO_LISTINGS } from "@/lib/narrative/listings-extra";
 import { cityOfClub } from "@/lib/narrative/cities";
 import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
 import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
@@ -148,7 +149,7 @@ function pickRandom<T>(items: T[], n: number): T[] {
 function pickAffordable<T extends { name: string; min: number; max: number }>(
   catalog: T[],
   n: number,
-  kind: "coche" | "yate" | "jet",
+  kind: "coche" | "moto" | "yate" | "jet",
   player: Player,
   roundTo: number,
   seed?: string,
@@ -168,7 +169,7 @@ function pickAffordable<T extends { name: string; min: number; max: number }>(
 
 /** Una opción de compra financiada: entrada ahora, cuota cada mes, deuda que cuenta en tu patrimonio. */
 function financedPurchase(
-  kind: "coche" | "yate" | "jet",
+  kind: "coche" | "moto" | "yate" | "jet",
   l: { name: string; price: number },
   photoUrl: string | null | undefined,
   week: number,
@@ -866,6 +867,13 @@ const CAR_LISTINGS = [
   },
 ];
 
+// Catálogo ampliado (listings-extra.ts): más casas, mansiones, coches, yates y jets; las motos son un catálogo propio.
+HOME_LISTINGS.push(...EXTRA_HOMES);
+MANSION_LISTINGS.push(...EXTRA_MANSIONS);
+CAR_LISTINGS.push(...EXTRA_CARS);
+YACHT_LISTINGS.push(...EXTRA_YACHTS);
+JET_LISTINGS.push(...EXTRA_JETS);
+
 /**
  * Comprar la primera vivienda: 3 opciones sorteadas de un catálogo, cada
  * una con un precio real que se descuenta del patrimonio tal cual, no una
@@ -879,7 +887,7 @@ const CAR_LISTINGS = [
  * comprada cuando no llegó a guardarse en su momento.
  */
 export function findPropertyPrompt(name: string): string | null {
-  const all = [...HOME_LISTINGS, ...MANSION_LISTINGS, ...YACHT_LISTINGS, ...JET_LISTINGS, ...CAR_LISTINGS] as { name: string; prompt: string }[];
+  const all = [...HOME_LISTINGS, ...MANSION_LISTINGS, ...YACHT_LISTINGS, ...JET_LISTINGS, ...CAR_LISTINGS, ...MOTO_LISTINGS] as { name: string; prompt: string }[];
   const base = baseListingName(name);
   const found = all.find((l) => l.name === base);
   if (!found) return null;
@@ -909,15 +917,17 @@ export function findPropertyInteriorPrompt(fullName: string): string | null {
     return `Interior design photography, ${style}, warm natural light, magazine quality, photorealistic, no people`;
   }
   if (YACHT_LISTINGS.some((l) => l.name === name)) return "Interior photography, luxurious yacht main salon with cream leather sofas, wood paneling and large windows facing the sea, photorealistic, no people";
+  if (MOTO_LISTINGS.some((l) => l.name === name)) return "Motorcycle detail photography, premium motorcycle handlebars, digital dashboard and leather seat close-up, photorealistic, no people, no visible brand logos";
   if (JET_LISTINGS.some((l) => l.name === name)) return "Interior photography, private jet cabin with cream leather seats, wood details and soft lighting, photorealistic, no people";
   if (CAR_LISTINGS.some((l) => l.name === name)) return "Automotive interior photography, sports car cockpit with leather seats, carbon-fibre details and a digital dashboard, photorealistic, no people, no visible brand logos";
   return null;
 }
 
 /** Qué tipo de capricho es una propiedad por su nombre (coche, yate o jet), o null si es una casa. */
-export function findVehicleKind(fullName: string): "coche" | "yate" | "jet" | null {
+export function findVehicleKind(fullName: string): "coche" | "moto" | "yate" | "jet" | null {
   const name = baseListingName(fullName);
   if (CAR_LISTINGS.some((l) => l.name === name)) return "coche";
+  if (MOTO_LISTINGS.some((l) => l.name === name)) return "moto";
   if (YACHT_LISTINGS.some((l) => l.name === name)) return "yate";
   if (JET_LISTINGS.some((l) => l.name === name)) return "jet";
   return null;
@@ -1159,6 +1169,40 @@ export async function buildCarEvent(player: Player, supabase: SupabaseClient): P
       },
     ],
     minWeek: 12,
+  };
+}
+
+/**
+ * La moto: otro capricho de los que llegan pronto. Un compañero llega a entrenar en la suya y te contagia.
+ */
+export async function buildMotoEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
+  const listings = pickAffordable(MOTO_LISTINGS, 3, "moto", player, 500);
+  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  return {
+    id: "vid-moto",
+    category: "vida",
+    title: "Una moto para escaparte",
+    description:
+      "Un compañero del vestuario llega a entrenar en su moto, con el casco colgando del brazo y una sonrisa de oreja a oreja: «No hay mejor forma de volver a casa después de un partido». Esa tarde, tu representante te manda tres opciones por si te pica el gusanillo. Alguna es más sensata que otra.",
+    options: [
+      ...listings.map((l, i) => {
+        const buy = financedPurchase("moto", l, photos[i], player.week, i, cityOfClub(player.club));
+        return {
+          id: `moto-${i}`,
+          label: `${l.name} — ${l.price.toLocaleString("es")} €`,
+          subtitle: `Entrada: ${buy.down.toLocaleString("es")} € · Cuota: ${buy.monthly.toLocaleString("es")} €/mes`,
+          imageUrl: photos[i] ?? undefined,
+          consequences: { patrimonio: -buy.down, moral: 6, fama: 1, flags: buy.flag },
+        };
+      }),
+      {
+        id: "pasar",
+        label: "Pasar: el coche te basta",
+        subtitle: "Sin prisa",
+        consequences: { moral: 1 },
+      },
+    ],
+    minWeek: 14,
   };
 }
 
