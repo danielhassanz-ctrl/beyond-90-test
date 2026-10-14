@@ -7076,7 +7076,7 @@ const CITY_STYLE: Record<string, string> = {
 const cityFlavor = (city: string): string => CITY_STYLE[city] ?? `typical architecture of ${city}`;
 
 /** Una propiedad del catálogo «vista» en esta ciudad: otro nombre y otra foto que la del mismo listado en otro sitio. */
-function localizeListing<T extends { name: string; prompt: string }>(l: T, city: string): T {
+export function localizeListing<T extends { name: string; prompt: string }>(l: T, city: string): T {
   return { ...l, name: `${l.name} (${city})`, prompt: `${l.prompt}, set in ${city}: ${cityFlavor(city)}` };
 }
 

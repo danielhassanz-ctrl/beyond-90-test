@@ -42,6 +42,7 @@ import { repairCashPurchases } from "@/lib/finance/repair";
 import { runWithAiBudget, careerBudgetTotal, currentAiUsed } from "@/lib/narrative/ai-budget";
 import { MODE_TARGET_WEEKS } from "@/types/career";
 import { addPartnerOpinion, addPartnerRenewalOpinion } from "@/lib/narrative/partner";
+import { shouldTriggerYouthHousing, buildYouthHousingEvent } from "@/lib/narrative/youth-housing";
 import { repairEuroAfterTransfer } from "@/lib/calendar/euro-transfer";
 
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
@@ -211,6 +212,12 @@ async function ensureNextEventInner(
   // pedía 18.000€ de entrada, por encima del propio umbral — un jugador
   // con 15-17k€ podía ver tres casas sin poder pagar la entrada de
   // ninguna. Se deriva ahora del catálogo real en vez de un número suelto.
+  // Siendo joven (16-21), al llegar a cada club: dónde vivir (residencia, piso compartido, estudio o casa de tus padres).
+  if (!event && shouldTriggerYouthHousing(player, usedEventIds)) {
+    event = await buildYouthHousingEvent(player, supabase);
+    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+  }
+
   // Mudanza a la ciudad de un club nuevo (no el primero, ni una cesión): primero dónde vivir, un par de turnos
   // después el coche. Una escena de cada por cada club al que llegas.
   {
@@ -219,7 +226,7 @@ async function ensureNextEventInner(
     const here = player.week - since;
     const onLoan = Boolean(player.flags?.loan_active) && !player.flags?.loan_returned;
     const ids = cityMoveIds(player.club);
-    if (!event && clubChanges >= 2 && !onLoan && since > 0 && here >= 1 && here <= 14 && player.status === "active") {
+    if (!event && clubChanges >= 2 && !onLoan && since > 0 && here >= 1 && here <= 14 && player.status === "active" && player.flags?.vivienda_joven_club !== player.club) {
       if (!usedEventIds.includes(ids.casa)) {
         event = await buildCityHousingEvent(player, supabase);
         await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
