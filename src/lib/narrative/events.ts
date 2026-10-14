@@ -145,17 +145,18 @@ function pickRandom<T>(items: T[], n: number): T[] {
  * 375.000 € pagando solo lo que había en la cuenta, y el resto desaparecía.
  * Si no hay suficientes asequibles, se completa con los más baratos.
  */
-function pickAffordable<T extends { min: number; max: number }>(
+function pickAffordable<T extends { name: string; min: number; max: number }>(
   catalog: T[],
   n: number,
   kind: "coche" | "yate" | "jet",
   player: Player,
   roundTo: number,
+  seed?: string,
 ): (T & { price: number })[] {
   const downFor = (price: number) => vehicleFinancing(kind, price).down;
   const affordable = catalog.filter((l) => downFor(l.min) <= player.patrimonio);
   const pool = affordable.length >= n ? affordable : [...catalog].sort((a, b) => a.min - b.min).slice(0, Math.max(n, affordable.length));
-  return pickRandom(pool, n).map((l) => {
+  return (seed ? pickSeeded(pool, n, seed) : pickRandom(pool, n)).map((l) => {
     let price = randomPrice(l.min, l.max, roundTo);
     // Tampoco se sortea un precio cuya entrada no puedas pagar si el mínimo sí.
     if (downFor(price) > player.patrimonio && downFor(l.min) <= player.patrimonio) {
@@ -815,6 +816,54 @@ const CAR_LISTINGS = [
     max: 200000,
     prompt: "Automotive photography, beautifully restored vintage classic sports car parked in a private collector's garage, warm lighting, professional listing photo, photorealistic, no people, no visible brand logos",
   },
+  {
+    name: "Compacto GTI de caja manual",
+    min: 36000,
+    max: 55000,
+    prompt: "Automotive photography, sporty hot-hatch with red accents parked on a quiet city street, dynamic angle, daylight, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Berlina deportiva de cuatro puertas",
+    min: 75000,
+    max: 110000,
+    prompt: "Automotive photography, powerful dark sports saloon with four doors parked in front of a modern glass building, daylight, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Roadster ligero de dos plazas",
+    min: 60000,
+    max: 95000,
+    prompt: "Automotive photography, lightweight two-seat roadster with the roof down on a winding road, golden hour, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "SUV de lujo con interior de piel",
+    min: 90000,
+    max: 140000,
+    prompt: "Automotive photography, large luxury SUV with a leather interior visible through the window parked outside a stylish hotel, daylight, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Gran turismo británico de edición especial",
+    min: 190000,
+    max: 280000,
+    prompt: "Automotive photography, elegant British-style grand tourer in racing green with a long bonnet, parked on a stone driveway, soft daylight, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Pickup americana preparada",
+    min: 65000,
+    max: 100000,
+    prompt: "Automotive photography, customised full-size pickup truck with chrome details and big wheels parked at a ranch-style house, daylight, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Coupé clásico de los setenta restaurado",
+    min: 85000,
+    max: 140000,
+    prompt: "Automotive photography, beautifully restored 1970s coupe in deep blue with chrome bumpers parked in front of an old garage, warm light, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
+  {
+    name: "Hiperdeportivo híbrido de serie limitada",
+    min: 350000,
+    max: 520000,
+    prompt: "Automotive photography, extreme hybrid hypercar with sharp aerodynamic lines parked in a minimalist private garage, dramatic lighting, professional listing photo, photorealistic, no people, no visible brand logos",
+  },
 ];
 
 /**
@@ -831,7 +880,11 @@ const CAR_LISTINGS = [
  */
 export function findPropertyPrompt(name: string): string | null {
   const all = [...HOME_LISTINGS, ...MANSION_LISTINGS, ...YACHT_LISTINGS, ...JET_LISTINGS, ...CAR_LISTINGS] as { name: string; prompt: string }[];
-  return all.find((l) => l.name === name)?.prompt ?? null;
+  const base = baseListingName(name);
+  const found = all.find((l) => l.name === base);
+  if (!found) return null;
+  // Con ciudad («… (Madrid)»), la foto lleva el sello de esa ciudad.
+  return base === name ? found.prompt : localizeListing(found, name.slice(base.length + 2, -1)).prompt;
 }
 
 /**
@@ -840,7 +893,8 @@ export function findPropertyPrompt(name: string): string | null {
  * exterior. El estilo se deduce del nombre del listado para que un loft no
  * tenga el mismo salón que una villa junto al mar.
  */
-export function findPropertyInteriorPrompt(name: string): string | null {
+export function findPropertyInteriorPrompt(fullName: string): string | null {
+  const name = baseListingName(fullName);
   const n = name.toLowerCase();
   if (HOME_LISTINGS.some((l) => l.name === name) || MANSION_LISTINGS.some((l) => l.name === name)) {
     const mansion = MANSION_LISTINGS.some((l) => l.name === name);
@@ -861,7 +915,8 @@ export function findPropertyInteriorPrompt(name: string): string | null {
 }
 
 /** Qué tipo de capricho es una propiedad por su nombre (coche, yate o jet), o null si es una casa. */
-export function findVehicleKind(name: string): "coche" | "yate" | "jet" | null {
+export function findVehicleKind(fullName: string): "coche" | "yate" | "jet" | null {
+  const name = baseListingName(fullName);
   if (CAR_LISTINGS.some((l) => l.name === name)) return "coche";
   if (YACHT_LISTINGS.some((l) => l.name === name)) return "yate";
   if (JET_LISTINGS.some((l) => l.name === name)) return "jet";
@@ -6937,6 +6992,71 @@ export const EVENTS: GameEvent[] = [
 
 export { cityOfClub };
 
+/** Cómo es cada ciudad (arquitectura y ambiente): las casas y los coches de cada mudanza salen con su sello, no iguales en todas. */
+const CITY_STYLE: Record<string, string> = {
+  Madrid: "classic brick and stone buildings with wrought-iron balconies, tree-lined avenues, warm dry sunlight",
+  Barcelona: "Modernista buildings with decorative facades, Mediterranean light, palm trees and narrow shaded streets",
+  Sevilla: "whitewashed Andalusian buildings with orange trees, tiled patios and bright southern light",
+  Valencia: "modern Mediterranean architecture beside gardens and the sea, bright coastal light",
+  Bilbao: "grey-green northern city with iron bridges, steel-and-glass modern buildings and soft overcast light",
+  Villarreal: "small sunny Mediterranean town with low whitewashed houses and orange groves",
+  Girona: "medieval stone old town with colourful riverside houses and Catalan light",
+  Vigo: "granite houses and glass galleries above a Galician estuary, soft Atlantic light",
+  Málaga: "bright white buildings, palm trees and the Mediterranean in the background",
+  Londres: "Victorian red-brick terraces, sash windows, grey London sky with soft daylight",
+  Liverpool: "red-brick Victorian terraces and converted docklands warehouses near the Mersey, overcast northern light",
+  Mánchester: "red-brick converted mills, modern glass towers and a rainy-bright northern city mood",
+  Newcastle: "stone Georgian buildings above a river with iron bridges, crisp northern light",
+  Birmingham: "red-brick canalside warehouses converted into lofts, modern towers in the background",
+  Múnich: "tidy Bavarian apartment buildings with wooden balconies, clean modern architecture and alpine light",
+  Dortmund: "red-brick industrial heritage buildings and green residential districts, honest working-city light",
+  Leverkusen: "quiet modern residential area beside a river, orderly German architecture",
+  Leipzig: "restored art-nouveau townhouses and modern lofts, soft central-European light",
+  Fráncfort: "glass skyscrapers next to rebuilt old-town houses and a riverside, crisp light",
+  París: "cream Haussmann stone buildings with wrought-iron balconies and mansard roofs, soft Paris light",
+  Marsella: "bright Mediterranean port city buildings, pale stone and shutters, strong southern sun",
+  Mónaco: "luxury coastal towers on a hillside above a harbour with yachts, Riviera light",
+  Lyon: "ochre and terracotta buildings along two rivers, Renaissance old town",
+  Lille: "Flemish-style red-brick facades with ornate gables, northern French light",
+  Turín: "elegant arcaded 19th-century apartment buildings, wide boulevards, the Alps in the background",
+  Milán: "refined Italian apartment buildings with inner courtyards and sleek design touches, soft grey-gold light",
+  Roma: "ochre and terracotta Roman palazzi, ivy-covered courtyards, golden light",
+  Nápoles: "colourful crowded Neapolitan buildings with laundry balconies and a view of the bay",
+  Bérgamo: "stone hill town with medieval walls and elegant residential streets",
+  Florencia: "Renaissance stone buildings with terracotta roofs and a Tuscan hills backdrop",
+  Riad: "modern desert-city towers and sand-coloured luxury villas with large glazed fronts, bright harsh sun",
+  Lisboa: "pastel tiled facades on steep hills with the river in the background",
+  Ámsterdam: "narrow gabled canal houses with big windows and bicycles",
+};
+
+const cityFlavor = (city: string): string => CITY_STYLE[city] ?? `typical architecture of ${city}`;
+
+/** Una propiedad del catálogo «vista» en esta ciudad: otro nombre y otra foto que la del mismo listado en otro sitio. */
+function localizeListing<T extends { name: string; prompt: string }>(l: T, city: string): T {
+  return { ...l, name: `${l.name} (${city})`, prompt: `${l.prompt}, set in ${city}: ${cityFlavor(city)}` };
+}
+
+/** El nombre del listado sin la ciudad: «Coupé deportivo alemán (Madrid)» → «Coupé deportivo alemán». */
+export function baseListingName(name: string): string {
+  const i = name.lastIndexOf(" (");
+  return i > 0 && name.endsWith(")") ? name.slice(0, i) : name;
+}
+
+function seedHash(value: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    h ^= value.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 15;
+  return h >>> 0;
+}
+
+/** Elige n del catálogo de forma estable para esa semilla (jugador + ciudad): cada ciudad enseña otras opciones. */
+function pickSeeded<T extends { name: string }>(items: T[], n: number, seed: string): T[] {
+  return [...items].sort((a, b) => seedHash(`${seed}:${a.name}`) - seedHash(`${seed}:${b.name}`)).slice(0, n);
+}
+
 /** Identificador estable por club para las escenas de mudanza (una vivienda y un coche por cada club nuevo). */
 export function cityMoveIds(club: string): { casa: string; coche: string } {
   const slug = club.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -6963,7 +7083,9 @@ export async function buildCityHousingEvent(player: Player, supabase: SupabaseCl
   const pool = rich
     ? MANSION_LISTINGS.filter((l) => !isInlandClub(player.club) || !l.coastal)
     : HOME_LISTINGS.filter((l) => Math.round((l.min * 0.2) / 500) * 500 <= player.patrimonio);
-  const buyList = pool.length > 0 ? pickRandom(pool, 1)[0] : null;
+  // Cada ciudad enseña SU casa (otro listado, otro nombre y otra foto que en las demás ciudades).
+  const buyBase = pool.length > 0 ? pickSeeded(pool, 1, `${player.id}:${city}:casa`)[0] : null;
+  const buyList = buyBase ? localizeListing(buyBase, city) : null;
   const buyPrice = buyList ? randomPrice(buyList.min, buyList.max, rich ? 50000 : 5000) : 0;
   const buyDown = Math.round((buyPrice * (rich ? 0.3 : 0.2)) / 500) * 500;
   const photo = buyList ? await getOrCreatePropertyPhoto(supabase, player.user_id, buyList.name, buyList.prompt) : null;
@@ -7024,7 +7146,8 @@ export async function buildCityHousingEvent(player: Player, supabase: SupabaseCl
 export async function buildCityCarEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
   const city = cityOfClub(player.club);
   const abroad = leagueOf(player.club).id !== "es";
-  const listings = pickAffordable(CAR_LISTINGS, 3, "coche", player, 5000);
+  // Los coches de cada ciudad son otros (y con su ambiente): no se repiten los del club anterior.
+  const listings = pickAffordable(CAR_LISTINGS, 3, "coche", player, 5000, `${player.id}:${city}:coche`).map((l) => localizeListing(l, city));
   const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
   return {
     id: cityMoveIds(player.club).coche,
