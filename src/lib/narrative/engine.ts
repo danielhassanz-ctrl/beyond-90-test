@@ -3513,7 +3513,7 @@ export async function pickNextEventDynamic(
         console.log("[pickNextEventDynamic] Cierre de temporada descartado: dice que vio desde casa un torneo que sí jugó");
         preseasoneEvent = null;
       }
-      if (preseasoneEvent && /doblete|triplete|hat-?trick|\d{1,2}\s*-\s*\d{1,2}|semifinal|cuartos de final|la final|nos eliminaron|campeones de/i.test(text)) {
+      if (preseasoneEvent && /doblete|triplete|hat-?trick|\b\d{1,2}\s*-\s*\d{1,2}\b|semifinal|cuartos de final|la final\b|nos eliminaron|campeones de/i.test(text)) {
         console.log("[pickNextEventDynamic] Cierre de temporada descartado: la IA inventó un partido o resultado");
         preseasoneEvent = null;
       }

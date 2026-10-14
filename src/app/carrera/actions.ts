@@ -157,7 +157,7 @@ export async function resolveEvent(formData: FormData) {
   // de la etiqueta. Sin esto, despedías al agente y la partida seguía con el
   // mismo (visto en una partida de prueba real). La relación con el nuevo
   // empieza en un punto neutro.
-  const fireMatch = option.label.match(/despedir.*fichar\s+(?:a\s+)?(\p{Lu}[\p{L}'-]+(?:\s+\p{Lu}[\p{L}'-]+)+)/u);
+  const fireMatch = option.label.match(/despedir.*\bfichar\s+(?:a\s+)?(\p{Lu}[\p{L}'-]+(?:\s+\p{Lu}[\p{L}'-]+)+)/u);
   const consequencesSet = Object.keys(setStats).length > 0 ? { ...consequencesWeek, ...setStats } : consequencesWeek;
   const newAgent = fireMatch && consequencesSet.agent_name === undefined ? fireMatch[1] : null;
   const consequencesAgent = newAgent
