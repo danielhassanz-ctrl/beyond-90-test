@@ -40,7 +40,7 @@ import { summarizeEffects } from "@/lib/narrative/state-brief";
 import { repairCashPurchases } from "@/lib/finance/repair";
 import { runWithAiBudget, careerBudgetTotal, currentAiUsed } from "@/lib/narrative/ai-budget";
 import { MODE_TARGET_WEEKS } from "@/types/career";
-import { addPartnerOpinion } from "@/lib/narrative/partner";
+import { addPartnerOpinion, addPartnerRenewalOpinion } from "@/lib/narrative/partner";
 import { repairEuroAfterTransfer } from "@/lib/calendar/euro-transfer";
 
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
@@ -348,7 +348,7 @@ async function ensureNextEventInner(
     try {
       event = await pickNextEventDynamic(player, historyForAi, usedEventIds);
       // Si la escena ofrece cambiar de club y tienes pareja, el texto recoge lo que ella opina de cada destino.
-      if (event) event = addPartnerOpinion(event, player);
+      if (event) event = addPartnerRenewalOpinion(addPartnerOpinion(event, player), player);
       if (!player.flags) player.flags = {};
       const spent = currentAiUsed();
       if (spent !== null) player.flags.ai_used = String(spent);

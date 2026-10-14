@@ -198,6 +198,8 @@ export async function resolveEvent(formData: FormData) {
     eventId: event.id,
     moral: consequencesBank.moral,
     optionFlags: consequencesBank.flags,
+    // Renovar con tu club (mismo club, contrato nuevo): ella lo vive según cómo lleve la ciudad.
+    renewed: Boolean(consequencesBank.flags?.contract_until) && String(consequencesBank.flags?.salary_club ?? "") === player.club && !consequencesBank.club,
   });
   const partnerTouches = Object.keys(partnerStep.flags).length > 1 || Boolean(consequencesBank.flags?.pareja_delta);
   const consequences = partnerTouches ? { ...consequencesBank, flags: { ...consequencesBank.flags, ...partnerStep.flags } } : consequencesBank;

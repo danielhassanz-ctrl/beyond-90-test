@@ -1,5 +1,5 @@
 /** Prueba sin IA: la relación con tu pareja sube y baja, ella opina de las mudanzas y la historia con una chica no se pierde. */
-import { stepPartner, partnerRel, cityStance, moveReaction, addPartnerOpinion, PARTNER_START_REL } from "../src/lib/narrative/partner";
+import { stepPartner, partnerRel, cityStance, moveReaction, addPartnerOpinion, addPartnerRenewalOpinion, renewalReaction, leaveReaction, PARTNER_START_REL } from "../src/lib/narrative/partner";
 import { BANK_SCENES } from "../src/lib/narrative/bank/scenes";
 import { eligibleBankScenes } from "../src/lib/narrative/bank/select";
 import { CHICAS } from "../src/lib/narrative/bank/scenes/chicas";
@@ -50,6 +50,19 @@ ok(moveReaction("Marta Vidal", "Real Madrid", "Atlético de Madrid") === null, "
 ok(cityStance("Marta Vidal", "Real Madrid") === cityStance("Marta Vidal", "Atlético de Madrid"), "las dos de Madrid le parecen la misma ciudad");
 const conCiudad = addPartnerOpinion({ ...ev, options: [{ id: "a", label: "x", subtitle: "", consequences: { club: "Bayern de Múnich" } }] } as any, { club: "Liverpool FC", flags: { pareja: "Marta Vidal" } });
 ok(!/Bayern de Múnich/.test(conCiudad.description.split("\n\n")[1] ?? "") && /Múnich/.test(conCiudad.description), "habla de la ciudad (Múnich), no del club");
+
+console.log("3b) Renovar o pedir salir también cuenta para ella");
+const ciudades = ["Real Madrid", "FC Barcelona", "Bayern de Múnich", "Liverpool FC", "Juventus", "París Saint-Germain", "Valencia CF", "Sevilla FC", "Manchester City", "Arsenal"];
+const encantada = ciudades.find((c) => cityStance("Marta Vidal", c) === "encantada")!;
+const reacia = ciudades.find((c) => cityStance("Marta Vidal", c) === "reacia")!;
+ok(renewalReaction("Marta Vidal", encantada)!.delta > 0 && renewalReaction("Marta Vidal", reacia)!.delta < 0, "renovar en la ciudad que adora sube la relación; en la que no soporta, baja");
+ok(leaveReaction("Marta Vidal", encantada)!.delta < 0 && leaveReaction("Marta Vidal", reacia)!.delta > 0, "pedir salir de la ciudad que adora duele; de la que no soporta, alegra");
+const stepR = stepPartner({ pareja: "Marta Vidal", pareja_rel: "70", pareja_rel_de: "Marta Vidal", pareja_last_week: "60" }, { club: reacia, week: 61, eventId: "contrato-ultima-70", optionFlags: { contract_until: "100" }, renewed: true });
+ok(Number(stepR.flags.pareja_rel) === 63 && /Marta/.test(stepR.note ?? ""), `renovar donde ella no es feliz: relación ${stepR.flags.pareja_rel} y reacciona: «${stepR.note}»`);
+const evRenov: any = { id: "contrato-ultima-70", category: "vida", title: "Tu contrato", description: "Te queda un año.", options: [] };
+const conOp = addPartnerRenewalOpinion(evRenov, { club: reacia, flags: { pareja: "Marta Vidal" } });
+ok(/^Te queda un año\.\n\n/.test(conOp.description) && /Marta/.test(conOp.description), "la escena del contrato recoge lo que ella opina");
+ok(addPartnerRenewalOpinion({ ...evRenov, id: "otra-escena" }, { club: reacia, flags: { pareja: "Marta Vidal" } }).description === "Te queda un año.", "solo en las escenas de contrato");
 
 console.log("4) La historia con una chica no se pierde");
 const cena = CHICAS.find((x) => x.id === "bank-ch-nerea-cena")!;

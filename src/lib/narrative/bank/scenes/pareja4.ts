@@ -52,4 +52,24 @@ export const PAREJA4: BankScene[] = [
       r("a", "Pedirle que se quede, de rodillas si hace falta", "Jugártela entera", 0.3, "Se queda quieta con la maleta en la mano. Pasan segundos eternos. Después la deja en el suelo. «Una oportunidad. Una. Y cambias de verdad». Te abraza llorando. Sabes que no tendrás una tercera.", { moral: 5, flags: { pareja_delta: "35" } }, "Te escucha hasta el final, te da un beso en la frente y se va. No cierra de un portazo: cierra con mucho cuidado, y es peor. Esa noche te quedas mirando la llave sobre la mesa hasta que se hace de día.", { moral: -10, forma: -3, flags: { pareja: "", pareja_foto: "", ex_pareja: true, convivencia: "" } }, "moral"),
       o("b", "Dejarla marchar con dignidad", "Aceptarlo", { moral: -6, flags: { pareja: "", pareja_foto: "", ex_pareja: true, convivencia: "" } }, "Le dices que lo entiendes y que le deseas lo mejor. Ayudas a bajar la maleta. En el portal, os abrazáis sin decir nada. Subes las escaleras despacio, y la casa, de repente, es enorme."),
     ], { weight: 20 }),
+
+  // ───── Los niños y la ciudad ─────
+  S("p4-hijos-colegio", "pareja", { flags: ["pareja", "hijos"], notFlags: ["p4_colegio"], minAge: 22, clubTurns: [3, 400] }, "vida",
+    "El colegio de los niños",
+    "Llega la hora de elegir colegio y {pareja} lo ha investigado todo: horarios, rutas, comedor, hasta qué familias de la clase tienen hijos de la misma edad. Tiene una carpeta con post-its de colores. «Lo que decidamos ahora lo vamos a querer mantener unos años», dice. «Y tú sabes mejor que yo cuántos años dura un fútbolista en un sitio».",
+    [
+      o("a", "Elegir el mejor colegio de {ciudad} y comprometerte a quedarte", "Poner a los niños primero", { moral: 3, rel_aficion: 2, flags: { pareja_delta: "10", p4_colegio: "quedarse" } }, "Firmáis la matrícula una tarde de lluvia. {pareja} sale del despacho como quien ha cerrado una etapa: los niños tendrán casa, amigos y una rutina. A ti te toca cumplir con tu parte: no irte a la primera oferta."),
+      o("b", "Buscar un colegio con plan internacional, por si hay mudanza", "Pensar en el futuro", { moral: 1, flags: { pareja_delta: "3", p4_colegio: "internacional" } }, "Elegís un colegio con programa internacional y convenios en varias ciudades. Es práctico y los dos lo sabéis. Pero {pareja} se queda mirando la carpeta un buen rato: tenía la ilusión de que esta fuera la casa de verdad."),
+      o("c", "Dejar que decida ella: «Lo que tú veas mejor»", "Confiar", { moral: 2, flags: { pareja_delta: "6", p4_colegio: "ella" } }, "Se le ilumina la cara: lleva meses esperando que se lo digas. En una semana tiene visitas, notas y un plan. Lo mejor de todo es que no vuelve a sacarte el tema de las mudanzas."),
+    ]),
+
+  // ───── Su propia carrera ─────
+  S("p4-su-carrera", "pareja", { flags: ["pareja"], notFlags: ["p4_carrera"], minAge: 21, clubTurns: [6, 400] }, "vida",
+    "{pareja} recibe una oferta para su carrera",
+    "Llega el día en que la conversación no va de ti. {pareja} ha recibido una oferta de trabajo que lleva años esperando, en un proyecto que le importa de verdad. El único problema: la sede no está en {ciudad}. Te lo cuenta en la cocina, con las manos en el delantal y la voz entrecortada: «No te pido nada. Solo quiero que lo sepas antes que nadie».",
+    [
+      o("a", "Animarla a aceptar y buscar la forma de seguir juntos", "Apoyar su carrera", { moral: 2, flags: { pareja_delta: "9", p4_carrera: "apoyo" } }, "Le dices que acepte, que ya buscaréis cómo. Llora de alivio y te da las gracias con un abrazo largo. Vais a tener que ser creativos con los calendarios, con los vuelos y con la paciencia, pero se ha quitado un peso de encima."),
+      o("b", "Pedirle que se quede: tu carrera os mantiene a los dos", "Priorizar la tuya", { moral: -2, flags: { pareja_delta: "-14", p4_carrera: "quedarse" } }, "Se lo dices con cariño y con una lógica que no admite réplica: vuestro nivel de vida depende de tu fútbol. {pareja} asiente. No discute, y eso es lo que más te preocupa. Esa noche prepara la cena en silencio y no vuelve a mencionar la oferta."),
+      o("c", "Proponerle probar seis meses y decidir juntos", "Buscar el término medio", { moral: 1, flags: { pareja_delta: "4", p4_carrera: "prueba" } }, "Acordáis seis meses de prueba, con revisión. Es razonable y a los dos os da algo de miedo. Pasan los primeros fines de semana en aeropuertos y se parecen mucho a los de las parejas que acaban funcionando… o a las otras."),
+    ]),
 ];

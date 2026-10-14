@@ -6,6 +6,7 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { applyConsequences } from "@/lib/narrative/engine";
 import { CLUB_REQUEST_KINDS, requestStatus, resolveClubRequest, type ClubRequestKind } from "@/lib/narrative/club-requests";
 import type { Player } from "@/types/player";
+import { stepPartner } from "@/lib/narrative/partner";
 
 /**
  * «Hablar con el club»: pedir salir, una cesión, la renovación, una mejora de sueldo, más minutos o el brazalete. El club evalúa en
@@ -22,6 +23,17 @@ export async function requestFromClub(formData: FormData) {
   if (!status.available) redirect("/carrera");
 
   const result = resolveClubRequest(player, kind);
+  // Tu pareja opina de renovar o de irte según cómo lleve la ciudad: sube o baja la relación y lo dice en la reacción.
+  const partnerStep = stepPartner(player.flags, {
+    club: player.club,
+    week: player.week,
+    eventId: `club-request-${kind}`,
+    optionFlags: result.consequences.flags,
+    renewed: kind === "renovacion" && result.ok,
+    leaving: (kind === "transferible" || kind === "cesion") && result.ok,
+  });
+  if (partnerStep.note) result.outcomeText = `${result.outcomeText} ${partnerStep.note}`;
+  if (Object.keys(partnerStep.flags).length > 1) result.consequences = { ...result.consequences, flags: { ...result.consequences.flags, ...partnerStep.flags } };
   const patch = applyConsequences(player as Player, result.consequences);
   const flags = { ...(player.flags ?? {}), ...(result.consequences.flags ?? {}) };
   const { data: updated, error } = await supabase.from("players").update({ ...patch, flags }).eq("id", player.id).select("id");

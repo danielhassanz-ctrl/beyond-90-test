@@ -111,6 +111,55 @@ export function partnerOpinionLine(partner: string, fromClub: string, toClub: st
   return `${name} te apoyará, aunque otra mudanza le pesa.`;
 }
 
+/** Renovar con tu club = quedarte en esa ciudad más años: ella lo vive según cómo lleve la ciudad. */
+export function renewalReaction(partner: string, club: string): MoveReaction | null {
+  const name = partnerFirstName(partner);
+  const city = cityName(club);
+  switch (cityStance(partner, club)) {
+    case "encantada":
+      return { delta: 5, text: `${name} se alegra muchísimo: renovar es quedarse en ${city}, que ya siente suya.` };
+    case "reacia":
+      return { delta: -7, text: `${name} no dice nada: otra etapa larga en ${city}, una ciudad en la que no termina de ser feliz.` };
+    default:
+      return { delta: 1, text: `${name} lo apoya: estabilidad, que ya era hora.` };
+  }
+}
+
+/** Pedir salir o una cesión: ella lo siente distinto si deja una ciudad que adora o una que no soporta. */
+export function leaveReaction(partner: string, club: string): MoveReaction | null {
+  const name = partnerFirstName(partner);
+  const city = cityName(club);
+  switch (cityStance(partner, club)) {
+    case "encantada":
+      return { delta: -6, text: `${name} se queda callada: tiene su vida en ${city} y la idea de irse le cuesta.` };
+    case "reacia":
+      return { delta: 6, text: `${name} no lo disimula: se le ilumina la cara. Llevaba meses queriendo salir de ${city}.` };
+    default:
+      return { delta: -1, text: `${name} te dice que te apoya, aunque otra mudanza le pesa.` };
+  }
+}
+
+/** Lo que opina antes de decidir sobre renovar (se añade al texto de la escena de contrato). */
+export function renewalOpinionLine(partner: string, club: string): string | null {
+  const name = partnerFirstName(partner);
+  const city = cityName(club);
+  switch (cityStance(partner, club)) {
+    case "encantada":
+      return `${name} te anima a renovar: es feliz en ${city} y no quiere irse.`;
+    case "reacia":
+      return `${name} te pide que no te ates a ${city}: no se adapta y echa de menos su casa.`;
+    default:
+      return null;
+  }
+}
+
+export function addPartnerRenewalOpinion(event: GameEvent, player: { club: string; flags?: Flags | null }): GameEvent {
+  const partner = partnerOf(player.flags);
+  if (!partner || !/^contrato-/.test(event.id)) return event;
+  const line = renewalOpinionLine(partner, player.club);
+  return line ? { ...event, description: `${event.description}\n\n${line}` } : event;
+}
+
 export interface PartnerStepInput {
   club: string;
   /** Club al que te cambias con esta decisión (si la hay). */
@@ -120,6 +169,10 @@ export interface PartnerStepInput {
   moral?: number;
   /** Banderas que deja la opción elegida. */
   optionFlags?: Flags | null;
+  /** Has renovado con tu club actual. */
+  renewed?: boolean;
+  /** Has pedido salir (transferible o cesión) de tu club actual. */
+  leaving?: boolean;
 }
 
 /**
@@ -149,6 +202,21 @@ export function stepPartner(flags: Flags | null | undefined, input: PartnerStepI
 
   if (input.newClub && cityName(input.newClub) !== cityName(input.club)) {
     const react = moveReaction(partner, input.club, input.newClub);
+    if (react) {
+      delta += react.delta;
+      note = react.text;
+    }
+  }
+
+  if (input.renewed) {
+    const react = renewalReaction(partner, input.club);
+    if (react) {
+      delta += react.delta;
+      note = react.text;
+    }
+  }
+  if (input.leaving) {
+    const react = leaveReaction(partner, input.club);
     if (react) {
       delta += react.delta;
       note = react.text;
