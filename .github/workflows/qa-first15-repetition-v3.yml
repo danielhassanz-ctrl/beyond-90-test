@@ -1,0 +1,44 @@
+name: QA first-15 repetition v3
+
+on:
+  push:
+    branches:
+      - qa-first15-repetition-v3
+  pull_request:
+    branches:
+      - main
+    paths:
+      - scripts/first15-repetition-v3-smoke.ts
+      - src/game/**
+      - .github/workflows/qa-first15-repetition-v3.yml
+
+permissions:
+  contents: read
+
+jobs:
+  repetition-v3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Mandatory life-first opening QA
+        run: npm run qa:opening
+      - name: First-15 semantic repetition gate
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-repetition-v3-smoke.ts
+      - name: Existing first-15 quality floor
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-quality-floor-smoke.ts
+      - name: Alternative branch playtest
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/first15-branch-diversity-smoke.ts
+      - name: Narrative anti-repetition QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/narrative-quality-smoke.ts
+      - name: Full-season boredom QA
+        run: node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-season-boredom-smoke.ts
+      - name: Build
+        run: npm run build
