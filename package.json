@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "qa:career": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/full-career-smoke.ts",
     "qa:branches": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/branch-coverage-smoke.ts",
-    "qa:pacing": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/pacing-smoke.ts",
+    "qa:pacing": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/pacing-smoke.ts && node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/academy-pacing-grounding-smoke.ts",
     "qa:competition-pacing": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/competition-pacing-smoke.ts",
     "qa:persistent-cast": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/persistent-cast-smoke.ts",
     "qa:opening": "node --experimental-loader ./scripts/asset-loader.mjs --import tsx scripts/opening-flow-smoke.ts",
