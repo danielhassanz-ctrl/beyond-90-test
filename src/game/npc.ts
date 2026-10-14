@@ -1,4 +1,5 @@
 import { installPeopleEvents } from "./events-people";
+import { installPeopleFollowups } from "./events-people-followups";
 import type { GameState } from "./types";
 
 /* =========================================================================
@@ -21,6 +22,7 @@ const FEMALE = ["Lucía", "Carla", "Marta", "Irene", "Nerea", "Paula", "Alba", "
 
 export function careerSeed(s: GameState): number {
   installPeopleEvents();
+  installPeopleFollowups();
   const anyS = s as GameState & { careerSeed?: number };
   if (typeof anyS.careerSeed !== "number" || !Number.isFinite(anyS.careerSeed)) {
     // Legacy saves may predate persisted careerSeed. Derive a stable fallback from
