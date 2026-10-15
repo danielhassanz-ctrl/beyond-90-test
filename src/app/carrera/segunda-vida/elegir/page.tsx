@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { displayName } from "@/types/player";
+import { canContinueDynasty } from "@/lib/narrative/dynasty";
+import Link from "next/link";
 import { PRESIDENT_CLUB_OPTIONS, COACH_CLUB_OPTIONS, AGENT_SPECIALTY_OPTIONS } from "@/lib/constants";
 import {
   chooseSecondCareer,
@@ -238,6 +240,15 @@ export default async function ElegirSegundaVidaPage({
       title="¿Qué quieres ser ahora?"
       subtitle={`${displayName(player)} colgó las botas. Tu historia en el fútbol no termina aquí.`}
     >
+      {canContinueDynasty(player) && (
+        <Link
+          href="/carrera/saga"
+          className="mb-4 block rounded-2xl border border-gold/60 bg-gold/10 p-4 text-center hover:bg-gold/20"
+        >
+          <span className="block font-display text-lg text-gold">🧬 Continuar la saga</span>
+          <span className="block text-xs text-muted-foreground">Empieza la carrera de tu hijo: lleva tu apellido y hereda parte de lo que has construido.</span>
+        </Link>
+      )}
       <form action={chooseSecondCareer} className="space-y-3">
         {ROLES.map((role) => (
           <OptionCard

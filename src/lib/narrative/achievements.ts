@@ -84,6 +84,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "boda", name: "Sí, quiero", description: "Cásate.", icon: "💍", tier: "plata", category: "Vida", check: (p) => flag(p, "casados") },
   { id: "primer-hijo", name: "Papá", description: "Nace tu primer hijo.", icon: "👶", tier: "plata", category: "Vida", check: (p) => num(p.flags?.hijos_n) >= 1 || flag(p, "hijos") },
   { id: "familia-numerosa", name: "Familia numerosa", description: "Ten tres hijos.", icon: "👨‍👩‍👧‍👦", tier: "oro", category: "Vida", check: (p) => num(p.flags?.hijos_n) >= 3 },
+  { id: "segunda-generacion", name: "Sangre de campeón", description: "Sigue la saga: juega con tu hijo.", icon: "🧬", tier: "plata", category: "Vida", check: (p) => num(p.flags?.dinastia_gen) >= 1 },
+  { id: "dinastia", name: "Una dinastía", description: "Llega a la tercera generación de tu apellido.", icon: "👑", tier: "oro", category: "Vida", check: (p) => num(p.flags?.dinastia_gen) >= 2 },
   // ── Club ──
   { id: "capitan", name: "El brazalete", description: "Sé capitán de tu club.", icon: "©️", tier: "plata", category: "Club", check: (p) => flag(p, "capitan_club") },
   { id: "capitan-seleccion", name: "Capitán de tu país", description: "Sé capitán de tu selección.", icon: "🎖️", tier: "oro", category: "Club", check: (p) => flag(p, "capitan_seleccion") },

@@ -49,6 +49,7 @@ import { readProperties } from "@/lib/finance/mortgage";
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
 import { timed } from "@/lib/perf";
 import { mergeFlagsForWrite } from "@/lib/supabase/flags";
+import { dynastyGeneration, buildDynastyIntroEvent } from "@/lib/narrative/dynasty-intro";
 export const GEN_LOCK_ID = "gen-lock";
 // Generar una escena con la IA tarda 10-15 s (medido en producción, máx. ~15). Si la petición que reservó el turno se cae (el navegador
 // cierra la conexión, el jugador recarga…) la reserva se queda puesta: antes caducaba a los 90 s y el jugador esperaba ~1 min y medio
@@ -173,6 +174,12 @@ async function ensureNextEventInner(
   let event: GameEvent | null = player.pending_event;
   // Si otra petición está generando la escena de este turno, se espera a que acabe.
   if (isGenLock(event)) event = await waitForPendingEvent(supabase, player.id);
+
+  // La saga: la primera escena de quien sigue el apellido, antes de elegir representante.
+  if (!event && !player.agent_name && dynastyGeneration(player.flags) > 0 && !player.flags?.dinastia_intro) {
+    event = buildDynastyIntroEvent(player);
+    await supabase.from("players").update({ pending_event: event }).eq("id", player.id);
+  }
 
   if (!event && !player.agent_name) {
     // Usar las 15 variantes narrativas de primera firma (sin generar con IA)

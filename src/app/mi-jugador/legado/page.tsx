@@ -6,6 +6,7 @@ import { seasonLabel } from "@/types/career";
 import { ClubCrest } from "@/components/ClubCrest";
 import { BottomNav } from "@/components/BottomNav";
 import { repairTrophies } from "@/lib/honours-repair";
+import { readSaga, describeLegacy } from "@/lib/narrative/dynasty";
 
 const SECOND_LIFE_MILESTONE_TYPES = new Set([
   "ascenso_entrenador", "canterano", "seleccion", "final_champions",
@@ -130,6 +131,22 @@ export default async function LegadoPage() {
           El mapa de tu carrera: lo que ya has logrado y lo que todavía te queda.
         </p>
       </div>
+
+      {readSaga(player.flags).length > 0 && (
+        <div className="w-full max-w-md space-y-2 rounded-2xl border border-gold/40 bg-surface p-4">
+          <p className="text-kicker text-gold">La saga de tu apellido</p>
+          {readSaga(player.flags).map((e, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <span className="font-num mt-0.5 text-xs font-bold text-gold">{i + 1}ª</span>
+              <div className="min-w-0">
+                <p className="font-display text-base">{e.n}{e.club ? <span className="text-sm text-muted-foreground"> · {e.club}</span> : null}</p>
+                <p className="text-xs text-muted-foreground">{describeLegacy(e)}</p>
+              </div>
+            </div>
+          ))}
+          <p className="text-xs text-muted-foreground">Tú eres la {readSaga(player.flags).length + 1}ª generación.</p>
+        </div>
+      )}
 
       <div className="w-full max-w-md space-y-2 rounded-2xl border border-panel-border bg-surface p-4">
         {achievements.map((a) => (

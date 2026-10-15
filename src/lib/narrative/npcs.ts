@@ -260,6 +260,9 @@ function pickGender(seed: string, gender: "m" | "f" | "any"): "m" | "f" {
 }
 
 export function getNpcName(player: Player, role: NpcRole): string {
+  // En la saga (dinastía) tu padre es el jugador de la generación anterior y tu madre, su pareja.
+  if (role === "padre" && typeof player.flags?.padre_nombre === "string" && player.flags.padre_nombre) return player.flags.padre_nombre;
+  if (role === "madre" && typeof player.flags?.madre_nombre === "string" && player.flags.madre_nombre) return player.flags.madre_nombre;
   // Cambios de cara en el entorno: cada vez que el entrenador, el capitán... del club
   // cambia (flag gen_<rol>), el personaje es otro, con otro nombre, no el mismo para siempre.
   const gen = parseInt(String(player.flags?.[`gen_${role}`] ?? "0"), 10) || 0;

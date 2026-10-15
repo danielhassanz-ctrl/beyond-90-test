@@ -8,6 +8,7 @@ import { withShareLink, getAppUrlLine } from "@/lib/constants";
 import { CareerStatCard } from "@/components/CareerStatCard";
 import { ShareableCard } from "@/components/ShareableCard";
 import { beginSecondLife } from "./actions";
+import { canContinueDynasty } from "@/lib/narrative/dynasty";
 
 /**
  * Mismos tipos de segunda vida que en carrera/hito/[id]/page.tsx — su
@@ -201,6 +202,15 @@ export default async function RetiroPage() {
           {/* Segunda vida button: pasa por beginSecondLife() para dejar el
               status en awaiting_second_life -- sin eso, /carrera/segunda-vida
               devolvía al jugador aquí mismo en bucle. */}
+          {canContinueDynasty(player) && (
+            <Link
+              href="/carrera/saga"
+              className="gold-fill mt-4 inline-block rounded-full px-6 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
+            >
+              🧬 Continuar la saga con tu hijo
+            </Link>
+          )}
+
           {!player.second_career && (
             <form action={beginSecondLife}>
               <button
