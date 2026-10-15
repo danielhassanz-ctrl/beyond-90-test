@@ -3,7 +3,7 @@ import type { Consequences, EventCategory, GameEvent, SecondCareerRole } from "@
 import type { Player } from "@/types/player";
 import { SECOND_CAREER_LABELS, playerAge } from "@/types/career";
 import { STARTING_AGENTS, pickStartingClubOffers, type ClubOffer } from "@/lib/constants";
-import { getSeasonContext, formatTournamentContext } from "@/lib/calendar/season";
+import { getSeasonContext, formatTournamentContext, noTournamentContext } from "@/lib/calendar/season";
 import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
 import { getCareerContext, shouldHaveClubOpportunity, shouldSuggestLifeEvent } from "@/lib/narrative/career-arc";
 import {
@@ -20,6 +20,8 @@ import { aiBudgetAllows, priorityFor, recordAiCall, type AiPriority } from "@/li
 import { buildStateBrief, buildLegacyBrief } from "@/lib/narrative/state-brief";
 import { describeAgeWeeks } from "@/lib/narrative/ledger";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
+import { worldTournamentWinner } from "@/lib/narrative/world-results";
+import type { TorneoType } from "@/lib/narrative/torneo";
 import { computeRole } from "@/lib/narrative/role";
 
 // Haiku por defecto: el texto de IA tiene que costar poco por jugador (ver ai-budget.ts). AI_MODEL lo sustituye en pruebas.
@@ -621,7 +623,7 @@ export async function generateNextEventDynamic(
   const seasonContext = getSeasonContext(player.week, player.nation);
   const tournamentNote = seasonContext.hasMajorTournament
     ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)}`
-    : "";
+    : `\n${noTournamentContext(seasonContext.season, player.nation)}`;
 
   // Obtén el contexto de carrera y oportunidades narrativas
   const careerContext = getCareerContext(player);
@@ -789,7 +791,7 @@ export async function generateAiEvent(
   const seasonContext = getSeasonContext(player.week, player.nation);
   const tournamentNote = seasonContext.hasMajorTournament
     ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)}`
-    : "";
+    : `\n${noTournamentContext(seasonContext.season, player.nation)}`;
 
   const careerContext = getCareerContext(player);
   const clubOpportunity = shouldHaveClubOpportunity(player);
@@ -1231,8 +1233,10 @@ export async function generatePreseasoneEvent(
     : "";
   const tournamentNote =
     seasonContext.hasMajorTournament && !attendedTournament
-      ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)} El jugador NO fue convocado — lo vivió como aficionado más, viendo el torneo por televisión. Menciona de pasada quién se proclamó campeón (puedes inventar la selección ganadora si no quieres comprometerte con un resultado real) antes de que el entrenador le cite para la pretemporada.`
-      : "";
+      ? `\n⭐ CONTEXTO ESPECIAL: ${formatTournamentContext(seasonContext.majorTournament)} El jugador NO lo disputó (lesionado o sin convocatoria) — lo vivió como aficionado más, viendo el torneo por televisión. DATO REAL: ${worldTournamentWinner(player, seasonContext.majorTournament as TorneoType, season).winner} se proclamó campeón y ${worldTournamentWinner(player, seasonContext.majorTournament as TorneoType, season).runnerUp} fue subcampeón; si lo mencionas, que sea exactamente así, antes de que el entrenador le cite para la pretemporada.`
+      : seasonContext.hasMajorTournament
+        ? ""
+        : `\n${noTournamentContext(seasonContext.season, player.nation)}`;
 
   const prompt = `Eres el director narrativo de "Beyond 90", un simulador de carrera de futbolista.
 Esta escena marca el CIERRE de la temporada anterior y el ARRANQUE de la nueva (verano de ${2026 + season}). Es el único momento del año donde se nota el paso del tiempo — antes de esto el jugador no tenía ninguna señal de que la temporada había terminado, solo notaba de golpe que tenía un año más. Este evento tiene que dejar claro que un año se cierra.

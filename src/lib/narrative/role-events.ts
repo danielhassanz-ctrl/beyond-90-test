@@ -11,6 +11,7 @@ import type { MatchWeek } from "@/lib/calendar/match-calendar";
 import { getClubLevel } from "@/lib/calendar/match-calendar";
 import { ligaLabel, copaLabel, leagueOf } from "@/lib/calendar/leagues";
 import { benchRemaining } from "@/lib/narrative/role";
+import { settleOffscreenMatch } from "@/lib/calendar/offscreen-progress";
 
 const WEEKS_PER_SEASON = 10;
 
@@ -27,14 +28,27 @@ export function buildBenchedMatchEvent(player: Player, match: MatchWeek): GameEv
   let h = 0;
   for (const ch of `${player.id}:${match.week}:${match.slot}:banquillo`) h = (h * 31 + ch.charCodeAt(0)) % 1000003;
   const roll = (h % 100) / 100;
-  const own = roll < 0.5 ? 2 + (h % 2) : roll < 0.75 ? 1 : h % 2;
-  const rival = roll < 0.5 ? h % 2 : roll < 0.75 ? 1 : 2 + (h % 2);
-  const verdict = own > rival ? "gana" : own === rival ? "empata" : "pierde";
+  let own = roll < 0.5 ? 2 + (h % 2) : roll < 0.75 ? 1 : h % 2;
+  let rival = roll < 0.5 ? h % 2 : roll < 0.75 ? 1 : 2 + (h % 2);
+  // Copa y Europa siguen su curso aunque no estés en la lista (ver offscreen-progress.ts).
+  const off = settleOffscreenMatch(player, match);
+  let scoreText = `${own}-${rival}`;
+  let verdict = own > rival ? "gana" : own === rival ? "empata" : "pierde";
+  if (off.scoreLine) {
+    scoreText = off.scoreLine;
+    const m = off.scoreLine.match(/^(\d+)-(\d+)/);
+    if (m) {
+      own = parseInt(m[1], 10);
+      rival = parseInt(m[2], 10);
+    }
+    verdict = off.win ? "gana" : "pierde";
+  }
   const comp = compLabel[match.competition] ?? "partido oficial";
   const streak = streakOf(player);
   const bench = benchRemaining(player.flags);
   const base = { bench_streak: String(streak + 1) };
 
+  const trophy = off.trophy ? { kind: off.trophy, detail: `${scoreText} a ${match.rivalClub}` } : undefined;
   const options: EventOption[] = [
     {
       id: "a",
@@ -92,8 +106,9 @@ export function buildBenchedMatchEvent(player: Player, match: MatchWeek): GameEv
     category: "partido",
     rivalClub: match.rivalClub,
     title: `Fuera de la convocatoria: ${player.club} ${verdict} ante ${match.rivalClub}`,
-    description: `${comp} ante ${match.rivalClub}. El entrenador no te incluye en la lista: no juegas ni siquiera desde el banquillo. Marcador: ${own}-${rival} (${player.club}-${match.rivalClub}). Lo ves desde la grada, con la camiseta de paisano, mientras el equipo juega sin ti.`,
+    description: `${comp} ante ${match.rivalClub}. El entrenador no te incluye en la lista: no juegas ni siquiera desde el banquillo. Marcador: ${scoreText} (${player.club}-${match.rivalClub}). ${off.note ? `${off.note} ` : ""}Lo ves desde la grada, con la camiseta de paisano, mientras el equipo juega sin ti.`,
     options,
+    ...(trophy ? { trophy } : {}),
   };
 }
 

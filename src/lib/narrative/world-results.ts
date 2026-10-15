@@ -57,6 +57,18 @@ export function tournamentFinal(player: Pick<Player, "id" | "nation">, type: Tor
   return { winner, runnerUp, score: scores[hash(`${player.id}:${type}:${season}:final:s`) % scores.length] };
 }
 
+/**
+ * Quién ganó de verdad el torneo de selecciones de ese verano cuando tú no lo jugaste (lesionado o sin convocatoria): estable para
+ * esa partida y ese año, con tu selección entre las candidatas. Así el cierre de temporada no inventa un campeón distinto cada vez.
+ */
+export function worldTournamentWinner(player: Pick<Player, "id" | "nation">, type: TorneoType, season: number): { winner: string; runnerUp: string } {
+  const pool = TORNEO_POOLS[type].includes(player.nation) ? TORNEO_POOLS[type] : [...TORNEO_POOLS[type], player.nation];
+  const weights: [string, number][] = pool.map((n) => [n, nationTier(n) ** 2]);
+  const winner = weightedPick(`${player.id}:${type}:${season}:world:w`, weights);
+  const runnerUp = weightedPick(`${player.id}:${type}:${season}:world:r`, weights, new Set([winner]));
+  return { winner, runnerUp };
+}
+
 const OUTCOME_FROM: Record<string, string> = {
   fase_de_grupos: "Te quedaste en la fase de grupos y la final te pilla ya en casa, con la maleta deshecha",
   dieciseisavos: "Caíste en dieciseisavos y la fase final del torneo la sigues desde el sofá, con la sensación de haberte quedado a las puertas",

@@ -178,6 +178,21 @@ export function getSeasonContext(
  * el torneo ya ha pasado para cuando empieza esta escena, se haya vivido
  * en persona (convocado) o solo como aficionado más.
  */
+/**
+ * Un año sin torneo de selecciones lo dice expresamente (con cuál fue el último): sin esto, la IA hablaba de que «llega la
+ * Eurocopa» en pleno 2033, el año después de una. Cadena vacía si este año sí hay torneo.
+ */
+export function noTournamentContext(season: number, nation: string): string {
+  if (hasMajorTournament(season, 16 + season, nation).has) return "";
+  const names: Record<string, string> = { mundial: "el Mundial", eurocopa: "la Eurocopa", copa_america: "la Copa América" };
+  let last = "";
+  for (let k = 1; k <= 4 && !last; k++) {
+    const t = hasMajorTournament(season - k, 16 + season - k, nation);
+    if (t.has && t.type) last = `El último torneo de selecciones fue ${names[t.type]} ${2026 + season - k}.`;
+  }
+  return `⭐ CALENDARIO: este año (${2026 + season}) NO hay Mundial, Eurocopa ni Copa América. ${last} PROHIBIDO decir que «llega», «se acerca» o «está en marcha» un torneo de selecciones, ni insinuar que se juega este verano.`;
+}
+
 export function formatTournamentContext(tournament?: "mundial" | "eurocopa" | "copa_america"): string {
   if (!tournament) return "";
   const labels: Record<string, string> = {

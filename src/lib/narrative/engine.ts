@@ -21,6 +21,7 @@ import { pickSponsorEvent } from "@/lib/narrative/brands";
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
 import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, getClubLevel, matchKey, parseMatchDone, type MatchWeek } from "@/lib/calendar/match-calendar";
 import { childStage as childStageOf, buildChildEvent } from "@/lib/narrative/children";
+import { settleOffscreenMatch } from "@/lib/calendar/offscreen-progress";
 import { getSeasonProgress, advanceCupProgress, decideKnockoutResult, decideTwoLegResult, resolveEuroGroupStage, decisionNeedsGoal } from "@/lib/calendar/competition-progress";
 import { getInjuryRemaining, naturalFormaDegradation, calculateMediaPressure, deteriorateRelationships, shouldTriggerDeclineReflection, ageBasedMediaDecline } from "@/lib/narrative/career-dynamics";
 import { detectCareerTransition, buildEnteringPeakEvent, buildExitingPeakEvent, buildEnteringDeclineEvent, buildReadyToRetireEvent } from "@/lib/narrative/career-transitions";
@@ -831,7 +832,7 @@ function clampPercent(value: number) {
  */
 function withTrophy(event: GameEvent, kind: TrofeoKind, team: string, detail?: string, scene?: string): GameEvent {
   const label = trofeoLabel({ k: kind, c: team });
-  const already = /campe[oó]n|levantw+ (el|la) (trofeo|copa)/i.test(event.description);
+  const already = /campe[oó]n|levant\w+ (el|la) (trofeo|copa)/i.test(event.description);
   const cup =
     kind === "champions" && leagueOf(team).id === "sa"
       ? "the large silver Asian Champions League trophy with big handles"
@@ -3134,17 +3135,29 @@ function buildInjuredMatchEvent(player: Player, match: MatchWeek, monthsLeft: nu
   let h = 0;
   for (const ch of `${player.id}:${match.week}:baja`) h = (h * 31 + ch.charCodeAt(0)) % 1000003;
   const roll = (h % 100) / 100;
-  const own = roll < 0.5 ? 2 + (h % 2) : roll < 0.75 ? 1 : h % 2;
-  const rival = roll < 0.5 ? h % 2 : roll < 0.75 ? 1 : 2 + (h % 2);
-  const verdict = own > rival ? "gana" : own === rival ? "empata" : "pierde";
+  let own = roll < 0.5 ? 2 + (h % 2) : roll < 0.75 ? 1 : h % 2;
+  let rival = roll < 0.5 ? h % 2 : roll < 0.75 ? 1 : 2 + (h % 2);
+  // Copa y Europa siguen su curso aunque no juegues: el partido se decide en código y mueve la eliminatoria (ver offscreen-progress.ts).
+  const off = settleOffscreenMatch(player, match);
+  let scoreText = `${own}-${rival}`;
+  let verdict = own > rival ? "gana" : own === rival ? "empata" : "pierde";
+  if (off.scoreLine) {
+    scoreText = off.scoreLine;
+    const m = off.scoreLine.match(/^(\d+)-(\d+)/);
+    if (m) {
+      own = parseInt(m[1], 10);
+      rival = parseInt(m[2], 10);
+    }
+    verdict = off.win ? "gana" : "pierde";
+  }
   const comp = compLabel[match.competition] ?? "partido oficial";
   const left = `${monthsLeft} ${monthsLeft === 1 ? "mes" : "meses"}`;
-  return {
+  const baseEvent: GameEvent = {
     id: `matchday-baja-${match.week}-${Date.now()}`,
     category: "partido",
     rivalClub: match.rivalClub,
     title: `Desde la grada: ${player.club} ${verdict} ante ${match.rivalClub}`,
-    description: `${comp} ante ${match.rivalClub}. No juegas: sigues de baja (te quedan unos ${left}). Marcador: ${own}-${rival} (${player.club}-${match.rivalClub}). Lo ves desde fuera, con la rodilla vendada y el partido pasando sin ti.`,
+    description: `${comp} ante ${match.rivalClub}. No juegas: sigues de baja (te quedan unos ${left}). Marcador: ${scoreText} (${player.club}-${match.rivalClub}). ${off.note ? `${off.note} ` : ""}Lo ves desde fuera, con la rodilla vendada y el partido pasando sin ti.`,
     options: [
       {
         id: "a",
@@ -3169,6 +3182,8 @@ function buildInjuredMatchEvent(player: Player, match: MatchWeek, monthsLeft: nu
       },
     ],
   };
+  // El título cuenta aunque lo veas desde la grada (sin foto de celebración: no estás en el campo).
+  return off.trophy ? { ...baseEvent, trophy: { kind: off.trophy, detail: `${scoreText} a ${match.rivalClub}` } } : baseEvent;
 }
 
 export async function generateMatchDayEvent(
@@ -3738,7 +3753,15 @@ export async function pickNextEventDynamic(
   // pasarlo aquí, el calendario no tendría forma de saber si el jugador
   // sigue vivo en el torneo.
   const currentSeason = Math.floor((playerWithDynamics.week - 1) / 10);
-  const seasonProgress = getSeasonProgress(playerWithDynamics, currentSeason);
+  let seasonProgress = getSeasonProgress(playerWithDynamics, currentSeason);
+  // Red de seguridad: si pasó la fase de grupos europea sin que se decidiera (no jugaste ese partido, un cambio de club…), se decide ahora.
+  {
+    const weekInSeasonNow = ((playerWithDynamics.week - 1) % 10) + 1;
+    if (weekInSeasonNow > 6 && seasonProgress.euro.round === 0 && seasonProgress.euro.alive && !seasonProgress.euro.tied && getEuropeanCompetitionFor(playerWithDynamics.club)) {
+      resolveEuroGroupStage(playerWithDynamics, currentSeason, getClubLevel(playerWithDynamics.club));
+      seasonProgress = getSeasonProgress(playerWithDynamics, currentSeason);
+    }
+  }
 
   // Verificar si el partido programado es ESTA semana — tiene que
   // comprobarse ANTES que "la próxima semana", o el partido nunca llega
