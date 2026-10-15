@@ -90,6 +90,7 @@ import { shouldTriggerArrivalIntro, buildArrivalIntroEvent } from "@/lib/narrati
 import { buildSeasonCloseEvent } from "@/lib/narrative/season-close";
 import { shouldTriggerSeasonAwards, buildSeasonAwardsEvent } from "@/lib/narrative/season-awards";
 import { shouldTriggerSeasonGoals, buildSeasonGoalsEvent, shouldTriggerGoalsReview, buildGoalsReviewEvent } from "@/lib/narrative/season-goals";
+import { shouldTriggerTrainingPlan, buildTrainingPlanEvent } from "@/lib/narrative/training-plan";
 import { shouldTriggerSeriousInjury, shouldTriggerSagaStage, buildSeriousInjuryEvent, buildSagaStageEvent } from "@/lib/narrative/injury-saga";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
@@ -2105,6 +2106,12 @@ export async function pickNextEventDynamic(
     const goalsEvent = buildSeasonGoalsEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Objetivos de temporada: "${goalsEvent.title}"`);
     return goalsEvent;
+  }
+  // El plan de entrenamiento de la temporada: en qué trabajar (mejora un atributo del perfil).
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerTrainingPlan(playerWithDynamics, usedEventIds)) {
+    const plan = buildTrainingPlanEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Plan de entrenamiento: "${plan.title}"`);
+    return plan;
   }
 
   // Recién fichado por otro club: lo primero es conocer al míster, al capitán y a alguien del cuerpo técnico.

@@ -1,3 +1,5 @@
+import { AttributeBars } from "@/components/AttributeBars";
+import { getAttributes } from "@/lib/narrative/attributes";
 import { headerPhotoUrl } from "@/lib/player/header-photo";
 import { displayWeek } from "@/lib/calendar/season-display";
 import Link from "next/link";
@@ -80,6 +82,17 @@ export default async function MiJugadorPage() {
               relRepresentante={player.agent_name ? player.rel_representante : null}
             />
           </div>
+
+          {player.club !== NO_CLUB_YET && (
+            <AttributeBars
+              attrs={getAttributes(player)}
+              focus={
+                typeof player.flags?.tp_foco === "string" && player.flags.tp_foco
+                  ? ({ intensivo: "intensivo", descanso: "mantenimiento" } as Record<string, string>)[player.flags.tp_foco] ?? getAttributes(player).find((a) => a.key === player.flags?.tp_foco)?.label ?? null
+                  : null
+              }
+            />
+          )}
 
           <div className="space-y-3 rounded-2xl border border-panel-border bg-surface p-4">
             <p className="text-kicker">Prensa</p>
