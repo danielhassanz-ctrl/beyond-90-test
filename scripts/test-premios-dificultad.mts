@@ -81,5 +81,27 @@ console.log("6) Criterio: un año lesionado o sin títulos no gana");
   ok(wChamp > wCopa * 2, "Champions y Liga pesan mucho más que una copa (" + Math.round(wChamp * 100) + " % frente a " + Math.round(wCopa * 100) + " %)");
 }
 
+console.log("7) Ganar el Mundial o la Eurocopa destacando te mete en la pelea");
+{
+  const mundial = JSON.stringify([{ k: "mundial", s: 9, c: "España" }]);
+  const euro = JSON.stringify([{ k: "eurocopa", s: 9, c: "España" }]);
+  const star = { match_decision_101_torneo_3: "x" } as Record<string, string>;
+  void star;
+  const decisions = (n: number) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`match_decision_101_torneo.${i + 3}`, i % 2 ? "assist" : "goal"]));
+  const sinNada = wins({ media: 92, week: 101, flags: {} }, "balon_oro");
+  const mundialGris = wins({ media: 92, week: 101, flags: { trofeos: mundial } }, "balon_oro");
+  const mundialBrillando = wins({ media: 92, week: 101, flags: { trofeos: mundial, ...decisions(4) } }, "balon_oro");
+  const euroBrillando = wins({ media: 92, week: 101, flags: { trofeos: euro, ...decisions(4) } }, "balon_oro");
+  const euroGris = wins({ media: 92, week: 101, flags: { trofeos: euro } }, "balon_oro");
+  console.log(`    sin nada: ${Math.round(sinNada * 100)} % · Mundial sin destacar: ${Math.round(mundialGris * 100)} % · Mundial destacando: ${Math.round(mundialBrillando * 100)} % · Eurocopa destacando: ${Math.round(euroBrillando * 100)} % · Eurocopa sin destacar: ${Math.round(euroGris * 100)} %`);
+  ok(mundialGris > sinNada * 3, "ganar el Mundial, aunque tu club no gane nada, te da posibilidades reales");
+  ok(mundialBrillando > mundialGris, "destacar en el Mundial (goles y asistencias en las jugadas decisivas) suma más");
+  ok(euroBrillando > euroGris && euroBrillando > sinNada * 2, "la Eurocopa también, algo menos que el Mundial");
+  ok(mundialBrillando > euroBrillando, "el Mundial pesa más que la Eurocopa");
+  ok(mundialBrillando < 0.8, "ni siquiera un Mundial brillante es un premio seguro");
+  const lesionadoMundial = wins({ media: 92, week: 101, flags: { trofeos: mundial, ...decisions(4), inj_10: "6" } }, "balon_oro");
+  ok(lesionadoMundial < mundialBrillando * 0.3, "pero un año de baja sigue pesando (" + Math.round(lesionadoMundial * 100) + " %)");
+}
+
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);

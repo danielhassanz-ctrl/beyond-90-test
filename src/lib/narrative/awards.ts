@@ -136,6 +136,37 @@ export function teamMerit(player: Pick<Player, "flags">, season: number): number
     .reduce((n, t) => n + (TITLE_WEIGHT[t.k] ?? 0.8), 0);
 }
 
+/**
+ * El Mundial y la Eurocopa hacen candidato: ganar un torneo de selecciones, y más si destacas en él (goles o asistencias en las
+ * jugadas decisivas de sus partidos), mete al jugador en la pelea por el Balón de Oro aunque su club no haya ganado nada. Llegar a
+ * la final destacando también suma algo.
+ */
+export function tournamentBoost(player: Pick<Player, "flags">, season: number): number {
+  const trofeos = readTrofeos(player.flags).filter((t) => t.s === season || t.s === season - 1);
+  const flags = player.flags ?? {};
+  // Jugadas decisivas con gol o asistencia en los partidos de torneo de esas dos veranos (turno 1 de cada temporada).
+  let stars = 0;
+  for (const w of [season * 10 + 1, (season - 1) * 10 + 1]) {
+    for (const [k, v] of Object.entries(flags)) {
+      if (k.startsWith(`match_decision_${w}_torneo.`) && (v === "goal" || v === "wondergoal" || v === "assist")) stars++;
+    }
+  }
+  const shines = stars >= 2;
+  let boost = 0;
+  for (const t of trofeos) {
+    if (t.k === "mundial") boost = Math.max(boost, 3 + (shines ? 1.5 : 0) + Math.min(1, stars * 0.15));
+    else if (t.k === "eurocopa") boost = Math.max(boost, 1.8 + (shines ? 1.2 : 0) + Math.min(0.8, stars * 0.12));
+    else if (t.k === "copa_america") boost = Math.max(boost, 1.2 + (shines ? 0.8 : 0));
+  }
+  // Una final jugada y perdida, destacando, también se recuerda.
+  for (const type of ["mundial", "eurocopa", "copa_america"]) {
+    for (const sx of [season, season - 1]) {
+      if (flags[`torneo_result_${type}_${sx}`] === "subcampeon" && shines) boost = Math.max(boost, 1);
+    }
+  }
+  return boost;
+}
+
 /** Turnos de baja en el año del premio: toda esta temporada y la mitad de la anterior (ver inj_<temporada> en carrera/actions.ts). */
 export function injuredTurns(player: Pick<Player, "flags">, season: number): number {
   const n = (k: string) => parseInt(String(player.flags?.[k] ?? "0"), 10) || 0;
@@ -163,7 +194,7 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
   const fatigue = kind === "balon_oro" ? wonBefore.filter((s) => season - s <= 3 && season - s >= 1).length * 1.8 : 0;
   const luck = jitter(`${player.id}:${kind}:${season}:yo`) * (kind === "golden_boy" ? 2 : young ? 5 : 4);
   const playerScore =
-    mediaEff + ((player.fama ?? 50) - 50) * 0.02 + (kind === "golden_boy" ? Math.min(3, merit * 0.5) : Math.min(6, merit)) - (kind === "balon_oro" && merit === 0 ? 1.5 : 0) - injTurns * (kind === "golden_boy" ? 1.4 : 2.4) - youthPenalty - fatigue + luck + (kind === "golden_boy" ? 3 : 0) + (kind === "balon_oro" ? (POS_BIAS[posKey(player.position)] ?? 0) : 0);
+    mediaEff + ((player.fama ?? 50) - 50) * 0.02 + (kind === "golden_boy" ? Math.min(3, merit * 0.5) : Math.min(6, merit) + tournamentBoost(player, season)) - (kind === "balon_oro" && merit === 0 ? 1.5 : 0) - injTurns * (kind === "golden_boy" ? 1.4 : 2.4) - youthPenalty - fatigue + luck + (kind === "golden_boy" ? 3 : 0) + (kind === "balon_oro" ? (POS_BIAS[posKey(player.position)] ?? 0) : 0);
   // Los demás: los megacracks de tu generación (si encajan) y el resto inventados, de más a menos.
   const top = kind === "golden_boy" ? maxMediaForAge(player.week, 78) : 100.5;
   const out: Finalist[] = [{ name: mine, club: player.club, pos: posKey(player.position), score: playerScore, isPlayer: true }];
