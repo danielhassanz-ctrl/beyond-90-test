@@ -72,6 +72,7 @@ function whyOf(f: Finalist, player: Player, podium: { winner: string; runnerUp: 
   if (f.isPlayer) {
     const mine = readTrofeos(player.flags).filter((t) => (t.s === season - 1 || t.s === season) && !INDIVIDUAL.has(t.k));
     const labels = [...new Set(mine.map((t) => trofeoLabel(t)))];
+    if (injuredTurns(player, season) >= 3) return labels.length > 0 ? `campeón de ${labels.join(", ")}, aunque con media temporada de baja` : "una temporada frenada por las lesiones";
     return labels.length > 0 ? `campeón de ${labels.join(", ")}` : "una gran temporada, aunque sin títulos";
   }
   if (f.club === podium.winner) return podium.byPlayer ? "campeón de Europa a tu lado" : `campeón de Europa con el ${f.club}`;
@@ -125,10 +126,29 @@ const WIN_REMOTE = [
   "Lo ves en el móvil del masajista, sentado en la camilla. Te quedas mudo; el míster te da un abrazo de oso y dice que mañana se entrena igual.",
 ];
 
+/** Peso de cada título de equipo para los premios individuales. */
+const TITLE_WEIGHT: Record<string, number> = { champions: 3.2, mundial: 3.5, eurocopa: 2.6, copa_america: 2, liga: 2, europa: 1.2, olimpico: 1.2, copa: 0.8 };
+
+/** Suma ponderada de los títulos de equipo ganados esta temporada y la anterior (el año del premio). */
+export function teamMerit(player: Pick<Player, "flags">, season: number): number {
+  return readTrofeos(player.flags)
+    .filter((t) => (t.s === season || t.s === season - 1) && !INDIVIDUAL.has(t.k))
+    .reduce((n, t) => n + (TITLE_WEIGHT[t.k] ?? 0.8), 0);
+}
+
+/** Turnos de baja en el año del premio: toda esta temporada y la mitad de la anterior (ver inj_<temporada> en carrera/actions.ts). */
+export function injuredTurns(player: Pick<Player, "flags">, season: number): number {
+  const n = (k: string) => parseInt(String(player.flags?.[k] ?? "0"), 10) || 0;
+  return n(`inj_${season}`) + 0.5 * n(`inj_${season - 1}`);
+}
+
 function finalists(player: Player, kind: AwardKind): Finalist[] {
   const season = seasonOf(player);
   const mine = displayName(player);
-  const titlesThisSeason = readTrofeos(player.flags).filter((t) => t.s === season || t.s === season - 1).length;
+  // Los méritos de verdad de la temporada: títulos de equipo ponderados (la Champions y los torneos de selecciones pesan mucho
+  // más que una copa) y los meses que has estado de baja (un año lesionado no gana un Balón de Oro).
+  const merit = teamMerit(player, season);
+  const injTurns = injuredTurns(player, season);
   // El Balón de Oro lo ganan jugadores de 24-30 años en su apogeo; un chico de 20 casi nunca (solo un genio generacional).
   // La edad pesa: cuanto más joven, más lejos del puesto de arriba aunque la media sea altísima.
   const ageNow = playerAge(player.week);
@@ -143,9 +163,9 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
   const fatigue = kind === "balon_oro" ? wonBefore.filter((s) => season - s <= 3 && season - s >= 1).length * 1.8 : 0;
   const luck = jitter(`${player.id}:${kind}:${season}:yo`) * (kind === "golden_boy" ? 2 : young ? 5 : 4);
   const playerScore =
-    mediaEff + ((player.fama ?? 50) - 50) * 0.02 + Math.min(3.6, titlesThisSeason * 1.2) - youthPenalty - fatigue + luck + (kind === "golden_boy" ? 3 : 0) + (kind === "balon_oro" ? (POS_BIAS[posKey(player.position)] ?? 0) : 0);
+    mediaEff + ((player.fama ?? 50) - 50) * 0.02 + (kind === "golden_boy" ? Math.min(3, merit * 0.5) : Math.min(6, merit)) - (kind === "balon_oro" && merit === 0 ? 1.5 : 0) - injTurns * (kind === "golden_boy" ? 1.4 : 2.4) - youthPenalty - fatigue + luck + (kind === "golden_boy" ? 3 : 0) + (kind === "balon_oro" ? (POS_BIAS[posKey(player.position)] ?? 0) : 0);
   // Los demás: los megacracks de tu generación (si encajan) y el resto inventados, de más a menos.
-  const top = kind === "golden_boy" ? maxMediaForAge(player.week, 78) : 98;
+  const top = kind === "golden_boy" ? maxMediaForAge(player.week, 78) : 100.5;
   const out: Finalist[] = [{ name: mine, club: player.club, pos: posKey(player.position), score: playerScore, isPlayer: true }];
   const megas = getRivals(player).filter((r) => r.kind === "mega" && (kind === "balon_oro" || r.media > 0));
   for (const m of megas) {

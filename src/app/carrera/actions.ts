@@ -52,6 +52,7 @@ import { logAppError } from "@/lib/errorLog";
 import { computeStreakUpdate, STREAK_MILESTONES } from "@/lib/player/streak";
 import { displayName } from "@/types/player";
 import { mergeFlagsForWrite } from "@/lib/supabase/flags";
+import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { photoRefs } from "@/lib/images/photo-refs";
 import { withStateCause } from "@/lib/narrative/states";
 import { coverForMilestone } from "@/lib/images/coverHeadlines";
@@ -393,6 +394,13 @@ async function resolveEventInner(formData: FormData) {
       stats_yellow_cards: updatedPlayer.stats_yellow_cards,
       stats_titles: updatedPlayer.stats_titles,
     };
+  }
+
+  // Turnos de baja de esta temporada: cuentan para los premios individuales (un año lesionado no gana un Balón de Oro).
+  if (newWeek > player.week && getInjuryRemaining(player.flags) > 0) {
+    const injKey = `inj_${seasonNow}`;
+    const injBase = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
+    playerUpdate.flags = { ...injBase, [injKey]: String((parseInt(String(injBase[injKey] ?? "0"), 10) || 0) + 1) };
   }
 
   if (consequences.flags || event.memorableThread) {

@@ -63,5 +63,23 @@ for (let i = 0; i < 300; i++) {
 }
 ok(verdicts.size >= 5, `${verdicts.size} aperturas distintas («Dicen tu nombre…» ya no es siempre la misma)`);
 
+console.log("6) Criterio: un año lesionado o sin títulos no gana");
+{
+  const T = titles(101);
+  const sano = wins({ media: 95, week: 101, flags: { trofeos: T } }, "balon_oro");
+  const lesionado = wins({ media: 95, week: 101, flags: { trofeos: T, inj_10: "6" } }, "balon_oro");
+  const medio = wins({ media: 95, week: 101, flags: { trofeos: T, inj_10: "3" } }, "balon_oro");
+  const sinTit = wins({ media: 95, week: 101, flags: {} }, "balon_oro");
+  console.log(`    sano con doblete: ${Math.round(sano * 100)} % · medio año de baja: ${Math.round(medio * 100)} % · todo el año de baja: ${Math.round(lesionado * 100)} % · sin títulos: ${Math.round(sinTit * 100)} %`);
+  ok(lesionado < 0.02, "con el año entero de baja, no gana el Balón de Oro (aunque sea el mejor del mundo)");
+  ok(medio < sano * 0.5, "con medio año de baja, mucho más difícil");
+  ok(sinTit < sano * 0.35, "sin títulos de equipo, mucho más difícil que con Champions y Liga");
+  const champ = JSON.stringify([{ k: "champions", s: 9, c: "Real Madrid" }, { k: "liga", s: 9, c: "Real Madrid" }]);
+  const solo = JSON.stringify([{ k: "copa", s: 9, c: "Real Madrid" }]);
+  const wChamp = wins({ media: 92, week: 101, flags: { trofeos: champ } }, "balon_oro");
+  const wCopa = wins({ media: 92, week: 101, flags: { trofeos: solo } }, "balon_oro");
+  ok(wChamp > wCopa * 2, "Champions y Liga pesan mucho más que una copa (" + Math.round(wChamp * 100) + " % frente a " + Math.round(wCopa * 100) + " %)");
+}
+
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);
