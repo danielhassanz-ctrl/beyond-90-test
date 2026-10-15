@@ -49,7 +49,10 @@ import { readProperties } from "@/lib/finance/mortgage";
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
 import { timed } from "@/lib/perf";
 export const GEN_LOCK_ID = "gen-lock";
-const LOCK_TTL_MS = 90_000;
+// Generar una escena con la IA tarda 10-15 s (medido en producción, máx. ~15). Si la petición que reservó el turno se cae (el navegador
+// cierra la conexión, el jugador recarga…) la reserva se queda puesta: antes caducaba a los 90 s y el jugador esperaba ~1 min y medio
+// mirando la pantalla de carga. Ahora caduca a los 30 s.
+const LOCK_TTL_MS = 30_000;
 
 export function isGenLock(event: GameEvent | null | undefined): boolean {
   return Boolean(event && event.id === GEN_LOCK_ID);
@@ -76,7 +79,7 @@ async function releaseGenLock(supabase: SupabaseClient, playerId: string): Promi
 /** Espera a que la otra petición deje la escena real (o a que su reserva caduque). */
 async function waitForPendingEvent(supabase: SupabaseClient, playerId: string): Promise<GameEvent | null> {
   const start = Date.now();
-  while (Date.now() - start < 80_000) {
+  while (Date.now() - start < 40_000) {
     const { data } = await supabase.from("players").select("pending_event").eq("id", playerId).maybeSingle();
     const ev = (data?.pending_event ?? null) as (GameEvent & { ts?: number }) | null;
     if (!ev) return null;
@@ -85,8 +88,10 @@ async function waitForPendingEvent(supabase: SupabaseClient, playerId: string): 
       await releaseGenLock(supabase, playerId);
       return null;
     }
-    await sleep(1500);
+    await sleep(1000);
   }
+  // Se acabó la espera: la reserva se da por muerta (la petición que la hizo se cayó) y se libera para generar la escena aquí.
+  await releaseGenLock(supabase, playerId);
   return null;
 }
 
