@@ -18,7 +18,12 @@ export type TrofeoKind =
   | "copa_america"
   | "olimpico"
   | "balon_oro"
-  | "golden_boy";
+  | "golden_boy"
+  | "pichichi"
+  | "zamora"
+  | "mejor_liga"
+  | "mvp_champions"
+  | "mvp_torneo";
 
 export interface Trofeo {
   /** Temporada (0 = la primera). */
@@ -31,7 +36,7 @@ export interface Trofeo {
 }
 
 /** Los premios individuales no suman al contador de títulos de equipo. */
-export const INDIVIDUAL: ReadonlySet<TrofeoKind> = new Set(["balon_oro", "golden_boy"]);
+export const INDIVIDUAL: ReadonlySet<TrofeoKind> = new Set(["balon_oro", "golden_boy", "pichichi", "zamora", "mejor_liga", "mvp_champions", "mvp_torneo"]);
 
 export const TROFEO_LABEL: Record<TrofeoKind, string> = {
   liga: "Liga",
@@ -44,6 +49,11 @@ export const TROFEO_LABEL: Record<TrofeoKind, string> = {
   olimpico: "Juegos Olímpicos",
   balon_oro: "Balón de Oro",
   golden_boy: "Golden Boy",
+  pichichi: "Pichichi",
+  zamora: "Zamora",
+  mejor_liga: "Mejor jugador de la Liga",
+  mvp_champions: "Mejor jugador de la Champions",
+  mvp_torneo: "Mejor jugador del torneo",
 };
 
 /** Nombre del título según con qué club se ganó: la Liga y la Copa son las del país de ese club (ver leagues.ts). */
@@ -68,6 +78,11 @@ export const TROFEO_ICON: Record<TrofeoKind, string> = {
   olimpico: "🏅",
   balon_oro: "🥇",
   golden_boy: "✨",
+  pichichi: "⚽",
+  zamora: "🧤",
+  mejor_liga: "⭐",
+  mvp_champions: "🌟",
+  mvp_torneo: "🏅",
 };
 
 type Flags = Record<string, string | boolean>;

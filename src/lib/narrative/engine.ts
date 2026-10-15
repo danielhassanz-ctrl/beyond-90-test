@@ -88,6 +88,7 @@ import { shouldTriggerInvestmentReview, buildInvestmentReviewEvent } from "@/lib
 import { shouldTriggerContractRenewal, buildContractRenewalEvent } from "@/lib/narrative/contract-renewal";
 import { shouldTriggerArrivalIntro, buildArrivalIntroEvent } from "@/lib/narrative/arrival-intro";
 import { buildSeasonCloseEvent } from "@/lib/narrative/season-close";
+import { shouldTriggerSeasonAwards, buildSeasonAwardsEvent } from "@/lib/narrative/season-awards";
 import { shouldTriggerSeriousInjury, shouldTriggerSagaStage, buildSeriousInjuryEvent, buildSagaStageEvent } from "@/lib/narrative/injury-saga";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
@@ -2085,6 +2086,13 @@ export async function pickNextEventDynamic(
     preseasoneEvent = preseasoneEvent ?? buildSeasonCloseEvent(player, season);
     console.log(`[pickNextEventDynamic] Preseason event: "${preseasoneEvent.title}"`);
     return maybeAddFreeText(addMatchContext(preseasoneEvent, player));
+  }
+
+  // Los premios de la temporada que se acaba de cerrar (Pichichi, Zamora, mejor jugador…): justo después del resumen de temporada.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerSeasonAwards(playerWithDynamics, usedEventIds)) {
+    const awardsEvent = buildSeasonAwardsEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Premios de la temporada: "${awardsEvent.title}"`);
+    return awardsEvent;
   }
 
   // Recién fichado por otro club: lo primero es conocer al míster, al capitán y a alguien del cuerpo técnico.

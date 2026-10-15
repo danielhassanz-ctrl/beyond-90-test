@@ -257,6 +257,10 @@ async function resolveEventInner(formData: FormData) {
   if (cf.title_liga) addTrophy("liga");
   if (cf.title_champions) addTrophy("champions");
   if (cf.title_balon_oro) addTrophy("balon_oro");
+  // Premios de la temporada que se cierra (Pichichi, Zamora, mejor jugador…): cuentan para esa temporada.
+  for (const [k, v] of Object.entries(cf)) {
+    if (k.startsWith("award_won_") && v) addTrophy(k.slice("award_won_".length), typeof v === "string" ? v : undefined, seasonNow - 1);
+  }
   if (cf.golden_boy) addTrophy("golden_boy");
   const newTitleCount = newTrophies.filter((x) => !INDIVIDUAL.has(x.k)).length;
   if (newTitleCount > 0) statUpdate.titles = newTitleCount;
@@ -316,6 +320,12 @@ async function resolveEventInner(formData: FormData) {
     } catch (err) {
       console.error("[resolveEvent] cierre de Liga falló:", err instanceof Error ? err.message : err);
     }
+    // Lo que llevabas al empezar la temporada nueva: con esto los premios (Pichichi, Zamora…) saben qué hiciste en cada una.
+    const newSeasonIdx = Math.floor((newWeek - 1) / WEEKS_PER_SEASON);
+    ligaFinishFlags[`sb_${newSeasonIdx}_g`] = String(player.stats_goals ?? 0);
+    ligaFinishFlags[`sb_${newSeasonIdx}_a`] = String(player.stats_assists ?? 0);
+    ligaFinishFlags[`sb_${newSeasonIdx}_m`] = String(player.stats_matches_played ?? 0);
+    ligaFinishFlags[`sb_${newSeasonIdx}_c`] = String(player.stats_clean_sheets ?? 0);
   }
   const targetWeeks = MODE_TARGET_WEEKS[player.mode];
   const willRetire = !isRetirementDecision && player.mode !== "pro" && newWeek > targetWeeks;
