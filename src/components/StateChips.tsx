@@ -6,7 +6,7 @@ export function StateChips({ flags, week, detailed = false }: { flags: Record<st
   if (list.length === 0) return null;
   return (
     <div className={detailed ? "space-y-2" : "flex flex-wrap gap-2"}>
-      {list.map(({ def, until }) => {
+      {list.map(({ def, until, cause }) => {
         const left = Math.max(1, until - week + 1);
         const tone = def.tone === "bad" ? "border-destructive/50 bg-destructive/10 text-destructive" : "border-pitch/50 bg-pitch/10 text-pitch";
         return detailed ? (
@@ -17,6 +17,7 @@ export function StateChips({ flags, week, detailed = false }: { flags: Record<st
                 {def.label} <span className="font-normal opacity-80">· {left} {left === 1 ? "mes" : "meses"}</span>
               </p>
               <p className="text-xs opacity-80">{def.hint}</p>
+              {cause && <p className="mt-0.5 text-xs italic opacity-70">Por: «{cause}»</p>}
             </div>
           </div>
         ) : (

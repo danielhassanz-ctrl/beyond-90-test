@@ -39,9 +39,22 @@ export const STATES: Record<string, StateDef> = {
 
 const KEY = "estado_";
 
+/** Anota en cada estado que empieza con esta escena cuál fue la causa (clave estado_<id>_por). */
+export function withStateCause<T extends { flags?: Record<string, string | boolean | undefined> }>(c: T, title: string): T {
+  const flags = c.flags;
+  if (!flags) return c;
+  const extra: Record<string, string> = {};
+  for (const [k, v] of Object.entries(flags)) {
+    if (k.startsWith(KEY) && STATES[k.slice(KEY.length)] && v !== "" && v !== undefined && v !== false) extra[`${k}_por`] = title;
+  }
+  return Object.keys(extra).length > 0 ? { ...c, flags: { ...flags, ...extra } } : c;
+}
+
 export interface ActiveState {
   def: StateDef;
   until: number;
+  /** La escena que lo provocó (para que se sepa por qué te pasa). */
+  cause?: string;
 }
 
 export function activeStates(flags: Record<string, string | boolean> | null | undefined, week: number): ActiveState[] {
@@ -50,7 +63,10 @@ export function activeStates(flags: Record<string, string | boolean> | null | un
     if (!k.startsWith(KEY)) continue;
     const def = STATES[k.slice(KEY.length)];
     const until = parseInt(String(v), 10);
-    if (def && Number.isFinite(until) && until >= week) out.push({ def, until });
+    if (def && Number.isFinite(until) && until >= week) {
+      const cause = flags?.[`${k}_por`];
+      out.push({ def, until, ...(typeof cause === "string" && cause ? { cause } : {}) });
+    }
   }
   return out;
 }

@@ -51,6 +51,8 @@ import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career
 import { logAppError } from "@/lib/errorLog";
 import { computeStreakUpdate, STREAK_MILESTONES } from "@/lib/player/streak";
 import { displayName } from "@/types/player";
+import { withStateCause } from "@/lib/narrative/states";
+import { coverForMilestone } from "@/lib/images/coverHeadlines";
 import { timed } from "@/lib/perf";
 
 export async function resolveEvent(formData: FormData) {
@@ -208,7 +210,9 @@ async function resolveEventInner(formData: FormData) {
     renewed: Boolean(consequencesBank.flags?.contract_until) && String(consequencesBank.flags?.salary_club ?? "") === player.club && !consequencesBank.club,
   });
   const partnerTouches = Object.keys(partnerStep.flags).length > 1 || Boolean(consequencesBank.flags?.pareja_delta);
-  const consequencesPartner = partnerTouches ? { ...consequencesBank, flags: { ...consequencesBank.flags, ...partnerStep.flags } } : consequencesBank;
+  const consequencesPartner0 = partnerTouches ? { ...consequencesBank, flags: { ...consequencesBank.flags, ...partnerStep.flags } } : consequencesBank;
+  // Un estado que empieza con esta escena (escándalo, pitada, bache…) guarda cuál fue la causa, para enseñarla en Vida.
+  const consequencesPartner = withStateCause(consequencesPartner0, event.title);
   // El nacimiento del primer hijo (escena del banco) anota su nombre y su fecha para los siguientes hijos y para Vida.
   const consequences = event.id === "bank-p2-nacimiento" ? { ...consequencesPartner, flags: { ...consequencesPartner.flags, ...firstChildPatch(player as Player) } } : consequencesPartner;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
@@ -264,6 +268,15 @@ async function resolveEventInner(formData: FormData) {
     isFirstTitleEver;
 
   const patch = applyConsequences(player, consequences);
+  // Nada se queda arriba del todo sin esfuerzo: cada turno la fama y el ánimo por encima de ciertos niveles se desgastan un poco.
+  // (Se nota más en el prime: a partir de los 25, el listón para sostenerse arriba es más alto.)
+  {
+    const primeNow = playerAge(player.week) >= 25;
+    const moralNow = (patch.moral ?? player.moral) as number;
+    const famaNow = (patch.fama ?? player.fama) as number;
+    if (moralNow > (primeNow ? 80 : 88)) patch.moral = Math.max(primeNow ? 80 : 88, moralNow - (primeNow ? 3 : 2));
+    if (famaNow > (primeNow ? 86 : 92)) patch.fama = Math.max(primeNow ? 86 : 92, famaNow - (primeNow ? 2 : 1));
+  }
 
   // patrimonio tiene suelo en 0 (ver applyConsequences): si un gasto pedía
   // más de lo que había, el patrimonio final se recorta pero el registro
@@ -896,6 +909,8 @@ async function resolveEventInner(formData: FormData) {
       // apodo real de futbolista suena más auténtico ahí que el apellido
       // formal ("La Pulga firma una obra de arte" en vez de "Messi").
       const finalPlayerName = displayName(player);
+      const finalTitle = overrideTitle ?? event.title;
+      const finalTrophyKind = event.trophy?.kind;
 
       after(async () => {
         try {
@@ -931,9 +946,13 @@ async function resolveEventInner(formData: FormData) {
           // src/lib/images/newspaper.ts). La foto de perfil que evoluciona
           // sí usa la foto de acción normal, no la portada del periódico.
           let milestoneBuffer = buffer;
-          if (finalIsGolChilena) {
+          // Los hitos grandes (títulos, premios, fichajes de impacto, debut, goles decisivos) salen en la portada de WARCA con su titular.
+          const cover = finalIsGolChilena
+            ? undefined
+            : coverForMilestone({ type: finalMilestoneType, title: finalTitle, trophyKind: finalTrophyKind, name: finalPlayerName, club: finalClub, seed: `${finalPlayerId}:${finalMilestoneId}` });
+          if (finalIsGolChilena || cover) {
             try {
-              milestoneBuffer = await composeWarcaCover(buffer, finalPlayerName, finalClub);
+              milestoneBuffer = await composeWarcaCover(buffer, finalPlayerName, finalClub, cover ?? undefined);
             } catch (err) {
               console.error("[resolveEvent:after] WARCA cover compositing failed, using plain photo:", err);
             }

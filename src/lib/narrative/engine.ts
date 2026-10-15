@@ -56,6 +56,11 @@ import { applyExClubTouch } from "@/lib/narrative/ex-club";
 import { trophyCelebrationOptions } from "@/lib/narrative/trophy-celebration";
 import { applyStateTick, stateRollNudge, hasState } from "@/lib/narrative/states";
 import { CHICAS } from "@/lib/narrative/bank/scenes/chicas";
+import { PAREJA } from "@/lib/narrative/bank/scenes/pareja";
+import { PAREJA2 } from "@/lib/narrative/bank/scenes/pareja2";
+import { PAREJA3 } from "@/lib/narrative/bank/scenes/pareja3";
+import { PAREJA4 } from "@/lib/narrative/bank/scenes/pareja4";
+import { shouldTriggerPartnerLife, buildPartnerLifeEvent } from "@/lib/narrative/partner-life";
 import { DISCIPLINA } from "@/lib/narrative/bank/scenes/disciplina";
 import { ESTADOS } from "@/lib/narrative/bank/scenes/estados";
 import { ESTADOS2 } from "@/lib/narrative/bank/scenes/estados2";
@@ -908,7 +913,13 @@ export function applyConsequences(
     if (delta !== undefined) {
       // Rendimientos decrecientes: subir de 55 a 70 es fácil, de 90 a 100 casi imposible.
       // Sin esto todas las barras acababan clavadas en 100 y dejaban de significar nada.
-      const gain = delta > 0 ? delta * Math.max(0.12, Math.min(1, (100 - state[field]) / 45)) * (field === "fama" ? 0.6 : 1) : delta;
+      // La fama y el ánimo cuestan mucho más de llenar, sobre todo en el prime (25-28 años en adelante): cuanto más arriba, menos
+      // sube cada buena noticia (casi nada por encima de 85) y a partir de los 25 todo cuesta un cuarto más, y a los 28 casi la mitad.
+      const hard = field === "fama" || field === "moral";
+      const age = playerAge(state.week);
+      const prime = hard ? (age >= 28 ? 0.55 : age >= 25 ? 0.75 : 1) : 1;
+      const room = hard ? Math.max(0.06, Math.min(1, (90 - state[field]) / 45)) : Math.max(0.12, Math.min(1, (100 - state[field]) / 45));
+      const gain = delta > 0 ? delta * room * prime * (field === "fama" ? 0.5 : 1) : delta;
       patch[field] = clampPercent(state[field] + gain);
     }
   }
@@ -3560,6 +3571,23 @@ export async function pickNextEventDynamic(
       const childEvent = buildChildEvent(playerWithDynamics, childStage);
       console.log(`[pickNextEventDynamic] Hijos: "${childEvent.title}"`);
       return maybeAddFreeText(childEvent);
+    }
+    // Tu pareja está presente: cada pocos turnos, una escena con ella (primero las historias del banco que ya tocan, si no, la vida
+    // de cada día: cena, día duro, visita de su madre, cumpleaños…). Ver partner-life.ts.
+    if (shouldTriggerPartnerLife(playerWithDynamics)) {
+      if (Math.random() < 0.5) {
+        const bankPartner = pickBankScene(playerWithDynamics, usedBank, [...PAREJA, ...PAREJA2, ...PAREJA3, ...PAREJA4]);
+        if (bankPartner) {
+          f.pa_scene_last = String(wk);
+          console.log(`[pickNextEventDynamic] Pareja (banco): "${bankPartner.title}"`);
+          return maybeAddFreeText(bankPartner);
+        }
+      }
+      const lifeEvent = buildPartnerLifeEvent(playerWithDynamics);
+      if (lifeEvent) {
+        console.log(`[pickNextEventDynamic] Pareja (vida): "${lifeEvent.title}"`);
+        return maybeAddFreeText(lifeEvent);
+      }
     }
     // Historia con una chica ya empezada (cita, rumor, «¿qué somos?»): sus escenas tienen prioridad para que la
     // historia no se quede a medias; si lleva demasiados turnos sin avanzar, se enfría y deja paso a otras.

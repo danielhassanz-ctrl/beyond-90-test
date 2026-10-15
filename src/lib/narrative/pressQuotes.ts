@@ -46,6 +46,8 @@ export function getPressQuote(player: Player): string {
     return pick(
       [
         `"${name} ya no es una promesa: es una realidad en ${club}."`,
+        `"Qué AURA tiene ${name}: el estadio lo siente antes de que toque el balón."`,
+        `"${name} está en su PRIME y ${club} lo sabe: cada partido es un recital."`,
         `"Cuando ${name} coge el balón, todo el estadio lo nota."`,
         `"${club} tiene en ${name} a uno de los suyos de verdad."`,
       ],
@@ -56,6 +58,7 @@ export function getPressQuote(player: Player): string {
     return pick(
       [
         `"${name} va ganándose el sitio en ${club}, partido a partido."`,
+        `"Hay FOMO por ver jugar a ${name}: el próximo partido ya es un evento."`,
         `"Todavía no es titular indiscutible, pero ${name} convence."`,
         `"${club} confía en ${name} para el proyecto a medio plazo."`,
       ],

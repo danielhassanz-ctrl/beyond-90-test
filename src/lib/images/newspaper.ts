@@ -17,6 +17,7 @@ export async function composeWarcaCover(
   actionPhoto: Buffer,
   playerName: string,
   club: string,
+  spec?: { headline: string; byline: string; variant: "marca" | "as" },
 ): Promise<Buffer> {
   const WIDTH = 1080;
   const HEIGHT = 1350;
@@ -27,8 +28,10 @@ export async function composeWarcaCover(
     .toBuffer();
 
   const today = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
-  const headline = "¡GOLAZO DE CHILENA!";
-  const byline = `${playerName.toUpperCase()} FIRMA UNA OBRA DE ARTE CON EL ${club.toUpperCase()}`;
+  const headline = spec?.headline ?? "¡GOLAZO DE CHILENA!";
+  const byline = spec?.byline ?? `${playerName.toUpperCase()} FIRMA UNA OBRA DE ARTE CON EL ${club.toUpperCase()}`;
+  // Dos diseños, los dos de prensa deportiva española: cabecera blanca con letras rojas, o cabecera roja con letras blancas.
+  const red = spec?.variant === "as";
   // Antes solo decía "Beyond 90" sin ningún sitio al que ir a jugar — la
   // portada podía llegar a compartirse sin acompañar ningún texto (ver
   // shareBranding.ts) y quien la recibía no tenía forma de encontrar el juego.
@@ -42,7 +45,7 @@ export async function composeWarcaCover(
     x: 40,
     y: MASTHEAD_HEIGHT / 2 + 34,
     fontSize: 92,
-    fill: "#E30613",
+    fill: red ? "#FFFFFF" : "#E30613",
     weight: 900,
     letterSpacing: 0.03,
   });
@@ -50,7 +53,7 @@ export async function composeWarcaCover(
     x: WIDTH - 40,
     y: MASTHEAD_HEIGHT / 2 + 34,
     fontSize: 22,
-    fill: "#333333",
+    fill: red ? "#FFE5E7" : "#333333",
     weight: 700,
     anchor: "right",
   });
@@ -96,10 +99,10 @@ export async function composeWarcaCover(
   </defs>
 
   <!-- Masthead: fondo blanco, letras rojas — estilo prensa deportiva española -->
-  <rect x="0" y="0" width="${WIDTH}" height="${MASTHEAD_HEIGHT}" fill="#FFFFFF" />
+  <rect x="0" y="0" width="${WIDTH}" height="${MASTHEAD_HEIGHT}" fill="${red ? "#E30613" : "#FFFFFF"}" />
   ${mastheadPath}
   ${editionPath}
-  <rect x="0" y="${MASTHEAD_HEIGHT - 8}" width="${WIDTH}" height="8" fill="#E30613" />
+  <rect x="0" y="${MASTHEAD_HEIGHT - 8}" width="${WIDTH}" height="8" fill="${red ? "#111111" : "#E30613"}" />
 
   <!-- Degradado inferior para que el titular se lea sobre la foto -->
   <rect x="0" y="${MASTHEAD_HEIGHT}" width="${WIDTH}" height="${HEIGHT - MASTHEAD_HEIGHT}" fill="url(#fade)" />

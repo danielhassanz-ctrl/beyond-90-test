@@ -94,6 +94,37 @@ export function awardDue(player: Player, weekInSeason: number): AwardKind | null
   return null;
 }
 
+/** Cómo suena la noche en que ganas: varias versiones para que no sea siempre la misma. */
+const WIN_VERDICTS = (prize: string, year: number): string[] => [
+  `Dicen tu nombre. Durante un segundo no oyes nada. Eres el ganador del ${prize} ${year}.`,
+  `El sobre se abre despacio y el presentador sonríe antes de leer. Tu apellido cae sobre la sala como un trueno: eres el ${prize} ${year}.`,
+  `No lo esperabas. Cuando por fin suena tu nombre, tardas un momento en entender que es a ti. Has ganado el ${prize} ${year}.`,
+  `El silencio dura una eternidad. Luego, tu nombre, y toda la sala puesta en pie. Eres el ${prize} ${year}.`,
+  `Lo habías imaginado de mil maneras y ninguna se parecía a esto: ves tu cara en la pantalla gigante y el ${prize} ${year} es tuyo.`,
+  `El presentador carraspea, mira el sobre y levanta la vista hacia tu mesa. «Enhorabuena». No hace falta más: ganas el ${prize} ${year}.`,
+  `Te levantas sin saber cómo. Alguien te abraza, alguien te empuja hacia el escenario. Eres el ${prize} ${year}.`,
+  `Tu agente te agarra del brazo un segundo antes de que suene el nombre, como si ya lo supiera. Y suena. Ganas el ${prize} ${year}.`,
+];
+const WIN_FAMILY = [
+  "Tu madre llora antes de que termines de levantarte y tu padre, que no llora nunca, se tapa la cara con el programa.",
+  "Tu hermana pequeña grita tanto que el presentador espera a que se calme. Tus padres se abrazan sin decir nada.",
+  "Tu padre, que nunca creyó en los premios individuales, te mira con los ojos brillantes: «Esto no estaba en el plan». Tu madre ya no puede hablar.",
+  "Tu abuela, que no ha visto un partido tuyo entero en su vida, asiente desde su asiento como si lo hubiera sabido siempre.",
+  "Tu mejor amigo de la infancia te manda un audio de veinte segundos que solo contiene gritos. Tu madre te enseña la pantalla entre lágrimas.",
+  "Tus padres se quedan quietos un segundo, como si el mundo se hubiera parado. Luego tu madre te agarra la cara con las dos manos: «Mi niño».",
+];
+const WIN_ALONE = [
+  "Subes sin papeles y tartamudeas tres frases que luego serán meme y homenaje a la vez. «Esto es para el barrio», dices. El mundo se enamora un poco de ti.",
+  "Subes con el discurso arrugado en el bolsillo y no lo sacas. Das las gracias a quien te dejó un balón con diez años. Hay gente que llora en directo.",
+  "Dices lo único que se te ocurre: «No sé qué decir». La sala se ríe, aplaude y te perdona el resto. Es el mejor discurso de la noche.",
+  "Levantas el trofeo y buscas una cara concreta entre el público. Cuando la encuentras, dejas de oír el ruido. Lo demás lo improvisas, y sale perfecto.",
+];
+const WIN_REMOTE = [
+  "Lo recoges por videollamada desde el hotel de concentración, con el chándal del club y el pelo mojado. El equipo se levanta en bloque: es la mejor imagen de la noche.",
+  "Te lo dan por conexión en directo desde el vestuario. Tus compañeros te levantan en volandas y alguien te echa una botella de agua por la cabeza. Nadie lo olvidará.",
+  "Lo ves en el móvil del masajista, sentado en la camilla. Te quedas mudo; el míster te da un abrazo de oso y dice que mañana se entrena igual.",
+];
+
 function finalists(player: Player, kind: AwardKind): Finalist[] {
   const season = seasonOf(player);
   const mine = displayName(player);
@@ -105,10 +136,16 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
   const youthPenalty = young ? (25 - ageNow) * 0.2 : 0;
   // Para los menores de 25 la media por encima de 86 pesa menos: un 92 a los 20 es un fenómeno, pero no un ganador seguro.
   const mediaEff = young && player.media > 86 ? 86 + (player.media - 86) * 0.6 : player.media;
+  // Ganar el Balón de Oro tiene que costar: la fama (que se satura en 99) casi no pesa, los títulos de equipo sí, el azar
+  // es grande y quien ya lo ganó hace poco tiene a los votantes en contra («otra vez él»). El Golden Boy, en cambio, es el
+  // premio que motiva al joven: más margen y menos azar en contra.
+  const wonBefore = String(player.flags?.bo_seasons ?? "").split(",").map((n) => parseInt(n, 10)).filter((n) => Number.isFinite(n));
+  const fatigue = kind === "balon_oro" ? wonBefore.filter((s) => season - s <= 3 && season - s >= 1).length * 1.8 : 0;
+  const luck = jitter(`${player.id}:${kind}:${season}:yo`) * (kind === "golden_boy" ? 2 : young ? 5 : 4);
   const playerScore =
-    mediaEff + ((player.fama ?? 50) - 50) * 0.06 + Math.min(4, titlesThisSeason * 1.5) - youthPenalty + jitter(`${player.id}:${kind}:${season}:yo`) * (young ? 5 : 1.5) + (kind === "balon_oro" ? (POS_BIAS[posKey(player.position)] ?? 0) : 0);
+    mediaEff + ((player.fama ?? 50) - 50) * 0.02 + Math.min(3.6, titlesThisSeason * 1.2) - youthPenalty - fatigue + luck + (kind === "golden_boy" ? 3 : 0) + (kind === "balon_oro" ? (POS_BIAS[posKey(player.position)] ?? 0) : 0);
   // Los demás: los megacracks de tu generación (si encajan) y el resto inventados, de más a menos.
-  const top = kind === "golden_boy" ? maxMediaForAge(player.week, 78) : 90;
+  const top = kind === "golden_boy" ? maxMediaForAge(player.week, 78) : 98;
   const out: Finalist[] = [{ name: mine, club: player.club, pos: posKey(player.position), score: playerScore, isPlayer: true }];
   const megas = getRivals(player).filter((r) => r.kind === "mega" && (kind === "balon_oro" || r.media > 0));
   for (const m of megas) {
@@ -181,13 +218,19 @@ export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
         : { fama: 3, moral: -1 };
   const flags: Record<string, string | boolean> = {
     [`award_${gb ? "gb" : "bo"}_${season}`]: true,
-    ...(rank === 1 ? (gb ? { golden_boy: true } : { title_balon_oro: true }) : {}),
+    ...(rank === 1
+      ? gb
+        ? { golden_boy: true }
+        : { title_balon_oro: true, bo_seasons: [...String(player.flags?.bo_seasons ?? "").split(",").filter(Boolean), String(season)].join(",") }
+      : {}),
     ...(gb && rank > 1 && rank <= 3 ? { gb_finalista: true } : {}),
   };
 
+  // Las frases de la noche no se repiten siempre: se elige una por jugador, premio y año.
+  const v = (arr: string[], salt: string) => arr[hash(`${player.id}:${season}:${kind}:${salt}`) % arr.length];
   const verdict =
     rank === 1
-      ? `Dicen tu nombre. Durante un segundo no oyes nada. Eres el ganador del ${prizeName} ${year}.`
+      ? v(WIN_VERDICTS(prizeName, year), "verdict")
       : rank <= 3
         ? `El ${prizeName} se lo lleva ${winner.name}. Tú terminas en el puesto ${rank}: tan cerca que casi puedes tocarlo.`
         : `El ${prizeName} se lo lleva ${winner.name}. Tú terminas en el puesto ${rank}, entre los diez mejores. No es poco, y lo sabes.`;
@@ -207,7 +250,7 @@ export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
         subtitle: "Compartirlo con los tuyos",
         consequences: { ...base, moral: (base.moral ?? 0) + 2, flags },
         outcomeText: `${verdict} ${extra(
-          "Tu madre llora antes de que termines de levantarte y tu padre, que no llora nunca, se tapa la cara con el programa.",
+          v(WIN_FAMILY, "fam"),
           "Tu madre te aprieta la mano bajo la mesa: «Para mí, has ganado». Y por unos segundos, te lo crees.",
           "Tu madre te susurra al oído que ha sido la mejor cena de su vida. A ti también te ha valido la pena.",
         )} ${resultLine}`,
@@ -218,7 +261,7 @@ export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
         subtitle: "Lo que salga",
         consequences: { ...base, reputacion: (base.reputacion ?? 0) + 1, flags },
         outcomeText: `${verdict} ${extra(
-          "Subes sin papeles y tartamudeas tres frases que luego serán meme y homenaje a la vez. «Esto es para el barrio», dices. El mundo se enamora un poco de ti.",
+          v(WIN_ALONE, "alone"),
           "Aplaudes de pie al ganador y la cámara te pilla sonriendo. «Qué deportividad», titulan al día siguiente.",
           "Sales con la corbata torcida y el móvil lleno de mensajes de gente que te quiere. No ganas el premio, pero ganas la noche.",
         )} ${resultLine}`,
@@ -229,7 +272,7 @@ export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
         subtitle: "Primero el equipo",
         consequences: { ...base, rel_entrenador: 3, moral: Math.max(-3, (base.moral ?? 0) - 3), flags },
         outcomeText: `${verdict} ${extra(
-          "Lo recoges por videollamada desde el hotel de concentración, con el chándal del club y el pelo mojado. El equipo se levanta en bloque: es la mejor imagen de la noche.",
+          v(WIN_REMOTE, "remote"),
           "Lo ves por la tele con el resto de la plantilla. El míster te pone una mano en el hombro: «Esto es solo el principio».",
           "Lo sigues desde el sofá del hotel con los auriculares puestos. Mañana juegas; hoy descansas. El equipo te lo agradecerá más que el premio.",
         )} ${resultLine}`,
