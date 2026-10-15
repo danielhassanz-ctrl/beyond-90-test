@@ -67,8 +67,8 @@ export const LIFE_EVENT_SCENARIOS = {
   ],
 
   dinero_luxury: [
-    "Compras mansión de ensueño. Hecha a tu medida. Coches. Piscina olímpica.",
-    "Jet privado compartido con otros futbolistas. Primera vez viajas así. Vicio.",
+    "Un agente inmobiliario te enseña una mansión de ensueño que aún está en venta: piscina olímpica, garaje enorme. Solo la visitas: todavía no has firmado nada y decidir si la compras es un paso posterior.",
+    "Un compañero con más años de carrera te invita a volar en su jet privado, con otros futbolistas. Es la primera vez que viajas así. El jet es de él, no tuyo: tú solo disfrutas el viaje.",
     "Evento benéfico. Subastas de caridad. Compras un viaje a la Luna (no existe aún). Por risa.",
     "Tu hija pide un caballo de carrera. Tienes dinero. Lo compras. Ella es feliz.",
   ],

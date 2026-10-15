@@ -9,6 +9,7 @@
 import { BANK_FACTS } from "@/lib/narrative/bank/scenes";
 import { describeOpenThreads } from "@/lib/narrative/threads";
 import { readInvestments } from "@/lib/finance/investments";
+import { readProperties } from "@/lib/finance/mortgage";
 import type { Player } from "@/types/player";
 import type { HistoryItem } from "@/lib/narrative/ai";
 import { computeRole, ROLE_LABELS, benchRemaining } from "@/lib/narrative/role";
@@ -175,8 +176,13 @@ export function describeLifeFacts(player: Player): string[] {
       facts.push(`en el ${names[tr[1]] ?? "torneo"} de ${2026 + Number(tr[2])} terminó: ${value.replace(/_/g, " ")}`);
     }
   }
-  const houses = Object.entries(f).filter(([k]) => k.startsWith("propiedad_"));
-  if (houses.length > 0) facts.push(`tiene ${houses.length} propiedad(es) compradas`);
+  const props = readProperties(f);
+  const ofKind = (k: string) => props.filter((p) => (p.kind ?? "casa") === k);
+  const homes = [...ofKind("casa"), ...ofKind("mansion")];
+  if (props.length > 0) facts.push(`tiene ${props.length} propiedad(es) compradas: ${props.map((p) => p.name.replace(/ \(.*\)$/, "")).join("; ")}`);
+  // Las compras las decide el jugador en las escenas de compra del juego: la IA no puede darle una propiedad que no ha comprado.
+  if (!homes.some((p) => (p.kind ?? "casa") === "mansion")) facts.push("NO tiene ninguna mansión: no digas que la ha comprado, que ya es suya ni que la estrena");
+  if (homes.length === 0) facts.push("NO es dueño de ninguna casa (vive de alquiler o con la familia): no digas que ha comprado una casa");
   for (const inv of readInvestments(f)) facts.push(`invirtió ${inv.amount.toLocaleString("es")} € en: ${inv.name}`);
   if (f.iguana) facts.push("tiene una iguana como mascota que se hizo famosa");
   if (f.patrocinio_chorizo) facts.push("fue imagen de una línea de chorizo");
