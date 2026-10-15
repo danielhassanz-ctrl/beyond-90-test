@@ -91,6 +91,7 @@ import { buildSeasonCloseEvent } from "@/lib/narrative/season-close";
 import { shouldTriggerSeasonAwards, buildSeasonAwardsEvent } from "@/lib/narrative/season-awards";
 import { shouldTriggerSeasonGoals, buildSeasonGoalsEvent, shouldTriggerGoalsReview, buildGoalsReviewEvent } from "@/lib/narrative/season-goals";
 import { shouldTriggerTrainingPlan, buildTrainingPlanEvent } from "@/lib/narrative/training-plan";
+import { newAchievements, markAchievements, buildAchievementEvent } from "@/lib/narrative/achievements";
 import { shouldTriggerSeriousInjury, shouldTriggerSagaStage, buildSeriousInjuryEvent, buildSagaStageEvent } from "@/lib/narrative/injury-saga";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
@@ -2112,6 +2113,18 @@ export async function pickNextEventDynamic(
     const plan = buildTrainingPlanEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Plan de entrenamiento: "${plan.title}"`);
     return plan;
+  }
+  // Logros: los de bronce se anotan sin ruido y los de plata y oro salen como una escena breve y compartible.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics)) {
+    const fresh = newAchievements(playerWithDynamics);
+    if (fresh.length > 0) {
+      markAchievements(playerWithDynamics, fresh);
+      const achievementEvent = buildAchievementEvent(playerWithDynamics, fresh);
+      if (achievementEvent) {
+        console.log(`[pickNextEventDynamic] Logro: "${achievementEvent.title}"`);
+        return achievementEvent;
+      }
+    }
   }
 
   // Recién fichado por otro club: lo primero es conocer al míster, al capitán y a alguien del cuerpo técnico.
