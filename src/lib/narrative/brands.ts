@@ -159,6 +159,27 @@ export const REAL_BRANDS = new Set([
   "Cupra", "Audi", "Emirates", "Iberia", "Oakley", "Ray-Ban", "Beats", "Bose",
 ]);
 
+/** La categoría de una marca del catálogo (null si la firma viene de una escena antigua sin categoría). */
+export function categoryOfBrand(name: string): BrandCategory | null {
+  return ALL.find((c) => CATEGORIES[c].brands.some((b) => b.name === name)) ?? null;
+}
+
+/** Una marca rival de la misma categoría que quiere quedarse con tu patrocinio (null si no hay otra disponible). */
+export function rivalBrandFor(name: string, player: Player, rng: () => number = Math.random): { name: string; note: string; category: BrandCategory } | null {
+  const cat = categoryOfBrand(name);
+  if (!cat) return null;
+  const used = new Set(brandsUsed(player.flags));
+  const pool = CATEGORIES[cat].brands.filter((b) => b.name !== name && !used.has(b.name));
+  const list = pool.length > 0 ? pool : CATEGORIES[cat].brands.filter((b) => b.name !== name);
+  if (list.length === 0) return null;
+  // Las estrellas atraen a los gigantes: con mucha fama, prefiere una marca conocida.
+  const real = list.filter((b) => REAL_BRANDS.has(b.name));
+  const from = (player.fama ?? 0) >= 82 && real.length > 0 ? real : list;
+  return { ...pick(from, rng), category: cat };
+}
+
+export { markBrands };
+
 function freshBrands(cat: BrandCategory, player: Player, n: number, rng: () => number, preferReal = false): { name: string; note: string }[] {
   const used = new Set(brandsUsed(player.flags));
   const fresh = CATEGORIES[cat].brands.filter((b) => !used.has(b.name));

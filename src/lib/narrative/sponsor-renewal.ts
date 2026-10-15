@@ -6,6 +6,7 @@
 import type { EventOption, GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { readSponsorships, SPONSORSHIP_TURNS, type SponsorshipRecord } from "@/lib/finance/sponsorship-income";
+import { CATEGORIES, rivalBrandFor, markBrands } from "@/lib/narrative/brands";
 
 /** Cuántos turnos después de vencer sigue valiendo la oferta de renovación. */
 const WINDOW = 4;
@@ -60,6 +61,13 @@ export function buildSponsorRenewalEvent(player: Player): GameEvent {
       ? `El contrato con ${s.name} ha vencido. ${agent} llega con la propuesta de renovación y un gesto que ya lo dice todo: «Quieren seguir, pero a la baja: ${eur(offer)} al mes, frente a los ${eur(s.monthly)} de antes. Dicen que este año no has dado lo que esperaban».`
       : `${s.name} te propone renovar. ${agent} resume: «Mismas condiciones, más o menos: ${eur(offer)} al mes (antes ${eur(s.monthly)}). No te regalan nada, pero tampoco te piden nada raro».`;
 
+  // Una marca rival de la misma categoría oye que sales de contrato y se mete: la renovación se convierte en una pelea.
+  const rival = (player.fama ?? 0) >= 68 && Math.random() < 0.6 ? rivalBrandFor(s.name, player) : null;
+  const rivalOffer = rival ? Math.max(50, Math.round((offer * (1.2 + Math.random() * 0.15)) / 50) * 50) : 0;
+  const rivalFlags: Record<string, string> = rival ? { brands_used: markBrands(player.flags, [rival.name, s.name]), [CATEGORIES[rival.category].flag]: rival.name } : {};
+  const rivalRec = (monthly: number) => (rival ? JSON.stringify({ name: rival.name, monthly, since: week + 1, until: week + SPONSORSHIP_TURNS }) : "");
+  const rivalKey = rival ? `patrocinio_spo_rival_${rival.name.replace(/[^a-z0-9]+/gi, "_")}_${week}` : "";
+
   const options: EventOption[] = [
     {
       id: "a",
@@ -99,11 +107,42 @@ export function buildSponsorRenewalEvent(player: Player): GameEvent {
     },
   ];
 
+  if (rival) {
+    options.splice(2, 0,
+      {
+        id: "d",
+        label: `Pasarte a ${rival.name}: ${eur(rivalOffer)} al mes`,
+        subtitle: `Más dinero, otra marca (${rival.note})`,
+        consequences: { moral: 3, fama: 1, rel_representante: 1, reputacion: -1, flags: { ...done, ...rivalFlags, [rivalKey]: rivalRec(rivalOffer) } },
+        outcomeText: `Firmas con ${rival.name}. ${s.name} se entera por la prensa y publica un comunicado de una sola línea que dice mucho: «Gracias por esta etapa». ${agent} te recuerda que en este mundo todo el mundo termina trabajando con todos algún día, pero que el cambio no pasará desapercibido.`,
+      },
+      {
+        id: "e",
+        label: `Usar la oferta de ${rival.name} para que ${s.name} mejore la suya`,
+        subtitle: "Una pequeña guerra de marcas",
+        consequences: {},
+        resolve: {
+          baseChance: Math.min(0.7, 0.3 + (player.fama ?? 0) / 200),
+          statModifier: "fama",
+          success: {
+            text: `Dejas caer, con toda la naturalidad del mundo, que ${rival.name} ha puesto ${eur(rivalOffer)} sobre la mesa. ${s.name} reacciona en menos de una hora: mejoran la oferta hasta ${eur(rivalOffer)} y añaden una edición especial con tu nombre. ${agent} sonríe como quien acaba de ganar una subasta.`,
+            consequences: { moral: 4, fama: 1, rel_representante: 2, flags: { ...done, [s.key]: rec(s, week, rivalOffer) } },
+          },
+          fail: {
+            text: `${s.name} no soporta que le pongan una oferta ajena delante: retira la suya con un comunicado seco. Te quedas con la de ${rival.name}, algo menos de lo que dijeron al principio (${eur(rivalOffer * 0.9)} al mes). ${agent} lo resume: «Hay marcas que no admiten presiones».`,
+            consequences: { moral: -2, rel_representante: -1, flags: { ...done, ...rivalFlags, [rivalKey]: rivalRec(Math.round((rivalOffer * 0.9) / 50) * 50) } },
+          },
+        },
+      },
+    );
+  }
+
+  const rivalNote = rival ? ` Además, ${rival.name} (${rival.note}) ha oído que tu contrato termina y ya ha llamado a tu agente.` : "";
   return {
     id: `spo-renewal-${slug}-${week}`,
     category: "representante",
     title: better ? `${s.name} quiere renovarte (y mejora)` : worse ? `${s.name} te ofrece renovar, a la baja` : `${s.name} te propone renovar`,
-    description: intro,
+    description: `${intro}${rivalNote}`,
     options,
     priority: true,
   };

@@ -93,5 +93,35 @@ ok(n > 300, `salen escenas (${n})`);
 ok(kinds.size >= 3, `varios tipos: ${[...kinds].join(", ")}`);
 ok(pickSponsorEvent(mk(30, 95, { marcas_evento_last: "29" }), [], rng) === null, "enfriamiento de 3 turnos tras una escena de marcas");
 
+console.log("9) Renovación: una marca rival se mete");
+{
+  const { buildSponsorRenewalEvent } = await import("../src/lib/narrative/sponsor-renewal");
+  const { categoryOfBrand } = await import("../src/lib/narrative/brands");
+  const { readSponsorships: read, activeSponsorships: active } = await import("../src/lib/finance/sponsorship-income");
+  const withNike = (fama: number): any => mk(21, fama, { patrocinio_nike_x: JSON.stringify({ name: "Nike", monthly: 4000, since: 11, until: 20 }) });
+  ok(categoryOfBrand("Nike") === "botas" && categoryOfBrand("Marca Atlas") === null, "Nike es de botas; una marca desconocida no tiene categoría");
+  let withRival = 0, without = 0, badR = 0, switched = 0, leveraged = 0;
+  for (let i = 0; i < 300; i++) {
+    const ev: any = buildSponsorRenewalEvent(withNike(92));
+    if (bad(ev)) badR++;
+    const d = ev.options.find((o: any) => o.id === "d");
+    const e = ev.options.find((o: any) => o.id === "e");
+    if (d && e) {
+      withRival++;
+      const pl = withNike(92);
+      for (const [k, v] of Object.entries(d.consequences.flags ?? {})) pl.flags[k] = v;
+      const newDeals = read(pl.flags).filter((x) => x.name !== "Nike");
+      if (newDeals.length === 1 && newDeals[0].monthly > 4000 && active(pl.flags, 22).length >= 1 && newDeals[0].name !== "Nike" && pl.flags.sponsor_botas === newDeals[0].name) switched++;
+      if (e.resolve && e.resolve.success.consequences.flags && e.resolve.fail.consequences.flags) leveraged++;
+    } else without++;
+  }
+  ok(badR === 0, "los textos con rival salen limpios");
+  ok(withRival > 120 && without > 60, "con fama 92 sale una marca rival en ~60 % de las renovaciones (" + withRival + "/300)");
+  ok(switched === withRival, "pasarte a la rival deja su contrato (más dinero) y su marca como patrocinador de botas");
+  ok(leveraged === withRival, "usar la oferta rival es una tirada con las dos salidas definidas");
+  const low = buildSponsorRenewalEvent(withNike(40)) as any;
+  ok(!low.options.some((o: any) => o.id === "d"), "con poca fama no hay marca rival");
+}
+
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);
