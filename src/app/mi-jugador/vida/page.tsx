@@ -12,6 +12,7 @@ import { describeRel, describeCity, partnerRel } from "@/lib/narrative/partner";
 import { exClubMembers } from "@/lib/narrative/ex-clubs";
 import { StateChips } from "@/components/StateChips";
 import { NO_CLUB_YET } from "@/lib/constants";
+import { readGoalsPlan, goalsProgress } from "@/lib/narrative/season-goals";
 
 function Stat({ label, value }: { label: string; value: number }) {
   const pct = Math.max(0, Math.min(100, value));
@@ -38,6 +39,11 @@ export default async function VidaPage() {
   if (!player) {
     redirect("/crear-jugador");
   }
+
+  // Objetivos de esta temporada y cómo van (los fija el míster al empezar; ver narrative/season-goals.ts).
+  const goalsSeason = Math.floor((player.week - 1) / 10);
+  const goalsPlan = readGoalsPlan(player, goalsSeason);
+  const goalRows = goalsPlan ? goalsProgress(player, goalsSeason, goalsPlan) : [];
 
   const pareja = typeof player.flags?.pareja === "string" && player.flags.pareja ? player.flags.pareja : null;
 
@@ -134,6 +140,22 @@ export default async function VidaPage() {
       <div className="w-full max-w-md empty:hidden">
         <StateChips flags={player.flags} week={player.week} detailed />
       </div>
+
+      {goalRows.length > 0 && (
+        <div className="w-full max-w-md space-y-2 rounded-2xl border border-panel-border bg-surface p-4">
+          <p className="text-kicker">Objetivos de la temporada</p>
+          {goalRows.map((r) => (
+            <div key={r.goal.kind} className="flex items-start gap-2 text-sm">
+              <span className={r.done ? "text-pitch" : "text-muted-foreground"} aria-hidden>{r.done ? "✓" : "○"}</span>
+              <div className="min-w-0">
+                <p className="text-foreground/90">{r.goal.label}</p>
+                <p className="text-xs text-muted-foreground">{r.text}</p>
+              </div>
+            </div>
+          ))}
+          {goalsPlan?.mode === "ambicioso" && <p className="text-xs text-gold-soft">Metas pactadas con prima: hace falta cumplirlas todas.</p>}
+        </div>
+      )}
 
       <LifeCircle icon="🏠" title="Familia" subtitle="Los que estaban antes de la fama" members={familia} defaultOpen />
       <LifeCircle icon="🤝" title="Amigos y compañeros" subtitle="Vestuario, barrio y quien te disputa el puesto" members={amigos} />

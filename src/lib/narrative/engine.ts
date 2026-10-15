@@ -89,6 +89,7 @@ import { shouldTriggerContractRenewal, buildContractRenewalEvent } from "@/lib/n
 import { shouldTriggerArrivalIntro, buildArrivalIntroEvent } from "@/lib/narrative/arrival-intro";
 import { buildSeasonCloseEvent } from "@/lib/narrative/season-close";
 import { shouldTriggerSeasonAwards, buildSeasonAwardsEvent } from "@/lib/narrative/season-awards";
+import { shouldTriggerSeasonGoals, buildSeasonGoalsEvent, shouldTriggerGoalsReview, buildGoalsReviewEvent } from "@/lib/narrative/season-goals";
 import { shouldTriggerSeriousInjury, shouldTriggerSagaStage, buildSeriousInjuryEvent, buildSagaStageEvent } from "@/lib/narrative/injury-saga";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
@@ -2093,6 +2094,17 @@ export async function pickNextEventDynamic(
     const awardsEvent = buildSeasonAwardsEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Premios de la temporada: "${awardsEvent.title}"`);
     return awardsEvent;
+  }
+  // El balance de los objetivos de la temporada que se cierra y, después, los de la nueva.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerGoalsReview(playerWithDynamics, usedEventIds)) {
+    const review = buildGoalsReviewEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Balance de objetivos: "${review.title}"`);
+    return review;
+  }
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerSeasonGoals(playerWithDynamics, usedEventIds)) {
+    const goalsEvent = buildSeasonGoalsEvent(playerWithDynamics);
+    console.log(`[pickNextEventDynamic] Objetivos de temporada: "${goalsEvent.title}"`);
+    return goalsEvent;
   }
 
   // Recién fichado por otro club: lo primero es conocer al míster, al capitán y a alguien del cuerpo técnico.
