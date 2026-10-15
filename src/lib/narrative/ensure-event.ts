@@ -46,6 +46,7 @@ import { shouldTriggerYouthHousing, buildYouthHousingEvent } from "@/lib/narrati
 import { repairEuroAfterTransfer } from "@/lib/calendar/euro-transfer";
 
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
+import { timed } from "@/lib/perf";
 export const GEN_LOCK_ID = "gen-lock";
 const LOCK_TTL_MS = 90_000;
 
@@ -103,7 +104,7 @@ export async function ensureNextEvent(
       week: player.week,
       targetWeeks: MODE_TARGET_WEEKS[player.mode] ?? 200,
     },
-    () => ensureNextEventInner(supabase, player),
+    () => timed("ensureNextEvent", () => ensureNextEventInner(supabase, player)),
   );
   return result;
 }
@@ -148,7 +149,9 @@ async function ensureNextEventInner(
   supabase: SupabaseClient,
   player: Player,
 ): Promise<{ event: GameEvent; usedEventIds: string[] }> {
+  await timed("ensure repairs", async () => {
   await migrateSalaryDeal(supabase, player);
+  });
   // Fichajes a mitad de temporada anteriores a la regla de la competición europea: se corrige una vez (calendar/euro-transfer.ts).
   await repairEuroAfterTransfer(supabase, player);
   // Una oferta de fichaje guardada con las cifras antiguas (sueldo que seguía a la media) se descarta y se genera de nuevo.
@@ -194,8 +197,10 @@ async function ensureNextEventInner(
 
   // Para no repetir nunca un evento fijo, se compara contra TODA la
   // carrera, no solo los últimos turnos.
-  const { data: allHistory } = await fetchAllRows<{ event_id: string }>((from, to) =>
-    supabase.from("career_events").select("event_id").eq("player_id", player.id).order("id").range(from, to),
+  const { data: allHistory } = await timed("ensure fetchAllHistory", () =>
+    fetchAllRows<{ event_id: string }>((from, to) =>
+      supabase.from("career_events").select("event_id").eq("player_id", player.id).order("id").range(from, to),
+    ),
   );
   const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
 
@@ -366,7 +371,7 @@ async function ensureNextEventInner(
     }));
 
     try {
-      event = await pickNextEventDynamic(player, historyForAi, usedEventIds);
+      event = await timed("ensure pickNextEventDynamic", () => pickNextEventDynamic(player, historyForAi, usedEventIds));
       // Si la escena ofrece cambiar de club y tienes pareja, el texto recoge lo que ella opina de cada destino.
       if (event) event = addPartnerRenewalOpinion(addPartnerOpinion(event, player), player);
       if (!player.flags) player.flags = {};

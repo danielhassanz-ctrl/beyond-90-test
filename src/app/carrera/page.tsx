@@ -5,6 +5,7 @@ import { displayWeek } from "@/lib/calendar/season-display";
 import { canonicalClub } from "@/lib/calendar/leagues";
 import { headerPhotoUrl } from "@/lib/player/header-photo";
 import { redirect } from "next/navigation";
+import { timed } from "@/lib/perf";
 
 // Necesario para que la generación de imagen en segundo plano (after() en
 // resolveEvent, en actions.ts) tenga tiempo de terminar: Flux Kontext Pro
@@ -62,7 +63,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default async function CarreraPage() {
-  const { supabase, user, player } = await getCurrentUserAndPlayer();
+  const { supabase, user, player } = await timed("page getPlayer", () => getCurrentUserAndPlayer());
 
   if (!user) {
     redirect("/login");
@@ -89,7 +90,7 @@ export default async function CarreraPage() {
     redirect("/carrera/retiro");
   }
 
-  const ensured = await ensureNextEvent(supabase, player);
+  const ensured = await timed("page ensureNextEvent", () => ensureNextEvent(supabase, player));
   let event = ensured.event;
   const usedEventIds = ensured.usedEventIds;
 
@@ -116,7 +117,7 @@ export default async function CarreraPage() {
   // (hasMetNpc ya en true) el personaje ya pesa algo de verdad en la
   // carrera y sí se le pone cara.
   const mentionedRoles = event ? detectMentionedRoles(event, player).filter((r) => NPC_FACE_ROLES.includes(r)) : [];
-  const npcFacesRaw = await Promise.all(
+  const npcFacesRaw = await timed("page npcFaces", () => Promise.all(
     mentionedRoles.slice(0, 2).map(async (role) => {
       if (!hasMetNpc(player, role)) {
         await markNpcSeen(supabase, player, role);
@@ -130,7 +131,7 @@ export default async function CarreraPage() {
         url: chica ?? (await getOrCreateNpcFace(supabase, player, role, user.id)),
       };
     }),
-  );
+  ));
   const npcFaces = npcFacesRaw.filter((f): f is NonNullable<typeof f> => f !== null);
 
   // Los títulos del escudo son los ganados CON ESTE CLUB (no los de toda tu carrera): al llegar a un club nuevo son 0.

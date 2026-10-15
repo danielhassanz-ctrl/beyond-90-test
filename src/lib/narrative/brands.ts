@@ -24,7 +24,7 @@ interface CategoryInfo {
   /** Fama mínima para que se interesen. */
   minFama: number;
   brands: { name: string; note: string }[];
-  intro: (brand: string, you: string) => string;
+  intro: (brand: string) => string;
   accept: (brand: string) => string;
   flag: string;
 }
@@ -32,92 +32,92 @@ interface CategoryInfo {
 export const CATEGORIES: Record<BrandCategory, CategoryInfo> = {
   botas: {
     label: "botas de fútbol", base: 20000, minFama: 65, flag: "sponsor_botas",
-    brands: [{ name: "Vektra", note: "la marca de moda entre los delanteros jóvenes" }, { name: "Ignis Sport", note: "botas ligeras y colores imposibles" }, { name: "Tramontana", note: "tradición artesana y piel de canguro" }, { name: "Halcón Athletic", note: "la apuesta española que quiere comerse el mercado" }, { name: "Zenit", note: "tecnología de tacos con patente propia" }],
-    intro: (b, y) => `${b} te propone convertirte en su cara de botas. Quieren que ${y} las lleve en todos los partidos, una edición con tu nombre en el talón y tu dorsal en la lengüeta.`,
+    brands: [{ name: "Nike", note: "la gigante del swoosh" }, { name: "Adidas", note: "las tres rayas de toda la vida" }, { name: "Puma", note: "el felino que no pasa de moda" }, { name: "Under Armour", note: "tecnología para los que entrenan como animales" }, { name: "Asics", note: "tradición japonesa y amortiguación" }, { name: "Mizuno", note: "botas artesanas hechas en Japón" }, { name: "New Balance", note: "el diseño de calle que ha llegado a los campos" }, { name: "Umbro", note: "una marca con historia en Inglaterra" }, { name: "Kelme", note: "la marca de siempre de Elche, con alma de barrio" }, { name: "Vektra", note: "la marca de moda entre los delanteros jóvenes" }, { name: "Ignis Sport", note: "botas ligeras y colores imposibles" }, { name: "Tramontana", note: "tradición artesana y piel de canguro" }, { name: "Halcón Athletic", note: "la apuesta española que quiere comerse el mercado" }, { name: "Zenit", note: "tecnología de tacos con patente propia" }],
+    intro: (b) => `${b} te propone convertirte en su cara de botas. Quieren que las lleves en todos los partidos, con una edición que lleve tu nombre en el talón y tu dorsal en la lengüeta.`,
     accept: (b) => `Firmas con ${b} y el diseñador te enseña el primer boceto: tu apellido bordado en el talón, el color que tú elijas en la suela. Esa noche sueñas con ver a un niño con tus botas en el patio del colegio.`,
   },
   ropa: {
     label: "ropa deportiva y de calle", base: 12000, minFama: 65, flag: "sponsor_ropa",
-    brands: [{ name: "Costa Norte", note: "ropa casual con aire de puerto" }, { name: "Urbano", note: "streetwear de barrio con colecciones cortas" }, { name: "Pampa Wear", note: "ropa de abrigo y de campo para la ciudad" }, { name: "Linaje", note: "moda de autor que quiere vestir al vestuario" }],
-    intro: (b, y) => `${b} quiere vestir tu día a día. Te ofrecen una cápsula de ropa con tu nombre y un acuerdo para que ${y} aparezca con sus prendas fuera del campo.`,
+    brands: [{ name: "Under Armour", note: "ropa de compresión y entrenamiento" }, { name: "On", note: "las zapatillas suizas con suela de nube" }, { name: "Kelme", note: "ropa deportiva con raíces españolas" }, { name: "Joma", note: "equipaciones y ropa de entrenamiento made in Toledo" }, { name: "Hummel", note: "la marca danesa de los chevrones" }, { name: "Lotto", note: "tradición italiana en la ropa del fútbol" }, { name: "Le Coq Sportif", note: "estilo francés con gallo en el pecho" }, { name: "Costa Norte", note: "ropa casual con aire de puerto" }, { name: "Urbano", note: "streetwear de barrio con colecciones cortas" }, { name: "Pampa Wear", note: "ropa de abrigo y de campo para la ciudad" }, { name: "Linaje", note: "moda de autor que quiere vestir al vestuario" }],
+    intro: (b) => `${b} quiere vestir tu día a día. Te ofrecen una cápsula de ropa con tu nombre y un acuerdo para que te vean con sus prendas también fuera del campo.`,
     accept: (b) => `Firmas con ${b} y el primer pedido llega a tu casa en cajas con tu nombre. Te pruebas la chaqueta frente al espejo y no puedes evitar sonreír: ahora tienes una colección.`,
   },
   colonia: {
     label: "perfumes y colonias", base: 15000, minFama: 68, flag: "sponsor_colonia",
-    brands: [{ name: "Aurea", note: "perfumería de lujo con frascos de cristal soplado" }, { name: "Noir Sur", note: "fragancias oscuras y marineras" }, { name: "Maré", note: "colonias frescas de verano" }, { name: "Oud Real", note: "esencias de maderas nobles" }, { name: "Cuero & Sal", note: "una colonia con olor a vestuario limpio, ironías incluidas" }],
-    intro: (b, y) => `${b} te llama con una idea que no esperabas: una colonia con tu nombre. Un frasco, un olor que defina tu estilo y una campaña con ${y} en blanco y negro.`,
+    brands: [{ name: "Hugo Boss", note: "fragancias de traje y corbata" }, { name: "Paco Rabanne", note: "colonias de lujo con aires futuristas" }, { name: "Aurea", note: "perfumería de lujo con frascos de cristal soplado" }, { name: "Noir Sur", note: "fragancias oscuras y marineras" }, { name: "Maré", note: "colonias frescas de verano" }, { name: "Oud Real", note: "esencias de maderas nobles" }, { name: "Cuero & Sal", note: "una colonia con olor a vestuario limpio, ironías incluidas" }],
+    intro: (b) => `${b} te llama con una idea que no esperabas: una colonia con tu nombre. Un frasco, un olor que defina tu estilo y una campaña en blanco y negro con tu cara.`,
     accept: (b) => `Pasas dos tardes oliendo muestras con el perfumista de ${b}, que te mira con cara de catador de vinos. Al final eliges la que huele a hierba recién cortada y a noche de estadio. Tu madre dice que le recuerda a ti.`,
   },
   reloj: {
     label: "relojes de lujo", base: 25000, minFama: 72, flag: "sponsor_reloj",
-    brands: [{ name: "Meridian", note: "relojería suiza de siempre" }, { name: "Chronos & Hale", note: "relojes de colección con historia" }, { name: "Vantor", note: "diseño atrevido y esfera de carbono" }, { name: "Orlov", note: "alta relojería para coleccionistas" }],
-    intro: (b, y) => `${b} te propone ser imagen de su nueva colección: un reloj de edición limitada y una campaña en revistas donde ${y} aparece con el brazo apoyado en un coche que no es tuyo.`,
+    brands: [{ name: "Hublot", note: "relojes de futbolistas y de estrellas" }, { name: "TAG Heuer", note: "relojería deportiva suiza" }, { name: "Meridian", note: "relojería suiza de siempre" }, { name: "Chronos & Hale", note: "relojes de colección con historia" }, { name: "Vantor", note: "diseño atrevido y esfera de carbono" }, { name: "Orlov", note: "alta relojería para coleccionistas" }],
+    intro: (b) => `${b} te propone ser imagen de su nueva colección: un reloj de edición limitada y una campaña en revistas donde sales con el brazo apoyado en un coche que no es tuyo.`,
     accept: (b) => `Te ponen el reloj en la muñeca y pesa más de lo que parece. El relojero de ${b} te explica cada engranaje con una devoción casi religiosa. Sales con la sensación de que acabas de entrar en otra liga.`,
   },
   bebida: {
     label: "bebidas", base: 12000, minFama: 65, flag: "sponsor_bebida",
-    brands: [{ name: "Voltio", note: "energética con anuncios muy ruidosos" }, { name: "Kraken Energy", note: "la bebida de los gamers y de los gimnasios" }, { name: "Frescor", note: "agua mineral y zumos naturales" }, { name: "Nitro Lima", note: "isotónica de sabor cítrico" }, { name: "Tormenta", note: "refresco con aires de verano eterno" }],
-    intro: (b, y) => `${b} quiere que ${y} salga en sus latas: un spot de quince segundos, una edición con tu cara y el compromiso de que beberás su producto delante de una cámara, con cara de felicidad.`,
+    brands: [{ name: "Red Bull", note: "la lata que da alas" }, { name: "Gatorade", note: "la bebida isotónica de los vestuarios" }, { name: "Powerade", note: "hidratación para el esfuerzo" }, { name: "Voltio", note: "energética con anuncios muy ruidosos" }, { name: "Kraken Energy", note: "la bebida de los gamers y de los gimnasios" }, { name: "Frescor", note: "agua mineral y zumos naturales" }, { name: "Nitro Lima", note: "isotónica de sabor cítrico" }, { name: "Tormenta", note: "refresco con aires de verano eterno" }],
+    intro: (b) => `${b} quiere que salgas en sus latas: un spot de quince segundos, una edición con tu cara y el compromiso de que beberás su producto delante de una cámara, con cara de felicidad.`,
     accept: (b) => `Rodáis el anuncio en un solo día. A la décima toma, estás ya hasta las cejas de ${b}, pero sonríes, que es lo que cuenta. Tu madre pregunta si de verdad te lo bebes.`,
   },
   tecnologia: {
     label: "tecnología", base: 18000, minFama: 68, flag: "sponsor_tecnologia",
-    brands: [{ name: "Nexa", note: "móviles con cámara de cine" }, { name: "Orbit", note: "relojes inteligentes y pulseras de actividad" }, { name: "Pixelon", note: "televisores enormes y pantallas curvas" }, { name: "Lumen", note: "portátiles y tablets de diseño" }],
-    intro: (b, y) => `${b} presenta un producto nuevo y quiere que ${y} sea la cara del lanzamiento: una campaña, un evento de presentación y un modelo especial con tu firma grabada.`,
+    brands: [{ name: "Samsung", note: "móviles y pantallas de gama alta" }, { name: "Sony", note: "auriculares, cámaras y televisores" }, { name: "Nexa", note: "móviles con cámara de cine" }, { name: "Orbit", note: "relojes inteligentes y pulseras de actividad" }, { name: "Pixelon", note: "televisores enormes y pantallas curvas" }, { name: "Lumen", note: "portátiles y tablets de diseño" }],
+    intro: (b) => `${b} presenta un producto nuevo y quiere que seas la cara del lanzamiento: una campaña, un evento de presentación y un modelo especial con tu firma grabada.`,
     accept: (b) => `Subes al escenario de la presentación de ${b} con un guion que no recuerdas ni un minuto después. El público aplaude cuando enseñas el aparato. Esa noche, en redes, tu foto con él supera a la del propio producto.`,
   },
   videojuegos: {
     label: "videojuegos", base: 14000, minFama: 70, flag: "sponsor_videojuego",
-    brands: [{ name: "Kickoff Legends", note: "el simulador de fútbol de moda" }, { name: "Pixel Arena", note: "un juego de cartas de futbolistas" }, { name: "Bravo Games", note: "shooters y competitivos en consola" }],
-    intro: (b, y) => `${b} te ofrece aparecer en su próximo juego, con tu cara, tu nombre y tu celebración de gol incluida. Quieren que ${y} haga captura de movimientos en un estudio.`,
+    brands: [{ name: "EA Sports", note: "el simulador que juega medio mundo" }, { name: "PlayStation", note: "la consola de los vestuarios" }, { name: "Kickoff Legends", note: "el simulador de fútbol de moda" }, { name: "Pixel Arena", note: "un juego de cartas de futbolistas" }, { name: "Bravo Games", note: "shooters y competitivos en consola" }],
+    intro: (b) => `${b} te ofrece aparecer en su próximo juego, con tu cara, tu nombre y tu celebración de gol incluida. Quieren que pases un día en un estudio de captura de movimientos.`,
     accept: (b) => `Pasas un día entero en un estudio de captura con un traje lleno de bolitas, celebrando goles imaginarios ante una pantalla verde. Meses después, un niño te enseña el juego en su consola y ahí estás, igual que tú, con sus mismos gestos.`,
   },
   motor: {
     label: "motor", base: 30000, minFama: 75, flag: "sponsor_motor",
-    brands: [{ name: "Veloce", note: "deportivos de lujo hechos a mano" }, { name: "Aster Motors", note: "coches de gran turismo con aire británico" }, { name: "Brisa Electric", note: "eléctricos premium de diseño nórdico" }],
-    intro: (b, y) => `${b} quiere a ${y} como embajador: un coche a tu disposición, una campaña en televisión y un acuerdo que incluye cenas de gala con sus clientes más ricos.`,
+    brands: [{ name: "Cupra", note: "deportivos con aire de Barcelona" }, { name: "Audi", note: "el coche oficial de tantos clubes" }, { name: "Veloce", note: "deportivos de lujo hechos a mano" }, { name: "Aster Motors", note: "coches de gran turismo con aire británico" }, { name: "Brisa Electric", note: "eléctricos premium de diseño nórdico" }],
+    intro: (b) => `${b} te quiere como embajador: un coche a tu disposición, una campaña en televisión y un acuerdo que incluye cenas de gala con sus clientes más ricos.`,
     accept: (b) => `Te dan las llaves de un coche que no sabes ni cómo arrancar. El de la marca te lo explica dos veces con una paciencia infinita. Al día siguiente, todo el vestuario sabe de qué marca eres.`,
   },
   banca: {
     label: "banca y seguros", base: 22000, minFama: 70, flag: "sponsor_banca",
     brands: [{ name: "Banco Atlántica", note: "la banca de siempre con ropa nueva" }, { name: "Fintra", note: "una aplicación de pagos que quiere ser el futuro" }, { name: "Credex", note: "hipotecas y tarjetas premium" }],
-    intro: (b, y) => `${b} te quiere como imagen. Anuncios serios con ${y} y un traje, una tarjeta personalizada y un acuerdo para que tu patrimonio se gestione con ellos.`,
+    intro: (b) => `${b} te quiere como imagen. Anuncios serios contigo de traje, una tarjeta personalizada y un acuerdo para que tu patrimonio se gestione con ellos.`,
     accept: (b) => `Firmas con ${b} en un despacho con cuadros caros. Te dan una tarjeta negra con tu nombre grabado y una carpeta con folletos que no abrirás nunca. Tu representante, eso sí, los lee todos.`,
   },
   aerolinea: {
     label: "aerolíneas", base: 20000, minFama: 72, flag: "sponsor_aerolinea",
-    brands: [{ name: "Aerolíneas Meridiana", note: "la bandera de tu país en el aire" }, { name: "SkyBravo", note: "vuelos baratos con humor" }, { name: "Cóndor Air", note: "rutas largas y asientos de cuero" }],
-    intro: (b, y) => `${b} busca cara para su campaña de verano: ${y} en un anuncio dentro de un avión, un pase de por vida para volar con ellos y tu cara en el fuselaje de uno de sus aviones.`,
+    brands: [{ name: "Emirates", note: "aerolínea de lujo y cabinas privadas" }, { name: "Iberia", note: "la bandera española en el aire" }, { name: "Aerolíneas Meridiana", note: "la bandera de tu país en el aire" }, { name: "SkyBravo", note: "vuelos baratos con humor" }, { name: "Cóndor Air", note: "rutas largas y asientos de cuero" }],
+    intro: (b) => `${b} busca cara para su campaña de verano: tú en un anuncio dentro de un avión, un pase de por vida para volar con ellos y tu cara en el fuselaje de uno de sus aviones.`,
     accept: (b) => `Rodáis en un avión parado en una pista, con un centenar de extras que fingen estar felices a cuatro grados. Meses después, ves tu cara pintada en la cola de un avión de ${b}. Se te encoge el estómago de orgullo.`,
   },
   alimentacion: {
     label: "alimentación", base: 8000, minFama: 65, flag: "sponsor_comida",
     brands: [{ name: "Doña Lola", note: "conservas y platos preparados de siempre" }, { name: "Crujiente", note: "cereales y barritas energéticas" }, { name: "Sol de Campo", note: "aceite y productos de huerta" }],
-    intro: (b, y) => `${b} quiere que ${y} salga en sus cajas. Una edición con tu cara, un anuncio en familia y un acuerdo para repartir producto en el comedor de varios colegios.`,
+    intro: (b) => `${b} quiere que salgas en sus cajas. Una edición con tu cara, un anuncio en familia y un acuerdo para repartir producto en el comedor de varios colegios.`,
     accept: (b) => `Rodáis un anuncio en una cocina con toda tu familia. Tu madre, nerviosa, repite la frase de la receta cinco veces. En el supermercado, semanas después, ves tu cara en una caja de ${b} y le haces una foto para mandarla a casa.`,
   },
   gafas: {
     label: "gafas de sol", base: 10000, minFama: 66, flag: "sponsor_gafas",
-    brands: [{ name: "Lynx Optics", note: "gafas deportivas ultra ligeras" }, { name: "Solana", note: "monturas de diseño" }, { name: "Bruma", note: "gafas con estilo retro" }],
-    intro: (b, y) => `${b} te propone una colección de gafas de sol con tu nombre y que ${y} las lleves en la llegada al estadio, ante las cámaras de los fotógrafos.`,
+    brands: [{ name: "Oakley", note: "gafas deportivas de alto rendimiento" }, { name: "Ray-Ban", note: "el clásico de las gafas de sol" }, { name: "Lynx Optics", note: "gafas deportivas ultra ligeras" }, { name: "Solana", note: "monturas de diseño" }, { name: "Bruma", note: "gafas con estilo retro" }],
+    intro: (b) => `${b} te propone una colección de gafas de sol con tu nombre y que te las pongas en la llegada al estadio, ante las cámaras de los fotógrafos.`,
     accept: (b) => `Llegas al estadio con unas gafas de ${b} y los fotógrafos no paran. Al día siguiente, tu foto con ellas se vende más que la de tu último gol. Tu agente lo resume: «El mejor autógrafo es una buena montura».`,
   },
   auriculares: {
     label: "auriculares", base: 9000, minFama: 66, flag: "sponsor_auriculares",
-    brands: [{ name: "Sonar", note: "auriculares de cancelación de ruido" }, { name: "Kraftwave", note: "auriculares de gaming y fútbol" }],
-    intro: (b, y) => `${b} quiere que ${y} entre al túnel de vestuarios con sus auriculares puestos: una foto icónica, una edición con tu dorsal y cinco imágenes en redes.`,
+    brands: [{ name: "Beats", note: "los auriculares que se ven en el túnel de vestuarios" }, { name: "Bose", note: "cancelación de ruido de primer nivel" }, { name: "Sonar", note: "auriculares de cancelación de ruido" }, { name: "Kraftwave", note: "auriculares de gaming y fútbol" }],
+    intro: (b) => `${b} quiere que entres al túnel de vestuarios con sus auriculares puestos: una foto icónica, una edición con tu dorsal y cinco imágenes en redes.`,
     accept: (b) => `Entras al estadio con unos auriculares de ${b}, la mirada perdida y la música a tope. La foto se vuelve viral: «el concentrado». Medio vestuario pide unos iguales.`,
   },
   cuidado: {
     label: "cuidado personal", base: 7000, minFama: 65, flag: "sponsor_cuidado",
     brands: [{ name: "Barba Real", note: "ceras y aceites para barba" }, { name: "Filo", note: "maquinillas y cuchillas" }, { name: "Cuarzo", note: "cremas y cuidado de la piel" }],
-    intro: (b, y) => `${b} te quiere como imagen de su nueva línea: ${y} en un baño blanquísimo, mirándose al espejo con cara de perfecto control de uno mismo.`,
+    intro: (b) => `${b} te quiere como imagen de su nueva línea: tú en un baño blanquísimo, mirándote al espejo con cara de perfecto control de ti mismo.`,
     accept: (b) => `Rodáis con una luz tan suave que te sientes un anuncio. Al terminar, te llevas una caja enorme de ${b} que tu pareja usa más que tú.`,
   },
   juguetes: {
     label: "juguetes y colecciones", base: 6000, minFama: 65, flag: "sponsor_juguetes",
     brands: [{ name: "Mini Crack", note: "figuras articuladas de futbolistas" }, { name: "Cromos Gol", note: "álbumes y cromos de la liga" }, { name: "FigurArte", note: "muñecos de colección y peluches" }],
-    intro: (b, y) => `${b} quiere sacar una figura de colección de ${y}: un muñeco con tu pose de celebración, tu equipación y una caja con tu firma.`,
+    intro: (b) => `${b} quiere sacar una figura de colección tuya: un muñeco con tu pose de celebración, tu equipación y una caja con tu firma.`,
     accept: (b) => `Te escanean la cara y el cuerpo con una cámara que parece un robot. Meses después, un niño te enseña tu figura de ${b} y te pide que se la firmes con rotulador. Es una de las firmas más difíciles de tu vida.`,
   },
 };
@@ -172,11 +172,10 @@ export function buildBrandOffer(player: Player, rng: () => number = Math.random)
   const info = CATEGORIES[cat];
   const [brand] = freshBrands(cat, player, 1, rng);
   const week = player.week;
-  const you = displayName(player);
   const bonus = round500(info.base * fameScale(player) * (0.9 + rng() * 0.25));
   const better = round500(bonus * 1.3);
   const agent = player.agent_name && player.agent_name !== "sin representante" ? player.agent_name : "Tu representante";
-  const marked = { brands_used: markBrands(player.flags, [brand.name]), [`brand_last_${cat}`]: String(week) };
+  const marked = { brands_used: markBrands(player.flags, [brand.name]), [`brand_last_${cat}`]: String(week), marcas_evento_last: String(week) };
   const options: EventOption[] = [
     {
       id: "firmar",
@@ -209,7 +208,7 @@ export function buildBrandOffer(player: Player, rng: () => number = Math.random)
     id: `sponsor-oferta-${cat}-${week}`,
     category: "representante",
     title: `${brand.name} quiere ser tu marca de ${info.label}`,
-    description: `${agent} entra con el móvil en la mano: «${brand.name}, ${brand.note}. Te quieren». ${info.intro(brand.name, you)} Ofrecen ${eur(bonus)} de prima por la firma.`,
+    description: `${agent} entra con el móvil en la mano: «${brand.name}, ${brand.note}. Te quieren». ${info.intro(brand.name)} Ofrecen ${eur(bonus)} de prima por la firma.`,
     options,
     isMilestone: bonus >= 30000,
     milestoneType: bonus >= 30000 ? "sponsor" : undefined,
@@ -232,7 +231,7 @@ export function buildBrandBidding(player: Player, rng: () => number = Math.rando
   const order = [...trio.keys()].sort((a, b) => bonuses[b] - bonuses[a]);
   const [top, mid, low] = order;
   const agent = player.agent_name && player.agent_name !== "sin representante" ? player.agent_name : "Tu representante";
-  const marked = (names: string[]) => ({ brands_used: markBrands(player.flags, names), [`brand_last_${cat}`]: String(week) });
+  const marked = (names: string[]) => ({ brands_used: markBrands(player.flags, names), [`brand_last_${cat}`]: String(week), marcas_evento_last: String(week) });
   const all = trio.map((b) => b.name);
   const options: EventOption[] = [
     {
@@ -315,7 +314,7 @@ export function buildMerchOffer(player: Player, rng: () => number = Math.random)
   const scale = fameScale(player);
   const bonus = round500(prod.cost * scale * 0.9);
   const invest = Math.round((prod.cost * scale * 1.4) / 500) * 500;
-  const mark = { [`merch_${prod.key}`]: String(week), [`merch_${prod.key}_nombre`]: name };
+  const mark = { [`merch_${prod.key}`]: String(week), [`merch_${prod.key}_nombre`]: name, marcas_evento_last: String(week) };
   const options: EventOption[] = [
     {
       id: "licencia",
@@ -335,12 +334,12 @@ export function buildMerchOffer(player: Player, rng: () => number = Math.random)
       id: "no",
       label: "No: no es lo mío",
       subtitle: "Quizá más adelante",
-      consequences: { flags: { [`merch_${prod.key}`]: String(week), [`merch_${prod.key}_modo`]: "no" } },
+      consequences: { flags: { [`merch_${prod.key}`]: String(week), [`merch_${prod.key}_modo`]: "no", marcas_evento_last: String(week) } },
       outcomeText: `Dices que no. ${agent} se encoge de hombros: «Habrá más ofertas». Pero tardas un par de días en dejar de pensar en cómo habría quedado.`,
     },
   ];
   return {
-    id: `sponsor-merch-${prod.key}-${week}`,
+    id: `merch-${prod.key}-${week}`,
     category: "representante",
     title: `Tu propio producto: ${name}`,
     description: `${agent} te cita en una cafetería con una carpeta llena de bocetos. «Quieren ${prod.verb}: ${prod.flavor}». Es la primera vez que tu apellido va a salir en un producto que no es una camiseta. Hay dos maneras de hacerlo: ceder la licencia (dinero seguro) o producirlo tú (más ganancia, más riesgo).`,
@@ -358,7 +357,7 @@ export function dueMerchResult(player: Player): { key: string; modo: string } | 
     const w = num(f[`merch_${p.key}`]);
     const modo = String(f[`merch_${p.key}_modo`] ?? "");
     if (w <= 0 || !modo || modo === "no" || f[`merch_${p.key}_resultado`]) continue;
-    if (player.week - w >= 12 && player.week - w <= 40) return { key: p.key, modo };
+    if (player.week - w >= 8 && player.week - w <= 30) return { key: p.key, modo };
   }
   return null;
 }
@@ -373,7 +372,7 @@ export function buildMerchResult(player: Player, rng: () => number = Math.random
   const roll = rng();
   const invest = num(f[`merch_${prod.key}_inversion`]);
   const week = player.week;
-  const mark = { [`merch_${prod.key}_resultado`]: String(week) };
+  const mark = { [`merch_${prod.key}_resultado`]: String(week), marcas_evento_last: String(week) };
   const hit = roll < 0.55 + Math.min(0.2, (player.fama ?? 0) / 500);
   const big = hit && roll < 0.2;
   const profit = due.modo === "propio" ? round500(invest * (big ? 3.4 : hit ? 1.9 : 0)) : round500(prod.cost * fameScale(player) * (big ? 1.6 : hit ? 0.8 : 0.2));
@@ -384,7 +383,7 @@ export function buildMerchResult(player: Player, rng: () => number = Math.random
       ? `${name} se vende mejor de lo que decía el plan. No es el pelotazo del siglo, pero cuadra: ${agent} te enseña la hoja de cálculo con una sonrisa moderada.`
       : `${name} no despega. Las cajas se acumulan en un almacén y ${agent} te explica, con la paciencia de un médico, que a veces el público decide otra cosa.`;
   return {
-    id: `sponsor-merch-resultado-${prod.key}-${week}`,
+    id: `merch-resultado-${prod.key}-${week}`,
     category: "representante",
     title: big ? `${name}: éxito de ventas` : hit ? `${name}: las cuentas salen` : `${name}: no ha funcionado`,
     description: verdict,
@@ -438,12 +437,11 @@ export function buildBillboardEvent(player: Player, usedEventIds: readonly strin
   const week = player.week;
   const bonus = round500(30000 * fameScale(player) * 0.7);
   const agent = player.agent_name && player.agent_name !== "sin representante" ? player.agent_name : "Tu representante";
-  const you = displayName(player);
   return {
     id: `sponsor-pantalla-${spot.key}`,
     category: "especial",
     title: `Tu cara en una pantalla gigante de ${spot.place}`,
-    description: `${brand.name} cierra la campaña más grande de tu carrera hasta ahora: tu imagen ocupará durante un mes una pantalla gigante en ${spot.place} (${spot.city}), ${spot.line}. ${agent} te enseña la maqueta con una sonrisa temblorosa: «Mira cómo sale el ${you} de dos metros de alto». Te invitan a la inauguración, con las cámaras de medio mundo esperando.`,
+    description: `${brand.name} cierra la campaña más grande de tu carrera hasta ahora: tu imagen ocupará durante un mes una pantalla gigante en ${spot.place} (${spot.city}), ${spot.line}. ${agent} te enseña la maqueta con una sonrisa temblorosa: «Mira qué tal sales de dos metros de alto». Te invitan a la inauguración, con las cámaras de medio mundo esperando.`,
     isMilestone: true,
     milestoneType: "sponsor",
     imageScene: `Photorealistic night photo of ${spot.scene}, a clean abstract logo mark only (no readable text), vibrant colours, cinematic wide shot, iconic atmosphere`,
@@ -452,21 +450,21 @@ export function buildBillboardEvent(player: Player, usedEventIds: readonly strin
         id: "ir",
         label: `Viajar a ${spot.city} y verlo con tus propios ojos`,
         subtitle: `Prima de ${eur(bonus)} y fama de icono`,
-        consequences: { patrimonio: bonus, fama: 10, moral: 6, rel_representante: 3, flags: { [`sponsor_${spot.key}`]: brand.name, brands_used: markBrands(f, [brand.name]) } },
+        consequences: { patrimonio: bonus, fama: 10, moral: 6, rel_representante: 3, flags: { [`sponsor_${spot.key}`]: brand.name, brands_used: markBrands(f, [brand.name]), marcas_evento_last: String(week) } },
         outcomeText: `Estás en ${spot.city} la noche en que tu cara se enciende en ${spot.place}. Miles de personas pasan por debajo sin saber quién eres… excepto una niña, que te señala con el dedo y tira de la manga de su madre. Esa foto, tuya mirando hacia arriba, dará la vuelta al mundo.`,
       },
       {
         id: "familia",
         label: "Llevar a tu familia a la inauguración",
         subtitle: "Que lo vean los tuyos",
-        consequences: { patrimonio: bonus, fama: 8, moral: 9, flags: { [`sponsor_${spot.key}`]: brand.name, brands_used: markBrands(f, [brand.name]) } },
+        consequences: { patrimonio: bonus, fama: 8, moral: 9, flags: { [`sponsor_${spot.key}`]: brand.name, brands_used: markBrands(f, [brand.name]), marcas_evento_last: String(week) } },
         outcomeText: `Llevas a tu madre y a tu padre a ${spot.city}. Cuando se enciende la pantalla y tu cara ocupa el cielo, tu madre se agarra a tu brazo y tu padre, que no llora nunca, se quita las gafas para limpiarlas. Es la mejor foto de la campaña.`,
       },
       {
         id: "humilde",
         label: "Quitarle importancia: «solo es una pantalla»",
         subtitle: "Mantener los pies en el suelo",
-        consequences: { patrimonio: bonus, fama: 6, reputacion: 5, flags: { [`sponsor_${spot.key}`]: brand.name, brands_used: markBrands(f, [brand.name]) } },
+        consequences: { patrimonio: bonus, fama: 6, reputacion: 5, flags: { [`sponsor_${spot.key}`]: brand.name, brands_used: markBrands(f, [brand.name]), marcas_evento_last: String(week) } },
         outcomeText: `Dices en una entrevista que sigues siendo el mismo y la frase se hace viral. Tus excompañeros de la cantera te escriben: «Eso es lo que esperábamos de ti». La pantalla sigue ahí, enorme, y tú sigues siendo tú.`,
       },
     ],
@@ -476,7 +474,7 @@ export function buildBillboardEvent(player: Player, usedEventIds: readonly strin
 /** Qué escena de marcas toca ahora (o null): oferta de una marca, puja, línea de producto o pantalla gigante. */
 export function pickSponsorEvent(player: Player, usedEventIds: readonly string[], rng: () => number = Math.random): GameEvent | null {
   const f = player.flags ?? {};
-  const last = num(f.sponsor_event_last);
+  const last = num(f.marcas_evento_last);
   if (last > 0 && player.week - last < 3) return null;
   // Resultado de ventas de un producto con tu nombre, cuando toca.
   const result = buildMerchResult(player, rng);

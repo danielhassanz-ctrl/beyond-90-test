@@ -51,9 +51,14 @@ import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career
 import { logAppError } from "@/lib/errorLog";
 import { computeStreakUpdate, STREAK_MILESTONES } from "@/lib/player/streak";
 import { displayName } from "@/types/player";
+import { timed } from "@/lib/perf";
 
 export async function resolveEvent(formData: FormData) {
-  const { supabase, user, player } = await getCurrentUserAndPlayer();
+  return timed("resolveEvent total", () => resolveEventInner(formData));
+}
+
+async function resolveEventInner(formData: FormData) {
+  const { supabase, user, player } = await timed("resolveEvent getPlayer", () => getCurrentUserAndPlayer());
 
   if (!user || !player) {
     redirect("/login");
