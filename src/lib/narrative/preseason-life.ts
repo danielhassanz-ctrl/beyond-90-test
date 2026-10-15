@@ -29,11 +29,10 @@ import { getCelebrityName, getNpcName, getPersonName, getTeammateName } from "@/
 const MAX_PER_SEASON = 5;
 
 export function isPreseasonLifeWindow(week: number): boolean {
-  const season = Math.floor((week - 1) / 10);
   const w = ((week - 1) % 10) + 1;
-  // Primera temporada: después de la secuencia guionada de arranque.
-  if (season === 0) return w >= 3 && w <= 6;
-  return w >= 1 && w <= 4;
+  // La pretemporada real va de finales de julio a mediados de agosto: los turnos 1 (julio) y 2 (agosto), también cuando el
+  // verano trae un torneo de selecciones (acaba a principios de julio). Antes se alargaba hasta octubre.
+  return w >= 1 && w <= 2;
 }
 
 export function shouldTriggerPreseasonLife(player: Player): boolean {

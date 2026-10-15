@@ -45,6 +45,7 @@ import { addPartnerOpinion, addPartnerRenewalOpinion } from "@/lib/narrative/par
 import { shouldTriggerYouthHousing, buildYouthHousingEvent } from "@/lib/narrative/youth-housing";
 import { repairEuroAfterTransfer } from "@/lib/calendar/euro-transfer";
 
+import { readProperties } from "@/lib/finance/mortgage";
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
 import { timed } from "@/lib/perf";
 export const GEN_LOCK_ID = "gen-lock";
@@ -242,9 +243,14 @@ async function ensureNextEventInner(
     }
   }
 
+  // Tras comprar o vender una propiedad, no se te ofrece otra de golpe: unos turnos de respiro (la escena sigue pendiente y sale después).
+  const lastPropertyTx = Math.max(0, parseInt(String(player.flags?.prop_tx_last ?? "0"), 10) || 0, ...readProperties(player.flags).map((p) => p.since ?? 0));
+  const propertyRest = lastPropertyTx > 0 && player.week - lastPropertyTx < 8;
+
   const MIN_PATRIMONIO_FOR_HOME = getMinHomeDownPayment();
   if (
     !event &&
+    !propertyRest &&
     player.week >= 8 &&
     player.patrimonio >= MIN_PATRIMONIO_FOR_HOME &&
     !usedEventIds.includes("vid-casa")
@@ -260,6 +266,7 @@ async function ensureNextEventInner(
   const MIN_PATRIMONIO_FOR_CAR = 30000;
   if (
     !event &&
+    !propertyRest &&
     player.week >= 12 &&
     player.patrimonio >= MIN_PATRIMONIO_FOR_CAR &&
     !usedEventIds.includes("vid-coche-deportivo") &&
@@ -272,6 +279,7 @@ async function ensureNextEventInner(
   // La moto: otro capricho, algo más barato y frecuente que el coche deportivo.
   if (
     !event &&
+    !propertyRest &&
     player.week >= 14 &&
     player.patrimonio >= 18000 &&
     !usedEventIds.includes("vid-moto") &&
@@ -287,6 +295,7 @@ async function ensureNextEventInner(
   const MIN_PATRIMONIO_FOR_MANSION = getMinMansionDownPayment();
   if (
     !event &&
+    !propertyRest &&
     player.week >= 65 &&
     player.patrimonio >= MIN_PATRIMONIO_FOR_MANSION &&
     !usedEventIds.includes("vid-mansion-lujo")
@@ -302,6 +311,7 @@ async function ensureNextEventInner(
   // yate a alguien que juega en el Real Madrid o el Atlético.
   if (
     !event &&
+    !propertyRest &&
     player.week >= 30 &&
     player.fama >= 55 &&
     player.media >= 75 &&
@@ -316,6 +326,7 @@ async function ensureNextEventInner(
 
   if (
     !event &&
+    !propertyRest &&
     player.week >= 80 &&
     player.fama >= 75 &&
     player.media >= 85 &&

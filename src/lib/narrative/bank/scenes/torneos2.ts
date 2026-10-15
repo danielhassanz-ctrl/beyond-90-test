@@ -62,7 +62,7 @@ export const TORNEOS2: BankScene[] = [
       o("a", "Contestarle con una carta escrita a mano", "Responder con cariño", { moral: 7, reputacion: 4, rel_aficion: 4, flags: { t2_carta: "respondo" } }, "Tardas tres horas en escribirla. La señora te contesta con una postal de su pueblo: «Ya sabía yo que eras de los buenos». Te la guardas en la cartera, donde antes guardabas los recibos."),
       o("b", "Enmarcarla y colgarla en el vestuario", "Compartirla con el equipo", { moral: 5, rel_vestuario: 5, flags: { t2_carta: "vestuario" } }, "La carta se lee en voz alta antes del siguiente entrenamiento. Los compañeros bajan la cabeza, conmovidos. El capitán dice: «Eso es lo que significa vestir esta camiseta»."),
     ]),
-  S("t2-ko-orgullo", "torneo", { torneo: { type: "any", outcomes: ["octavos", "cuartos", "semifinal"] }, notFlags: ["t2_orgullo"] }, "vestuario",
+  S("t2-ko-orgullo", "torneo", { torneo: { type: "any", outcomes: ["dieciseisavos", "octavos", "cuartos", "semifinal"] }, notFlags: ["t2_orgullo"] }, "vestuario",
     "El vestuario de la selección tras la eliminación: nadie se mueve",
     "Pasan veinte minutos desde el pitido final y nadie se ha quitado las botas. Los jóvenes lloran. Los veteranos, con la mirada fija en el suelo, mastican un silencio de plomo. El seleccionador entra, se pone en medio y dice: «Hemos hecho un buen torneo». Nadie lo acepta. Hasta que uno de los veteranos, con voz ronca, empieza a aplaudir. Uno a uno, todos le siguen.",
     [

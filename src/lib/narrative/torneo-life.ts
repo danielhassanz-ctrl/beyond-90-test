@@ -1,6 +1,6 @@
 import type { Consequences, EventOption, GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
-import type { TorneoProgress } from "@/lib/narrative/torneo";
+import { torneoFinalStage, type TorneoProgress } from "@/lib/narrative/torneo";
 import { getPersonName, getTeammateName, getCelebrityName, getNpcName, nationalSquadView } from "@/lib/narrative/npcs";
 
 /**
@@ -404,7 +404,7 @@ export function buildTorneoLifeEvent(player: Player, progress?: TorneoProgress |
 
   // Primera escena = llegada; víspera de la final = escena especial; el resto, cualquiera.
   const wantedPhase: "arrival" | "final" | undefined =
-    progress && progress.lifeCount === 0 ? "arrival" : progress && progress.stage === 6 ? "final" : undefined;
+    progress && progress.lifeCount === 0 ? "arrival" : progress && progress.stage === torneoFinalStage(progress.type) ? "final" : undefined;
   let pool = TEMPLATES.filter((t) => (wantedPhase ? t.phase === wantedPhase : !t.phase) && !recent.includes(t.key));
   if (pool.length === 0) pool = TEMPLATES.filter((t) => (wantedPhase ? t.phase === wantedPhase : !t.phase));
   const tpl = pool[Math.floor(Math.random() * pool.length)];

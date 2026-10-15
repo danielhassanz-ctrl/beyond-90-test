@@ -52,17 +52,17 @@ for (let i = 0; i < 300; i++) {
   const p = mk(100); const ev: any = buildSeriousInjuryEvent(p, pick(0));
   const rb = resolveOption(opt(ev, "b"), p)!; const before = p.patrimonio; apply(p, rb.consequences);
   if (!(p.patrimonio < before)) bad++;
-  if (rb.success) { bOk++; if (p.flags[SAGA_KEY] !== "6" || p.flags.lg_calidad !== "alta") bad++; } else { bKo++; if (p.flags[SAGA_KEY] !== "7") bad++; }
+  if (rb.success) { bOk++; if (p.flags[SAGA_KEY] !== "3" || p.flags.lg_calidad !== "alta") bad++; } else { bKo++; if (p.flags[SAGA_KEY] !== "4") bad++; }
   const q = mk(100); const ev2: any = buildSeriousInjuryEvent(q, pick(0));
   const rc = resolveOption(opt(ev2, "c"), q)!; apply(q, rc.consequences);
-  if (rc.success) { cOk++; if (Number(q.flags[SAGA_KEY]) >= 7) bad++; } else { cKo++; if (q.flags[SAGA_KEY] !== "9") bad++; }
+  if (rc.success) { cOk++; if (Number(q.flags[SAGA_KEY]) >= 4) bad++; } else { cKo++; if (q.flags[SAGA_KEY] !== "5") bad++; }
 }
-ok(bad === 0, "segunda opinión: cobra siempre; sale 6 meses (con calidad alta) o 7; conservador: acorta o suma 2 meses");
+ok(bad === 0, "segunda opinión: cobra siempre; sale 3 meses (con calidad alta) o 4; conservador: acorta o suma 1 mes");
 ok(bOk > 150 && cOk < 120 && cKo > 150, `éxito de la segunda opinión ${bOk}/300 · del conservador en un cruzado ${cOk}/300`);
 
 console.log("4) Historia completa: operar, rehabilitación, alta");
 const p = mk(100); e = buildSeriousInjuryEvent(p, pick(0)); apply(p, opt(e, "a").consequences);
-ok(getInjuryRemaining(p.flags) === 7 && p.flags.lg_stage === "1", "baja de 7 turnos y fase 1");
+ok(getInjuryRemaining(p.flags) === 4 && p.flags.lg_stage === "1", "baja de 4 turnos y fase 1");
 ok(!shouldTriggerPhysioScene(p), "el fisio de siempre no se mete en una lesión grave");
 let sawRehab = false, rehabAt = 0;
 for (let i = 0; i < 12 && getInjuryRemaining(p.flags) > 0; i++) {
@@ -126,6 +126,25 @@ for (let i = 0; i < 300; i++) {
   if (rr.success && !q.flags.secuela_rodilla && q.flags[SAGA_KEY] === "2") cleaned++;
 }
 ok(cleaned > 160, `operación de limpieza: quita la secuela en ${cleaned}/300`);
+
+console.log("8) La segunda opinión se cuenta en una escena propia");
+{
+  let withScene = 0, shortened = 0, same = 0, bad8 = 0;
+  for (let i = 0; i < 200; i++) {
+    const p8 = mk(100); const ev: any = buildSeriousInjuryEvent(p8, pick(0));
+    const r8 = resolveOption(opt(ev, "b"), p8)!; apply(p8, r8.consequences);
+    if (sagaStage(p8) !== "opinion" || !shouldTriggerSagaStage(p8)) { bad8++; continue; }
+    const sc: any = buildSagaStageEvent(p8);
+    if (!clean(sc) || sc.options.length !== 2 || !sc.priority || !/segunda opinión/.test(sc.title)) { bad8++; continue; }
+    withScene++;
+    if (r8.success) { if (/acortar/.test(sc.description) && sc.description.includes("de " + KINDS.cruzado.months + " meses a unos " + (KINDS.cruzado.months - 1))) shortened++; else bad8++; }
+    else if (/mismos plazos/.test(sc.description)) same++; else bad8++;
+    apply(p8, sc.options[0].consequences);
+    if (sagaStage(p8) === "opinion") bad8++;
+  }
+  ok(withScene === 200 && bad8 === 0, "tras pagar, el turno siguiente es la consulta con el cirujano y no se repite (" + withScene + "/200)");
+  ok(shortened > 0 && same > 0, "si salió bien, acorta la baja con su protocolo (" + shortened + "); si no, confirma el plazo (" + same + ")");
+}
 
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
 process.exit(fails ? 1 : 0);

@@ -42,10 +42,10 @@ export const KINDS: Record<SagaKind, KindDef> = {
   cruzado: {
     label: "rotura del ligamento cruzado",
     part: "rodilla",
-    months: 7,
+    months: 4,
     risk: 38,
     title: "La rodilla que lo para todo",
-    diagnosis: (d) => `Un apoyo mal hecho, sin contacto, y un crujido que oyes tú antes que nadie. En la resonancia, ${d} te lo dice sin rodeos: rotura del ligamento cruzado. Entre siete y nueve meses de baja, una operación y la pregunta que nadie dice en voz alta: ¿volverás al mismo nivel?`,
+    diagnosis: (d) => `Un apoyo mal hecho, sin contacto, y un crujido que oyes tú antes que nadie. En la resonancia, ${d} te lo dice sin rodeos: rotura del ligamento cruzado. Unos cuatro meses de baja, una operación y la pregunta que nadie dice en voz alta: ¿volverás al mismo nivel?`,
   },
   menisco: {
     label: "rotura de menisco",
@@ -74,10 +74,10 @@ export const KINDS: Record<SagaKind, KindDef> = {
   aquiles: {
     label: "rotura del tendón de Aquiles",
     part: "tendón",
-    months: 8,
+    months: 4,
     risk: 40,
     title: "El chasquido del tendón",
-    diagnosis: (d) => `Sentiste un golpe en el talón, como una patada que nadie te había dado. ${d} no se anda con eufemismos: rotura del tendón de Aquiles. Ocho meses largos de baja, y una pregunta de fondo: a tu edad, ¿se vuelve igual?`,
+    diagnosis: (d) => `Sentiste un golpe en el talón, como una patada que nadie te había dado. ${d} no se anda con eufemismos: rotura del tendón de Aquiles. Cuatro meses largos de baja, y una pregunta de fondo: a tu edad, ¿se vuelve igual?`,
   },
 };
 
@@ -188,11 +188,11 @@ export function buildSeriousInjuryEvent(player: Player, rng: () => number = Math
         statModifier: "reputacion",
         success: {
           text: `Viajas a ver a uno de los mejores especialistas de Europa. Revisa la resonancia dos veces, cambia la técnica y te promete un mes menos de baja. Pagas ${eur(c.surgeon)} sin pestañear. Sales con algo que hacía semanas que no tenías: esperanza.`,
-          consequences: merge({ ...base, patrimonio: -c.surgeon, moral: -4 }, { flags: start(Math.max(2, M - 1), def.risk - 12, { lg_calidad: "alta" }) }),
+          consequences: merge({ ...base, patrimonio: -c.surgeon, moral: -4 }, { flags: start(Math.max(2, M - 1), def.risk - 12, { lg_calidad: "alta", lg_segunda: "ok" }) }),
         },
         fail: {
           text: `El cirujano confirma lo que ya sabías: la misma técnica, los mismos plazos. Pagas ${eur(c.surgeon)} por una respuesta que no cambia nada. Te vas a casa con el bolsillo más ligero y un poco más de miedo que antes.`,
-          consequences: merge({ ...base, patrimonio: -c.surgeon, moral: -9 }, { flags: start(M, def.risk) }),
+          consequences: merge({ ...base, patrimonio: -c.surgeon, moral: -9 }, { flags: start(M, def.risk, { lg_segunda: "ko" }) }),
         },
       },
     });
@@ -211,8 +211,8 @@ export function buildSeriousInjuryEvent(player: Player, rng: () => number = Math
         consequences: merge({ ...base, forma: -14, moral: -3 }, { flags: start(Math.max(2, Math.ceil(M * 0.55)), def.risk + 8) }),
       },
       fail: {
-        text: `No cuaja. Tras dos meses de rehabilitación, la zona cede otra vez y no queda más remedio que operar, tarde y con más daño. ${doctor} te mira con respeto y mucha pena: «Era la apuesta, y no ha salido». Pierdes ${Math.min(MAX_TURNS - M, 2)} meses más.`,
-        consequences: merge({ ...base, forma: -24, moral: -10 }, { flags: start(M + 2, def.risk + 18) }),
+        text: `No cuaja. Tras dos meses de rehabilitación, la zona cede otra vez y no queda más remedio que operar, tarde y con más daño. ${doctor} te mira con respeto y mucha pena: «Era la apuesta, y no ha salido». Pierdes un mes más.`,
+        consequences: merge({ ...base, forma: -24, moral: -10 }, { flags: start(M + 1, def.risk + 18) }),
       },
     },
   });
@@ -233,13 +233,15 @@ export function buildSeriousInjuryEvent(player: Player, rng: () => number = Math
 
 // ───────────────────────── 3. Las fases siguientes ─────────────────────────
 
-export type SagaStage = "rehab" | "vuelta" | "secuela" | null;
+export type SagaStage = "opinion" | "rehab" | "vuelta" | "secuela" | null;
 
 /** Qué toca ahora de la saga (si algo). */
 export function sagaStage(player: Player): SagaStage {
   const f = player.flags ?? {};
   const left = getInjuryRemaining(f);
   const stage = String(f.lg_stage ?? "");
+  // Pagaste una segunda opinión: antes de seguir, la consulta con el cirujano (una sola vez).
+  if ((f.lg_segunda === "ok" || f.lg_segunda === "ko") && !f.lg_seg_visto && left > 0) return "opinion";
   if (stage === "1") {
     if (left === 0) return "vuelta"; // se curó antes de llegar a la mitad (o saltó la escena): toca el alta
     return left <= Math.ceil(num(f.lg_total) / 2) && left >= 2 ? "rehab" : null;
@@ -263,9 +265,76 @@ export function shouldTriggerSagaStage(player: Player): boolean {
 
 export function buildSagaStageEvent(player: Player, rng: () => number = Math.random): GameEvent {
   const stage = sagaStage(player);
+  if (stage === "opinion") return buildSecondOpinionEvent(player);
   if (stage === "rehab") return buildRehabEvent(player);
   if (stage === "vuelta") return buildReturnEvent(player, rng);
   return buildSequelaEvent(player);
+}
+
+const SURGEONS = ["Matías Ferrer", "Lucía Beltrán", "Andrés Echeverría", "Clara Montesinos", "Gonzalo Arévalo", "Elena Santamaría"];
+
+/** La consulta con el cirujano de renombre que pagaste: lo que dice cambia según saliera bien o mal la segunda opinión. */
+function buildSecondOpinionEvent(player: Player): GameEvent {
+  const f = player.flags ?? {};
+  const week = player.week;
+  const kind = (String(f.lg_kind ?? "cruzado") as SagaKind) in KINDS ? (String(f.lg_kind) as SagaKind) : "cruzado";
+  const def = KINDS[kind];
+  const total = num(f.lg_total) || def.months;
+  const good = f.lg_segunda === "ok";
+  const surgeon = SURGEONS[((player.id ?? "").length + week * 7 + (player.last_name ?? "").length) % SURGEONS.length];
+  const club = getNpcName(player, "fisio");
+  const seen = { lg_seg_visto: "1", lg_scene_last: String(week) };
+  const before = total + 1;
+  const part = def.part;
+
+  if (good) {
+    return {
+      id: `lesion-segunda-opinion-${week}`,
+      category: "vida",
+      title: `La segunda opinión de ${surgeon}`,
+      description: `El despacho de ${surgeon} tiene diplomas en tres idiomas y una maqueta de ${part} sobre la mesa. Revisa tu resonancia dos veces, sin prisa, y por fin levanta la vista: «Vuestro plan es correcto, pero se puede afinar. Con una técnica distinta y un protocolo de rehabilitación más agresivo en las primeras semanas, creo que podrías acortar los plazos: de ${before} meses a unos ${total}». Te enseña el calendario ya marcado, semana a semana. Cuesta caro, pero sale algo que no tenías: una fecha.`,
+      options: [
+        {
+          id: "a",
+          label: "Seguir su protocolo al pie de la letra",
+          subtitle: "Fecha de vuelta más corta y menos riesgo de secuelas",
+          consequences: { moral: 5, forma: 2, flags: seen },
+          outcomeText: `Sales con el calendario en el bolsillo y una sensación rara: por primera vez desde la lesión, te sientes dueño de algo. ${surgeon} te da la mano: «Si cumples, nos vemos en ${total} meses en un campo, no en mi consulta».`,
+        },
+        {
+          id: "b",
+          label: `Coordinarlo con ${club}, el médico del club`,
+          subtitle: "Que los dos equipos trabajen juntos",
+          consequences: { moral: 3, rel_entrenador: 3, flags: seen },
+          outcomeText: `Llamas a ${club} y le pasas el plan. Al principio se tensa, como cualquiera al que le corrigen el trabajo, pero lee las páginas y asiente: «Esto tiene sentido». Esa semana, los dos médicos hablan por teléfono más tiempo del que tú has hablado con nadie.`,
+        },
+      ],
+      priority: true,
+    };
+  }
+  return {
+    id: `lesion-segunda-opinion-${week}`,
+    category: "vida",
+    title: `La segunda opinión de ${surgeon}`,
+    description: `${surgeon} estudia la resonancia en silencio y al final confirma lo que ya te habían dicho: la misma técnica, los mismos plazos, ${total} meses. No hay atajos que ofrecer. Eso sí, te da una lista de cuidados para las primeras semanas y te pide una cosa: «No fuerces nada antes de tiempo, la ${part} te lo cobraría con intereses». Has pagado por una confirmación, y la confirmación, al menos, es honesta.`,
+    options: [
+      {
+        id: "a",
+        label: "Aceptarlo y centrarte en la rehabilitación",
+        subtitle: "Sin atajos, pero con la cabeza tranquila",
+        consequences: { moral: 2, flags: seen },
+        outcomeText: `Piensas en los 90.000 euros mientras sales por la puerta y, curiosamente, no te duele tanto como esperabas. Ahora sabes que no hay otra vía. Se acabaron las dudas: toca trabajar.`,
+      },
+      {
+        id: "b",
+        label: "Pedirle los cuidados por escrito y dárselos a tu fisio",
+        subtitle: "Sacarle partido a lo que has pagado",
+        consequences: { moral: 1, rel_entrenador: 1, flags: { ...seen, lg_riesgo: String(clamp(num(f.lg_riesgo) - 4, 0, 95)) } },
+        outcomeText: `Te preparan tres folios con los cuidados de las primeras semanas. ${club} los lee con atención y subraya dos cosas con un rotulador amarillo. Ese plan no acorta nada, pero baja un poco el riesgo de que algo salga mal.`,
+      },
+    ],
+    priority: true,
+  };
 }
 
 function riskOf(player: Player) {

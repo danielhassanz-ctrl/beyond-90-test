@@ -104,8 +104,9 @@ import {
   advanceTorneo,
   torneoYear,
   TORNEO_NAMES,
-  TORNEO_STAGE_LABELS,
-  TORNEO_STAGES,
+  torneoStageLabels,
+  torneoStages,
+  torneoFinalStage,
 } from "@/lib/narrative/torneo";
 import { shouldTriggerSocialDm, buildSocialDmEvent } from "@/lib/narrative/social-dm";
 import { shouldTriggerArcoRival, buildArcoRivalEvent } from "@/lib/narrative/arco-rival";
@@ -2976,7 +2977,7 @@ async function pickTorneoEvent(
   }
 
   // Red de seguridad: un torneo ya terminado no debe quedarse abierto.
-  if (!progress.alive || progress.stage >= TORNEO_STAGES) {
+  if (!progress.alive || progress.stage >= torneoStages(progress.type)) {
     saveTorneoProgress(player, null);
     return null;
   }
@@ -2986,7 +2987,7 @@ async function pickTorneoEvent(
   const decisionOutcome = player.flags?.[`match_decision_${match.week}_${stageKey}`] as string | undefined;
 
   if (!decisionOutcome) {
-    console.log(`[pickNextEventDynamic] Torneo ${progress.type}: ${TORNEO_STAGE_LABELS[progress.stage]} — momento decisivo.`);
+    console.log(`[pickNextEventDynamic] Torneo ${progress.type}: ${torneoStageLabels(progress.type)[progress.stage]} — momento decisivo.`);
     return { ...maybeAddFreeText(buildMatchDecisionMoment(player, match)), ownTeam: player.nation, matchKey: stageKey };
   }
 
@@ -3010,8 +3011,8 @@ async function pickTorneoEvent(
         rival: match.rivalClub,
         comp: tName,
         regular: "",
-        round: TORNEO_STAGE_LABELS[progress.stage],
-        decisive: progress.stage >= 5,
+        round: torneoStageLabels(progress.type)[progress.stage],
+        decisive: progress.stage >= torneoFinalStage(progress.type) - 1,
         national: true,
         scored: decisionNeedsGoal(decisionOutcome),
       },
@@ -3032,22 +3033,22 @@ async function pickTorneoEvent(
     if (progress.stage === 2) {
       lines.push(
         adv.qualified
-          ? `- Era el último partido de grupo: con este resultado ${nation} SE CLASIFICA para octavos de final. Que quede claro.`
+          ? `- Era el último partido de grupo: con este resultado ${nation} SE CLASIFICA para ${progress.type === "mundial" ? "los dieciseisavos" : "octavos"} de final. Que quede claro.`
           : `- Era el último partido de grupo: con este resultado ${nation} QUEDA ELIMINADA del torneo en la fase de grupos. Que quede claro, con el peso emocional que tiene.`,
       );
     }
   }
-  if (progress.stage === 6) {
+  if (progress.stage === torneoFinalStage(progress.type)) {
     lines.push(
       result.win
         ? `- Es la FINAL de ${tName} y ${nation} la GANA: es un TÍTULO. Escribe con claridad que "te proclamas campeón" y "levantas el trofeo".`
         : `- Es la FINAL de ${tName} y ${nation} la PIERDE: queda la espina clavada del subcampeón, sin título. NO uses las palabras "campeón" ni "título" para tu selección.`,
     );
   }
-  const hito = progress.stage === 0 || progress.stage >= 5 || adv.finished;
+  const hito = progress.stage === 0 || progress.stage >= torneoFinalStage(progress.type) - 1 || adv.finished;
   lines.push(
     hito
-      ? `- Este partido es un HITO COMPARTIBLE: is_milestone debe ser true y image_scene una foto realista del jugador con la camiseta de la selección de ${nation} en ${tName} (sin logos ni nombres reales, escena concreta de este partido: ${progress.stage === 0 ? "su debut en el torneo" : adv.finished && !adv.champion ? "la eliminación, con el vestuario roto o consolándose" : result.win && progress.stage === 6 ? "levantando el trofeo" : "un momento clave del partido"}).`
+      ? `- Este partido es un HITO COMPARTIBLE: is_milestone debe ser true y image_scene una foto realista del jugador con la camiseta de la selección de ${nation} en ${tName} (sin logos ni nombres reales, escena concreta de este partido: ${progress.stage === 0 ? "su debut en el torneo" : adv.finished && !adv.champion ? "la eliminación, con el vestuario roto o consolándose" : result.win && progress.stage === torneoFinalStage(progress.type) ? "levantando el trofeo" : "un momento clave del partido"}).`
       : `- is_milestone solo si hay un gol o una actuación realmente histórica; si no, false.`,
   );
   const debutT = progress.stage === 0 && isSelDebut(player);

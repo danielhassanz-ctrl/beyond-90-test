@@ -9,6 +9,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * desde image_templates, la misma tabla de caché que ya usan las escenas
  * de jugador.
  */
+import { after } from "next/server";
+
 const MODEL_VERSION = "c846a69991daf4c0e5d016514849d14ee5b2e6846ce6b9d6f21369e564cfe51e"; // black-forest-labs/flux-schnell
 
 /**
@@ -31,7 +33,10 @@ async function generatePropertyImage(prompt: string): Promise<Buffer | null> {
   if (!process.env.REPLICATE_API_TOKEN) return null;
 
   try {
-    const res = await fetchWithTimeout(
+    let res: Response | null = null;
+    // Replicate limita las peticiones en ráfaga (429): tres fotos a la vez dejaban una sin generar y la propiedad se quedaba sin foto.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      res = await fetchWithTimeout(
       "https://api.replicate.com/v1/predictions",
       {
         method: "POST",
@@ -46,8 +51,18 @@ async function generatePropertyImage(prompt: string): Promise<Buffer | null> {
         }),
       },
       70_000,
-    );
-    if (!res.ok) return null;
+      );
+      if (res.status !== 429) break;
+      let wait = 3000;
+      try {
+        const body = (await res.clone().json()) as { retry_after?: number };
+        if (typeof body.retry_after === "number") wait = Math.min(10_000, Math.max(1000, body.retry_after * 1000 + 300));
+      } catch {
+        // sin cuerpo legible: espera por defecto
+      }
+      await new Promise((r) => setTimeout(r, wait));
+    }
+    if (!res || !res.ok) return null;
 
     let data = (await res.json()) as { status: string; output: string[] | string | null; urls?: { get: string } };
     const getUrl = data.urls?.get;
@@ -129,4 +144,35 @@ export async function getOrCreatePropertyPhoto(
 
   await supabase.from("image_templates").insert({ template_key: templateKey, image_url: publicUrl });
   return publicUrl;
+}
+
+/**
+ * Como getOrCreatePropertyPhoto, pero sin hacerte esperar: si la foto no está lista en `ms` (generarla puede tardar
+ * medio minuto), devuelve null y la generación sigue en segundo plano, de modo que queda guardada para la próxima vez
+ * (Patrimonio la recoge de la caché). Antes cada escena de casa, coche o yate esperaba a que se generaran sus tres fotos.
+ */
+export async function getPropertyPhotoWithin(
+  supabase: SupabaseClient,
+  userId: string,
+  listingName: string,
+  prompt: string,
+  kind: "propiedad" | "interior" = "propiedad",
+  ms = 7000,
+): Promise<string | null> {
+  const job = getOrCreatePropertyPhoto(supabase, userId, listingName, prompt, kind).catch(() => null);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<"timeout">((resolve) => {
+    timer = setTimeout(() => resolve("timeout"), ms);
+  });
+  const result = await Promise.race([job, timeout]);
+  if (timer) clearTimeout(timer);
+  if (result !== "timeout") return result;
+  try {
+    after(async () => {
+      await job;
+    });
+  } catch {
+    // fuera de una petición: la generación sigue mientras viva la función
+  }
+  return null;
 }

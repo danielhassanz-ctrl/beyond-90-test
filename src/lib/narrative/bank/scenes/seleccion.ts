@@ -115,7 +115,7 @@ export const SELECCION: BankScene[] = [
       o("b", "Salir directo al coche, sin pararte", "Evitar el trago", { moral: -2, rel_aficion: -2 }, "Sales sin mirar a nadie. Dentro del coche, te das cuenta de que te tiemblan las manos. En el espejo, ves al niño del cartel guardándoselo bajo el brazo, sin haberte visto."),
       o("c", "Responder al niño con un abrazo y la camiseta", "Un gesto que lo cambia todo", { moral: 5, rel_aficion: 8, fama: 3 }, "Te agachas, abrazas al niño y le das la camiseta. La foto aparece en todos los medios con el título «Los campeones de verdad». Sonríes, aunque duele."),
     ]),
-  S("sel-eliminado-penalti", "seleccion", { torneo: { type: "any", outcomes: ["octavos", "cuartos", "semifinal"] }, minAge: 18 }, "especial",
+  S("sel-eliminado-penalti", "seleccion", { torneo: { type: "any", outcomes: ["dieciseisavos", "octavos", "cuartos", "semifinal"] }, minAge: 18 }, "especial",
     "El compañero que falló el penalti",
     "Lo ves sentado en el último asiento del autobús, con la cabeza gacha y la camiseta aún puesta. Ha fallado el penalti decisivo de una tanda que os ha dejado fuera. Nadie le habla. Los periodistas ya hablan del «villano». Un compañero te susurra al pasar: «Déjalo. Que lo piense». Pero a ti te cuesta dejarlo.",
     [
@@ -123,7 +123,7 @@ export const SELECCION: BankScene[] = [
       o("b", "Contarle que tú también has fallado alguno decisivo", "Compartir tu historia", { rel_vestuario: 5, moral: 2, reputacion: 2 }, "Le cuentas la vez que fallaste un penalti con los quince años y tu padre no te habló en dos días. Él te mira con los ojos muy abiertos: «¿En serio?». «En serio.» Se ríe, por primera vez desde el partido."),
       o("c", "Dejarlo tranquilo, como te pidieron", "Respetar su espacio", { rel_vestuario: 1, moral: 0 }, "Dejas el asiento libre. Al llegar al hotel, le ves salir solo, hacia el jardín, con las manos en los bolsillos. No sabes si has hecho bien."),
     ]),
-  S("sel-eliminado-tertulia", "seleccion", { torneo: { type: "any", outcomes: ["fase_de_grupos", "octavos", "cuartos"] }, minAge: 18, fama: [30, 100] }, "prensa",
+  S("sel-eliminado-tertulia", "seleccion", { torneo: { type: "any", outcomes: ["fase_de_grupos", "dieciseisavos", "octavos", "cuartos"] }, minAge: 18, fama: [30, 100] }, "prensa",
     "Te señalan en las tertulias",
     "Cada mañana, una tertulia distinta te dedica doce minutos de análisis. Un exjugador dice que «le faltó carácter». Un periodista, que «ya no es lo que era». Otro, que «el problema no es él, pero tampoco es la solución». Tu madre ha prohibido la radio en casa. Tu padre la tiene en el garaje, a bajo volumen, para saber qué dicen.",
     [
@@ -139,7 +139,7 @@ export const SELECCION: BankScene[] = [
       o("b", "Dormir en el asiento hasta aterrizar", "Escapar un rato", { moral: 2, forma: 2 }, "Duermes cuatro horas seguidas. Al despertar, la cara de tu compañero de al lado te dice que no ha pegado ojo. Le ofreces tu botella de agua y te devuelve una sonrisa vacía."),
       o("c", "Escribir una carta a la afición durante el vuelo", "Dar explicaciones con humildad", { reputacion: 5, rel_aficion: 5, moral: -1 }, "La escribes a mano, en una servilleta de papel. Al aterrizar, la lees en un vídeo corto. Es la primera vez que alguien en el país recuerda una carta de una fase de grupos."),
     ]),
-  S("sel-grupos-portada", "seleccion", { torneo: { type: "any", outcomes: ["fase_de_grupos", "octavos"] }, minAge: 18, fama: [35, 100] }, "prensa",
+  S("sel-grupos-portada", "seleccion", { torneo: { type: "any", outcomes: ["fase_de_grupos", "dieciseisavos", "octavos"] }, minAge: 18, fama: [35, 100] }, "prensa",
     "La portada que te destroza",
     "En el quiosco de la esquina hay una portada con tu cara en blanco y negro y un titular feroz: «ADIÓS, LEYENDA». Una foto tuya, cabizbajo, con los brazos en jarras, bajo una luz de funeral. El quiosquero, que siempre te saluda, hoy se hace el distraído. Tu hermana te la manda con un solo mensaje: «No la leas».",
     [

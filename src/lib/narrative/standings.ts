@@ -9,7 +9,7 @@ import {
 import { leagueOf, leagueTier, ligaJornadaByWeek, canonicalClub, continentalName } from "@/lib/calendar/leagues";
 import { getCopaProgress, getEuroProgress, copaRoundName, euroRoundName } from "@/lib/calendar/competition-progress";
 import { WEEKS_PER_SEASON } from "@/types/career";
-import { getTorneoProgress, torneoGroupRivals, TORNEO_NAMES, TORNEO_STAGE_LABELS, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
+import { getTorneoProgress, torneoGroupRivals, TORNEO_NAMES, torneoStageLabels, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
 
 /**
  * Mini clasificación con tu club señalado, y el cuadro de "eliminatoria"
@@ -442,7 +442,7 @@ export function getActiveStandings(
     const ko: KnockoutStandings = {
       type: "knockout",
       label: name,
-      roundLabel: TORNEO_STAGE_LABELS[Math.min(progress.stage, TORNEO_STAGE_LABELS.length - 1)],
+      roundLabel: torneoStageLabels(type)[Math.min(progress.stage, torneoStageLabels(type).length - 1)],
       alive: progress.alive,
     };
     return { primary: table, secondary: null, copa: null, euro: ko };
@@ -496,6 +496,7 @@ export function getActiveStandings(
 
 const TORNEO_RESULT_TEXT: Record<string, string> = {
   fase_de_grupos: "Eliminado en la fase de grupos",
+  dieciseisavos: "Eliminado en dieciseisavos de final",
   octavos: "Eliminado en octavos de final",
   cuartos: "Eliminado en cuartos de final",
   semifinal: "Eliminado en semifinales",

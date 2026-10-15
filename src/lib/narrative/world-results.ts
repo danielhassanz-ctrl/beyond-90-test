@@ -59,6 +59,7 @@ export function tournamentFinal(player: Pick<Player, "id" | "nation">, type: Tor
 
 const OUTCOME_FROM: Record<string, string> = {
   fase_de_grupos: "Te quedaste en la fase de grupos y la final te pilla ya en casa, con la maleta deshecha",
+  dieciseisavos: "Caíste en dieciseisavos y la fase final del torneo la sigues desde el sofá, con la sensación de haberte quedado a las puertas",
   octavos: "Caíste en octavos y has seguido el torneo desde el sofá",
   cuartos: "Caíste en cuartos, y desde entonces ver los partidos duele de una manera muy concreta",
   semifinal: "Te quedaste a un paso de la final, y verla desde fuera es una cosa rara entre la rabia y la curiosidad",

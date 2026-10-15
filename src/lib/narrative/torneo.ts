@@ -2,7 +2,7 @@
  * Torneos de selecciones (Mundial, Eurocopa, Copa América) jugados partido a
  * partido. Antes eran UNA sola escena con el resultado ya decidido ("levantas
  * el trofeo" o "caes eliminado"): ahora hay fase de grupos (3 partidos) y
- * eliminatorias (octavos, cuartos, semifinal y final) con su jugada decisiva
+ * eliminatorias (dieciseisavos solo en el Mundial de 48 selecciones, octavos, cuartos, semifinal y final) con su jugada decisiva
  * y su crónica, y entre partido y partido, vida de concentración
  * (torneo-life.ts).
  *
@@ -22,7 +22,7 @@ export type TorneoType = "mundial" | "eurocopa" | "copa_america";
 export interface TorneoProgress {
   type: TorneoType;
   season: number;
-  /** Siguiente partido por jugar: 0-2 grupos, 3 octavos, 4 cuartos, 5 semifinal, 6 final. */
+  /** Siguiente partido por jugar: 0-2 grupos y después las eliminatorias (ver torneoStageLabels: el Mundial lleva una ronda más, los dieciseisavos). */
   stage: number;
   alive: boolean;
   /** Puntos en la fase de grupos. */
@@ -41,16 +41,17 @@ export const TORNEO_NAMES: Record<TorneoType, string> = {
   copa_america: "Copa América",
 };
 
-export const TORNEO_STAGE_LABELS = [
-  "Fase de grupos · Jornada 1",
-  "Fase de grupos · Jornada 2",
-  "Fase de grupos · Jornada 3",
-  "Octavos de final",
-  "Cuartos de final",
-  "Semifinal",
-  "Final",
-];
-export const TORNEO_STAGES = TORNEO_STAGE_LABELS.length;
+const GROUP_LABELS = ["Fase de grupos · Jornada 1", "Fase de grupos · Jornada 2", "Fase de grupos · Jornada 3"];
+
+/** Las rondas de cada torneo. El Mundial tiene 48 selecciones y empieza las eliminatorias en dieciseisavos; Eurocopa y Copa América, no. */
+export function torneoStageLabels(type: TorneoType): string[] {
+  return type === "mundial"
+    ? [...GROUP_LABELS, "Dieciseisavos de final", "Octavos de final", "Cuartos de final", "Semifinal", "Final"]
+    : [...GROUP_LABELS, "Octavos de final", "Cuartos de final", "Semifinal", "Final"];
+}
+export const torneoStages = (type: TorneoType): number => torneoStageLabels(type).length;
+/** Índice de la final (el último partido). */
+export const torneoFinalStage = (type: TorneoType): number => torneoStages(type) - 1;
 
 export const TORNEO_POOLS: Record<TorneoType, string[]> = {
   mundial: ["Brasil", "Francia", "Argentina", "Inglaterra", "Alemania", "Portugal", "Países Bajos", "Italia", "Bélgica", "Croacia", "Uruguay", "Marruecos", "España"],
@@ -155,7 +156,7 @@ export function buildTorneoMatch(player: Player, progress: TorneoProgress): Matc
     awayTeam: rival,
     rivalClub: rival,
     mandatory: true,
-    description: `${name} - ${TORNEO_STAGE_LABELS[progress.stage]} ante ${rival}`,
+    description: `${name} - ${torneoStageLabels(progress.type)[progress.stage]} ante ${rival}`,
     stakes: progress.stage < 2 ? "importante" : "decisivo",
     torneoStage: progress.stage,
   };
@@ -204,19 +205,20 @@ export function advanceTorneo(
     next.res = (progress.res ?? "") + (result.win ? "W" : result.draw ? "D" : "L");
     next.stage = progress.stage + 1;
     if (progress.stage === 2) {
-      const qualified = next.groupPts >= 4 || (next.groupPts === 3 && Math.random() < 0.45);
+      // En el Mundial de 48 pasan también los mejores terceros: con 3 puntos hay más opciones.
+      const qualified = next.groupPts >= 4 || (next.groupPts === 3 && Math.random() < (progress.type === "mundial" ? 0.6 : 0.45));
       next.alive = qualified;
       if (!qualified) return { next, finished: true, qualified, outcome: "fase_de_grupos" };
-      return { next, finished: false, qualified, outcome: "octavos" };
+      return { next, finished: false, qualified, outcome: progress.type === "mundial" ? "dieciseisavos" : "octavos" };
     }
     return { next, finished: false, outcome: "grupos" };
   }
   if (!result.win) {
     next.alive = false;
-    const labels = ["octavos", "cuartos", "semifinal", "subcampeon"];
+    const labels = progress.type === "mundial" ? ["dieciseisavos", "octavos", "cuartos", "semifinal", "subcampeon"] : ["octavos", "cuartos", "semifinal", "subcampeon"];
     return { next, finished: true, outcome: labels[progress.stage - 3] };
   }
   next.stage = progress.stage + 1;
-  if (progress.stage === 6) return { next, finished: true, champion: true, outcome: "campeon" };
+  if (progress.stage === torneoFinalStage(progress.type)) return { next, finished: true, champion: true, outcome: "campeon" };
   return { next, finished: false, outcome: "ko" };
 }

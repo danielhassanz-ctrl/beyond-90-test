@@ -75,7 +75,7 @@ export function buildPropertyReviewEvent(player: Player): GameEvent {
         patrimonio: proceeds,
         moral: diff >= 0 ? 2 : -2,
         rel_representante: 1,
-        flags: { [p.key]: "", ...marked },
+        flags: { [p.key]: "", ...marked, prop_tx_last: String(player.week) },
       },
       outcomeText:
         proceeds >= 0

@@ -9,7 +9,7 @@ import type { GameEvent } from "@/types/career";
 import { playerAge } from "@/types/career";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
-import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
+import { getPropertyPhotoWithin } from "@/lib/images/property-photos";
 import { readProperties } from "@/lib/finance/mortgage";
 import { readRent } from "@/lib/finance/rent";
 import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
@@ -104,7 +104,7 @@ export async function buildYouthHousingEvent(player: Player, supabase: SupabaseC
   const rResi = price(resi, 1);
   const rShared = price(shared, 2);
   const rOwn = Math.min(Math.max(cap, 400), price(own, 3));
-  const [pResi, pShared, pOwn] = await Promise.all([resi, shared, own].map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  const [pResi, pShared, pOwn] = await Promise.all([resi, shared, own].map((l) => getPropertyPhotoWithin(supabase, player.user_id, l.name, l.prompt)));
   const rentFlag = (name: string, monthly: number) => JSON.stringify({ name, monthly, city, since: player.week });
   const mark = { vivienda_joven_club: club };
   const euros = (n: number) => `${n.toLocaleString("es")} €`;

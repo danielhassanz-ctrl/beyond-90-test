@@ -15,7 +15,7 @@ import { repairPropertyCities } from "@/lib/finance/property-city";
 import { readProperties, monthlyPayment, remainingLoan, originalLoan, totalMonthlyPayments, propertyValue as propertyValueOf, canRent, propertyRentMonthly, totalRentalIncome, saleProceeds } from "@/lib/finance/mortgage";
 import { readInvestments, investmentValue } from "@/lib/finance/investments";
 import { activeSponsorships } from "@/lib/finance/sponsorship-income";
-import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
+import { getPropertyPhotoWithin } from "@/lib/images/property-photos";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { repairCashPurchases } from "@/lib/finance/repair";
 
@@ -165,9 +165,9 @@ export default async function PatrimonioPage() {
         p.photoUrl
           ? Promise.resolve(p.photoUrl)
           : exteriorPrompt
-            ? getOrCreatePropertyPhoto(supabase, user.id, p.name, exteriorPrompt)
+            ? getPropertyPhotoWithin(supabase, user.id, p.name, exteriorPrompt)
             : Promise.resolve(null),
-        interiorPrompt ? getOrCreatePropertyPhoto(supabase, user.id, p.name, interiorPrompt, "interior") : Promise.resolve(null),
+        interiorPrompt ? getPropertyPhotoWithin(supabase, user.id, p.name, interiorPrompt, "interior") : Promise.resolve(null),
       ]);
       return { ...p, exterior, interior };
     }),

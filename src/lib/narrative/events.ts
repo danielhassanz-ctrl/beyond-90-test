@@ -7,9 +7,9 @@ import { describeKit } from "@/lib/clubColors";
 import { EXTRA_HOMES, EXTRA_MANSIONS, EXTRA_CARS, EXTRA_YACHTS, EXTRA_JETS, MOTO_LISTINGS } from "@/lib/narrative/listings-extra";
 import { cityOfClub } from "@/lib/narrative/cities";
 import { getRandomFirstSigningVariant } from "@/lib/narrative/first-signing-variants";
-import { getOrCreatePropertyPhoto } from "@/lib/images/property-photos";
+import { getPropertyPhotoWithin } from "@/lib/images/property-photos";
 import { investmentFlag } from "@/lib/finance/investments";
-import { monthlyPayment, vehicleFinancing } from "@/lib/finance/mortgage";
+import { monthlyPayment, vehicleFinancing, readProperties } from "@/lib/finance/mortgage";
 import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
 import { leagueOf } from "@/lib/calendar/leagues";
 
@@ -146,6 +146,17 @@ function pickRandom<T>(items: T[], n: number): T[] {
  * 375.000 € pagando solo lo que había en la cuenta, y el resto desaparecía.
  * Si no hay suficientes asequibles, se completa con los más baratos.
  */
+/**
+ * Lo que ya es tuyo (casa, coche, moto, yate, jet) no se te vuelve a ofrecer: se quitan del catálogo los modelos que ya
+ * tienes (por su nombre sin ciudad). Si no quedaran opciones, se deja el catálogo entero.
+ */
+export function withoutOwned<T extends { name: string }>(items: T[], player: Pick<Player, "flags">, minLeft = 1): T[] {
+  const owned = new Set(readProperties(player.flags).map((p) => baseListingName(p.name)));
+  if (owned.size === 0) return items;
+  const rest = items.filter((l) => !owned.has(baseListingName(l.name)));
+  return rest.length >= minLeft ? rest : items;
+}
+
 function pickAffordable<T extends { name: string; min: number; max: number }>(
   catalog: T[],
   n: number,
@@ -155,6 +166,7 @@ function pickAffordable<T extends { name: string; min: number; max: number }>(
   seed?: string,
 ): (T & { price: number })[] {
   const downFor = (price: number) => vehicleFinancing(kind, price).down;
+  catalog = withoutOwned(catalog, player, n);
   const affordable = catalog.filter((l) => downFor(l.min) <= player.patrimonio);
   const pool = affordable.length >= n ? affordable : [...catalog].sort((a, b) => a.min - b.min).slice(0, Math.max(n, affordable.length));
   return (seed ? pickSeeded(pool, n, seed) : pickRandom(pool, n)).map((l) => {
@@ -229,7 +241,7 @@ export function isInlandClub(club: string): boolean {
   return INLAND_CLUBS.has(club);
 }
 
-const HOME_LISTINGS = [
+export const HOME_LISTINGS = [
   {
     name: "Piso de dos habitaciones cerca de la ciudad deportiva",
     min: 90000,
@@ -780,7 +792,7 @@ const JET_LISTINGS = [
  * escudos de club: el modelo de imagen no reproduce bien logos exactos
  * de marcas de coches y usarlos tal cual es terreno legal delicado.
  */
-const CAR_LISTINGS = [
+export const CAR_LISTINGS = [
   {
     name: "Deportivo compacto de segunda mano",
     min: 35000,
@@ -941,19 +953,20 @@ export async function buildCasaEvent(player: Player, supabase: SupabaseClient): 
   // jugador cumpliera el umbral general. Se prioriza mostrar las que de
   // verdad puede pagar; solo si no hay 3 así, se completa con las más
   // baratas del resto (nunca al azar entre las caras).
-  const affordable = HOME_LISTINGS.filter(
+  const homes = withoutOwned(HOME_LISTINGS, player, 3);
+  const affordable = homes.filter(
     (l) => Math.round((l.min * 0.2) / 500) * 500 <= player.patrimonio,
   );
   const pool =
     affordable.length >= 3
       ? affordable
-      : [...HOME_LISTINGS].sort((a, b) => a.min - b.min);
+      : [...homes].sort((a, b) => a.min - b.min);
   const listings = pickRandom(pool, 3).map((l) => ({
     ...l,
     price: randomPrice(l.min, l.max, 5000),
   }));
   const partner = typeof player.flags?.pareja === "string" ? player.flags.pareja : null;
-  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  const photos = await Promise.all(listings.map((l) => getPropertyPhotoWithin(supabase, player.user_id, l.name, l.prompt)));
 
   return {
     id: "vid-casa",
@@ -997,9 +1010,11 @@ export async function buildCasaEvent(player: Player, supabase: SupabaseClient): 
  * buildCasaEvent pero con un catálogo de lujo y foto por listado.
  */
 export async function buildMansionEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
-  const eligibleListings = isInlandClub(player.club)
-    ? MANSION_LISTINGS.filter((l) => !l.coastal)
-    : MANSION_LISTINGS;
+  const eligibleListings = withoutOwned(
+    isInlandClub(player.club) ? MANSION_LISTINGS.filter((l) => !l.coastal) : MANSION_LISTINGS,
+    player,
+    3,
+  );
   // Mismo filtro de asequibilidad que buildCasaEvent, sobre lo que ya
   // haya quedado tras el filtro de costa/interior.
   const affordable = eligibleListings.filter(
@@ -1014,7 +1029,7 @@ export async function buildMansionEvent(player: Player, supabase: SupabaseClient
     price: randomPrice(l.min, l.max, 50000),
   }));
   const partner = typeof player.flags?.pareja === "string" ? player.flags.pareja : null;
-  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  const photos = await Promise.all(listings.map((l) => getPropertyPhotoWithin(supabase, player.user_id, l.name, l.prompt)));
 
   return {
     id: "vid-mansion-lujo",
@@ -1057,7 +1072,7 @@ export async function buildMansionEvent(player: Player, supabase: SupabaseClient
  */
 export async function buildYachtEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
   const listings = pickAffordable(YACHT_LISTINGS, 3, "yate", player, 10000);
-  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  const photos = await Promise.all(listings.map((l) => getPropertyPhotoWithin(supabase, player.user_id, l.name, l.prompt)));
 
   return {
     id: "vid-yate",
@@ -1094,7 +1109,7 @@ export async function buildYachtEvent(player: Player, supabase: SupabaseClient):
 
 export async function buildJetEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
   const listings = pickAffordable(JET_LISTINGS, 2, "jet", player, 100000);
-  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  const photos = await Promise.all(listings.map((l) => getPropertyPhotoWithin(supabase, player.user_id, l.name, l.prompt)));
 
   return {
     id: "vid-jet-privado",
@@ -1137,7 +1152,7 @@ export async function buildJetEvent(player: Player, supabase: SupabaseClient): P
  */
 export async function buildCarEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
   const listings = pickAffordable(CAR_LISTINGS, 3, "coche", player, 5000);
-  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  const photos = await Promise.all(listings.map((l) => getPropertyPhotoWithin(supabase, player.user_id, l.name, l.prompt)));
 
   return {
     id: "vid-coche-deportivo",
@@ -1177,7 +1192,7 @@ export async function buildCarEvent(player: Player, supabase: SupabaseClient): P
  */
 export async function buildMotoEvent(player: Player, supabase: SupabaseClient): Promise<GameEvent> {
   const listings = pickAffordable(MOTO_LISTINGS, 3, "moto", player, 500);
-  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  const photos = await Promise.all(listings.map((l) => getPropertyPhotoWithin(supabase, player.user_id, l.name, l.prompt)));
   return {
     id: "vid-moto",
     category: "vida",
@@ -7124,15 +7139,18 @@ export async function buildCityHousingEvent(player: Player, supabase: SupabaseCl
 
   // Compra: una vivienda de lujo si la cuenta lo permite (solo en una ciudad de costa o interior que encaje), o una normal.
   const rich = player.patrimonio >= getMinMansionDownPayment();
-  const pool = rich
-    ? MANSION_LISTINGS.filter((l) => !isInlandClub(player.club) || !l.coastal)
-    : HOME_LISTINGS.filter((l) => Math.round((l.min * 0.2) / 500) * 500 <= player.patrimonio);
+  const pool = withoutOwned(
+    rich
+      ? MANSION_LISTINGS.filter((l) => !isInlandClub(player.club) || !l.coastal)
+      : HOME_LISTINGS.filter((l) => Math.round((l.min * 0.2) / 500) * 500 <= player.patrimonio),
+    player,
+  );
   // Cada ciudad enseña SU casa (otro listado, otro nombre y otra foto que en las demás ciudades).
   const buyBase = pool.length > 0 ? pickSeeded(pool, 1, `${player.id}:${city}:casa`)[0] : null;
   const buyList = buyBase ? localizeListing(buyBase, city) : null;
   const buyPrice = buyList ? randomPrice(buyList.min, buyList.max, rich ? 50000 : 5000) : 0;
   const buyDown = Math.round((buyPrice * (rich ? 0.3 : 0.2)) / 500) * 500;
-  const photo = buyList ? await getOrCreatePropertyPhoto(supabase, player.user_id, buyList.name, buyList.prompt) : null;
+  const photo = buyList ? await getPropertyPhotoWithin(supabase, player.user_id, buyList.name, buyList.prompt) : null;
 
   const intro = abroad
     ? `Has aterrizado en ${city} con dos maletas y un idioma que no es el tuyo. El club te ha pagado el hotel unos días, pero no puedes vivir en el hotel para siempre. Tu representante lo resume: "O decides ahora, o decide la agencia de relocation por ti, y te aseguro que no te va a gustar".`
@@ -7192,7 +7210,7 @@ export async function buildCityCarEvent(player: Player, supabase: SupabaseClient
   const abroad = leagueOf(player.club).id !== "es";
   // Los coches de cada ciudad son otros (y con su ambiente): no se repiten los del club anterior.
   const listings = pickAffordable(CAR_LISTINGS, 3, "coche", player, 5000, `${player.id}:${city}:coche`).map((l) => localizeListing(l, city));
-  const photos = await Promise.all(listings.map((l) => getOrCreatePropertyPhoto(supabase, player.user_id, l.name, l.prompt)));
+  const photos = await Promise.all(listings.map((l) => getPropertyPhotoWithin(supabase, player.user_id, l.name, l.prompt)));
   return {
     id: cityMoveIds(player.club).coche,
     category: "vida",

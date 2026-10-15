@@ -1221,6 +1221,7 @@ export async function generatePreseasoneEvent(
     subcampeon: "perdió la final (subcampeón)",
     semifinal: "cayó en semifinales",
     cuartos: "cayó en cuartos de final",
+    dieciseisavos: "cayó en dieciseisavos de final",
     octavos: "cayó en octavos de final",
     fase_de_grupos: "cayó en la fase de grupos",
   };
