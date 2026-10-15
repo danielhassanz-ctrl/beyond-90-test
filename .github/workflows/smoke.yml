@@ -1,0 +1,21 @@
+name: Prueba de humo
+
+# Cada 6 horas y a mano: comprueba que la web desplegada responde y que lo protegido sigue protegido.
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/smoke.mts
+        env:
+          SMOKE_URL: https://beyond-90.vercel.app

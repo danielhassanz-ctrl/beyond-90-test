@@ -27,9 +27,10 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims verifica el token en local (sin viaje a la red de Supabase) y refresca la sesión si hace falta: la página ya
+  // pide el usuario completo con getUser() donde lo necesita, así que aquí basta con saber si hay sesión válida.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const user = claimsData?.claims ? { id: String(claimsData.claims.sub ?? "") } : null;
 
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_ROUTES.some((route) =>
