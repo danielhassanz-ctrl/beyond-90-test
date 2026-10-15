@@ -16,8 +16,9 @@ import type { MatchWeek } from "@/lib/calendar/match-calendar";
 import { decideKnockoutResult, coherentWithDecision } from "@/lib/calendar/competition-progress";
 import { hasMajorTournament } from "@/lib/calendar/season";
 import { getConfederation } from "@/lib/nations";
+import { isOlympicYear, olympicLabel, olympicRole } from "@/lib/narrative/olympics";
 
-export type TorneoType = "mundial" | "eurocopa" | "copa_america";
+export type TorneoType = "mundial" | "eurocopa" | "copa_america" | "olimpico";
 
 export interface TorneoProgress {
   type: TorneoType;
@@ -39,12 +40,20 @@ export const TORNEO_NAMES: Record<TorneoType, string> = {
   mundial: "Mundial",
   eurocopa: "Eurocopa",
   copa_america: "Copa América",
+  olimpico: "Juegos Olímpicos",
 };
+
+/** El nombre completo de un torneo en una temporada (los Juegos llevan su ciudad: «Juegos Olímpicos de Los Ángeles 2028»). */
+export function torneoLabel(type: TorneoType, season: number): string {
+  return type === "olimpico" ? olympicLabel(season) : `${TORNEO_NAMES[type]} ${2026 + season}`;
+}
 
 const GROUP_LABELS = ["Fase de grupos · Jornada 1", "Fase de grupos · Jornada 2", "Fase de grupos · Jornada 3"];
 
 /** Las rondas de cada torneo. El Mundial tiene 48 selecciones y empieza las eliminatorias en dieciseisavos; Eurocopa y Copa América, no. */
 export function torneoStageLabels(type: TorneoType): string[] {
+  // Los Juegos: 16 selecciones sub-23, grupos de cuatro y cuadro desde cuartos.
+  if (type === "olimpico") return [...GROUP_LABELS, "Cuartos de final", "Semifinal", "Final"];
   return type === "mundial"
     ? [...GROUP_LABELS, "Dieciseisavos de final", "Octavos de final", "Cuartos de final", "Semifinal", "Final"]
     : [...GROUP_LABELS, "Octavos de final", "Cuartos de final", "Semifinal", "Final"];
@@ -57,6 +66,7 @@ export const TORNEO_POOLS: Record<TorneoType, string[]> = {
   mundial: ["Brasil", "Francia", "Argentina", "Inglaterra", "Alemania", "Portugal", "Países Bajos", "Italia", "Bélgica", "Croacia", "Uruguay", "Marruecos", "España"],
   eurocopa: ["Alemania", "Francia", "Inglaterra", "Italia", "Portugal", "Países Bajos", "Bélgica", "Croacia", "Dinamarca", "Suiza", "Polonia", "España"],
   copa_america: ["Brasil", "Argentina", "Uruguay", "Colombia", "Chile", "Ecuador", "Perú", "Paraguay", "Venezuela", "Bolivia", "México", "Estados Unidos"],
+  olimpico: ["Brasil", "Argentina", "Francia", "España", "Marruecos", "Japón", "Estados Unidos", "México", "Egipto", "Uruguay", "Colombia", "Italia", "Países Bajos", "Nigeria"],
 };
 
 /** Nivel de selección 1-5 (por defecto, 3). */
@@ -64,7 +74,7 @@ const NATION_TIER: Record<string, number> = {
   Brasil: 5, Francia: 5, Argentina: 5, Alemania: 5, Inglaterra: 5, España: 5,
   Portugal: 4, "Países Bajos": 4, Italia: 4, Bélgica: 4, Uruguay: 4, Croacia: 4, Colombia: 4, Marruecos: 4,
   Chile: 3, Ecuador: 3, Perú: 3, Paraguay: 3, Dinamarca: 3, Suiza: 3, México: 3, "Estados Unidos": 3, Polonia: 3,
-  Venezuela: 2, Bolivia: 2,
+  Venezuela: 2, Bolivia: 2, Japón: 3, Egipto: 3, Nigeria: 3,
 };
 
 export function nationTier(nation: string): number {
@@ -123,11 +133,26 @@ export function shouldStartTorneo(player: Player, weekInSeason: number, injured:
   return tournament.type;
 }
 
+/**
+ * Los Juegos Olímpicos: se disputan justo después de la Eurocopa o el Mundial (si juegas los dos, primero uno y luego el
+ * otro) y solo van los sub-23 y tres mayores por equipo (ver olympics.ts). Hace falta haber recibido el aviso o tener nivel.
+ */
+export function shouldStartOlympics(player: Player, weekInSeason: number, injured: boolean): TorneoType | null {
+  if (weekInSeason !== 1 || injured) return null;
+  if (getTorneoProgress(player)) return null;
+  const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  if (!isOlympicYear(season) || player.flags?.[`torneo_started_olimpico_${season}`]) return null;
+  if (player.week < 30) return null;
+  // Quien rechazó la llamada, no va; el resto, si es elegible.
+  if (player.flags?.olimpico_no && String(player.flags?.olimpico_aviso ?? "") === String(2026 + season)) return null;
+  return olympicRole(player, season) ? "olimpico" : null;
+}
+
 export function startTorneoProgress(player: Player, type: TorneoType): TorneoProgress {
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const progress: TorneoProgress = { type, season, stage: 0, alive: true, groupPts: 0, lifeDue: true, lifeCount: 0 };
   if (!player.flags) player.flags = {};
-  player.flags[`torneo_started_${season}`] = true;
+  player.flags[type === "olimpico" ? `torneo_started_olimpico_${season}` : `torneo_started_${season}`] = true;
   saveTorneoProgress(player, progress);
   return progress;
 }
@@ -145,7 +170,7 @@ export function buildTorneoMatch(player: Player, progress: TorneoProgress): Matc
   const pool = TORNEO_POOLS[progress.type].filter((n) => n !== player.nation);
   const ordered = [...pool].sort((a, b) => hash(`${player.id}:${progress.season}:${progress.type}:${a}`) - hash(`${player.id}:${progress.season}:${progress.type}:${b}`));
   const rival = ordered[progress.stage % ordered.length];
-  const name = `${TORNEO_NAMES[progress.type]} ${torneoYear(progress.season)}`;
+  const name = torneoLabel(progress.type, progress.season);
   return {
     week: player.week,
     slot: 1,
@@ -209,13 +234,18 @@ export function advanceTorneo(
       const qualified = next.groupPts >= 4 || (next.groupPts === 3 && Math.random() < (progress.type === "mundial" ? 0.6 : 0.45));
       next.alive = qualified;
       if (!qualified) return { next, finished: true, qualified, outcome: "fase_de_grupos" };
-      return { next, finished: false, qualified, outcome: progress.type === "mundial" ? "dieciseisavos" : "octavos" };
+      return { next, finished: false, qualified, outcome: progress.type === "mundial" ? "dieciseisavos" : progress.type === "olimpico" ? "cuartos" : "octavos" };
     }
     return { next, finished: false, outcome: "grupos" };
   }
   if (!result.win) {
     next.alive = false;
-    const labels = progress.type === "mundial" ? ["dieciseisavos", "octavos", "cuartos", "semifinal", "subcampeon"] : ["octavos", "cuartos", "semifinal", "subcampeon"];
+    const labels =
+      progress.type === "mundial"
+        ? ["dieciseisavos", "octavos", "cuartos", "semifinal", "subcampeon"]
+        : progress.type === "olimpico"
+          ? ["cuartos", "semifinal", "subcampeon"]
+          : ["octavos", "cuartos", "semifinal", "subcampeon"];
     return { next, finished: true, outcome: labels[progress.stage - 3] };
   }
   next.stage = progress.stage + 1;

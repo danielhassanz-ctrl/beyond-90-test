@@ -53,6 +53,7 @@ import { playerMonthlyNet } from "@/lib/narrative/transfer-terms";
 import { monthlyRent } from "@/lib/finance/rent";
 import { getNpcName, nationalSquadView } from "@/lib/narrative/npcs";
 import { buildTorneoFinalEvent } from "@/lib/narrative/world-results";
+import { buildOlympicArrival, buildOlympicCallUp, shouldTriggerOlympicPreview, buildOlympicPreviewEvent } from "@/lib/narrative/olympics";
 import { applyExClubTouch } from "@/lib/narrative/ex-club";
 import { trophyCelebrationOptions } from "@/lib/narrative/trophy-celebration";
 import { applyStateTick, stateRollNudge, hasState } from "@/lib/narrative/states";
@@ -104,6 +105,8 @@ import {
   getTorneoProgress,
   saveTorneoProgress,
   shouldStartTorneo,
+  shouldStartOlympics,
+  torneoLabel,
   startTorneoProgress,
   buildTorneoMatch,
   decideTorneoResult,
@@ -2965,16 +2968,16 @@ async function pickTorneoEvent(
   const progress = getTorneoProgress(player);
 
   if (!progress) {
-    const type = shouldStartTorneo(player, weekInSeason, injured);
+    const type = shouldStartTorneo(player, weekInSeason, injured) ?? shouldStartOlympics(player, weekInSeason, injured);
     if (!type) return null;
     // Primero la lista de convocados (hito); el torneo arranca en cuanto se resuelve.
     const seasonT = Math.floor((player.week - 1) / 10);
     if (!player.flags?.[`conv_${type}_${seasonT}`]) {
       console.log(`[pickNextEventDynamic] Convocatoria ${type}.`);
-      return buildConvocatoriaEvent(player, type, seasonT);
+      return type === "olimpico" ? buildOlympicCallUp(player, seasonT) : buildConvocatoriaEvent(player, type, seasonT);
     }
     startTorneoProgress(player, type);
-    const base = EVENTS.find((e) => e.id === `sel-${type === "copa_america" ? "copa-america" : type}`);
+    const base = type === "olimpico" ? buildOlympicArrival(player, seasonT) : EVENTS.find((e) => e.id === `sel-${type === "copa_america" ? "copa-america" : type}`);
     if (!base) return null;
     console.log(`[pickNextEventDynamic] Torneo ${type}: llegada.`);
     return maybeAddFreeText({ ...base, id: `${base.id}-s${Math.floor((player.week - 1) / 10)}` });
@@ -3006,7 +3009,7 @@ async function pickTorneoEvent(
   // Crónica del partido: el resultado y lo que implica (pasar de fase,
   // eliminación, título) se deciden en código ANTES de pedírsela a la IA.
   let result = decideTorneoResult(player, progress, match.rivalClub, decisionOutcome);
-  const tName = `${TORNEO_NAMES[progress.type]} ${torneoYear(progress.season)}`;
+  const tName = torneoLabel(progress.type, progress.season);
   const nation = player.nation;
   const lines: string[] = [];
   // Si la eliminatoria se va a los penaltis, se vive como escena propia (tira el jugador) y su desenlace
@@ -3098,11 +3101,14 @@ async function pickTorneoEvent(
     player.flags.sel_debut_played = true;
   }
 
+  // En los Juegos, quien cae en semifinales juega por el bronce (la mitad de las veces lo gana: medalla).
+  const olympicBronze = progress.type === "olimpico" && adv.finished && adv.outcome === "semifinal" && Math.random() < 0.5;
+  const finalOutcome = olympicBronze ? "bronce" : adv.outcome;
   if (adv.finished) {
     if (!player.flags) player.flags = {};
-    player.flags[`torneo_result_${progress.type}_${progress.season}`] = adv.outcome;
+    player.flags[`torneo_result_${progress.type}_${progress.season}`] = finalOutcome;
     // Eliminado antes de la final: más adelante verás quién la gana (escena torneo-final-*).
-    if (!adv.champion && adv.outcome !== "subcampeon") player.flags.torneo_final_pending = `${progress.type}|${progress.season}|${adv.outcome}`;
+    if (!adv.champion && adv.outcome !== "subcampeon") player.flags.torneo_final_pending = `${progress.type}|${progress.season}|${finalOutcome}`;
     saveTorneoProgress(player, null);
   } else {
     saveTorneoProgress(player, adv.next);
@@ -3115,7 +3121,12 @@ async function pickTorneoEvent(
     rivalClub: match.rivalClub,
     matchKey: stageKey,
   };
-  return adv.champion ? withTrophy(torneoEvent, progress.type, nation, `${tName}`) : torneoEvent;
+  if (adv.champion) return withTrophy(torneoEvent, progress.type, nation, `${tName}`);
+  // Medallas olímpicas que no son oro: cuentan como trofeo (plata en la final perdida, bronce en el partido por el tercer puesto).
+  if (progress.type === "olimpico" && (adv.outcome === "subcampeon" || olympicBronze)) {
+    return { ...torneoEvent, trophy: { kind: "olimpico", detail: `${tName} · ${adv.outcome === "subcampeon" ? "plata" : "bronce"}` } };
+  }
+  return torneoEvent;
 }
 
 /**
@@ -3586,6 +3597,12 @@ export async function pickNextEventDynamic(
       const childEvent = buildChildEvent(playerWithDynamics, childStage);
       console.log(`[pickNextEventDynamic] Hijos: "${childEvent.title}"`);
       return maybeAddFreeText(childEvent);
+    }
+    // Los Juegos Olímpicos del verano que viene (cada cuatro años): aviso para quien puede ir (olympics.ts).
+    if (shouldTriggerOlympicPreview(playerWithDynamics, usedEventIds)) {
+      const preview = buildOlympicPreviewEvent(playerWithDynamics);
+      console.log(`[pickNextEventDynamic] Juegos Olímpicos (aviso): "${preview.title}"`);
+      return maybeAddFreeText(preview);
     }
     // Tu pareja está presente: cada pocos turnos, una escena con ella (primero las historias del banco que ya tocan, si no, la vida
     // de cada día: cena, día duro, visita de su madre, cumpleaños…). Ver partner-life.ts.

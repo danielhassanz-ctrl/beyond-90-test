@@ -13,7 +13,7 @@ import { fictionalFullName, fictionalPlayerName } from "@/lib/narrative/npcs";
 import { CLUB_WEIGHTS, championsPodium, weightedPick } from "@/lib/narrative/world-results";
 import { getRivals } from "@/lib/narrative/rivals";
 import { maxMediaForAge } from "@/lib/narrative/media-cap";
-import { TORNEO_NAMES, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
+import { torneoLabel, type TorneoType } from "@/lib/narrative/torneo";
 import { readTrofeos, INDIVIDUAL, trofeoLabel } from "@/lib/honours";
 
 export type AwardKind = "golden_boy" | "balon_oro";
@@ -309,7 +309,7 @@ function squadByLines(player: Player, type: TorneoType, season: number) {
 }
 
 export function buildConvocatoriaEvent(player: Player, type: TorneoType, season: number): GameEvent {
-  const tName = `${TORNEO_NAMES[type]} ${torneoYear(season)}`;
+  const tName = torneoLabel(type, season);
   const nation = player.nation;
   const lines = squadByLines(player, type, season);
   const flagKey = `conv_${type}_${season}`;

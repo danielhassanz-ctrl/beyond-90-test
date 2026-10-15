@@ -1225,6 +1225,7 @@ export async function generatePreseasoneEvent(
     semifinal: "cayó en semifinales",
     cuartos: "cayó en cuartos de final",
     dieciseisavos: "cayó en dieciseisavos de final",
+    bronce: "ganó la medalla de bronce",
     octavos: "cayó en octavos de final",
     fase_de_grupos: "cayó en la fase de grupos",
   };

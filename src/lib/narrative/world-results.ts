@@ -7,7 +7,7 @@
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { readTrofeos } from "@/lib/honours";
-import { TORNEO_NAMES, TORNEO_POOLS, nationTier, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
+import { TORNEO_POOLS, nationTier, torneoLabel, type TorneoType } from "@/lib/narrative/torneo";
 
 function hash(value: string): number {
   let h = 2166136261;
@@ -74,12 +74,13 @@ const OUTCOME_FROM: Record<string, string> = {
   dieciseisavos: "Caíste en dieciseisavos y la fase final del torneo la sigues desde el sofá, con la sensación de haberte quedado a las puertas",
   octavos: "Caíste en octavos y has seguido el torneo desde el sofá",
   cuartos: "Caíste en cuartos, y desde entonces ver los partidos duele de una manera muy concreta",
+  bronce: "Te colgaron el bronce, y la final, desde fuera, se vive con orgullo y con un poco de envidia",
   semifinal: "Te quedaste a un paso de la final, y verla desde fuera es una cosa rara entre la rabia y la curiosidad",
 };
 
 /** La final de un torneo de selecciones, vista desde casa tras caer eliminado (outcome del torneo del jugador). */
 export function buildTorneoFinalEvent(player: Player, type: TorneoType, season: number, outcome: string): GameEvent {
-  const name = `${TORNEO_NAMES[type]} ${torneoYear(season)}`;
+  const name = torneoLabel(type, season);
   const f = tournamentFinal(player, type, season);
   const lead = OUTCOME_FROM[outcome] ?? "Ya no estás en el torneo";
   const pens = /penaltis/.test(f.score);

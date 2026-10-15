@@ -171,7 +171,7 @@ export function describeLifeFacts(player: Player): string[] {
   for (const [key, value] of Object.entries(f)) {
     const tr = key.match(/^torneo_result_(.+)_(\d+)$/);
     if (tr && typeof value === "string" && value) {
-      const names: Record<string, string> = { mundial: "Mundial", eurocopa: "Eurocopa", copa_america: "Copa América" };
+      const names: Record<string, string> = { mundial: "Mundial", eurocopa: "Eurocopa", copa_america: "Copa América", olimpico: "Juegos Olímpicos" };
       facts.push(`en el ${names[tr[1]] ?? "torneo"} de ${2026 + Number(tr[2])} terminó: ${value.replace(/_/g, " ")}`);
     }
   }

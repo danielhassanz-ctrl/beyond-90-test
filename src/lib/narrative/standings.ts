@@ -9,7 +9,7 @@ import {
 import { leagueOf, leagueTier, ligaJornadaByWeek, canonicalClub, continentalName } from "@/lib/calendar/leagues";
 import { getCopaProgress, getEuroProgress, copaRoundName, euroRoundName } from "@/lib/calendar/competition-progress";
 import { WEEKS_PER_SEASON } from "@/types/career";
-import { getTorneoProgress, torneoGroupRivals, TORNEO_NAMES, torneoStageLabels, torneoYear, type TorneoType } from "@/lib/narrative/torneo";
+import { getTorneoProgress, torneoGroupRivals, torneoLabel, torneoStageLabels, type TorneoType } from "@/lib/narrative/torneo";
 
 /**
  * Mini clasificación con tu club señalado, y el cuadro de "eliminatoria"
@@ -393,7 +393,7 @@ export function getActiveStandings(
   const progress = getTorneoProgress(player);
   if (typeof torneo === "string" && torneo && progress) {
     const type = progress.type;
-    const name = `${TORNEO_NAMES[type]} ${torneoYear(progress.season)}`;
+    const name = torneoLabel(type, progress.season);
     const rivals = torneoGroupRivals(player, type, progress.season);
     const playedGroup = Math.min(progress.stage, 3);
     // Tus resultados reales de grupo. En partidas anteriores a guardarlos se reconstruyen desde los puntos.
@@ -496,6 +496,7 @@ export function getActiveStandings(
 
 const TORNEO_RESULT_TEXT: Record<string, string> = {
   fase_de_grupos: "Eliminado en la fase de grupos",
+  bronce: "Medalla de bronce olímpica",
   dieciseisavos: "Eliminado en dieciseisavos de final",
   octavos: "Eliminado en octavos de final",
   cuartos: "Eliminado en cuartos de final",
@@ -506,10 +507,10 @@ const TORNEO_RESULT_TEXT: Record<string, string> = {
 
 /** Cómo acabó el torneo de selecciones de esta temporada, si ya se jugó. */
 function lastTorneoResult(player: Player, season: number): KnockoutStandings | null {
-  for (const type of ["mundial", "eurocopa", "copa_america"] as TorneoType[]) {
+  for (const type of ["mundial", "eurocopa", "copa_america", "olimpico"] as TorneoType[]) {
     const v = player.flags?.[`torneo_result_${type}_${season}`];
     if (typeof v === "string" && TORNEO_RESULT_TEXT[v]) {
-      return { type: "knockout", label: `${TORNEO_NAMES[type]} ${torneoYear(season)}`, roundLabel: TORNEO_RESULT_TEXT[v], alive: v === "campeon" || v === "subcampeon", badge: v === "campeon" ? "Campeón" : v === "subcampeon" ? "Subcampeón" : "Eliminado" };
+      return { type: "knockout", label: torneoLabel(type, season), roundLabel: TORNEO_RESULT_TEXT[v], alive: v === "campeon" || v === "subcampeon" || v === "bronce", badge: v === "campeon" ? "Campeón" : v === "subcampeon" ? "Subcampeón" : "Eliminado" };
     }
   }
   return null;

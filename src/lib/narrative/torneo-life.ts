@@ -30,6 +30,7 @@ function torneoLabel(torneo: string): string {
   if (torneo === "mundial") return "el Mundial";
   if (torneo === "eurocopa") return "la Eurocopa";
   if (torneo === "copa_america") return "la Copa América";
+  if (torneo === "olimpico") return "los Juegos Olímpicos";
   return "el torneo";
 }
 
