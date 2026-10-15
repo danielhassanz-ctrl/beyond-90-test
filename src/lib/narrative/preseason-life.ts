@@ -394,7 +394,7 @@ const TEMPLATES: Tpl[] = [
     key: "mascota_fuga",
     title: "La mascota del club se escapa",
     tone: ["gracioso", "surrealista"],
-    desc: (c) => `En plena sesión de fotos, la persona disfrazada de mascota del ${c.club} sale corriendo detrás de una paloma y se cuela en pleno pueblo, con el traje de águila puesto y todo el club detrás intentando explicarlo.`,
+    desc: (c) => `En plena sesión de fotos, la persona disfrazada de mascota del ${c.club} sale corriendo detrás de una paloma y se cuela en pleno pueblo, con el traje de águila puesto y todo el club detrás intentando explicarlo. El utillero se agarra la cabeza desde la banda y ${c.mate}, a tu lado, ya se está remangando para salir corriendo.`,
     opts: (c) => [
       { label: "Unirte a la caza", subtitle: `Con ${c.mate} a perseguirla`, consequences: { rel_vestuario: 4, moral: 3, forma: -1 }, outcomeText: "Corres detrás de la mascota, que salta una valla con el traje puesto. Os pilla un fotógrafo a los dos, y esa foto da la vuelta al país." },
       { label: "Grabarlo todo", subtitle: "Contenido asegurado", consequences: { fama: 5, rel_vestuario: 1 }, outcomeText: "Grabas la persecución desde tres ángulos. El vídeo suma un millón de visitas antes de que la paloma desaparezca." },

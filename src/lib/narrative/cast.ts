@@ -307,7 +307,9 @@ export function introduceCast(
   event: Pick<GameEvent, "title" | "description" | "options">,
   player: Player,
 ): CastCard[] {
-  const text = [event.title, event.description, ...event.options.flatMap((o) => [o.label ?? "", o.subtitle ?? ""])].join("\n");
+  // Solo se presenta a quien sale en el TEXTO de la escena: una ficha de alguien que solo aparece en una opción («Con Fulano a
+  // perseguirla») salía antes de que el jugador supiera quién era y no tenía nada que ver con lo que se contaba.
+  const text = [event.title, event.description].join("\n");
   const met = metNames(player);
   const found: { entry: Entry; pos: number }[] = [];
   for (const entry of allCandidates(player).values()) {
