@@ -152,11 +152,21 @@ function busyCategories(player: Player): Set<BrandCategory> {
   return out;
 }
 
-function freshBrands(cat: BrandCategory, player: Player, n: number, rng: () => number): { name: string; note: string }[] {
+/** Marcas que existen de verdad (el resto del catálogo es inventado). */
+export const REAL_BRANDS = new Set([
+  "Nike", "Adidas", "Puma", "Under Armour", "Asics", "Mizuno", "New Balance", "Umbro", "Kelme", "On", "Joma", "Hummel", "Lotto", "Le Coq Sportif",
+  "Hugo Boss", "Paco Rabanne", "Hublot", "TAG Heuer", "Red Bull", "Gatorade", "Powerade", "Samsung", "Sony", "EA Sports", "PlayStation",
+  "Cupra", "Audi", "Emirates", "Iberia", "Oakley", "Ray-Ban", "Beats", "Bose",
+]);
+
+function freshBrands(cat: BrandCategory, player: Player, n: number, rng: () => number, preferReal = false): { name: string; note: string }[] {
   const used = new Set(brandsUsed(player.flags));
   const fresh = CATEGORIES[cat].brands.filter((b) => !used.has(b.name));
   const pool = fresh.length >= n ? fresh : CATEGORIES[cat].brands;
-  return [...pool].sort(() => rng() - 0.5).slice(0, n);
+  const shuffled = [...pool].sort(() => rng() - 0.5);
+  // Las estrellas atraen a los gigantes: con mucha fama, las marcas conocidas van primero en la puja.
+  if (preferReal) shuffled.sort((a, b) => Number(REAL_BRANDS.has(b.name)) - Number(REAL_BRANDS.has(a.name)));
+  return shuffled.slice(0, n);
 }
 
 function eligibleCategories(player: Player): BrandCategory[] {
@@ -224,7 +234,7 @@ export function buildBrandBidding(player: Player, rng: () => number = Math.rando
   const cat = pick(cats, rng);
   const info = CATEGORIES[cat];
   const week = player.week;
-  const trio = freshBrands(cat, player, 3, rng);
+  const trio = freshBrands(cat, player, 3, rng, (player.fama ?? 0) >= 85);
   const scale = fameScale(player);
   const bonuses = trio.map((_, i) => round500(info.base * scale * (1.1 + i * 0.12 + rng() * 0.2)));
   // Cada marca tiene su carácter: la que más paga exige exclusividad, la del medio es la más cómoda y la humilde, la que menos ruido hace.

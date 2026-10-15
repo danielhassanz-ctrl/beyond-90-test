@@ -17,6 +17,7 @@ import { detectDeclineSignals, buildDeclinePrompt } from "@/lib/narrative/declin
 import { pickCharacterToReappear, describeCharacterReappearance, updateCharacterLastSeen } from "@/lib/narrative/secondary-characters";
 import { shouldBeeFunnyMoment, pickRandomFunnyMoment, isSurrealMoment } from "@/lib/narrative/funny-surreal";
 import { isEligibleForSponsorship, SPONSORSHIP_EVENTS } from "@/lib/narrative/sponsorships";
+import { pickSponsorEvent } from "@/lib/narrative/brands";
 import { shouldExcludeEvent, type EventHistory } from "@/lib/narrative/event-tracking";
 import { getNextMatch, isMatchWeekNext, getMatchThisWeek, getEuropeanCompetitionFor, getClubLevel, matchKey, parseMatchDone, type MatchWeek } from "@/lib/calendar/match-calendar";
 import { childStage as childStageOf, buildChildEvent } from "@/lib/narrative/children";
@@ -4254,6 +4255,12 @@ REGLAS:
   // Patrocinios y endorsements para jugadores de alta fama (~15% si elegibles)
   // Solo si fama >= 65 y el evento no ha sido usado antes
   if (isEligibleForSponsorship(player.fama) && Math.random() < 0.15) {
+    // Mayoría de las veces: marcas del catálogo (ofertas, pujas, productos con tu nombre, pantallas gigantes). Resto: las escenas fijas de siempre.
+    const brandEvent = !midMatch && Math.random() < 0.75 ? pickSponsorEvent(player, usedEventIds) : null;
+    if (brandEvent) {
+      console.log(`[pickNextEventDynamic] Marcas para ${player.last_name}: "${brandEvent.title}"`);
+      return maybeAddFreeText(brandEvent);
+    }
     const availableSponsorships = Object.values(SPONSORSHIP_EVENTS).filter(
       (event) => !usedEventIds.includes(event.id) && (event.minFama === undefined || player.fama >= event.minFama)
     );
