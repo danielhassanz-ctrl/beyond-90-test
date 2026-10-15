@@ -51,6 +51,7 @@ import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career
 import { logAppError } from "@/lib/errorLog";
 import { computeStreakUpdate, STREAK_MILESTONES } from "@/lib/player/streak";
 import { displayName } from "@/types/player";
+import { mergeFlagsForWrite } from "@/lib/supabase/flags";
 import { photoRefs } from "@/lib/images/photo-refs";
 import { withStateCause } from "@/lib/narrative/states";
 import { coverForMilestone } from "@/lib/images/coverHeadlines";
@@ -1144,6 +1145,11 @@ async function resolveEventInner(formData: FormData) {
     };
   }
 
+  // Solo se escribe lo que ESTA decisión ha cambiado, encima de las banderas actuales (una foto que acaba de generarse, un pago…
+  // no se pisan con el valor viejo de cuando empezó la petición). Ver supabase/flags.ts.
+  if (playerUpdate.flags) {
+    playerUpdate.flags = await mergeFlagsForWrite(supabase, player.id, player.flags ?? {}, playerUpdate.flags as Record<string, string | boolean>);
+  }
   const { error: playerUpdateError } = await supabase
     .from("players")
     .update({

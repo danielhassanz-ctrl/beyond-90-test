@@ -90,5 +90,53 @@ export async function POST(request: Request) {
     }
   }
 
+  // Reembolso completo o disputa (contracargo): las fotos de ese pago se retiran (hasta lo que quede sin usar), una sola vez por sesión.
+  if (event.type === "charge.refunded" || event.type === "charge.dispute.created") {
+    const obj = event.data.object as { payment_intent?: string | { id: string } | null; refunded?: boolean };
+    // Un reembolso parcial no retira las fotos: solo el completo (o una disputa).
+    if (event.type === "charge.refunded" && obj.refunded !== true) {
+      console.log("[stripe webhook] reembolso parcial: no se retiran fotos");
+      return NextResponse.json({ received: true });
+    }
+    const paymentIntent = typeof obj.payment_intent === "string" ? obj.payment_intent : obj.payment_intent?.id;
+    if (!paymentIntent) {
+      console.error("[stripe webhook] reembolso sin payment_intent, no se puede localizar la compra");
+      return NextResponse.json({ received: true });
+    }
+    let supabase;
+    try {
+      supabase = createServiceClient();
+    } catch (err) {
+      console.error("[stripe webhook]", err instanceof Error ? err.message : err);
+      return NextResponse.json({ error: "not configured" }, { status: 503 });
+    }
+    const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntent, limit: 1 });
+    const session = sessions.data[0];
+    const playerId = session?.client_reference_id;
+    if (!session || !playerId) {
+      console.error(`[stripe webhook] no se encontró la sesión del pago ${paymentIntent}`);
+      return NextResponse.json({ received: true });
+    }
+    const { data: player } = await supabase.from("players").select("id, flags").eq("id", playerId).maybeSingle();
+    if (!player) return NextResponse.json({ received: true });
+    const revoked = String(player.flags?.img_refunded_sessions ?? "").split(",").filter(Boolean);
+    if (revoked.includes(session.id)) {
+      console.log(`[stripe webhook] sesión ${session.id} ya retirada, se ignora el aviso repetido`);
+      return NextResponse.json({ received: true });
+    }
+    const currentPaid = getPaidCredits({ flags: player.flags ?? {} });
+    const newFlags = {
+      ...(player.flags ?? {}),
+      img_paid_credits: String(Math.max(0, currentPaid - CREDIT_PACK.images)),
+      img_refunded_sessions: [...revoked, session.id].slice(-20).join(","),
+    };
+    const { data: rows, error: updateErr } = await supabase.from("players").update({ flags: newFlags }).eq("id", playerId).select("id");
+    if (updateErr || !rows || rows.length === 0) {
+      console.error(`[stripe webhook] no se pudieron retirar las fotos del jugador ${playerId}:`, updateErr?.message ?? "ninguna fila actualizada");
+    } else {
+      console.log(`[stripe webhook] reembolso: retiradas hasta ${CREDIT_PACK.images} fotos al jugador ${playerId}`);
+    }
+  }
+
   return NextResponse.json({ received: true });
 }

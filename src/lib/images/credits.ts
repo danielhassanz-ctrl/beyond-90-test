@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Player } from "@/types/player";
 import { createServiceClient } from "@/lib/supabase/service";
+import { patchFlagsFresh } from "@/lib/supabase/flags";
 
 /**
  * Modelo freemium por carrera: las primeras FREE_IMAGES_PER_CAREER fotos
@@ -117,10 +118,9 @@ export async function isEligibleForFreeTier(
   }
 
   try {
-    await supabase
-      .from("players")
-      .update({ flags: { ...(player.flags ?? {}), free_tier_eligible: eligible ? "yes" : "no" } })
-      .eq("id", player.id);
+    await patchFlagsFresh(supabase, player.id, (f) => {
+      f.free_tier_eligible = eligible ? "yes" : "no";
+    });
   } catch (err) {
     console.error("[isEligibleForFreeTier] no se pudo cachear el resultado:", err instanceof Error ? err.message : err);
   }
@@ -155,25 +155,21 @@ export async function consumeImageCredit(
 ): Promise<void> {
   if (isOwnerEmail(userEmail)) return;
 
-  const freeUsed = getFreeImagesUsed(player);
-  const paid = getPaidCredits(player);
   const eligible = await isEligibleForFreeTier(supabase, player, userEmail);
-  const flags = { ...(player.flags ?? {}) };
 
-  if (eligible && freeUsed < FREE_IMAGES_PER_CAREER) {
-    flags.img_free_used = String(freeUsed + 1);
-  } else if (paid > 0) {
-    flags.img_paid_credits = String(paid - 1);
+  // El gasto se calcula sobre las banderas ACTUALES de la base de datos, no sobre las de hace un minuto (cuando empezó la generación):
+  // así no se pisan una compra reciente ni lo que haya cambiado el resto del juego mientras tanto. Si no quedaba ni gratis ni comprado
+  // no debería haberse llegado aquí (hasImageCredit se comprueba antes): no se resta nada por debajo de 0.
+  const fresh = await patchFlagsFresh(supabase, player.id, (f) => {
+    const freeNow = parseInt(String(f.img_free_used ?? "0"), 10) || 0;
+    const paidNow = parseInt(String(f.img_paid_credits ?? "0"), 10) || 0;
+    if (eligible && freeNow < FREE_IMAGES_PER_CAREER) f.img_free_used = String(freeNow + 1);
+    else if (paidNow > 0) f.img_paid_credits = String(paidNow - 1);
+  });
+  if (fresh) {
+    // Reflejar el cambio también en el objeto en memoria, por si el mismo `player` se sigue usando después en la misma petición.
+    player.flags = fresh;
+    return;
   }
-  // Si no quedaba ni gratis ni comprado, no debería haberse llegado aquí
-  // (hasImageCredit se comprueba antes) — no restamos nada por debajo de 0.
-
-  try {
-    await supabase.from("players").update({ flags }).eq("id", player.id);
-  } catch (err) {
-    console.error("[consumeImageCredit] failed to persist credit usage:", err instanceof Error ? err.message : err);
-  }
-  // Reflejar el cambio también en el objeto en memoria, por si el mismo
-  // `player` se sigue usando después en la misma petición.
-  player.flags = flags;
+  console.error("[consumeImageCredit] no se pudo guardar el gasto del crédito");
 }

@@ -48,6 +48,7 @@ import { repairEuroAfterTransfer } from "@/lib/calendar/euro-transfer";
 import { readProperties } from "@/lib/finance/mortgage";
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
 import { timed } from "@/lib/perf";
+import { mergeFlagsForWrite } from "@/lib/supabase/flags";
 export const GEN_LOCK_ID = "gen-lock";
 // Generar una escena con la IA tarda 10-15 s (medido en producción, máx. ~15). Si la petición que reservó el turno se cae (el navegador
 // cierra la conexión, el jugador recarga…) la reserva se queda puesta: antes caducaba a los 90 s y el jugador esperaba ~1 min y medio
@@ -155,6 +156,7 @@ async function ensureNextEventInner(
   supabase: SupabaseClient,
   player: Player,
 ): Promise<{ event: GameEvent; usedEventIds: string[] }> {
+  const startFlags = { ...(player.flags ?? {}) };
   await timed("ensure repairs", async () => {
   await migrateSalaryDeal(supabase, player);
   });
@@ -418,6 +420,8 @@ async function ensureNextEventInner(
     // avisar — la semana nunca avanzaba y el mismo partido podía volver
     // a aparecer turno tras turno. Visto en vivo jugando (Copa del Rey
     // repitiéndose contra el mismo rival sin motivo).
+    // Las banderas que cambió esta generación, sobre las actuales (la IA tarda 10-15 s y mientras tanto pueden haber cambiado otras).
+    if (player.flags) player.flags = await mergeFlagsForWrite(supabase, player.id, startFlags, player.flags);
     const baseUpdate = supabase
       .from("players")
       .update({
