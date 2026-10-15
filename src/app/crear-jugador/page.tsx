@@ -172,6 +172,10 @@ export default async function CrearJugadorPage({
               <PhotoInput name="photo" />
               <p className="text-xs text-muted-foreground">Se guarda en tu cuenta y será tu avatar en toda la carrera.</p>
             </Field>
+            <Field label="Segunda foto, otro ángulo (opcional)" emoji="🧑">
+              <PhotoInput name="photo2" />
+              <p className="text-xs text-muted-foreground">Con dos fotos tuyas, las fotos de tus momentos se parecen más a ti.</p>
+            </Field>
           </div>
 
           {/* Modo */}

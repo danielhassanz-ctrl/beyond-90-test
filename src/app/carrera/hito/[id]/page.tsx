@@ -156,7 +156,7 @@ export default async function HitoPage({
             {milestone.title}
           </h1>
           {milestone.subtitle && (
-            <p className="mx-auto max-w-xl text-base text-muted-foreground">
+            <p className="mx-auto max-w-xl whitespace-pre-line text-base text-muted-foreground">
               {milestone.subtitle}
             </p>
           )}

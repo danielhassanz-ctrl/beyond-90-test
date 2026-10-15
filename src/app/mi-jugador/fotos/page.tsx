@@ -4,12 +4,13 @@ import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { BottomNav } from "@/components/BottomNav";
 import { FREE_IMAGES_PER_CAREER, CREDIT_PACK, getFreeImagesUsed, getFreeImagesRemaining, getPaidCredits, isEligibleForFreeTier } from "@/lib/images/credits";
-import { createCreditCheckout } from "./actions";
+import { createCreditCheckout, saveSecondPhoto, removeSecondPhoto } from "./actions";
+import { PhotoInput } from "@/components/PhotoInput";
 
 export default async function FotosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; comprado?: string }>;
+  searchParams: Promise<{ error?: string; comprado?: string; segunda?: string }>;
 }) {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
   if (!user) redirect("/login");
@@ -44,11 +45,38 @@ export default async function FotosPage({
           ¡Pago recibido! En unos segundos tus fotos nuevas estarán disponibles.
         </p>
       )}
+      {params.segunda && (
+        <p className="w-full max-w-md rounded-lg border border-gold/50 bg-gold/10 px-3 py-2 text-center text-sm text-gold-soft">
+          Segunda foto guardada: las próximas fotos usarán las dos como referencia.
+        </p>
+      )}
       {params.error && (
         <p className="w-full max-w-md rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-center text-sm text-destructive">
           {params.error}
         </p>
       )}
+
+      <div className="w-full max-w-md space-y-3 rounded-2xl border border-panel-border bg-surface p-5">
+        <p className="text-kicker">Segunda foto de referencia</p>
+        <p className="text-xs text-muted-foreground">
+          Con dos fotos tuyas (de frente y de perfil, o con otra luz) las fotos generadas se te parecen más. Es opcional y no gasta fotos.
+        </p>
+        {typeof player.flags?.photo_ref2 === "string" && player.flags.photo_ref2 ? (
+          <div className="flex items-center gap-3">
+            <Image src={player.flags.photo_ref2} alt="Segunda foto de referencia" width={64} height={64} className="h-16 w-16 rounded-lg object-cover" />
+            <form action={removeSecondPhoto}>
+              <button type="submit" className="font-cond text-xs uppercase tracking-wide text-muted-foreground hover:text-gold">Quitarla</button>
+            </form>
+          </div>
+        ) : (
+          <form action={saveSecondPhoto} className="space-y-3">
+            <PhotoInput name="photo2" />
+            <button type="submit" className="w-full rounded-full border border-gold/50 px-4 py-2 font-cond text-xs font-bold uppercase tracking-wide text-gold">
+              Guardar segunda foto
+            </button>
+          </form>
+        )}
+      </div>
 
       <div className="w-full max-w-md space-y-3 rounded-2xl border border-panel-border bg-surface p-5">
         {eligibleForFree ? (

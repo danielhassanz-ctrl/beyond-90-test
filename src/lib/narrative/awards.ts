@@ -182,7 +182,7 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
   return top10;
 }
 
-const listLine = (list: Finalist[]) => list.map((f, i) => `${i + 1}. ${f.name}${f.isPlayer ? " (tú)" : ""} · ${f.club} · ${f.pos}`).join("  |  ");
+const listLine = (list: Finalist[]) => list.map((f, i) => `${i + 1}. ${f.name}${f.isPlayer ? " (tú)" : ""} · ${f.club} · ${f.pos}`).join("\n");
 
 /** El evento del premio (con la clasificación final ya decidida), o null si no toca o no entras entre los diez. */
 export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
@@ -203,7 +203,8 @@ export function buildAwardEvent(player: Player, kind: AwardKind): GameEvent {
     : `La Champions de la temporada pasada fue para el ${podium0.winner}; ${podium0.runnerUp} perdió la final. Por eso hay tantos nombres suyos en la lista.`;
   const winner = list[0];
   const podium = list.slice(0, 3).map((f, i) => `${i + 1}. ${f.name}${f.isPlayer ? " (tú)" : ""}`).join("  ·  ");
-  const resultLine = `Clasificación final: ${listLine(list)}.`;
+  // La clasificación final, una línea por puesto (la pantalla respeta los saltos de línea).
+  const resultLine = `\n\nClasificación final:\n${listLine(list)}`;
 
   const base = gb
     ? rank === 1

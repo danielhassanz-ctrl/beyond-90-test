@@ -19,6 +19,7 @@ import { findSocialDmCard } from "@/lib/narrative/social-dm";
 import { maybeDmScenePhoto } from "@/lib/images/dm-scene";
 import { BANK_SCENES } from "@/lib/narrative/bank/scenes";
 import { fillBankEvent } from "@/lib/narrative/bank/select";
+import { photoRefs } from "@/lib/images/photo-refs";
 
 const STALE_PENDING_MS = 5 * 60_000;
 
@@ -140,7 +141,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
     { surname: player.last_name },
   );
 
-  const photoUrl = player.photo_url as string;
+  const photoUrl = photoRefs(player);
   const userId = user.id;
   const userEmail = user.email;
   const playerId = player.id;

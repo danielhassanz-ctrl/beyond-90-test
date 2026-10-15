@@ -51,6 +51,7 @@ import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career
 import { logAppError } from "@/lib/errorLog";
 import { computeStreakUpdate, STREAK_MILESTONES } from "@/lib/player/streak";
 import { displayName } from "@/types/player";
+import { photoRefs } from "@/lib/images/photo-refs";
 import { withStateCause } from "@/lib/narrative/states";
 import { coverForMilestone } from "@/lib/images/coverHeadlines";
 import { timed } from "@/lib/perf";
@@ -894,7 +895,7 @@ async function resolveEventInner(formData: FormData) {
     if (milestoneId && willGenerate) {
       const finalMilestoneId = milestoneId;
       const finalPrompt = milestoneImagePrompt || event.imageScene || "jugador celebrando momento épico";
-      const finalPhotoUrl = player.photo_url as string;
+      const finalPhotoUrl = photoRefs(player);
       const finalTemplateKey = templateKey;
       const finalUserId = user.id;
       const finalPlayerId = player.id;
@@ -1060,7 +1061,7 @@ async function resolveEventInner(formData: FormData) {
   if (isSeasonPhotoRefresh && preseasonSeason !== null && player.photo_url && (await hasImageCredit(supabase, player, user.email))) {
     const refreshQuota = await checkImageGenerationQuota(supabase, user.id);
     if (refreshQuota.allowed) {
-      const refreshPhotoUrl = player.photo_url as string;
+      const refreshPhotoUrl = photoRefs(player);
       const refreshUserId = user.id;
       const refreshUserEmail = user.email;
       const refreshPlayerId = player.id;

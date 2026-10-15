@@ -1,3 +1,5 @@
+import { splitRefs } from "@/lib/images/photo-refs";
+
 const MODEL_OWNER = "google";
 const MODEL_NAME = "nano-banana-pro";
 
@@ -99,8 +101,8 @@ export async function generatePlayerImage(
         },
         body: JSON.stringify({
           input: {
-            prompt: lite ? `Photo of the exact same man from the reference photo. ${prompt}` : withIdentityPreserved(prompt),
-            image_input: [inputImageUrl],
+            prompt: (splitRefs(inputImageUrl).length > 1 ? "The two reference photos show the same man from different angles: use both to keep his exact face, hair and features. " : "") + (lite ? `Photo of the exact same man from the reference photo. ${prompt}` : withIdentityPreserved(prompt)),
+            image_input: splitRefs(inputImageUrl),
             aspect_ratio: "4:5",
             resolution: "2K",
           },

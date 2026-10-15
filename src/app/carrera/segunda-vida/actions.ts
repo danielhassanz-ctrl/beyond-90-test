@@ -12,6 +12,7 @@ import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quot
 import { addShareBranding } from "@/lib/images/shareBranding";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { logAppError } from "@/lib/errorLog";
+import { photoRefs } from "@/lib/images/photo-refs";
 
 export async function resolveSecondLifeEvent(formData: FormData) {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
@@ -108,7 +109,7 @@ export async function resolveSecondLifeEvent(formData: FormData) {
     if (milestoneId && willGenerate) {
       const finalMilestoneId = milestoneId;
       const finalPrompt = event.imageScene as string;
-      const finalPhotoUrl = player.photo_url as string;
+      const finalPhotoUrl = photoRefs(player);
       const finalUserId = user.id;
       const finalPlayerId = player.id;
       const finalMilestoneType = event.milestoneType ?? "hito";

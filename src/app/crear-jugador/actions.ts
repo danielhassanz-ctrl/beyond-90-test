@@ -25,6 +25,7 @@ export async function createPlayer(formData: FormData) {
   const personality2 = formData.get("personality_2") as string;
   const mode = formData.get("mode") as string;
   const photo = formData.get("photo") as File | null;
+  const photo2 = formData.get("photo2") as File | null;
 
   if (personality1 === personality2) {
     redirect(
@@ -63,6 +64,19 @@ export async function createPlayer(formData: FormData) {
     }
   }
 
+  // Segunda foto de referencia opcional (flags.photo_ref2): ver images/photo-refs.ts.
+  let photoRef2: string | null = null;
+  if (photoUrl && photo2 && photo2.size > 0) {
+    try {
+      const ext2 = photo2.name.split(".").pop() ?? "jpg";
+      const path2 = `${user.id}/ref2-${Date.now()}.${ext2}`;
+      const { error: upErr } = await supabase.storage.from("player-photos").upload(path2, photo2, { upsert: true });
+      if (!upErr) photoRef2 = supabase.storage.from("player-photos").getPublicUrl(path2).data.publicUrl;
+    } catch (err) {
+      console.error("[createPlayer] second photo upload failed:", err);
+    }
+  }
+
   const { error: insertError } = await supabase.from("players").insert({
     user_id: user.id,
     last_name: lastName,
@@ -75,6 +89,7 @@ export async function createPlayer(formData: FormData) {
     club: NO_CLUB_YET,
     mode,
     photo_url: photoUrl,
+    ...(photoRef2 ? { flags: { photo_ref2: photoRef2 } } : {}),
   });
 
   if (insertError) {

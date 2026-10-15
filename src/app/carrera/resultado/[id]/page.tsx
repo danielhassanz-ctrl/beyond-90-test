@@ -190,10 +190,10 @@ export default async function ResultadoPage({
             </p>
             <h1 className="font-display text-2xl text-foreground leading-tight">{careerEvent.title}</h1>
 
-            <p className="text-sm text-muted-foreground leading-relaxed">{careerEvent.description}</p>
+            <p className="whitespace-pre-line text-sm text-muted-foreground leading-relaxed">{careerEvent.description}</p>
 
             {careerEvent.outcome_text && (
-              <p className="font-cond text-base italic text-foreground/90 leading-relaxed">
+              <p className="whitespace-pre-line font-cond text-base italic text-foreground/90 leading-relaxed">
                 {careerEvent.outcome_text}
               </p>
             )}

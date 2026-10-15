@@ -10,6 +10,7 @@ import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
 import { recapPhotoPrompt } from "@/lib/images/recap-photo";
 import { logAppError } from "@/lib/errorLog";
 import { playerAge } from "@/types/career";
+import { photoRefs } from "@/lib/images/photo-refs";
 
 type Flags = Record<string, string | boolean>;
 
@@ -35,7 +36,7 @@ export async function regenerateRecapPhoto(careerEventRowId: string): Promise<{ 
   const quota = await checkImageGenerationQuota(supabase, user.id);
   if (!quota.allowed) return { ok: false, message: "Ahora mismo no se pueden generar más fotos. Inténtalo más tarde." };
 
-  const photoUrl = player.photo_url as string;
+  const photoUrl = photoRefs(player);
   const playerId = player.id;
   const userId = user.id;
   const userEmail = user.email;

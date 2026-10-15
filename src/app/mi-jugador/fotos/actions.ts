@@ -5,6 +5,7 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { getStripeClient } from "@/lib/stripe";
 import { CREDIT_PACK } from "@/lib/images/credits";
 import { getAppUrl } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Crea una sesión de pago único de Stripe Checkout para un pack de fotos
@@ -56,4 +57,39 @@ export async function createCreditCheckout() {
   }
 
   redirect(session.url);
+}
+
+/** Cambia la bandera photo_ref2 sin pisar el resto de banderas (se lee la fila fresca) y comprueba que se escribió. */
+async function setSecondRef(playerId: string, url: string | null): Promise<boolean> {
+  const supabase = await createClient();
+  const { data: fresh } = await supabase.from("players").select("flags").eq("id", playerId).maybeSingle();
+  const flags = { ...((fresh?.flags ?? {}) as Record<string, string | boolean>) };
+  if (url) flags.photo_ref2 = url;
+  else delete flags.photo_ref2;
+  const { data: rows } = await supabase.from("players").update({ flags }).eq("id", playerId).select("id");
+  return Boolean(rows && rows.length > 0);
+}
+
+/** Segunda foto de referencia (otro ángulo u otra luz): las fotos generadas se parecen más con dos referencias. */
+export async function saveSecondPhoto(formData: FormData) {
+  const { user, player } = await getCurrentUserAndPlayer();
+  if (!user || !player) redirect("/login");
+  const file = formData.get("photo2") as File | null;
+  if (!file || file.size === 0) redirect("/mi-jugador/fotos?error=" + encodeURIComponent("Elige una foto primero."));
+  const supabase = await createClient();
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const path = `${user.id}/ref2-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("player-photos").upload(path, file, { upsert: true });
+  if (error) redirect("/mi-jugador/fotos?error=" + encodeURIComponent("No se pudo subir la foto: " + error.message));
+  const { data } = supabase.storage.from("player-photos").getPublicUrl(path);
+  const ok = await setSecondRef(player.id, data.publicUrl);
+  if (!ok) redirect("/mi-jugador/fotos?error=" + encodeURIComponent("No se pudo guardar la foto. Inténtalo de nuevo."));
+  redirect("/mi-jugador/fotos?segunda=ok");
+}
+
+export async function removeSecondPhoto() {
+  const { user, player } = await getCurrentUserAndPlayer();
+  if (!user || !player) redirect("/login");
+  await setSecondRef(player.id, null);
+  redirect("/mi-jugador/fotos");
 }
