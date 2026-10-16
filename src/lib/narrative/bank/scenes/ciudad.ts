@@ -7,7 +7,7 @@ import { S, o, after } from "../dsl";
 import type { BankScene } from "../types";
 
 export const CIUDAD: BankScene[] = [
-  S("cd-vecino-manual", "ciudad", { minAge: 17, clubTurns: [1, 6], notFlags: ["cd_vecino"] }, "vida",
+  S("cd-vecino-manual", "ciudad", { flat: true, minAge: 17, clubTurns: [1, 6], notFlags: ["cd_vecino"] }, "vida",
     "Tu vecino te deja un «manual de supervivencia del barrio» bajo la puerta",
     "Son cuatro folios escritos a máquina, con una tipografía de cuando existían las máquinas. «Panadería de Aurora: abre a las 6, el pan es mejor a las 6:40. Bar de Paco: no pida café, pida cortado. Farmacia de guardia: la de la esquina, pero no la de enfrente. Y por favor, no suba la música después de las 11». Al final, una firma: «Don Ramiro, 3.º B».",
     [
@@ -70,7 +70,7 @@ export const CIUDAD: BankScene[] = [
       o("b", "Subir pero limitarte a saludar y dejar que cante él", "Con prudencia", { fama: 3, moral: 5, flags: { cd_concierto: "saludo" } }, "Saludas con las dos manos. El cantante, con una sonrisa, te regala su púa. Vuelves a tu asiento con la tela de la camisa empapada de sudor. Tu agente dice: «Has hecho lo justo». Y sonríe."),
       o("c", "Rechazar con una sonrisa y disfrutar desde tu sitio", "Evitar el foco", { moral: 3, reputacion: 1, flags: { cd_concierto: "no" } }, "El cantante asiente y sigue con otro tema. Disfrutas del concierto con los ojos cerrados. A la salida, un chico te dice: «Podrías haber subido». «Lo sé —respondes—. Pero así lo disfruto mejor»."),
     ]),
-  S("cd-obra-vecino", "ciudad", { minAge: 17, clubTurns: [2, 400], notFlags: ["cd_obra"] }, "vida",
+  S("cd-obra-vecino", "ciudad", { flat: true, minAge: 17, clubTurns: [2, 400], notFlags: ["cd_obra"] }, "vida",
     "Las obras del vecino de arriba te despiertan cada mañana a las siete",
     "Es un taladro que no distingue sábados ni domingos, una radio que repite jingles y un hombre con voz de trueno que da órdenes a un equipo de albañiles. Llevas tres semanas durmiendo a trompicones. En el entrenamiento, el fisio nota tus ojeras. El míster, con una ceja levantada, sentencia: «Tienes que descansar». Tú le explicas lo del taladro. Él sonríe con una mezcla de simpatía y diversión.",
     [

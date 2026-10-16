@@ -255,7 +255,22 @@ const NATIONAL_KITS: Record<string, string> = {
 };
 
 /** La equipación de una selección, lista para meter en un prompt de imagen (sin textos legibles). */
-export function describeNationalKit(nation: string): string {
+/** Segunda equipación de algunas selecciones (distinta de cualquier club: siempre con el escudo de la federación). */
+const NATIONAL_AWAY_KITS: Record<string, string> = {
+  "España": "a white jersey with red and golden-yellow trim on the collar and cuffs, a shield-shaped crest topped with a golden royal crown on the left chest, red shorts and white socks (clearly a national team shirt, not a club shirt)",
+  "Francia": "a white jersey with navy and red details and a small rooster badge on the chest, navy shorts",
+  "Alemania": "a black jersey with red and gold details and a small eagle badge on the chest, black shorts",
+  "Italia": "a white jersey with azure details and a small roundel badge on the chest, white shorts",
+  "Inglaterra": "a deep red jersey with navy details and a small three-lions badge on the chest, red shorts",
+  "Portugal": "a white jersey with red and green details and a small shield badge on the chest, white shorts",
+  "Brasil": "a royal blue jersey with yellow trim and a small badge on the chest, white shorts",
+  "Argentina": "a dark navy jersey with light-blue details and a small badge on the chest, navy shorts",
+};
+
+export function describeNationalKit(nation: string, variant: "home" | "away" = "home"): string {
+  if (variant === "away" && NATIONAL_AWAY_KITS[nation]) {
+    return `the ${nation} national team away kit: ${NATIONAL_AWAY_KITS[nation]}; the shirt must NOT look like any club kit, must not show any club crest and must not copy the kit of any other national team`;
+  }
   const kit = NATIONAL_KITS[nation] ?? `a jersey in the colours of the ${nation} flag with a small national federation badge on the chest`;
   return `the ${nation} national team home kit: ${kit}; the shirt must NOT look like any club kit, must not show any club crest and must not copy the kit of any other national team`;
 }

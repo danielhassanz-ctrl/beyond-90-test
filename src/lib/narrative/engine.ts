@@ -93,6 +93,7 @@ import { shouldTriggerSeasonGoals, buildSeasonGoalsEvent, shouldTriggerGoalsRevi
 import { shouldTriggerTrainingPlan, buildTrainingPlanEvent } from "@/lib/narrative/training-plan";
 import { newAchievements, markAchievements, buildAchievementEvent } from "@/lib/narrative/achievements";
 import { shouldTriggerLockerScene, buildLockerScene } from "@/lib/narrative/locker-room";
+import { shouldTriggerClubKit, buildClubKitEvent, shouldTriggerNationalKit, buildNationalKitEvent } from "@/lib/narrative/kit-presentation";
 import { shouldTriggerSeriousInjury, shouldTriggerSagaStage, buildSeriousInjuryEvent, buildSagaStageEvent } from "@/lib/narrative/injury-saga";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
@@ -2285,6 +2286,14 @@ export async function pickNextEventDynamic(
     if (bankedEarly) {
       console.log(`[pickNextEventDynamic] Banco de escenas (prioridad): "${bankedEarly.title}"`);
       return maybeAddFreeText(bankedEarly);
+    }
+  }
+  // La presentación de la camiseta nueva (club en pretemporada; selección el verano antes de un gran torneo): un hito con compañeros.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics)) {
+    const kit = shouldTriggerNationalKit(playerWithDynamics) ? buildNationalKitEvent(playerWithDynamics) : shouldTriggerClubKit(playerWithDynamics) ? buildClubKitEvent(playerWithDynamics) : null;
+    if (kit) {
+      console.log(`[pickNextEventDynamic] Camiseta nueva: "${kit.title}"`);
+      return kit;
     }
   }
   if (!midMatch && shouldTriggerPreseasonLife(playerWithDynamics)) {

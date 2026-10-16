@@ -104,7 +104,9 @@ export function cleanImagePrompt(prompt: string, opts: { surname?: string | null
   const nameRule = showsShirtName ? ` The only name that may appear on any shirt is his own surname, exactly spelled "${surname}" in capital letters; never write any other surname.` : "";
   const cleaned = (prompt + nameRule)
     .replace(/Getty Images/gi, "press-agency")
-    .replace(/jersey over (his )?shoulders?/gi, "jersey worn normally on his body");
+    .replace(/jersey over (his )?shoulders?/gi, "jersey worn normally on his body")
+    // «Away kit» (un partido en Múnich) dejaba que el modelo inventara una camiseta azul con «MADRID»: la camiseta del club es siempre la que se pide.
+    .replace(/(?<!team )\b(away|second|alternate|alternative|third|visiting|road)([ -])(kit|jersey|shirt|strip)\b/gi, "club $3");
   return /no watermark/i.test(cleaned) ? cleaned : `${cleaned} No watermark and no photographer credit; no text anywhere except what is explicitly requested above; no names, numbers or lettering printed on the front of any worn shirt; any crest or badge is small, simple and clean (never a large invented emblem); one jersey per person only (no second shirt draped over the shoulders).`;
 }
 
@@ -182,7 +184,9 @@ export function withSceneGuards(scene: string, opts: { club?: string; age: numbe
         ? `a ${opts.age}-year-old young man with a youthful, clean-shaven or lightly stubbled face, no wrinkles, no grey hair, looking clearly in his early twenties`
         : `a ${opts.age}-year-old man`;
   // Con la selección, la camiseta es la de la selección (antes no se decía ninguna y salía una cualquiera: rojinegra y sin escudo).
-  const kit = opts.nationalTeam
+  const kit = /national team (home|away) kit/.test(scene)
+    ? ""
+    : opts.nationalTeam
     ? opts.nation
       ? ` If he wears a football kit, it is ${describeNationalKit(opts.nation)}.`
       : ""

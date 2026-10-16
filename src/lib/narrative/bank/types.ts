@@ -65,6 +65,8 @@ export interface BankWhen {
   selDebut?: boolean;
   /** Mes de la temporada (1 = pretemporada/julio ... 10 = mayo). */
   turn?: Range;
+  /** true = solo si vives en un piso (sin casa propia en la ciudad de tu club): escenas de vecinos, escaleras, obras del de arriba. */
+  flat?: boolean;
   /** Turnos que llevas en el club actual (para escenas de llegada o de arraigo). */
   clubTurns?: Range;
 }

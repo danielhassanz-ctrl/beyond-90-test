@@ -4,6 +4,7 @@
  * cobrar) sobre lo suelto. Ver types.ts.
  */
 import { cityOfClub } from "@/lib/narrative/cities";
+import { readProperties } from "@/lib/finance/mortgage";
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
 import { playerAge } from "@/types/career";
@@ -54,6 +55,12 @@ function sceneFlagKeys(scene: BankScene): Set<string> {
 }
 
 /** Devuelve los ids ya vividos quitando los que, por tiempo, vuelven a poder salir; limpia sus marcas. */
+/** ¿Tienes casa propia (no alquilada) en la ciudad donde juegas? Entonces no hay vecinos de arriba ni de abajo. */
+function ownsHomeHere(player: Player): boolean {
+  const city = cityOfClub(player.club);
+  return readProperties(player.flags).some((p) => (p.kind === undefined || p.kind === "casa" || p.kind === "mansion") && !p.rented && (!p.city || p.city === city));
+}
+
 export function recycleBankScenes(player: Player, usedIds: string[], scenes: BankScene[] = BANK_SCENES, afterTurns = 90): string[] {
   const flags = (player.flags ??= {}) as Flags;
   const back = new Set<string>();
@@ -117,6 +124,7 @@ function fits(player: Player, when: BankWhen): { ok: boolean; chained: boolean }
     const since = parseInt(String(flags.club_since ?? "0"), 10) || 10;
     if (!inRange(player.week - since, when.clubTurns)) return { ok: false, chained: false };
   }
+  if (when.flat && ownsHomeHere(player)) return { ok: false, chained: false };
   if (when.market) {
     const w = getMarketWindow(player.week);
     if (!w || (when.market !== "abierta" && when.market !== w)) return { ok: false, chained: false };

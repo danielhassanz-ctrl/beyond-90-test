@@ -54,7 +54,7 @@ export const EXTRANJERO: BankScene[] = [
       o("b", "Dejarlo todo en manos de tu agente y no mirar", "Confiar", { patrimonio: -300, moral: 0, flags: { ex_impuestos: "agente" } }, "Tu agente lo gestiona con corrección. Te llega un resumen cada trimestre. No entiendes la mitad, pero te sientes protegido. A veces, delegar es una forma de paz."),
       o("c", "Quejarte en voz alta ante el vestuario del sistema fiscal", "Desahogarte", { moral: 1, rel_vestuario: 2, reputacion: -1, flags: { ex_impuestos: "queja" } }, "Los veteranos te escuchan con paciencia. «Todos hemos pasado por ahí», dice uno. Luego te invitan a un café y te cuentan lo que hicieron. Aprendes más en media hora que en un mes."),
     ]),
-  S("ex-vecino-amigo", "extranjero", { exterior: true, minAge: 17, clubTurns: [2, 400], notFlags: ["ex_vecino"] }, "vida",
+  S("ex-vecino-amigo", "extranjero", { flat: true, exterior: true, minAge: 17, clubTurns: [2, 400], notFlags: ["ex_vecino"] }, "vida",
     "Un vecino del edificio te adopta como si fueras su nieto",
     "Es un hombre de unos setenta años, con un sombrero de paja y un abrigo con botones desparejados. Te topa cada mañana en la escalera y te dice una frase en su idioma, que tú contestas con otra. Una tarde, te invita a pasar. Su casa huele a pan y a café. Hay una foto de un equipo de los años sesenta. «Ese soy yo», dice, señalando a un joven de pelo oscuro. «Medio centro. Como tú».",
     [

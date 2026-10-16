@@ -779,7 +779,7 @@ async function resolveEventInner(formData: FormData) {
             })
           : null);
       // Con la selección, la camiseta es la de la selección (antes salía una cualquiera, sin sentido).
-      if (milestoneImagePrompt && isNationalTeamEvent(event, player.nation) && player.nation && !/national team home kit/.test(milestoneImagePrompt)) {
+      if (milestoneImagePrompt && isNationalTeamEvent(event, player.nation) && player.nation && !/national team (home|away) kit/.test(milestoneImagePrompt)) {
         // La camiseta va AL PRINCIPIO: al final del prompt el modelo la ignoraba y ponía la de otra selección.
         milestoneImagePrompt = `He is wearing ${describeNationalKit(player.nation)} — reproduce this exact kit faithfully. ${milestoneImagePrompt}`;
       }

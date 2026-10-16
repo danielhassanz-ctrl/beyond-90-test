@@ -132,7 +132,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
   const prompt = cleanImagePrompt(
     isNational
       ? // La camiseta de la selección va AL PRINCIPIO (al final del prompt el modelo la ignoraba y ponía la de otra selección).
-        /national team home kit/.test(basePrompt)
+        /national team (home|away) kit/.test(basePrompt)
         ? basePrompt
         : `He is wearing ${describeNationalKit(String(player.nation ?? ""))} — reproduce this exact kit faithfully. ${basePrompt}`
       : /(kit|jersey|shirt|tracksuit)/i.test(basePrompt) || /national team|world cup|selecci/i.test(basePrompt)

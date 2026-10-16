@@ -125,7 +125,7 @@ export const CONVIVENCIA: BankScene[] = [
       o("b", "Meter un poco de dinero por no discutir en Navidad", "Pagar la paz", { patrimonio: -8000, moral: 1, flags: { cv_familiar: true } }, "Le firmas un cheque para que se calle. El restaurante abre y cierra en cuatro meses, y tu tío te escribe en Reyes un mensaje lleno de agradecimiento hacia ti y de reproches hacia el mundo."),
       o("c", "Pedirle que te enseñe los números antes de decidir", "Racional", { moral: 2, reputacion: 2, flags: { cv_familiar: true } }, "Cuando te enseña un papel con garabatos y ninguna previsión, sonríes con la tranquilidad de quien ya sabía lo que ibas a ver. «Aprende a hacer un Excel, tío, y volvemos a hablar». Se ríe, y esa semana se apunta a un curso."),
     ]),
-  S("cv-vecino", "convivencia", { minAge: 18, fama: [25, 100], notFlags: ["cv_vecino"], clubTurns: [3, 400] }, "vida",
+  S("cv-vecino", "convivencia", { flat: true, minAge: 18, fama: [25, 100], notFlags: ["cv_vecino"], clubTurns: [3, 400] }, "vida",
     "Un vecino denuncia las fiestas en tu piso",
     "No son fiestas, o no lo eran: son una cena con tres amigos que se alargó hasta las dos. Pero tu vecino de abajo, un señor jubilado con una libreta y una paciencia de ajedrecista, ha apuntado cada una de las veces y ahora presenta una queja formal con tu nombre y tu club. El presidente de tu comunidad te cita. Dos periodistas ya han preguntado.",
     [
