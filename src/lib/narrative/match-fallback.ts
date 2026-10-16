@@ -498,6 +498,13 @@ export function buildFallbackMatchReport(args: {
   // Nota
   const bad = ["miss_bad", "concede", "beaten", "penalty_conceded", "foul_committed"].includes(outcome);
   let rating = 6.2 + goals * 1.3 + assists * 0.7 - (bad ? 0.7 : 0) + (Math.random() - 0.5);
+  // Porteros y defensas no suman goles ni asistencias: su nota depende de lo encajado y de sus jugadas (paradas, cortes). Sin esto
+  // su media solo podía bajar (en simulación: -0,21 por partido, y ningún portero llegaba a 80).
+  const isDefender = (player.position ?? "").toLowerCase().includes("defensa");
+  if (isKeeper || isDefender) {
+    rating += rival === 0 ? (isKeeper ? 1.0 : 0.8) : rival === 1 ? 0.4 : rival >= 3 ? -0.5 : 0;
+    if (["save", "clean_tackle", "contained"].includes(outcome)) rating += isKeeper ? 0.6 : 0.5;
+  }
   rating = Math.max(4.5, Math.min(9.6, rating));
   const nota = rating.toFixed(1);
 

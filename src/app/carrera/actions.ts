@@ -434,6 +434,7 @@ async function resolveEventInner(formData: FormData, ctx: { restore: (() => Prom
       stats_red_cards: updatedPlayer.stats_red_cards,
       stats_yellow_cards: updatedPlayer.stats_yellow_cards,
       stats_titles: updatedPlayer.stats_titles,
+      stats_clean_sheets: updatedPlayer.stats_clean_sheets ?? 0,
     };
   }
 

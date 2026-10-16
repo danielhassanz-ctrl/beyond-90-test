@@ -18,6 +18,8 @@ export interface StatUpdate {
   red_cards?: number;
   yellow_cards?: number;
   titles?: number;
+  /** Partido con la portería a cero (solo cuenta para porteros, ver applyStatUpdate). */
+  clean_sheets?: number;
 }
 
 /**
@@ -92,6 +94,10 @@ export function extractStatsFromEvent(event: GameEvent): StatUpdate {
       update.goals = 1;
     }
 
+    // «Marcador: 2-0 (…)»: si el rival no marca y juegas al menos 60 minutos, es portería a cero.
+    const scoreMatch = text.match(/marcador:\s*(\d+)-(\d+)/);
+    if (scoreMatch && parseInt(scoreMatch[2], 10) === 0 && (minutesMatch ? parseInt(minutesMatch[1], 10) : 90) >= 60) update.clean_sheets = 1;
+
     if (assistsMatch) {
       const n = parseInt(assistsMatch[1], 10);
       if (n > 0) update.assists = n;
@@ -142,6 +148,7 @@ export function applyStatUpdate(player: Player, update: StatUpdate): Player {
     stats_red_cards: (player.stats_red_cards ?? 0) + (update.red_cards ?? 0),
     stats_yellow_cards: (player.stats_yellow_cards ?? 0) + (update.yellow_cards ?? 0),
     stats_titles: (player.stats_titles ?? 0) + (update.titles ?? 0),
+    stats_clean_sheets: (player.stats_clean_sheets ?? 0) + ((player.position ?? "").toLowerCase().includes("portero") ? update.clean_sheets ?? 0 : 0),
   };
 }
 

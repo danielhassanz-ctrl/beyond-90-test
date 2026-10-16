@@ -6,7 +6,7 @@ import {
   EURO_GROUP_WEEKS,
   EURO_GROUP_JORNADAS,
 } from "@/lib/calendar/match-calendar";
-import { leagueOf, leagueTier, ligaJornadaByWeek, canonicalClub, continentalName } from "@/lib/calendar/leagues";
+import { leagueOf, leagueTier, ligaJornadaByWeek, canonicalClub, isKnownLeagueClub, continentalName } from "@/lib/calendar/leagues";
 import { getCopaProgress, getEuroProgress, copaRoundName, euroRoundName } from "@/lib/calendar/competition-progress";
 import { WEEKS_PER_SEASON } from "@/types/career";
 import { getTorneoProgress, torneoGroupRivals, torneoLabel, torneoStageLabels, type TorneoType } from "@/lib/narrative/torneo";
@@ -536,13 +536,18 @@ export function leagueFinish(
   player: Pick<Player, "id" | "club" | "week">,
   record: SeasonMatchRecord,
 ): { rank: number; points: number; secondPoints: number; leaderPoints: number } | null {
-  if (!leagueOf(player.club).teams.includes(canonicalClub(player.club))) return null;
+  // Los clubes de segunda o recién ascendidos que el juego conoce (Sporting, Oviedo, Málaga…) también cierran la Liga con su puesto:
+  // antes solo los 20 de la lista lo tenían y los demás nunca podían ser campeones.
+  if (!leagueOf(player.club).teams.includes(canonicalClub(player.club)) && !isKnownLeagueClub(player.club)) return null;
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
   const table = buildLigaTable(`${player.id}:${season}:liga`, player.club, record);
   const played = table.rows[0]?.played ?? 0;
-  if (played < 30) return null;
+  // Con Copa y Europa vivas el calendario deja sin jugar algunas jornadas de Liga (máx. 2 partidos por semana): con 20-29 jornadas jugadas se proyecta
+  // la tabla a las 38 (mismos partidos para todos), en vez de dejar al club sin puesto justo en las mejores temporadas (un tercio de los dobletes).
+  if (played < 20) return null;
+  const scale = played < 38 ? 38 / played : 1;
   const idx = table.rows.findIndex((r) => r.isPlayer);
   if (idx < 0) return null;
   const other = table.rows.filter((r) => !r.isPlayer).sort((a, b) => b.points - a.points)[0];
-  return { rank: idx + 1, points: table.rows[idx].points, secondPoints: other?.points ?? 0, leaderPoints: table.rows[0].points };
+  return { rank: idx + 1, points: Math.round(table.rows[idx].points * scale), secondPoints: Math.round((other?.points ?? 0) * scale), leaderPoints: Math.round(table.rows[0].points * scale) };
 }

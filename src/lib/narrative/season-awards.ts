@@ -140,9 +140,9 @@ function pichichi(player: Player, closed: number, st: SeasonStats): AwardResult 
   // Los partidos clave son una muestra de la temporada: se proyecta tu ritmo a la liga entera, descontando lo que estuviste de baja.
   const available = Math.max(0.2, 1 - Math.min(10, num(player.flags?.[`inj_${closed}`])) / 10);
   const rate = st.matches > 0 ? st.goals / st.matches : 0;
-  const mine = Math.round(Math.min(48, rate * 38 * available * 0.85));
+  const mine = Math.round(Math.min(48, rate * 38 * available * 0.92));
   if (mine < 2 && st.matches < 6) return null;
-  const topGoals = 24 + (hash(seed) % 9);
+  const topGoals = 23 + (hash(seed) % 9);
   const rows: Row[] = rivalNames(player, seed, 12, leagueClubs(player)).map((r, i) => {
     const goals = Math.max(5, Math.round(topGoals - i * 1.6 - Math.abs(jitter(`${seed}:g:${i}`)) * 2));
     return { name: r.name, club: r.club, value: goals + (i === 0 ? 0 : 0), text: `${goals} goles`, isPlayer: false };

@@ -38,6 +38,12 @@ export const clubTier = (club: string) => (ELITE.has(club) ? 2 : TIER[getClubLev
 /** Sueldo bruto anual "de mercado" para una media, en un club de escalón 1 (europeo). Mínimo de un filial: 15.000 €. */
 export const baseAnnual = (media: number) => Math.max(15000, Math.round(15000 * Math.exp((media - 45) * 0.135)));
 
+/**
+ * Techo del sueldo bruto anual en ese club: el doble del «sueldo de mercado» de tu media. Sin techo, cada renovación (+15 %, +18 %, ×1,2)
+ * se encadenaba con la anterior y un 99 acababa cobrando 637 M€ al año con un valor de mercado de 53 M€ (visto en simulación).
+ */
+export const salaryCeiling = (media: number | null | undefined, club: string): number => Math.round((baseAnnual(Math.max(60, media ?? 50)) * clubTier(club) * 2) / 1000) * 1000;
+
 export const salaryMultFor = (flags: Record<string, string | boolean> | null | undefined, club: string): number => {
   if (String(flags?.salary_club ?? "") !== club) return 1;
   const m = parseFloat(String(flags?.salary_mult ?? "1"));
@@ -48,7 +54,7 @@ export const salaryMultFor = (flags: Record<string, string | boolean> | null | u
 export function playerAnnualGross(player: Pick<Player, "media" | "club" | "flags">): number {
   // Un contrato pactado es una cifra FIJA mientras sigas en ese club: no sube ni baja con tu media (para eso están las renovaciones).
   const fixed = parseInt(String(player.flags?.salary_fixed ?? "0"), 10) || 0;
-  if (fixed > 0 && String(player.flags?.salary_club ?? "") === player.club) return fixed;
+  if (fixed > 0 && String(player.flags?.salary_club ?? "") === player.club) return Math.min(fixed, Math.max(15000, salaryCeiling(player.media, player.club)));
   return Math.max(15000, Math.round((baseAnnual(player.media ?? 50) * clubTier(player.club) * salaryMultFor(player.flags, player.club)) / 1000) * 1000);
 }
 
@@ -69,7 +75,7 @@ const round1k = (n: number) => Math.round(n / 1000) * 1000;
  */
 export function marketValueM(player: Pick<Player, "media" | "week">): number {
   const media = player.media ?? 50;
-  const age = 16 + Math.floor(player.week / 10);
+  const age = 16 + Math.floor((player.week - 1) / 10);
   let v = Math.max(0.4, Math.max(0, media - 48) ** 2 / 22);
   v *= age >= 31 ? 0.45 : age >= 29 ? 0.75 : age <= 21 ? 1.35 : 1;
   return v >= 10 ? Math.round(v) : Math.round(v * 10) / 10;
@@ -112,7 +118,7 @@ export interface Terms {
 
 export function buildTerms(player: Player, club: string, windowName: "verano" | "enero" | null): Terms {
   const media = player.media ?? 50;
-  const age = 16 + Math.floor(player.week / 10);
+  const age = 16 + Math.floor((player.week - 1) / 10);
   const seed = `${player.id}:${club}:${player.week}`;
   const currentAnnual = playerAnnualGross(player);
   const marketAnnual = round1k(baseAnnual(media) * clubTier(club));
@@ -209,6 +215,8 @@ export function contractFlags(
   years: number,
   clauseM?: number,
 ): Record<string, string> {
+  // Nunca se firma por encima del techo (ver salaryCeiling).
+  annual = Math.min(annual, Math.max(15000, salaryCeiling(player.media, forClub)));
   return {
     ...(clauseM && clauseM > 0 ? { contract_clause_m: String(clauseM) } : {}),
     salary_mult: (annual / Math.max(1, baseAnnual(player.media ?? 50) * clubTier(forClub))).toFixed(3),
@@ -235,7 +243,7 @@ export interface RenewalDeal {
 export function renewalDeal(player: Player, ask = 1): RenewalDeal {
   const t = buildTerms(player, player.club, null);
   const current = playerAnnualGross(player);
-  const salary = round1k(Math.max(current * 1.15, t.offeredAnnual) * ask);
+  const salary = Math.min(round1k(Math.max(current * 1.15, t.offeredAnnual) * ask), Math.max(15000, salaryCeiling(player.media, player.club)));
   const clauseM = Math.max(2, Math.round(Math.max(releaseClauseM(player) * 1.5, marketValueM(player) * 2) * ask));
   return { salary, clauseM, years: t.years, bonus: Math.max(2000, round1k(salary * 0.1)) };
 }
@@ -247,7 +255,7 @@ export function offerOptions(player: Player, t: Terms, cfg: OfferCfg): EventOpti
   const close = cfg.closeFlags ?? {};
   const haggleAnnual = round1k(t.offeredAnnual * 1.14);
   const haggleBonus = Math.round((t.bonus * 1.35) / 1000) * 1000;
-  const stayAnnual = round1k(t.currentAnnual * 1.18);
+  const stayAnnual = Math.min(round1k(t.currentAnnual * 1.18), Math.max(15000, salaryCeiling(player.media, player.club)));
   const stayBonus = Math.max(2000, Math.round((t.currentAnnual * 0.1) / 1000) * 1000);
   const stayClauseM = Math.max(2, Math.round(Math.max(releaseClauseM(player) * 1.3, marketValueM(player) * 1.8)));
   const dealFlags = (annual: number, forClub: string, years: number, clauseM?: number) => contractFlags(player, annual, forClub, years, clauseM);

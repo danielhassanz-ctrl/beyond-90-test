@@ -1976,6 +1976,13 @@ export async function pickNextEventDynamic(
       player.week - parseInt(String(player.flags?.retire_reminder_last_week ?? "-999"), 10) >= 15) &&
     oneTimeTransitionOk;
 
+  // El título de Liga de la última temporada se celebra ANTES de preguntar por el retiro (si no, quien se retiraba al primer aviso lo perdía:
+  // 114 temporadas con puesto 1 frente a 107 trofeos en simulación).
+  if (careerTransition === "ready_to_retire" && retireReminderCooldownOk) {
+    const ligaFirst = pickLigaChampionEvent(playerWithDynamics);
+    if (ligaFirst) return ligaFirst;
+  }
+
   if (careerTransition && retireReminderCooldownOk) {
     console.log(`[pickNextEventDynamic] Career transition detected: ${careerTransition}`);
     let transitionEvent: GameEvent | null = null;
@@ -2471,7 +2478,9 @@ export async function pickNextEventDynamic(
       // carrera/actions.ts) — sin esto, la misma semana de partido podría
       // volver a ofrecer otro momento decisivo por no haber tocado nunca
       // el flag match_decision_*.
-      if (Math.random() < 0.2) {
+      // Solo en partidos de Liga: un momento especial NO avanza la Copa ni Europa (ni concede el título de una final), así que en esas
+      // competiciones congelaba la ronda y dejaba la competición muerta en silencio (en 58 de 60 carreras simuladas).
+      if (matchThisWeek.competition === "liga" && Math.random() < 0.2) {
         const specialMoment = pickMatchSpecialMoment(playerWithDynamics, usedEventIds);
         if (specialMoment) {
           console.log(

@@ -173,6 +173,8 @@ const ORDER: LeagueId[] = ["es", "en", "de", "it", "fr", "sa"];
 const ALIAS: Record<string, string> = {
   "Bayern Múnich": "Bayern de Múnich", "Bayern Munich": "Bayern de Múnich", PSG: "Paris Saint-Germain", "AC Milán": "AC Milan", "Napoli": "SSC Nápoles",
   "Eintracht Frankfurt": "Eintracht Fráncfort", "Olympique de Marseille": "Olympique de Marsella", "Atlético": "Atlético de Madrid",
+  // Formas con prefijo de los clubes que la lista de LaLiga escribe sin él: sin esto el club salía DOS veces en la tabla y jugaba contra sí mismo.
+  "UD Almería": "Almería", "CA Osasuna": "Osasuna", "RCD Mallorca": "Mallorca", "UD Las Palmas": "Las Palmas",
 };
 const norm = (club: string) => ALIAS[club] ?? club;
 
@@ -184,6 +186,9 @@ for (const t of ["Osasuna", "CA Osasuna", "RCD Mallorca", "UD Almería", "UD Las
 /** La liga en la que juega un club (La Liga por defecto: filiales, clubes inventados, segunda categoría). */
 export const leagueOf = (club: string): League => LEAGUES[BY_CLUB.get(norm(club)) ?? "es"];
 export const canonicalClub = norm;
+
+/** ¿Es un club real del juego (de cualquier liga, aunque no esté en su lista de 20)? Los filiales y clubes inventados no. */
+export const isKnownLeagueClub = (club: string): boolean => BY_CLUB.has(norm(club));
 
 /** ¿Es un club de fuera de España que el juego conoce? */
 export const isKnownForeignClub = (club: string): boolean => (BY_CLUB.get(norm(club)) ?? "es") !== "es";

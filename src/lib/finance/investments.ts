@@ -39,7 +39,10 @@ export function readInvestments(flags: Record<string, string | boolean> | null |
 /** Lo que vale hoy lo invertido: capital + rentabilidad compuesta mes a mes. */
 export function investmentValue(i: InvestmentRecord, week: number): number {
   const months = Math.max(0, week - (i.since ?? week));
-  return Math.round(i.amount * (1 + i.annualRate / 12) ** months);
+  // Hay 10 turnos por temporada (no 12 meses): la tasa anual se reparte entre 10. Y el multiplicador tiene techo (×10): una startup
+  // «semilla» del 220 % anual compuesta durante 15 temporadas llegaba a convertir 18.000 € en 819 millones.
+  const factor = Math.min(10, (1 + i.annualRate / 10) ** months);
+  return Math.round(i.amount * factor);
 }
 
 export function totalInvestmentValue(flags: Record<string, string | boolean> | null | undefined, week: number): number {

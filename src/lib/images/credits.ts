@@ -118,7 +118,14 @@ export async function isEligibleForFreeTier(
   }
 
   try {
-    await patchFlagsFresh(supabase, player.id, (f) => {
+    // Con la service role (la migración 20261017 impide que el jugador cree o cambie esta bandera desde su sesión); sin ella, con la del jugador.
+    let writer: SupabaseClient = supabase;
+    try {
+      writer = createServiceClient();
+    } catch {
+      // sin SUPABASE_SERVICE_ROLE_KEY (local)
+    }
+    await patchFlagsFresh(writer, player.id, (f) => {
       f.free_tier_eligible = eligible ? "yes" : "no";
     });
   } catch (err) {

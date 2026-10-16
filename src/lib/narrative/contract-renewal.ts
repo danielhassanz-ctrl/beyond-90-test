@@ -11,7 +11,7 @@
  */
 import type { EventOption, GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
-import { TURNS_PER_YEAR, buildTerms, contractFlags, contractUntil, eur, eurFee, marketValueM, playerAnnualGross, releaseClauseM, type Terms } from "@/lib/narrative/transfer-terms";
+import { TURNS_PER_YEAR, buildTerms, contractFlags, contractUntil, eur, eurFee, marketValueM, playerAnnualGross, releaseClauseM, salaryCeiling, type Terms } from "@/lib/narrative/transfer-terms";
 import { pickInterestedClub } from "@/lib/narrative/market-window";
 import { NO_CLUB_YET } from "@/lib/constants";
 
@@ -45,7 +45,7 @@ export function renewalOffer(player: Player, terms: Terms): number {
   const mister = player.rel_entrenador ?? 50;
   const perf = Math.min(1.25, Math.max(0.88, 0.9 + (fama - 50) / 250 + (forma - 60) / 400 + (mister - 50) / 500));
   const current = playerAnnualGross(player);
-  return Math.max(round1k(terms.offeredAnnual * perf), round1k(current * 0.9), 15000);
+  return Math.min(Math.max(round1k(terms.offeredAnnual * perf), round1k(current * 0.9), 15000), Math.max(15000, salaryCeiling(player.media, player.club)));
 }
 
 export function buildContractRenewalEvent(player: Player): GameEvent {
@@ -89,7 +89,7 @@ export function buildContractRenewalEvent(player: Player): GameEvent {
   const options: EventOption[] = [renew];
 
   if (phase === "ultima") {
-    const ask = round1k(offer * 1.2);
+    const ask = Math.min(round1k(offer * 1.2), Math.max(15000, salaryCeiling(player.media, player.club)));
     options.push({
       id: "b",
       label: `Pedir más: ${eur(ask)} al año y cláusula de ${eurFee(askClause)}`,
