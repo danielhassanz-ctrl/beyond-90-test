@@ -38,12 +38,12 @@ export function getMarketWindow(week: number): MarketWindow | null {
 
 const FEMININE_CLUBS = new Set(["Real Sociedad", "Atalanta", "Juventus", "AS Roma"]);
 /** "el Getafe CF", "la Real Sociedad", "la Roma"... el artículo depende del club. */
-function art(club: string): string {
+export function art(club: string): string {
   if (club === "Las Palmas") return "Las Palmas";
   if (club === "AS Roma") return "la Roma";
   return FEMININE_CLUBS.has(club) ? "la " + club : "el " + club;
 }
-function de(club: string): string {
+export function de(club: string): string {
   if (club === "Las Palmas") return "de Las Palmas";
   return FEMININE_CLUBS.has(club) ? "de " + art(club) : "del " + club;
 }
@@ -134,10 +134,10 @@ export function maybeSeedTransferInterest(player: Player): void {
 
 const OUTLETS = ["Mercado Total", "Fichajes Al Día", "Diario del Balón", "Radio Mercado", "Cuenta @FichajesYa"];
 
-const POOL_LOW = ["Getafe CF", "Osasuna", "Celta de Vigo", "Mallorca", "Girona FC", "Las Palmas", "Cádiz CF", "Real Valladolid"];
-const POOL_MID = ["Sevilla FC", "Real Betis", "Villarreal CF", "Real Sociedad", "Athletic Club", "Valencia CF"];
-const POOL_HIGH = ["Atlético de Madrid", "FC Barcelona", "Borussia Dortmund", "AS Roma", "Atalanta", "Inter de Milán"];
-const POOL_ELITE = ["Real Madrid", "Manchester City", "Liverpool FC", "Paris Saint-Germain", "Bayern de Múnich", "Juventus"];
+export const POOL_LOW = ["Getafe CF", "Osasuna", "Celta de Vigo", "Mallorca", "Girona FC", "Las Palmas", "Cádiz CF", "Real Valladolid"];
+export const POOL_MID = ["Sevilla FC", "Real Betis", "Villarreal CF", "Real Sociedad", "Athletic Club", "Valencia CF"];
+export const POOL_HIGH = ["Atlético de Madrid", "FC Barcelona", "Borussia Dortmund", "AS Roma", "Atalanta", "Inter de Milán"];
+export const POOL_ELITE = ["Real Madrid", "Manchester City", "Liverpool FC", "Paris Saint-Germain", "Bayern de Múnich", "Juventus"];
 
 /**
  * Un club que encaje con el ARCO de su carrera, nunca el suyo: partiendo de
@@ -179,13 +179,28 @@ export function pickInterestedClub(player: Player): string {
   return pick(filtered.length ? filtered : POOL_MID);
 }
 
-const interestFlags = (club: string, week: number, source: string = "prensa") => ({
+export const interestFlags = (club: string, week: number, source: string = "prensa") => ({
   transfer_interest: club,
   transfer_interest_week: String(week),
   transfer_interest_source: source,
 });
 
 type RumorKind = "interes" | "agente" | "competencia" | "bulo" | "capitan" | "clausula" | "familia" | "en_venta" | "intermediario" | "confundido" | "asador" | "hincha_rico" | "agente_doble" | "comision";
+
+/**
+ * Los rumores de humor (el club que te ficha por error, el asador que te ofrece un contrato…) hacen gracia la primera vez: cada tipo
+ * puede salir como mucho dos veces en toda la carrera y con 40 turnos de distancia (antes volvían cada pocas ventanas y cansaban).
+ */
+const HUMOR_KINDS: RumorKind[] = ["bulo", "intermediario", "confundido", "asador", "hincha_rico", "comision", "agente_doble"];
+const HUMOR_MAX = 2;
+const HUMOR_GAP = 40;
+
+function humorAllowed(player: Player, kind: RumorKind): boolean {
+  if (!HUMOR_KINDS.includes(kind)) return true;
+  const n = parseInt(String(player.flags?.[`mk_${kind}`] ?? "0"), 10) || 0;
+  const last = parseInt(String(player.flags?.[`mk_${kind}_w`] ?? "0"), 10) || 0;
+  return n < HUMOR_MAX && (last === 0 || player.week - last >= HUMOR_GAP);
+}
 
 function pickKind(player: Player): RumorKind {
   // No repetir ninguno de los dos últimos tipos de rumor (antes solo el último: el mismo título volvía cada ventana).
@@ -197,14 +212,15 @@ function pickKind(player: Player): RumorKind {
   // Recién fichado nadie te quiere de verdad todavía: solo ruido (bulos, confusiones...).
   if (getInjuryRemaining(player.flags) > 0 || inStabilityPeriod(player)) {
     const quiet: RumorKind[] = ["bulo", "confundido", "asador", "hincha_rico", "comision", "familia"];
-    const pool = quiet.filter((k) => k !== last);
-    return pick(pool.length ? pool : quiet);
+    const pool = quiet.filter((k) => k !== last && humorAllowed(player, k));
+    // Si ya se han gastado todas las bromas, ruido de fondo sin humor (la familia opina y poco más).
+    return pick(pool.length ? pool : ["familia"]);
   }
   const role = computeRole(player).role;
   const extra: RumorKind[] =
     role === "suplente" || role === "apartado" ? ["en_venta", "en_venta", "en_venta", "en_venta", "agente", "agente"] : [];
-  const options = [...weighted, ...extra].filter((k) => !lastTwo.includes(k));
-  return pick(options);
+  const options = [...weighted, ...extra].filter((k) => !lastTwo.includes(k) && humorAllowed(player, k));
+  return pick(options.length ? options : ["interes"]);
 }
 
 const club0 = (p: Player) => p.club;
@@ -215,6 +231,10 @@ export function buildMarketRumorEvent(player: Player): GameEvent {
   const kind = pickKind(player);
   if (!player.flags) player.flags = {};
   player.flags.market_last_kind = [...String(player.flags.market_last_kind ?? "").split(",").filter(Boolean), kind].slice(-2).join(",");
+  if (HUMOR_KINDS.includes(kind)) {
+    player.flags[`mk_${kind}`] = String((parseInt(String(player.flags[`mk_${kind}`] ?? "0"), 10) || 0) + 1);
+    player.flags[`mk_${kind}_w`] = String(player.week);
+  }
 
   const club = pickInterestedClub(player);
   const outlet = pick(OUTLETS);

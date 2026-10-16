@@ -1,3 +1,4 @@
+import { clampLigaToTable } from "@/lib/player/liga-clamp";
 import { withClubSplit } from "@/lib/narrative/off-screen-matches";
 import { displayWeek } from "@/lib/calendar/season-display";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
@@ -39,8 +40,13 @@ export default async function ClasificacionPage() {
   });
 
   const { primary, secondary, copa, euro } = getActiveStandings(shownPlayer, usedEventIds, matchRecord);
-  const seasonStats = await getCurrentSeasonStats(supabase, shownPlayer, player.pending_event, player.flags);
-  const competitionStats = await getCompetitionStats(supabase, shownPlayer, player.pending_event, player.flags, player.week);
+  const seasonStatsRaw = await getCurrentSeasonStats(supabase, shownPlayer, player.pending_event, player.flags);
+  const competitionStatsRaw = await getCompetitionStats(supabase, shownPlayer, player.pending_event, player.flags, player.week);
+  // Tus partidos de Liga no pueden superar las jornadas que ha jugado tu equipo (la tabla de abajo): se recorta lo que sobre.
+  const ligaRow = primary && primary.type === "table" && !/filial/i.test(primary.label) ? primary.rows.find((r) => r.isPlayer) : undefined;
+  const clamped = ligaRow ? clampLigaToTable(competitionStatsRaw.season, seasonStatsRaw, ligaRow.played) : null;
+  const seasonStats = clamped ? clamped.totals : seasonStatsRaw;
+  const competitionStats = clamped ? { ...competitionStatsRaw, season: clamped.season } : competitionStatsRaw;
   // Reparto de partidos inferido (cambio de club anterior al registro): se guarda UNA vez para que no cambie al volver.
   if (competitionStats.splitToPersist) {
     const { data: fresh } = await supabase.from("players").select("flags").eq("id", player.id).maybeSingle();

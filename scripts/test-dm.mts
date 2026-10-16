@@ -49,4 +49,24 @@ const dmRival = dmScenes.find((x) => x.id === "bank-nm-r1");
 ok(!!dmRival && dmRival.event.dm?.audio === true, "el audio del rival (nm-r1) está marcado como nota de voz");
 
 console.log(fails ? `\nFALLOS: ${fails}` : "\nTODO OK");
+console.log("Solo unos pocos mensajes son hito");
+{
+  const { buildSocialDmEvent } = await import("../src/lib/narrative/social-dm");
+  const mkp = (flags: Record<string, string> = {}): any => ({ id: "p", last_name: "Hassan", club: "Real Madrid", week: 100, fama: 70, flags, position: "Delantero", nation: "España" });
+  let hitos = 0, total = 0, badHito = 0;
+  const HITO = new Set(["padre", "influencer", "colegio", "reto"]);
+  for (let i = 0; i < 600; i++) {
+    const ev = buildSocialDmEvent(mkp());
+    total++;
+    if (ev.isMilestone) { hitos++; if (!HITO.has(ev.id.split("-")[2])) badHito++; }
+  }
+  console.log((hitos / total < 0.2 ? "  ✓ " : "  ✗ ") + `solo ${Math.round((hitos / total) * 100)} % de los mensajes son hito`);
+  console.log((badHito === 0 ? "  ✓ " : "  ✗ ") + "y solo de los tipos emotivos o grandes (padre, colaboración, pasado, reto)");
+  if (hitos / total >= 0.2 || badHito > 0) process.exitCode = 1;
+  let gap = 0;
+  for (let i = 0; i < 300; i++) { const ev = buildSocialDmEvent(mkp({ dm_hito_last: "90" })); if (ev.isMilestone) gap++; }
+  console.log((gap === 0 ? "  ✓ " : "  ✗ ") + "tras un hito de mensaje reciente (10 turnos), no sale otro hito");
+  if (gap > 0) process.exitCode = 1;
+}
+
 process.exit(fails ? 1 : 0);

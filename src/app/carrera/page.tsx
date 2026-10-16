@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { allTrofeos } from "@/lib/honours";
 import { ClubRequests } from "@/components/ClubRequests";
 import { CLUB_REQUEST_KINDS, CLUB_REQUEST_INFO, requestStatus } from "@/lib/narrative/club-requests";
@@ -323,6 +324,12 @@ export default async function CarreraPage() {
             </div>
           )}
         </div>
+        {player.club !== NO_CLUB_YET && (
+          <Link href="/carrera/mercado" className="flex items-center justify-between rounded-2xl border border-panel-border bg-surface px-4 py-3 hover:border-gold/50">
+            <span className="text-kicker">🔎 Mercado</span>
+            <span className="font-cond text-xs font-semibold uppercase tracking-wide text-gold">Explorar ofertas y clubes ›</span>
+          </Link>
+        )}
         {player.club !== NO_CLUB_YET && <ClubRequests items={clubRequestItems} />}
       </div>
       <BottomNav active="carrera" />

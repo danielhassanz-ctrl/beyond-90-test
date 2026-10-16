@@ -14,7 +14,14 @@ import { getPersonName, getTeammateName } from "@/lib/narrative/npcs";
  * El enfriamiento va en el flag `dm_last_week` (lo escribe el propio evento).
  */
 
-const COOLDOWN_WEEKS = 8;
+const COOLDOWN_WEEKS = 10;
+
+/**
+ * Solo unos pocos mensajes son un HITO con su captura y su página (lo emotivo, lo grande, lo que da ganas de enseñar): los demás salen como una
+ * escena normal con el mensaje dentro. Y aun así, un hito de este tipo como mucho cada ~25 turnos: antes casi cada mensaje era un hito y cansaba.
+ */
+const HITO_KEYS = new Set(["padre", "influencer", "colegio", "reto"]);
+const HITO_GAP = 25;
 
 export function shouldTriggerSocialDm(player: Player): boolean {
   if (player.club === NO_CLUB_YET) return false;
@@ -516,15 +523,16 @@ export function buildSocialDmEvent(player: Player): GameEvent {
   const platform = (["instagram", "tiktok", "x"] as const)[Math.floor(Math.random() * 3)];
   const net = { instagram: "Instagram", tiktok: "TikTok", x: "X" }[platform];
   const ctx: DmCtx = { name, first, mate, club: player.club, net };
-  const dmFlags = { dm_last_week: String(week), dm_last_key: scenario.key };
+  const lastHito = Number(player.flags?.dm_hito_last ?? 0);
+  const hito = HITO_KEYS.has(scenario.key) && (lastHito === 0 || week - lastHito >= HITO_GAP) && Math.random() < 0.6;
+  const dmFlags: Record<string, string> = { dm_last_week: String(week), dm_last_key: scenario.key, ...(hito ? { dm_hito_last: String(week) } : {}) };
 
   return {
     id: `social-dm-${scenario.key}-${week}`,
     category: "vida",
     title: scenario.title,
     description: scenario.intro(ctx),
-    isMilestone: true,
-    milestoneType: "dm_instagram",
+    ...(hito ? { isMilestone: true, milestoneType: "dm_instagram" } : {}),
     dm: { handle: handleFor(name, week), name, message: scenario.message(ctx), platform },
     options: scenario.options.map((o, i) => ({
       id: String(i),

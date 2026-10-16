@@ -473,7 +473,7 @@ export function getActiveStandings(
     p.elim ? `${p.elim.club} ${p.elim.score} ${p.elim.opp}` : roundName;
   const copa: KnockoutStandings | null =
     copaProgress.round > 0 && copaProgress.alive
-      ? { type: "knockout", label: leagueOf(player.club).cup, roundLabel: copaRoundName(copaProgress.round, player.club), alive: true }
+      ? { type: "knockout", label: leagueOf(player.club).cup, roundLabel: `Próxima ronda: ${copaRoundName(copaProgress.round, player.club)}`, alive: true }
       : copaProgress.round > 0
         ? { type: "knockout", label: leagueOf(player.club).cup, roundLabel: `Eliminado en ${shortRound(copaRoundName(copaProgress.round, player.club))}`, alive: false, result: eliminatedText("", copaProgress) || undefined }
         : null;
@@ -483,7 +483,7 @@ export function getActiveStandings(
   const euro: KnockoutStandings | null = !european
     ? null
     : euroProgress.round > 0 && euroProgress.alive
-      ? { type: "knockout", label: euroLabel, roundLabel: euroRoundName(euroProgress.round), alive: true }
+      ? { type: "knockout", label: euroLabel, roundLabel: `Clasificado para ${euroRoundName(euroProgress.round).toLowerCase()} (${["febrero", "abril", "mayo", "mayo"][Math.min(3, euroProgress.round - 1)]})`, alive: true }
       : euroProgress.round > 0
         ? { type: "knockout", label: euroLabel, roundLabel: `Eliminado en ${shortRound(euroRoundName(euroProgress.round))}`, alive: false, result: eliminatedText("", euroProgress) || undefined }
         : !euroProgress.alive && euroGroupsPlayed >= 2
