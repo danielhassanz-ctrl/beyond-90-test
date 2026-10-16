@@ -164,6 +164,11 @@ export default async function VidaPage() {
           🚪 Entrar al vestuario
         </Link>
       )}
+      {hasClub && (
+        <Link href="/mi-jugador/prensa" className="w-full max-w-md rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-gold">
+          📰 Prensa y redes
+        </Link>
+      )}
       <LifeCircle icon="🏟️" title="Club y cuerpo técnico" subtitle="Míster, médicos, directivos y tu representante" members={club} />
       {antiguos.length > 0 && <LifeCircle icon="🕰️" title="De tus clubes anteriores" subtitle="Quienes te dirigieron y compartieron vestuario contigo" members={antiguos} />}
 

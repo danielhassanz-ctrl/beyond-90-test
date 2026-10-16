@@ -17,6 +17,8 @@ import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
 import { withShareLink, getAppUrlLine, NO_CLUB_YET } from "@/lib/constants";
 import { logout, shareAndCompare } from "./actions";
 import { repairTrophies } from "@/lib/honours-repair";
+import { challengeState } from "@/lib/narrative/daily-challenge";
+import { PushToggle } from "@/components/PushToggle";
 
 export default async function MiJugadorPage() {
   const supabase = await createClient();
@@ -44,6 +46,8 @@ export default async function MiJugadorPage() {
     for (const c of closes ?? []) closedIds.push(String(c.event_id));
   }
 
+  const retoState = challengeState(player ?? { flags: {} });
+
   return (
     <main className="flex flex-1 flex-col items-center gap-6 p-6 pb-24">
       <div className="flex w-full max-w-md justify-end">
@@ -56,7 +60,7 @@ export default async function MiJugadorPage() {
 
       {!player ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <p className="text-muted-foreground">Todavía no creaste tu jugador.</p>
+          <p className="text-muted-foreground">Todavía no has creado tu jugador.</p>
           <Link
             href="/crear-jugador"
             className="gold-fill rounded-full px-6 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
@@ -93,6 +97,21 @@ export default async function MiJugadorPage() {
               }
             />
           )}
+
+          <Link
+            href="/mi-jugador/reto"
+            className="flex w-full items-center justify-between rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-left hover:border-gold"
+          >
+            <span>
+              <span className="block text-kicker text-gold">🎯 Reto del día</span>
+              <span className="block text-xs text-muted-foreground">
+                {retoState.playedToday ? `Hecho hoy · racha de ${retoState.streak}. Mañana, otra jugada.` : retoState.streakAlive ? `Hoy hay jugada nueva. Tu racha de ${retoState.streak} depende de ella.` : "Hoy hay una jugada nueva, igual para todos."}
+              </span>
+            </span>
+            <span aria-hidden className="text-gold">›</span>
+          </Link>
+
+          {process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && <PushToggle publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY} />}
 
           <div className="space-y-3 rounded-2xl border border-panel-border bg-surface p-4">
             <p className="text-kicker">Prensa</p>

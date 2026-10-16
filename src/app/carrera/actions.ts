@@ -54,6 +54,7 @@ import { displayName } from "@/types/player";
 import { isNationalTeamEvent } from "@/lib/images/national-event";
 import { mergeFlagsForWrite } from "@/lib/supabase/flags";
 import { applyLockerDeltas } from "@/lib/narrative/locker-room";
+import { applyPressDeltas } from "@/lib/narrative/press-system";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { photoRefs } from "@/lib/images/photo-refs";
 import { withStateCause } from "@/lib/narrative/states";
@@ -220,9 +221,11 @@ async function resolveEventInner(formData: FormData) {
   const consequencesPartner1 = withStateCause(consequencesPartner0, event.title);
   // Vestuario: las escenas mueven la relación con compañeros concretos (vr_delta = «capitan:+4,rival:-6», ver narrative/locker-room.ts).
   const lockerDelta = applyLockerDeltas(player as Player, consequencesPartner1.flags?.vr_delta);
+  // Prensa y redes: lo mismo con los medios y los seguidores (pr_delta = «afin:+4,hostil:-3,seg:+5», ver narrative/press-system.ts).
+  const pressDelta = applyPressDeltas(player as Player, consequencesPartner1.flags?.pr_delta);
   const consequencesPartner =
-    consequencesPartner1.flags?.vr_delta !== undefined
-      ? { ...consequencesPartner1, flags: { ...Object.fromEntries(Object.entries(consequencesPartner1.flags).filter(([k]) => k !== "vr_delta")), ...lockerDelta } }
+    consequencesPartner1.flags?.vr_delta !== undefined || consequencesPartner1.flags?.pr_delta !== undefined
+      ? { ...consequencesPartner1, flags: { ...Object.fromEntries(Object.entries(consequencesPartner1.flags ?? {}).filter(([k]) => k !== "vr_delta" && k !== "pr_delta")), ...lockerDelta, ...pressDelta } }
       : consequencesPartner1;
   // El nacimiento del primer hijo (escena del banco) anota su nombre y su fecha para los siguientes hijos y para Vida.
   const consequences = event.id === "bank-p2-nacimiento" ? { ...consequencesPartner, flags: { ...consequencesPartner.flags, ...firstChildPatch(player as Player) } } : consequencesPartner;

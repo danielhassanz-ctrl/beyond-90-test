@@ -25,6 +25,7 @@ import { PlayerHeaderCard } from "@/components/PlayerHeaderCard";
 import { EventScene } from "@/components/EventScene";
 import { MatchScene } from "@/components/MatchScene";
 import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
+import { challengeState } from "@/lib/narrative/daily-challenge";
 import { resolveEvent } from "./actions";
 import { personalizeEvent, detectMentionedRoles, NPC_ROLE_LABELS } from "@/lib/narrative/npcs";
 import { getOrCreateNpcFace, hasMetNpc, markNpcSeen, NPC_FACE_ROLES } from "@/lib/images/npcFaces";
@@ -86,6 +87,7 @@ export default async function CarreraPage() {
     redirect("/carrera/segunda-vida");
   }
 
+  const retoState = challengeState(player);
   const targetWeeks = MODE_TARGET_WEEKS[player.mode];
   if (player.mode !== "pro" && player.week > targetWeeks) {
     redirect("/carrera/retiro");
@@ -311,6 +313,19 @@ export default async function CarreraPage() {
             </form>
           </div>
         </div>
+
+        <Link
+          href="/mi-jugador/reto"
+          className="flex w-full items-center justify-between rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-left hover:border-gold"
+        >
+          <span>
+            <span className="block text-kicker text-gold">🎯 Reto del día</span>
+            <span className="block text-xs text-muted-foreground">
+              {retoState.playedToday ? `Hecho hoy · racha de ${retoState.streak}. Mañana, otra jugada.` : retoState.streakAlive ? `Hoy hay jugada nueva. Tu racha de ${retoState.streak} depende de ella.` : "Hoy hay una jugada nueva, igual para todos."}
+            </span>
+          </span>
+          <span aria-hidden className="text-gold">›</span>
+        </Link>
 
         <div className="space-y-3 rounded-2xl border border-panel-border bg-surface p-4">
           <div>

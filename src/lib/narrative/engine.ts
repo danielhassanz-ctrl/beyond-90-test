@@ -93,6 +93,7 @@ import { shouldTriggerSeasonGoals, buildSeasonGoalsEvent, shouldTriggerGoalsRevi
 import { shouldTriggerTrainingPlan, buildTrainingPlanEvent } from "@/lib/narrative/training-plan";
 import { newAchievements, markAchievements, buildAchievementEvent } from "@/lib/narrative/achievements";
 import { shouldTriggerLockerScene, buildLockerScene } from "@/lib/narrative/locker-room";
+import { dueFollowersMilestone, buildFollowersMilestone, shouldTriggerCover, buildCoverEvent, shouldTriggerPressScene, buildPressScene, applyPressTick } from "@/lib/narrative/press-system";
 import { shouldTriggerClubKit, buildClubKitEvent, shouldTriggerNationalKit, buildNationalKitEvent } from "@/lib/narrative/kit-presentation";
 import { shouldTriggerSeriousInjury, shouldTriggerSagaStage, buildSeriousInjuryEvent, buildSagaStageEvent } from "@/lib/narrative/injury-saga";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
@@ -1897,6 +1898,8 @@ function applyCareerDynamics(player: Player): Player {
   player.forma = naturalFormaDegradation(player);
   // Complicaciones y rachas buenas en curso (states.ts): restan o suman cada turno.
   applyStateTick(player);
+  // La prensa devuelve algo cada turno (ver press-system.ts): la tertulia aprieta si vas mal, el diario afín te da fama si vas bien.
+  applyPressTick(player);
 
   // Aplicar declive por edad (si >32 años)
   const mediaAfterAge = ageBasedMediaDecline(player);
@@ -2115,6 +2118,25 @@ export async function pickNextEventDynamic(
     const plan = buildTrainingPlanEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Plan de entrenamiento: "${plan.title}"`);
     return plan;
+  }
+  // Prensa y redes: hitos de seguidores y la primera portada, y de vez en cuando una escena con tus tres medios de siempre.
+  if (!midMatch && !getTorneoProgress(playerWithDynamics)) {
+    const step = dueFollowersMilestone(playerWithDynamics);
+    if (step) {
+      console.log(`[pickNextEventDynamic] Seguidores: ${step}`);
+      return buildFollowersMilestone(playerWithDynamics, step);
+    }
+    if (shouldTriggerCover(playerWithDynamics)) {
+      console.log("[pickNextEventDynamic] Portada de revista");
+      return buildCoverEvent(playerWithDynamics);
+    }
+    if (shouldTriggerPressScene(playerWithDynamics)) {
+      const pressEvent = buildPressScene(playerWithDynamics);
+      if (pressEvent) {
+        console.log(`[pickNextEventDynamic] Prensa: "${pressEvent.title}"`);
+        return pressEvent;
+      }
+    }
   }
   // Vestuario: una escena con tus compañeros de verdad (el capitán, el rival por tu puesto, el polémico…).
   if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerLockerScene(playerWithDynamics)) {
