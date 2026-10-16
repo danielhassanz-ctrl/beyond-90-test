@@ -45,7 +45,7 @@ export const DISCIPLINA2: BankScene[] = [
       o("b", "Mantener que fue una broma, sin disculpas", "Sin dar el brazo a torcer", { rel_aficion: -6, fama: 3, rel_entrenador: -2, flags: { dc_gesto: true, estado_escandalo: "@WEEK+3" } }, "Lo defiendes con tono tranquilo. La afición, que lo oye todo, te devuelve un silencio helado en el partido siguiente: ni silbidos, ni aplausos, ni un solo cántico con tu nombre. Es peor de lo que parece."),
       o("c", "No decir nada y dejar que el campo hable", "Callar", { moral: -1, rel_aficion: -2, flags: { dc_gesto: true } }, "Entrenas más de lo que acostumbras y juegas el domingo con los dientes apretados. Marcas, esta vez sin gesto, con los brazos abiertos y la mirada en la grada. Algunos aplauden. Otros prefieren esperar otro partido."),
     ]),
-  S("dc-marca-rival", "disciplina", { ...ADULTO, fama: [45, 100], flags: ["sponsor_nike"], notFlags: [...LIMPIO, "dc_marca"], clubTurns: [3, 400] }, "representante",
+  S("dc-marca-rival", "disciplina", { ...ADULTO, fama: [45, 100], flags: ["sponsor_botas"], patrimonio: [8000, 1_000_000_000], notFlags: [...LIMPIO, "dc_marca"], clubTurns: [3, 400] }, "representante",
     "Sales en una foto con las botas de otra marca",
     "Una foto tuya en el vestuario, del tipo que se hace sin pensar, con las botas que más te gustan. El problema es que no son las de tu patrocinador. La imagen circula por las redes durante dos horas antes de que alguien del equipo de marketing se dé cuenta. Tu representante te llama con voz de abogado.",
     [

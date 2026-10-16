@@ -101,7 +101,7 @@ export const CONVIVENCIA: BankScene[] = [
       o("b", "Darle la mitad y hablarle claro", "Con límites", { patrimonio: -3000, moral: 1, reputacion: 1, flags: { cv_prestamo: true } }, "«Esto es lo que puedo. Y la próxima vez, me enseñas el plan». No se enfada, aunque la sonrisa le dura menos de lo habitual. Se lleva el dinero con una frase de gratitud medida. Desde entonces os veis menos, pero con más sinceridad."),
       o("c", "Decirle que no, con todo el cariño que puedas", "Negarte", { moral: -3, flags: { cv_prestamo: true, estado_preocupado: "@WEEK+2" } }, "Se lo dices mirándole a los ojos. Él asiente, se encoge de hombros y cambia de tema. Pero algo se ha enfriado: le notas la voz más lejos, y tu amistad de siempre, de repente, tiene un precio.", { thread: th("rencor", "tu amigo de toda la vida", "Le dijiste que no a un préstamo.") }),
     ]),
-  S("cv-ex", "convivencia", { minAge: 18, fama: [30, 100], notFlags: ["cv_ex"], clubTurns: [2, 400] }, "vida",
+  S("cv-ex", "convivencia", { flags: ["ex_pareja"], minAge: 18, fama: [30, 100], notFlags: ["cv_ex"], clubTurns: [2, 400] }, "vida",
     "Tu ex te escribe después de un golazo",
     "El gol se ha repetido veinte veces en todos los programas. A las once de la noche, tu móvil vibra con un mensaje de un nombre que no veías desde hacía un año: tu ex. «Enhorabuena. Te lo mereces». Y un segundo mensaje, tres minutos después: «A veces pienso en lo que habríamos podido ser». Es un clásico: llega cuando todo va bien.",
     [
@@ -117,7 +117,7 @@ export const CONVIVENCIA: BankScene[] = [
       o("b", "Avisar a seguridad del club y que lo gestione", "Profesional", { moral: 2, rel_entrenador: 1, flags: { cv_seguidor: true } }, "Seguridad habla con él, con tacto. El chaval, que no es peligroso, se asusta mucho y desaparece. Te quedas con una sensación incómoda: ni querías hacerle daño ni querías esto."),
       o("c", "Ignorarlo y esperar a que se canse", "Aguantar", { moral: -3, forma: -1, flags: { cv_seguidor: true, estado_preocupado: "@WEEK+3" } }, "Se cansa a los quince días, pero tú pasas ese tiempo con una mano en el picaporte y la cabeza al revés. Sales a la calle mirando a ambos lados. Es un precio de la fama que nadie te contó."),
     ]),
-  S("cv-familiar-dinero", "convivencia", { minAge: 19, fama: [40, 100], patrimonio: [50000, 100000000], notFlags: ["cv_familiar"], clubTurns: [3, 400] }, "vida",
+  S("cv-familiar-dinero", "convivencia", { turn: [5, 6], minAge: 19, fama: [40, 100], patrimonio: [50000, 100000000], notFlags: ["cv_familiar"], clubTurns: [3, 400] }, "vida",
     "Un familiar lejano quiere que lo metas en un «negocio seguro»",
     "En la comida familiar de Navidad, un tío que solo veías en las bodas te acorrala junto al turrón: tiene un restaurante, un socio y un plan. «Con lo que ganas tú, esto es calderilla». Tu madre te mira de reojo desde la cocina; tu padre se ha puesto a lavar platos para no oír. Todos saben que no es un buen negocio. Nadie quiere ser quien lo diga.",
     [

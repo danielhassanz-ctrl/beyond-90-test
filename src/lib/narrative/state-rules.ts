@@ -132,6 +132,8 @@ const MAX_WEEK: Record<string, number> = {
   "vid-nueva-relacion": 90,
 };
 
+const SCORER_ONLY_IDS = new Set(["par-hat-trick", "par-penal", "par-mano-a-mano"]);
+
 export function isEventCoherentWithState(
   event: { id: string; category: string; title?: string; description?: string },
   player: Player,
@@ -147,6 +149,11 @@ export function isEventCoherentWithState(
     if (event.category === "entrenamiento" || event.category === "partido") return false;
     if (PHYSICAL_TEXT.test(`${event.title ?? ""} ${event.description ?? ""}`)) return false;
   }
+
+  // Posición: un portero no hace hat-tricks ni un defensa se planta solo ante el portero cada semana.
+  const text = `${event.title ?? ""} ${event.description ?? ""}`;
+  if (player.position === "Portero" && (SCORER_ONLY_IDS.has(event.id) || /\b(hat-trick|pichichi|goleador|tu gol)\b/i.test(text))) return false;
+  if (player.position === "Defensa" && (event.id === "par-hat-trick" || event.id === "par-mano-a-mano")) return false;
 
   // Apartado: el entrenador no lo convoca, así que no hay escenas de partido jugado.
   const role = computeRole(player).role;

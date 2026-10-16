@@ -26,7 +26,7 @@ export const VIDA2: BankScene[] = [
       o("b", "Apuntarlo a una buena academia y a la vez a una tutoría", "Un plan", { patrimonio: -2500, moral: 3, flags: { v2_hermano: true } }, "Pagas la academia y una tutora para que no pierda el curso. Los dos primeros meses se queja de todo; el tercero se levanta solo a las siete para ir. Tu madre te agradece el plan con una llamada de media hora."),
       o("c", "Decirle que sí, que si le gusta tanto, lo intente", "Apoyarlo", { moral: 1, rel_representante: -1, flags: { v2_hermano: true, estado_preocupado: "@WEEK+3" } }, "Se pone a saltar de alegría. Tu madre, desde la cocina, te mira con una ceja levantada que dice mucho. A las pocas semanas, empiezas a sentir esa mezcla rara de orgullo y miedo que solo conocen los hermanos mayores."),
     ]),
-  S("v2-abuela", "familia", { ...ADULTO, notFlags: [...LIBRE, "v2_abuela"], clubTurns: [2, 400] }, "vida",
+  S("v2-abuela", "familia", { ...ADULTO, notFlags: [...LIBRE, "v2_abuela", "abuela_adios"], clubTurns: [2, 400] }, "vida",
     "Tu abuela ingresa en el hospital",
     "Tu madre te llama en medio de una sesión de vídeo: la abuela, la que lleva viéndote jugar desde el patio del colegio, ha tenido una caída y está en el hospital. «No es grave, pero pregunta por ti». Tienes dos entrenamientos y un partido por delante. Y la abuela, en una cama de hospital, preguntando por ti.",
     [

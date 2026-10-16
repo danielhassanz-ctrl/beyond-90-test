@@ -114,7 +114,8 @@ function fits(player: Player, when: BankWhen): { ok: boolean; chained: boolean }
     };
     for (const [k, r] of Object.entries(when.rel)) if (!inRange(rel[k], r as Range)) return { ok: false, chained: false };
   }
-  for (const f of when.flags ?? []) if (!flags[f]) return { ok: false, chained: false };
+  // «sel_debut» lo pone el banco y «sel_debut_played» el motor al debutar de verdad: cualquiera de los dos vale (25 escenas de selección no salían a quien debutaba por el motor).
+  for (const f of when.flags ?? []) if (!flags[f] && !(f === "sel_debut" && flags.sel_debut_played)) return { ok: false, chained: false };
   for (const f of when.notFlags ?? []) if (flags[f]) return { ok: false, chained: false };
   if (when.hasThread && !openThreads(player.flags).some((t) => t.k === when.hasThread)) return { ok: false, chained: false };
 
@@ -200,8 +201,10 @@ export function fillBankEvent<T extends Omit<GameEvent, "id">>(event: T, player:
     }
     return out;
   };
+  // Contracciones: «presidente de {el_interes}» salía «de el Real Madrid» (y «a el»).
+  const contract = (t: string) => t.replace(/\b([Dd])e el\b/g, "$1el").replace(/\b([Aa]) el\b/g, "$1l");
   const fill = (t: string) =>
-    fillRivals(t)
+    contract(fillRivals(t)
       .replace(/\{el_club\}/g, club === "tu club" ? "tu club" : clubWithArticle(club))
       .replace(/\{ciudad\}/g, club === "tu club" ? "tu ciudad" : cityOfClub(club))
       .replace(/\{club\}/g, club)
@@ -214,7 +217,7 @@ export function fillBankEvent<T extends Omit<GameEvent, "id">>(event: T, player:
       // Cifras reales de tu contrato: la ficha bruta anual y la cláusula de rescisión.
       .replace(/\{ficha\}/g, `${eur(playerAnnualGross(player))} brutos al año`)
       .replace(/\{clausula\}/g, eurFee(releaseClauseM(player)))
-      .replace(/\{apellido\}/g, player.last_name ?? "");
+      .replace(/\{apellido\}/g, player.last_name ?? ""));
   const text = (t: string | undefined) => (t === undefined ? t : fill(t));
   return {
     ...event,
@@ -243,6 +246,20 @@ export interface BankCandidate {
   weight: number;
 }
 
+/**
+ * Escenas que dan por hecho que marcas o que eres delantero («Marcas en el 63», «El delantero que…») no salen a un portero ni, las de
+ * «delantero», a quien juega de otra cosa. Las que ya declaran sus posiciones (when.positions) se rigen por ellas.
+ */
+const SCORER_RE = /\b(marcas|marcaste|marcar|tu gol|tus goles|hat-trick|pichichi|goleador|el delantero|un delantero|eres delantero|ser delantero)\b/i;
+const STRIKER_RE = /\b(el delantero|un delantero|eres delantero|ser delantero|de delantero)\b/i;
+function positionMismatch(player: Player, scene: BankScene): boolean {
+  if (scene.when.positions) return false;
+  const text = `${scene.event.title} ${scene.event.description}`;
+  const position = player.position ?? "";
+  if (position === "Portero" && SCORER_RE.test(text)) return true;
+  return position !== "Delantero" && STRIKER_RE.test(text);
+}
+
 /** Escenas del banco que encajan ahora con el estado del jugador y no se han vivido. */
 export function eligibleBankScenes(player: Player, usedIds: string[], scenes: BankScene[] = BANK_SCENES): BankCandidate[] {
   const used = new Set(usedIds);
@@ -250,7 +267,7 @@ export function eligibleBankScenes(player: Player, usedIds: string[], scenes: Ba
   for (const scene of scenes) {
     if (used.has(scene.id)) continue;
     const { ok, chained } = fits(player, scene.when);
-    if (!ok) continue;
+    if (!ok || positionMismatch(player, scene)) continue;
     // Una escena sin ninguna condición de contexto no es del banco "personal": sale con peso bajo.
     const weight = (scene.weight ?? 1) * (1 + 0.15 * specificity(scene.when)) * (chained ? 5 : 1);
     out.push({ scene, chained, weight });

@@ -31,7 +31,7 @@ export const SUELTAS2: BankScene[] = [
       o("b", "Hacerle bromas en cada saque de banda", "Divertirte con él", { rel_vestuario: 3, moral: 4, reputacion: -1, flags: { s2x_arbitro: "bromas" } }, "«¡Que no he hecho los abdominales, profe!», le dices. Todos se parten. Te saca una amarilla por «conducta antideportiva con exceso de simpatía». La guardas como recuerdo."),
       o("c", "Pedir al delegado que le cambien", "Evitar el roce", { moral: -2, flags: { s2x_arbitro: "cambio" } }, "El delegado se encoge de hombros: «Es el que toca». Tienes que aguantar noventa minutos con la sombra del colegio. Marcas un gol y le miras de reojo. Él te guiña el ojo."),
     ]),
-  S("s2x-vecino", "humor", { minAge: 18, patrimonio: [3000, 100000000], clubTurns: [2, 400], notFlags: ["s2x_vecino"] }, "vida",
+  S("s2x-vecino", "humor", { flat: true, minAge: 18, patrimonio: [3000, 100000000], clubTurns: [2, 400], notFlags: ["s2x_vecino"] }, "vida",
     "Tu vecino de abajo se queja de tus pasos",
     "Es un señor mayor, jubilado, con una paciencia que se agota a las diez de la noche. Esta mañana, te deja una nota bajo la puerta: «Camina como un jugador de fútbol. Y lo digo con todo respeto». Es una frase exquisita. No sabes si ríe o te regaña. Llevas semanas descalzo en casa, y aun así, debes de pisar como una manada de elefantes.",
     [
@@ -39,7 +39,7 @@ export const SUELTAS2: BankScene[] = [
       o("b", "Comprar alfombras para toda la casa", "Solución práctica", { patrimonio: -400, moral: 2, flags: { s2x_vecino: "alfombras" } }, "Tu casa parece una tienda de persas. El vecino, con la nota doblada, te saluda al cruzaros: «Gracias». Cada mañana, un poco menos de ruido y un poco más de paz."),
       o("c", "Ignorar la nota y seguir como siempre", "Pasar", { moral: -1, flags: { s2x_vecino: "paso" } }, "A los dos días, la nota se repite, más corta: «Sigue igual». Al mes, la tercera: «Me mudo». No sabes si es una broma. Esa noche, sigues pisando fuerte."),
     ]),
-  S("s2x-llave", "humor", { minAge: 17, clubTurns: [1, 400], notFlags: ["s2x_llave"] }, "vida",
+  S("s2x-llave", "humor", { flat: true, minAge: 17, clubTurns: [1, 400], notFlags: ["s2x_llave"] }, "vida",
     "Te dejas las llaves de casa dentro y no hay nadie que te abra",
     "Son las doce de la noche, llueve y tu móvil tiene un uno por ciento de batería. Te has quedado fuera, en pijama y con una camiseta del club, frente a tu puerta. Un vecino te mira desde su balcón, con una taza en la mano. En el edificio de enfrente, alguien te ha reconocido y ya ha sacado el móvil. Tu cabeza empieza a calcular los titulares.",
     [

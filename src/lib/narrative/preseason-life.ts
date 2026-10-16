@@ -1,4 +1,6 @@
 import type { Consequences, EventOption, GameEvent } from "@/types/career";
+import { art, de } from "@/lib/narrative/market-window";
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 import type { Player } from "@/types/player";
 import { displayName } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
@@ -27,6 +29,12 @@ import { getCelebrityName, getNpcName, getPersonName, getTeammateName } from "@/
  */
 
 const MAX_PER_SEASON = 5;
+
+/** «Tu padre», «Sin representante aún»… se usan dentro de frases: en minúscula, y sin representante, «tu representante». */
+function agentRef(name: string): string {
+  if (/^sin /i.test(name)) return "tu representante";
+  return /^tu /i.test(name) ? name.charAt(0).toLowerCase() + name.slice(1) : name;
+}
 
 export function isPreseasonLifeWindow(week: number): boolean {
   const w = ((week - 1) % 10) + 1;
@@ -84,7 +92,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "gira",
     title: "Gira de pretemporada",
-    desc: (c) => `El ${c.club} viaja de gira a ${TOURS[c.club.length % TOURS.length]}: vuelos largos, estadios enormes y mucho calor. ${c.coach} avisa de que allí también se gana el puesto.`,
+    desc: (c) => `${cap(art(c.club))} viaja de gira a ${TOURS[c.club.length % TOURS.length]}: vuelos largos, estadios enormes y mucho calor. ${c.coach} avisa de que allí también se gana el puesto.`,
     opts: (c) => [
       { label: "Centrarte en cada entreno", subtitle: "Que el míster te vea", consequences: { rel_entrenador: 3, forma: 2 }, outcomeText: "En el tercer día de gira, el míster te hace una seña desde la banda y apunta tu nombre en su libreta. Nadie más lo ha visto." },
       { label: "Aprovechar para dejarte ver", subtitle: "Fotos, fans y camisetas", consequences: { fama: 4, forma: -2 }, outcomeText: "Posas con aficionados, firmas camisetas y sonríes a todas las cámaras. Al volver al hotel, tienes más seguidores... y las piernas más cansadas." },
@@ -104,7 +112,7 @@ const TEMPLATES: Tpl[] = [
     key: "camiseta",
     title: "Presentación de la camiseta",
     tone: ["gracioso"],
-    desc: (c) => `El ${c.club} presenta la nueva equipación y te eligen para la sesión de fotos. Focos, maquillaje y un fotógrafo que te pide "cara de ganador".`,
+    desc: (c) => `${cap(art(c.club))} presenta la nueva equipación y te eligen para la sesión de fotos. Focos, maquillaje y un fotógrafo que te pide "cara de ganador".`,
     opts: () => [
       { label: "Posar con orgullo", subtitle: "Una foto que se hace viral", consequences: { fama: 4, moral: 2 }, outcomeText: "El fotógrafo grita '¡Eso es!' y dispara sin parar. La foto, con tu mirada decidida, aparece en la web del club antes de comer." },
       { label: "Hacer el tonto delante de la cámara", subtitle: "Un vídeo divertido para las redes", consequences: { fama: 3, rel_vestuario: 2, rel_aficion: 2 }, outcomeText: "Pones cara de dibujo animado justo cuando se enciende el flash. El vídeo se hace viral y hasta el presidente se ríe." },
@@ -163,7 +171,7 @@ const TEMPLATES: Tpl[] = [
     key: "altura",
     title: "Concentración en altura",
     tone: ["gracioso"],
-    desc: (c) => `El ${c.club} se concentra diez días en la montaña. Aire limpio, móviles sin cobertura y noches de cartas y bromas en la habitación.`,
+    desc: (c) => `${cap(art(c.club))} se concentra diez días en la montaña. Aire limpio, móviles sin cobertura y noches de cartas y bromas en la habitación.`,
     opts: (c) => [
       { label: "Ser el alma de las cartas", subtitle: `Con ${c.mate} y ${c.mate2}`, consequences: { rel_vestuario: 4, moral: 2 }, outcomeText: "Montas un torneo con premios absurdos y reglas inventadas. A la tercera noche, hasta el míster se sienta a perder dinero contigo." },
       { label: "Dormir y recuperar", subtitle: "El cuerpo lo agradece", consequences: { forma: 4 }, outcomeText: "Mientras los demás juegan a las cartas, tú duermes diez horas seguidas. Al despertar, el cuerpo te responde como en tus mejores semanas." },
@@ -173,7 +181,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "puertas_abiertas",
     title: "Jornada de puertas abiertas",
-    desc: (c) => `Miles de aficionados llenan el campo de entrenamiento del ${c.club}. Un niño, ${c.kid}, lleva tu nombre pintado a mano en la camiseta.`,
+    desc: (c) => `Miles de aficionados llenan el campo de entrenamiento ${de(c.club)}. Un niño, ${c.kid}, lleva tu nombre pintado a mano en la camiseta.`,
     opts: () => [
       { label: "Firmarle la camiseta y hacerte una foto", subtitle: "El niño no lo va a olvidar", consequences: { rel_aficion: 5, fama: 2, moral: 3 }, outcomeText: "El niño se queda mudo mientras firmas, y luego rompe a llorar de la emoción. Su madre te da las gracias con la voz entrecortada." },
       { label: "Regalarle tus botas", subtitle: "Un detalle que se recuerda", consequences: { rel_aficion: 6, moral: 4, patrimonio: -200 }, outcomeText: "El niño abraza las botas como si fuera un trofeo. Su padre te hace un gesto con la mano en el pecho: no hacen falta palabras." },
@@ -224,7 +232,7 @@ const TEMPLATES: Tpl[] = [
     key: "cena_novatada",
     title: "Cena de equipo y novatada",
     tone: ["gracioso"],
-    desc: (c) => `El vestuario del ${c.club} organiza la cena de inicio de temporada y ${c.captain} te señala: "Al nuevo le toca cantar".`,
+    desc: (c) => `El vestuario ${de(c.club)} organiza la cena de inicio de temporada y ${c.captain} te señala: "Al nuevo le toca cantar".`,
     opts: () => [
       {
         label: "Cantar sin vergüenza",
@@ -261,7 +269,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "fans_hotel",
     title: "La afición en la puerta del hotel",
-    desc: (c) => `Cientos de hinchas del ${c.club} esperan al autobús con bufandas y cánticos. Entre ellos, alguien te grita un ánimo que te llega.`,
+    desc: (c) => `Cientos de hinchas ${de(c.club)} esperan al autobús con bufandas y cánticos. Entre ellos, alguien te grita un ánimo que te llega.`,
     opts: () => [
       { label: "Parar a firmar", subtitle: "Diez minutos que valen oro", consequences: { rel_aficion: 4, fama: 2 }, outcomeText: "Bajas del autobús y firmas hasta que el entrenador te llama desde la puerta. Algún hincha te lleva en volandas unos metros." },
       { label: "Saludar desde la ventanilla", subtitle: "Sin retrasar al equipo", consequences: { rel_aficion: 2 }, outcomeText: "Levantas la mano desde la ventanilla y la multitud responde con un rugido. No hace falta más." },
@@ -293,7 +301,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "golazo_viral",
     title: "Tu golazo en el amistoso se hace viral",
-    desc: (c) => `Un gol de otro planeta en un amistoso del ${c.club} da la vuelta a las redes. Las cuentas de fútbol lo suben con un "¿Quién es este?".`,
+    desc: (c) => `Un gol de otro planeta en un amistoso ${de(c.club)} da la vuelta a las redes. Las cuentas de fútbol lo suben con un "¿Quién es este?".`,
     opts: () => [
       { label: "Compartirlo con humildad", subtitle: "Gracias al equipo", consequences: { fama: 4, reputacion: 2, rel_vestuario: 2 }, outcomeText: "Subes el gol con un 'gracias al equipo'. Los compañeros comentan el vídeo con emojis y cinco aficionados lo comparten con tu nombre." },
       { label: "Subirte al carro", subtitle: "Mensaje a los rivales", consequences: { fama: 5, rel_vestuario: -1 }, outcomeText: "Lo compartes con un mensaje desafiante a los rivales. Los comentarios arden: unos te aplauden y otros te piden que te calles." },
@@ -303,7 +311,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "abonados",
     title: "Campaña de abonados",
-    desc: (c) => `El ${c.club} lanza la campaña de abonos y te pide que salgas en el vídeo con el lema de la temporada. Solo pide una tarde de tu tiempo.`,
+    desc: (c) => `${cap(art(c.club))} lanza la campaña de abonos y te pide que salgas en el vídeo con el lema de la temporada. Solo pide una tarde de tu tiempo.`,
     opts: () => [
       { label: "Grabar con ganas", subtitle: "Que la afición se ilusione", consequences: { rel_aficion: 5, fama: 2 }, outcomeText: "Repites la toma cuatro veces hasta que sale con fuerza. Al estrenarse el vídeo, la cola de abonados da la vuelta a la manzana." },
       { label: "Grabar rápido", subtitle: "Toma única", consequences: { rel_aficion: 2 }, outcomeText: "Haces una toma única, sin florituras. El resultado es correcto, sin más, y el equipo de marketing no se queja." },
@@ -314,7 +322,7 @@ const TEMPLATES: Tpl[] = [
     key: "vacaciones",
     title: "Vuelves de vacaciones",
     tone: ["gracioso"],
-    desc: (c) => `El vestuario del ${c.club} vuelve del verano: bronceados, anécdotas y algún kilo de más. ${c.coach} os pesa uno a uno con el cronómetro en la mano.`,
+    desc: (c) => `El vestuario ${de(c.club)} vuelve del verano: bronceados, anécdotas y algún kilo de más. ${c.coach} os pesa uno a uno con el cronómetro en la mano.`,
     opts: () => [
       {
         label: "Presentarte en forma",
@@ -332,7 +340,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "despacho",
     title: "El presidente te llama al despacho",
-    desc: (c) => `${c.director} te pide que pases por el palco antes del entrenamiento: el presidente quiere enseñarte el proyecto del ${c.club} para los próximos años.`,
+    desc: (c) => `${c.director} te pide que pases por el palco antes del entrenamiento: el presidente quiere enseñarte el proyecto ${de(c.club)} para los próximos años.`,
     opts: () => [
       { label: "Escuchar con atención", subtitle: "Y decir sí a todo", consequences: { moral: 3, rel_aficion: 1 }, outcomeText: "El presidente despliega un plano del nuevo estadio y tú asientes a cada frase. Al salir, tienes la sensación de formar parte de algo grande." },
       { label: "Preguntar por los fichajes", subtitle: "Sin miedo", consequences: { reputacion: 2, moral: 1 }, outcomeText: "El presidente sonríe: 'Quien pregunta así quiere ganar'. Te adelanta un par de nombres y te hace jurar discreción." },
@@ -342,7 +350,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "rumor_te_ofrecen",
     title: "Tu nombre en la lista de transferibles",
-    desc: (c) => `Un medio publica que el ${c.club} "escucharía ofertas" por ti. ${c.agent} llama sobresaltado: "No sé de dónde ha salido, pero hay que aclararlo".`,
+    desc: (c) => `Un medio publica que ${art(c.club)} "escucharía ofertas" por ti. ${c.agent} llama sobresaltado: "No sé de dónde ha salido, pero hay que aclararlo".`,
     opts: (c) => [
       { label: `Ir a hablar con ${c.director}`, subtitle: "Que te lo diga a la cara", consequences: { rel_entrenador: 1 }, resolve: { baseChance: 0.6, success: { text: "Era una filtración interesada de otro club. El director te asegura que cuentan contigo.", consequences: { moral: 4, rel_aficion: 2 } }, fail: { text: "No lo niega del todo: 'si llega una gran oferta, lo hablamos'. Te quedas pensando.", consequences: { moral: -3, rel_representante: 1 } } } },
       { label: "Pedirle a tu agente que lo desmienta", subtitle: "Ruido fuera", consequences: { rel_representante: 2, fama: 1 }, outcomeText: "Tu agente lo desmiente en dos llamadas. La noticia desaparece de las webs en una tarde, aunque el murmullo tarda un poco más." },
@@ -352,7 +360,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "estrella",
     title: "Llega una estrella",
-    desc: (c) => `El ${c.club} presenta a ${c.star}, un fichaje bomba para la temporada. Estadio lleno, camisetas por todos lados y el vestuario en modo expectación.`,
+    desc: (c) => `${cap(art(c.club))} presenta a ${c.star}, un fichaje bomba para la temporada. Estadio lleno, camisetas por todos lados y el vestuario en modo expectación.`,
     opts: (c) => [
       { label: "Ir a saludarle el primero", subtitle: "Buen rollo y cercanía", consequences: { rel_vestuario: 3, fama: 2 }, outcomeText: "Te adelantas entre el tumulto y le tiendes la mano. Él sonríe: 'Gracias, me hacía falta una cara amable'." },
       { label: "Aprender todo lo que puedas", subtitle: `Mirar a ${c.star} entrenar`, consequences: { media: 1, moral: 2 }, outcomeText: "Te pasas la sesión mirándole: cómo pide el balón, cómo se coloca, cómo respira. Tomas notas mentales para el resto de tu carrera." },
@@ -372,7 +380,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "cesion_rumor",
     title: "Se habla de cederte",
-    desc: (c) => `Un periodista del entorno del ${c.club} asegura que te pueden ceder para "coger minutos". ${c.coach} lo ha oído y no se ha molestado en desmentirlo.`,
+    desc: (c) => `Un periodista del entorno ${de(c.club)} asegura que te pueden ceder para "coger minutos". ${c.coach} lo ha oído y no se ha molestado en desmentirlo.`,
     opts: (c) => [
       { label: `Preguntar a ${c.coach}`, subtitle: "Mirarle a los ojos", consequences: { rel_entrenador: 1, moral: -1 } },
       { label: "Plantear salir con minutos", subtitle: "Te interesa jugar", consequences: { rel_representante: 2, moral: 1 }, outcomeText: "Se lo dices a tu agente y él, sin dramatizar, toma nota. 'Veremos qué se mueve', responde con una media sonrisa." },
@@ -383,7 +391,7 @@ const TEMPLATES: Tpl[] = [
     key: "aficionado_rival",
     title: "Un mensaje de un hincha rival",
     tone: ["gracioso"],
-    desc: (c) => `Alguien te escribe desde el otro lado de la ciudad para decirte que el ${c.club} "no tiene nada que hacer" esta temporada. Se ha hecho viral.`,
+    desc: (c) => `Alguien te escribe desde el otro lado de la ciudad para decirte que ${art(c.club)} "no tiene nada que hacer" esta temporada. Se ha hecho viral.`,
     opts: () => [
       { label: "Responder con clase", subtitle: "Nos vemos en el campo", consequences: { fama: 2, reputacion: 2 }, outcomeText: "Contestas con una frase educada y firme. El mensaje se hace viral por lo contrario: porque no hay ninguna provocación." },
       { label: "Devolverla con ironía", subtitle: "Un titular más", consequences: { fama: 4, rel_aficion: 2, reputacion: -1 }, outcomeText: "Respondes con una ironía que arrasa en redes. La afición propia se parte de risa, y la rival se queda sin respuesta." },
@@ -394,7 +402,7 @@ const TEMPLATES: Tpl[] = [
     key: "mascota_fuga",
     title: "La mascota del club se escapa",
     tone: ["gracioso", "surrealista"],
-    desc: (c) => `En plena sesión de fotos, la persona disfrazada de mascota del ${c.club} sale corriendo detrás de una paloma y se cuela en pleno pueblo, con el traje de águila puesto y todo el club detrás intentando explicarlo. El utillero se agarra la cabeza desde la banda y ${c.mate}, a tu lado, ya se está remangando para salir corriendo.`,
+    desc: (c) => `En plena sesión de fotos, la persona disfrazada de mascota ${de(c.club)} sale corriendo detrás de una paloma y se cuela en pleno pueblo, con el traje de águila puesto y todo el club detrás intentando explicarlo. El utillero se agarra la cabeza desde la banda y ${c.mate}, a tu lado, ya se está remangando para salir corriendo.`,
     opts: (c) => [
       { label: "Unirte a la caza", subtitle: `Con ${c.mate} a perseguirla`, consequences: { rel_vestuario: 4, moral: 3, forma: -1 }, outcomeText: "Corres detrás de la mascota, que salta una valla con el traje puesto. Os pilla un fotógrafo a los dos, y esa foto da la vuelta al país." },
       { label: "Grabarlo todo", subtitle: "Contenido asegurado", consequences: { fama: 5, rel_vestuario: 1 }, outcomeText: "Grabas la persecución desde tres ángulos. El vídeo suma un millón de visitas antes de que la paloma desaparezca." },
@@ -465,7 +473,7 @@ const TEMPLATES: Tpl[] = [
     key: "autobus_averiado",
     title: "El autobús se avería en mitad de la nada",
     tone: ["gracioso", "surrealista"],
-    desc: (c) => `Volviendo de un amistoso, el autobús del ${c.club} se avería en un pueblo de trescientos habitantes. Los vecinos, que no tienen ni idea de fútbol, os confunden con los invitados de una boda que se celebra esa misma tarde.`,
+    desc: (c) => `Volviendo de un amistoso, el autobús ${de(c.club)} se avería en un pueblo de trescientos habitantes. Los vecinos, que no tienen ni idea de fútbol, os confunden con los invitados de una boda que se celebra esa misma tarde.`,
     opts: (c) => [
       { label: "Seguirles la corriente", subtitle: "Colarse en la boda", consequences: { rel_vestuario: 5, moral: 4, fama: 2 }, outcomeText: "En diez minutos estáis brindando con vecinos que os llaman 'primos de la novia'. Acabáis bailando, y el entrenador os saca de la fiesta arrastrando a los últimos." },
       { label: "Aclarar el malentendido", subtitle: "Explicar quiénes sois", consequences: { reputacion: 2, rel_aficion: 2 }, outcomeText: "Lo explicas con educación y los vecinos, algo confusos, os invitan a un café igualmente. Salís del pueblo con una bolsa de dulces." },
@@ -589,7 +597,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "exjugador_visita",
     title: "Una leyenda visita el entrenamiento",
-    desc: (c) => `${c.legend}, un histórico retirado del ${c.club}, se pasa por la ciudad deportiva a saludar al grupo. Se sienta a ver un rondo y, al terminar, te llama aparte.`,
+    desc: (c) => `${c.legend}, un histórico retirado ${de(c.club)}, se pasa por la ciudad deportiva a saludar al grupo. Se sienta a ver un rondo y, al terminar, te llama aparte.`,
     opts: (c) => [
       { label: "Escuchar su consejo con atención", subtitle: "Aprender de quien ya lo vivió", consequences: { media: 2, moral: 3, reputacion: 1 }, outcomeText: "La leyenda te habla sin prisas, con una voz tranquila. Cuando termina, te da una palmada en el hombro: 'Esto no se aprende de golpe'." },
       { label: "Pedirle una foto para tus redes", subtitle: `Con ${c.legend}`, consequences: { fama: 3, moral: 1 }, outcomeText: "Te haces la foto con la leyenda y, esa tarde, la imagen supera el millón de me gusta. Él, sonriendo, te deja claro que no es la última." },
@@ -725,7 +733,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "exigencia_aficion",
     title: "La afición pide explicaciones",
-    desc: (c) => `Un grupo de aficionados del ${c.club} organiza una concentración a las puertas de la ciudad deportiva tras una pretemporada floja. Piden hablar con algún jugador.`,
+    desc: (c) => `Un grupo de aficionados ${de(c.club)} organiza una concentración a las puertas de la ciudad deportiva tras una pretemporada floja. Piden hablar con algún jugador.`,
     opts: () => [
       { label: "Salir a dar la cara", subtitle: "Escuchar sus quejas", consequences: { rel_aficion: 4, reputacion: 3, moral: -1 }, outcomeText: "Sales a hablar con ellos con la cabeza alta. Escuchas las quejas sin interrumpir, y al despedirte alguien te aplaude." },
       { label: "Dejar que hable el capitán", subtitle: "No es tu papel", consequences: { rel_vestuario: 1 }, outcomeText: "El capitán sale a hablar con la afición. Tú te quedas dentro, mirando por la ventana, con la certeza de que podrías haber salido." },
@@ -755,7 +763,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "utillero_despedida",
     title: "Se jubila el utillero histórico",
-    desc: (c) => `Después de treinta años doblando camisetas, el utillero del ${c.club} se jubila. El vestuario entero le prepara una sorpresa el último día de pretemporada.`,
+    desc: (c) => `Después de treinta años doblando camisetas, el utillero ${de(c.club)} se jubila. El vestuario entero le prepara una sorpresa el último día de pretemporada.`,
     opts: () => [
       { label: "Organizar una colecta para su regalo", subtitle: "Que se note el cariño", consequences: { rel_vestuario: 5, moral: 4, patrimonio: -200 }, outcomeText: "Todo el vestuario echa dinero en una bolsa y le regalan un reloj grabado. El utillero abre el paquete y no puede hablar." },
       { label: "Pedirle que se quede a alguna charla suelta", subtitle: "No perder el contacto", consequences: { rel_vestuario: 3, moral: 2 }, outcomeText: "Le propones aparecer de vez en cuando por el vestuario. Él sonríe y asiente: 'Eso es lo que más echaré de menos'." },
@@ -765,7 +773,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "estadio_obras",
     title: "Las obras del estadio se retrasan",
-    desc: (c) => `Las obras de reforma del estadio del ${c.club} no llegan a tiempo: la presentación oficial de la plantilla toca hacerse en el campo de entrenamiento, sin grada ni gran boato.`,
+    desc: (c) => `Las obras de reforma del estadio ${de(c.club)} no llegan a tiempo: la presentación oficial de la plantilla toca hacerse en el campo de entrenamiento, sin grada ni gran boato.`,
     opts: () => [
       { label: "Restarle importancia", subtitle: "Lo que importa es el equipo", consequences: { moral: 1, rel_vestuario: 1 }, outcomeText: "Dices que el equipo es lo que importa. Tu compañero asiente: 'Total, el himno suena igual'." },
       { label: "Proponer llevarla igualmente a la afición", subtitle: "Streaming improvisado", consequences: { rel_aficion: 3, fama: 2 }, outcomeText: "Montas un streaming improvisado desde el campo de entrenamiento. Miles de aficionados lo ven y la presentación acaba siendo más cercana que nunca." },
@@ -826,7 +834,7 @@ const TEMPLATES: Tpl[] = [
   {
     key: "partido_benefico",
     title: "Partido benéfico de pretemporada",
-    desc: (c) => `El ${c.club} organiza un partido benéfico contra veteranos y famosos locales para recaudar fondos para un hospital infantil. Te piden ser el capitán del combinado.`,
+    desc: (c) => `${cap(art(c.club))} organiza un partido benéfico contra veteranos y famosos locales para recaudar fondos para un hospital infantil. Te piden ser el capitán del combinado.`,
     opts: () => [
       { label: "Volcarte al máximo en la causa", subtitle: "Que se note el compromiso", consequences: { reputacion: 4, fama: 3, rel_aficion: 3 }, outcomeText: "Te implicas hasta en la organización de las entradas. Al final, el hospital recibe una cifra récord y una enfermera te abraza con lágrimas en los ojos." },
       { label: "Donar tu prima del partido", subtitle: "Un gesto extra", consequences: { patrimonio: -1000, reputacion: 3, moral: 3 }, outcomeText: "Donas tu prima sin pedir publicidad. Cuando se filtra, la gente te lo agradece más por lo discreto que por la cantidad." },
@@ -965,7 +973,7 @@ export function buildPreseasonLifeEvent(player: Player): GameEvent {
     fisio: getNpcName(player, "fisio"),
     captain: getNpcName(player, "capitan"),
     director: getNpcName(player, "director_deportivo"),
-    agent: player.agent_name ?? getNpcName(player, "agente"),
+    agent: agentRef(player.agent_name ?? getNpcName(player, "agente")),
     mate: getTeammateName(player, `${salt}-a`),
     mate2: getTeammateName(player, `${salt}-b`),
     rival: getTeammateName(player, `${salt}-r`),

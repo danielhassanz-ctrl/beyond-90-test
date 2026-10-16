@@ -75,7 +75,7 @@ export function getLockerRoom(player: Player): Mate[] {
   const flags = (player.flags ?? {}) as Flags;
   const age = playerAge(player.week);
   const general = player.rel_vestuario ?? 50;
-  const ageOf: Record<MateRole, number> = { capitan: 30 + (hash(`${player.id}:${player.club}:ca`) % 5), veterano: 34 + (hash(`${player.id}:${player.club}:ve`) % 4), amigo: clamp(age + (hash(`${player.id}:${player.club}:am`) % 3) - 1, 18, 38), joven: 17 + (hash(`${player.id}:${player.club}:jo`) % 3), rival: clamp(age + (hash(`${player.id}:${player.club}:ri`) % 5) - 2, 18, 38), polemico: 26 + (hash(`${player.id}:${player.club}:po`) % 6) };
+  const ageOf: Record<MateRole, number> = { capitan: clamp(Math.max(30, age + 4 + (hash(`${player.id}:${player.club}:ca`) % 4)), 30, 38), veterano: clamp(Math.max(34, age + 7 + (hash(`${player.id}:${player.club}:ve`) % 4)), 34, 40), amigo: clamp(age + (hash(`${player.id}:${player.club}:am`) % 3) - 1, 18, 38), joven: clamp(age - 3 + (hash(`${player.id}:${player.club}:jo`) % 3), 16, 20), rival: clamp(age + (hash(`${player.id}:${player.club}:ri`) % 5) - 2, 18, 38), polemico: 26 + (hash(`${player.id}:${player.club}:po`) % 6) };
   return (Object.keys(ROLE_LABEL) as MateRole[]).map((role) => {
     const name = role === "capitan" ? getNpcName(player, "capitan") : fictionalPlayerName(`${player.id}:${player.club}:vr:${role}`, player.club, player.last_name);
     const personal = clamp(num(flags[personalKey(player.club, role)]), -40, 40);

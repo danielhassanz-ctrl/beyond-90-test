@@ -1468,7 +1468,9 @@ export function buildDebutPretemp3(): GameEvent {
   };
 }
 
-export const EVENTS: GameEvent[] = [...EVENTS_1, ...EVENTS_2, ...EVENTS_3, ...EVENTS_4, ...EVENTS_5, ...EVENTS_6];
+// «premio-pichichi» y «premio-mvp-torneo» eran escenas fijas («40 goles en 38 partidos») que contradecían los premios reales de season-awards.ts: se quitan.
+const FAKE_AWARD_IDS = new Set(["premio-pichichi", "premio-mvp-torneo"]);
+export const EVENTS: GameEvent[] = [...EVENTS_1, ...EVENTS_2, ...EVENTS_3, ...EVENTS_4, ...EVENTS_5, ...EVENTS_6].filter((e) => !FAKE_AWARD_IDS.has(e.id));
 
 /* ─────────────── Mudanza a la ciudad de un club nuevo: vivienda y coche ─────────────── */
 

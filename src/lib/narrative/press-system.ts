@@ -16,6 +16,7 @@ import { displayName } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { cityOfClub } from "@/lib/narrative/cities";
 import { getNpcName, fictionalPlayerName } from "@/lib/narrative/npcs";
+import { de } from "@/lib/narrative/market-window";
 
 type Flags = Record<string, string | boolean>;
 
@@ -386,7 +387,7 @@ const SCENES: { key: string; weight: number; when: (p: Player, press: Outlet[], 
       return {
         category: "prensa",
         title: "Una pregunta incómoda en la rueda de prensa",
-        description: `Tras el entrenamiento, el club te pone delante del micrófono. ${n.journalist}, de ${n.name}, levanta la mano al final: «¿Es verdad que has hablado con otro club?». Silencio. A tu lado, el jefe de prensa del ${p.club} mira un punto fijo del techo. Hay cámaras, y todo lo que digas va a ser titular.`,
+        description: `Tras el entrenamiento, el club te pone delante del micrófono. ${n.journalist}, de ${n.name}, levanta la mano al final: «¿Es verdad que has hablado con otro club?». Silencio. A tu lado, el jefe de prensa ${de(p.club)} mira un punto fijo del techo. Hay cámaras, y todo lo que digas va a ser titular.`,
         options: [
           opt("a", "«Estoy centrado en el equipo, y punto»", "Pared", { reputacion: 2, rel_entrenador: 1 }, "neutral:+2,hostil:+1", `La respuesta es plana a propósito. No sale ningún titular salvo «${displayName(p)} se centra en el equipo». Para quien lo escribe, es un aburrimiento. Para ti, es una victoria.`),
           opt("b", "Soltar una media verdad que mantenga el misterio", "Jugar con fuego", { fama: 3, rel_entrenador: -2 }, "neutral:+4,hostil:+3,afin:-2,seg:+3", `«Mi representante habla con muchos clubes. Es su trabajo». Es tan cierto como inútil. Salen doce titulares distintos; el míster te dedica una mirada de las que no se olvidan.`),
@@ -433,7 +434,7 @@ const SCENES: { key: string; weight: number; when: (p: Player, press: Outlet[], 
       return {
         category: "prensa",
         title: "Se filtra tu conversación con el club",
-        description: `Una charla privada con la dirección deportiva del ${p.club} aparece, casi palabra por palabra, en las páginas de ${find(press, "hostil").name}. Alguien del entorno ha hablado. ${a.journalist}, tu contacto de confianza, te escribe: «Te cuento quién ha sido si quieres, pero antes tienes que decirme qué hacemos».`,
+        description: `Una charla privada con la dirección deportiva ${de(p.club)} aparece, casi palabra por palabra, en las páginas de ${find(press, "hostil").name}. Alguien del entorno ha hablado. ${a.journalist}, tu contacto de confianza, te escribe: «Te cuento quién ha sido si quieres, pero antes tienes que decirme qué hacemos».`,
         options: [
           opt("a", "Pedir que el club investigue y aclararlo en público", "Responsabilidad", { reputacion: 3, rel_entrenador: 1 }, "afin:+3,neutral:+2,hostil:-2", `Sale un comunicado conjunto y una frase tuya clara. La filtración pierde fuerza. Dentro del club, alguien deja de cenar con quien cenaba.`),
           opt("b", "Desmentirlo todo a la vez", "Negar la mayor", { fama: 1, reputacion: -2 }, "hostil:+2,afin:-3,seg:-2", `Lo niegas todo en una entrevista. Te cuesta mantener la historia cuando aparecen los mensajes. No es tu mejor semana.`),
@@ -477,10 +478,10 @@ export function buildPressScene(player: Player, rng: () => number = Math.random)
 /* ───────────── Hitos compartibles: los seguidores y la portada ───────────── */
 
 const STEP_TEXT: Record<number, { title: string; label: string }> = {
-  100_000: { title: "Cien mil personas te siguen", label: "cien mil" },
-  1_000_000: { title: "Un millón de seguidores", label: "un millón" },
-  5_000_000: { title: "Cinco millones de seguidores", label: "cinco millones" },
-  10_000_000: { title: "Diez millones de seguidores", label: "diez millones" },
+  100_000: { title: "Cien mil personas te siguen", label: "cien mil seguidores" },
+  1_000_000: { title: "Un millón de seguidores", label: "un millón de seguidores" },
+  5_000_000: { title: "Cinco millones de seguidores", label: "cinco millones de seguidores" },
+  10_000_000: { title: "Diez millones de seguidores", label: "diez millones de seguidores" },
 };
 
 export function buildFollowersMilestone(player: Player, step: number): GameEvent {
@@ -493,7 +494,7 @@ export function buildFollowersMilestone(player: Player, step: number): GameEvent
     id: `prensa-seguidores-${step}`,
     category: "prensa",
     title: t.title,
-    description: `Estás en el autobús de vuelta cuando el móvil se llena de avisos: has pasado de ${t.label} de seguidores. Nadie del vestuario se ha dado cuenta hasta que ${mate} te enseña la pantalla y grita. ${a.journalist}, de ${a.name}, ya te ha escrito: «¿Te acuerdas de cuando eran doscientos y todos tus primos?». Cada número es una persona que ha decidido escucharte.`,
+    description: `Estás en el autobús de vuelta cuando el móvil se llena de avisos: has pasado de ${t.label}. Nadie del vestuario se ha dado cuenta hasta que ${mate} te enseña la pantalla y grita. ${a.journalist}, de ${a.name}, ya te ha escrito: «¿Te acuerdas de cuando eran doscientos y todos tus primos?». Cada número es una persona que ha decidido escucharte.`,
     options: [
       { id: "a", label: "Dar las gracias con un vídeo sin guion", subtitle: "Cercanía", consequences: { fama: 3, rel_aficion: 3, moral: 4, flags: { [flag]: true, pr_delta: "afin:+3,neutral:+2,seg:+3" } }, outcomeText: "Grabas un vídeo de un minuto, sin cortes, con los compañeros dormidos al fondo. «Gracias por estar aquí». Se comparte por todas partes, y no por la cifra, sino por cómo lo has dicho." },
       { id: "b", label: "Sortear camisetas firmadas entre tus seguidores", subtitle: "Un regalo", consequences: { fama: 2, rel_aficion: 5, moral: 3, patrimonio: -800, flags: { [flag]: true, pr_delta: "neutral:+2,seg:+4" } }, outcomeText: "Mil personas participan en una hora. El ganador, un chaval de un pueblo pequeño, te escribe llorando. Ese mensaje, de los miles que lees, es el que guardas." },

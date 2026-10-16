@@ -13,6 +13,7 @@ import { describeKit, describeNationalKit } from "@/lib/clubColors";
 import { hasMajorTournament } from "@/lib/calendar/season";
 import { getLockerRoom } from "@/lib/narrative/locker-room";
 import { fictionalPlayerName } from "@/lib/narrative/npcs";
+import { de } from "@/lib/narrative/market-window";
 
 type Flags = Record<string, string | boolean>;
 
@@ -107,7 +108,7 @@ export function buildClubKitEvent(player: Player): GameEvent {
   return {
     id: `kit-club-${season}`,
     category: "especial",
-    title: `La camiseta nueva del ${club}`,
+    title: `La camiseta nueva ${de(club)}`,
     description: `${maker} y el club presentan la equipación de la temporada y quieren tu cara en la campaña, junto a ${list(crew)}. Una tarde entera de focos, cambios de camiseta y un fotógrafo que repite «una más, una más». Hay vídeo para las redes y la tienda del club abrirá la preventa esa misma noche. Te pagan ${pay.toLocaleString("es-ES")} € por el día.`,
     options: [
       opt("a", "Posar con una sonrisa y darlo todo", "Profesional", { fama: 3, rel_aficion: 2, moral: 2, patrimonio: pay }, { kit_club_last: String(season) }, `El fotógrafo no tiene que pedirte nada: acierta a la primera. Cuando salen las fotos, ${first(crew[0] ?? name)} te escribe: «Pareces uno de los de la tele». La preventa vuela y el club te da las gracias por eso, aunque en voz baja.`),

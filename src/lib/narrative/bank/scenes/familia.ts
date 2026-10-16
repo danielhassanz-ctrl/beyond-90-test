@@ -30,7 +30,7 @@ export const FAMILIA: BankScene[] = [
       o("b", "Dejarle ganar con un pequeño teatro", "Un buen hermano", { moral: 5, rel_vestuario: 2, flags: { fm_hermano_reto: "dejo" } }, "Finges tropezar dos veces y fallas a puerta vacía. Tu hermano, sin sospechar nada, celebra como un campeón del mundo. Esa noche, en casa, tu madre te guiña un ojo: «Te vi». No dices nada."),
       o("c", "Decir que hoy no, que tienes entrenamiento", "Otro día", { moral: -2, flags: { fm_hermano_reto: "no" } }, "Le dices que otro día. Tu hermano asiente, con la mirada baja. Esa noche, no te habla en la cena. A los tres días, te lo encuentras en la puerta con el balón: «¿Hoy sí?»."),
     ]),
-  S("fm-abuela-velas", "familia", { minAge: 16, clubTurns: [2, 400], notFlags: ["fm_abuela"] }, "vida",
+  S("fm-abuela-velas", "familia", { minAge: 16, clubTurns: [2, 400], notFlags: ["fm_abuela", "abuela_adios"] }, "vida",
     "Tu abuela enciende velas por ti en todas las iglesias del pueblo",
     "Es su manera de ayudarte: antes de cada partido importante, camina por el pueblo con una caja de cerillas y va dejando velitas en tres iglesias, dos ermitas y una capillita que ya nadie visita. Una vecina te lo cuenta con la boca llena de pastel: «Tu abuela hace lo que puede. Y puede mucho». Hay que verla: ochenta años, un bastón y una fe inquebrantable.",
     [

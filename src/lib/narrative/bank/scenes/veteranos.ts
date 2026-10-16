@@ -84,28 +84,28 @@ export const VETERANOS: BankScene[] = [
       o("c", "Pedir que no haya nada especial, sin ceremonias", "Un adiós discreto", { moral: 2, reputacion: 3, flags: { vt_despedida: "discreta" } }, "Prefieres no hacer ruido. Al final, solo el utillero te espera en el vestuario con una caja: «Es el balón de tu primer gol. Lo guardaba». Te quedas sin palabras. Era lo único que de verdad querías."),
     ], { isMilestone: true, milestoneType: "carrera", imageScene: "Photorealistic photo of a veteran footballer doing a lap of honour in a packed stadium at dusk, fans waving scarves and banners, emotional smile, golden light, no logos or readable text" }),
   // ───── Cameos de la despedida: solo salen si viviste aquellas escenas ─────
-  S("vt-cameo-loro", "veterano", { after: [after("vt-despedida", undefined, 2, 8)], flags: ["loro_leyenda"] }, "vestuario",
+  S("vt-cameo-loro", "veterano", { after: [after("vt-despedida", "a", 2, 8)], flags: ["loro_leyenda"] }, "vestuario",
     "Evaristo, en primera fila de tu despedida",
     "En la tribuna, junto al utillero, hay una jaula tapada con una tela del club. Cuando acabas tu discurso, el utillero la destapa con un gesto teatral y, desde dentro, un loro viejo, con mucha dignidad, suelta con la voz de aquel míster: «¡Esto no es un hotel!». Los veteranos se parten. Los jóvenes, sin saber por qué, te abrazan.",
     [
       o("a", "Subir a la tribuna y abrazar al utillero y al loro", "Cerrar el círculo", { moral: 9, rel_vestuario: 6, reputacion: 3 }, "Le das un abrazo al utillero. Al loro, una pipa. Evaristo contesta con tu apellido, pronunciado con la entonación del speaker. «Lo ha aprendido solo», jura el utillero. Nadie le cree. Todos lo agradecen."),
       o("b", "Decirle al micrófono: «Gracias a quien me ha aguantado todo este tiempo»", "Un chiste final", { moral: 6, fama: 2, rel_vestuario: 4 }, "Lo dices mirando a la jaula. El estadio estalla, el loro se ofende, y el vídeo se hace viral con el título «El mejor fichaje del club fue un pájaro»."),
     ]),
-  S("vt-cameo-campo", "veterano", { after: [after("vt-despedida", undefined, 2, 8)], flags: ["campo_inaugurado"] }, "vida",
+  S("vt-cameo-campo", "veterano", { after: [after("vt-despedida", "a", 2, 8)], flags: ["campo_inaugurado"] }, "vida",
     "Los críos del campo de tu barrio, con la camiseta del equipo",
     "Una fila de treinta niños con la equipación de la escuela de tu barrio sale al césped y se pone en hilera, detrás de una pancarta pintada a mano: «De este campo salió un crack. Gracias por volver». Algunos de los chavales son hijos de los que jugaban contigo en el barro. El entrenador de siempre, ya muy mayor, camina el último con un bastón.",
     [
       o("a", "Jugar un último partidillo con ellos en el césped", "Volver a los doce años", { moral: 10, rel_aficion: 6, reputacion: 5, forma: 1 }, "Te quitas las botas de profesional y juegas descalzo diez minutos con los críos. Un niño te hace un túnel y todo el estadio celebra. Piensas en el campo de tierra y piensas que, en el fondo, nunca has dejado de jugar allí."),
       o("b", "Abrazar al viejo entrenador antes que a nadie", "Agradecerle todo", { moral: 9, reputacion: 6, rel_entrenador: 0 }, "Le das un abrazo largo, sin palabras. «Lo hiciste tú, yo solo te miraba», murmura. «Mentira», contestas. El estadio entero se queda en silencio, sin saber por qué se emociona."),
     ]),
-  S("vt-cameo-nacho", "veterano", { after: [after("vt-despedida", undefined, 2, 8)], flags: ["nacho_cerrado"] }, "vida",
+  S("vt-cameo-nacho", "veterano", { after: [after("vt-despedida", "a", 2, 8)], flags: ["nacho_cerrado"] }, "vida",
     "Chema, con una bicicleta de regalo",
     "Entre la gente, al fondo de la grada, un hombre con una gorra y una camiseta vieja levanta una bicicleta por encima de su cabeza. Es Chema, el de la pachanga, el del taller del barrio. Baja las escaleras con la bici en brazos, atraviesa la valla de seguridad con una sonrisa disculpándose, y te la entrega en mitad del césped. «Para tus rutas de jubilado», dice.",
     [
       o("a", "Subirte a la bici y dar una vuelta de honor con él", "Un homenaje a dos", { moral: 11, rel_aficion: 7, reputacion: 5, fama: 3 }, "Dais una vuelta al campo montados cada uno en una bici, entre aplausos y carcajadas. Dos amigos del barrio, con las rodillas mal, haciendo el ridículo. Es la mejor vuelta de honor de la historia del club."),
       o("b", "Darle las gracias y guardarla en el vestuario", "Con cariño", { moral: 7, reputacion: 3 }, "Le abrazas y le dices que no la va a usar nadie más que tú. Esa tarde, en el vestuario, pegas una nota en el manillar: «De Chema. Para siempre»."),
     ]),
-  S("vt-cameo-quique", "veterano", { after: [after("vt-despedida", undefined, 2, 8)], flags: ["restaurante_exito"] }, "vida",
+  S("vt-cameo-quique", "veterano", { after: [after("vt-despedida", "a", 2, 8)], flags: ["restaurante_exito"] }, "vida",
     "Quique prepara la cena de tu despedida",
     "En el vestuario, tras el homenaje, hay un camión de reparto aparcado en la puerta trasera. Del camión bajan veinte cajas con croquetas, jamón y una tarta con tu cara en azúcar. Quique, con el delantal manchado, se limpia las manos y dice: «Para mi primo, el cliente más famoso de Bar el Crack». Detrás, tres camareros con bandejas y la prensa local.",
     [

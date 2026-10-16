@@ -15,7 +15,7 @@ export const VETERANO2: BankScene[] = [
       o("b", "Hacerle una broma sobre el póster y contarle que tú también tuviste uno", "Humor de veterano", { moral: 4, reputacion: 3, flags: { v2v_rival_joven: "broma" } }, "«Yo tenía el de uno que se pasó de moda», dices. El chaval se ríe a carcajadas. Os hacéis una foto juntos: una con la camiseta de un equipo, otra con la de otro. Se hace viral con la leyenda: «Del póster al campo»."),
       o("c", "Responder con frialdad: «El campo es el campo»", "Marcar distancia", { moral: -1, reputacion: -1, flags: { v2v_rival_joven: "frio" } }, "El chaval se aparta, avergonzado. En el vestuario, te quedas pensando. Años después, cuando leas una entrevista suya, descubrirás que no habló de ti. Y entenderás que fue por aquella frialdad."),
     ]),
-  S("v2v-hijo-pregunta", "veterano", { minAge: 29, flags: ["hijos"], clubTurns: [3, 400], notFlags: ["v2v_hijo_pregunta"] }, "vida",
+  S("v2v-hijo-pregunta", "veterano", { minAge: 29, flags: ["hijos", "pareja"], clubTurns: [3, 400], notFlags: ["v2v_hijo_pregunta"] }, "vida",
     "Tu hijo te pregunta cuándo vas a dejar de jugar para jugar con él",
     "Es en la hora del baño, con espuma en el pelo y un patito de goma. Tu hijo, con voz muy seria, dice: «Papá, ¿tú cuándo vas a dejar de jugar a los partidos para jugar conmigo?». Te quedas inmóvil con la toalla en la mano. {pareja}, desde la puerta, aguanta la respiración. El niño te mira con una paciencia infinita. Tienes que contestar. Y todo lo que digas, será verdad.",
     [

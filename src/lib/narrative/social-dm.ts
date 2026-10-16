@@ -511,7 +511,7 @@ const SCENARIOS: DmScenario[] = [
 
 export function buildSocialDmEvent(player: Player): GameEvent {
   const week = player.week;
-  const hasPartner = typeof player.flags?.pareja === "string";
+  const hasPartner = typeof player.flags?.pareja === "string" && Boolean(player.flags.pareja);
   const lastKey = String(player.flags?.dm_last_key ?? "");
   let pool = SCENARIOS.filter((s) => !(s.flirty && hasPartner) && s.key !== lastKey);
   if (pool.length === 0) pool = SCENARIOS.filter((s) => !s.flirty);

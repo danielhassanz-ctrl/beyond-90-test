@@ -40,7 +40,7 @@ interface Ctx {
 
 const RIVALS = ["Atlético Valdemar", "Racing de Ribera", "Unión Costa Verde", "Real Sierra Alta", "Deportivo Montealto", "CD Peña Blanca", "Athletic de la Vega", "Sporting Llanura"];
 const CITIES = ["Valdemar", "Ribera", "Costa Verde", "Sierra Alta", "Montealto", "Peña Blanca", "la Vega", "Llanura"];
-const COACHES = ["Don Ernesto", "el míster Alcalde", "Quique Villar", "el profe Castaño", "Pablo Iriarte"];
+const COACHES = ["Don Ernesto", "Rubén Alcalde", "Quique Villar", "Santi Castaño", "Pablo Iriarte"];
 
 interface Tpl {
   key: string;
@@ -123,7 +123,7 @@ const TEMPLATES: Tpl[] = [
     key: "lesion-companero",
     stage: "Pretemporada · vestuario",
     title: "El compañero que juega lesionado",
-    setup: (c) => `A diez minutos del partido clave, ${c.coach} te llama aparte. «Fulano está tocado, pero dice que juega. Tú eres el capitán del día. Dime qué hacemos». Fulano, desde el otro lado del vestuario, hace el gesto de que está bien con una cara que dice lo contrario.`,
+    setup: (c) => `A diez minutos del partido clave, ${c.coach} te llama aparte. «Nacho está tocado, pero dice que juega. Tú eres el capitán del día. Dime qué hacemos». Nacho, desde el otro lado del vestuario, hace el gesto de que está bien con una cara que dice lo contrario.`,
     options: () => [
       o("a", "Dejarle jugar, es su decisión", "Confiar", 0.45, `Juega los noventa minutos y marca un gol que no olvidará nadie. Su cara después del partido, de puro alivio, es una foto para enmarcar.`, `A los veinte minutos se hace daño de verdad y sale en camilla. Pasarás semanas pensando si debiste decir otra cosa.`),
       o("b", "Sacarle del once y hablar con él", "Prudencia", 0.75, `Se enfada un par de horas y después te lo agradece: «Tenías razón». El equipo gana sin él y la unión del grupo sube un escalón.`, `Se lo toma mal y la relación se enfría. Aunque tenías razón, a veces tener razón sale caro.`),

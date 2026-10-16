@@ -36,7 +36,7 @@ export function getMarketWindow(week: number): MarketWindow | null {
   return null;
 }
 
-const FEMININE_CLUBS = new Set(["Real Sociedad", "Atalanta", "Juventus", "AS Roma"]);
+const FEMININE_CLUBS = new Set(["Real Sociedad", "Atalanta", "Juventus", "AS Roma", "Lazio", "Fiorentina", "Udinese", "Sampdoria", "Cremonese", "Salernitana", "Cultural Leonesa", "Ponferradina"]);
 /** "el Getafe CF", "la Real Sociedad", "la Roma"... el artículo depende del club. */
 export function art(club: string): string {
   if (club === "Las Palmas") return "Las Palmas";
