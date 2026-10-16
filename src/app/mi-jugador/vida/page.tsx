@@ -159,6 +159,11 @@ export default async function VidaPage() {
 
       <LifeCircle icon="🏠" title="Familia" subtitle="Los que estaban antes de la fama" members={familia} defaultOpen />
       <LifeCircle icon="🤝" title="Amigos y compañeros" subtitle="Vestuario, barrio y quien te disputa el puesto" members={amigos} />
+      {hasClub && (
+        <Link href="/mi-jugador/vestuario" className="w-full max-w-md rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-gold">
+          🚪 Entrar al vestuario
+        </Link>
+      )}
       <LifeCircle icon="🏟️" title="Club y cuerpo técnico" subtitle="Míster, médicos, directivos y tu representante" members={club} />
       {antiguos.length > 0 && <LifeCircle icon="🕰️" title="De tus clubes anteriores" subtitle="Quienes te dirigieron y compartieron vestuario contigo" members={antiguos} />}
 

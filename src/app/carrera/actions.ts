@@ -51,7 +51,9 @@ import { detectNewMilestones, buildMilestoneEvent } from "@/lib/narrative/career
 import { logAppError } from "@/lib/errorLog";
 import { computeStreakUpdate, STREAK_MILESTONES } from "@/lib/player/streak";
 import { displayName } from "@/types/player";
+import { isNationalTeamEvent } from "@/lib/images/national-event";
 import { mergeFlagsForWrite } from "@/lib/supabase/flags";
+import { applyLockerDeltas } from "@/lib/narrative/locker-room";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
 import { photoRefs } from "@/lib/images/photo-refs";
 import { withStateCause } from "@/lib/narrative/states";
@@ -215,7 +217,13 @@ async function resolveEventInner(formData: FormData) {
   const partnerTouches = Object.keys(partnerStep.flags).length > 1 || Boolean(consequencesBank.flags?.pareja_delta);
   const consequencesPartner0 = partnerTouches ? { ...consequencesBank, flags: { ...consequencesBank.flags, ...partnerStep.flags } } : consequencesBank;
   // Un estado que empieza con esta escena (escándalo, pitada, bache…) guarda cuál fue la causa, para enseñarla en Vida.
-  const consequencesPartner = withStateCause(consequencesPartner0, event.title);
+  const consequencesPartner1 = withStateCause(consequencesPartner0, event.title);
+  // Vestuario: las escenas mueven la relación con compañeros concretos (vr_delta = «capitan:+4,rival:-6», ver narrative/locker-room.ts).
+  const lockerDelta = applyLockerDeltas(player as Player, consequencesPartner1.flags?.vr_delta);
+  const consequencesPartner =
+    consequencesPartner1.flags?.vr_delta !== undefined
+      ? { ...consequencesPartner1, flags: { ...Object.fromEntries(Object.entries(consequencesPartner1.flags).filter(([k]) => k !== "vr_delta")), ...lockerDelta } }
+      : consequencesPartner1;
   // El nacimiento del primer hijo (escena del banco) anota su nombre y su fecha para los siguientes hijos y para Vida.
   const consequences = event.id === "bank-p2-nacimiento" ? { ...consequencesPartner, flags: { ...consequencesPartner.flags, ...firstChildPatch(player as Player) } } : consequencesPartner;
   // outcomeText garantizado (sin tirada de éxito/fracaso) para que se vea
@@ -765,13 +773,13 @@ async function resolveEventInner(formData: FormData) {
           ? withSceneGuards(event.imageScene, {
               club: newClub,
               age: currentAge,
-              nationalTeam: /^(sel-|torneo|matchday-torneo)/.test(event.id),
+              nationalTeam: isNationalTeamEvent(event, player.nation),
               nation: player.nation ?? undefined,
               surname: player.last_name ?? undefined,
             })
           : null);
       // Con la selección, la camiseta es la de la selección (antes salía una cualquiera, sin sentido).
-      if (milestoneImagePrompt && /^(sel-|torneo|matchday-torneo)/.test(event.id) && player.nation && !/national team home kit/.test(milestoneImagePrompt)) {
+      if (milestoneImagePrompt && isNationalTeamEvent(event, player.nation) && player.nation && !/national team home kit/.test(milestoneImagePrompt)) {
         // La camiseta va AL PRINCIPIO: al final del prompt el modelo la ignoraba y ponía la de otra selección.
         milestoneImagePrompt = `He is wearing ${describeNationalKit(player.nation)} — reproduce this exact kit faithfully. ${milestoneImagePrompt}`;
       }
@@ -852,7 +860,10 @@ async function resolveEventInner(formData: FormData) {
             ? `Después de ${player.week} semanas como profesional`
             : overrideTitle
               ? event.title
-              : (outcomeText ?? option.subtitle),
+              : /^matchday-/.test(event.id)
+                ? // El hito de un partido cuenta el PARTIDO (la jugada y el marcador), no la reacción posterior (un tuit, una entrevista).
+                  event.description.length > 260 ? `${event.description.slice(0, 257).replace(/\s+\S*$/, "")}…` : event.description
+                : (outcomeText ?? option.subtitle),
           image_url: null,
           image_status: willGenerate || isDmEvent ? "pending" : "none",
           // Se guarda aquí (no solo se usa al vuelo) para que

@@ -92,6 +92,7 @@ import { shouldTriggerSeasonAwards, buildSeasonAwardsEvent } from "@/lib/narrati
 import { shouldTriggerSeasonGoals, buildSeasonGoalsEvent, shouldTriggerGoalsReview, buildGoalsReviewEvent } from "@/lib/narrative/season-goals";
 import { shouldTriggerTrainingPlan, buildTrainingPlanEvent } from "@/lib/narrative/training-plan";
 import { newAchievements, markAchievements, buildAchievementEvent } from "@/lib/narrative/achievements";
+import { shouldTriggerLockerScene, buildLockerScene } from "@/lib/narrative/locker-room";
 import { shouldTriggerSeriousInjury, shouldTriggerSagaStage, buildSeriousInjuryEvent, buildSagaStageEvent } from "@/lib/narrative/injury-saga";
 import { shouldTriggerSponsorRenewal, buildSponsorRenewalEvent } from "@/lib/narrative/sponsor-renewal";
 import { shouldTriggerPropertyReview, buildPropertyReviewEvent } from "@/lib/narrative/property-review";
@@ -2113,6 +2114,14 @@ export async function pickNextEventDynamic(
     const plan = buildTrainingPlanEvent(playerWithDynamics);
     console.log(`[pickNextEventDynamic] Plan de entrenamiento: "${plan.title}"`);
     return plan;
+  }
+  // Vestuario: una escena con tus compañeros de verdad (el capitán, el rival por tu puesto, el polémico…).
+  if (!midMatch && !getTorneoProgress(playerWithDynamics) && shouldTriggerLockerScene(playerWithDynamics)) {
+    const lockerEvent = buildLockerScene(playerWithDynamics);
+    if (lockerEvent) {
+      console.log(`[pickNextEventDynamic] Vestuario: "${lockerEvent.title}"`);
+      return lockerEvent;
+    }
   }
   // Logros: los de bronce se anotan sin ruido y los de plata y oro salen como una escena breve y compartible.
   if (!midMatch && !getTorneoProgress(playerWithDynamics)) {

@@ -178,8 +178,8 @@ export function withSceneGuards(scene: string, opts: { club?: string; age: numbe
   const ageText =
     opts.age < 18
       ? "a 16-17 year old teenager"
-      : opts.age < 23
-        ? `a ${opts.age}-year-old young man with a youthful, clean-shaven or lightly stubbled face, no wrinkles, no grey hair`
+      : opts.age < 26
+        ? `a ${opts.age}-year-old young man with a youthful, clean-shaven or lightly stubbled face, no wrinkles, no grey hair, looking clearly in his early twenties`
         : `a ${opts.age}-year-old man`;
   // Con la selección, la camiseta es la de la selección (antes no se decía ninguna y salía una cualquiera: rojinegra y sin escudo).
   const kit = opts.nationalTeam
@@ -189,5 +189,5 @@ export function withSceneGuards(scene: string, opts: { club?: string; age: numbe
     : opts.club
       ? ` If he wears a football kit, it is: ${describeKit(opts.club)}.`
       : "";
-  return `${scene} Requirements: the man is ${ageText}.${kit} No readable text anywhere in the image: no scoreboard numbers, no captions, no banners with words, and no names at all${opts.surname ? ` except his own surname "${opts.surname.toUpperCase()}" (only if a shirt back is shown)` : ""}.`;
+  return `${scene} Requirements: the man is ${ageText}.${kit} Every person in the image is a living athlete caught mid-action with natural motion: never a statue, sculpture, mannequin or frozen figure. Any goalkeeper wears a goalkeeper kit of a clearly different colour from the outfield players and is in a natural diving or standing position. Realistic sports photography. No readable text anywhere in the image: no scoreboard numbers, no captions, no banners with words, and no names at all${opts.surname ? ` except his own surname "${opts.surname.toUpperCase()}" (only if a shirt back is shown)` : ""}.`;
 }
