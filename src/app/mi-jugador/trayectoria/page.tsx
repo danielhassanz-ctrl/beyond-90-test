@@ -50,7 +50,7 @@ function NumCells({ pj, g, a, trophies, labels, club, season }: { pj: number; g:
       <span className="font-num w-9 text-center text-sm text-foreground">{pj}</span>
       <span className="font-num w-11 text-center text-sm text-foreground">{g}</span>
       <span className="font-num w-11 text-center text-sm text-foreground">{a}</span>
-      <span className="flex w-16 items-center justify-end gap-0.5">
+      <span className="flex w-16 flex-wrap items-center justify-end gap-0.5">
         {trophies.length > 0 ? trophies.map((k, i) => <TrophyHint key={`${k}-${i}`} kind={k} label={[labels[i], INDIVIDUAL.has(k) ? '' : club, season].filter(Boolean).join(' · ')} />) : <span className="text-muted-foreground">—</span>}
       </span>
     </>

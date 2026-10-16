@@ -100,7 +100,7 @@ export const LIFE_EVENTS_EXPANDED = {
 
   // Romance
   propuesta: [
-    "Propuesta de matrimonio en la cancha después de ganar. Anillo, todo. Ella dice que sí llorando.",
+    "Propuesta de matrimonio en el césped después de ganar. Anillo, todo. Ella dice que sí llorando.",
     "Tu pareja te pide que elijas: ella o un fichaje a otro país. Lo elegiste el día anterior.",
     "Se enteral que le eres infiel. La prensa lo publica. Pierdes todo en 48 horas.",
   ],
@@ -134,7 +134,7 @@ export const MATCH_MOMENTS = {
 
   defensa: [
     "Dos bloqueos salvadores. El otro equipo pudo ganar. Tú lo impediste sin que nadie lo note.",
-    "Entrada perfecta en la mitad de cancha. Robo de balón. Contraataque. Gol. Fue idea tuya.",
+    "Entrada perfecta en la mitad del campo. Robo de balón. Contraataque. Gol. Fue idea tuya.",
     "Cabezazo contra el poste. Duele, sangras, sigues jugando. Eso es lo que duele al rival.",
   ],
 

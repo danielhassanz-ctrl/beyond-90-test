@@ -33,8 +33,13 @@ export function ShareButton({
           setTimeout(() => setStatus("idle"), 2000);
           return;
         }
-      } catch {
-        // el usuario canceló el share, o el navegador no lo soporta: seguimos abajo
+      } catch (err) {
+        // Si el usuario cancela el menú de compartir, no se descarga nada ni se dice «compartido con éxito».
+        if (err instanceof DOMException && err.name === "AbortError") {
+          setStatus("idle");
+          return;
+        }
+        // el navegador no lo soporta: seguimos abajo
       }
 
       const a = document.createElement("a");

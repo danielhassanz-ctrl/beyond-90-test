@@ -89,3 +89,29 @@ export function getConfederation(nation: string): Confederation | null {
   if (CONMEBOL_NATIONS_NORMALIZED.includes(normalized)) return "CONMEBOL";
   return null;
 }
+
+/**
+ * El nombre «de diccionario» de una selección a partir de lo que escribió el jugador («espana», «Holanda», «EEUU»…): la camiseta
+ * de la selección se busca por este nombre exacto. Si no se reconoce, se devuelve el texto tal cual (sin tocar).
+ */
+const CANONICAL_NATIONS = [
+  "España", "Francia", "Alemania", "Italia", "Inglaterra", "Portugal", "Países Bajos", "Bélgica", "Croacia", "Suiza", "Polonia", "Austria", "Dinamarca",
+  "Suecia", "Noruega", "Gales", "Escocia", "Irlanda", "Serbia", "Ucrania", "Turquía", "Grecia", "Argentina", "Brasil", "Uruguay", "Colombia", "Chile",
+  "Perú", "Ecuador", "Paraguay", "Bolivia", "Venezuela", "México", "Estados Unidos", "Canadá", "Marruecos", "Senegal", "Nigeria", "Egipto", "Japón",
+  "Corea del Sur", "Australia", "Costa Rica",
+];
+const NATION_ALIASES: Record<string, string> = {
+  holanda: "Países Bajos", "paises bajos": "Países Bajos", netherlands: "Países Bajos", usa: "Estados Unidos", eeuu: "Estados Unidos", "ee uu": "Estados Unidos",
+  "ee.uu.": "Estados Unidos", "estados unidos de america": "Estados Unidos", spain: "España", france: "Francia", germany: "Alemania", italy: "Italia", england: "Inglaterra",
+  brazil: "Brasil", belgium: "Bélgica", croatia: "Croacia", switzerland: "Suiza", poland: "Polonia", denmark: "Dinamarca", mexico: "México", japan: "Japón",
+  morocco: "Marruecos", peru: "Perú",
+};
+
+export function canonicalNation(raw: string | null | undefined): string {
+  const text = String(raw ?? "").trim();
+  if (!text) return text;
+  const key = normalize(text).replace(/\s+/g, " ");
+  const alias = NATION_ALIASES[key];
+  if (alias) return alias;
+  return CANONICAL_NATIONS.find((n) => normalize(n) === key) ?? text;
+}

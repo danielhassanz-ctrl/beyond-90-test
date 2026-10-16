@@ -1,7 +1,7 @@
 "use server";
 
 import { pickInterestedClub } from "@/lib/narrative/market-window";
-import { ensureNextEvent } from "@/lib/narrative/ensure-event";
+import { ensureNextEvent, GEN_LOCK_ID } from "@/lib/narrative/ensure-event";
 import { appendThread } from "@/lib/narrative/threads";
 import { bankFlagKey } from "@/lib/narrative/bank/types";
 import { simulateOffScreenMatches, backfillOffScreen, addSimSeason, addClubSplit, sumSim, emptySim } from "@/lib/narrative/off-screen-matches";
@@ -62,10 +62,19 @@ import { coverForMilestone } from "@/lib/images/coverHeadlines";
 import { timed } from "@/lib/perf";
 
 export async function resolveEvent(formData: FormData) {
-  return timed("resolveEvent total", () => resolveEventInner(formData));
+  const ctx: { restore: (() => Promise<void>) | null } = { restore: null };
+  try {
+    return await timed("resolveEvent total", () => resolveEventInner(formData, ctx));
+  } catch (err) {
+    // Un fallo inesperado después de reclamar la escena no debe dejar el turno perdido: se devuelve para poder repetirla.
+    // (Las redirecciones de Next también viajan como excepción: esas son flujo normal y no se tocan.)
+    const digest = String((err as { digest?: unknown })?.digest ?? "");
+    if (!digest.startsWith("NEXT_REDIRECT") && ctx.restore) await ctx.restore().catch(() => {});
+    throw err;
+  }
 }
 
-async function resolveEventInner(formData: FormData) {
+async function resolveEventInner(formData: FormData, ctx: { restore: (() => Promise<void>) | null }) {
   const { supabase, user, player } = await timed("resolveEvent getPlayer", () => getCurrentUserAndPlayer());
 
   if (!user || !player) {
@@ -74,7 +83,8 @@ async function resolveEventInner(formData: FormData) {
 
   const eventId = formData.get("event_id") as string;
   const optionId = formData.get("option_id") as string;
-  const freeText = (formData.get("free_text") as string) || null;
+  // El texto libre va al historial y a los prompts de la IA: se recorta en el servidor (no basta el límite del formulario).
+  const freeText = ((formData.get("free_text") as string) || "").slice(0, 400).trim() || null;
 
   // El evento vivo se lee siempre de lo que quedó guardado en el servidor
   // (nunca de lo que mande el formulario), así ninguna consecuencia puede
@@ -88,6 +98,16 @@ async function resolveEventInner(formData: FormData) {
   if (!event || !option) {
     redirect("/carrera");
   }
+
+  // Doble envío (doble toque, dos pestañas): la escena se «reclama» quitándola del servidor en un solo paso. Solo la primera petición
+  // la encuentra; las demás vuelven a Carrera sin duplicar historial, hito ni foto (ni gastar créditos dos veces).
+  // En su lugar queda la reserva de generación (ver ensure-event.ts): mientras dura esta petición, recargar Carrera espera en vez de inventar otra escena.
+  const reservation = { id: GEN_LOCK_ID, category: "vida", title: "", description: "", options: [], ts: Date.now() };
+  const { data: claimedRows } = await supabase.from("players").update({ pending_event: reservation }).eq("id", player.id).eq("pending_event->>id", eventId).select("id");
+  if (!claimedRows || claimedRows.length === 0) redirect("/carrera");
+  ctx.restore = async () => {
+    await supabase.from("players").update({ pending_event: player.pending_event }).eq("id", player.id).eq("pending_event->>id", GEN_LOCK_ID);
+  };
 
   const resolution = resolveOption(option, player);
   // Una opción con tirada de éxito/fracaso puede traer además cambios
@@ -426,7 +446,8 @@ async function resolveEventInner(formData: FormData) {
 
   if (consequences.flags || event.memorableThread) {
     playerUpdate.flags = {
-      ...player.flags,
+      // Se parte de lo ya escrito en este turno (contador de baja inj_<temporada>, club de la temporada…): antes se perdía.
+      ...((playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags),
       ...consequences.flags,
       ...(event.memorableThread ? { [`hilo_${Date.now()}`]: event.memorableThread } : {}),
     };
@@ -455,7 +476,9 @@ async function resolveEventInner(formData: FormData) {
     const flagsBaseC = (playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {};
     if (clubNow && clubNow !== NO_CLUB_YET && flagsBaseC[key] !== clubNow) playerUpdate.flags = { ...flagsBaseC, [key]: clubNow };
   }
-  const injuryTick = newWeek > player.week ? tickInjury(player.flags) : null;
+  const rawInjuryTick = newWeek > player.week ? tickInjury(player.flags) : null;
+  // Si la propia escena fija la duración de la baja (una recaída o un adelanto de la recuperación), manda ella: el tick no la pisa.
+  const injuryTick = rawInjuryTick && consequences.flags && rawInjuryTick.flagKey in consequences.flags ? null : rawInjuryTick;
   if (injuryTick) {
     const flagsBase = {
       ...((playerUpdate.flags as Record<string, string | boolean> | undefined) ?? player.flags ?? {}),
@@ -769,18 +792,26 @@ async function resolveEventInner(formData: FormData) {
         overrideMilestoneType ?? event.milestoneType,
         currentAgentName,
       );
+      const guardedScene = event.imageScene
+        ? withSceneGuards(event.imageScene, {
+            club: newClub,
+            age: currentAge,
+            nationalTeam: isNationalTeamEvent(event, player.nation),
+            nation: player.nation ?? undefined,
+            surname: player.last_name ?? undefined,
+            position: player.position ?? undefined,
+          })
+        : null;
+      // Orden: los «primeros» de la carrera (plantilla con cara), el guion hecho a mano para ese id, la escena propia del evento (con
+      // camiseta, edad y posición) y, solo si no hay, la plantilla genérica del tipo. Antes la plantilla genérica del tipo se imponía
+      // a la escena escrita para el evento (una gala de premios salía como «rompiendo un récord»; una falta, como un gol cualquiera).
+      const handScripted = getMilestoneImagePrompt(event.id, currentAge, newClub, player.last_name, undefined, currentAgentName);
       // Un título lleva su escena propia (levantando LA copa de esa competición), no la genérica de "trofeo".
       milestoneImagePrompt =
-        (event.trophy && event.imageScene ? null : contextualPrompt) ??
-        (event.imageScene
-          ? withSceneGuards(event.imageScene, {
-              club: newClub,
-              age: currentAge,
-              nationalTeam: isNationalTeamEvent(event, player.nation),
-              nation: player.nation ?? undefined,
-              surname: player.last_name ?? undefined,
-            })
-          : null);
+        (overrideMilestoneType ? contextualPrompt : null) ??
+        (event.trophy && event.imageScene ? null : handScripted) ??
+        guardedScene ??
+        contextualPrompt;
       // Con la selección, la camiseta es la de la selección (antes salía una cualquiera, sin sentido).
       if (milestoneImagePrompt && isNationalTeamEvent(event, player.nation) && player.nation && !/national team (home|away) kit/.test(milestoneImagePrompt)) {
         // La camiseta va AL PRINCIPIO: al final del prompt el modelo la ignoraba y ponía la de otra selección.
@@ -1196,6 +1227,9 @@ async function resolveEventInner(formData: FormData) {
 
   if (playerUpdateError) {
     console.error("[resolveEvent] players update failed:", playerUpdateError.message);
+    // No se aplicó la decisión: la escena se devuelve para poder repetirla (si no, el turno se perdía sin efecto).
+    await supabase.from("players").update({ pending_event: player.pending_event }).eq("id", player.id);
+    redirect("/carrera");
   }
 
   // Update de stats aparte y best-effort: si falta alguna columna stats_*

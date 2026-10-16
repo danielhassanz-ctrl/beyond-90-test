@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { redirect } from "next/navigation";
 
 // Igual que en carrera/page.tsx: sin esto, la generación de imagen en
@@ -201,12 +202,7 @@ export default async function SegundaVidaPage() {
                 </div>
               )}
 
-              <button
-                type="submit"
-                className="gold-fill w-full cursor-pointer rounded-full px-4 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
-              >
-                Confirmar decisión
-              </button>
+              <ConfirmButton />
             </form>
           </div>
         </div>

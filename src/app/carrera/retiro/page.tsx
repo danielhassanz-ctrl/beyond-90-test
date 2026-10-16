@@ -30,7 +30,8 @@ export default async function RetiroPage() {
     redirect("/login");
   }
 
-  if (player.status !== "retired") {
+  // Solo se retira quien sigue activo: entrar aquí desde la saga o la segunda vida no debe bajar el estado.
+  if (player.status === "active") {
     await supabase.from("players").update({ status: "retired" }).eq("id", player.id);
   }
 
@@ -224,7 +225,7 @@ export default async function RetiroPage() {
 
           {player.second_career && (
             <Link
-              href="/carrera"
+              href="/mi-jugador/legado"
               className="gold-fill mt-4 inline-block rounded-full px-6 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
             >
               📚 Ver mi legado en carrera

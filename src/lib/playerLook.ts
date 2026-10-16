@@ -48,6 +48,15 @@ const LOOK_BRACKETS: { maxAge: number; variants: string[] }[] = [
     ],
   },
   {
+    // 33-36: en plena madurez, no todavía un abuelo (antes todo lo de 33 en adelante salía «veterano canoso»).
+    maxAge: 36,
+    variants: [
+      "well-groomed beard with a few grey hairs at the chin, short hair, mature but fit and athletic",
+      "light stubble with a touch of grey, hair neatly cut, mature athletic look",
+      "clean-shaven, short hair with a little grey at the temples, mature athletic look",
+    ],
+  },
+  {
     maxAge: Infinity,
     variants: [
       "greying full beard, fully shaved head, showing the wear of a long veteran career",

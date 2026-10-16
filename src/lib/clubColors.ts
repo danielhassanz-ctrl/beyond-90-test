@@ -1,3 +1,5 @@
+import { EXTRA_KIT_DESCRIPTIONS, colorName } from "@/lib/clubKits";
+import { canonicalNation } from "@/lib/nations";
 /**
  * Colores reales de camiseta/identidad de los clubes que pueden aparecer en
  * el juego, usados solo para teñir degradados y una insignia con iniciales
@@ -267,7 +269,8 @@ const NATIONAL_AWAY_KITS: Record<string, string> = {
   "Argentina": "a dark navy jersey with light-blue details and a small badge on the chest, navy shorts",
 };
 
-export function describeNationalKit(nation: string, variant: "home" | "away" = "home"): string {
+export function describeNationalKit(rawNation: string, variant: "home" | "away" = "home"): string {
+  const nation = canonicalNation(rawNation);
   if (variant === "away" && NATIONAL_AWAY_KITS[nation]) {
     return `the ${nation} national team away kit: ${NATIONAL_AWAY_KITS[nation]}; the shirt must NOT look like any club kit, must not show any club crest and must not copy the kit of any other national team`;
   }
@@ -276,9 +279,14 @@ export function describeNationalKit(nation: string, variant: "home" | "away" = "
 }
 
 export function describeKit(club: string): string {
-  const colorPhrase = KIT_DESCRIPTIONS[club] ?? (() => {
+  // Sin club todavía: nada de camiseta de club inventada con colores al azar.
+  if (club === "Agente libre") return "plain neutral training wear (a simple grey or navy training top) with no club crest and no badge";
+  const colorPhrase = EXTRA_KIT_DESCRIPTIONS[club] ?? KIT_DESCRIPTIONS[club] ?? (() => {
+    // Sin descripción hecha a mano: los colores en palabras, nunca hexadecimales (el modelo los intentaba escribir o los ignoraba).
     const colors = getClubColors(club);
-    return `custom kit colored ${colors.primary} and ${colors.secondary}`;
+    const a = colorName(colors.primary);
+    const b = colorName(colors.secondary);
+    return a === b ? `a plain ${a} jersey` : `a ${a} jersey with ${b} trim`;
   })();
   return kitAccuracyClause(colorPhrase);
 }

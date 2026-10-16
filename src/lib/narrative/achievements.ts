@@ -102,7 +102,9 @@ export const TIER_LABEL: Record<Tier, string> = { bronce: "Bronce", plata: "Plat
 
 /** Los ids ya desbloqueados. */
 export function unlockedIds(p: Pick<Player, "flags">): string[] {
-  return String(p.flags?.logros ?? "").split(",").filter(Boolean);
+  // Solo ids que existen (un id antiguo o borrado haría pasar el contador del 100 %).
+  const known = new Set(ACHIEVEMENTS.map((a) => a.id));
+  return String(p.flags?.logros ?? "").split(",").filter((id) => id && known.has(id));
 }
 
 /** Los logros que se cumplen ahora y todavía no estaban anotados. */

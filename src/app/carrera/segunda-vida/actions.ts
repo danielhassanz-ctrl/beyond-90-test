@@ -9,6 +9,7 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
+import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
 import { addShareBranding } from "@/lib/images/shareBranding";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { logAppError } from "@/lib/errorLog";
@@ -74,7 +75,8 @@ export async function resolveSecondLifeEvent(formData: FormData) {
   // imagen conectado. Se cablea aquí el mismo mecanismo (cuota, foto en
   // segundo plano con after(), estado pending/ready/failed).
   let milestoneId: string | null = null;
-  const willAttemptImage = milestoneAchieved && Boolean(player.photo_url) && Boolean(event.imageScene);
+  // Igual que en la carrera principal: la foto gasta un crédito (gratis o comprado). Antes la segunda vida generaba sin crédito.
+  const willAttemptImage = milestoneAchieved && Boolean(player.photo_url) && Boolean(event.imageScene) && (await hasImageCredit(supabase, player, user.email));
   const quota = willAttemptImage ? await checkImageGenerationQuota(supabase, user.id) : null;
   const willGenerate = willAttemptImage && quota?.allowed === true;
 
@@ -111,6 +113,8 @@ export async function resolveSecondLifeEvent(formData: FormData) {
       const finalPrompt = event.imageScene as string;
       const finalPhotoUrl = photoRefs(player);
       const finalUserId = user.id;
+      const finalUserEmail = user.email;
+      const finalPlayerFlags = (player.flags ?? {}) as Record<string, string | boolean>;
       const finalPlayerId = player.id;
       const finalMilestoneType = event.milestoneType ?? "hito";
 
@@ -128,6 +132,7 @@ export async function resolveSecondLifeEvent(formData: FormData) {
           }
 
           await logImageGeneration(supabase, finalUserId);
+          await consumeImageCredit(supabase, { id: finalPlayerId, flags: finalPlayerFlags }, finalUserEmail);
 
           // Igual que en la carrera principal (ver carrera/actions.ts): sin
           // marca ni enlace impresos en la propia imagen, la mayoría de

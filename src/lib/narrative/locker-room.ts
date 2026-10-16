@@ -245,7 +245,7 @@ export function shouldTriggerLockerScene(player: Player, rng: () => number = Mat
   if (player.club === NO_CLUB_YET || player.status !== "active" || player.club.startsWith("SELECCIÓN:")) return false;
   if (playerAge(player.week) < 16 || player.week < 14) return false;
   const last = num(player.flags?.vr_scene_last);
-  if (last > 0 && player.week - last < 5) return false;
+  if (last > 0 && player.week - last < 7) return false;
   // Recién llegado: primero se conoce a la gente (escena de presentación del club).
   const since = num(player.flags?.club_since);
   if (since > 0 && player.week - since < 3) return false;
@@ -384,8 +384,11 @@ export function buildLockerScene(player: Player, rng: () => number = Math.random
   if (room.length === 0) return null;
   const mood = lockerMood(player);
   const recent = String(player.flags?.vr_recent ?? "").split(",").filter(Boolean);
-  const eligible = SCENES.filter((s) => s.when(room, mood) && !recent.includes(s.key));
-  const pool = eligible.length > 0 ? eligible : SCENES.filter((s) => s.when(room, mood));
+  // Cada plantilla sale como mucho 3 veces por carrera (la «Cena de equipo» llegaba a salir cinco veces).
+  const uses = (k: string) => num((player.flags ?? {})[`vr_n_${k}`]);
+  const fresh = SCENES.filter((s) => s.when(room, mood) && uses(s.key) < 3);
+  const eligible = fresh.filter((s) => !recent.includes(s.key));
+  const pool = eligible.length > 0 ? eligible : fresh;
   if (pool.length === 0) return null;
   const total = pool.reduce((n, s) => n + s.weight, 0);
   let r = rng() * total;
@@ -397,7 +400,7 @@ export function buildLockerScene(player: Player, rng: () => number = Math.random
       break;
     }
   }
-  const stamp: Flags = { vr_scene_last: String(player.week), vr_recent: [...recent, scene.key].slice(-3).join(",") };
+  const stamp: Flags = { vr_scene_last: String(player.week), vr_recent: [...recent, scene.key].slice(-3).join(","), [`vr_n_${scene.key}`]: String(uses(scene.key) + 1) };
   const built = scene.build(player, room);
   return {
     id: `vestuario-${scene.key}-${player.week}`,

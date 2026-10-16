@@ -18,7 +18,7 @@ export async function moverPrensa(formData: FormData) {
   const outlet = (rawKey === "afin" || rawKey === "neutral" || rawKey === "hostil" ? rawKey : undefined) as OutletKey | undefined;
   const { supabase, user, player } = await getCurrentUserAndPlayer();
   if (!user || !player) redirect("/login");
-  if (!(action in PRESS_ACTIONS)) redirect("/mi-jugador/prensa");
+  if (!Object.hasOwn(PRESS_ACTIONS, action)) redirect("/mi-jugador/prensa");
 
   const result = doPressAction(player as Player, action, outlet);
   if ("error" in result) redirect("/mi-jugador/prensa?error=" + encodeURIComponent(result.error));

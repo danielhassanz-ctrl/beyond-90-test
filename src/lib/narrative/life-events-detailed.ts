@@ -23,7 +23,7 @@ export const LIFE_EVENT_SCENARIOS = {
   ],
 
   romance_proposal: [
-    "Propuesta en la cancha después de ganar. Anillo de diamantes. Todo el estadio lo ve.",
+    "Propuesta en el césped después de ganar. Anillo de diamantes. Todo el estadio lo ve.",
     "Cena elegante. Reserva todo meses antes. Ella se da cuenta. Dice sí llorando.",
     "Cae de rodillas en el coche. Anillo falso de broma. Luego el real. Ella grita.",
     "Viaje sorpresa a París. Torre Eiffel al atardecer. Anillo antigua de familia.",

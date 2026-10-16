@@ -57,7 +57,9 @@ export default async function ResultadoPage({
 
   const continueHref = player.status === "second_life" ? "/carrera/segunda-vida" : "/carrera";
   const shareText = withShareLink(
-    `${careerEvent.title}. "${careerEvent.outcome_text}" — ${displayName(player)} (${player.club}), en Beyond 90.`,
+    careerEvent.outcome_text
+      ? `${careerEvent.title}. "${careerEvent.outcome_text}" — ${displayName(player)} (${player.club}), en Beyond 90.`
+      : `${careerEvent.title} — ${displayName(player)} (${player.club}), en Beyond 90.`,
   );
 
   // Parsear consecuencias para mostrar visualmente

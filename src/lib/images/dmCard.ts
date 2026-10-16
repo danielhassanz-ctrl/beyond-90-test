@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { isTrustedImageUrl } from "@/lib/images/upload-guards";
 import { measureText, textToPath, wrapByWidth } from "@/lib/images/textToPath";
 import { getAppUrl } from "@/lib/constants";
 
@@ -52,6 +53,7 @@ async function loadImage(src: string | null | undefined): Promise<Buffer | null>
   if (!src) return null;
   try {
     const url = /^https?:\/\//.test(src) ? src : `${getAppUrl() ?? "https://beyond-90.vercel.app"}${src}`;
+    if (!isTrustedImageUrl(url)) return null;
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     return Buffer.from(await res.arrayBuffer());

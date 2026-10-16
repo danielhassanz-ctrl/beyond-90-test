@@ -91,6 +91,7 @@ export default async function PrensaPage({ searchParams }: { searchParams: Promi
                   {o.key === "hostil" ? "Hablar con ellos (arriesgado)" : "Darles una exclusiva"}
                 </button>
               </form>
+              {blocked && <p className="text-xs text-muted-foreground">{blocked}</p>}
             </div>
           );
         })}

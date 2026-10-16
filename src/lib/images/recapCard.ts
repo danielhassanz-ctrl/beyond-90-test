@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { isTrustedImageUrl } from "@/lib/images/upload-guards";
 import { measureText, textToPath, wrapByWidth } from "@/lib/images/textToPath";
 
 /**
@@ -33,7 +34,7 @@ const GOLD = "#F5B740";
 const clean = (s: string) => s.replace(/[^ -ɏ–—‘-”…¿¡€]/g, "").replace(/\s+/g, " ").trim();
 
 async function loadPhoto(url: string | null | undefined): Promise<Buffer | null> {
-  if (!url) return null;
+  if (!isTrustedImageUrl(url)) return null;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
     if (!res.ok) return null;

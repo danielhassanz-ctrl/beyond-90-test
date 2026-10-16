@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { allTrofeos } from "@/lib/honours";
 import { ClubRequests } from "@/components/ClubRequests";
 import { CLUB_REQUEST_KINDS, CLUB_REQUEST_INFO, requestStatus } from "@/lib/narrative/club-requests";
@@ -304,12 +305,7 @@ export default async function CarreraPage() {
                 </div>
               )}
 
-              <button
-                type="submit"
-                className="gold-fill w-full cursor-pointer rounded-full px-4 py-3 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
-              >
-                Confirmar decisión
-              </button>
+              <ConfirmButton />
             </form>
           </div>
         </div>

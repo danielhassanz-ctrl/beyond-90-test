@@ -158,6 +158,9 @@ async function ensureNextEventInner(
   player: Player,
 ): Promise<{ event: GameEvent; usedEventIds: string[] }> {
   const startFlags = { ...(player.flags ?? {}) };
+  // Las cifras de inicio: la IA tarda 10-15 s y mientras tanto el jugador puede hacer otras cosas (cenar con un compañero, hablar con
+  // la prensa…). Al guardar se suma solo lo que CAMBIÓ esta generación sobre las cifras actuales, no se escriben valores viejos.
+  const startNums = { forma: player.forma, media: player.media, moral: player.moral, patrimonio: player.patrimonio, fama: player.fama, rel_entrenador: player.rel_entrenador, rel_vestuario: player.rel_vestuario, rel_aficion: player.rel_aficion };
   await timed("ensure repairs", async () => {
   await migrateSalaryDeal(supabase, player);
   });
@@ -361,6 +364,10 @@ async function ensureNextEventInner(
     player.week >= 155 &&
     player.media >= 60 &&
     !usedEventIds.includes("fork-oferta-arabia") &&
+    // Sin sentido si ya juegas allí, estás cedido o a mitad de un torneo/partido.
+    player.club !== "Al-Nassr FC" &&
+    !(player.flags?.loan_active && !player.flags?.loan_returned) &&
+    !player.flags?.torneo_progress &&
     Math.random() < 0.35  // 35% de probabilidad, no garantizado
   ) {
     event = buildOfertaArabiaEvent(player);
@@ -429,22 +436,35 @@ async function ensureNextEventInner(
     // repitiéndose contra el mismo rival sin motivo).
     // Las banderas que cambió esta generación, sobre las actuales (la IA tarda 10-15 s y mientras tanto pueden haber cambiado otras).
     if (player.flags) player.flags = await mergeFlagsForWrite(supabase, player.id, startFlags, player.flags);
+    const numsPatch: Record<string, number> = {};
+    try {
+      const { data: fresh } = await supabase.from("players").select("forma, media, moral, patrimonio, fama, rel_entrenador, rel_vestuario, rel_aficion").eq("id", player.id).maybeSingle();
+      for (const k of Object.keys(startNums) as (keyof typeof startNums)[]) {
+        const delta = (player[k] ?? 0) - (startNums[k] ?? 0);
+        const base = fresh ? Number((fresh as Record<string, unknown>)[k] ?? player[k] ?? 0) : (player[k] ?? 0);
+        const next = base + delta;
+        numsPatch[k] = k === "patrimonio" ? Math.max(0, next) : Math.max(0, Math.min(100, next));
+      }
+    } catch {
+      for (const k of Object.keys(startNums) as (keyof typeof startNums)[]) numsPatch[k] = player[k] ?? 0;
+    }
     const baseUpdate = supabase
       .from("players")
       .update({
         pending_event: event,
         flags: player.flags,
-        forma: player.forma,
-        media: player.media,
-        moral: player.moral,
+        forma: numsPatch.forma,
+        media: numsPatch.media,
+        moral: numsPatch.moral,
+        fama: numsPatch.fama,
         // El sueldo y las cuotas de hipoteca también se aplican en
         // applyCareerDynamics: sin guardar el patrimonio aquí se calculaban
         // cada turno y se tiraban (visto en vivo: 8.190 €/mes de sueldo y
         // el dinero siempre en 0 €).
-        patrimonio: player.patrimonio,
-        rel_entrenador: player.rel_entrenador,
-        rel_vestuario: player.rel_vestuario,
-        rel_aficion: player.rel_aficion,
+        patrimonio: numsPatch.patrimonio,
+        rel_entrenador: numsPatch.rel_entrenador,
+        rel_vestuario: numsPatch.rel_vestuario,
+        rel_aficion: numsPatch.rel_aficion,
       })
       .eq("id", player.id);
     const { data: updatedRows } = await (

@@ -78,7 +78,7 @@ export function PlayerHeaderCard({
     <div className="mx-auto w-full max-w-md">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="grid h-32 w-32 shrink-0 place-items-center overflow-hidden rounded-2xl border border-gold/40 bg-surface-2">
+          <div className="grid h-24 w-24 shrink-0 place-items-center sm:h-32 sm:w-32 overflow-hidden rounded-2xl border border-gold/40 bg-surface-2">
             {photoUrl ? (
               <Image src={photoUrl} alt={name} width={128} height={128} className="h-full w-full object-cover" />
             ) : (
@@ -87,7 +87,7 @@ export function PlayerHeaderCard({
           </div>
           <div className="min-w-0">
             <p className="truncate font-display text-base leading-tight">{name}</p>
-            <p className="truncate font-cond text-xs uppercase tracking-[0.16em] text-muted-foreground">
+            <p className="line-clamp-2 font-cond text-xs uppercase tracking-[0.16em] text-muted-foreground">
               {age} años · {club} · {categoryLabel}
             </p>
             <p className="truncate font-cond text-xs uppercase tracking-[0.16em] text-gold-soft">{statusLine}</p>

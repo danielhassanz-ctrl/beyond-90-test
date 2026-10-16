@@ -8,7 +8,19 @@ export interface PushSubscriptionInput {
   keys: { p256dh: string; auth: string };
 }
 
-const validEndpoint = (e: unknown): e is string => typeof e === "string" && e.length < 600 && /^https:\/\//.test(e);
+/** Solo los servicios de push reales de los navegadores: el cron hace una petición a cada endpoint guardado. */
+const PUSH_HOSTS = [/(^|\.)fcm\.googleapis\.com$/, /(^|\.)push\.services\.mozilla\.com$/, /(^|\.)push\.apple\.com$/, /(^|\.)notify\.windows\.com$/];
+const MAX_DEVICES_PER_USER = 5;
+
+function validEndpoint(e: unknown): e is string {
+  if (typeof e !== "string" || e.length > 600) return false;
+  try {
+    const u = new URL(e);
+    return u.protocol === "https:" && PUSH_HOSTS.some((re) => re.test(u.hostname));
+  } catch {
+    return false;
+  }
+}
 
 /** Guarda el dispositivo del usuario de la sesión. El user_id sale de la sesión, nunca del formulario. */
 export async function guardarSuscripcion(input: PushSubscriptionInput, userAgent: string): Promise<{ ok: boolean; error?: string }> {
@@ -19,6 +31,8 @@ export async function guardarSuscripcion(input: PushSubscriptionInput, userAgent
   }
   try {
     const service = createServiceClient();
+    const { count } = await service.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("user_id", user.id).neq("endpoint", input.endpoint);
+    if ((count ?? 0) >= MAX_DEVICES_PER_USER) return { ok: false, error: "Ya tienes demasiados dispositivos con avisos. Apaga alguno antes." };
     // Un mismo dispositivo con otra cuenta: la suscripción pasa a la cuenta actual.
     const { error } = await service
       .from("push_subscriptions")

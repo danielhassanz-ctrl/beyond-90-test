@@ -62,7 +62,7 @@ export function calculateCareerArc(player: Player): CareerArc {
  */
 export function naturalFormaDegradation(player: Player): number {
   const arc = calculateCareerArc(player);
-  const formaBefore = player.forma || 50;
+  const formaBefore = player.forma ?? 50;
 
   // Antes esto era "el rico se hace más rico": -2 de forma cada semana
   // salvo que la media ya estuviera por encima de 75, caso en el que se
@@ -135,12 +135,12 @@ export function deteriorateRelationships(player: Player): Record<string, number>
 
   // Si moral es muy baja, relación con entrenador sufre
   if (player.moral < 30) {
-    updates.rel_entrenador = (player.rel_entrenador || 50) - 2;
+    updates.rel_entrenador = Math.max(0, (player.rel_entrenador ?? 50) - 2);
   }
 
   // Si forma es muy baja, afición se decepciona
   if (player.forma < 30) {
-    updates.rel_aficion = (player.rel_aficion || 50) - 3;
+    updates.rel_aficion = Math.max(0, (player.rel_aficion ?? 50) - 3);
   }
 
   // Las relaciones se enfrían solas: el cariño de la grada, el vestuario o el míster no se queda en 90+ para
@@ -253,10 +253,10 @@ export function ageBasedMediaDecline(player: Player): number {
   // visible: media a 0 en un jugador de 16 años, visto en vivo jugando.
   if (age < 32) return media;
 
-  // 1-2 puntos por año después de 32, con el mismo suelo de 40 que usa
-  // el resto del juego para la media (ver clampMedia en engine.ts).
-  const yearsAfter32 = age - 32;
-  const decline = yearsAfter32 * 1.5;
+  // Lo que se pierde en UN año (el motor la aplica una vez por temporada, no cada semana: antes se aplicaba ~10 veces por temporada y
+  // un jugador de 90 a los 34 años caía al suelo de 40): 1 punto a los 32, 2 a los 34, 3 a los 36… con el mismo suelo de 40
+  // que usa el resto del juego para la media (ver clampMedia en engine.ts).
+  const decline = Math.round(1 + (age - 32) * 0.5);
 
   return Math.max(40, media - decline);
 }

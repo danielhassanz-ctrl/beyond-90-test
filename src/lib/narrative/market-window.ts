@@ -75,6 +75,8 @@ export function inStabilityPeriod(player: Pick<Player, "week" | "flags">): boole
 
 export function shouldTriggerMarketRumor(player: Player): boolean {
   if (player.club === NO_CLUB_YET) return false;
+  // En periodo de baja o de estabilidad solo queda ruido de fondo: si el último fue «En casa opinan del mercado», no se repite (salía sin parar).
+  if ((getInjuryRemaining(player.flags) > 0 || inStabilityPeriod(player)) && String(player.flags?.market_last_kind ?? "").split(",").includes("familia")) return false;
   // Un debutante recién llegado no suena para nadie: primeras ventanas
   // reales a partir de la segunda temporada.
   if (player.week < 12) return false;

@@ -1,11 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { friendlyError } from "@/lib/supabase/friendly-errors";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { getStripeClient } from "@/lib/stripe";
 import { CREDIT_PACK } from "@/lib/images/credits";
 import { getAppUrl } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
+import { photoExtension, validatePhotoFile } from "@/lib/images/upload-guards";
 
 /**
  * Crea una sesión de pago único de Stripe Checkout para un pack de fotos
@@ -76,11 +78,13 @@ export async function saveSecondPhoto(formData: FormData) {
   if (!user || !player) redirect("/login");
   const file = formData.get("photo2") as File | null;
   if (!file || file.size === 0) redirect("/mi-jugador/fotos?error=" + encodeURIComponent("Elige una foto primero."));
+  const bad = validatePhotoFile(file);
+  if (bad) redirect("/mi-jugador/fotos?error=" + encodeURIComponent(bad));
   const supabase = await createClient();
-  const ext = file.name.split(".").pop() ?? "jpg";
+  const ext = photoExtension(file);
   const path = `${user.id}/ref2-${Date.now()}.${ext}`;
   const { error } = await supabase.storage.from("player-photos").upload(path, file, { upsert: true });
-  if (error) redirect("/mi-jugador/fotos?error=" + encodeURIComponent("No se pudo subir la foto: " + error.message));
+  if (error) redirect("/mi-jugador/fotos?error=" + encodeURIComponent(friendlyError(error.message, "No se pudo subir la foto.")));
   const { data } = supabase.storage.from("player-photos").getPublicUrl(path);
   const ok = await setSecondRef(player.id, data.publicUrl);
   if (!ok) redirect("/mi-jugador/fotos?error=" + encodeURIComponent("No se pudo guardar la foto. Inténtalo de nuevo."));

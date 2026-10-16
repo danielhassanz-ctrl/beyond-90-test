@@ -52,7 +52,7 @@ export const CAMBIOS: BankScene[] = [
     ]),
   S("cb-mister-nuevo-amigo", "cambios", { flags: ["coach_nuevo_pendiente"], clubTurns: [0, 400] }, "vestuario",
     "El nuevo míster es de los que se toman un café contigo",
-    "Se acerca a ti en la primera mañana con un café en cada mano y te dice: «No sé si te gusta con leche. Te traigo uno solo y uno con leche, y te quedas con el que quieras». Se llama Tomás, tiene cuarenta y ocho años, ha jugado en cuatro países y habla de fútbol como quien habla de su familia. Lo del café, descubres luego, lo hace con todos los jugadores del plantel.",
+    "Se acerca a ti en la primera mañana con un café en cada mano y te dice: «No sé si te gusta con leche. Te traigo uno solo y uno con leche, y te quedas con el que quieras». Se llama Tomás, tiene cuarenta y ocho años, ha jugado en cuatro países y habla de fútbol como quien habla de su familia. Lo del café, descubres luego, lo hace con todos los jugadores de la plantilla.",
     [
       o("a", "Quedarte con el café con leche y charlar un rato", "Conectar con él", { rel_entrenador: 6, moral: 4, rel_vestuario: 1, flags: { coach_nuevo_pendiente: "", coach_estilo: "amigo" } }, "Hablas con él veinte minutos de nada y de todo. Cuando te levantas, sientes que has entrado a una casa en la que todavía no sabías que cabías."),
       o("b", "Agradecérselo con cortesía y volver a lo tuyo", "Mantener las distancias", { rel_entrenador: 2, flags: { coach_nuevo_pendiente: "", coach_estilo: "amigo" } }, "Le das las gracias con una sonrisa y te vas. Él lo entiende: «Con calma», dice, y le da el otro café al masajista."),

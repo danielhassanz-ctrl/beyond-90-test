@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { friendlyError } from "@/lib/supabase/friendly-errors";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAppUrl } from "@/lib/constants";
@@ -14,7 +15,7 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    redirect(`/login?error=${encodeURIComponent(friendlyError(error.message))}`);
   }
 
   revalidatePath("/", "layout");
@@ -44,7 +45,7 @@ export async function requestPasswordReset(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/login/recuperar?error=${encodeURIComponent(error.message)}`);
+    redirect(`/login/recuperar?error=${encodeURIComponent(friendlyError(error.message))}`);
   }
 
   redirect(
@@ -73,7 +74,7 @@ export async function signup(formData: FormData) {
   const { data, error } = await supabase.auth.signUp({ email, password });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    redirect(`/login?error=${encodeURIComponent(friendlyError(error.message))}`);
   }
 
   if (!data.session) {

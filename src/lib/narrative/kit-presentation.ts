@@ -115,11 +115,12 @@ export function buildClubKitEvent(player: Player): GameEvent {
         id: "b",
         label: "Hacerte el gracioso delante de la cámara",
         subtitle: "Puede ser viral… o un corte para la sala de montaje",
-        consequences: { patrimonio: pay },
+        // El pago va dentro de cada desenlace: las consecuencias de una opción con tirada no se aplican (solo las de su resultado).
+        consequences: {},
         resolve: {
           baseChance: 0.62,
-          success: { text: `Improvisas un baile con ${first(crew[1] ?? crew[0] ?? name)} y acabáis los cuatro llorando de risa. El vídeo no estaba previsto, pero es el que más se comparte de toda la campaña. ${maker} te escribe para repetir.`, consequences: { fama: 6, rel_vestuario: 3, rel_aficion: 3, moral: 3, flags: { kit_club_last: String(season) } } },
-          fail: { text: `El baile sale raro, el vídeo da más vergüenza que gracia y el departamento de marketing lo guarda en el cajón. No pasa nada, pero tampoco será lo que recordemos de esta tarde.`, consequences: { fama: 1, moral: -1, flags: { kit_club_last: String(season) } } },
+          success: { text: `Improvisas un baile con ${first(crew[1] ?? crew[0] ?? name)} y acabáis los cuatro llorando de risa. El vídeo no estaba previsto, pero es el que más se comparte de toda la campaña. ${maker} te escribe para repetir.`, consequences: { fama: 6, rel_vestuario: 3, rel_aficion: 3, moral: 3, patrimonio: pay, flags: { kit_club_last: String(season) } } },
+          fail: { text: `El baile sale raro, el vídeo da más vergüenza que gracia y el departamento de marketing lo guarda en el cajón. No pasa nada, pero tampoco será lo que recordemos de esta tarde.`, consequences: { fama: 1, moral: -1, patrimonio: pay, flags: { kit_club_last: String(season) } } },
         },
       },
       opt("c", `Llevarte a un par de chavales de la cantera a la sesión`, "Compartir el foco", { fama: 2, rel_vestuario: 4, rel_aficion: 3, moral: 3, patrimonio: pay }, { kit_club_last: String(season) }, `Pides que dos chicos del juvenil salgan en la foto y el club accede, un poco a regañadientes. Se les ve en la cara que no se lo creen. La foto de grupo se convierte en la favorita de la afición.`),
@@ -155,8 +156,8 @@ export function buildNationalKitEvent(player: Player): GameEvent {
         consequences: { patrimonio: pay },
         resolve: {
           baseChance: 0.65,
-          success: { text: `${first(crew[0] ?? "Uno")} te lanza un balón a mitad de foto y acabáis haciendo malabares con la camiseta nueva puesta. El vídeo es una fiesta y todos los medios lo recogen. El seleccionador finge enfadarse y se ríe.`, consequences: { fama: 6, rel_vestuario: 3, rel_aficion: 4, moral: 3, flags: { [`kit_sel_${season}`]: true } } },
-          fail: { text: `Un balón vuela donde no debe, rompe un foco y la sesión se para diez minutos. La anécdota da risa en el hotel esa noche, pero la federación no está tan contenta.`, consequences: { fama: 1, moral: -1, flags: { [`kit_sel_${season}`]: true } } },
+          success: { text: `${first(crew[0] ?? "Uno")} te lanza un balón a mitad de foto y acabáis haciendo malabares con la camiseta nueva puesta. El vídeo es una fiesta y todos los medios lo recogen. El seleccionador finge enfadarse y se ríe.`, consequences: { fama: 6, rel_vestuario: 3, rel_aficion: 4, moral: 3, patrimonio: pay, flags: { [`kit_sel_${season}`]: true } } },
+          fail: { text: `Un balón vuela donde no debe, rompe un foco y la sesión se para diez minutos. La anécdota da risa en el hotel esa noche, pero la federación no está tan contenta.`, consequences: { fama: 1, moral: -1, patrimonio: pay, flags: { [`kit_sel_${season}`]: true } } },
         },
       },
       opt("c", "Dedicar la foto a los que no han tenido tu suerte", "Un gesto bonito", { fama: 2, reputacion: 3, rel_aficion: 4, moral: 4, patrimonio: pay }, { [`kit_sel_${season}`]: true }, `Escribes un pie de foto sencillo: «Para los que soñaron con esto y no llegaron». Lo comparten las escuelas de fútbol de medio país. Algunos compañeros te dicen, con la voz baja, que ojalá se les hubiera ocurrido a ellos.`),

@@ -1901,10 +1901,15 @@ function applyCareerDynamics(player: Player): Player {
   // La prensa devuelve algo cada turno (ver press-system.ts): la tertulia aprieta si vas mal, el diario afín te da fama si vas bien.
   applyPressTick(player);
 
-  // Aplicar declive por edad (si >32 años)
-  const mediaAfterAge = ageBasedMediaDecline(player);
-  if (mediaAfterAge < player.media) {
-    player.media = mediaAfterAge;
+  // Aplicar declive por edad (si >32 años): UNA vez por temporada (flag age_decl_s), no en cada semana.
+  const seasonNow = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  if (String(player.flags?.age_decl_s ?? "") !== String(seasonNow)) {
+    if (!player.flags) player.flags = {};
+    player.flags.age_decl_s = String(seasonNow);
+    const mediaAfterAge = ageBasedMediaDecline(player);
+    if (mediaAfterAge < player.media) {
+      player.media = mediaAfterAge;
+    }
   }
   // Autocorrección: un bug ya corregido en ageBasedMediaDecline dejó
   // partidas reales con media en 0 (por debajo del suelo de 40 que rige
@@ -1920,7 +1925,7 @@ function applyCareerDynamics(player: Player): Player {
   // Presión mediática afecta moral
   const { mortalAfect } = calculateMediaPressure(player);
   if (mortalAfect < 0) {
-    player.moral = Math.max(0, (player.moral || 50) + mortalAfect);
+    player.moral = Math.max(0, (player.moral ?? 50) + mortalAfect);
   }
 
   return player;

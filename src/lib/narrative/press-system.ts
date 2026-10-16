@@ -325,7 +325,7 @@ export function shouldTriggerPressScene(player: Player, rng: () => number = Math
   if (player.club === NO_CLUB_YET || player.status !== "active" || player.club.startsWith("SELECCIÓN:")) return false;
   if (playerAge(player.week) < 16 || player.week < 12 || (player.fama ?? 0) < 15) return false;
   const last = num(player.flags?.pr_scene_last);
-  if (last > 0 && player.week - last < 6) return false;
+  if (last > 0 && player.week - last < 8) return false;
   return rng() < 0.4;
 }
 
@@ -449,8 +449,11 @@ export function buildPressScene(player: Player, rng: () => number = Math.random)
   const press = getPress(player);
   const climate = pressClimate(player);
   const recent = String(player.flags?.pr_recent ?? "").split(",").filter(Boolean);
-  const eligible = SCENES.filter((s) => s.when(player, press, climate) && !recent.includes(s.key));
-  const pool = eligible.length > 0 ? eligible : SCENES.filter((s) => s.when(player, press, climate));
+  // Cada plantilla sale como mucho 3 veces por carrera (con solo seis, salían unas cinco veces cada una).
+  const uses = (k: string) => num((player.flags ?? {})[`pr_n_${k}`]);
+  const fresh = SCENES.filter((s) => s.when(player, press, climate) && uses(s.key) < 3);
+  const eligible = fresh.filter((s) => !recent.includes(s.key));
+  const pool = eligible.length > 0 ? eligible : fresh;
   if (pool.length === 0) return null;
   const total = pool.reduce((n, s) => n + s.weight, 0);
   let r = rng() * total;
@@ -462,7 +465,7 @@ export function buildPressScene(player: Player, rng: () => number = Math.random)
       break;
     }
   }
-  const stamp: Flags = { pr_scene_last: String(player.week), pr_recent: [...recent, scene.key].slice(-3).join(",") };
+  const stamp: Flags = { pr_scene_last: String(player.week), pr_recent: [...recent, scene.key].slice(-3).join(","), [`pr_n_${scene.key}`]: String(uses(scene.key) + 1) };
   const built = scene.build(player, press);
   return {
     id: `prensa-${scene.key}-${player.week}`,

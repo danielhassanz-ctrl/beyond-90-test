@@ -12,7 +12,9 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/mi-jugador";
+  // Solo rutas del propio sitio: «//evil.com», «/\evil.com» o «@evil.com» cambiarían el destino.
+  const rawNext = searchParams.get("next") ?? "/mi-jugador";
+  const next = /^\/(?![/\\])/.test(rawNext) ? rawNext : "/mi-jugador";
 
   if (code) {
     const supabase = await createClient();

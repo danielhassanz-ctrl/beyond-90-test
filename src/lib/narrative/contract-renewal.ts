@@ -24,7 +24,7 @@ export type ContractPhase = "ultima" | "fin" | null;
 export function contractPhase(player: Player): ContractPhase {
   if (!player.club || player.club === NO_CLUB_YET || player.status !== "active") return null;
   const f = player.flags ?? {};
-  if (player.flags?.loan_active) return null;
+  if (player.flags?.loan_active && !player.flags?.loan_returned) return null;
   const until = contractUntil(player);
   const left = until - player.week;
   if (left <= 0) return num(f[`ctr_fin_${until}`]) ? null : "fin";

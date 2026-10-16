@@ -1,4 +1,5 @@
 import { describeKit, describeNationalKit } from "@/lib/clubColors";
+import { NO_CLUB_YET } from "@/lib/constants";
 
 import { describeLook } from "@/lib/playerLook";
 import { getContextualImagePrompt, pickSigningScene } from "@/lib/narrative/contextual-image-prompts";
@@ -132,16 +133,17 @@ export function getMilestoneImagePrompt(
   }
   if (basePrompt) {
     let prompt = basePrompt;
+    // Tramos por la edad real (antes de 18 a 22 salía «20-23», de 28 a 31 «veterano» y de 32 a 34 «35+»).
     const ageContext =
       age < 18
         ? "young 16-17 year old footballer"
         : age < 23
-          ? "young 20-23 year old footballer"
-          : age < 28
-            ? "experienced 25-28 year old footballer"
-            : age < 32
-              ? "veteran 30-32 year old footballer"
-              : "35+ year old experienced veteran footballer";
+          ? `young ${age}-year-old footballer`
+          : age < 30
+            ? `${age}-year-old footballer in his prime`
+            : age < 34
+              ? `experienced ${age}-year-old footballer`
+              : `veteran ${age}-year-old footballer`;
     // El look (barba, peinado) evoluciona con la edad del jugador.
     prompt = prompt.replace("[AGE]", `${ageContext}, ${describeLook(age, safePlayerName)}`);
     if (club && prompt.includes("[CLUB_KIT]")) {
@@ -176,7 +178,7 @@ export function getMilestoneImagePrompt(
  * jugando con el Real Madrid, y un marcador con "HAT-TRICK" en un 1-2. Estas
  * cláusulas se añaden al final de cualquier escena de IA.
  */
-export function withSceneGuards(scene: string, opts: { club?: string; age: number; nationalTeam?: boolean; nation?: string; surname?: string }): string {
+export function withSceneGuards(scene: string, opts: { club?: string; age: number; nationalTeam?: boolean; nation?: string; surname?: string; position?: string }): string {
   const ageText =
     opts.age < 18
       ? "a 16-17 year old teenager"
@@ -184,14 +186,18 @@ export function withSceneGuards(scene: string, opts: { club?: string; age: numbe
         ? `a ${opts.age}-year-old young man with a youthful, clean-shaven or lightly stubbled face, no wrinkles, no grey hair, looking clearly in his early twenties`
         : `a ${opts.age}-year-old man`;
   // Con la selección, la camiseta es la de la selección (antes no se decía ninguna y salía una cualquiera: rojinegra y sin escudo).
+  // Sin club todavía no hay camiseta de club (salía una inventada con colores al azar).
+  const noClub = !opts.club || opts.club === NO_CLUB_YET;
   const kit = /national team (home|away) kit/.test(scene)
     ? ""
     : opts.nationalTeam
     ? opts.nation
       ? ` If he wears a football kit, it is ${describeNationalKit(opts.nation)}.`
       : ""
-    : opts.club
-      ? ` If he wears a football kit, it is: ${describeKit(opts.club)}.`
-      : "";
-  return `${scene} Requirements: the man is ${ageText}.${kit} Every person in the image is a living athlete caught mid-action with natural motion: never a statue, sculpture, mannequin or frozen figure. Any goalkeeper wears a goalkeeper kit of a clearly different colour from the outfield players and is in a natural diving or standing position. Realistic sports photography. No readable text anywhere in the image: no scoreboard numbers, no captions, no banners with words, and no names at all${opts.surname ? ` except his own surname "${opts.surname.toUpperCase()}" (only if a shirt back is shown)` : ""}.`;
+    : !noClub
+      ? ` If he wears a football kit, it is: ${describeKit(opts.club as string)}.`
+      : " He does not wear any club kit or crest: plain training wear or casual clothes.";
+  // El portero juega de portero: guantes, camiseta de portero (de un color distinto al del resto) y nada de celebrar goles como un delantero.
+  const keeper = opts.position === "Portero" ? " He is a goalkeeper: if he wears a football kit it is a goalkeeper kit with gloves in a colour clearly different from his outfield teammates; show him making or celebrating a save, never scoring." : "";
+  return `${scene} Requirements: the man is ${ageText}.${kit}${keeper} Every person in the image is a living athlete caught mid-action with natural motion: never a statue, sculpture, mannequin or frozen figure. Any goalkeeper wears a goalkeeper kit of a clearly different colour from the outfield players and is in a natural diving or standing position. Realistic sports photography. No readable text anywhere in the image: no scoreboard numbers, no captions, no banners with words, and no names at all${opts.surname ? ` except his own surname "${opts.surname.toUpperCase()}" (only if a shirt back is shown)` : ""}.`;
 }

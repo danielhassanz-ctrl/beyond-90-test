@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { friendlyError } from "@/lib/supabase/friendly-errors";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -20,7 +21,7 @@ export async function updatePassword(formData: FormData) {
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    redirect(`/login/actualizar-contrasena?error=${encodeURIComponent(error.message)}`);
+    redirect(`/login/actualizar-contrasena?error=${encodeURIComponent(friendlyError(error.message))}`);
   }
 
   redirect("/mi-jugador");

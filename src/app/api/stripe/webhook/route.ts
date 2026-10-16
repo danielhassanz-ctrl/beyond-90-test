@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getStripeClient } from "@/lib/stripe";
 import { CREDIT_PACK, getPaidCredits } from "@/lib/images/credits";
+import { patchFlagsFresh } from "@/lib/supabase/flags";
 
 /**
  * Stripe llama a esto directamente desde SUS servidores, no desde el
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid signature" }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
+  if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
     const session = event.data.object;
     // Con medios de pago diferidos la sesión se "completa" antes de cobrar: solo se acredita lo ya pagado.
     if (session.payment_status !== "paid") {
@@ -63,8 +64,13 @@ export async function POST(request: Request) {
       .eq("id", playerId)
       .maybeSingle();
 
-    if (fetchErr || !player) {
-      console.error(`[stripe webhook] jugador ${playerId} no encontrado:`, fetchErr?.message);
+    // Un fallo de lectura es transitorio: se responde 500 para que Stripe reintente (con 200 el pago se quedaba sin acreditar).
+    if (fetchErr) {
+      console.error(`[stripe webhook] no se pudo leer al jugador ${playerId}:`, fetchErr.message);
+      return NextResponse.json({ error: "temporary" }, { status: 500 });
+    }
+    if (!player) {
+      console.error(`[stripe webhook] jugador ${playerId} no encontrado (¿borrado tras pagar?), sesión ${session.id}`);
       return NextResponse.json({ received: true });
     }
 
@@ -75,19 +81,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true });
     }
 
-    const currentPaid = getPaidCredits({ flags: player.flags ?? {} });
-    const newFlags = {
-      ...(player.flags ?? {}),
-      img_paid_credits: String(currentPaid + CREDIT_PACK.images),
-      img_paid_sessions: [...handled, session.id].slice(-20).join(","),
-    };
-
-    const { error: updateErr } = await supabase.from("players").update({ flags: newFlags }).eq("id", playerId);
-    if (updateErr) {
-      console.error(`[stripe webhook] no se pudo acreditar al jugador ${playerId}:`, updateErr.message);
-    } else {
-      console.log(`[stripe webhook] +${CREDIT_PACK.images} fotos acreditadas a jugador ${playerId}`);
+    // Se vuelve a leer y escribir en el mismo paso (ventana de milisegundos): con la instantánea de arriba, otro escritor
+    // (consumir una foto, un turno) podía pisar el +10 o el registro de sesiones acreditadas.
+    let alreadyHandled = false;
+    const written = await patchFlagsFresh(supabase, playerId, (flags) => {
+      const done = String(flags.img_paid_sessions ?? "").split(",").filter(Boolean);
+      if (done.includes(session.id)) {
+        alreadyHandled = true;
+        return;
+      }
+      flags.img_paid_credits = String(getPaidCredits({ flags }) + CREDIT_PACK.images);
+      flags.img_paid_sessions = [...done, session.id].slice(-20).join(",");
+    });
+    if (!written) {
+      console.error(`[stripe webhook] no se pudo acreditar al jugador ${playerId}, sesión ${session.id}`);
+      return NextResponse.json({ error: "temporary" }, { status: 500 });
     }
+    console.log(alreadyHandled ? `[stripe webhook] sesión ${session.id} ya acreditada` : `[stripe webhook] +${CREDIT_PACK.images} fotos acreditadas a jugador ${playerId}`);
   }
 
   // Reembolso completo o disputa (contracargo): las fotos de ese pago se retiran (hasta lo que quede sin usar), una sola vez por sesión.

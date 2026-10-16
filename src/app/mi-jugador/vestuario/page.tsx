@@ -80,6 +80,11 @@ export default async function VestuarioPage({ searchParams }: { searchParams: Pr
                 );
               })}
             </div>
+            {(() => {
+              // En el móvil no hay tooltip: la razón de un botón apagado se escribe debajo.
+              const reason = actionsFor(m.key).map((a) => actionBlocked(p, m.key, a)).find(Boolean);
+              return reason ? <p className="text-xs text-muted-foreground">{reason}</p> : null;
+            })()}
           </div>
         ))}
       </div>

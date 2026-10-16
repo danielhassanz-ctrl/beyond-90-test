@@ -53,6 +53,8 @@ export function extractStatsFromEvent(event: GameEvent): StatUpdate {
   const isMatch =
     (event.category === "partido" || event.id?.startsWith("matchday-")) &&
     !event.id?.startsWith("match-decision-") &&
+    // Las escenas del banco de categoría «partido» (un perro en el campo, un cántico del rival…) son anécdotas, no partidos jugados.
+    !event.id?.startsWith("bank-") &&
     event.id !== "pretemp-amistoso" &&
     // Partido que el equipo juega sin ti por lesión (buildInjuredMatchEvent):
     // no suma partido, minutos ni nada a tus estadísticas.

@@ -196,7 +196,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
 }
 
 /**
- * Rehace la TARJETA de un mensaje directo (se dibuja en código: no usa IA ni gasta fotos). Sirve para las tarjetas hechas
+ * Rehace la TARJETA de un mensaje directo (se dibuja en código; si lleva la foto de los dos, esa foto sí gasta una foto de tu saldo). Sirve para las tarjetas hechas
  * antes de que llevaran la foto de ella, tu respuesta y las dos fotos. Como el hito no guarda el mensaje, se busca la
  * escena del banco cuya reacción coincide con el subtítulo del hito.
  */
@@ -236,6 +236,12 @@ export async function regenerateDmCard(formData: FormData) {
 
   try {
     const scenePhoto = await maybeDmScenePhoto(supabase, { id: user.id, email: user.email }, { id: player.id, photo_url: player.photo_url as string | null, flags: player.flags }, found.dm.avatar);
+    // Si la tarjeta lleva la foto de los dos y ahora no se puede generar (sin fotos), se conserva la que ya existe en vez de
+    // sustituirla por una sin foto.
+    if (found.dm.avatar && player.photo_url && !scenePhoto) {
+      revalidatePath(`/carrera/hito/${milestoneId}`);
+      redirect(`/carrera/hito/${milestoneId}?dm=sinfotos`);
+    }
     const raw = await composeDmCard({
       ...found.dm,
       reply: found.reply,
@@ -252,6 +258,7 @@ export async function regenerateDmCard(formData: FormData) {
     const { data: updated, error } = await supabase.from("milestones").update({ image_url: url, image_status: "ready" }).eq("id", milestoneId).select("id");
     if (error || !updated || updated.length !== 1) throw new Error(error?.message ?? "el UPDATE no cambió ninguna fila");
   } catch (err) {
+    if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
     console.error("[regenerateDmCard] falló:", err);
     await logAppError(supabase, "regenerateDmCard", err, { userId: user.id, playerId: player.id });
   }

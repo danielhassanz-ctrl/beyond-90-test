@@ -17,6 +17,7 @@ import { getPressQuote, getCoachOpinion } from "@/lib/narrative/pressQuotes";
 import { withShareLink, getAppUrlLine, NO_CLUB_YET } from "@/lib/constants";
 import { logout, shareAndCompare } from "./actions";
 import { repairTrophies } from "@/lib/honours-repair";
+import { SECOND_CAREER_LABELS } from "@/types/career";
 import { challengeState } from "@/lib/narrative/daily-challenge";
 import { PushToggle } from "@/components/PushToggle";
 
@@ -254,7 +255,7 @@ export default async function MiJugadorPage() {
               href="/carrera/segunda-vida"
               className="gold-fill block w-full rounded-full px-4 py-3 text-center font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground"
             >
-              Continuar como {player.second_career}
+              Continuar como {(player.second_career && SECOND_CAREER_LABELS[player.second_career]?.toLowerCase()) || "tu nueva vida"}
             </Link>
           )}
 

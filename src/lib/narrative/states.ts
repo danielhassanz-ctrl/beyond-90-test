@@ -82,9 +82,15 @@ const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 export function applyStateTick(player: Player): void {
   const flags = (player.flags ??= {});
   for (const [k, v] of Object.entries(flags)) {
-    if (!k.startsWith(KEY)) continue;
+    // Solo los estados de verdad: «estado_last_week» (cooldown del motor) y «estado_<id>_por» (causa) no caducan por sí solos y antes se
+    // borraban en el primer turno (el cooldown de 3 turnos no funcionaba y la causa casi nunca llegaba a verse).
+    if (!k.startsWith(KEY) || !STATES[k.slice(KEY.length)]) continue;
     const until = parseInt(String(v), 10);
-    if (!Number.isFinite(until) || until < player.week) flags[k] = "";
+    if (v === "" || v === undefined) continue;
+    if (!Number.isFinite(until) || until < player.week) {
+      flags[k] = "";
+      if (`${k}_por` in flags) flags[`${k}_por`] = "";
+    }
   }
   for (const { def } of activeStates(flags, player.week)) {
     player.forma = clamp((player.forma ?? 70) + def.forma);
