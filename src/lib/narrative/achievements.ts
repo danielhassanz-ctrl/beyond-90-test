@@ -1,12 +1,13 @@
 /**
  * LOGROS. Una colección de metas de toda la carrera (primer gol, primer título, un millón en el banco, ser padre, un Balón de Oro…)
  * que se desbloquean solas cuando se cumplen. Los de bronce se anotan sin ruido; los de plata y oro salen como una escena breve y
- * compartible. Se ven todos en /mi-jugador/logros, con los que faltan por descubrir. Lo desbloqueado vive en flags.logros.
+ * compartible. Se ven todos en /mi-jugador/legado (pestañas Camino y Logros), con los que faltan por descubrir. Lo desbloqueado vive en
+ * flags.logros. Trece de ellos forman EL CAMINO (PATH_ORDER): el hilo principal de una carrera, de la cantera al retiro; el resto son opcionales.
  */
 import type { GameEvent } from "@/types/career";
 import { playerAge } from "@/types/career";
 import type { Player } from "@/types/player";
-import { readTrofeos } from "@/lib/honours";
+import { readTrofeos, INDIVIDUAL } from "@/lib/honours";
 import { readProperties } from "@/lib/finance/mortgage";
 import { readSponsorships } from "@/lib/finance/sponsorship-income";
 import { getAttributes } from "@/lib/narrative/attributes";
@@ -31,10 +32,28 @@ const clubsPlayed = (p: Player) => new Set([...String(p.flags?.clubs_history ?? 
 const trophiesCount = (p: Player) => p.stats_titles ?? 0;
 const hasAward = (p: Player, kind: string) => has(p, kind) || flag(p, `award_won_${kind}`) || Object.keys(p.flags ?? {}).some((k) => k.startsWith(`award_won_${kind}`));
 
+/** Los logros que forman el camino de una carrera, en orden. El resto de la lista son los opcionales. */
+export const PATH_ORDER: Record<string, number> = {
+  "primer-paso": 1, representante: 2, debut: 3, "primer-gol": 4, "media-70": 5, convocado: 6, capitan: 7, "primer-titulo": 8, distinguido: 9,
+  "media-85": 10, "balon-oro": 11, "segunda-vida": 12, "fin-camino": 13,
+};
+
+const individualAward = (p: Player) => readTrofeos(p.flags).some((t) => INDIVIDUAL.has(t.k)) || Object.keys(p.flags ?? {}).some((k) => k.startsWith("award_won_"));
+const calledUp = (p: Player) => flag(p, "sel_debut") || flag(p, "sel_debut_played") || Object.keys(p.flags ?? {}).some((k) => /^(torneo_started_|sel_win_|torneo_result_)/.test(k));
+const retired = (p: Player) => p.status === "retired" || p.status === "second_life" || p.status === "awaiting_second_life";
+
 export const ACHIEVEMENTS: Achievement[] = [
+  // ── El camino (los que no estaban ya abajo) ──
+  { id: "primer-paso", name: "Primer paso", description: "Empieza tu carrera en una cantera.", icon: "🌱", tier: "bronce", category: "Carrera", check: () => true },
+  { id: "representante", name: "Con quien confiar", description: "Firma con un representante.", icon: "🤝", tier: "bronce", category: "Carrera", check: (p) => Boolean(p.agent_name) && !/^sin /i.test(String(p.agent_name)) },
+  { id: "media-70", name: "Media 70", description: "Alcanza una media de 70.", icon: "📊", tier: "bronce", category: "Carrera", check: (p) => (p.media ?? 0) >= 70 },
+  { id: "convocado", name: "Internacional", description: "Sé convocado por tu selección.", icon: "🧢", tier: "bronce", category: "Carrera", check: calledUp },
+  { id: "distinguido", name: "Distinguido", description: "Gana un premio individual.", icon: "🎖️", tier: "bronce", category: "Premios", check: individualAward },
+  { id: "segunda-vida", name: "Segunda vida", description: "Empieza una nueva etapa tras colgar las botas.", icon: "🔁", tier: "bronce", category: "Carrera", check: (p) => Boolean(p.second_career) },
+  { id: "fin-camino", name: "Fin del camino", description: "Retírate del fútbol profesional.", icon: "🏁", tier: "bronce", category: "Carrera", check: retired },
   // ── Carrera ──
-  { id: "debut", name: "Debut oficial", description: "Juega tu primer partido importante.", icon: "👟", tier: "bronce", category: "Carrera", check: (p) => (p.stats_matches_played ?? 0) >= 1 },
-  { id: "primer-gol", name: "El primero", description: "Marca tu primer gol.", icon: "⚽", tier: "bronce", category: "Carrera", check: (p) => (p.stats_goals ?? 0) >= 1 },
+  { id: "debut", name: "Debut oficial", description: "Juega tu primer partido oficial.", icon: "👟", tier: "bronce", category: "Carrera", check: (p) => (p.stats_matches_played ?? 0) >= 1 },
+  { id: "primer-gol", name: "El primero", description: "Marca tu primer gol como profesional.", icon: "⚽", tier: "bronce", category: "Carrera", check: (p) => (p.stats_goals ?? 0) >= 1 },
   { id: "diez-goles", name: "Doble dígito", description: "Llega a 10 goles en tu carrera.", icon: "🔟", tier: "bronce", category: "Carrera", check: (p) => (p.stats_goals ?? 0) >= 10 },
   { id: "cincuenta-goles", name: "Máquina de goles", description: "Llega a 50 goles.", icon: "🎯", tier: "plata", category: "Carrera", check: (p) => (p.stats_goals ?? 0) >= 50 },
   { id: "cien-goles", name: "Centenario", description: "Llega a 100 goles.", icon: "💯", tier: "oro", category: "Carrera", check: (p) => (p.stats_goals ?? 0) >= 100 },
@@ -87,7 +106,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "segunda-generacion", name: "Sangre de campeón", description: "Sigue la saga: juega con tu hijo.", icon: "🧬", tier: "plata", category: "Vida", check: (p) => num(p.flags?.dinastia_gen) >= 1 },
   { id: "dinastia", name: "Una dinastía", description: "Llega a la tercera generación de tu apellido.", icon: "👑", tier: "oro", category: "Vida", check: (p) => num(p.flags?.dinastia_gen) >= 2 },
   // ── Club ──
-  { id: "capitan", name: "El brazalete", description: "Sé capitán de tu club.", icon: "©️", tier: "plata", category: "Club", check: (p) => flag(p, "capitan_club") },
+  { id: "capitan", name: "El brazalete", description: "Sé capitán de tu club.", icon: "©️", tier: "plata", category: "Club", check: (p) => flag(p, "capitan_equipo") || flag(p, "capitan_club") },
   { id: "capitan-seleccion", name: "Capitán de tu país", description: "Sé capitán de tu selección.", icon: "🎖️", tier: "oro", category: "Club", check: (p) => flag(p, "capitan_seleccion") },
   { id: "hombre-club", name: "Hombre de club", description: "Pasa cinco temporadas en el mismo club.", icon: "🏟️", tier: "plata", category: "Club", check: (p) => { const since = num(p.flags?.club_since); return since > 0 && (p.week ?? 0) - since >= 50; } },
   { id: "trotamundos", name: "Trotamundos", description: "Juega en cuatro clubes distintos.", icon: "🧳", tier: "bronce", category: "Club", check: (p) => clubsPlayed(p) >= 4 },
@@ -97,6 +116,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "perfil-completo", name: "Perfil completo", description: "Todos tus atributos por encima de 80.", icon: "🧬", tier: "oro", category: "Superación", check: (p) => getAttributes(p).every((a) => a.value >= 80) },
   { id: "veterano", name: "Veterano", description: "Sigue en activo con 35 años.", icon: "🧓", tier: "plata", category: "Superación", check: (p) => playerAge(p.week) >= 35 && p.status === "active" },
 ];
+
+/** Los pasos del camino, en orden. */
+export const pathAchievements = (): Achievement[] => ACHIEVEMENTS.filter((a) => PATH_ORDER[a.id]).sort((a, b) => PATH_ORDER[a.id] - PATH_ORDER[b.id]);
+/** Los logros opcionales (los que no son del camino). */
+export const optionalAchievements = (): Achievement[] => ACHIEVEMENTS.filter((a) => !PATH_ORDER[a.id]);
 
 export const TIER_LABEL: Record<Tier, string> = { bronce: "Bronce", plata: "Plata", oro: "Oro" };
 

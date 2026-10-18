@@ -1,4 +1,5 @@
 /** Prueba sin red: el vestuario como sistema (compañeros, ambiente, acciones, escenas y cambios de relación). */
+import { personalizeEvent } from "../src/lib/narrative/npcs";
 import { getLockerRoom, lockerMood, doMateAction, actionBlocked, applyLockerDeltas, shouldTriggerLockerScene, buildLockerScene, personalKey, MAX_ACTS_PER_TURN } from "../src/lib/narrative/locker-room";
 
 let fails = 0;
@@ -66,6 +67,18 @@ for (let i = 0; i < 400; i++) {
 }
 ok(broken === 0, "400 escenas: opciones con delta y textos limpios");
 ok(titles.size >= 4, `varias escenas distintas (${titles.size})`);
+
+console.log("6) Los nombres no salen duplicados al personalizar la escena");
+let dups = 0;
+for (let i = 0; i < 200; i++) {
+  const pl = mk({ id: "d" + (i % 11), week: 30 + (i % 60), club: ["Real Betis", "Sevilla FC", "Real Madrid"][i % 3] });
+  const e = buildLockerScene(pl, () => ((i * 37) % 100) / 100);
+  if (!e) continue;
+  const out = personalizeEvent(e, pl);
+  const names: string[] = Array.from(out.description.match(/[A-ZÁÉÍÓÚÑ]\p{L}+ [A-ZÁÉÍÓÚÑ]\p{L}+/gu) ?? []);
+  if (names.some((n, k) => names.indexOf(n) !== k)) dups++;
+}
+ok(dups === 0, "200 escenas de vestuario: ningún nombre repetido en la descripción («Óscar Iribar, el capitán Óscar Iribar»)");
 
 if (fails) { console.log(`\n${fails} fallos`); process.exit(1); }
 console.log("\nTodo bien");

@@ -560,8 +560,16 @@ function nameFirstMentions(texts: string[], player: Player, done: Set<string>, s
       if (done.has(rule.key)) continue;
       const match = out.match(rule.re);
       if (!match || match.index === undefined) continue;
-      // "Nadia Solaris, una influencer...": ya viene nombrada justo delante
-      if (rule.style === "llamado" && /[A-ZÁÉÍÓÚÑ]\p{L}+ [A-ZÁÉÍÓÚÑ]\p{L}+,\s*$/u.test(out.slice(0, match.index))) {
+      // "Nadia Solaris, una influencer..." / "Óscar Iribar, el capitán, te retiene": ya viene nombrada justo delante (en cualquier estilo;
+      // antes solo se comprobaba en «llamado» y salía «Óscar Iribar, el capitán Óscar Iribar»). Para madre, padre… basta un nombre de pila.
+      const before = out.slice(0, match.index);
+      const namedTwoWords = /[A-ZÁÉÍÓÚÑ]\p{L}+ [A-ZÁÉÍÓÚÑ]\p{L}+,\s*$/u.test(before);
+      const namedOneWord = ["madre", "padre", "hermano", "cunado", "amigo"].includes(rule.key) && /[A-ZÁÉÍÓÚÑ]\p{L}{2,},\s*$/u.test(before);
+      // Y también si el nombre va justo detrás, en aposición: «Tu padre, Ismael Vidal, dejó…».
+      const after = out.slice(match.index + match[0].length);
+      const followedTwoWords = /^,\s*[A-ZÁÉÍÓÚÑ]\p{L}+ [A-ZÁÉÍÓÚÑ]\p{L}+/u.test(after);
+      const followedOneWord = ["madre", "padre", "hermano", "cunado", "amigo"].includes(rule.key) && /^,\s*[A-ZÁÉÍÓÚÑ]\p{L}{2,}\b/u.test(after);
+      if (namedTwoWords || namedOneWord || followedTwoWords || followedOneWord) {
         done.add(rule.key);
         continue;
       }

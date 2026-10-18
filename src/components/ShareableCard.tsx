@@ -70,7 +70,7 @@ export function ShareableCard({
       <button
         onClick={handleShare}
         disabled={status === "sharing"}
-        className="w-full rounded-md bg-amber-500 px-5 py-2 text-sm font-semibold text-neutral-950 hover:bg-amber-400 disabled:opacity-60"
+        className="gold-fill w-full cursor-pointer rounded-full px-4 py-2.5 font-cond text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-60"
       >
         {status === "sharing"
           ? "Preparando..."
