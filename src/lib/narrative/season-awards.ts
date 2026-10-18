@@ -12,7 +12,7 @@ import { displayName } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import { leagueOf } from "@/lib/calendar/leagues";
 import { getEuropeanCompetitionFor } from "@/lib/calendar/match-calendar";
-import { getEuroProgress } from "@/lib/calendar/competition-progress";
+import { getEuroProgress, decisionNeedsGoal } from "@/lib/calendar/competition-progress";
 import { fictionalPlayerName } from "@/lib/narrative/npcs";
 import { readTrofeos } from "@/lib/honours";
 import { TORNEO_POOLS, torneoLabel, type TorneoType } from "@/lib/narrative/torneo";
@@ -220,7 +220,7 @@ function mvpTorneo(player: Player, season: number): (AwardResult & { type: Torne
     const seed = `${player.id}:mvp_torneo:${type}:${season}`;
     let stars = 0;
     for (const [k, v] of Object.entries(player.flags ?? {})) {
-      if (k.startsWith(`match_decision_${season * 10 + 1}_torneo.`) && (v === "goal" || v === "wondergoal" || v === "assist")) stars++;
+      if (k.startsWith(`match_decision_${season * 10 + 1}_torneo.`) && decisionNeedsGoal(String(v))) stars++;
     }
     const mine = (player.media ?? 60) + (OUTCOME_POINTS[outcome] ?? 0) + Math.min(3.5, stars * 0.9) + jitter(`${seed}:yo`) * 3 - (type === "olimpico" ? 3 : 0);
     const top = 91 + (hash(seed) % 4) - (type === "olimpico" ? 4 : 0);

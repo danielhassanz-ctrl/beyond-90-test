@@ -15,6 +15,7 @@ import { getRivals } from "@/lib/narrative/rivals";
 import { maxMediaForAge } from "@/lib/narrative/media-cap";
 import { torneoLabel, type TorneoType } from "@/lib/narrative/torneo";
 import { readTrofeos, INDIVIDUAL, trofeoLabel } from "@/lib/honours";
+import { decisionNeedsGoal } from "@/lib/calendar/competition-progress";
 
 export type AwardKind = "golden_boy" | "balon_oro";
 
@@ -148,7 +149,7 @@ export function tournamentBoost(player: Pick<Player, "flags">, season: number): 
   let stars = 0;
   for (const w of [season * 10 + 1, (season - 1) * 10 + 1]) {
     for (const [k, v] of Object.entries(flags)) {
-      if (k.startsWith(`match_decision_${w}_torneo.`) && (v === "goal" || v === "wondergoal" || v === "assist")) stars++;
+      if (k.startsWith(`match_decision_${w}_torneo.`) && decisionNeedsGoal(String(v))) stars++;
     }
   }
   const shines = stars >= 2;

@@ -94,7 +94,7 @@ export function buildTrainingPlanEvent(player: Player): GameEvent {
 
   return {
     id: trainingPlanId(season),
-    category: "entrenamiento",
+    category: "especial",
     title: "Tu plan de entrenamiento de la temporada",
     description: `${coach} y ${fisio} te enseñan tu perfil en una pantalla del gimnasio: tu mejor atributo es el ${best.label.toLowerCase()} (${best.value}) y el que más te falta, el ${worst.label.toLowerCase()} (${worst.value}). «Esta temporada, ¿en qué quieres trabajar?», pregunta el míster. Hay horas para una cosa bien hecha, no para todo.`,
     options,

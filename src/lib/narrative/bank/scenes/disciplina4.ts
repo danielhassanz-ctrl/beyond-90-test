@@ -26,7 +26,7 @@ const make = (parent: (typeof PADRES)[number]): BankScene[] => {
           "El humor no cuela. «No tiene ninguna gracia», dice, y el silencio que sigue te lo hace sentir en la nuca. La multa llega ese mismo día y el club filtra a la prensa que «estudia medidas». Hay chistes que se pagan caros.", { rel_entrenador: -2, multa: 2, moral: -3, fama: -1, flags: { dc_presi: true } }, "fama"),
         o("d", "Llevar a tu representante y negociar una multa menor y un comunicado conjunto", "Con un plan", { rel_representante: 2, multa: 1, patrimonio: -400, moral: 1, flags: { dc_presi: true, dc_permiso: true } }, "Tu representante llega con una carpeta y una sonrisa de las que cobran por hora. Entre los dos pactan una multa moderada, un comunicado serio y una cláusula de «consulta previa» para futuros viajes. El presidente firma sin ganas, pero firma. Tu agente te susurra al salir: «Esto es lo que se llama contener el daño»."),
       ]),
-    S(`dc-isla-mister-${k}`, "disciplina", { ...ADULTO, injured: true, after: [after(parent, undefined, 1, 5)], notFlags: ["dc_mister_isla"] }, "entrenamiento",
+    S(`dc-isla-mister-${k}`, "disciplina", { ...ADULTO, injured: true, after: [after(parent, undefined, 1, 5)], notFlags: ["dc_mister_isla"] }, "vida",
       "El míster te habla claro",
       "El entrenador te espera después de la sesión de gimnasio con los brazos cruzados y la mandíbula apretada. No te saluda. Espera a que los demás se vayan, cierra la puerta del vestuario y dice, con calma, que es peor que un grito: «He visto el vídeo. No hablo de lo que hagas en tus vacaciones. Hablo de lo que se ve de ti cuando estás lesionado y todo el equipo te mira».",
       [

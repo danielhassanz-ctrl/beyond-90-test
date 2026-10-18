@@ -152,6 +152,8 @@ async function career(club: string, media: number, seed: number): Promise<Result
       break;
     }
     res.events++;
+    if (process.env.TRACE && (process.env.TRACE === "all" || /^(matchday|match-decision|tanda)/.test(String(ev.id)))) process.stdout.write(`TRACE ${club} w${player.week} ${String(ev.id).slice(0, 34)} | ${String(ev.description).slice(0, 110)} | euro=${player.flags.euro_progress} copa=${player.flags.copa_progress}
+`);
     if (process.env.SEQ && res.events < 140 && seed === 0) process.stdout.write(`SEQ w${player.week} ${String(ev.id).slice(0, 40)}
 `);
     res.cats[ev.category] = (res.cats[ev.category] ?? 0) + 1;
@@ -257,6 +259,22 @@ async function career(club: string, media: number, seed: number): Promise<Result
     if (newWeek === lastWeek) sameWeek++; else { sameWeek = 0; lastWeek = newWeek; }
     if (sameWeek > 45) { res.stuck++; res.errors.push(`atascado en semana ${newWeek}: último evento ${ev.id}`); break; }
 
+    // INVARIANTE: al cerrar una temporada ninguna eliminatoria puede quedar «viva» sin jugar (Copa en rondas 1-5, Champions en 1-4): si pasa,
+    // la competición se ha congelado en silencio (visto: «Próxima ronda» en mayo sin que existiera el partido).
+    if (Math.floor((newWeek - 1) / 10) > Math.floor((player.week - 1) / 10) && ev.category === "partido") {
+      const sOld = Math.floor((player.week - 1) / 10);
+      for (const key of ["copa_progress", "euro_progress"] as const) {
+        try {
+          const pr = JSON.parse(String(player.flags?.[key] ?? "null"));
+          // (Si se fichó en esa temporada, el simulador no reproduce euroOnTransfer: se salta.)
+          const movedThisSeason = Math.floor(((parseInt(String(player.flags?.club_since ?? "0"), 10) || 0) - 1) / 10) === sOld;
+          if (pr && pr.season === sOld && pr.alive && !pr.tied && !movedThisSeason) {
+            const pending = key === "copa_progress" ? pr.round >= 1 && pr.round <= 5 : pr.round >= 1 && pr.round <= 4;
+            if (pending) res.errors.push(`${key} sin terminar al cerrar la temporada ${sOld}: ronda ${pr.round} viva (club ${player.club})`);
+          }
+        } catch {}
+      }
+    }
     player.week = newWeek;
     used.push(ev.id);
     history.unshift({

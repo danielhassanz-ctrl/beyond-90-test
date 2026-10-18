@@ -3,11 +3,12 @@ import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import {
   getEuropeanCompetitionFor,
+  buildMatchCalendar,
   EURO_GROUP_WEEKS,
   EURO_GROUP_JORNADAS,
 } from "@/lib/calendar/match-calendar";
 import { leagueOf, leagueTier, ligaJornadaByWeek, canonicalClub, isKnownLeagueClub, continentalName } from "@/lib/calendar/leagues";
-import { getCopaProgress, getEuroProgress, copaRoundName, euroRoundName } from "@/lib/calendar/competition-progress";
+import { getCopaProgress, getEuroProgress, getSeasonProgress, copaRoundName, euroRoundName } from "@/lib/calendar/competition-progress";
 import { WEEKS_PER_SEASON } from "@/types/career";
 import { getTorneoProgress, torneoGroupRivals, torneoLabel, torneoStageLabels, type TorneoType } from "@/lib/narrative/torneo";
 
@@ -222,13 +223,36 @@ function simulateGame(seed: string, tier: number, g: number): "W" | "D" | "L" {
  * jornadas de tu equipo se simulan de forma estable. Así "PJ" es siempre
  * la jornada real en la que estás, y puntos = 3·G + E con G+E+P = PJ.
  */
-function buildLigaTable(seed: string, playerClub: string, record?: SeasonMatchRecord): TableStandings {
+/**
+ * Hasta qué jornada ha llegado la Liga. NO depende de que el partido clave de cada mes se haya jugado como escena: con Copa y Europa vivas
+ * el calendario omite el partido de Liga de las semanas 8, 9 y 10 (un mes admite como mucho dos partidos clave) y esas jornadas se
+ * simulan. Antes la tabla solo avanzaba con los partidos clave jugados, así que en mayo seguía en la jornada 24 de 38 y la Liga no terminaba nunca
+ * en las mejores temporadas. Ahora: una jornada clave cuenta si ya se jugó o si el calendario la omite y su semana ya ha llegado.
+ */
+export function ligaJornadaReached(player: Pick<Player, "club" | "flags" | "week">, record?: SeasonMatchRecord): number {
+  const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
+  const inSeasonWeek = ((player.week - 1) % WEEKS_PER_SEASON) + 1;
+  const byWeek = ligaJornadaByWeek(player.club);
+  const calendar = buildMatchCalendar(player.club, season, getSeasonProgress(player as Player, season));
+  const keyWeeks = new Set(calendar.filter((m) => m.competition === "liga").map((m) => m.week - season * WEEKS_PER_SEASON));
+  const played = new Set((record?.results ?? []).map((r) => r.inSeasonWeek));
+  let reached = 0;
+  for (const [w, jornada] of Object.entries(byWeek)) {
+    const week = Number(w);
+    if (week > inSeasonWeek) continue;
+    if (!keyWeeks.has(week) || played.has(week)) reached = Math.max(reached, jornada);
+  }
+  return reached;
+}
+
+function buildLigaTable(seed: string, playerClub: string, record?: SeasonMatchRecord, reached?: number): TableStandings {
   const keyByJornada = new Map<number, "W" | "D" | "L">();
   for (const res of record?.results ?? []) {
     const jornada = ligaJornadaByWeek(playerClub)[res.inSeasonWeek];
     if (jornada) keyByJornada.set(jornada, res.r);
   }
-  const jornadaNow = keyByJornada.size > 0 ? Math.max(...keyByJornada.keys()) : 0;
+  const playedMax = keyByJornada.size > 0 ? Math.max(...keyByJornada.keys()) : 0;
+  const jornadaNow = Math.max(playedMax, reached ?? 0);
 
   const league = leagueOf(playerClub);
   const others = league.teams.filter((c) => c !== playerClub)
@@ -454,7 +478,7 @@ export function getActiveStandings(
 
   const primary = inFilial
     ? buildTable(`${seed}:filial`, player.club, RESERVE_RIVALS, matchdayGuess, "Segunda RFEF · Filial", record)
-    : buildLigaTable(`${seed}:liga`, player.club, record);
+    : buildLigaTable(`${seed}:liga`, player.club, record, ligaJornadaReached(player, record));
 
   if (inFilial) return { primary, secondary: null, copa: null, euro: null };
 
@@ -472,7 +496,9 @@ export function getActiveStandings(
   const eliminatedText = (roundName: string, p: { elim?: { opp: string; score: string; club: string } }) =>
     p.elim ? `${p.elim.club} ${p.elim.score} ${p.elim.opp}` : roundName;
   const copa: KnockoutStandings | null =
-    copaProgress.round > 0 && copaProgress.alive
+    copaProgress.round > 5 && copaProgress.alive
+      ? { type: "knockout", label: leagueOf(player.club).cup, roundLabel: "Campeón de la copa", alive: true, badge: "Campeón" }
+      : copaProgress.round > 0 && copaProgress.alive
       ? { type: "knockout", label: leagueOf(player.club).cup, roundLabel: `Próxima ronda: ${copaRoundName(copaProgress.round, player.club)}`, alive: true }
       : copaProgress.round > 0
         ? { type: "knockout", label: leagueOf(player.club).cup, roundLabel: `Eliminado en ${shortRound(copaRoundName(copaProgress.round, player.club))}`, alive: false, result: eliminatedText("", copaProgress) || undefined }
@@ -482,7 +508,9 @@ export function getActiveStandings(
   const euroLabel = european ? continentalName(player.club, european.competition) : "";
   const euro: KnockoutStandings | null = !european
     ? null
-    : euroProgress.round > 0 && euroProgress.alive
+    : euroProgress.round > 4 && euroProgress.alive
+      ? { type: "knockout", label: euroLabel, roundLabel: `Campeón de la ${euroLabel}`, alive: true, badge: "Campeón" }
+      : euroProgress.round > 0 && euroProgress.alive
       ? { type: "knockout", label: euroLabel, roundLabel: `Clasificado para ${euroRoundName(euroProgress.round).toLowerCase()} (${["febrero", "abril", "mayo", "mayo"][Math.min(3, euroProgress.round - 1)]})`, alive: true }
       : euroProgress.round > 0
         ? { type: "knockout", label: euroLabel, roundLabel: `Eliminado en ${shortRound(euroRoundName(euroProgress.round))}`, alive: false, result: eliminatedText("", euroProgress) || undefined }
@@ -533,14 +561,14 @@ function shortRound(name: string): string {
  * una temporada completa que juzgar (club fuera de LaLiga o menos de 30 jornadas).
  */
 export function leagueFinish(
-  player: Pick<Player, "id" | "club" | "week">,
+  player: Pick<Player, "id" | "club" | "week" | "flags">,
   record: SeasonMatchRecord,
 ): { rank: number; points: number; secondPoints: number; leaderPoints: number } | null {
   // Los clubes de segunda o recién ascendidos que el juego conoce (Sporting, Oviedo, Málaga…) también cierran la Liga con su puesto:
   // antes solo los 20 de la lista lo tenían y los demás nunca podían ser campeones.
   if (!leagueOf(player.club).teams.includes(canonicalClub(player.club)) && !isKnownLeagueClub(player.club)) return null;
   const season = Math.floor((player.week - 1) / WEEKS_PER_SEASON);
-  const table = buildLigaTable(`${player.id}:${season}:liga`, player.club, record);
+  const table = buildLigaTable(`${player.id}:${season}:liga`, player.club, record, ligaJornadaReached(player, record));
   const played = table.rows[0]?.played ?? 0;
   // Con Copa y Europa vivas el calendario deja sin jugar algunas jornadas de Liga (máx. 2 partidos por semana): con 20-29 jornadas jugadas se proyecta
   // la tabla a las 38 (mismos partidos para todos), en vez de dejar al club sin puesto justo en las mejores temporadas (un tercio de los dobletes).

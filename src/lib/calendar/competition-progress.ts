@@ -128,9 +128,29 @@ export function ownGoalsOf(scoreLine: string): number {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+/**
+ * El resultado de la jugada decisiva. La bandera match_decision_* guarda un JSON ({"outcome":"goal","style":…,"sit":…,"min":…}), no la
+ * palabra suelta: comparar la cadena entera con «goal» era SIEMPRE falso, así que el marcador de una eliminatoria o una final podía salir
+ * 0-0 con tu gol ya contado («¡Gol!» y la escena siguiente: «0-0 tras la prórroga»). Acepta las dos formas (la antigua, de la palabra suelta).
+ */
+export function decisionOutcomeOf(decision?: string | null): string | undefined {
+  if (!decision) return undefined;
+  const text = String(decision).trim();
+  if (text.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(text) as { outcome?: unknown };
+      return typeof parsed.outcome === "string" ? parsed.outcome : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  return text;
+}
+
 /** ¿Lo que viviste en la jugada decisiva (gol, golazo o asistencia) exige que tu equipo marque en el partido? */
 export function decisionNeedsGoal(decision?: string | null): boolean {
-  return decision === "goal" || decision === "wondergoal" || decision === "assist";
+  const outcome = decisionOutcomeOf(decision);
+  return outcome === "goal" || outcome === "wondergoal" || outcome === "assist";
 }
 
 /**

@@ -159,7 +159,7 @@ export function buildSeasonGoalsEvent(player: Player): GameEvent {
   const mark = { [`go_set_${season}`]: true };
   return {
     id: goalsEventId(season),
-    category: "entrenamiento",
+    category: "especial",
     title: `Objetivos de la temporada ${year}`,
     description: `${coach} y el director deportivo te citan en el despacho antes de que empiece lo serio. Sobre la mesa, una hoja con las metas del año para ti:\n${list(goals)}\n«No es un examen, es una conversación», dice el míster, aunque la hoja tiene pinta de examen. Puedes aceptarlas tal cual, pedir unas más exigentes a cambio de una prima o intentar que las rebajen.`,
     options: [
@@ -229,7 +229,7 @@ export function buildGoalsReviewEvent(player: Player): GameEvent {
   const flags = { [`go_review_${closed}`]: `${done}/${total}` };
   return {
     id: goalsReviewId(closed),
-    category: "entrenamiento",
+    category: "especial",
     title: `Balance de objetivos ${2026 + closed}/${String(2027 + closed).slice(2)}: ${done} de ${total}`,
     description: `${verdict}\n\n${lines}${allDone && bonus > 0 ? `\n\nPrima cobrada: ${bonus.toLocaleString("es")} €.` : bonus > 0 ? "\n\nLa prima pactada no se cobra: hacía falta cumplirlo todo." : ""}`,
     options: [
