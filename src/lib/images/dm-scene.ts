@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateCouplePhoto, PAPARAZZI_RESTAURANT_SCENE } from "@/lib/images/replicate";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
-import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
+import { hasImageCredit, reserveImageCredit, refundImageCredit } from "@/lib/images/credits";
 import { getAppUrl } from "@/lib/constants";
 
 /**
@@ -20,11 +20,22 @@ export async function maybeDmScenePhoto(
     if (!(await hasImageCredit(supabase, player as never, user.email))) return null;
     const quota = await checkImageGenerationQuota(supabase, user.id);
     if (!quota.allowed) return null;
+    // El crédito se reserva ANTES de generar (atómico) y se devuelve si no sale foto.
+    const reservation = await reserveImageCredit(supabase, player as never, user.email);
+    if (!reservation) return null;
     const herUrl = /^https?:\/\//.test(herAvatar) ? herAvatar : `${getAppUrl() ?? "https://beyond-90.vercel.app"}${herAvatar}`;
-    const buffer = await generateCouplePhoto(player.photo_url, herUrl, PAPARAZZI_RESTAURANT_SCENE);
-    if (!buffer) return null;
+    let buffer: Buffer | null = null;
+    try {
+      buffer = await generateCouplePhoto(player.photo_url, herUrl, PAPARAZZI_RESTAURANT_SCENE);
+    } catch (err) {
+      await refundImageCredit(supabase, reservation);
+      throw err;
+    }
+    if (!buffer) {
+      await refundImageCredit(supabase, reservation);
+      return null;
+    }
     await logImageGeneration(supabase, user.id);
-    await consumeImageCredit(supabase, { id: player.id, flags: player.flags ?? {} }, user.email);
     return buffer;
   } catch (err) {
     console.error("[maybeDmScenePhoto] falló:", err instanceof Error ? err.message : err);

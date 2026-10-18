@@ -6,7 +6,8 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
-import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
+import { hasImageCredit, reserveImageCredit, refundImageCredit } from "@/lib/images/credits";
+import { patchFlagsFresh } from "@/lib/supabase/flags";
 import { recapPhotoPrompt } from "@/lib/images/recap-photo";
 import { logAppError } from "@/lib/errorLog";
 import { playerAge } from "@/types/career";
@@ -43,12 +44,19 @@ export async function regenerateRecapPhoto(careerEventRowId: string): Promise<{ 
   const prompt = recapPhotoPrompt(String(fresh?.club ?? player.club), playerAge(Number(fresh?.week ?? player.week)), player.last_name ?? "");
 
   // La foto vieja se enseña como "revelando…" mientras se genera la nueva
-  const { data: marked, error: markError } = await supabase
-    .from("players")
-    .update({ flags: { ...flags, recap_photo_pending: `${season}:${Date.now()}` } })
-    .eq("id", playerId)
-    .select("id");
-  if (markError || !marked || marked.length !== 1) return { ok: false, message: "No se pudo iniciar la generación. Inténtalo de nuevo." };
+  const marked = await patchFlagsFresh(supabase, playerId, (f) => {
+    f.recap_photo_pending = `${season}:${Date.now()}`;
+  });
+  if (!marked) return { ok: false, message: "No se pudo iniciar la generación. Inténtalo de nuevo." };
+
+  // El crédito se reserva ANTES de generar (atómico) y se devuelve si no sale foto.
+  const reservation = await reserveImageCredit(supabase, player, user.email);
+  if (!reservation) {
+    await patchFlagsFresh(supabase, playerId, (f) => {
+      delete f.recap_photo_pending;
+    });
+    return { ok: false, message: "No te quedan fotos disponibles. Puedes comprar más en la sección de fotos." };
+  }
 
   const finish = async (url: string | null) => {
     const { data: cur } = await supabase.from("players").select("flags").eq("id", playerId).maybeSingle();
@@ -64,18 +72,21 @@ export async function regenerateRecapPhoto(careerEventRowId: string): Promise<{ 
   };
 
   after(async () => {
+    let generated = false;
     try {
       const buffer = await generatePlayerImage(photoUrl, prompt);
       if (!buffer) {
         await logAppError(supabase, "regenerateRecapPhoto", "generatePlayerImage returned null", { userId, playerId, detail: { season } });
+        await refundImageCredit(supabase, reservation);
         await finish(null);
         return;
       }
+      generated = true;
       await logImageGeneration(supabase, userId);
-      await consumeImageCredit(supabase, { id: playerId, flags }, userEmail);
       await finish(await uploadGeneratedImage(supabase, userId, buffer, "look"));
     } catch (err) {
       await logAppError(supabase, "regenerateRecapPhoto", err, { userId, playerId });
+      if (!generated) await refundImageCredit(supabase, reservation);
       await finish(null).catch(() => {});
     }
   });

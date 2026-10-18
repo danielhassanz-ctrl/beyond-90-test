@@ -181,6 +181,77 @@ export async function hasImageCredit(
 }
 
 /**
+ * RESERVA ATÓMICA DE UN CRÉDITO. Antes se comprobaba al empezar (hasImageCredit) y se descontaba al terminar (consumeImageCredit): con un crédito y
+ * N peticiones a la vez (varios «Rehacer» en paralelo) todas pasaban la comprobación y salían N fotos por el precio de una. Ahora se descuenta ANTES de
+ * generar, con una escritura condicional (solo si las dos cifras siguen como se leyeron: si otra petición se adelantó, se vuelve a leer y se reintenta) y
+ * se devuelve si la generación falla (refundImageCredit). El dueño no gasta nada.
+ */
+export interface ImageReservation {
+  kind: "owner" | "free" | "paid";
+  playerId: string;
+}
+
+const asInt = (v: unknown) => parseInt(String(v ?? "0"), 10) || 0;
+
+export async function reserveImageCredit(
+  supabase: SupabaseClient,
+  player: Pick<Player, "id" | "flags">,
+  userEmail: string | null | undefined,
+): Promise<ImageReservation | null> {
+  if (isOwnerEmail(userEmail)) return { kind: "owner", playerId: player.id };
+  const eligible = await isEligibleForFreeTier(supabase, player, userEmail);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data } = await supabase.from("players").select("flags").eq("id", player.id).maybeSingle();
+    if (!data) return null;
+    const flags = { ...((data.flags ?? {}) as Record<string, string | boolean>) };
+    const free = asInt(flags.img_free_used);
+    const paid = asInt(flags.img_paid_credits);
+    const next = { ...flags };
+    let kind: "free" | "paid";
+    if (eligible && free < FREE_IMAGES_PER_CAREER) {
+      next.img_free_used = String(free + 1);
+      kind = "free";
+    } else if (paid > 0) {
+      next.img_paid_credits = String(paid - 1);
+      kind = "paid";
+    } else {
+      return null;
+    }
+    let q = supabase.from("players").update({ flags: next }).eq("id", player.id);
+    q = flags.img_free_used === undefined ? q.is("flags->>img_free_used", null) : q.eq("flags->>img_free_used", String(flags.img_free_used));
+    q = flags.img_paid_credits === undefined ? q.is("flags->>img_paid_credits", null) : q.eq("flags->>img_paid_credits", String(flags.img_paid_credits));
+    const { data: rows } = await q.select("id");
+    if (rows && rows.length === 1) {
+      if (kind === "free") {
+        try {
+          const { data: auth } = await supabase.auth.getUser();
+          if (auth.user) await recordAccountFreeUse(auth.user.id, asInt(next.img_free_used));
+        } catch {
+          // no bloquea
+        }
+      }
+      return { kind, playerId: player.id };
+    }
+  }
+  return null;
+}
+
+/** Devuelve el crédito reservado cuando la generación no llegó a producir una foto. Con la service role (el trigger de la base de datos no deja devolver créditos desde la sesión del jugador). */
+export async function refundImageCredit(supabase: SupabaseClient, reservation: ImageReservation | null | undefined): Promise<void> {
+  if (!reservation || reservation.kind === "owner") return;
+  let writer: SupabaseClient = supabase;
+  try {
+    writer = createServiceClient();
+  } catch {
+    // sin SUPABASE_SERVICE_ROLE_KEY (local)
+  }
+  await patchFlagsFresh(writer, reservation.playerId, (f) => {
+    if (reservation.kind === "free") f.img_free_used = String(Math.max(0, asInt(f.img_free_used) - 1));
+    else f.img_paid_credits = String(asInt(f.img_paid_credits) + 1);
+  });
+}
+
+/**
  * Se llama SOLO tras una generación que de verdad tuvo éxito — igual que
  * `logImageGeneration` en quota.ts, que también cuenta al final y no al
  * intentarlo, para no cobrarle a nadie una foto que falló por un error de

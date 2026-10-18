@@ -10,7 +10,7 @@ const ok = (c: boolean, m: string) => { console.log((c ? "  ✓ " : "  ✗ ") + 
 function walk(camino: "a" | "b" | "c") {
   const p: any = {
     id: "rv-test", last_name: "Hassan", nation: "España", club: "Real Madrid", position: "Delantero", week: 120, media: 86, fama: 82, moral: 70, forma: 80, patrimonio: 900000,
-    rel_entrenador: 60, rel_vestuario: 60, rel_aficion: 60, rel_representante: 60, reputacion: 60, stats_matches_played: 300, status: "active", mode: "pro",
+    rel_entrenador: 60, rel_vestuario: 60, rel_aficion: 60, rel_representante: 60, reputacion: 60, stats_matches_played: 300, status: "active", mode: "pro", agent_name: "Iñaki Zubiaurre",
     flags: { club_since: "100", sel_debut: true },
   };
   const used: string[] = [];

@@ -37,12 +37,29 @@ begin
     new.flags := jsonb_set(new.flags, '{img_free_used}', to_jsonb(old_free::text));
   end if;
 
+  -- (la elegibilidad del cupo gratis no la toca el jugador)
   -- La elegibilidad del cupo gratis no la toca el jugador: ni crearla ni cambiarla.
   if old.flags ? 'free_tier_eligible' then
     new.flags := jsonb_set(new.flags, '{free_tier_eligible}', to_jsonb(old.flags ->> 'free_tier_eligible'));
   else
     new.flags := new.flags - 'free_tier_eligible';
   end if;
+
+  -- Los contadores del presupuesto de IA (ai_used, ai_used_sl) solo pueden SUBIR desde una sesión de jugador: poner ai_used = 0 desde el navegador
+  -- reiniciaba el tope de coste por jugador y permitía forzar llamadas a Claude sin límite.
+  declare
+    k text;
+    old_n int;
+    new_n int;
+  begin
+    foreach k in array array['ai_used', 'ai_used_sl'] loop
+      old_n := coalesce(nullif(old.flags ->> k, '')::int, 0);
+      new_n := coalesce(nullif(new.flags ->> k, '')::int, 0);
+      if new_n < old_n then
+        new.flags := jsonb_set(new.flags, array[k], to_jsonb(old_n::text));
+      end if;
+    end loop;
+  end;
 
   return new;
 end;

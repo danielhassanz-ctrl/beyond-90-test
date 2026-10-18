@@ -55,5 +55,19 @@ const won = getActiveStandings(mk("Real Madrid", 10, { round: 6, alive: true }, 
 ok(won.copa?.roundLabel === "Campeón de la copa", `Copa ganada: «${won.copa?.roundLabel}» (antes «Próxima ronda: Copa del Rey»)`);
 ok(/Campeón/.test(won.euro?.roundLabel ?? ""), `Champions ganada: «${won.euro?.roundLabel}»`);
 
+console.log("5) La tabla europea no contradice la etiqueta");
+let contradict = 0;
+for (let i = 0; i < 80; i++) {
+  for (const [round, alive] of [[1, true], [0, false]] as const) {
+    const p = { ...mk("Real Madrid", 10, { round: 2, alive: false }, { round, alive }), id: "pe" + i };
+    const st = getActiveStandings(p, ["pretemp-amistoso", "rookie-debut-oficial"], recordUpTo("Real Madrid", 10, copa, euro));
+    const rows = (st.secondary as any)?.rows ?? [];
+    const rank = rows.findIndex((r: any) => r.isPlayer) + 1;
+    if (round > 0 && rank > 3) contradict++;
+    if (round === 0 && rank <= 5) contradict++;
+  }
+}
+ok(contradict === 0, `pasar de fase = entre los 3 primeros; caer en grupos = del 6º abajo (contradicciones: ${contradict} de 160)`);
+
 if (fails) { console.log(`\n${fails} fallos`); process.exit(1); }
 console.log("\nTodo bien");

@@ -43,8 +43,12 @@ export function weightedPick(seed: string, items: [string, number][], exclude: S
 /** Ganador y finalista de la Champions de la temporada `s`: si la ganaste tú, tu club de entonces. */
 export function championsPodium(player: Pick<Player, "id" | "flags">, s: number): { winner: string; runnerUp: string; byPlayer: boolean } {
   const mine = readTrofeos(player.flags).find((t) => t.k === "champions" && t.s === s);
-  const winner = mine?.c ?? weightedPick(`${player.id}:cl:${s}:w`, CLUB_WEIGHTS);
-  const runnerUp = weightedPick(`${player.id}:cl:${s}:r`, CLUB_WEIGHTS, new Set([winner]));
+  // Si tu club no la ganó, tampoco puede salir como ganador (ni finalista) inventado: en el 5,5 % de las temporadas la gala decía «la Champions fue para
+  // tu equipo» cuando había caído en octavos.
+  const own = String(player.flags?.[`club_s${s}`] ?? "");
+  const noOwn = new Set(own ? [own] : []);
+  const winner = mine?.c ?? weightedPick(`${player.id}:cl:${s}:w`, CLUB_WEIGHTS, noOwn);
+  const runnerUp = weightedPick(`${player.id}:cl:${s}:r`, CLUB_WEIGHTS, new Set([winner, ...noOwn]));
   return { winner, runnerUp, byPlayer: Boolean(mine) };
 }
 

@@ -250,18 +250,18 @@ export default async function HitoPage({
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="rounded-2xl border border-panel-border bg-surface p-3 text-center">
             <p className="gold-text font-display text-2xl">{player.media}</p>
-            <p className="text-kicker mt-1">Media</p>
+            <p className="text-kicker mt-1">Media hoy</p>
           </div>
           <div className="rounded-2xl border border-panel-border bg-surface p-3 text-center">
             <p className="gold-text font-display text-2xl">{player.fama}</p>
-            <p className="text-kicker mt-1">Fama</p>
+            <p className="text-kicker mt-1">Fama hoy</p>
           </div>
           <div className="rounded-2xl border border-panel-border bg-surface p-3 text-center">
-            <p className="gold-text font-display text-2xl">{player.week}w</p>
-            <p className="text-kicker mt-1">Semanas</p>
+            <p className="gold-text font-display text-2xl">{seasonLabel(milestone.week)}</p>
+            <p className="text-kicker mt-1">Temporada</p>
           </div>
           <div className="rounded-2xl border border-panel-border bg-surface p-3 text-center">
-            <p className="gold-text font-display text-2xl">{age}</p>
+            <p className="gold-text font-display text-2xl">{age ?? "—"}</p>
             <p className="text-kicker mt-1">Años</p>
           </div>
         </div>

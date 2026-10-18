@@ -7,9 +7,10 @@ import { getCurrentUserAndPlayer } from "@/lib/player";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
-import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
+import { hasImageCredit, reserveImageCredit, refundImageCredit } from "@/lib/images/credits";
+import { patchFlagsFresh } from "@/lib/supabase/flags";
 import { addShareBranding } from "@/lib/images/shareBranding";
-import { getMilestoneImagePrompt, cleanImagePrompt } from "@/lib/images/milestonePrompts";
+import { getMilestoneImagePrompt, cleanImagePrompt, safeScene } from "@/lib/images/milestonePrompts";
 import { describeKit, describeNationalKit } from "@/lib/clubColors";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { playerAge } from "@/types/career";
@@ -101,10 +102,17 @@ export async function regenerateMilestoneImage(formData: FormData) {
 
   // La marca de inicio va en los flags del jugador, NO en created_at: esa columna
   // ordena la línea temporal del retiro y no debe moverse al regenerar una foto.
-  await supabase
-    .from("players")
-    .update({ flags: { ...(player.flags ?? {}), [`regen_${milestoneId}`]: String(Date.now()) } })
-    .eq("id", player.id);
+  // Sobre las banderas ACTUALES (no la copia de hace un momento): si no, esta escritura podía pisar una compra o un gasto de créditos recientes.
+  await patchFlagsFresh(supabase, player.id, (f) => {
+    f[`regen_${milestoneId}`] = String(Date.now());
+  });
+
+  // El crédito se reserva ANTES de generar (atómico) y se devuelve si no sale foto: varios «Rehacer» a la vez ya no dan fotos de más.
+  const reservation = await reserveImageCredit(supabase, player, user.email);
+  if (!reservation) {
+    await supabase.from("milestones").update({ image_status: "failed" }).eq("id", milestoneId);
+    redirect(`/mi-jugador/fotos?error=${encodeURIComponent("Ya has usado todas tus fotos gratis. Compra un pack para seguir generando fotos.")}`);
+  }
   console.log(`[regenerateMilestoneImage] flags updated, about to schedule after() and redirect`);
 
   const age = playerAge(milestone.week ?? player.week);
@@ -117,10 +125,12 @@ export async function regenerateMilestoneImage(formData: FormData) {
   // "grandes") > genérico basado solo en el título, como última red.
   // Las galas de premios tienen su propia escena (smoking y trofeo): la que se guardó al crear el hito pudo ser la de "récord".
   const awardId = /bal[oó]n de oro/i.test(String(milestone.title)) ? "award-balon-oro" : /golden boy/i.test(String(milestone.title)) ? "award-golden-boy" : null;
-  const contextual = getMilestoneImagePrompt(awardId ?? String(milestone.type), age, player.club, player.last_name, String(milestone.type), player.agent_name ?? undefined);
+  // El club de ENTONCES (no el de hoy): un hito antiguo rehecho tras un traspaso salía con la camiseta nueva. Los de la segunda vida usan el club actual.
+  const clubAtTime = player.second_career ? player.club : String(player.flags?.[`club_s${Math.floor(((milestone.week ?? player.week) - 1) / 10)}`] ?? player.club);
+  const contextual = getMilestoneImagePrompt(awardId ?? String(milestone.type), age, clubAtTime, player.last_name, String(milestone.type), player.agent_name ?? undefined);
   const basePrompt =
     (awardId ? contextual : null) ??
-    (milestone.image_scene as string | null) ??
+    safeScene(milestone.image_scene as string | null) ??
     contextual ??
     `Photorealistic cinematic photo of the photographed man in an emotional football moment: "${milestone.title}". He wears a ${describeKit(player.club)} football jersey, natural stadium light, expressive face, documentary sports photography style`;
   // Una escena guardada sin camiseta (de antes de que se añadiera la cláusula) dejaba que el modelo eligiera la de cualquier club.
@@ -150,6 +160,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
 
   after(async () => {
     console.log(`[regenerateMilestoneImage:after] background job started for ${milestoneId}`);
+    let generated = false;
     try {
       const buffer = await generatePlayerImage(photoUrl, prompt);
       console.log(`[regenerateMilestoneImage:after] generatePlayerImage returned buffer=${!!buffer}`);
@@ -160,10 +171,11 @@ export async function regenerateMilestoneImage(formData: FormData) {
           detail: { milestoneId },
         });
         await supabase.from("milestones").update({ image_status: "failed" }).eq("id", milestoneId);
+        await refundImageCredit(supabase, reservation);
         return;
       }
+      generated = true;
       await logImageGeneration(supabase, userId);
-      await consumeImageCredit(supabase, { id: playerId, flags: playerFlags }, userEmail);
       let finalBuffer = buffer;
       try {
         finalBuffer = await addShareBranding(buffer, getShareTagline(type));
@@ -185,6 +197,7 @@ export async function regenerateMilestoneImage(formData: FormData) {
       }
     } catch (err) {
       console.error(`[regenerateMilestoneImage] exception for ${milestoneId}:`, err);
+      if (!generated) await refundImageCredit(supabase, reservation);
       await logAppError(supabase, "regenerateMilestoneImage", err, { userId, playerId, detail: { milestoneId } });
       await supabase.from("milestones").update({ image_status: "failed" }).eq("id", milestoneId);
     }

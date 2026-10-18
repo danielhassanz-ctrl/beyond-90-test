@@ -15,7 +15,7 @@ import { generatePlayerImage } from "@/lib/images/replicate";
 import { personalizeEvent } from "@/lib/narrative/npcs";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
-import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
+import { hasImageCredit, reserveImageCredit, refundImageCredit } from "@/lib/images/credits";
 import { generateFromTemplate, saveAsTemplateIfMissing } from "@/lib/images/templates";
 import { composeWarcaCover } from "@/lib/images/newspaper";
 import { addShareBranding } from "@/lib/images/shareBranding";
@@ -963,15 +963,18 @@ async function resolveEventInner(formData: FormData, ctx: { restore: (() => Prom
       });
     }
 
-    if (milestoneId && willGenerate) {
+    // El crédito se reserva ANTES de generar (atómico: dos decisiones a la vez no gastan la misma foto) y se devuelve si no sale foto.
+    const imageReservation = milestoneId && willGenerate ? await reserveImageCredit(supabase, player, user.email) : null;
+    if (milestoneId && willGenerate && !imageReservation) {
+      await supabase.from("milestones").update({ image_status: "none" }).eq("id", milestoneId);
+    }
+    if (milestoneId && willGenerate && imageReservation) {
       const finalMilestoneId = milestoneId;
       const finalPrompt = milestoneImagePrompt || event.imageScene || "jugador celebrando momento épico";
       const finalPhotoUrl = photoRefs(player);
       const finalTemplateKey = templateKey;
       const finalUserId = user.id;
       const finalPlayerId = player.id;
-      const finalPlayerFlags = player.flags ?? {};
-      const finalUserEmail = user.email;
       const finalIsGolChilena = event.id === GOL_CHILENA_EVENT_ID;
       // Solo las escenas pensadas para cambiar el aspecto (barba, pelo, madurez) actualizan la foto de referencia.
       const finalEvolvesLook = Boolean(event.lookEvolution);
@@ -985,6 +988,7 @@ async function resolveEventInner(formData: FormData, ctx: { restore: (() => Prom
       const finalTrophyKind = event.trophy?.kind;
 
       after(async () => {
+        let generated = false;
         try {
           let buffer: Buffer | null = null;
           let isFreshGeneration = false;
@@ -1007,11 +1011,12 @@ async function resolveEventInner(formData: FormData, ctx: { restore: (() => Prom
               detail: { milestoneId: finalMilestoneId, templateKey: finalTemplateKey },
             });
             await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
+            await refundImageCredit(supabase, imageReservation);
             return;
           }
 
+          generated = true;
           await logImageGeneration(supabase, finalUserId);
-          await consumeImageCredit(supabase, { id: finalPlayerId, flags: finalPlayerFlags }, finalUserEmail);
 
           // El gol de chilena no comparte una foto de acción tal cual —
           // esa foto se compone dentro de la portada "WARCA" (ver
@@ -1094,6 +1099,7 @@ async function resolveEventInner(formData: FormData, ctx: { restore: (() => Prom
           }
         } catch (err) {
           console.error(`[resolveEvent:after] Exception generating image for milestone ${finalMilestoneId}:`, err);
+          if (!generated) await refundImageCredit(supabase, imageReservation);
           await logAppError(supabase, "resolveEvent:milestone-image", err, {
             userId: finalUserId,
             playerId: finalPlayerId,
@@ -1131,12 +1137,11 @@ async function resolveEventInner(formData: FormData, ctx: { restore: (() => Prom
 
   if (isSeasonPhotoRefresh && preseasonSeason !== null && player.photo_url && (await hasImageCredit(supabase, player, user.email))) {
     const refreshQuota = await checkImageGenerationQuota(supabase, user.id);
-    if (refreshQuota.allowed) {
+    const refreshReservation = refreshQuota.allowed ? await reserveImageCredit(supabase, player, user.email) : null;
+    if (refreshQuota.allowed && refreshReservation) {
       const refreshPhotoUrl = photoRefs(player);
       const refreshUserId = user.id;
-      const refreshUserEmail = user.email;
       const refreshPlayerId = player.id;
-      const refreshPlayerFlags = player.flags ?? {};
       const refreshAge = playerAge(newWeek);
       const refreshClub = typeof consequences.club === "string" ? consequences.club : player.club;
       const refreshSeason = preseasonSeason;
@@ -1158,6 +1163,7 @@ async function resolveEventInner(formData: FormData, ctx: { restore: (() => Prom
       };
 
       after(async () => {
+        let generated = false;
         try {
           const buffer = await generatePlayerImage(refreshPhotoUrl, refreshPrompt);
           if (!buffer) {
@@ -1168,14 +1174,16 @@ async function resolveEventInner(formData: FormData, ctx: { restore: (() => Prom
               detail: { preseasonSeason: refreshSeason },
             });
             await clearPending(null);
+            await refundImageCredit(supabase, refreshReservation);
             return;
           }
+          generated = true;
           await logImageGeneration(supabase, refreshUserId);
-          await consumeImageCredit(supabase, { id: refreshPlayerId, flags: refreshPlayerFlags }, refreshUserEmail);
           const newUrl = await uploadGeneratedImage(supabase, refreshUserId, buffer, "look");
           await clearPending(newUrl);
         } catch (err) {
           console.error("[resolveEvent:after] season photo refresh threw:", err);
+          if (!generated) await refundImageCredit(supabase, refreshReservation);
           await logAppError(supabase, "resolveEvent:season-photo-refresh", err, {
             userId: refreshUserId,
             playerId: refreshPlayerId,

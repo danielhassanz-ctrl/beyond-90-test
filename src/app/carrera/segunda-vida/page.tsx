@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { mergeFlagsForWrite } from "@/lib/supabase/flags";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { redirect } from "next/navigation";
 
@@ -99,7 +100,9 @@ export default async function SegundaVidaPage() {
         ? { hilos: consumeThread(player.flags, dueThread), thread_last_second_week: String(player.second_week) }
         : {}),
     };
-    await supabase.from("players").update({ pending_event: event, flags: flagsAfter }).eq("id", player.id);
+    // Solo lo que cambió esta generación, sobre las banderas actuales (la IA tarda y mientras tanto pueden haber cambiado créditos u otras banderas).
+    const mergedAfter = await mergeFlagsForWrite(supabase, player.id, player.flags ?? {}, flagsAfter);
+    await supabase.from("players").update({ pending_event: event, flags: mergedAfter }).eq("id", player.id);
   }
 
   const clubTitleCount = [player.flags?.title_liga, player.flags?.title_champions].filter(Boolean).length;

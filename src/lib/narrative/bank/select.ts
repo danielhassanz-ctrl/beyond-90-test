@@ -286,6 +286,14 @@ function positionMismatch(player: Player, scene: BankScene): boolean {
   return position !== "Delantero" && STRIKER_RE.test(text);
 }
 
+/** Sin ningún representante (ni siquiera un familiar), las escenas que giran en torno a «tu agente» no tienen sentido. */
+const AGENT_RE = /(tu|el|tus) (agente|representante)/i;
+function agentMismatch(player: Player, scene: BankScene): boolean {
+  const name = String(player.agent_name ?? "").trim();
+  if (name && !/^sin /i.test(name)) return false;
+  return AGENT_RE.test(`${scene.event.title} ${scene.event.description}`);
+}
+
 /** Escenas del banco que encajan ahora con el estado del jugador y no se han vivido. */
 export function eligibleBankScenes(player: Player, usedIds: string[], scenes: BankScene[] = BANK_SCENES): BankCandidate[] {
   const used = new Set(usedIds);
@@ -293,7 +301,7 @@ export function eligibleBankScenes(player: Player, usedIds: string[], scenes: Ba
   for (const scene of scenes) {
     if (used.has(scene.id)) continue;
     const { ok, chained } = fits(player, scene.when);
-    if (!ok || positionMismatch(player, scene)) continue;
+    if (!ok || positionMismatch(player, scene) || agentMismatch(player, scene)) continue;
     // Una escena sin ninguna condición de contexto no es del banco "personal": sale con peso bajo.
     const weight = (scene.weight ?? 1) * (1 + 0.15 * specificity(scene.when)) * (chained ? 5 : 1);
     out.push({ scene, chained, weight });

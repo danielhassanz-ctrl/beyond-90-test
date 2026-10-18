@@ -246,6 +246,28 @@ export function ligaJornadaReached(player: Pick<Player, "club" | "flags" | "week
   return reached;
 }
 
+/**
+ * Ajusta una tabla simulada al resultado ya decidido: si pasas de fase, tu equipo queda entre los 3 primeros; si no, del 6º hacia abajo. Se intercambian
+ * los registros (puntos, victorias…) con el equipo de esa posición: la tabla europea es simulada, no sale de tus partidos.
+ */
+function alignWithResult(table: TableStandings, qualified: boolean): TableStandings {
+  const rows = [...table.rows].sort((a, b) => b.points - a.points || b.won - a.won);
+  const idx = rows.findIndex((r) => r.isPlayer);
+  if (idx < 0) return table;
+  const target = qualified ? (idx > 2 ? 2 : -1) : idx < 5 ? Math.min(5, rows.length - 1) : -1;
+  if (target < 0) return table;
+  const me = rows[idx];
+  const other = rows[target];
+  const swap = (a: StandingsRow, b: StandingsRow) => ({ points: b.points, played: b.played, won: b.won, drawn: b.drawn, lost: b.lost });
+  const mine = swap(me, other);
+  const theirs = swap(other, me);
+  rows[idx] = { ...me, ...mine };
+  rows[target] = { ...other, ...theirs };
+  // En un empate a todo, se decide a favor (si pasas) o en contra (si caes) de tu equipo: así el puesto siempre cuadra con el resultado.
+  const tie = (a: StandingsRow, b: StandingsRow) => (a.isPlayer === b.isPlayer ? 0 : (a.isPlayer ? -1 : 1) * (qualified ? 1 : -1));
+  return { ...table, rows: rows.sort((a, b) => b.points - a.points || b.won - a.won || tie(a, b)) };
+}
+
 function buildLigaTable(seed: string, playerClub: string, record?: SeasonMatchRecord, reached?: number): TableStandings {
   const keyByJornada = new Map<number, "W" | "D" | "L">();
   for (const res of record?.results ?? []) {
@@ -489,7 +511,12 @@ export function getActiveStandings(
   // simulación estable — el progreso real en esa competición concreta ya
   // se cuenta aparte, en el propio evento de eliminatoria cuando toca.
   const european = getEuropeanCompetitionFor(player.club, euroSpotFor(player.flags, season, player.club));
-  const secondary = european
+  // La tabla europea es una simulación aparte del sorteo que decide si pasas de fase (resolveEuroGroupStage): podían contradecirse (tu equipo 6º en la
+  // tabla y «Clasificado para octavos» debajo, el 40 % de las veces). Una vez resuelta la fase, la tabla se ajusta a ese resultado.
+  const euroProgressNow = getEuroProgress(player, season);
+  const euroResolved = euroProgressNow.round > 0 || (!euroProgressNow.alive && euroGroupsPlayed >= 2);
+  const euroQualified = euroProgressNow.round > 0; // ronda ≥ 1 = pasó la fase de grupos
+  const secondaryRaw = european
     ? buildTable(`${seed}:${european.competition}`, player.club, european.rivals, europeanMatchdayGuess, european.label)
     : null;
 
@@ -505,6 +532,7 @@ export function getActiveStandings(
         ? { type: "knockout", label: leagueOf(player.club).cup, roundLabel: `Eliminado en ${shortRound(copaRoundName(copaProgress.round, player.club))}`, alive: false, result: eliminatedText("", copaProgress) || undefined }
         : null;
 
+  const secondary = secondaryRaw && euroResolved ? alignWithResult(secondaryRaw, euroQualified) : secondaryRaw;
   const euroProgress = getEuroProgress(player, season);
   const euroLabel = european ? continentalName(player.club, european.competition) : "";
   const euro: KnockoutStandings | null = !european

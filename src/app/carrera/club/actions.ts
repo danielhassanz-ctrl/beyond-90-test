@@ -1,5 +1,6 @@
 "use server";
 
+import { mergeFlagsForWrite } from "@/lib/supabase/flags";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserAndPlayer } from "@/lib/player";
@@ -35,7 +36,8 @@ export async function requestFromClub(formData: FormData) {
   if (partnerStep.note) result.outcomeText = `${result.outcomeText} ${partnerStep.note}`;
   if (Object.keys(partnerStep.flags).length > 1) result.consequences = { ...result.consequences, flags: { ...result.consequences.flags, ...partnerStep.flags } };
   const patch = applyConsequences(player as Player, result.consequences);
-  const flags = { ...(player.flags ?? {}), ...(result.consequences.flags ?? {}) };
+  const start = (player.flags ?? {}) as Record<string, string | boolean>;
+  const flags = await mergeFlagsForWrite(supabase, player.id, start, { ...start, ...((result.consequences.flags ?? {}) as Record<string, string | boolean>) });
   const { data: updated, error } = await supabase.from("players").update({ ...patch, flags }).eq("id", player.id).select("id");
   // Sin error no es éxito: una política que descarta el UPDATE tampoco lo da (ver la nota de RLS del proyecto).
   if (error || !updated || updated.length !== 1) {

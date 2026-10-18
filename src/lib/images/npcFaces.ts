@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { patchFlagsFresh } from "@/lib/supabase/flags";
 import type { Player } from "@/types/player";
 import type { NpcRole } from "@/lib/narrative/npcs";
 import { generateNpcFace } from "@/lib/images/replicate";
@@ -63,9 +64,12 @@ export async function markNpcSeen(
 ): Promise<void> {
   if (hasMetNpc(player, role)) return;
   try {
-    const flags = { ...(player.flags ?? {}), [seenFlagKey(role, player)]: "1" };
-    await supabase.from("players").update({ flags }).eq("id", player.id);
-    player.flags = flags;
+    // Sobre las banderas actuales: la copia de player.flags puede tener segundos y pisaría un gasto o una compra de créditos recientes.
+    const key = seenFlagKey(role, player);
+    const flags = await patchFlagsFresh(supabase, player.id, (f) => {
+      f[key] = "1";
+    });
+    player.flags = flags ?? { ...(player.flags ?? {}), [key]: "1" };
   } catch (err) {
     console.error("[markNpcSeen] no se pudo guardar:", err instanceof Error ? err.message : err);
   }
@@ -179,9 +183,11 @@ export async function getOrCreateNpcFace(
   if (!url) return null;
 
   try {
-    const flags = { ...(player.flags ?? {}), [flagKey]: url };
-    await supabase.from("players").update({ flags }).eq("id", player.id);
-    player.flags = flags;
+    // Tras 6-25 s de generación: se escribe sobre las banderas ACTUALES, no sobre la copia de antes (si no, pisaba créditos o escenas guardadas entretanto).
+    const flags = await patchFlagsFresh(supabase, player.id, (f) => {
+      f[flagKey] = url;
+    });
+    player.flags = flags ?? { ...(player.flags ?? {}), [flagKey]: url };
   } catch (err) {
     console.error("[getOrCreateNpcFace] no se pudo cachear la cara:", err instanceof Error ? err.message : err);
   }

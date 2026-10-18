@@ -4,12 +4,13 @@ import { redirect } from "next/navigation";
 import { appendThread } from "@/lib/narrative/threads";
 import { after } from "next/server";
 import { applyConsequences, nextWeekGap, resolveOption } from "@/lib/narrative/engine";
-import { SECOND_LIFE_TARGET_WEEKS } from "@/types/career";
+import { SECOND_LIFE_TARGET_WEEKS, playerAge } from "@/types/career";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 import { generatePlayerImage } from "@/lib/images/replicate";
 import { uploadGeneratedImage } from "@/lib/images/upload";
 import { checkImageGenerationQuota, logImageGeneration } from "@/lib/images/quota";
-import { hasImageCredit, consumeImageCredit } from "@/lib/images/credits";
+import { hasImageCredit, reserveImageCredit, refundImageCredit } from "@/lib/images/credits";
+import { cleanImagePrompt, withSceneGuards } from "@/lib/images/milestonePrompts";
 import { addShareBranding } from "@/lib/images/shareBranding";
 import { getShareTagline } from "@/lib/shareTaglines";
 import { logAppError } from "@/lib/errorLog";
@@ -108,17 +109,30 @@ export async function resolveSecondLifeEvent(formData: FormData) {
       milestoneId = null;
     }
 
-    if (milestoneId && willGenerate) {
+    // El crédito se reserva ANTES de generar (atómico) y se devuelve si no sale foto.
+    const imageReservation = milestoneId && willGenerate ? await reserveImageCredit(supabase, player, user.email) : null;
+    if (milestoneId && willGenerate && !imageReservation) {
+      await supabase.from("milestones").update({ image_status: "none" }).eq("id", milestoneId);
+    }
+    if (milestoneId && willGenerate && imageReservation) {
       const finalMilestoneId = milestoneId;
-      const finalPrompt = event.imageScene as string;
+      // Con las mismas guardas que la carrera principal: edad real (un entrenador de 45 años no sale como «young footballer»), camiseta y sin textos.
+      const finalPrompt = cleanImagePrompt(
+        withSceneGuards(event.imageScene as string, {
+          club: (player.second_club as string | null) ?? player.club,
+          age: playerAge(player.week) + Math.floor((player.second_week ?? 0) / 10),
+          position: player.position ?? undefined,
+          surname: player.last_name ?? undefined,
+        }),
+        { surname: player.last_name },
+      );
       const finalPhotoUrl = photoRefs(player);
       const finalUserId = user.id;
-      const finalUserEmail = user.email;
-      const finalPlayerFlags = (player.flags ?? {}) as Record<string, string | boolean>;
       const finalPlayerId = player.id;
       const finalMilestoneType = event.milestoneType ?? "hito";
 
       after(async () => {
+        let generated = false;
         try {
           const buffer = await generatePlayerImage(finalPhotoUrl, finalPrompt);
           if (!buffer) {
@@ -128,11 +142,12 @@ export async function resolveSecondLifeEvent(formData: FormData) {
               detail: { milestoneId: finalMilestoneId },
             });
             await supabase.from("milestones").update({ image_status: "failed" }).eq("id", finalMilestoneId);
+            await refundImageCredit(supabase, imageReservation);
             return;
           }
 
+          generated = true;
           await logImageGeneration(supabase, finalUserId);
-          await consumeImageCredit(supabase, { id: finalPlayerId, flags: finalPlayerFlags }, finalUserEmail);
 
           // Igual que en la carrera principal (ver carrera/actions.ts): sin
           // marca ni enlace impresos en la propia imagen, la mayoría de
@@ -159,9 +174,8 @@ export async function resolveSecondLifeEvent(formData: FormData) {
             console.error("[resolveSecondLifeEvent:after] milestone upload rejected unexpectedly:", milestoneResult.reason);
           }
 
-          if (evolvedUrl) {
-            await supabase.from("players").update({ current_photo_url: evolvedUrl }).eq("id", finalPlayerId);
-          }
+          // La foto de referencia del jugador no cambia con cada hito (igual que en la carrera principal): antes se pisaba con la de cada escena.
+          void evolvedUrl;
 
           if (milestoneImageUrl) {
             await supabase
@@ -173,6 +187,7 @@ export async function resolveSecondLifeEvent(formData: FormData) {
           }
         } catch (err) {
           console.error(`[resolveSecondLifeEvent:after] Exception generating image for milestone ${finalMilestoneId}:`, err);
+          if (!generated) await refundImageCredit(supabase, imageReservation);
           await logAppError(supabase, "resolveSecondLifeEvent:milestone-image", err, {
             userId: finalUserId,
             playerId: finalPlayerId,

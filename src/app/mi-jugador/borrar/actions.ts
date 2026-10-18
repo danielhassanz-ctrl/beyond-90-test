@@ -3,6 +3,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentUserAndPlayer } from "@/lib/player";
 
+/**
+ * Borra el personaje. Las fotos (bucket "player-photos", siempre bajo `${user.id}/...`) son de la CUENTA y las comparten todos sus personajes (la saga de
+ * un hijo reutiliza las del padre): solo se borran cuando ya no queda ningún personaje. list() devuelve como mucho 100 archivos por llamada, así que se
+ * pagina (antes, una carrera con más de 100 fotos dejaba el resto huérfano pese a haber pedido borrar los datos).
+ */
 export async function deletePlayer() {
   const { supabase, user, player } = await getCurrentUserAndPlayer();
 
@@ -10,31 +15,27 @@ export async function deletePlayer() {
     redirect("/login");
   }
 
-  // Antes esto solo borraba la fila de "players" — la foto original y
-  // todas las generadas por IA (mismo bucket "player-photos", siempre
-  // bajo la ruta `${user.id}/...`, ver crear-jugador/actions.ts y
-  // upload.ts) se quedaban huérfanas para siempre en el storage, pese a
-  // que el jugador pidió expresamente borrar sus datos. list()+remove()
-  // van con el cliente normal (con sesión), no con el de administrador:
-  // funciona porque las políticas de storage ya restringen cada carpeta
-  // a su propio dueño, igual que las subidas.
-  const { data: files } = await supabase.storage.from("player-photos").list(user.id);
-  if (files && files.length > 0) {
-    await supabase.storage.from("player-photos").remove(files.map((f) => `${user.id}/${f.name}`));
-  }
-
   if (player) {
     await supabase.from("players").delete().eq("id", player.id);
   }
 
-  // NOTA para cuando exista SUPABASE_SERVICE_ROLE_KEY en el entorno: esto
-  // borra los DATOS del jugador (personaje + fotos), pero no la cuenta de
-  // acceso en sí (auth.users) — esa parte solo se puede borrar con la
-  // API de administrador de Supabase (`supabase.auth.admin.deleteUser`),
-  // que exige la service role key. Esa clave es un secreto de producción
-  // real: no se pide ni se pega aquí. Si en algún momento se añade como
-  // variable de entorno en Vercel, esta función es el sitio donde llamar
-  // a esa API para completar el borrado de cuenta de verdad.
+  const { count } = await supabase.from("players").select("id", { count: "exact", head: true }).eq("user_id", user.id);
+  if ((count ?? 0) === 0) {
+    try {
+      for (let round = 0; round < 50; round++) {
+        const { data: files } = await supabase.storage.from("player-photos").list(user.id, { limit: 100 });
+        if (!files || files.length === 0) break;
+        const { error } = await supabase.storage.from("player-photos").remove(files.map((f) => `${user.id}/${f.name}`));
+        if (error) break;
+        if (files.length < 100) break;
+      }
+    } catch (err) {
+      console.error("[deletePlayer] no se pudieron borrar todas las fotos:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  // NOTA: esto borra los DATOS del jugador (personaje + fotos), pero no la cuenta de acceso (auth.users): eso solo se puede con la API de administrador
+  // de Supabase (service role).
 
   redirect("/crear-jugador");
 }

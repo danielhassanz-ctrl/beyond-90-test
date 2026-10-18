@@ -23,8 +23,11 @@ export interface OffscreenOutcome {
 export function settleOffscreenMatch(player: Player, match: MatchWeek): OffscreenOutcome {
   const season = match.season;
   const media = player.media ?? 60;
+  // Las mismas probabilidades que cuando juegas el partido (engine.ts): la ronda real y el nivel del club. Antes siempre «ronda 2» y sin bonus.
+  const level = getClubLevel(player.club);
+  const levelBonus = level === "grande" ? 0.1 : level === "europeo" ? 0.04 : -0.06;
   if (match.cupRound) {
-    const res = decideKnockoutResult(media, 2, 0);
+    const res = decideKnockoutResult(media, match.cupRound, levelBonus);
     advanceCupProgress(player, "copa_progress", season, match.cupRound, res.win, { opp: match.rivalClub, score: res.scoreLine });
     const final = match.cupRound === 5;
     return {
@@ -35,7 +38,7 @@ export function settleOffscreenMatch(player: Player, match: MatchWeek): Offscree
     };
   }
   if (match.euroKoRound) {
-    const res = decideKnockoutResult(media, 2, 0);
+    const res = decideKnockoutResult(media, match.euroKoRound + 1, levelBonus);
     advanceCupProgress(player, "euro_progress", season, match.euroKoRound, res.win, { opp: match.rivalClub, score: res.scoreLine });
     const final = match.euroKoRound === 4;
     return {

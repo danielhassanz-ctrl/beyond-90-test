@@ -98,6 +98,17 @@ export const MILESTONE_TYPE_TO_CONTEXT_TYPE: Record<string, string> = {
  * Limpieza de cualquier prompt de foto antes de enviarlo: «Getty Images» hacía que el modelo dibujara la marca de agua
  * y el crédito del fotógrafo, y «camiseta sobre los hombros» le hacía poner una segunda camiseta encima de la que ya llevaba.
  */
+/**
+ * La escena guardada en el hito (image_scene) la puede escribir el propio jugador desde su navegador: antes de usarla como prompt se acota (largo) y se
+ * descartan las que piden contenido que el juego nunca genera (desnudos, violencia, símbolos de odio…). Si no pasa, se usa la escena genérica.
+ */
+const FORBIDDEN_SCENE = /(nude|naked|nsfw|porn|erotic|sexual|\bsex\b|gore|corpse|decapitat|swastika|nazi|hitler|isis|terroris|\bgun\b|firearm|weapon|bomb|child abuse|underage)/i;
+export function safeScene(scene: string | null | undefined): string | null {
+  if (!scene) return null;
+  const text = scene.trim().slice(0, 1400);
+  return text.length < 20 || FORBIDDEN_SCENE.test(text) ? null : text;
+}
+
 export function cleanImagePrompt(prompt: string, opts: { surname?: string | null } = {}): string {
   // Si la escena enseña el nombre en una camiseta, tiene que ser el apellido REAL del jugador (salía «Rodríguez»).
   const surname = (opts.surname ?? "").trim().toUpperCase();
