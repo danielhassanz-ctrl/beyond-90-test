@@ -150,6 +150,11 @@ export function isEventCoherentWithState(
     if (PHYSICAL_TEXT.test(`${event.title ?? ""} ${event.description ?? ""}`)) return false;
   }
 
+  // «La selección te llama por primera vez»: una sola vez y nunca a quien ya ha jugado con su selección (salía 2-3 veces a un campeón del Mundial).
+  if (event.id === "sel-primera-convocatoria") {
+    const f = player.flags ?? {};
+    if (f.sel_debut || f.sel_debut_played || Object.keys(f).some((k) => /^(torneo_started_|sel_win_|torneo_result_|sel_)/.test(k))) return false;
+  }
   // Posición: un portero no hace hat-tricks ni un defensa se planta solo ante el portero cada semana.
   const text = `${event.title ?? ""} ${event.description ?? ""}`;
   if (player.position === "Portero" && (SCORER_ONLY_IDS.has(event.id) || /\b(hat-trick|pichichi|goleador|tu gol)\b/i.test(text))) return false;

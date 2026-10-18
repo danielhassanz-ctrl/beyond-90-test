@@ -4,6 +4,7 @@ import { describeNationalKit } from "../src/lib/clubColors";
 import { cleanImagePrompt, withSceneGuards } from "../src/lib/images/milestonePrompts";
 import { isNationalTeamEvent } from "../src/lib/images/national-event";
 import { pickBankScene } from "../src/lib/narrative/bank/select";
+import { isEventCoherentWithState } from "../src/lib/narrative/state-rules";
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { if (!c) { fails++; console.log("  ✗ " + m); } else console.log("  ✓ " + m); };
@@ -71,6 +72,13 @@ const withHouse = seen(mk({ patrimonio: 5_000_000, flags: { propiedad_1: JSON.st
 ok(flatIds.every((id) => !withHouse.has(id)), "con casa propia en la ciudad, no sale ninguna escena de vecinos");
 const inFlat = seen(mk({ patrimonio: 50_000 }));
 ok(inFlat.has("bank-cd-obra-vecino") || inFlat.has("bank-cv-vecino") || inFlat.has("bank-cd-vecino-manual"), "en un piso, sí salen");
+
+console.log("6) La primera convocatoria con la selección no vuelve tras debutar");
+const call = { id: "sel-primera-convocatoria", category: "especial", title: "La selección te llama por primera vez", description: "" };
+ok(isEventCoherentWithState(call, mk({ flags: { club_since: "10" } })), "sin haber jugado con la selección, puede salir");
+ok(!isEventCoherentWithState(call, mk({ flags: { club_since: "10", sel_debut_played: true } })), "tras debutar, no");
+ok(!isEventCoherentWithState(call, mk({ flags: { club_since: "10", torneo_started_5: true } })), "tras jugar un torneo, no");
+ok(!isEventCoherentWithState(call, mk({ flags: { club_since: "10", sel_debut: true } })), "tras la convocatoria del banco, no");
 
 if (fails) { console.log(`\n${fails} fallos`); process.exit(1); }
 console.log("\nTodo bien");
