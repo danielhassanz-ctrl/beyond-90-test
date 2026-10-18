@@ -4,6 +4,8 @@
  * cobrar) sobre lo suelto. Ver types.ts.
  */
 import { cityOfClub } from "@/lib/narrative/cities";
+import { canonicalNation } from "@/lib/nations";
+import { leagueOf, isKnownLeagueClub } from "@/lib/calendar/leagues";
 import { readProperties } from "@/lib/finance/mortgage";
 import type { GameEvent } from "@/types/career";
 import type { Player } from "@/types/player";
@@ -31,6 +33,26 @@ const FOREIGN_CLUBS = new Set([
 ]);
 export const isForeignClub = (club: string) => FOREIGN_CLUBS.has(club) || isKnownForeignClub(club);
 
+const LEAGUE_COUNTRY: Record<string, string> = { es: "España", en: "Inglaterra", de: "Alemania", it: "Italia", fr: "Francia", sa: "Arabia Saudí" };
+const EXTRA_COUNTRY: Record<string, string> = {
+  Benfica: "Portugal", "Sporting CP": "Portugal", Ajax: "Países Bajos", Feyenoord: "Países Bajos", "Rangers FC": "Escocia", "Fenerbahçe": "Turquía", Olympiacos: "Grecia", "Slavia Praga": "República Checa",
+};
+/** El país del club (null si no se conoce). */
+export function clubCountry(club: string): string | null {
+  if (EXTRA_COUNTRY[club]) return EXTRA_COUNTRY[club];
+  return isKnownLeagueClub(club) ? LEAGUE_COUNTRY[leagueOf(club).id] ?? null : null;
+}
+/**
+ * ¿Juegas fuera de tu país? Antes «extranjero» era «un club fuera de España» para todos: un inglés en el Arsenal recibía escenas de
+ * «nunca habías visto nevar» y un argentino en el Madrid, ninguna. Ahora se compara el país del club con tu nacionalidad.
+ */
+export function playsAbroad(player: Pick<Player, "club" | "nation">): boolean {
+  const country = clubCountry(player.club);
+  const nation = canonicalNation(player.nation);
+  if (!country) return isForeignClub(player.club);
+  return country !== nation;
+}
+
 const inRange = (value: number | undefined, r: Range | undefined): boolean =>
   !r || (value !== undefined && value >= r[0] && value <= r[1]);
 
@@ -43,6 +65,9 @@ const RECYCLABLE_FAMILIES = new Set([
   "estados", "disciplina", "convivencia", "familia", "mente", "cuerpo", "club", "prensa", "negocio", "redes", "aficion", "vestuario", "humor",
   "surreal", "dia", "barrio", "juventud", "salud", "ciudad", "emocion", "mister", "negocios",
 ]);
+
+/** Escenas biográficas que solo pasan una vez en una vida (adoptar al perro, que se jubile el utillero…): nunca se reciclan. */
+const NEVER_RECYCLED = new Set(["bank-fm-perro", "bank-fm-padre-susto", "bank-v2-abuela", "bank-v2-padre-jubila", "bank-sl-masajista", "bank-c3-utillero", "bank-em-primer-lleno", "bank-f2-abuela-adios", "bank-f2-abuela-anillo", "bank-f2-herencia-silla"]);
 
 function sceneFlagKeys(scene: BankScene): Set<string> {
   const keys = new Set<string>();
@@ -66,7 +91,7 @@ export function recycleBankScenes(player: Player, usedIds: string[], scenes: Ban
   const back = new Set<string>();
   const used = new Set(usedIds);
   for (const s of scenes) {
-    if (!used.has(s.id) || !RECYCLABLE_FAMILIES.has(s.family) || (s.when.after?.length ?? 0) > 0) continue;
+    if (!used.has(s.id) || !RECYCLABLE_FAMILIES.has(s.family) || NEVER_RECYCLED.has(s.id) || (s.when.after?.length ?? 0) > 0) continue;
     const choice = readBankChoice(flags, s.id);
     if (!choice || player.week - choice.week < afterTurns) continue;
     back.add(s.id);
@@ -99,7 +124,7 @@ function fits(player: Player, when: BankWhen): { ok: boolean; chained: boolean }
   if (Boolean(when.loan) !== onLoan) return { ok: false, chained: false };
 
   if (when.selDebut && (flags.sel_debut_played || Object.keys(flags).some((k) => /^(torneo_started_|sel_win_|torneo_result_)/.test(k)))) return { ok: false, chained: false };
-  if (when.exterior !== undefined && when.exterior !== isForeignClub(player.club)) return { ok: false, chained: false };
+  if (when.exterior !== undefined && when.exterior !== playsAbroad(player)) return { ok: false, chained: false };
   if (when.roles && !when.roles.includes(computeRole(player).role as never)) return { ok: false, chained: false };
   if (when.clubLevels && !when.clubLevels.includes(getClubLevel(player.club))) return { ok: false, chained: false };
   if (when.positions && !when.positions.some((p) => (player.position ?? "").toLowerCase().includes(p.toLowerCase()))) return { ok: false, chained: false };
@@ -217,6 +242,7 @@ export function fillBankEvent<T extends Omit<GameEvent, "id">>(event: T, player:
       // Cifras reales de tu contrato: la ficha bruta anual y la cláusula de rescisión.
       .replace(/\{ficha\}/g, `${eur(playerAnnualGross(player))} brutos al año`)
       .replace(/\{clausula\}/g, eurFee(releaseClauseM(player)))
+      .replace(/\{numero\}/g, String(player.number ?? 9))
       .replace(/\{apellido\}/g, player.last_name ?? ""));
   const text = (t: string | undefined) => (t === undefined ? t : fill(t));
   return {

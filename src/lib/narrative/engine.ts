@@ -2391,7 +2391,7 @@ export async function pickNextEventDynamic(
   // Red de seguridad: si pasó la fase de grupos europea sin que se decidiera (no jugaste ese partido, un cambio de club…), se decide ahora.
   {
     const weekInSeasonNow = ((playerWithDynamics.week - 1) % 10) + 1;
-    if (weekInSeasonNow > 6 && seasonProgress.euro.round === 0 && seasonProgress.euro.alive && !seasonProgress.euro.tied && getEuropeanCompetitionFor(playerWithDynamics.club)) {
+    if (weekInSeasonNow > 6 && seasonProgress.euro.round === 0 && seasonProgress.euro.alive && !seasonProgress.euro.tied && getEuropeanCompetitionFor(playerWithDynamics.club, seasonProgress.euroSpot)) {
       resolveEuroGroupStage(playerWithDynamics, currentSeason, getClubLevel(playerWithDynamics.club));
       seasonProgress = getSeasonProgress(playerWithDynamics, currentSeason);
     }

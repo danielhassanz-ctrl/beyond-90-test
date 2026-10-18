@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { euroSpotFor } from "@/lib/calendar/euro-spot";
 import type { Player } from "@/types/player";
 import { NO_CLUB_YET } from "@/lib/constants";
 import {
@@ -487,7 +488,7 @@ export function getActiveStandings(
   // competiciones distintas con sus propias tablas reales. Se queda como
   // simulación estable — el progreso real en esa competición concreta ya
   // se cuenta aparte, en el propio evento de eliminatoria cuando toca.
-  const european = getEuropeanCompetitionFor(player.club);
+  const european = getEuropeanCompetitionFor(player.club, euroSpotFor(player.flags, season, player.club));
   const secondary = european
     ? buildTable(`${seed}:${european.competition}`, player.club, european.rivals, europeanMatchdayGuess, european.label)
     : null;

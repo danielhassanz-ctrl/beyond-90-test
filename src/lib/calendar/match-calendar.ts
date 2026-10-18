@@ -14,6 +14,7 @@
  * Total: ~10-15 partidos/temporada virtual
  */
 
+import { type EuroSpot } from "@/lib/calendar/euro-spot";
 import { leagueOf, ligaJornadaByWeek, europeanRivals, ALL_CHAMPIONS, ALL_EUROPA, ASIA_RIVALS, continentalName } from "@/lib/calendar/leagues";
 
 export type CompetitionType = "liga" | "copa" | "champions" | "europa" | "amistoso" | "internacional";
@@ -68,7 +69,7 @@ export const EURO_KO_WEEKS = [8, 9, 10, 10];
 const COPA_ROUND_LABELS = ["Dieciseisavos", "Octavos", "Cuartos", "Semifinal", "Final"];
 const EURO_KO_LABELS = ["Octavos de final", "Cuartos de final", "Semifinal", "Final"];
 /** Máximo de partidos que caben en un mes antes de dejar fuera el de Liga. */
-const MAX_MATCHES_PER_WEEK = 2;
+const MAX_MATCHES_PER_WEEK = 3;
 
 export type ClubLevel = "grande" | "europeo" | "modesto";
 
@@ -101,6 +102,8 @@ export interface MatchWeek {
 
 /** Progreso de competiciones de eliminación, para poder generar la SIGUIENTE ronda si el jugador sigue vivo. */
 export interface SeasonProgress {
+  /** La plaza europea que da la Liga del año anterior (null = no se sabe: vale la habitual del club). */
+  euroSpot?: EuroSpot;
   copa?: { round: number; alive: boolean };
   euro?: { round: number; alive: boolean; tied?: boolean };
 }
@@ -271,7 +274,7 @@ export function buildMatchCalendar(playerClub: string, season: number, progress?
 
   // --- Competición europea (fase de grupos + eliminatorias) ---------------
   // Si ya jugaste una competición europea esta temporada con otro club, no puedes jugarla con este (euro-transfer.ts).
-  const europeanCompetition = progress?.euro?.tied ? null : getEuropeanCompetitionFor(playerClub);
+  const europeanCompetition = progress?.euro?.tied ? null : getEuropeanCompetitionFor(playerClub, progress?.euroSpot);
   if (europeanCompetition) {
     const europeanRandom = seededRandom(hashString(`${playerClub}:${season}:${europeanCompetition.competition}`));
     const europeanPool = europeanCompetition.rivals.filter((c) => c !== playerClub);
@@ -488,8 +491,15 @@ const EUROPA_RIVALS = ["AS Roma", "Ajax", "Sporting CP", "Feyenoord", "Olympiaco
  */
 export function getEuropeanCompetitionFor(
   playerClub: string,
+  spot?: EuroSpot,
 ): { competition: "champions" | "europa"; label: string; rivals: string[] } | null {
   const lg = leagueOf(playerClub);
+  // Con la Liga del año anterior ya cerrada, manda el puesto (ver euro-spot.ts); los clubes saudíes siguen con su regla.
+  if (lg.id !== "sa" && spot) {
+    if (spot === "none") return null;
+    if (spot === "champions") return { competition: "champions", label: "Champions League - Fase de grupos", rivals: lg.id === "es" ? CHAMPIONS_RIVALS : europeanRivals(lg, "champions") };
+    return { competition: "europa", label: "Europa League - Fase de grupos", rivals: lg.id === "es" ? EUROPA_RIVALS : europeanRivals(lg, "europa") };
+  }
   if (lg.id === "sa") {
     return ALL_CHAMPIONS.has(playerClub)
       ? { competition: "champions", label: `${continentalName(playerClub, "champions")} - Fase de grupos`, rivals: ASIA_RIVALS }

@@ -5,6 +5,7 @@
  * (los demás son inventados y estables para esa partida y ese año) y tu puesto sale de lo que has hecho de verdad: goles y
  * asistencias, partidos, bajas por lesión, títulos y hasta dónde llegó tu equipo. Todo en código, sin llamadas a la IA.
  */
+import { euroSpotFor } from "@/lib/calendar/euro-spot";
 import type { GameEvent } from "@/types/career";
 import { playerAge } from "@/types/career";
 import type { Player } from "@/types/player";
@@ -190,7 +191,7 @@ function mejorLiga(player: Player, closed: number, st: SeasonStats): AwardResult
 }
 
 function mvpChampions(player: Player, closed: number, st: SeasonStats): AwardResult | null {
-  const euro = getEuropeanCompetitionFor(player.club);
+  const euro = getEuropeanCompetitionFor(player.club, euroSpotFor(player.flags, closed, player.club));
   if (!euro || euro.competition !== "champions" || st.matches < 3) return null;
   const prog = getEuroProgress(player, closed);
   const champion = readTrofeos(player.flags).some((t) => t.k === "champions" && t.s === closed);

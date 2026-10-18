@@ -116,7 +116,7 @@ export const SURREALISMO: BankScene[] = [
     ]),
   S("sr-dron", "surreal", { minAge: 17, patrimonio: [100, 100000000], clubTurns: [1, 400] }, "vida",
     "Un dron te entrega una pizza en pleno entrenamiento",
-    "Un dron de reparto se posa en el centro del campo con una caja de pizza cuatro quesos y una nota: «Para el 9, de parte de un admirador». Todo el vestuario te mira. El míster te mira. El dron te mira, con su luz roja, como esperando una propina.",
+    "Un dron de reparto se posa en el centro del campo con una caja de pizza cuatro quesos y una nota: «Para el {numero}, de parte de un admirador». Todo el vestuario te mira. El míster te mira. El dron te mira, con su luz roja, como esperando una propina.",
     [
       o("a", "Compartir la pizza con todo el vestuario", "Ser generoso", { rel_vestuario: 5, moral: 4, forma: -1 }, "Reparte porciones a todos, incluido el míster, que acepta una «para quitar el susto». El dron se va con un gesto de dignidad, y no vuelve a verse. Dicen que lo mandó el hermano del utillero."),
       o("b", "Devolver el dron con una nota de agradecimiento", "Profesional", { rel_entrenador: 3, reputacion: 2, moral: 0 }, "Le pones al dron una notita: «Gracias, pero ahora entreno». El míster te mira con ojos de respeto. «Cuando seas capitán, serás un buen capitán», dice. Te quedas con hambre."),

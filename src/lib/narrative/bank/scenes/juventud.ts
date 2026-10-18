@@ -18,7 +18,7 @@ export const JUVENTUD: BankScene[] = [
     "Tu madre sigue usando la lavadora del primer sueldo",
     "Han pasado los años y la lavadora, que debería haber muerto hace mucho, sigue en el mismo sitio, brillante, con un trapo encima. Tu madre la limpia cada domingo. Le preguntas por qué no se compra una nueva, con todo lo que ganas ahora. Se encoge de hombros: «Esta me la regaló mi hijo cuando tenía diecisiete años. ¿Qué voy a querer yo otra?».",
     [
-      o("a", "Quedarte con ella a tomar un café y escucharla", "Estar presente", { moral: 8, reputacion: 3, flags: { madre_lavadora: true } }, "Pasas la tarde en la cocina. Te cuenta cómo fue aquel día, cómo guardó el lazo y cómo lo enseñó a todas las vecinas. Tienes veinte años y por primera vez entiendes qué significa «agradecer»."),
+      o("a", "Quedarte con ella a tomar un café y escucharla", "Estar presente", { moral: 8, reputacion: 3, flags: { madre_lavadora: true } }, "Pasas la tarde en la cocina. Te cuenta cómo fue aquel día, cómo guardó el lazo y cómo lo enseñó a todas las vecinas. Por primera vez entiendes qué significa «agradecer»."),
       o("b", "Prometerle una casa nueva con lavadora incluida", "Hacer una promesa", { moral: 4, patrimonio: -500, flags: { madre_casa: "promesa" } }, "«Algún día te compraré una casa con jardín», le dices. Tu madre sonríe sin creérselo del todo: «Con que vengas a comer los domingos, me vale». Pero la promesa se queda en su memoria."),
     ]),
   S("jv-estudios", "juventud", { minAge: 16, maxAge: 21, clubTurns: [1, 60], notFlags: ["estudios"] }, "vida",

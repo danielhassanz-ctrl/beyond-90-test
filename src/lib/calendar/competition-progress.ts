@@ -12,6 +12,7 @@
  * trackers del juego (loan_active, gol_chilena_tracker...) — no hace
  * falta ninguna columna nueva en la base de datos.
  */
+import { euroSpotFor, type EuroSpot } from "@/lib/calendar/euro-spot";
 import type { Player } from "@/types/player";
 import { leagueOf } from "@/lib/calendar/leagues";
 
@@ -66,12 +67,14 @@ export function euroRoundName(round: number): string {
  * En la competición europea, round 0 = aún en fase de grupos.
  */
 export function getSeasonProgress(player: Player, season: number): {
+  euroSpot: EuroSpot;
   copa: { round: number; alive: boolean };
   euro: { round: number; alive: boolean; tied?: boolean };
 } {
   const copa = getCopaProgress(player, season);
   const euro = getEuroProgress(player, season);
   return {
+    euroSpot: euroSpotFor(player.flags, season, player.club),
     copa: { round: copa.round, alive: copa.alive },
     euro: { round: euro.round, alive: euro.alive, ...(euro.tied ? { tied: true } : {}) },
   };

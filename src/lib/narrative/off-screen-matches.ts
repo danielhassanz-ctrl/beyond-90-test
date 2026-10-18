@@ -12,6 +12,7 @@
  * tarjeta de temporada y a las tablas por competición: todo sale de la MISMA
  * cuenta, así que cabecera, tablas e historial siempre suman lo mismo.
  */
+import { euroSpotFor } from "@/lib/calendar/euro-spot";
 import type { Player } from "@/types/player";
 import { computeRole } from "@/lib/narrative/role";
 import { getInjuryRemaining } from "@/lib/narrative/career-dynamics";
@@ -87,7 +88,7 @@ const weekInSeason = (week: number) => ((week - 1) % 10) + 1;
  */
 function slotsForMonth(player: Player, week: number): SimComp[] {
   const slots: SimComp[] = Array.from({ length: OFF_SCREEN_PER_TURN }, () => "liga" as SimComp);
-  const euro = getEuropeanCompetitionFor(player.club);
+  const euro = getEuropeanCompetitionFor(player.club, euroSpotFor(player.flags, Math.floor((week - 1) / 10), player.club));
   if (!euro || getSeasonProgress(player, Math.floor((week - 1) / 10)).euro.tied) return slots;
   const wis = weekInSeason(week);
   if (EURO_GROUP_WEEKS.includes(wis)) slots.push(euro.competition, euro.competition);

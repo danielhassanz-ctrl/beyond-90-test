@@ -75,7 +75,7 @@ export const EMOCION: BankScene[] = [
       o("b", "Disimular y decir que es el agua", "Fingir", { moral: 1, flags: { em_ducha: "agua" } }, "«Es el champú», murmuras. El utillero asiente, sin creerte, y deja la toalla en el banco. Te seca los ojos y respiras. Nadie lo contará, y es un alivio."),
       o("c", "Pedirle que no cuente nada a nadie", "Pedir discreción", { moral: 3, reputacion: 1, flags: { em_ducha: "secreto" } }, "«Entre tú y yo», dice, con un guiño. Cuarenta años de club le han enseñado qué se cuenta y qué no. Nunca más hablaréis de ello. Pero cuando te retires, será el primero en abrazarte."),
     ]),
-  S("em-aniversario-debut", "emocion", { minAge: 20, clubTurns: [10, 400], notFlags: ["em_aniv_debut"] }, "vida",
+  S("em-aniversario-debut", "emocion", { minAge: 21, maxAge: 22, clubTurns: [10, 400], notFlags: ["em_aniv_debut"] }, "vida",
     "Se cumplen cinco años de tu debut y nadie se acuerda… salvo tu madre",
     "Te lo recuerda al teléfono, sin darle importancia: «Hoy hace cinco años que te vi salir al campo». Tú lo habías olvidado. Hablas con ella un rato, cuelgas, y te quedas mirando por la ventana. Piensas en el chaval que fuiste aquel día: nervios, rodillas flojas, un balón que no te obedecía. Cinco años. Y todo lo que cabe en cinco años.",
     [

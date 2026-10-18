@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NO_CLUB_YET, POSITIONS, FEET, PERSONALITIES } from "@/lib/constants";
 import { MODE_TARGET_WEEKS } from "@/types/career";
 import { canonicalNation } from "@/lib/nations";
+import { carryAccountFreeUsage } from "@/lib/images/credits";
 import { photoExtension, validatePhotoFile } from "@/lib/images/upload-guards";
 
 export async function createPlayer(formData: FormData) {
@@ -100,7 +101,7 @@ export async function createPlayer(formData: FormData) {
     }
   }
 
-  const { error: insertError } = await supabase.from("players").insert({
+  const { data: created, error: insertError } = await supabase.from("players").insert({
     user_id: user.id,
     last_name: lastName,
     nickname,
@@ -113,11 +114,14 @@ export async function createPlayer(formData: FormData) {
     mode,
     photo_url: photoUrl,
     ...(photoRef2 ? { flags: { photo_ref2: photoRef2 } } : {}),
-  });
+  }).select("id").single();
 
   if (insertError) {
     redirect(`/crear-jugador?error=${encodeURIComponent(friendlyError(insertError.message, "No se pudo crear al jugador. Inténtalo de nuevo."))}`);
   }
+
+  // Las fotos gratis son de la cuenta: el personaje nuevo hereda las que ya se gastaron con los anteriores.
+  if (created?.id) await carryAccountFreeUsage(user.id, created.id);
 
   redirect("/mi-jugador");
 }

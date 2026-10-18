@@ -71,7 +71,7 @@ export const EXTRANJERO: BankScene[] = [
     ]),
   S("ex-clima", "extranjero", { exterior: true, minAge: 17, clubTurns: [2, 30], turn: [4, 8], notFlags: ["ex_clima"] }, "vida",
     "Nieva por primera vez en tu vida y te quedas mirando el balcón con cara de niño",
-    "Es una nevada silenciosa, de las que cubren todo en una hora. Estás en tu piso, con una taza de té y la mirada fija en la ventana. Los copos caen despacio. Los coches, cubiertos de blanco. Los niños, abajo, hacen un muñeco. Tienes veintiún años y nunca habías visto nevar. Un mensaje de tu madre: «¿Cómo es?». Respondes: «Es como si el mundo se hubiera quedado callado».",
+    "Es una nevada silenciosa, de las que cubren todo en una hora. Estás en tu piso, con una taza de té y la mirada fija en la ventana. Los copos caen despacio. Los coches, cubiertos de blanco. Los niños, abajo, hacen un muñeco. Nunca habías visto nevar. Un mensaje de tu madre: «¿Cómo es?». Respondes: «Es como si el mundo se hubiera quedado callado».",
     [
       o("a", "Bajar a la calle y hacer un muñeco de nieve con los niños", "Jugar como un crío", { moral: 8, rel_aficion: 3, fama: 2, flags: { ex_clima: "muneco" } }, "Los niños, al reconocerte, gritan. Hacéis un muñeco con tu camiseta. Alguien lo fotografía y la imagen recorre el mundo: «El delantero y su muñeco». Acabas con los dedos helados y el alma caliente."),
       o("b", "Hacer una foto, mandársela a tus padres y quedarte dentro", "Disfrutar en silencio", { moral: 5, flags: { ex_clima: "foto" } }, "La foto es un rectángulo blanco con una luz amarilla en una esquina. Tu madre la imprime. Años después, la enmarcará: «La primera nieve de mi hijo». Y tú, cada vez que la ves, sientes el mismo silencio."),

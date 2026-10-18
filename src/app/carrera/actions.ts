@@ -238,7 +238,13 @@ async function resolveEventInner(formData: FormData, ctx: { restore: (() => Prom
   const partnerTouches = Object.keys(partnerStep.flags).length > 1 || Boolean(consequencesBank.flags?.pareja_delta);
   const consequencesPartner0 = partnerTouches ? { ...consequencesBank, flags: { ...consequencesBank.flags, ...partnerStep.flags } } : consequencesBank;
   // Un estado que empieza con esta escena (escándalo, pitada, bache…) guarda cuál fue la causa, para enseñarla en Vida.
-  const consequencesPartner1 = withStateCause(consequencesPartner0, event.title);
+  // Una ruptura (pareja:"") cierra TODO lo que dependía de esa pareja: compromiso, boda, embarazo y convivencia. Solo se limpiaba la pareja y
+  // después salían la boda o el parto con alguien que ya no estaba (los hijos que ya existen se conservan: son de verdad).
+  const breakup = consequencesPartner0.flags?.pareja === "" && String(player.flags?.pareja ?? "") !== "";
+  const consequencesBreakup = breakup
+    ? { ...consequencesPartner0, flags: { ...consequencesPartner0.flags, prometidos: "", casados: "", embarazo: "", convivencia: "", ...(consequencesPartner0.flags?.ex_pareja === undefined ? { ex_pareja: true } : {}) } }
+    : consequencesPartner0;
+  const consequencesPartner1 = withStateCause(consequencesBreakup, event.title);
   // Vestuario: las escenas mueven la relación con compañeros concretos (vr_delta = «capitan:+4,rival:-6», ver narrative/locker-room.ts).
   const lockerDelta = applyLockerDeltas(player as Player, consequencesPartner1.flags?.vr_delta);
   // Prensa y redes: lo mismo con los medios y los seguidores (pr_delta = «afin:+4,hostil:-3,seg:+5», ver narrative/press-system.ts).

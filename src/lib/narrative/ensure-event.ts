@@ -46,6 +46,7 @@ import { shouldTriggerYouthHousing, buildYouthHousingEvent } from "@/lib/narrati
 import { repairEuroAfterTransfer } from "@/lib/calendar/euro-transfer";
 
 import { readProperties } from "@/lib/finance/mortgage";
+import { expandThemeUsed } from "@/lib/narrative/theme-groups";
 import { fetchAllRows } from "@/lib/supabase/fetchAll";
 import { timed } from "@/lib/perf";
 import { mergeFlagsForWrite } from "@/lib/supabase/flags";
@@ -220,7 +221,8 @@ async function ensureNextEventInner(
       supabase.from("career_events").select("event_id").eq("player_id", player.id).order("id").range(from, to),
     ),
   );
-  const usedEventIds = (allHistory ?? []).map((h) => h.event_id as string);
+  // El mismo tema en dos bolsas (documental, podcast, paparazzi…): si ya salió uno, los demás se dan por vividos (theme-groups.ts).
+  const usedEventIds = expandThemeUsed((allHistory ?? []).map((h) => h.event_id as string));
 
   // Comprar casa necesita 3 opciones con precios sorteados en el momento,
   // así que no puede vivir como una entrada estática más del pool normal.

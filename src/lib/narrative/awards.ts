@@ -195,7 +195,7 @@ function finalists(player: Player, kind: AwardKind): Finalist[] {
   const fatigue = kind === "balon_oro" ? wonBefore.filter((s) => season - s <= 3 && season - s >= 1).length * 1.8 : 0;
   const luck = jitter(`${player.id}:${kind}:${season}:yo`) * (kind === "golden_boy" ? 2 : young ? 5 : 4);
   const playerScore =
-    mediaEff + ((player.fama ?? 50) - 50) * 0.02 + (kind === "golden_boy" ? Math.min(3, merit * 0.5) : Math.min(6, merit) + tournamentBoost(player, season)) - (kind === "balon_oro" && merit === 0 ? 1.5 : 0) - injTurns * (kind === "golden_boy" ? 1.4 : 2.4) - youthPenalty - fatigue + luck + (kind === "golden_boy" ? 3 : 0) + (kind === "balon_oro" ? (POS_BIAS[posKey(player.position)] ?? 0) : 0);
+    mediaEff + ((player.fama ?? 50) - 50) * 0.02 + (kind === "golden_boy" ? Math.min(3, merit * 0.5) : Math.min(6, merit) + tournamentBoost(player, season)) - (kind === "balon_oro" && merit === 0 ? 1.5 : 0) - injTurns * (kind === "golden_boy" ? 1.4 : 2.4) - (injTurns >= 3 ? 7 + (injTurns - 3) * 4 : 0) - youthPenalty - fatigue + luck + (kind === "golden_boy" ? 3 : 0) + (kind === "balon_oro" ? (POS_BIAS[posKey(player.position)] ?? 0) : 0);
   // Los demás: los megacracks de tu generación (si encajan) y el resto inventados, de más a menos.
   const top = kind === "golden_boy" ? maxMediaForAge(player.week, 78) : 100.5;
   const out: Finalist[] = [{ name: mine, club: player.club, pos: posKey(player.position), score: playerScore, isPlayer: true }];

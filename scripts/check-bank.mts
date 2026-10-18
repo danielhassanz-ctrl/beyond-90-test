@@ -13,7 +13,7 @@ const warn: string[] = [];
 const err = (id: string, msg: string) => errors.push(`✗ ${id}: ${msg}`);
 
 const VOSEO = /(?<![\p{L}])(vos|tenés|querés|sos|podés|andá|contame|mirá|fijate|sabés|decime|dale che|(?<!de )(?<!la )(?<!una )plata|computadora|celular|auto)(?![\p{L}])/iu;
-const KNOWN_PLACEHOLDERS = new Set(["{ficha}", "{clausula}", "{club}", "{el_club}", "{apellido}", "{interes}", "{el_interes}", "{ex_club}", "{el_ex_club}", "{pareja}", "{nacion}", "{ciudad}"]);
+const KNOWN_PLACEHOLDERS = new Set(["{ficha}", "{clausula}", "{club}", "{el_club}", "{apellido}", "{interes}", "{el_interes}", "{ex_club}", "{el_ex_club}", "{pareja}", "{nacion}", "{ciudad}", "{numero}"]);
 
 const ids = new Set<string>();
 const optionsByScene = new Map<string, Set<string>>();

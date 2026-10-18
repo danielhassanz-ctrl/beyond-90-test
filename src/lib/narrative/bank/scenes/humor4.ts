@@ -81,7 +81,7 @@ export const HUMOR4: BankScene[] = [
     ]),
   S("h4-ficha-error", "humor", { minAge: 17, clubTurns: [3, 400], notFlags: ["h4_ficha"] }, "prensa",
     "Un error en la web del club te presenta como «el nuevo portero» durante todo un día",
-    "Alguien, en el departamento digital, cambió una etiqueta, y ahora tu ficha dice «Portero» con tu foto de delantero. Los medios lo recogen con alborozo: «El 9 se pasa a la portería». Las casas de apuestas abren una cuota. Tu agente te escribe: «Esto es una pesadilla». El míster, desde su despacho, te pide que subas. Tiene una cara indescifrable.",
+    "Alguien, en el departamento digital, cambió una etiqueta, y ahora tu ficha dice «Portero» con tu foto de delantero. Los medios lo recogen con alborozo: «El {numero} se pasa a la portería». Las casas de apuestas abren una cuota. Tu agente te escribe: «Esto es una pesadilla». El míster, desde su despacho, te pide que subas. Tiene una cara indescifrable.",
     [
       o("a", "Seguir la broma y pedir los guantes en el siguiente entrenamiento", "Convertirte en portero un día", { fama: 4, rel_vestuario: 6, moral: 5, flags: { h4_ficha: "portero" } }, "Te pones los guantes, te cuelgas del larguero y paras tres penaltis. El míster, asombrado, murmura: «Por si acaso». Esa tarde, la grada te corea «¡Portero! ¡Portero!». Es el mejor error de la temporada."),
       o("b", "Pedir al club que lo corrija y lo disculpe con un comunicado", "Cumplir el protocolo", { reputacion: 3, moral: 1, flags: { h4_ficha: "corrijo" } }, "El comunicado, de dos líneas, dice: «Error de edición». Los medios, decepcionados, pasan página. Pero esa noche, un aficionado te manda un meme con tu cara sobre un portero de ficción. Te ríes en la oscuridad."),

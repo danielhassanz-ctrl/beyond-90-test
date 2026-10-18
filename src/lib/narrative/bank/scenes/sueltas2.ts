@@ -53,7 +53,7 @@ export const SUELTAS2: BankScene[] = [
     [
       o("a", "Ponértela y agradecérselo con entusiasmo", "Cuestión de gratitud", { rel_aficion: -1, reputacion: 4, moral: 5, flags: { s2x_bufanda: "uso" } }, "Te la pones y posas con ella, con la mejor sonrisa. Los ultras del club, al verlo, te lo perdonan al instante: «Lo ha hecho por una abuela». En el barrio rival, te hacen socio de honor."),
       o("b", "Explicarle con dulzura que son otros colores", "Sinceridad amable", { reputacion: 2, moral: 2, flags: { s2x_bufanda: "explico" } }, "La abuela, avergonzada, vuelve a casa con la bufanda. Al día siguiente, regresa con otra con los colores correctos. Esta vez, tiene tu nombre bordado. Y es la más bonita del mundo."),
-      o("c", "Guardarla discretamente y no decir nada", "Evitar la polémica", { moral: 1, flags: { s2x_bufanda: "guardo" } }, "La metes en el fondo de la taquilla. Un día, un compañero la encuentra y lo cuenta a todos. «¡El 9 es un traidor!», gritan, entre carcajadas. Se la regalas al utillero, que es del rival."),
+      o("c", "Guardarla discretamente y no decir nada", "Evitar la polémica", { moral: 1, flags: { s2x_bufanda: "guardo" } }, "La metes en el fondo de la taquilla. Un día, un compañero la encuentra y lo cuenta a todos. «¡El {numero} es un traidor!», gritan, entre carcajadas. Se la regalas al utillero, que es del rival."),
     ]),
   S("s2x-balon-vecino", "humor", { minAge: 17, clubTurns: [1, 400], notFlags: ["s2x_balon"] }, "vida",
     "El balón de unos niños cae en tu jardín y se rompe una ventana",

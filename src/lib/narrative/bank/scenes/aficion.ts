@@ -50,7 +50,7 @@ export const AFICION: BankScene[] = [
     [
       o("a", "Subir y cantar con ellos", "Compartir el momento", { rel_aficion: 8, fama: 3, moral: 6, reputacion: -2, flags: { af_ultras: "subo" } }, "Subes a la valla y cantas, con la camiseta sudada, un himno que apenas te sabes. Los ultras te levantan en volandas. Al día siguiente, la prensa te critica y la afición te ama. Tu agente te llama: «¿Estabas loco?». Estabas feliz."),
       o("b", "Agradecérselo desde abajo con un gesto", "Mantener la distancia", { rel_aficion: 4, reputacion: 1, moral: 2, flags: { af_ultras: "distancia" } }, "Les aplaudes con las dos manos y les lanzas un beso. Se quedan satisfechos, y los medios no tienen de qué hablar. Pero tú, en la ducha, piensas que podrías haber subido."),
-      o("c", "Hacer un gesto de respeto y marcharte al vestuario", "Profesional", { reputacion: 2, rel_aficion: -1, moral: 0, flags: { af_ultras: "paso" } }, "Les saludas y te metes en el túnel. Al día siguiente, una pancarta dice: «El 9 es un señor». No sabes si es un elogio o un reproche."),
+      o("c", "Hacer un gesto de respeto y marcharte al vestuario", "Profesional", { reputacion: 2, rel_aficion: -1, moral: 0, flags: { af_ultras: "paso" } }, "Les saludas y te metes en el túnel. Al día siguiente, una pancarta dice: «El {numero} es un señor». No sabes si es un elogio o un reproche."),
     ]),
   S("af-radio", "aficion", { minAge: 18, clubTurns: [2, 400], fama: [25, 100], notFlags: ["af_radio"] }, "prensa",
     "Te llaman a un programa de radio donde un oyente te insulta en directo",
@@ -66,7 +66,7 @@ export const AFICION: BankScene[] = [
     [
       o("a", "Ir a conocer al artista y darle las gracias", "Un reconocimiento", { rel_aficion: 6, reputacion: 4, moral: 6, flags: { af_mural: "artista" } }, "El artista, un chaval de veintitrés años, te explica el proceso con ojos brillantes. Le compras un cuadro para tu casa y le abres una cuenta para exponer. Una semana después, otro mural, esta vez tuyo, aparece en otra ciudad."),
       o("b", "Hacerte una foto y publicarla en redes", "Dejarte querer", { fama: 4, rel_aficion: 4, moral: 4, flags: { af_mural: "foto" } }, "La foto bajo el mural tiene tres millones de visualizaciones. El artista te escribe: «Gracias por el empujón». Tú le respondes: «Gracias por la cara»."),
-      o("c", "Pedir con timidez que lo retoquen, que sales de lado", "Con humor", { moral: 3, rel_aficion: 2, flags: { af_mural: "retoque" } }, "El artista se ríe, retoca un ángulo y firma debajo: «El 9, con mejor perfil». Y es verdad: tu madre dice que ahora «pareces tú»."),
+      o("c", "Pedir con timidez que lo retoquen, que sales de lado", "Con humor", { moral: 3, rel_aficion: 2, flags: { af_mural: "retoque" } }, "El artista se ríe, retoca un ángulo y firma debajo: «El {numero}, con mejor perfil». Y es verdad: tu madre dice que ahora «pareces tú»."),
     ]),
   S("af-derbi-barbero", "aficion", { minAge: 17, clubTurns: [3, 400], clubLevels: ["grande", "europeo", "modesto"], notFlags: ["af_barbero"] }, "vida",
     "Tu barbero es hincha del rival y te lo recuerda cada semana",

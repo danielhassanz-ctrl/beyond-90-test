@@ -43,7 +43,7 @@ export const HUMOR3: BankScene[] = [
     [
       o("a", "Escuchar y asentir como si fuera la mejor táctica del mundo", "Hacer caso", { rel_aficion: 5, moral: 4, flags: { h3_peluqueria: "escucho" } }, "Te corta el pelo una señora que te canta una copla mientras te sermonea. Sales con un corte un poco irregular y la cabeza llena de ideas. Esa semana, tiras con la izquierda. Marcas. Le mandas flores."),
       o("b", "Contarles lo que de verdad pasa dentro del vestuario", "Sincerarte", { rel_aficion: 4, reputacion: -1, moral: 3, flags: { h3_peluqueria: "cuento" } }, "Les cuentas anécdotas sin importancia. A la mañana siguiente, medio barrio sabe qué comió el portero. Tu agente te llama: «No cuentes nada en la peluquería». «Era solo una anécdota», dices."),
-      o("c", "Poner los auriculares y fingir que estás dormido", "Desconectar", { moral: 1, flags: { h3_peluqueria: "auriculares" } }, "Escuchas música mientras te cortan. Cuando sales, hay un cartel nuevo en la puerta: «Aquí se ha cortado el pelo el 9 (y no habló con nadie)»."),
+      o("c", "Poner los auriculares y fingir que estás dormido", "Desconectar", { moral: 1, flags: { h3_peluqueria: "auriculares" } }, "Escuchas música mientras te cortan. Cuando sales, hay un cartel nuevo en la puerta: «Aquí se ha cortado el pelo el {numero} (y no habló con nadie)»."),
     ]),
   S("h3-corbata", "humor", { minAge: 18, clubTurns: [3, 400], notFlags: ["h3_corbata"] }, "vestuario",
     "El club impone corbata para viajar y nadie sabe anudársela",

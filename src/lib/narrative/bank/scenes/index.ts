@@ -1,4 +1,5 @@
 import type { BankScene } from "../types";
+import { balanceDilemmas } from "../balance";
 import { BARRIO } from "./barrio";
 import { VESTUARIO } from "./vestuario";
 import { BANQUILLO } from "./banquillo";
@@ -77,7 +78,7 @@ import { INVERSIONES } from "./inversiones";
 import { ARCOS2 } from "./arcos2";
 
 /** Todas las escenas del banco, en un solo sitio. Añadir una familia nueva = importarla aquí. */
-export const BANK_SCENES: BankScene[] = [...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS.filter((s) => !s.id.startsWith("bank-jjoo-")), ...CAMBIOS, ...PAREJA, ...RIVALES, ...SURREALISMO, ...NEGOCIOS, ...VETERANOS, ...JUVENTUD, ...AFICION, ...VESTUARIO2, ...REDES, ...FAMILIA, ...LESIONES, ...SELECCION2, ...MISTER2, ...SUELTAS2, ...MERCADO2, ...TORNEOS2, ...DIA_A_DIA, ...SURREALISMO2, ...HUMOR3, ...EMOCION, ...CANTERA2, ...PAREJA2, ...PRENSA3, ...EUROPA, ...CLUB2, ...VESTUARIO3, ...BARRIO2, ...SALUD, ...LUJO, ...MENTALIDAD, ...CUERPO_TECNICO, ...SELECCION3, ...AFICION3, ...CIUDAD, ...HUMOR4, ...EXTRANJERO, ...FICHAJES_VIDA, ...FAMILIA2, ...VERANO, ...VETERANO2, ...ROLES, ...PAREJA3, ...PAREJA4, ...RIVALES2, ...HUMOR5, ...TORNEOS3, ...MERCADO4, ...HOBBIES, ...ESTADIOS, ...MARCAS, ...CHICAS, ...DISCIPLINA, ...DISCIPLINA2, ...DISCIPLINA3, ...DISCIPLINA4, ...JERGA, ...CONVIVENCIA, ...VIDA2, ...CLUB3, ...INVERSIONES, ...ARCOS2, ...ESTADOS, ...ESTADOS2, ...RIVALES3];
+export const BANK_SCENES: BankScene[] = balanceDilemmas([...BARRIO, ...VESTUARIO, ...BANQUILLO, ...PRENSA, ...MENTE, ...AFICION_FAMILIA, ...SUELTAS, ...CACHONDEO_VESTUARIO, ...TRASPASOS, ...SELECCION, ...PREMIOS.filter((s) => !s.id.startsWith("bank-jjoo-")), ...CAMBIOS, ...PAREJA, ...RIVALES, ...SURREALISMO, ...NEGOCIOS, ...VETERANOS, ...JUVENTUD, ...AFICION, ...VESTUARIO2, ...REDES, ...FAMILIA, ...LESIONES, ...SELECCION2, ...MISTER2, ...SUELTAS2, ...MERCADO2, ...TORNEOS2, ...DIA_A_DIA, ...SURREALISMO2, ...HUMOR3, ...EMOCION, ...CANTERA2, ...PAREJA2, ...PRENSA3, ...EUROPA, ...CLUB2, ...VESTUARIO3, ...BARRIO2, ...SALUD, ...LUJO, ...MENTALIDAD, ...CUERPO_TECNICO, ...SELECCION3, ...AFICION3, ...CIUDAD, ...HUMOR4, ...EXTRANJERO, ...FICHAJES_VIDA, ...FAMILIA2, ...VERANO, ...VETERANO2, ...ROLES, ...PAREJA3, ...PAREJA4, ...RIVALES2, ...HUMOR5, ...TORNEOS3, ...MERCADO4, ...HOBBIES, ...ESTADIOS, ...MARCAS, ...CHICAS, ...DISCIPLINA, ...DISCIPLINA2, ...DISCIPLINA3, ...DISCIPLINA4, ...JERGA, ...CONVIVENCIA, ...VIDA2, ...CLUB3, ...INVERSIONES, ...ARCOS2, ...ESTADOS, ...ESTADOS2, ...RIVALES3]);
 
 /**
  * Banderas que dejan las escenas del banco y que cuentan algo de la historia

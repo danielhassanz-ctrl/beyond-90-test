@@ -18,7 +18,7 @@ export const VIDA2: BankScene[] = [
       o("b", "Hacer un gesto público de cariño hacia él en el siguiente partido", "Sacar pecho", { rel_aficion: 3, moral: 3, flags: { v2_padre_grada: true } }, "Marcas, corres hacia el córner y le señalas en la grada con las dos manos. El estadio le aplaude, él se pone rojo y se levanta con un gesto torpe. Alguien lo sube a las redes: «El padre de la afición»."),
       o("c", "Ignorarlo: es cosa suya", "No meterte", { moral: -1, rel_aficion: -1, flags: { v2_padre_grada: true } }, "Dejas que pase. Pero cada vez que sales a calentar, miras la grada buscando su cara. No saber si hoy se contiene te distrae más de lo que querrías."),
     ]),
-  S("v2-hermano-estudios", "familia", { ...ADULTO, fama: [30, 100], notFlags: ["v2_hermano"], clubTurns: [3, 400] }, "vida",
+  S("v2-hermano-estudios", "familia", { maxAge: 26, ...ADULTO, fama: [30, 100], notFlags: ["v2_hermano"], clubTurns: [3, 400] }, "vida",
     "Tu hermano pequeño quiere dejar los estudios para ser como tú",
     "Tu madre te lo cuenta con la voz de quien lleva una semana dándole vueltas: tu hermano pequeño quiere dejar el instituto para dedicarse al fútbol. Tiene catorce años, una camiseta tuya y la absoluta seguridad de que «a mí me van a fichar». Te pregunta con ojos de héroe qué piensas. Tú sabes que la mayoría de los chavales no llegan.",
     [

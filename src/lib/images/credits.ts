@@ -59,6 +59,38 @@ export const CREDIT_PACK = {
   label: "10 fotos más",
 };
 
+/**
+ * Las fotos gratis son de la CUENTA, no del personaje: borrar el jugador y crear otro daba otras 5. El gasto se apunta también en
+ * account_photo_usage (tabla solo para la service role, ver supabase/migrations/20261017_account_photo_usage.sql) y el personaje
+ * nuevo hereda lo ya gastado. Si la tabla aún no existe, no hace nada (el resto del sistema sigue como antes).
+ */
+async function recordAccountFreeUse(userId: string, used: number): Promise<void> {
+  try {
+    const service = createServiceClient();
+    const { data } = await service.from("account_photo_usage").select("free_used").eq("user_id", userId).maybeSingle();
+    const current = Number(data?.free_used ?? 0) || 0;
+    if (used > current) await service.from("account_photo_usage").upsert({ user_id: userId, free_used: Math.min(FREE_IMAGES_PER_CAREER, used), updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  } catch {
+    // sin tabla o sin service role: se ignora
+  }
+}
+
+/** Tras crear un personaje nuevo: hereda las gratis que la cuenta ya gastó con los anteriores. */
+export async function carryAccountFreeUsage(userId: string, playerId: string): Promise<void> {
+  try {
+    const service = createServiceClient();
+    const { data } = await service.from("account_photo_usage").select("free_used").eq("user_id", userId).maybeSingle();
+    const used = Number(data?.free_used ?? 0) || 0;
+    if (used <= 0) return;
+    await patchFlagsFresh(service, playerId, (f) => {
+      const now = parseInt(String(f.img_free_used ?? "0"), 10) || 0;
+      if (used > now) f.img_free_used = String(used);
+    });
+  } catch {
+    // sin tabla o sin service role: se ignora
+  }
+}
+
 export function getFreeImagesUsed(player: Pick<Player, "flags">): number {
   return parseInt(String(player.flags?.img_free_used ?? "0"), 10) || 0;
 }
@@ -174,6 +206,14 @@ export async function consumeImageCredit(
     else if (paidNow > 0) f.img_paid_credits = String(paidNow - 1);
   });
   if (fresh) {
+    // El gasto de gratis también se apunta en la cuenta (ver recordAccountFreeUse).
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const used = parseInt(String(fresh.img_free_used ?? "0"), 10) || 0;
+      if (auth.user && used > 0) await recordAccountFreeUse(auth.user.id, used);
+    } catch {
+      // no bloquea la generación
+    }
     // Reflejar el cambio también en el objeto en memoria, por si el mismo `player` se sigue usando después en la misma petición.
     player.flags = fresh;
     return;
