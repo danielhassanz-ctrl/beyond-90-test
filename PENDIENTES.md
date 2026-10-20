@@ -42,6 +42,4 @@ El código ya está desplegado, pero sin estos tres los agujeros del primero y d
 
 ## 6. Cosas menores que quedan en el código (no urgentes)
 
-- `consumeImageCredit` en `src/lib/images/credits.ts` ya no se usa (la reserva atómica lo sustituye).
-- Al borrar el personaje no se borra la tarjeta pública de comparar carrera (`public_career_cards`) si la tabla no tiene `on delete cascade`.
 - La escena guardada en cada hito (`image_scene`) la puede escribir el propio jugador desde el navegador: ahora se acota y se filtran contenidos prohibidos, pero no se ha impedido del todo la suplantación con foto ajena sin guardar la escena firmada en el servidor.
